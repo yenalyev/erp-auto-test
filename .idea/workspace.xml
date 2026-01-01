@@ -5,22 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="git commit -m &quot;feat: Initial project setup&#10;&#10;- Maven project structure (Java 8)&#10;- Core dependencies (RestAssured, TestNG, Allure, Lombok)&#10;- BaseClient &#10;- Configuration layer (TestConfig, properties)&#10;- Logging and test suite setup&quot;">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/TestGroups.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/clients/BaseClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpoints.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/TestConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/logback.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/allure.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/config/dev.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/config/stage.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/suites/smoke.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/services/CleanupService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/TestcontainersManager.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/TraceabilityMatrixUpdater.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/auth/AuthService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigReader.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/DatabaseHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/GoogleSheetsHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/parser/AllureResultsParser.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/BaseTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/ItemApiTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/resources/config/config-debug.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/resources/config/config-dev.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/resources/config/config-local.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/resources/config/config-staging.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/config/dev.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/dev.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/config/stage.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/stage.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -73,7 +75,10 @@
   <component name="RunAnythingCache">
     <option name="myCommands">
       <command value="mvn clean compile" />
+      <command value="mvn allure:serve" />
+      <command value="mvn clean install -U" />
       <command value="mvn clean install" />
+      <command value="mvn clean test " />
     </option>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -86,8 +91,16 @@
       <updated>1766944251492</updated>
       <workItem from="1766944253698" duration="5340000" />
       <workItem from="1766950188489" duration="705000" />
-      <workItem from="1766950947157" duration="1437000" />
+      <workItem from="1766950947157" duration="10909000" />
     </task>
+    <task id="LOCAL-00001" summary="git commit -m &quot;feat: Initial project setup&#10;&#10;- Maven project structure (Java 8)&#10;- Core dependencies (RestAssured, TestNG, Allure, Lombok)&#10;- BaseClient &#10;- Configuration layer (TestConfig, properties)&#10;- Logging and test suite setup&quot;">
+      <created>1766953268129</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1766953268129</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
