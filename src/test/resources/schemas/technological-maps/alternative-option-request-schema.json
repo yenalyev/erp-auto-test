@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AlternativeOptionRequest",
+  "type": "object",
+  "required": ["name", "resourceId", "amount"],
+  "properties": {
+    "name": { "type": "string" },
+    "resourceId": { "type": "integer", "minimum": 1 },
+    "mainOption": { "type": "boolean", "default": false },
+    "amount": { "type": "number", "exclusiveMinimum": 0 }
+  },
+  "additionalProperties": false
+}

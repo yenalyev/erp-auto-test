@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Resource List Response",
+  "description": "Array of resource objects",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "$ref": "resource-response-schema.json"
+  }
+}

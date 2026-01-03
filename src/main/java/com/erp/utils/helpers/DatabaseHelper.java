@@ -1,8 +1,7 @@
 package com.erp.utils.helpers;
 
-
 import com.erp.utils.TestcontainersManager;
-import com.erp.utils.config.ConfigReader;
+import com.erp.utils.config.ConfigProvider;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
@@ -16,7 +15,7 @@ public class DatabaseHelper {
     private final String password;
 
     public DatabaseHelper() {
-        String profile = System.getProperty("profile", "local");
+        String profile = System.getProperty("env", "local");
 
         if ("local".equals(profile)) {
             // Для Testcontainers
@@ -28,10 +27,10 @@ public class DatabaseHelper {
                 throw new IllegalStateException("Testcontainers not started for local profile");
             }
         } else {
-            // Для інших профілів (staging, debug)
-            this.jdbcUrl = ConfigReader.getProperty("db.url");
-            this.username = ConfigReader.getProperty("db.username");
-            this.password = ConfigReader.getProperty("db.password");
+            // ✅ Використовуємо ConfigProvider
+            this.jdbcUrl = ConfigProvider.getDbUrl();
+            this.username = ConfigProvider.getDbUsername();
+            this.password = ConfigProvider.getDbPassword();
         }
 
         log.info("🗄️  DatabaseHelper initialized");
@@ -54,9 +53,16 @@ public class DatabaseHelper {
         }
     }
 
-    /**
-     * Закрити з'єднання
-     */
+    public ResultSet executeQuery(String sql) throws SQLException {
+        Statement statement = connection.createStatement();
+        return statement.executeQuery(sql);
+    }
+
+    public int executeUpdate(String sql) throws SQLException {
+        Statement statement = connection.createStatement();
+        return statement.executeUpdate(sql);
+    }
+
     public void closeConnection() {
         try {
             if (connection != null && !connection.isClosed()) {
@@ -66,6 +72,10 @@ public class DatabaseHelper {
         } catch (SQLException e) {
             log.error("❌ Failed to close connection: {}", e.getMessage());
         }
+    }
+
+    public Connection getConnection() {
+        return connection;
     }
 
     private String maskPassword(String url) {

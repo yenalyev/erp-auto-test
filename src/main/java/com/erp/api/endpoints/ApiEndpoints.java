@@ -6,23 +6,24 @@ package com.erp.api.endpoints;
 public class ApiEndpoints {
 
     // Base paths
+    private static final String BASE_APP_URL = "http://backend:8080";
     private static final String API_V1 = "/api/v1";
 
-    // Inventory endpoints
-    public static final String INCOMING = API_V1 + "/inventory/incoming";
-    public static final String INCOMING_BY_ID = API_V1 + "/inventory/incoming/{id}";
-    public static final String OUTGOING = API_V1 + "/inventory/outgoing";
-    public static final String OUTGOING_BY_ID = API_V1 + "/inventory/outgoing/{id}";
+    //----------------------- RESOURCES --------------------------
+    public static final String RESOURCE_BASE_URL = API_V1 + "/resources";
+    public static final String RESOURCE_GET_ALL = RESOURCE_BASE_URL;
+    public static final String RESOURCE_POST_CREATE = RESOURCE_BASE_URL;
+    public static final String RESOURCE_UPDATE = RESOURCE_BASE_URL;
 
-    // Production endpoints
-    public static final String PRODUCTION_ORDERS = API_V1 + "/production/orders";
-    public static final String PRODUCTION_ORDER_BY_ID = API_V1 + "/production/orders/{id}";
+    //----------------------- UNIT MEASUREMENT --------------------------
+    public static final String UNIT_BASE_URL = API_V1 + "/measurement-unit";
+    public static final String UNIT_GET_ALL = UNIT_BASE_URL;
 
-    // Reporting endpoints
-    public static final String REPORTS = API_V1 + "/reports";
-    public static final String INVENTORY_REPORT = API_V1 + "/reports/inventory";
-    public static final String PRODUCTION_REPORT = API_V1 + "/reports/production";
+    //----------------------- TECHNOLOGICAL MAP --------------------------
+    public static final String TECHNOLOGICAL_MAP_BASE_URL = "/technological-maps";
+    public static final String TECHNOLOGICAL_MAP_GET_ALL = TECHNOLOGICAL_MAP_BASE_URL;
+    public static final String TECHNOLOGICAL_MAP_POST_CREATE = TECHNOLOGICAL_MAP_BASE_URL;
 
-    // Common
-    public static final String HEALTH = API_V1 + "/health";
+
+
 }

@@ -1,0 +1,51 @@
+# RBAC Access Control Policy Configuration
+rules:
+  # ========================================
+  # RESOURCE ENDPOINTS
+  # ========================================
+
+  # GET all resources
+  - endpointName: "RESOURCE_GET_ALL"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+
+  # POST create resource
+  - endpointName: "RESOURCE_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "CREATE"
+
+  # PUT update resource name
+  - endpointName: "RESOURCE_UPDATE_NAME"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "UPDATE_NAME"
+
+  # PUT update resource unit
+  - endpointName: "RESOURCE_UPDATE_UNIT"
+    allowedRoles: [ ]
+    deniedRoles: [ ADMIN, OWNER_1, ANONYMOUS ]
+    bodyType: "UPDATE_UNIT"
+
+  # ========================================
+  # MEASUREMENT UNIT ENDPOINTS
+  # ========================================
+  - endpointName: "MEASUREMENT_UNIT_GET_ALL"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+
+  # ========================================
+  # TECHNOLOGICAL MAP ENDPOINTS
+  # ========================================
+
+  - endpointName: "TECH_MAP_GET_ALL"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+
+#  - endpointName: "TECH_MAP_CREATE"
+#    allowedRoles: [ ADMIN ]
+#    deniedRoles: [ OWNER_1, ANONYMOUS ]
+#    bodyType: "CREATE"

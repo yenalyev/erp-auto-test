@@ -3,7 +3,7 @@ package com.erp.tests;
 import com.erp.services.CleanupService;
 import com.erp.utils.TestcontainersManager;
 import com.erp.utils.auth.AuthService;
-import com.erp.utils.config.ConfigReader;
+import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.DatabaseHelper;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
@@ -29,7 +29,7 @@ public abstract class BaseTest {
     private static String baseUrl;
     private static String authToken;
     private static boolean isTestcontainersMode;
-    private static boolean useDocker;  // ✅ Додано
+    private static boolean useDocker;
 
     // Зберігаємо створені ресурси для cleanup
     protected List<String> createdItemIds = new ArrayList<>();
@@ -40,11 +40,11 @@ public abstract class BaseTest {
         log.info("🚀 Starting test suite setup...");
 
         // Читаємо конфігурацію
-        String profile = System.getProperty("profile", "debug");  // ✅ За замовчуванням debug (без Docker)
+        String profile = System.getProperty("env", "debug");
         log.info("📋 Running with profile: {}", profile);
 
         // Визначаємо чи використовувати Docker
-        useDocker = Boolean.parseBoolean(System.getProperty("use.docker", "false"));  // ✅ Додано
+        useDocker = Boolean.parseBoolean(System.getProperty("use.docker", "false"));
         isTestcontainersMode = "local".equals(profile) && useDocker;
 
         if (isTestcontainersMode) {
@@ -56,12 +56,12 @@ public abstract class BaseTest {
             } catch (Exception e) {
                 log.error("❌ Failed to start Testcontainers: {}", e.getMessage());
                 log.warn("⚠️  Falling back to configuration from properties file");
-                baseUrl = ConfigReader.getProperty("base.url");
+                baseUrl = ConfigProvider.getBaseUrl();  // ✅ Змінено
                 isTestcontainersMode = false;
             }
         } else {
             log.info("📝 Running WITHOUT Testcontainers (using config from properties)");
-            baseUrl = ConfigReader.getProperty("base.url");
+            baseUrl = ConfigProvider.getBaseUrl();  // ✅ Змінено
         }
 
         log.info("🌐 Base URL: {}", baseUrl);
@@ -142,11 +142,10 @@ public abstract class BaseTest {
      * Перевірка чи потрібно ініціалізувати Database Helper
      */
     private boolean shouldInitializeDatabase() {
-        String profile = System.getProperty("profile", "debug");
-        String useDb = ConfigReader.getProperty("use.database", "false");
+        String profile = System.getProperty("env", "debug");
 
-        // Database потрібен для local (з Testcontainers) або якщо явно вказано
-        return isTestcontainersMode || "true".equals(useDb) || "local".equals(profile);
+        // ✅ Використовуємо ConfigProvider
+        return isTestcontainersMode || ConfigProvider.useDatabase() || "local".equals(profile);
     }
 
     /**
@@ -154,8 +153,9 @@ public abstract class BaseTest {
      */
     @Step("Authenticate user and get access token")
     private String authenticateUser() {
-        String username = ConfigReader.getProperty("auth.username", "test-user");
-        String password = ConfigReader.getProperty("auth.password", "test-password");
+        // ✅ Отримуємо credentials з ConfigProvider
+        String username = ConfigProvider.getAuthUsername();
+        String password = ConfigProvider.getAuthPassword();
 
         log.info("🔐 Authenticating user: {}", username);
 
@@ -166,6 +166,30 @@ public abstract class BaseTest {
         } catch (Exception e) {
             log.error("❌ Authentication failed: {}", e.getMessage());
             throw new RuntimeException("Failed to authenticate", e);
+        }
+    }
+
+    /**
+     * Автентифікація конкретного користувача
+     * Примітка: Зараз всі користувачі беруться з основного конфігу.
+     * Якщо потрібна підтримка multiple users - додайте окремий properties файл.
+     */
+    @Step("Authenticate specific user: {userType}")
+    protected String authenticateUser(String userType) {
+        // ✅ Наразі використовуємо основного користувача
+        // TODO: Додати підтримку різних типів користувачів якщо потрібно
+        String username = ConfigProvider.getAuthUsername();
+        String password = ConfigProvider.getAuthPassword();
+
+        log.info("🔐 Authenticating user: {} (type: {})", username, userType);
+
+        try {
+            String token = authService.getAccessToken(username, password);
+            log.info("✅ Authentication successful");
+            return token;
+        } catch (Exception e) {
+            log.error("❌ Authentication failed: {}", e.getMessage());
+            throw new RuntimeException("Failed to authenticate " + userType, e);
         }
     }
 
@@ -184,11 +208,8 @@ public abstract class BaseTest {
                 .log(LogDetail.ALL)
                 .build();
 
-        // Додаємо фільтри для логування
-        boolean verboseLogging = Boolean.parseBoolean(
-                ConfigReader.getProperty("logging.verbose", "true"));
-
-        if (verboseLogging) {
+        // ✅ Використовуємо ConfigProvider
+        if (ConfigProvider.verboseLogging()) {
             RestAssured.filters(
                     new RequestLoggingFilter(LogDetail.ALL),
                     new ResponseLoggingFilter(LogDetail.ALL)
@@ -219,7 +240,7 @@ public abstract class BaseTest {
      */
     @Step("Cleanup test data")
     private void cleanupTestData() {
-        String profile = System.getProperty("profile", "debug");
+        String profile = System.getProperty("env", "debug");
 
         // В staging не видаляємо автоматично
         if ("staging".equals(profile)) {

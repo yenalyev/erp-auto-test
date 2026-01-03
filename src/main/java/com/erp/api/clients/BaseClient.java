@@ -15,17 +15,15 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 
-/**
- * Base client for all API requests
- * Provides common HTTP methods and request/response specifications
- */
 @Slf4j
 public abstract class BaseClient {
 
     protected RequestSpecification requestSpec;
     protected ResponseSpecification responseSpec;
+    protected String authToken;
 
-    public BaseClient() {
+    public BaseClient(String authToken) {
+        this.authToken = authToken;
         this.requestSpec = createRequestSpec();
         this.responseSpec = createResponseSpec();
     }
@@ -34,14 +32,19 @@ public abstract class BaseClient {
      * Create default request specification
      */
     private RequestSpecification createRequestSpec() {
-        return new RequestSpecBuilder()
+        RequestSpecBuilder builder = new RequestSpecBuilder()
                 .setBaseUri(ConfigProvider.getBaseUrl())
                 .setContentType(ContentType.JSON)
                 .setAccept(ContentType.JSON)
-                .addHeader("Authorization", "Bearer " + ConfigProvider.getAuthToken())
                 .addFilter(new AllureRestAssured())
-                .log(LogDetail.ALL)
-                .build();
+                .log(LogDetail.ALL);
+
+        // ✅ Додаємо токен якщо він є
+        if (authToken != null && !authToken.isEmpty()) {
+            builder.addHeader("Authorization", "Bearer " + authToken);
+        }
+
+        return builder.build();
     }
 
     /**
@@ -54,8 +57,16 @@ public abstract class BaseClient {
     }
 
     /**
-     * Execute GET request
+     * Update auth token (for token refresh scenarios)
      */
+    public void updateAuthToken(String newToken) {
+        this.authToken = newToken;
+        this.requestSpec = createRequestSpec();
+        log.debug("🔄 Auth token updated in client");
+    }
+
+    // ✅ Всі методи залишаються такими ж
+
     protected Response get(String endpoint) {
         log.info("GET request to: {}", endpoint);
         return given()
@@ -68,9 +79,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute GET request with path parameters
-     */
     protected Response get(String endpoint, Map<String, ?> pathParams) {
         log.info("GET request to: {} with params: {}", endpoint, pathParams);
         return given()
@@ -84,9 +92,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute GET request with query parameters
-     */
     protected Response getWithQueryParams(String endpoint, Map<String, ?> queryParams) {
         log.info("GET request to: {} with query params: {}", endpoint, queryParams);
         return given()
@@ -100,9 +105,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute POST request with body
-     */
     protected Response post(String endpoint, Object body) {
         log.info("POST request to: {} with body: {}", endpoint, body);
         return given()
@@ -116,9 +118,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute POST request without body
-     */
     protected Response post(String endpoint) {
         log.info("POST request to: {}", endpoint);
         return given()
@@ -131,9 +130,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute PUT request with body
-     */
     protected Response put(String endpoint, Object body) {
         log.info("PUT request to: {} with body: {}", endpoint, body);
         return given()
@@ -147,9 +143,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute PUT request with path parameters
-     */
     protected Response put(String endpoint, Map<String, ?> pathParams, Object body) {
         log.info("PUT request to: {} with params: {} and body: {}", endpoint, pathParams, body);
         return given()
@@ -164,9 +157,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute PATCH request with body
-     */
     protected Response patch(String endpoint, Object body) {
         log.info("PATCH request to: {} with body: {}", endpoint, body);
         return given()
@@ -180,9 +170,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute DELETE request
-     */
     protected Response delete(String endpoint) {
         log.info("DELETE request to: {}", endpoint);
         return given()
@@ -195,9 +182,6 @@ public abstract class BaseClient {
                 .response();
     }
 
-    /**
-     * Execute DELETE request with path parameters
-     */
     protected Response delete(String endpoint, Map<String, ?> pathParams) {
         log.info("DELETE request to: {} with params: {}", endpoint, pathParams);
         return given()

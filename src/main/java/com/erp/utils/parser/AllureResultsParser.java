@@ -3,113 +3,190 @@ package com.erp.utils.parser;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+@Slf4j
 public class AllureResultsParser {
-    private static final String ALLURE_RESULTS_PATH = "target/allure-results";
-    private static final Gson gson = new Gson();
 
-    public static class TestResult {
-        String testClass;
-        String testMethod;
-        String epic;
-        String feature;
-        String story;
-        String status;
-        String lastRun;
-        long duration;
-        String bugId;
+    private static final String ALLURE_RESULTS_DIR = "target/allure-results";
+    private final Gson gson = new Gson();
 
-        public List<Object> toRowData() {
-            return Arrays.asList(
-                    testClass, testMethod, epic, feature, story,
-                    status, lastRun, duration + "ms", bugId
-            );
-        }
-    }
-
+    /**
+     * Парсинг всіх Allure результатів
+     */
     public List<TestResult> parseAllureResults() throws IOException {
         List<TestResult> results = new ArrayList<>();
+        Path resultsPath = Paths.get(ALLURE_RESULTS_DIR);
 
-        File resultsDir = new File(ALLURE_RESULTS_PATH);
-        if (!resultsDir.exists()) {
-            System.out.println("Allure results directory not found");
+        if (!Files.exists(resultsPath)) {
+            log.warn("⚠️  Allure results directory not found: {}", ALLURE_RESULTS_DIR);
             return results;
         }
 
-        // Читаємо всі *-result.json файли
-        File[] resultFiles = resultsDir.listFiles((dir, name) ->
-                name.endsWith("-result.json"));
+        try (Stream<Path> paths = Files.walk(resultsPath)) {
+            List<File> jsonFiles = paths
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith("-result.json"))
+                    .map(Path::toFile)
+                    .collect(Collectors.toList());
 
-        if (resultFiles != null) {
-            for (File file : resultFiles) {
-                TestResult result = parseResultFile(file);
-                if (result != null) {
-                    results.add(result);
+            log.info("📄 Found {} Allure result files", jsonFiles.size());
+
+            for (File file : jsonFiles) {
+                try {
+                    TestResult result = parseResultFile(file);
+                    if (result != null) {
+                        results.add(result);
+                    }
+                } catch (Exception e) {
+                    log.error("❌ Failed to parse file {}: {}", file.getName(), e.getMessage());
                 }
             }
         }
 
+        log.info("✅ Parsed {} test results", results.size());
         return results;
     }
 
+    /**
+     * Парсинг одного файлу результату
+     */
     private TestResult parseResultFile(File file) throws IOException {
-        JsonObject json = gson.fromJson(new FileReader(file), JsonObject.class);
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject json = gson.fromJson(reader, JsonObject.class);
 
-        TestResult result = new TestResult();
-        result.testMethod = json.get("name").getAsString();
-        result.status = json.get("status").getAsString();
-        result.duration = json.get("stop").getAsLong() - json.get("start").getAsLong();
-        result.lastRun = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                .format(new java.util.Date(json.get("stop").getAsLong()));
+            TestResult result = new TestResult();
 
-        // Витягуємо класс з fullName
-        String fullName = json.get("fullName").getAsString();
-        result.testClass = fullName.substring(0, fullName.lastIndexOf("."));
+            // Basic info
+            result.setTestClass(getTestClass(json));
+            result.setTestMethod(json.get("name").getAsString());
+            result.setStatus(json.get("status").getAsString());
 
-        // Парсимо labels (Epic, Feature, Story)
-        JsonArray labels = json.getAsJsonArray("labels");
-        result.epic = "";
-        result.feature = "";
-        result.story = "";
-        result.bugId = "";
+            // Labels (Epic, Feature, Story)
+            if (json.has("labels")) {
+                JsonArray labels = json.getAsJsonArray("labels");
+                for (int i = 0; i < labels.size(); i++) {
+                    JsonObject label = labels.get(i).getAsJsonObject();
+                    String name = label.get("name").getAsString();
+                    String value = label.get("value").getAsString();
 
-        for (int i = 0; i < labels.size(); i++) {
-            JsonObject label = labels.get(i).getAsJsonObject();
-            String name = label.get("name").getAsString();
-            String value = label.get("value").getAsString();
-
-            switch (name) {
-                case "epic":
-                    result.epic = value;
-                    break;
-                case "feature":
-                    result.feature = value;
-                    break;
-                case "story":
-                    result.story = value;
-                    break;
+                    switch (name) {
+                        case "epic":
+                            result.setEpic(value);
+                            break;
+                        case "feature":
+                            result.setFeature(value);
+                            break;
+                        case "story":
+                            result.setStory(value);
+                            break;
+                    }
+                }
             }
-        }
 
-        // Витягуємо Bug ID з links якщо є
-        if (json.has("links")) {
-            JsonArray links = json.getAsJsonArray("links");
-            for (int i = 0; i < links.size(); i++) {
-                JsonObject link = links.get(i).getAsJsonObject();
-                if ("issue".equals(link.get("type").getAsString())) {
-                    result.bugId = link.get("name").getAsString();
-                    break;
+            // Timing
+            if (json.has("start") && json.has("stop")) {
+                long start = json.get("start").getAsLong();
+                long stop = json.get("stop").getAsLong();
+                long duration = stop - start;
+
+                result.setDuration(formatDuration(duration));
+                result.setLastRun(formatTimestamp(start));
+            }
+
+            // Links (Bug ID)
+            if (json.has("links")) {
+                JsonArray links = json.getAsJsonArray("links");
+                for (int i = 0; i < links.size(); i++) {
+                    JsonObject link = links.get(i).getAsJsonObject();
+                    if ("issue".equals(link.get("type").getAsString())) {
+                        result.setBugId(link.get("name").getAsString());
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /**
+     * Витягти назву тест класу
+     */
+    private String getTestClass(JsonObject json) {
+        if (json.has("labels")) {
+            JsonArray labels = json.getAsJsonArray("labels");
+            for (int i = 0; i < labels.size(); i++) {
+                JsonObject label = labels.get(i).getAsJsonObject();
+                if ("testClass".equals(label.get("name").getAsString())) {
+                    String fullName = label.get("value").getAsString();
+                    // Повертаємо тільки назву класу без пакету
+                    return fullName.substring(fullName.lastIndexOf('.') + 1);
                 }
             }
         }
+        return "Unknown";
+    }
 
-        return result;
+    /**
+     * Форматувати тривалість
+     */
+    private String formatDuration(long milliseconds) {
+        double seconds = milliseconds / 1000.0;
+        return String.format("%.2fs", seconds);
+    }
+
+    /**
+     * Форматувати timestamp
+     */
+    private String formatTimestamp(long milliseconds) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(new Date(milliseconds));
+    }
+
+    /**
+     * Test Result Model
+     */
+    @Data
+    public static class TestResult {
+        private String testClass;
+        private String testMethod;
+        private String epic;
+        private String feature;
+        private String story;
+        private String status;
+        private String lastRun;
+        private String duration;
+        private String bugId;
+
+        /**
+         * Конвертація в рядок для Google Sheets (deprecated, використовуйте GoogleSheetsHelper.TestResult)
+         */
+        @Deprecated
+        public List<Object> toRowData() {
+            return Arrays.asList(
+                    testClass != null ? testClass : "",
+                    testMethod != null ? testMethod : "",
+                    epic != null ? epic : "",
+                    feature != null ? feature : "",
+                    story != null ? story : "",
+                    status != null ? status : "",
+                    lastRun != null ? lastRun : "",
+                    duration != null ? duration : "",
+                    bugId != null ? bugId : ""
+            );
+        }
     }
 }

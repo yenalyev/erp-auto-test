@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MeasurementUnit",
+  "type": "object",
+  "required": [
+    "name",
+    "shortName"
+  ],
+  "properties": {
+    "id": {
+      "type": ["integer", "null"],
+      "description": "Унікальний ідентифікатор одиниці виміру"
+    },
+    "name": {
+      "type": "string",
+      "description": "Повна назва (наприклад, кілограми)",
+      "minLength": 1
+    },
+    "shortName": {
+      "type": "string",
+      "description": "Скорочена назва (наприклад, кг)",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}
