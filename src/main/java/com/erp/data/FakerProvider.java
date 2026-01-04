@@ -1,4 +1,4 @@
-package com.erp.builders.common;
+package com.erp.data;
 
 import com.github.javafaker.Faker;
 import lombok.experimental.UtilityClass;

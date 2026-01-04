@@ -1,7 +1,7 @@
 package com.erp.data.factories;
 
 import com.erp.models.request.ResourceRequest;
-import com.erp.builders.common.FakerProvider;
+import com.erp.data.FakerProvider;
 import com.erp.models.response.ResourceResponse;
 import lombok.NonNull;
 

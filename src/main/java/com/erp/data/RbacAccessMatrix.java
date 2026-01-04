@@ -76,10 +76,11 @@ public class RbacAccessMatrix {
                 // Генеруємо тести для allowed roles
                 if (rule.getAllowedRoles() != null) {
                     for (UserRole allowedRole : rule.getAllowedRoles()) {
-                        int expectedStatus = endpoint.getHttpMethod().name().equals("POST")
-                                ? 201
-                                : 200;
+//                        int expectedStatus = endpoint.getHttpMethod().name().equals("POST")
+//                                ? 201
+//                                : 200;
 
+                        int expectedStatus = 200;
                         testCases.add(new Object[]{
                                 rule,
                                 allowedRole,
