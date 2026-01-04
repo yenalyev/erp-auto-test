@@ -292,7 +292,7 @@ public class EndpointAccessRule {
     }
 
     // ============================================
-    // 📊 Information Methods
+    // Information Methods
     // ============================================
 
     /**

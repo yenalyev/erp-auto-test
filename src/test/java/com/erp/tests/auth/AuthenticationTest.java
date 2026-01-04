@@ -1,7 +1,7 @@
 package com.erp.tests.auth;
 
 import com.erp.annotations.TestCaseId;
-import com.erp.api.endpoints.ApiEndpoints;
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.tests.BaseTest;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
@@ -119,7 +119,7 @@ public class AuthenticationTest extends BaseTest {
                 .contentType("application/json")
                 // ❌ Без Authorization header
                 .when()
-                .get(ApiEndpoints.RESOURCE_GET_ALL)
+                .get(ApiEndpointDefinition.RESOURCE_GET_ALL.getPath())
                 .then()
                 .extract()
                 .response();
@@ -148,7 +148,7 @@ public class AuthenticationTest extends BaseTest {
                 .header("Authorization", "Bearer " + invalidToken)
                 .contentType("application/json")
                 .when()
-                .get(ApiEndpoints.RESOURCE_GET_ALL)
+                .get(ApiEndpointDefinition.RESOURCE_GET_ALL.getPath())
                 .then()
                 .extract()
                 .response();
@@ -174,7 +174,7 @@ public class AuthenticationTest extends BaseTest {
         Map<String, String> sessionCookies = authService.loginViaBrowserFlow(
                 ConfigProvider.getAuthUsername(),
                 ConfigProvider.getAuthPassword(),
-                ApiEndpoints.RESOURCE_GET_ALL
+                ApiEndpointDefinition.RESOURCE_GET_ALL.getPath()
         );
 
         log.info("🔓 Step 2: Testing API access using obtained JSESSIONID");
@@ -185,7 +185,7 @@ public class AuthenticationTest extends BaseTest {
                 .cookies(sessionCookies) // Передаємо отриману сесію
                 .contentType("application/json")
                 .when()
-                .get(ApiEndpoints.RESOURCE_GET_ALL)
+                .get(ApiEndpointDefinition.RESOURCE_GET_ALL.getPath())
                 .then()
                 .extract()
                 .response();

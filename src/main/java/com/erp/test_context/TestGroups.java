@@ -1,4 +1,4 @@
-package com.erp;
+package com.erp.test_context;
 
 /**
  * Constants for TestNG groups

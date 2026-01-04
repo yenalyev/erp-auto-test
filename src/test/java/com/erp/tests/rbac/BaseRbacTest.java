@@ -1,7 +1,9 @@
 package com.erp.tests.rbac;
 
 import com.erp.enums.UserRole;
+import com.erp.fixtures.ErpFixture;
 import com.erp.models.rbac.EndpointAccessRule;
+import com.erp.test_context.RbacTestContext;
 import com.erp.tests.BaseTest;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
@@ -10,6 +12,8 @@ import io.restassured.http.Method;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +21,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class BaseRbacTest extends BaseTest {
+
+    protected final RbacTestContext testContext = new RbacTestContext();
+    protected ErpFixture erpFixture;
+
+    @BeforeClass(alwaysRun = true)
+    public void rbacClassSetup() {
+        this.erpFixture = new ErpFixture(testContext, apiExecutor);
+    }
 
     // Кеш сесій для кожної ролі (щоб не логінитись кожен раз)
     protected Map<UserRole, Map<String, String>> roleSessionCache = new ConcurrentHashMap<>();

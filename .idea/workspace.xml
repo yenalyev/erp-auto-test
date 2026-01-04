@@ -5,13 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="add rbac tests">
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpointDefinition.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpointDefinition.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/clients/ApiExecutor.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/ResourceDataFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/ResourceRequestBodyFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/fixtures/BaseFixture.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/fixtures/ErpFixture.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/test_context/ContextKey.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/test_context/TestContext.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/AllureHelper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/TestGroups.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/test_context/TestGroups.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpoints.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/RbacAccessMatrix.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/RbacAccessMatrix.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/RbacTestContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/test_context/RbacTestContext.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/RequestBodyFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/RequestBodyFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/strategies/RequestBodyStrategy.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/strategies/RequestBodyStrategy.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/models/rbac/EndpointAccessRule.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/rbac/EndpointAccessRule.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/models/request/TechnologicalMapRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/request/TechnologicalMapRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ErrorResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ErrorResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/models/response/MeasurementUnitResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/MeasurementUnitResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/BaseTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/BaseTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/auth/AuthenticationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/auth/AuthenticationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/rbac/BaseRbacTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/rbac/BaseRbacTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/rbac/RbacAccessMatrixTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/rbac/RbacAccessMatrixTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/resource-usage-request-schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/resource-usage-request-schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/technological-map-request-schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/technological-map-request-schema.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,6 +38,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Interface" />
+        <option value="Enum" />
         <option value="Class" />
       </list>
     </option>
@@ -40,12 +57,12 @@
     &quot;assignee&quot;: &quot;yenalyev&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/yenalyev/erp-test.git&quot;,
-    &quot;accountId&quot;: &quot;c0f8bd3d-107d-4c6a-8343-3c82b797d3d0&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/yenalyev/erp-auto-test.git",
+    "accountId": "c0f8bd3d-107d-4c6a-8343-3c82b797d3d0"
   }
-}</component>
+}]]></component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -79,7 +96,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "TestNG.AuthTest.executor": "Run",
-    "git-widget-placeholder": "test",
+    "git-widget-placeholder": "change__data__management",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "project.structure.last.edited": "Project",
@@ -109,6 +126,17 @@
       <command value="mvn allure:serve" />
     </option>
   </component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -118,7 +146,7 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="475882b8-a04a-4f3c-9129-c4fc4a378c94" name="Changes" comment="" />
+      <changelist id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="add rbac tests" />
       <created>1767038664500</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />

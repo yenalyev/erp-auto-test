@@ -1,5 +1,7 @@
 package com.erp.tests;
 
+import com.erp.api.clients.ApiExecutor;
+import com.erp.api.clients.SessionClient;
 import com.erp.services.CleanupService;
 import com.erp.utils.TestcontainersManager;
 import com.erp.utils.auth.AuthService;
@@ -20,7 +22,7 @@ import java.util.List;
 
 @Slf4j
 public abstract class BaseTest {
-
+    protected static ApiExecutor apiExecutor;
     protected static RequestSpecification requestSpec;
     protected static AuthService authService;
     protected static CleanupService cleanupService;
@@ -30,6 +32,7 @@ public abstract class BaseTest {
     private static String authToken;
     private static boolean isTestcontainersMode;
     private static boolean useDocker;
+    protected static SessionClient sessionClient;
 
     // Зберігаємо створені ресурси для cleanup
     protected List<String> createdItemIds = new ArrayList<>();
@@ -69,6 +72,10 @@ public abstract class BaseTest {
         // Ініціалізуємо сервіси
         authService = new AuthService(baseUrl);
         cleanupService = new CleanupService(baseUrl);
+
+        sessionClient = new SessionClient();
+        // Ініціалізуємо ApiExecutor (використовує sessionClient для запитів та authService для кешування сесій)
+        apiExecutor = new ApiExecutor(sessionClient, authService);
 
         // Database Helper тільки якщо потрібен
         if (shouldInitializeDatabase()) {

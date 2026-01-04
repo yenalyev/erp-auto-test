@@ -3,6 +3,7 @@ package com.erp.data;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.models.rbac.EndpointAccessRule;
+import com.erp.test_context.RbacTestContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Data;
@@ -32,15 +33,15 @@ public class RbacAccessMatrix {
     private static List<EndpointAccessRule> cachedRules;
 
     /**
-     * ✅ Генерує test data для TestNG DataProvider
+     * Генерує test data для TestNG DataProvider
      */
     public static Object[][] generateTestData(RbacTestContext context) {
         List<Object[]> testCases = new ArrayList<>();
 
-        // Завантажуємо правила з YAML
+        // Завантажуємо правила з YAML файла
         List<EndpointAccessRule> rules = loadRules();
 
-        log.info("📋 Generating RBAC test matrix from {} rules", rules.size());
+        log.info("Generating RBAC test matrix from {} rules", rules.size());
 
         for (EndpointAccessRule rule : rules) {
             try {
@@ -48,12 +49,12 @@ public class RbacAccessMatrix {
                 ApiEndpointDefinition endpoint = rule.getEndpointDefinition();
 
                 // 1. Генеруємо request body на основі endpoint definition
-                // Більше не залежимо від текстового bodyType з YAML
+
                 if (endpoint.requiresBody()) {
                     Object requestBody = RequestBodyFactory.generate(endpoint, context);
 
                     if (requestBody == null) {
-                        log.warn("⚠️ Request body is required for '{}' but Factory returned null. " +
+                        log.warn("Request body is required for '{}' but Factory returned null. " +
                                 "This might cause test skips if body is mandatory.", endpoint);
                     }
 
@@ -65,7 +66,7 @@ public class RbacAccessMatrix {
                     String pathParam = context.getResourceIdForEndpoint(rule.getEndpointName());
 
                     if (pathParam == null) {
-                        log.warn("⚠️ Path parameter required for '{}' but Context returned null (Setup failed?). " +
+                        log.warn("Path parameter required for '{}' but Context returned null (Setup failed?). " +
                                 "Tests requiring ID will likely be SKIPPED.", endpoint);
                     }
 
@@ -88,7 +89,7 @@ public class RbacAccessMatrix {
                     }
                 }
 
-                // Генеруємо тести для denied roles
+                // Генеруємо тести для denied roles (ANONYMOUS - завжди 401)
                 if (rule.getDeniedRoles() != null) {
                     for (UserRole deniedRole : rule.getDeniedRoles()) {
                         testCases.add(new Object[]{
@@ -101,7 +102,7 @@ public class RbacAccessMatrix {
                 }
 
             } catch (Exception e) {
-                log.error("❌ Failed to generate test cases for rule: {}",
+                log.error("ERROR - Failed to generate test cases for rule: {}",
                         rule.getEndpointName(), e);
                 throw new RuntimeException(
                         "Failed to generate test cases for: " + rule.getEndpointName(), e
@@ -109,24 +110,24 @@ public class RbacAccessMatrix {
             }
         }
 
-        log.info("✅ Generated {} test cases", testCases.size());
+        log.info("Generated {} test cases", testCases.size());
 
         return testCases.toArray(new Object[0][]);
     }
 
     /**
-     * ✅ Завантажує правила з YAML файлу
+     * Завантажує правила з YAML файлу
      */
     private static List<EndpointAccessRule> loadRules() {
         if (cachedRules != null) {
-            log.debug("📦 Returning cached RBAC rules ({} rules)", cachedRules.size());
+            log.debug("Returning cached RBAC rules ({} rules)", cachedRules.size());
             return cachedRules;
         }
 
-        log.info("📂 Loading RBAC policy from: {}", POLICY_FILE);
+        log.info("Loading RBAC policy from: {}", POLICY_FILE);
 
         try (InputStream inputStream = getRbacPolicyInputStream()) {
-            // ✅ Парсимо YAML напряму в Map структуру
+            // Парсимо YAML напряму в Map структуру
             RbacPolicyConfig config = YAML_MAPPER.readValue(inputStream, RbacPolicyConfig.class);
 
             if (config == null || config.rules == null || config.rules.isEmpty()) {
@@ -135,7 +136,7 @@ public class RbacAccessMatrix {
                 );
             }
 
-            log.info("✅ Parsed {} rules from YAML", config.rules.size());
+            log.info("Parsed {} rules from YAML", config.rules.size());
 
             // Конвертуємо в EndpointAccessRule
             cachedRules = convertToAccessRules(config.rules);
@@ -208,7 +209,7 @@ public class RbacAccessMatrix {
     }
 
     /**
-     * ✅ Конвертує список імен ролей в Set<UserRole>
+     *  Конвертує список імен ролей в Set<UserRole>
      */
     private static Set<UserRole> convertRoles(List<String> roleNames, String fieldName, int ruleNumber) {
         if (roleNames == null || roleNames.isEmpty()) {

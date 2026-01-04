@@ -1,11 +1,12 @@
 package com.erp.data.strategies;
 
-import com.erp.data.RbacTestContext;
+import com.erp.test_context.RbacTestContext;
+import com.erp.test_context.TestContext;
 
 /**
  * Strategy для генерації request body різних типів
  */
 @FunctionalInterface
 public interface RequestBodyStrategy {
-    Object generate(RbacTestContext context);
+    Object generate(TestContext context);
 }
