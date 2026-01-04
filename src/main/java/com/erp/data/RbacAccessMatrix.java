@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.erp.enums.UserRole.ANONYMOUS;
 
@@ -48,18 +47,28 @@ public class RbacAccessMatrix {
                 // Отримуємо endpoint definition
                 ApiEndpointDefinition endpoint = rule.getEndpointDefinition();
 
-                // Генеруємо request body якщо потрібно
-                if (endpoint.requiresBody() && rule.getBodyType() != null) {
-                    Object requestBody = RequestBodyFactory.generate(
-                            rule.getBodyType(),
-                            context
-                    );
+                // 1. Генеруємо request body на основі endpoint definition
+                // Більше не залежимо від текстового bodyType з YAML
+                if (endpoint.requiresBody()) {
+                    Object requestBody = RequestBodyFactory.generate(endpoint, context);
+
+                    if (requestBody == null) {
+                        log.warn("⚠️ Request body is required for '{}' but Factory returned null. " +
+                                "This might cause test skips if body is mandatory.", endpoint);
+                    }
+
                     rule.setRequestBody(requestBody);
                 }
 
-                // Встановлюємо path param якщо потрібно
+                // 2. Встановлюємо path param якщо потрібно
                 if (endpoint.hasPathVariables()) {
                     String pathParam = context.getResourceIdForEndpoint(rule.getEndpointName());
+
+                    if (pathParam == null) {
+                        log.warn("⚠️ Path parameter required for '{}' but Context returned null (Setup failed?). " +
+                                "Tests requiring ID will likely be SKIPPED.", endpoint);
+                    }
+
                     rule.setPathParam(pathParam);
                 }
 
@@ -174,6 +183,8 @@ public class RbacAccessMatrix {
                 Set<UserRole> deniedRoles = convertRoles(yaml.deniedRoles, "deniedRoles", ruleNumber);
 
                 // Будуємо правило
+                // Поле bodyType більше не є критичним, але ми можемо зберегти його в об'єкті,
+                // якщо воно колись знадобиться для специфічних кейсів.
                 EndpointAccessRule rule = EndpointAccessRule.builder()
                         .endpointName(yaml.endpointName)
                         .allowedRoles(allowedRoles)
@@ -304,6 +315,6 @@ public class RbacAccessMatrix {
         private String endpointName;
         private List<String> allowedRoles;
         private List<String> deniedRoles;
-        private String bodyType;
+        private String bodyType; // Залишено для сумісності з YAML, але ігнорується логікою
     }
 }

@@ -4,80 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="git commit -m &quot;feat: Initial project setup&#10;&#10;- Maven project structure (Java 8)&#10;- Core dependencies (RestAssured, TestNG, Allure, Lombok)&#10;- BaseClient &#10;- Configuration layer (TestConfig, properties)&#10;- Logging and test suite setup&quot;">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/annotations/TestCaseId.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/clients/SessionClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpointDefinition.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/types/TypeReference.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/builders/common/FakerProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/builders/common/TestDataBuilder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/builders/resources/ResourceTestData.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/builders/techmap/TechnologicalMapTestData.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/builders/units/MeasurementUnitTestData.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/RbacAccessMatrix.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/RbacTestContext.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/RequestBodyFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/strategies/RequestBodyStrategy.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/enums/UserRole.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/listeners/AllureTestCaseIdListener.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/listeners/GoogleSheetsReportListener.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/listeners/TestCaseIdListener.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/rbac/EndpointAccessRule.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/rbac/RbacPolicyConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/rbac/RuleConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/request/ResourceRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/request/TechnologicalMapRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/AlternativeGroupResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/AlternativeOptionResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ErrorResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/MeasurementUnitResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ResourceResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ResourceUsageResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/TechnologicalMapResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/CollectionUtils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/ResponseDeserializer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/auth/SecurityMockProvider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/UserCredentials.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/TestCaseIdExtractor.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/validators/ResponseValidator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/validators/SchemaRegistry.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/auth/AuthenticationTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/rbac/BaseRbacTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/rbac/RbacAccessMatrixTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/config/debug.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/config/default.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/config/local.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/config/test-users.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/rbac-policy.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/measurement-unit-list-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/measurement-unit-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/resource-list-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/resource-response-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/alternative-group-request-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/alternative-option-request-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/resource-usage-request-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/technological-map-list-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/technological-map-request-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/suites/test-dev.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/api/clients/BaseClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/clients/BaseClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpoints.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpoints.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/TraceabilityMatrixUpdater.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/TraceabilityMatrixUpdater.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/auth/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/auth/AuthService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigProvider.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigReader.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/TestConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/TestConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/DatabaseHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/DatabaseHelper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/GoogleSheetsHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/GoogleSheetsHelper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/parser/AllureResultsParser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/parser/AllureResultsParser.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/BaseTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/BaseTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/ItemApiTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/config/config-debug.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/config/stage.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/staging.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/suites/smoke.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/suites/smoke.xml" afterDir="false" />
+    <list default="true" id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="add rbac tests">
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpointDefinition.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpointDefinition.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/RbacAccessMatrix.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/RbacAccessMatrix.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/RequestBodyFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/RequestBodyFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/rbac/RbacAccessMatrixTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/rbac/RbacAccessMatrixTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/resource-usage-request-schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/resource-usage-request-schema.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/technological-map-request-schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/schemas/technological-maps/technological-map-request-schema.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,7 +29,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="master" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -145,7 +79,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "TestNG.AuthTest.executor": "Run",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "test",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "project.structure.last.edited": "Project",
@@ -200,7 +134,19 @@
       <option name="project" value="LOCAL" />
       <updated>1766953268129</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="add rbac tests">
+      <option name="closed" value="true" />
+      <created>1767473828740</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1767473828740</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="add rbac tests" />
+    <option name="LAST_COMMIT_MESSAGE" value="add rbac tests" />
   </component>
 </project>

@@ -1,11 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ResourceUsageRequest",
   "type": "object",
-  "required": ["resourceId", "amount"],
+  "required": ["resource", "amount"],
   "properties": {
-    "resourceId": { "type": "integer", "minimum": 1 },
-    "amount": { "type": "number", "exclusiveMinimum": 0 }
+    "resource": {
+      "$ref": "../resource-response-schema.json"
+    },
+    "amount": {
+      "type": "number",
+      "minimum": 0,
+      "exclusiveMinimum": true
+    }
   },
   "additionalProperties": false
 }

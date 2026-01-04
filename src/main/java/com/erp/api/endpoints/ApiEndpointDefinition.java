@@ -36,7 +36,7 @@ public enum ApiEndpointDefinition {
             "/api/v1/resources",
             Method.GET,
             "schemas/resource-list-schema.json",
-            "Get all resources",
+            "Get all resources - ",
             null,  // no request body
             new TypeReference<List<ResourceResponse>>() {},  // ✅ Type-safe List
             null
@@ -76,7 +76,7 @@ public enum ApiEndpointDefinition {
     // MEASUREMENT UNIT ENDPOINTS
     // ========================================
     MEASUREMENT_UNIT_GET_ALL(
-            "/api/v1/technological-maps",
+            "/api/v1/measurement-unit",
             Method.GET,
             "schemas/measurement-unit-list-schema.json",
             "Get all measurement units",
