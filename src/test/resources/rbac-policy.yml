@@ -9,6 +9,7 @@ rules:
     allowedRoles: [ ADMIN, OWNER_1 ]
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
+    description: "Отримати список всіх ресурсів: ADMIN, OWNER_1 - можуть, ANONYMOUS - ні"
 
   # POST create resource
   - endpointName: "RESOURCE_CREATE"
@@ -18,12 +19,14 @@ rules:
 
   # PUT update resource name
   - endpointName: "RESOURCE_UPDATE_NAME"
+    contextKey: "SHARED_RESOURCE_ID"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, ANONYMOUS ]
     bodyType: "UPDATE_NAME"
 
   # PUT update resource unit
   - endpointName: "RESOURCE_UPDATE_UNIT"
+    contextKey: "SHARED_RESOURCE_ID"
     allowedRoles: [ ]
     deniedRoles: [ ADMIN, OWNER_1, ANONYMOUS ]
     bodyType: "UPDATE_UNIT"
@@ -35,6 +38,16 @@ rules:
     allowedRoles: [ ADMIN, OWNER_1 ]
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
+    description: "Отримати список всіх MEASUREMENT UNIT: ADMIN та OWNER_1 мають право, ANONYMOUS - ні"
+
+
+  # POST create measurement unit
+  - endpointName: "MEASUREMENT_UNIT_POST_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "CREATE_MEASUREMENT_UNIT"
+    description: "Створити новий MEASUREMENT UNIT: тільки ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
 
   # ========================================
   # TECHNOLOGICAL MAP ENDPOINTS
@@ -45,7 +58,15 @@ rules:
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
 
-#  - endpointName: "TECH_MAP_CREATE"
-#    allowedRoles: [ ADMIN ]
-#    deniedRoles: [ OWNER_1, ANONYMOUS ]
-#    bodyType: "CREATE"
+  - endpointName: "TECH_MAP_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "CREATE_TECH_MAP"
+    description: "Створити нову TECH_MAP: тільки ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  - endpointName: "TECH_MAP_UPDATE_NAME"
+    contextKey: "DYNAMIC_TECH_MAP_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "UPDATE_TECH_MAP_NAME"
+    description: "Змінити назву (name) TECH_MAP: тільки ADMIN має право, OWNER_1 та ANONYMOUS - ні"

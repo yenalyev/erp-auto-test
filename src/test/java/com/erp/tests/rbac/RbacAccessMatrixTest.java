@@ -76,6 +76,9 @@ public class RbacAccessMatrixTest extends BaseRbacTest {
             int expectedStatusCode,
             String accessType
     ) {
+        // Встановлюємо 'Description' в алюр-репорті
+        Allure.description(rule.getDescription());
+
         // === SKIP LOGIC ===
         if (!rule.canExecute()) {
             skippedTests++;

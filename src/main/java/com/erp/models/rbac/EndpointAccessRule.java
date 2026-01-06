@@ -2,6 +2,7 @@ package com.erp.models.rbac;
 
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.test_context.ContextKey;
 import io.restassured.http.Method;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -78,6 +79,10 @@ public class EndpointAccessRule {
      */
     private String pathParam;
 
+    private String description;
+
+    private ContextKey contextKey;
+
     /**
      * Pre-generated request body for POST/PUT requests
      * <p>
@@ -144,9 +149,14 @@ public class EndpointAccessRule {
     /**
      * Get endpoint description
      * <p>
-     * Delegates to ApiEndpointDefinition
+     * Logic:
+     * 1. If 'description' is set in YAML, return it.
+     * 2. Otherwise, delegate to ApiEndpointDefinition description.
      */
     public String getDescription() {
+        if (description != null && !description.trim().isEmpty()) {
+            return description;
+        }
         return getEndpointDefinition().getDescription();
     }
 
@@ -243,23 +253,19 @@ public class EndpointAccessRule {
     // ✅ Execution Validation
     // ============================================
 
+
     /**
-     * Check if this rule can be executed with current runtime context
-     * <p>
-     * Rule can execute if:
-     * - Endpoint doesn't require ID, OR
-     * - Endpoint requires ID AND pathParam is set
-     *
-     * @return true if rule can execute, false otherwise
+     * Перевірка чи можна виконати правило.
+     * Оновлена логіка: тепер ми перевіряємо наявність contextKey, якщо потрібен ID
      */
     public boolean canExecute() {
-        if (requiresId() && pathParam == null) {
-            log.warn("⚠️ Cannot execute rule for {} - requires ID but pathParam is null", endpointName);
+        if (requiresId() && contextKey == null) {
+            log.error("❌ Конфігураційна помилка: для '{}' потрібен contextKey в YAML", endpointName);
             return false;
         }
 
         if (requiresBody() && requestBody == null) {
-            log.warn("⚠️ Cannot execute rule for {} - requires body but requestBody is null", endpointName);
+            log.warn("⚠️ Немає body для {}", endpointName);
             return false;
         }
 

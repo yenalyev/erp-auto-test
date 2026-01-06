@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Alternative Option Response",
+  "type": "object",
+  "required": ["id", "name", "resource", "mainOption", "amount"],
+  "properties": {
+    "id": { "type": "integer", "minimum": 0 },
+    "name": { "type": "string" },
+    "resource": { "$ref": "../resource-response-schema.json" },
+    "mainOption": { "type": "boolean" },
+    "amount": { "type": "number", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

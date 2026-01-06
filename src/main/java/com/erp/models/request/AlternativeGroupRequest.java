@@ -13,9 +13,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TechnologicalMapRequest {
+public class AlternativeGroupRequest {
     private String name;
-    private List<ResourceUsageRequest> input;
-    private List<ResourceUsageRequest> output;
-    private List<AlternativeGroupRequest> alternatives;
+    private Boolean required;
+    private List<AlternativeOptionRequest> options;
 }

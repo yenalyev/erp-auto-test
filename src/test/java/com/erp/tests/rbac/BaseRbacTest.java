@@ -13,7 +13,6 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -68,55 +67,48 @@ public class BaseRbacTest extends BaseTest {
     }
 
     /**
-     * Виконує HTTP запит з певною роллю (використовуючи session cookies)
+     * Виконує HTTP запит з певною роллю, автоматично підставляючи ID з контексту
      */
-    @Step("Execute API request as role")
-    public Response executeRequestAsRole(EndpointAccessRule rule, UserRole role, Object requestBody, String pathParam) {
-        // Формуємо повний шлях з pathParam якщо є
-        String fullPath = rule.getEndpoint();
-        if (pathParam != null && !pathParam.isEmpty()) {
-            fullPath = fullPath + "/" + pathParam;
+    @Step("Execute API request as role: {role} for {rule.endpointName}")
+    public Response executeRequestAsRole(EndpointAccessRule rule, UserRole role, Object requestBody) {
+        // 1. Отримуємо метадані ендпоїнта
+        var definition = rule.getEndpointDefinition();
+
+        // 2. Визначаємо ID для шляху (якщо він потрібен)
+        String finalPath;
+        if (definition.hasPathVariables()) {
+            if (rule.getContextKey() == null) {
+                throw new IllegalStateException(String.format(
+                        "Ендпоїнт %s вимагає ID, але в YAML не вказано contextKey", rule.getEndpointName()));
+            }
+
+            Object id = testContext.get(rule.getContextKey());
+            if (id == null) {
+                log.warn("⚠️ Увага: Ключ {} порожній у контексті для ендпоїнта {}",
+                        rule.getContextKey(), rule.getEndpointName());
+            }
+
+            // Використовуємо ваш метод getPath, який замінює {id} на реальне значення
+            finalPath = definition.getPath(id);
+        } else {
+            finalPath = definition.getPathTemplate();
         }
-        log.info("📡 Executing: {} {} as {}", rule.getHttpMethod(), fullPath, role);
 
-        Map<String, String> session = getSessionForRole(role);
+        log.info("📡 [RBAC] {} {} | Role: {} | DataKey: {}",
+                definition.getHttpMethod(), finalPath, role, rule.getContextKey());
 
+        // 3. Формуємо та виконуємо запит
         RequestSpecification requestSpec = RestAssured.given()
-                .cookies(session)
+                .cookies(getSessionForRole(role))
                 .contentType(ContentType.JSON);
 
-        // Додаємо body якщо є
         if (requestBody != null) {
             requestSpec.body(requestBody);
         }
 
-        // Виконуємо request в залежності від HTTP методу
-        Response response;
-        switch (rule.getHttpMethod()) {
-            case Method.GET:
-                response = requestSpec.get(fullPath);
-                break;
-            case Method.POST:
-                response = requestSpec.post(fullPath);
-                break;
-            case Method.PUT:
-                response = requestSpec.put(fullPath);
-                break;
-            case Method.DELETE:
-                response = requestSpec.delete(fullPath);
-                break;
-            case Method.PATCH:
-                response = requestSpec.patch(fullPath);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported HTTP method: " + rule.getHttpMethod());
-        }
+        Response response = requestSpec.request(definition.getHttpMethod(), finalPath);
 
-        int statusCode = response.getStatusCode();
-        log.info("📥 Response status: {} (took {}ms)",
-                statusCode,
-                response.getTime());
-
+        log.info("📥 Response: {} ({} ms)", response.getStatusCode(), response.getTime());
         return response;
     }
 

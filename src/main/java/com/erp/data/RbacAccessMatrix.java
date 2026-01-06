@@ -3,6 +3,7 @@ package com.erp.data;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.models.rbac.EndpointAccessRule;
+import com.erp.test_context.ContextKey;
 import com.erp.test_context.RbacTestContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -40,7 +41,6 @@ public class RbacAccessMatrix {
 
         // Завантажуємо правила з YAML файла
         List<EndpointAccessRule> rules = loadRules();
-
         log.info("Generating RBAC test matrix from {} rules", rules.size());
 
         for (EndpointAccessRule rule : rules) {
@@ -49,7 +49,6 @@ public class RbacAccessMatrix {
                 ApiEndpointDefinition endpoint = rule.getEndpointDefinition();
 
                 // 1. Генеруємо request body на основі endpoint definition
-
                 if (endpoint.requiresBody()) {
                     Object requestBody = RequestBodyFactory.generate(endpoint, context);
 
@@ -57,29 +56,12 @@ public class RbacAccessMatrix {
                         log.warn("Request body is required for '{}' but Factory returned null. " +
                                 "This might cause test skips if body is mandatory.", endpoint);
                     }
-
                     rule.setRequestBody(requestBody);
-                }
-
-                // 2. Встановлюємо path param якщо потрібно
-                if (endpoint.hasPathVariables()) {
-                    String pathParam = context.getResourceIdForEndpoint(rule.getEndpointName());
-
-                    if (pathParam == null) {
-                        log.warn("Path parameter required for '{}' but Context returned null (Setup failed?). " +
-                                "Tests requiring ID will likely be SKIPPED.", endpoint);
-                    }
-
-                    rule.setPathParam(pathParam);
                 }
 
                 // Генеруємо тести для allowed roles
                 if (rule.getAllowedRoles() != null) {
                     for (UserRole allowedRole : rule.getAllowedRoles()) {
-//                        int expectedStatus = endpoint.getHttpMethod().name().equals("POST")
-//                                ? 201
-//                                : 200;
-
                         int expectedStatus = 200;
                         testCases.add(new Object[]{
                                 rule,
@@ -184,16 +166,21 @@ public class RbacAccessMatrix {
                 Set<UserRole> allowedRoles = convertRoles(yaml.allowedRoles, "allowedRoles", ruleNumber);
                 Set<UserRole> deniedRoles = convertRoles(yaml.deniedRoles, "deniedRoles", ruleNumber);
 
+                // Конвертуємо String з YAML в Enum ContextKey
+                ContextKey key = null;
+                if (yaml.getContextKey() != null && !yaml.getContextKey().isBlank()) {
+                    key = ContextKey.valueOf(yaml.getContextKey().trim());
+                }
+
                 // Будуємо правило
-                // Поле bodyType більше не є критичним, але ми можемо зберегти його в об'єкті,
-                // якщо воно колись знадобиться для специфічних кейсів.
                 EndpointAccessRule rule = EndpointAccessRule.builder()
                         .endpointName(yaml.endpointName)
-                        .allowedRoles(allowedRoles)
-                        .deniedRoles(deniedRoles)
+                        .description(yaml.description)
+                        .allowedRoles(convertRoles(yaml.allowedRoles, "allowed", 0))
+                        .deniedRoles(convertRoles(yaml.deniedRoles, "denied", 0))
+                        .contextKey(key)
                         .bodyType(yaml.bodyType)
                         .build();
-
                 rules.add(rule);
 
             } catch (Exception e) {
@@ -315,8 +302,10 @@ public class RbacAccessMatrix {
     @Data
     private static class RbacRuleYaml {
         private String endpointName;
+        private String description;
         private List<String> allowedRoles;
         private List<String> deniedRoles;
-        private String bodyType; // Залишено для сумісності з YAML, але ігнорується логікою
+        private String bodyType;
+        private String contextKey;
     }
 }

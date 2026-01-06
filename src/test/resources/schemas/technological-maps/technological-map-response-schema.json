@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Technological Map Response",
+  "type": "object",
+  "required": ["id", "name", "input", "output", "alternatives"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "resource-usage-response-schema.json"
+      }
+    },
+    "output": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "resource-usage-response-schema.json"
+      }
+    },
+    "alternatives": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "alternative-group-response-schema.json"
+      }
+    }
+  },
+  "additionalProperties": false
+}

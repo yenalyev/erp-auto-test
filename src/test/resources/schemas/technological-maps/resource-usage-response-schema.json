@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Resource Usage Response",
+  "type": "object",
+  "required": ["resource", "amount"],
+  "properties": {
+    "resource": { "$ref": "../resource-response-schema.json" },
+    "amount": { "type": "number", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

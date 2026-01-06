@@ -2,6 +2,8 @@ package com.erp.data;
 
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceRequestBodyFactory;
+import com.erp.data.factories.measurement_unit.MeasurementUnitResponseBodyFactory;
+import com.erp.data.factories.tech_map.TechnologicalMapRequestBodyFactory;
 import com.erp.data.strategies.RequestBodyStrategy;
 import com.erp.test_context.TestContext;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +20,10 @@ public class RequestBodyFactory {
     static {
         // Реєструємо стратегії для Ресурсів
         ResourceRequestBodyFactory.registerStrategies();
+        //
+        MeasurementUnitResponseBodyFactory.registerStrategies();
         // Реєструємо стратегії для Технологічних карт
-        //TechnologicalMapRequestBodyFactory.registerStrategies();
+        TechnologicalMapRequestBodyFactory.registerStrategies();
     }
 
     /**

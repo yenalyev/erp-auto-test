@@ -85,6 +85,27 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    MEASUREMENT_UNIT_POST_CREATE(
+            "/api/v1/measurement-unit",
+            Method.POST,
+            "schemas/measurement-unit-schema.json",
+            "Create measurement unit",
+            new TypeReference<MeasurementUnitResponse>() {},
+            new TypeReference<MeasurementUnitResponse>() {},
+            "CREATE_MEASUREMENT_UNIT"
+    ),
+
+    MEASUREMENT_UNIT_POST_CREATE_INVALID_NAME(
+            "/api/v1/measurement-unit",
+            Method.POST,
+            "schemas/measurement-unit-schema.json",
+            "Create measurement unit",
+            new TypeReference<MeasurementUnitResponse>() {},
+            new TypeReference<MeasurementUnitResponse>() {},
+            "CREATE_MEASUREMENT_UNIT"
+    ),
+
+
     // ========================================
     // TECHNOLOGICAL MAP ENDPOINTS
     // ========================================
@@ -106,17 +127,17 @@ public enum ApiEndpointDefinition {
             "Create technological map",
             new TypeReference<TechnologicalMapRequest>() {},
             new TypeReference<TechnologicalMapResponse>() {},
-            "CREATE"
+            "CREATE_TECH_MAP"
     ),
 
-    TECH_MAP_UPDATE(
+    TECH_MAP_UPDATE_NAME(
             "/api/v1/technological-maps/{id}",
             Method.PUT,
             "schemas/technological-maps/technological-map-response-schema.json",
-            "Update technological map",
+            "Update name in technological map",
             new TypeReference<TechnologicalMapRequest>() {},
             new TypeReference<TechnologicalMapResponse>() {},
-            "UPDATE"
+            "UPDATE_TECH_MAP_NAME"
     );
 
     // ========================================

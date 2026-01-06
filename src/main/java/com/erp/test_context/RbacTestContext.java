@@ -3,6 +3,7 @@ package com.erp.test_context;
 import com.erp.enums.UserRole;
 import com.erp.models.response.MeasurementUnitResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.TechnologicalMapResponse;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,12 +34,19 @@ public class RbacTestContext implements TestContext {
 
     private final Map<ContextKey, Object> attributes = new ConcurrentHashMap<>();
 
+    // shared resources - for read-only tests
     private Long sharedResourceId;
     private ResourceResponse sharedResource;
     private Long sharedUnitId;
     private List<MeasurementUnitResponse> sharedAvailableMeasurementUnits;
     private Long sharedTechMapId;
     private Long sharedOrderId;
+    private List<ResourceResponse> sharedAvailableResources;
+
+    //dynamic resources for update/delete operation
+    private TechnologicalMapResponse dynamicTechnologicalMap;
+    private Long dynamicTechnologicalMapId;
+    private String dynamicTechnologicalMapNewName;
 
 
     // ============================================
@@ -152,6 +160,10 @@ public class RbacTestContext implements TestContext {
             case SHARED_ORDER_ID -> sharedOrderId;
             case SHARED_MEASUREMENT_UNIT_LIST -> sharedAvailableMeasurementUnits;
             case SHARED_RESOURCE -> sharedResource;
+            case SHARED_AVAILABLE_RESOURCES -> sharedAvailableResources;
+            case DYNAMIC_TECH_MAP -> dynamicTechnologicalMap;
+            case DYNAMIC_TECH_MAP_ID -> dynamicTechnologicalMapId;
+            case DYNAMIC_TECH_MAP_NEW_NAME -> dynamicTechnologicalMapNewName;
             default -> attributes.get(key); // Шукаємо в мапі за Enum ключем
         };
         return (T) value;
@@ -171,6 +183,11 @@ public class RbacTestContext implements TestContext {
             case SHARED_ORDER_ID -> this.sharedOrderId = (Long) value;
             case SHARED_MEASUREMENT_UNIT_LIST -> this.sharedAvailableMeasurementUnits = (List<MeasurementUnitResponse>) value;
             case SHARED_RESOURCE -> this.sharedResource = (ResourceResponse) value;
+            case SHARED_AVAILABLE_RESOURCES -> this.sharedAvailableResources = (List<ResourceResponse>) value;
+            case DYNAMIC_TECH_MAP -> this.dynamicTechnologicalMap = (TechnologicalMapResponse) value;
+            case DYNAMIC_TECH_MAP_ID -> this.dynamicTechnologicalMapId = (Long) value;
+            case DYNAMIC_TECH_MAP_NEW_NAME -> this.dynamicTechnologicalMapNewName = (String)value;
+
             default -> attributes.put(key, value);
         }
     }
@@ -187,6 +204,9 @@ public class RbacTestContext implements TestContext {
         sharedAvailableMeasurementUnits = null;
         sharedTechMapId = null;
         sharedOrderId = null;
+        dynamicTechnologicalMap = null;
+        dynamicTechnologicalMapId = null;
+        dynamicTechnologicalMapNewName = null;
 
         log.debug("🗑️ RBAC Context fully cleared");
     }
@@ -210,7 +230,9 @@ public class RbacTestContext implements TestContext {
         Long id = null;
         if (endpointName.startsWith("RESOURCE_") && !isCreateOrGetAll(endpointName)) {
             id = sharedResourceId;
-        } else if (endpointName.startsWith("TECH_MAP_") && !isCreateOrGetAll(endpointName)) {
+        } else if (endpointName.startsWith("TECH_MAP_UPDATE_") && !isCreateOrGetAll(endpointName)) {
+            id = dynamicTechnologicalMapId;}
+        else if (endpointName.startsWith("TECH_MAP_") && !isCreateOrGetAll(endpointName)) {
             id = sharedTechMapId;
         } else if (endpointName.startsWith("MEASUREMENT_UNIT_") && !endpointName.contains("GET_ALL")) {
             id = sharedUnitId;

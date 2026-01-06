@@ -6,16 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TechnologicalMapRequest {
-    private String name;
-    private List<ResourceUsageRequest> input;
-    private List<ResourceUsageRequest> output;
-    private List<AlternativeGroupRequest> alternatives;
+public class ResourceUsageRequest {
+    private Long resourceId;
+    private Double amount;
 }
