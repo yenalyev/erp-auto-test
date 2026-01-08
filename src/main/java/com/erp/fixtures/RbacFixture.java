@@ -2,27 +2,35 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.FakerProvider;
 import com.erp.data.RequestBodyFactory;
+import com.erp.data.factories.measurement_unit.MeasurementUnitRequestDataFactory;
+import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.UserRole;
+import com.erp.models.request.MeasurementUnitRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.MeasurementUnitResponse;
+import com.erp.models.response.ProductionResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
-public class ErpFixture extends BaseFixture {
+import static com.erp.test_context.ContextKey.OWNER_1_STORAGE_ID;
 
-    public ErpFixture(TestContext testContext, ApiExecutor apiExecutor) {
+@Slf4j
+public class RbacFixture extends BaseFixture {
+
+    public RbacFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
     }
 
@@ -36,24 +44,39 @@ public class ErpFixture extends BaseFixture {
         setupSharedResource();
         setupSharedResourceList(4);
         prepareTechMapForUpdate();
+        setupDynamicProductionList(3, UserRole.OWNER_1);
     }
 
-    @Step("Fetch existing Measurement Unit")
+    @Step("Ensure realistic Measurement Units exist (min 5)")
     public void fetchSharedUnit() {
-        ApiEndpointDefinition endpoint = ApiEndpointDefinition.MEASUREMENT_UNIT_GET_ALL;
-        Response response = apiExecutor.execute(endpoint, UserRole.ADMIN);
+        ApiEndpointDefinition getEndpoint = ApiEndpointDefinition.MEASUREMENT_UNIT_GET_ALL;
 
-        validateSuccess(response, "Fetch Units");
+        // 1. Отримуємо те, що вже є
+        Response response = apiExecutor.execute(getEndpoint, UserRole.ADMIN);
+        List<MeasurementUnitResponse> existing = response.jsonPath().getList("", MeasurementUnitResponse.class);
+        if (existing == null) existing = new ArrayList<>();
 
-        List<MeasurementUnitResponse> units = response.jsonPath()
-                .getList("", (Class<MeasurementUnitResponse>) endpoint.getResponseElementType());
+        // 2. Запитуємо у фабрики список того, чого не вистачає до 5 одиниць
+        List<MeasurementUnitRequest> toCreate = MeasurementUnitRequestDataFactory.getMissingUnits(existing, 5);
 
-        if (units == null || units.isEmpty()) {
-            throw new IllegalStateException("Database must have at least one Measurement Unit");
+        if (!toCreate.isEmpty()) {
+            log.info("📊 Database needs {} more units. Starting creation...", toCreate.size());
+
+            for (MeasurementUnitRequest request : toCreate) {
+                Response createRes = apiExecutor.execute(ApiEndpointDefinition.MEASUREMENT_UNIT_POST_CREATE, UserRole.ADMIN, request);
+                validateSuccess(createRes, "Create MU: " + request.getName());
+            }
+
+            // 3. Оновлюємо фінальний список після створення
+            response = apiExecutor.execute(getEndpoint, UserRole.ADMIN);
+            existing = response.jsonPath().getList("", MeasurementUnitResponse.class);
         }
 
-        testContext.set(ContextKey.SHARED_UNIT_ID, units.get(0).getId());
-        testContext.set(ContextKey.SHARED_MEASUREMENT_UNIT_LIST, units);
+        // 4. Зберігаємо в контекст
+        testContext.set(ContextKey.SHARED_UNIT_ID, existing.get(0).getId());
+        testContext.set(ContextKey.SHARED_MEASUREMENT_UNIT_LIST, existing);
+
+        log.info("✅ Measurement units ready. Total: {}", existing.size());
     }
 
     @Step("Create Shared Resource")
@@ -101,6 +124,51 @@ public class ErpFixture extends BaseFixture {
         }
 
         testContext.set(ContextKey.SHARED_AVAILABLE_RESOURCES, allResources);
+    }
+
+    @Step("Ensure there are at least {length} productions resources")
+    public void setupDynamicProductionList(@NonNegative int length,
+                                           @NonNull UserRole userRole) {
+        ApiEndpointDefinition getEndpoint =
+                ApiEndpointDefinition.PRODUCTION_GET_ALL_BY_STORE_ID;
+        Response response = apiExecutor.execute(getEndpoint, userRole, userRole.getStoreId());
+
+        // Гарантуємо, що список можна змінювати (ArrayList)
+        List<ProductionResponse> allProductions = new ArrayList<>(
+                response.jsonPath().getList("", ProductionResponse.class)
+        );
+
+        if (allProductions.size() < length) {
+            int currentSize = allProductions.size();
+            int needed = length - currentSize;
+            log.info("Current allProductionList: {}. Creating {} more to reach {}", currentSize, needed, length);
+
+            //ensure that we have at least one techMap
+            TechnologicalMapResponse techMap = testContext.get(ContextKey.DYNAMIC_TECH_MAP);
+            if (null == techMap){
+                prepareTechMapForUpdate();
+            }
+
+            TechnologicalMapResponse techMapGuaranteed = testContext.get(ContextKey.DYNAMIC_TECH_MAP);
+
+            for (int i = 0; i < needed; i++) {
+                //Create productions
+                Object body = ProductionDataFactory
+                        .simpleProduction(Long.valueOf(userRole.getStoreId()),
+                                techMapGuaranteed, FakerProvider.price(1D,100D));
+
+                ApiEndpointDefinition createEndpoint =
+                        ApiEndpointDefinition.PRODUCTION_POST_CREATE_BY_OWNER_1_STORE_ID;
+
+                Response createResponse = apiExecutor.execute(createEndpoint, userRole, body, userRole.getStoreId());
+                validateSuccess(createResponse, "Create Production during setup");
+
+                ProductionResponse createdRProduction = createResponse.as(ProductionResponse.class);
+                allProductions.add(createdRProduction);
+            }
+        }
+
+        testContext.set(ContextKey.DYNAMIC_PRODUCTIONS, allProductions);
     }
 
     @Step("Prepare dynamic Tech Map for update test")

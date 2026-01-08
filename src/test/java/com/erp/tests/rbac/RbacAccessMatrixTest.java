@@ -1,10 +1,9 @@
 package com.erp.tests.rbac;
 
 import com.erp.annotations.TestCaseId;
-import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.RbacAccessMatrix;
 import com.erp.enums.UserRole;
-import com.erp.fixtures.ErpFixture;
+import com.erp.fixtures.RbacFixture;
 import com.erp.models.rbac.EndpointAccessRule;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
@@ -14,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.SkipException;
 import org.testng.annotations.*;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 import static com.erp.utils.helpers.AllureHelper.attachSchemaValidationInfo;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +34,7 @@ public class RbacAccessMatrixTest extends BaseRbacTest {
         log.info("🚀 Preparing ERP environment for RBAC tests...");
 
         // 1. Використовуємо фікстуру для підготовки даних (всередині неї вже є кроки Allure)
-        erpFixture.prepareFullRbacContext();
+        rbacFixture.prepareFullRbacContext();
 
         // 2. Логуємо статистику матриці
         String stats = RbacAccessMatrix.getMatrixStats();
@@ -50,15 +47,15 @@ public class RbacAccessMatrixTest extends BaseRbacTest {
     @DataProvider(name = "rbacAccessMatrix")
     public Object[][] accessMatrixData() {
         // Гарантуємо, що erpFixture ініціалізований, навіть якщо DataProvider випередив @BeforeClass
-        if (erpFixture == null) {
+        if (rbacFixture == null) {
             log.info("erpFixture was null in DataProvider, initializing manually...");
-            this.erpFixture = new ErpFixture(testContext, apiExecutor);
+            this.rbacFixture = new RbacFixture(testContext, apiExecutor);
         }
 
         // Якщо контекст порожній - наповнюємо його
         if (testContext.getSharedUnitId() == null) {
             log.info("Context is empty in DataProvider, preparing environment...");
-            erpFixture.prepareFullRbacContext();
+            rbacFixture.prepareFullRbacContext();
         }
 
         Object[][] data = RbacAccessMatrix.generateTestData(testContext);
@@ -90,11 +87,10 @@ public class RbacAccessMatrixTest extends BaseRbacTest {
         attachRequestDetails(rule, role);
 
         // Використовуємо ApiExecutor, який успадкований від BaseTest
-        Response response = apiExecutor.execute(
-                rule.getEndpointDefinition(),
+        Response response = executeRequestAsRole(
+                rule,
                 role,
-                rule.getRequestBody(),
-                rule.getPathParam()
+                rule.getRequestBody()
         );
 
         attachResponseDetails(response);

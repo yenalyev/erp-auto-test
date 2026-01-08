@@ -1,11 +1,8 @@
 package com.erp.api.endpoints;
 
 import com.erp.api.types.TypeReference;
-import com.erp.models.request.ResourceRequest;
-import com.erp.models.request.TechnologicalMapRequest;
-import com.erp.models.response.MeasurementUnitResponse;
-import com.erp.models.response.ResourceResponse;
-import com.erp.models.response.TechnologicalMapResponse;
+import com.erp.models.request.*;
+import com.erp.models.response.*;
 import io.restassured.http.Method;
 import lombok.Getter;
 
@@ -113,7 +110,7 @@ public enum ApiEndpointDefinition {
     TECH_MAP_GET_ALL(
             "/api/v1/technological-maps",
             Method.GET,
-            "schemas/technological-maps/technological-map-list-schema.json",
+            "schemas/technological-maps/technological-map-response-list-schema.json",
             "Get all technological maps",
             null,
             new TypeReference<List<TechnologicalMapResponse>>() {},  // ✅ Type-safe List
@@ -138,7 +135,93 @@ public enum ApiEndpointDefinition {
             new TypeReference<TechnologicalMapRequest>() {},
             new TypeReference<TechnologicalMapResponse>() {},
             "UPDATE_TECH_MAP_NAME"
-    );
+    ),
+
+    // ========================================
+    // TECHNOLOGICAL MAP ENDPOINTS
+    // ========================================
+
+    STORAGE_GET_ALL(
+            "/api/v1/storages",
+            Method.GET,
+            "schemas/storages/storage-response-list-schema.json",
+            "Get all storages",
+            null,
+            new TypeReference<List<StorageResponse>>() {},
+            null
+    ),
+
+    STORAGE_POST_CREATE(
+            "/api/v1/storages",
+            Method.POST,
+            "schemas/storages/storage-response-schema.json",
+            "Create new storage",
+            new TypeReference<StorageRequest>() {},
+            new TypeReference<StorageResponse>() {},
+            "CREATE_STORAGE"
+    ),
+
+    // ========================================
+    // STATISTIC ENDPOINTS
+    // ========================================
+
+    STATISTIC_GET_PLAN(
+            "/api/v1/statistics/plan?storageId={id}",
+            Method.GET,
+            "schemas/statistics/plan-statistics-response-schema.json",
+            "Get statistic plan",
+            null,
+            new TypeReference<PlanStatisticsResponse>() {},
+            null
+    ),
+
+    // ========================================
+    // PRODUCTION ENDPOINTS
+    // ========================================
+
+    PRODUCTION_GET_ALL_BY_STORE_ID(
+            "/api/v1/productions?storageId={id}",
+            Method.GET,
+            "schemas/productions/production-response-list-schema.json",
+            "Get all production by store",
+            null,
+            new TypeReference<List<ProductionResponse>>() {},
+            null
+    ),
+
+    PRODUCTION_POST_CREATE_BY_OWNER_1_STORE_ID(
+            "/api/v1/productions",
+            Method.POST,
+            "schemas/productions/production-response-schema.json",
+            "Create production by store",
+            new TypeReference<ProductionRequest>() {},
+            new TypeReference<ProductionResponse>() {},
+            "CREATE_PRODUCTIONS"
+    ),
+
+    // ========================================
+    // RELOCATION ENDPOINTS
+    // ========================================
+    RELOCATION_GET_ALL_BY_STORE_ID(
+            "/api/v1/relocations?storageId={id}",
+            Method.GET,
+            "schemas/relocations/relocation-response-list-schema.json",
+            "Get all relocation by store",
+            null,
+            new TypeReference<List<RelocationResponse>>() {},
+            null
+    ),
+
+    RELOCATION_POST_CREATE_BY_STORE_ID(
+            "/api/v1/relocations",
+            Method.POST,
+            "schemas/relocations/relocation-response-schema.json",
+                    "Create relocation by store",
+                    new TypeReference<RelocationRequest>() {},
+                    new TypeReference<ResourceResponse>() {},
+            "CREATE_RELOCATIONS"
+            );
+
 
     // ========================================
     // Fields

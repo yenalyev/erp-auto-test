@@ -7,22 +7,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TechnologicalMapResponse {
-    private Long id;
-    private String name;
-    private Long version;
-    private String groupId;
-    private Boolean isActive;
+public class ProductionResponse {
+    private String id;
+    private String description;
+    private Long technologicalMapId;
+    private Double amount;
     private Instant createdAt;
-
-    private List<ResourceUsageResponse> input;
-    private List<ResourceUsageResponse> output;
-    private List<AlternativeGroupResponse> alternatives;
+    private String storageId;
 }

@@ -2,7 +2,17 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Technological Map Response",
   "type": "object",
-  "required": ["id", "name", "input", "output", "alternatives"],
+  "required": [
+    "id",
+    "name",
+    "version",
+    "groupId",
+    "isActive",
+    "createdAt",
+    "input",
+    "output",
+    "alternatives"
+  ],
   "properties": {
     "id": {
       "type": "integer",
@@ -11,6 +21,23 @@
     "name": {
       "type": "string",
       "minLength": 1
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "groupId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Унікальний ідентифікатор групи техкарт"
+    },
+    "isActive": {
+      "type": "boolean"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 формат дати та часу (Instant)"
     },
     "input": {
       "type": "array",

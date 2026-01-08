@@ -8,7 +8,7 @@ public class MeasurementUnitResponseBodyFactory {
     public static void registerStrategies() {
         // POST /api/v1/measurement-unit
         register(ApiEndpointDefinition.MEASUREMENT_UNIT_POST_CREATE, context -> {
-                    return MeasurementUnitResponseDataFactory.defaultMeasurementUnit().build();
+                    return MeasurementUnitRequestDataFactory.defaultMeasurementUnit().build();
                 }
         );
 
@@ -20,7 +20,7 @@ public class MeasurementUnitResponseBodyFactory {
 
         // POST /api/v1/measurement-unit
         register(ApiEndpointDefinition.MEASUREMENT_UNIT_POST_CREATE_INVALID_NAME, context -> {
-                    return MeasurementUnitResponseDataFactory.create("Кубічні метри", "").build();
+                    return MeasurementUnitRequestDataFactory.create("Кубічні метри", "").build();
                 }
         );
     }

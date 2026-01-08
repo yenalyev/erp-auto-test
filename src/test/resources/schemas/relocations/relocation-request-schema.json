@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RelocationRequest",
+  "description": "Schema for creating a relocation request between storages",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "Optional description of the relocation",
+      "minLength": 1
+    },
+    "items": {
+      "type": "array",
+      "description": "List of resources to relocate",
+      "minItems": 1,
+      "items": {
+        "$ref": "../technological-maps/resource-usage-request-schema.json"
+      }
+    },
+    "fromStorageId": {
+      "type": "integer",
+      "description": "ID of the source storage"
+    },
+    "toStorageId": {
+      "type": "integer",
+      "description": "ID of the destination storage"
+    }
+  },
+  "required": [
+    "items",
+    "fromStorageId",
+    "toStorageId"
+  ],
+  "additionalProperties": false
+}

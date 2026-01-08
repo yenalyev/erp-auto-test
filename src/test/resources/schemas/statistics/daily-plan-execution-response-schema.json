@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DailyPlanExecutionResponse",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "resource-plan-execution-response-schema.json" }
+    },
+    "materials": {
+      "type": "array",
+      "items": { "$ref": "resource-sufficiency-response-schema.json" }
+    },
+    "alternatives": {
+      "type": "array",
+      "items": { "$ref": "alternative-resource-sufficiency-response-schema.json" }
+    }
+  },
+  "required": ["date", "items", "materials", "alternatives"],
+  "additionalProperties": false
+}

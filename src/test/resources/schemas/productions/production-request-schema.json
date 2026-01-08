@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProductionRequest",
+  "description": "Schema for creating a new production record",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "Optional description of the production",
+      "minLength": 1
+    },
+    "technologicalMapId": {
+      "type": "integer",
+      "description": "The ID of the technological map to use"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount to be produced",
+      "minimum": 0.001
+    },
+    "storageId": {
+      "type": "integer",
+      "description": "The target storage ID"
+    },
+    "selectedOptionIds": {
+      "type": "array",
+      "description": "List of selected option IDs for the technological map",
+      "items": {
+        "type": "integer"
+      },
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "technologicalMapId",
+    "amount",
+    "storageId"
+  ],
+  "additionalProperties": false
+}

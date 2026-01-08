@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProductionResponse",
+  "description": "Schema for production record response",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier of the production record"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the production process"
+    },
+    "technologicalMapId": {
+      "type": "integer",
+      "description": "ID of the associated technological map"
+    },
+    "amount": {
+      "type": "number",
+      "description": "The quantity produced"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the record was created"
+    },
+    "storageId": {
+      "type": "string",
+      "description": "ID of the storage where products are placed"
+    }
+  },
+  "required": [
+    "id",
+    "technologicalMapId",
+    "amount",
+    "createdAt",
+    "storageId"
+  ],
+  "additionalProperties": false
+}

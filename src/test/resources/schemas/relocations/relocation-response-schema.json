@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RelocationResponse",
+  "description": "Schema for resource relocation between storages",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier of the relocation record"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of the relocation"
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "description": "List of resources being relocated",
+      "items": {
+        "$ref": "../technological-maps/resource-usage-response-schema.json"
+      }
+    },
+    "fromStorageId": {
+      "type": "integer",
+      "description": "Source storage identifier"
+    },
+    "toStorageId": {
+      "type": "integer",
+      "description": "Destination storage identifier"
+    }
+  },
+  "required": [
+    "id",
+    "items",
+    "fromStorageId",
+    "toStorageId"
+  ],
+  "additionalProperties": false
+}

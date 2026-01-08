@@ -23,7 +23,11 @@ public enum ContextKey {
     SHARED_AVAILABLE_RESOURCES("sharedAvailableResources", List.class),
     DYNAMIC_TECH_MAP ("dynamicTechnologicalMap", TechnologicalMapResponse.class),
     DYNAMIC_TECH_MAP_NEW_NAME ("dynamicTechnologicalMapNewName", String.class),
-    DYNAMIC_TECH_MAP_ID("dynamicTechnologicalMapId", Long.class);
+    DYNAMIC_TECH_MAP_ID("dynamicTechnologicalMapId", Long.class),
+    OWNER_1_STORAGE_ID("owner_1_storageId", Long.class),
+    OWNER_2_STORAGE_ID("owner_1_storageId", Long.class),
+    OWNER_INCORRECT_STORAGE_ID("owner_incorrect_storageId", Long.class),
+    DYNAMIC_PRODUCTIONS("dynamic_productions", List.class );
     private final String name;
     private final Class<?> type;
 }

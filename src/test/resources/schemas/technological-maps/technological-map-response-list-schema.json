@@ -4,6 +4,6 @@
   "type": "array",
   "minItems": 1,
   "items": {
-    "$ref": "technological-map-request-schema.json"
+    "$ref": "technological-map-response-schema.json"
   }
 }

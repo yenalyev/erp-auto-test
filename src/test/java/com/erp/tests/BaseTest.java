@@ -259,26 +259,6 @@ public abstract class BaseTest {
             }
             return;
         }
-
-        // Видаляємо створені items
-        for (String itemId : createdItemIds) {
-            try {
-                cleanupService.deleteItem(itemId, authToken);
-                log.info("🗑️  Deleted item: {}", itemId);
-            } catch (Exception e) {
-                log.warn("⚠️  Failed to delete item {}: {}", itemId, e.getMessage());
-            }
-        }
-
-        // Видаляємо створені orders
-        for (String orderId : createdOrderIds) {
-            try {
-                cleanupService.deleteOrder(orderId, authToken);
-                log.info("🗑️  Deleted order: {}", orderId);
-            } catch (Exception e) {
-                log.warn("⚠️  Failed to delete order {}: {}", orderId, e.getMessage());
-            }
-        }
     }
 
     /**

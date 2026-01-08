@@ -70,3 +70,117 @@ rules:
     deniedRoles: [ OWNER_1, ANONYMOUS ]
     bodyType: "UPDATE_TECH_MAP_NAME"
     description: "Змінити назву (name) TECH_MAP: тільки ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  # ========================================
+  # TECHNOLOGICAL MAP ENDPOINTS
+  # ========================================
+
+  - endpointName: "STORAGE_GET_ALL"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Отримати всі Бізнес Юніти (STORAGES): ADMIN та OWNER_1 мають право, ANONYMOUS - ні"
+
+  - endpointName: "STORAGE_POST_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "CREATE_STORAGE"
+    description: "Створити новий Бізнес Юніт (STORAGE): тільки ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  # ========================================
+  # STATISTIC ENDPOINTS
+  # ========================================
+
+  - endpointName: "STATISTIC_GET_PLAN"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Отримати статистику плану по Бізнес Юніту який належить OWNER_1 (STORAGES): 
+    ADMIN та OWNER_1 мають право, ANONYMOUS - ні"
+
+  - endpointName: "STATISTIC_GET_PLAN"
+    contextKey: "OWNER_2_STORAGE_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати статистику плану по Бізнес Юніту який належить OWNER_2 (STORAGES): 
+    ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  - endpointName: "STATISTIC_GET_PLAN"
+    contextKey: "OWNER_INCORRECT_STORAGE_ID"
+    allowedRoles: [ ]
+    deniedRoles: [ ADMIN, OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати статистику плану по Бізнес Юніту з невалідним ід (немає такого бізнес юніту)
+     (STORAGES): ніхто не отримує доступ ні ADMIN ні OWNER_1 ні ANONYMOUS"
+
+  # ========================================
+  # PRODUCTION ENDPOINTS
+  # ========================================
+
+  - endpointName: "PRODUCTION_GET_ALL_BY_STORE_ID"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Отримати весь журнал виробництва Бізнес Юніту який належить OWNER_1 (STORAGES): 
+    ADMIN та OWNER_1 мають право, ANONYMOUS - ні"
+
+  - endpointName: "PRODUCTION_GET_ALL_BY_STORE_ID"
+    contextKey: "OWNER_2_STORAGE_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати статистику плану по Бізнес Юніту який належить OWNER_2 (STORAGES): 
+    ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  - endpointName: "PRODUCTION_GET_ALL_BY_STORE_ID"
+    contextKey: "OWNER_INCORRECT_STORAGE_ID"
+    allowedRoles: [  ]
+    deniedRoles: [ ADMIN, OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати статистику плану по Бізнес Юніту з невалідним ід (немає такого бізнес юніту)
+     (STORAGES): ніхто не отримує доступ ні ADMIN ні OWNER_1 ні ANONYMOUS"
+
+  - endpointName: "PRODUCTION_POST_CREATE_BY_OWNER_1_STORE_ID"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
+    bodyType: "CREATE_SIMPLE_PRODUCTION"
+    description: "Додати запис в журнал виробництва по Бізнес Юніту який належить OWNER_1 (STORAGES): 
+    має право тільки OWNER_1. ADMIN, OWNER_2, ANONYMOUS - не мають права"
+
+  # ========================================
+  # RELOCATION ENDPOINTS
+  # ========================================
+
+  - endpointName: "RELOCATION_GET_ALL_BY_STORE_ID"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Отримати переміщення по Бізнес Юніту який належить OWNER_1 (STORAGES): 
+    ADMIN та OWNER_1 мають право, ANONYMOUS - ні"
+
+  - endpointName: "RELOCATION_GET_ALL_BY_STORE_ID"
+    contextKey: "OWNER_2_STORAGE_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати переміщення по Бізнес Юніту який належить OWNER_2 (STORAGES): 
+    ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  - endpointName: "RELOCATION_GET_ALL_BY_STORE_ID"
+    contextKey: "OWNER_INCORRECT_STORAGE_ID"
+    allowedRoles: [  ]
+    deniedRoles: [ ADMIN, OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати переміщення по Бізнес Юніту з невалідним ід (немає такого бізнес юніту)
+     (STORAGES): ніхто не отримує доступ ні ADMIN ні OWNER_1 ні ANONYMOUS"
+
+  - endpointName: "RELOCATION_POST_CREATE_BY_STORE_ID"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Зробити переміщення з Бізнес Юніта 1 на Бізнес Юніт 2
+     (STORAGES): OWNER_1 має можлиівість створити. ADMIN, OWNER_2, ANONYMOUS - не можуть створити таке переміщення"

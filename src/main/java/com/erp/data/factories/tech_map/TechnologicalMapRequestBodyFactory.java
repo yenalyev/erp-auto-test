@@ -1,7 +1,6 @@
 package com.erp.data.factories.tech_map;
 
 import com.erp.api.endpoints.ApiEndpointDefinition;
-import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
@@ -27,7 +26,6 @@ public class TechnologicalMapRequestBodyFactory {
                 }
 
         );
-
 
         // PUT /api/v1/technological-maps/{id}
         // Використовується для тестування оновлення імені

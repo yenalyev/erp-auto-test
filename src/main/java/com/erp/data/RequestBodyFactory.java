@@ -3,6 +3,9 @@ package com.erp.data;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceRequestBodyFactory;
 import com.erp.data.factories.measurement_unit.MeasurementUnitResponseBodyFactory;
+import com.erp.data.factories.production.ProductionRequestBodyFactory;
+import com.erp.data.factories.relocation.RelocationRequestBodyFactory;
+import com.erp.data.factories.storage.StorageRequestBodyFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapRequestBodyFactory;
 import com.erp.data.strategies.RequestBodyStrategy;
 import com.erp.test_context.TestContext;
@@ -18,12 +21,13 @@ public class RequestBodyFactory {
             new EnumMap<>(ApiEndpointDefinition.class);
 
     static {
-        // Реєструємо стратегії для Ресурсів
+        // Реєструємо стратегії для Resource, TechMaps, Storages, .....
         ResourceRequestBodyFactory.registerStrategies();
-        //
         MeasurementUnitResponseBodyFactory.registerStrategies();
-        // Реєструємо стратегії для Технологічних карт
         TechnologicalMapRequestBodyFactory.registerStrategies();
+        StorageRequestBodyFactory.registerStrategies();
+        ProductionRequestBodyFactory.registerStrategies();
+        RelocationRequestBodyFactory.registerStrategies();
     }
 
     /**

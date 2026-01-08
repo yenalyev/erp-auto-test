@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResourcePlanExecutionResponse",
+  "type": "object",
+  "properties": {
+    "resource": { "$ref": "../resource-response-schema.json" },
+    "plan": { "type": "number" },
+    "done": { "type": "number" }
+  },
+  "required": ["resource", "plan", "done"],
+  "additionalProperties": false
+}

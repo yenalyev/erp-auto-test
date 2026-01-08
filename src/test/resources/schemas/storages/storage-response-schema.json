@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StorageResponse",
+  "description": "Schema for StorageResponse class",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Unique identifier of the storage"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the storage"
+    },
+    "items": {
+      "type": "array",
+      "description": "List of storage items",
+      "items": {
+        "$ref": "storage-item-response-schema.json"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "name"
+  ],
+  "additionalProperties": false
+}

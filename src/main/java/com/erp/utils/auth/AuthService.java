@@ -112,6 +112,7 @@ public class AuthService {
         Response step1 = RestAssured.given()
                 .urlEncodingEnabled(false)
                 .redirects().follow(false)
+                //.get(baseUrl+"?redirectUri=http://backend:8080/api/v1/resources");
                 .get(baseUrl + "/oauth2/authorization/keycloak");
 
         String nextLocation = step1.getHeader("Location");

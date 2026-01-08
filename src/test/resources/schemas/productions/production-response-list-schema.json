@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProductionResponseList",
+  "description": "Schema for a list of production records",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "$ref": "production-response-schema.json"
+  }
+}

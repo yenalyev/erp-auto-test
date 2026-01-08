@@ -22,15 +22,4 @@ public class CleanupService {
             log.warn("Failed to delete item {}: {}", itemId, response.statusLine());
         }
     }
-
-    public void deleteOrder(String orderId, String token) {
-        Response response = RestAssured.given()
-                .baseUri(baseUrl)
-                .header("Authorization", "Bearer " + token)
-                .delete("/api/orders/" + orderId);
-
-        if (response.statusCode() != 204 && response.statusCode() != 200) {
-            log.warn("Failed to delete order {}: {}", orderId, response.statusLine());
-        }
-    }
 }

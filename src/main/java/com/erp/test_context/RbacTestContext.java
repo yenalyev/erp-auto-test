@@ -2,6 +2,7 @@ package com.erp.test_context;
 
 import com.erp.enums.UserRole;
 import com.erp.models.response.MeasurementUnitResponse;
+import com.erp.models.response.ProductionResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import lombok.Data;
@@ -47,6 +48,7 @@ public class RbacTestContext implements TestContext {
     private TechnologicalMapResponse dynamicTechnologicalMap;
     private Long dynamicTechnologicalMapId;
     private String dynamicTechnologicalMapNewName;
+    private List<ProductionResponse> dynamicProductionList;
 
 
     // ============================================
@@ -164,6 +166,10 @@ public class RbacTestContext implements TestContext {
             case DYNAMIC_TECH_MAP -> dynamicTechnologicalMap;
             case DYNAMIC_TECH_MAP_ID -> dynamicTechnologicalMapId;
             case DYNAMIC_TECH_MAP_NEW_NAME -> dynamicTechnologicalMapNewName;
+            case OWNER_1_STORAGE_ID -> 1L;
+            case OWNER_2_STORAGE_ID -> 2L;
+            case OWNER_INCORRECT_STORAGE_ID -> 9999L;
+            case DYNAMIC_PRODUCTIONS ->  dynamicProductionList;
             default -> attributes.get(key); // Шукаємо в мапі за Enum ключем
         };
         return (T) value;
@@ -187,6 +193,7 @@ public class RbacTestContext implements TestContext {
             case DYNAMIC_TECH_MAP -> this.dynamicTechnologicalMap = (TechnologicalMapResponse) value;
             case DYNAMIC_TECH_MAP_ID -> this.dynamicTechnologicalMapId = (Long) value;
             case DYNAMIC_TECH_MAP_NEW_NAME -> this.dynamicTechnologicalMapNewName = (String)value;
+            case DYNAMIC_PRODUCTIONS -> this.dynamicProductionList = (List<ProductionResponse>) value;
 
             default -> attributes.put(key, value);
         }

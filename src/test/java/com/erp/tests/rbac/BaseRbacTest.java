@@ -1,14 +1,14 @@
 package com.erp.tests.rbac;
 
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
-import com.erp.fixtures.ErpFixture;
+import com.erp.fixtures.RbacFixture;
 import com.erp.models.rbac.EndpointAccessRule;
 import com.erp.test_context.RbacTestContext;
 import com.erp.tests.BaseTest;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.http.Method;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +22,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BaseRbacTest extends BaseTest {
 
     protected final RbacTestContext testContext = new RbacTestContext();
-    protected ErpFixture erpFixture;
+    protected RbacFixture rbacFixture;
 
     @BeforeClass(alwaysRun = true)
     public void rbacClassSetup() {
-        this.erpFixture = new ErpFixture(testContext, apiExecutor);
+        this.rbacFixture = new RbacFixture(testContext, apiExecutor);
     }
 
     // Кеш сесій для кожної ролі (щоб не логінитись кожен раз)
@@ -66,38 +66,46 @@ public class BaseRbacTest extends BaseTest {
         return cookies.get("JSESSIONID");
     }
 
+    // У класі BaseRbacTest
+
     /**
      * Виконує HTTP запит з певною роллю, автоматично підставляючи ID з контексту
      */
     @Step("Execute API request as role: {role} for {rule.endpointName}")
     public Response executeRequestAsRole(EndpointAccessRule rule, UserRole role, Object requestBody) {
         // 1. Отримуємо метадані ендпоїнта
-        var definition = rule.getEndpointDefinition();
+        ApiEndpointDefinition definition = rule.getEndpointDefinition();
 
-        // 2. Визначаємо ID для шляху (якщо він потрібен)
+        // 2. Визначаємо фінальний шлях (з підставленим ID)
         String finalPath;
+
         if (definition.hasPathVariables()) {
+            // Перевіряємо, чи вказано ключ у YAML
             if (rule.getContextKey() == null) {
                 throw new IllegalStateException(String.format(
-                        "Ендпоїнт %s вимагає ID, але в YAML не вказано contextKey", rule.getEndpointName()));
+                        "❌ Помилка конфігурації: Ендпоїнт %s вимагає {id}, але в YAML не вказано contextKey",
+                        rule.getEndpointName()));
             }
 
+            // Дістаємо ID з контексту
             Object id = testContext.get(rule.getContextKey());
+
             if (id == null) {
-                log.warn("⚠️ Увага: Ключ {} порожній у контексті для ендпоїнта {}",
-                        rule.getContextKey(), rule.getEndpointName());
+                log.error("❌ Дані відсутні: Ключ {} порожній у контексті", rule.getContextKey());
+                throw new RuntimeException("Test Setup Failed: ID not found via key " + rule.getContextKey());
             }
 
-            // Використовуємо ваш метод getPath, який замінює {id} на реальне значення
+            // 🔥 ВАЖЛИВО: Замінюємо {id} на реальне число (наприклад, "123")
+            // RestAssured отримає чистий URL без плейсхолдерів
             finalPath = definition.getPath(id);
         } else {
             finalPath = definition.getPathTemplate();
         }
 
-        log.info("📡 [RBAC] {} {} | Role: {} | DataKey: {}",
+        log.info("📡 [RBAC] {} {} | Role: {} | Key: {}",
                 definition.getHttpMethod(), finalPath, role, rule.getContextKey());
 
-        // 3. Формуємо та виконуємо запит
+        // 3. Формуємо запит
         RequestSpecification requestSpec = RestAssured.given()
                 .cookies(getSessionForRole(role))
                 .contentType(ContentType.JSON);
@@ -106,6 +114,7 @@ public class BaseRbacTest extends BaseTest {
             requestSpec.body(requestBody);
         }
 
+        // 4. Виконуємо запит за фінальним шляхом
         Response response = requestSpec.request(definition.getHttpMethod(), finalPath);
 
         log.info("📥 Response: {} ({} ms)", response.getStatusCode(), response.getTime());
