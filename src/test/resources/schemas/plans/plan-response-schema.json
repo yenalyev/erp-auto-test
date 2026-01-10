@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlanResponse",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Унікальний ідентифікатор плану"
+    },
+    "description": {
+      "type": "string",
+      "description": "Опис плану"
+    },
+    "storageId": {
+      "type": "integer",
+      "description": "ID сховища"
+    },
+    "resourceId": {
+      "type": "integer",
+      "description": "ID ресурсу"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Кількість"
+    },
+    "from": {
+      "type": "string",
+      "format": "date",
+      "description": "Дата початку (YYYY-MM-DD)"
+    },
+    "to": {
+      "type": "string",
+      "format": "date",
+      "description": "Дата закінчення (YYYY-MM-DD)"
+    }
+  },
+  "required": ["id", "description", "storageId", "resourceId", "amount", "from", "to"]
+}

@@ -72,7 +72,7 @@ rules:
     description: "Змінити назву (name) TECH_MAP: тільки ADMIN має право, OWNER_1 та ANONYMOUS - ні"
 
   # ========================================
-  # TECHNOLOGICAL MAP ENDPOINTS
+  # STORAGE ENDPOINTS
   # ========================================
 
   - endpointName: "STORAGE_GET_ALL"
@@ -86,6 +86,13 @@ rules:
     deniedRoles: [ OWNER_1, ANONYMOUS ]
     bodyType: "CREATE_STORAGE"
     description: "Створити новий Бізнес Юніт (STORAGE): тільки ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  - endpointName: "STORAGE_PUT_UPDATE"
+    contextKey: "DYNAMIC_STORAGE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: "UPDATE_STORAGE"
+    description: "Змінити NAME існучого Бізнес Юніта (STORAGE): тільки ADMIN має право. OWNER_1 (власник STORAGE_1), OWNER_2 та ANONYMOUS - ні"
 
   # ========================================
   # STATISTIC ENDPOINTS
@@ -114,6 +121,34 @@ rules:
     bodyType: null
     description: "Отримати статистику плану по Бізнес Юніту з невалідним ід (немає такого бізнес юніту)
      (STORAGES): ніхто не отримує доступ ні ADMIN ні OWNER_1 ні ANONYMOUS"
+
+  # ========================================
+  # PLAN ENDPOINTS
+  # ========================================
+
+  - endpointName: "PLAN_GET_ALL"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Подивитися всі плани по виробництву Бізнес Юніту який належить OWNER_1: 
+    ADMIN та OWNER_1 мають право, OWNER_2 та ANONYMOUS - ні"
+
+  - endpointName: "PLAN_POST_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "CREATE_PLAN"
+    description: "Створити новий план виробництва по Бізнес Юніту який належить OWNER_1: 
+    ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  - endpointName: "PLAN_PUT_UPDATE"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "UPDATE_PLAN"
+    description: "Змінити дату плану виробництва по Бізнес Юніту який належить OWNER_1 (STORAGES): 
+    ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
 
   # ========================================
   # PRODUCTION ENDPOINTS
@@ -181,6 +216,6 @@ rules:
   - endpointName: "RELOCATION_POST_CREATE_BY_STORE_ID"
     allowedRoles: [ OWNER_1 ]
     deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
-    bodyType: null
+    bodyType: "CREATE_SIMPLE_RELOCATION"
     description: "Зробити переміщення з Бізнес Юніта 1 на Бізнес Юніт 2
      (STORAGES): OWNER_1 має можлиівість створити. ADMIN, OWNER_2, ANONYMOUS - не можуть створити таке переміщення"

@@ -10,10 +10,7 @@ import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.models.request.MeasurementUnitRequest;
 import com.erp.models.request.TechnologicalMapRequest;
-import com.erp.models.response.MeasurementUnitResponse;
-import com.erp.models.response.ProductionResponse;
-import com.erp.models.response.ResourceResponse;
-import com.erp.models.response.TechnologicalMapResponse;
+import com.erp.models.response.*;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import io.qameta.allure.Step;
@@ -45,6 +42,8 @@ public class RbacFixture extends BaseFixture {
         setupSharedResourceList(4);
         prepareTechMapForUpdate();
         setupDynamicProductionList(3, UserRole.OWNER_1);
+        setupDynamicBusinessUnit();
+        setupDynamicPlan(2);
     }
 
     @Step("Ensure realistic Measurement Units exist (min 5)")
@@ -185,6 +184,75 @@ public class RbacFixture extends BaseFixture {
         testContext.set(ContextKey.DYNAMIC_TECH_MAP, createdMap);
         testContext.set(ContextKey.DYNAMIC_TECH_MAP_ID, createdMap.getId());
     }
+
+    @Step("Create Dynamic Storage")
+    public void setupDynamicBusinessUnit() {
+        ApiEndpointDefinition endpoint = ApiEndpointDefinition.STORAGE_POST_CREATE;
+
+        // Генеруємо тіло запиту. RequestBodyFactory візьме SHARED_UNIT_ID з контексту
+        Object body = RequestBodyFactory.generate(endpoint, testContext);
+
+        Response response = apiExecutor.execute(endpoint, UserRole.ADMIN, body);
+        validateSuccess(response,  "Create Storage");
+
+        StorageResponse storageResponse = response.as((Class<StorageResponse>) endpoint.getResponseClass());
+
+        // Зберігаємо і ID, і повний об'єкт (для апдейтів у фабриці)
+        testContext.set(ContextKey.DYNAMIC_STORAGE, storageResponse);
+    }
+
+
+    @Step("Create Dynamic Plan")
+    public void setupDynamicPlan(@NonNegative int length) {
+        ApiEndpointDefinition getEndpoint = ApiEndpointDefinition.PLAN_GET_ALL;
+
+        Object storageIdObj = testContext.get(ContextKey.OWNER_1_STORAGE_ID);
+        String storageId = (storageIdObj != null) ? storageIdObj.toString() : "1";
+
+        log.info("Fetching plans for storageId: {}", storageId);
+
+        // Використовуємо queryParam або pathParam залежно від вашого ApiExecutor
+        Response response = apiExecutor.execute(getEndpoint, UserRole.ADMIN, storageId);
+
+        List<PlanResponse> allPlans = new ArrayList<>();
+
+        // БЕЗПЕЧНИЙ ПАРСИНГ: перевіряємо статус ПЕРЕД jsonPath()
+        if (response.statusCode() == 200) {
+            List<PlanResponse> parsed = response.jsonPath().getList("", PlanResponse.class);
+            if (parsed != null) {
+                allPlans.addAll(parsed);
+            }
+        } else {
+            log.warn("Could not fetch existing plans, status: {}. Proceeding with empty list.", response.statusCode());
+        }
+
+        log.info("Current plans length: {}", allPlans.size());
+
+        if (allPlans.size() < length) {
+            int needed = length - allPlans.size();
+            log.info("Creating {} more plans to reach {}", needed, length);
+
+            for (int i = 0; i < needed; i++) {
+                ApiEndpointDefinition createEndpoint = ApiEndpointDefinition.PLAN_POST_CREATE;
+
+                // ВАЖЛИВО: Переконайтеся, що RequestBodyFactory знає, як створити PlanRequest
+                // Якщо для створення потрібен storageId в URL, передайте його третім параметром
+                Object body = RequestBodyFactory.generate(createEndpoint, testContext);
+
+                Response createResponse = apiExecutor.execute(createEndpoint, UserRole.ADMIN, body, storageId);
+                validateSuccess(createResponse, "Create Plan during setup");
+
+                PlanResponse createdPlan = createResponse.as(PlanResponse.class);
+                allPlans.add(createdPlan);
+            }
+        }
+
+        // Зберігаємо список у контекст ПЕРЕД завершенням фікстури
+        testContext.set(ContextKey.DYNAMIC_PLAN_LIST, allPlans);
+        log.info("DYNAMIC_PLAN_LIST - " + testContext.get(ContextKey.DYNAMIC_PLAN_LIST));
+    }
+
+
 
     private void validateSuccess(Response response, String action) {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {

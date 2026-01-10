@@ -1,10 +1,7 @@
 package com.erp.test_context;
 
 import com.erp.enums.UserRole;
-import com.erp.models.response.MeasurementUnitResponse;
-import com.erp.models.response.ProductionResponse;
-import com.erp.models.response.ResourceResponse;
-import com.erp.models.response.TechnologicalMapResponse;
+import com.erp.models.response.*;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,6 +46,9 @@ public class RbacTestContext implements TestContext {
     private Long dynamicTechnologicalMapId;
     private String dynamicTechnologicalMapNewName;
     private List<ProductionResponse> dynamicProductionList;
+    private StorageResponse dynamicStorage;
+    private PlanResponse dynamicPlan;
+    private List<PlanResponse> dynamicPlanList;
 
 
     // ============================================
@@ -170,6 +170,9 @@ public class RbacTestContext implements TestContext {
             case OWNER_2_STORAGE_ID -> 2L;
             case OWNER_INCORRECT_STORAGE_ID -> 9999L;
             case DYNAMIC_PRODUCTIONS ->  dynamicProductionList;
+            case DYNAMIC_STORAGE -> dynamicStorage;
+            case DYNAMIC_PLAN -> dynamicPlan;
+            case DYNAMIC_PLAN_LIST -> dynamicPlanList;
             default -> attributes.get(key); // Шукаємо в мапі за Enum ключем
         };
         return (T) value;
@@ -194,6 +197,9 @@ public class RbacTestContext implements TestContext {
             case DYNAMIC_TECH_MAP_ID -> this.dynamicTechnologicalMapId = (Long) value;
             case DYNAMIC_TECH_MAP_NEW_NAME -> this.dynamicTechnologicalMapNewName = (String)value;
             case DYNAMIC_PRODUCTIONS -> this.dynamicProductionList = (List<ProductionResponse>) value;
+            case DYNAMIC_STORAGE -> this.dynamicStorage = (StorageResponse) value;
+            case DYNAMIC_PLAN -> this.dynamicPlan = (PlanResponse) value;
+            case DYNAMIC_PLAN_LIST -> this.dynamicPlanList = (List<PlanResponse>) value;
 
             default -> attributes.put(key, value);
         }
@@ -201,56 +207,31 @@ public class RbacTestContext implements TestContext {
 
     @Override
     public void clear() {
+        // Очищаємо всі ключі, визначені в Enum
+        for (ContextKey key : ContextKey.values()) {
+            try {
+                this.set(key, null);
+            } catch (ClassCastException e) {
+            }
+        }
+
+        // Очищаємо додаткові структури
         createdResources.clear();
         attributes.clear();
 
-        // Скидаємо всі явні поля
-        sharedResourceId = null;
-        sharedResource = null;
-        sharedUnitId = null;
-        sharedAvailableMeasurementUnits = null;
-        sharedTechMapId = null;
-        sharedOrderId = null;
-        dynamicTechnologicalMap = null;
-        dynamicTechnologicalMapId = null;
-        dynamicTechnologicalMapNewName = null;
-
-        log.debug("🗑️ RBAC Context fully cleared");
+        log.debug("🗑️ RBAC Context fully cleared using ContextKey iteration");
     }
 
     @Override
     public boolean isEmpty() {
-        return attributes.isEmpty() &&
-                createdResources.isEmpty() &&
-                sharedResourceId == null &&
-                sharedUnitId == null;
-    }
-
-
-    /**
-     * Рефакторинг: Мапінг ендпоінтів через ContextKey
-     */
-    public String getResourceIdForEndpoint(String endpointName) {
-        if (endpointName == null) return null;
-
-        // Логіка: витягуємо ID залежно від префікса
-        Long id = null;
-        if (endpointName.startsWith("RESOURCE_") && !isCreateOrGetAll(endpointName)) {
-            id = sharedResourceId;
-        } else if (endpointName.startsWith("TECH_MAP_UPDATE_") && !isCreateOrGetAll(endpointName)) {
-            id = dynamicTechnologicalMapId;}
-        else if (endpointName.startsWith("TECH_MAP_") && !isCreateOrGetAll(endpointName)) {
-            id = sharedTechMapId;
-        } else if (endpointName.startsWith("MEASUREMENT_UNIT_") && !endpointName.contains("GET_ALL")) {
-            id = sharedUnitId;
-        } else if (endpointName.startsWith("ORDER_") && !isCreateOrGetAll(endpointName)) {
-            id = sharedOrderId;
+        if (!attributes.isEmpty() || !createdResources.isEmpty()) {
+            return false;
         }
-
-        return id != null ? String.valueOf(id) : null;
-    }
-
-    private boolean isCreateOrGetAll(String name) {
-        return name.endsWith("_CREATE") || name.endsWith("_GET_ALL");
+        for (ContextKey key : ContextKey.values()) {
+            if (this.get(key) != null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

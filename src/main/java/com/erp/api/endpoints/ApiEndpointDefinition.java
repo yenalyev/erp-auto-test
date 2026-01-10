@@ -161,6 +161,16 @@ public enum ApiEndpointDefinition {
             "CREATE_STORAGE"
     ),
 
+    STORAGE_PUT_UPDATE(
+            "/api/v1/storages/{id}",
+            Method.PUT,
+            "schemas/storages/storage-response-schema.json",
+            "Update storage name",
+            new TypeReference<StorageRequest>() {},
+            new TypeReference<StorageResponse>() {},
+            "UPDATE_STORAGE"
+    ),
+
     // ========================================
     // STATISTIC ENDPOINTS
     // ========================================
@@ -173,6 +183,40 @@ public enum ApiEndpointDefinition {
             null,
             new TypeReference<PlanStatisticsResponse>() {},
             null
+    ),
+
+    // ========================================
+    // PLAN ENDPOINTS
+    // ========================================
+
+    PLAN_GET_ALL(
+            "/api/v1/plans?storageId={id}",
+            Method.GET,
+            "schemas/plans/plan-response-list-schema.json",
+            "Get all plans",
+            null,
+            new TypeReference<List<PlanResponse>>() {},
+            null
+    ),
+
+    PLAN_POST_CREATE(
+            "/api/v1/plans",
+            Method.POST,
+            "schemas/plans/plan-response-schema.json",
+            "Create plan",
+            new TypeReference<PlanRequest>() {},
+            new TypeReference<PlanResponse>() {},
+            "CREATE_PLAN"
+    ),
+
+    PLAN_PUT_UPDATE(
+            "/api/v1/plans/{id}",
+            Method.PUT,
+            "schemas/plans/plan-response-schema.json",
+            "Update plan",
+            new TypeReference<PlanRequest>() {},
+            new TypeReference<PlanResponse>() {},
+            "UPDATE_PLAN"
     ),
 
     // ========================================

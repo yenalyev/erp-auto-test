@@ -1,6 +1,8 @@
 package com.erp.test_context;
 
+import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +27,12 @@ public enum ContextKey {
     DYNAMIC_TECH_MAP_NEW_NAME ("dynamicTechnologicalMapNewName", String.class),
     DYNAMIC_TECH_MAP_ID("dynamicTechnologicalMapId", Long.class),
     OWNER_1_STORAGE_ID("owner_1_storageId", Long.class),
-    OWNER_2_STORAGE_ID("owner_1_storageId", Long.class),
+    OWNER_2_STORAGE_ID("owner_2_storageId", Long.class),
     OWNER_INCORRECT_STORAGE_ID("owner_incorrect_storageId", Long.class),
-    DYNAMIC_PRODUCTIONS("dynamic_productions", List.class );
+    DYNAMIC_PRODUCTIONS("dynamic_productions", List.class ),
+    DYNAMIC_STORAGE("dynamicStorage",StorageResponse .class ),
+    DYNAMIC_PLAN("dynamicPlan",PlanResponse .class ),
+    DYNAMIC_PLAN_LIST("dynamicPlanList",List.class );
     private final String name;
     private final Class<?> type;
 }

@@ -3,6 +3,7 @@ package com.erp.data;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceRequestBodyFactory;
 import com.erp.data.factories.measurement_unit.MeasurementUnitResponseBodyFactory;
+import com.erp.data.factories.plan.PlanRequestBodyFactory;
 import com.erp.data.factories.production.ProductionRequestBodyFactory;
 import com.erp.data.factories.relocation.RelocationRequestBodyFactory;
 import com.erp.data.factories.storage.StorageRequestBodyFactory;
@@ -28,6 +29,7 @@ public class RequestBodyFactory {
         StorageRequestBodyFactory.registerStrategies();
         ProductionRequestBodyFactory.registerStrategies();
         RelocationRequestBodyFactory.registerStrategies();
+        PlanRequestBodyFactory.registerStrategies();
     }
 
     /**
