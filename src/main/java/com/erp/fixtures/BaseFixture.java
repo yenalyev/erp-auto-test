@@ -107,6 +107,8 @@ public abstract class BaseFixture {
             }
         }
 
+        testContext.set(ContextKey.SHARED_RESOURCE_ID, allResources.getFirst().getId());
+        testContext.set(ContextKey.SHARED_RESOURCE, allResources.getFirst());
         testContext.set(ContextKey.SHARED_AVAILABLE_RESOURCES, allResources);
     }
 
