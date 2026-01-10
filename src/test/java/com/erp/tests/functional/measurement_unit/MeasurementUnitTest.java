@@ -90,51 +90,13 @@ public class MeasurementUnitTest extends BaseFunctionalTest {
             SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.MEASUREMENT_UNIT_POST_CREATE);
         });
 
-        MeasurementUnitResponse createdUnit = response.as(MeasurementUnitResponse.class);
-
-        Allure.step("STEP 3: Верифікація створеної сутності", () -> {
-
-            Allure.step("Перевірка полів Response Body", () -> {
-                assertThat(createdUnit.getName())
-                        .as("Назва одиниці виміру має збігатися з запитом")
-                        .isEqualTo(requestBody.getName());
-
-                assertThat(createdUnit.getShortName())
-                        .as("Скорочення має збігатися з запитом")
-                        .isEqualTo(requestBody.getShortName());
-
-                assertThat(createdUnit.getId())
-                        .as("ID сутності не повинен бути порожнім")
-                        .isNotNull();
-            });
-
-            Allure.step("Перевірка фізичного збереження в БД (Persistence Check)", () -> {
-                Response getResponse = apiExecutor.execute(
-                        ApiEndpointDefinition.MEASUREMENT_UNIT_GET_ALL,
-                        UserRole.ADMIN
-                );
-
-                // Додаємо деталі відповіді GET запиту в алюр для прозорості
-                AllureHelper.attachResponseDetails(getResponse);
-
-                List<MeasurementUnitResponse> allUnits = getResponse.jsonPath()
-                        .getList("", MeasurementUnitResponse.class);
-
-                // Шукаємо наш об'єкт у списку для більш детальної перевірки
-                MeasurementUnitResponse persistedUnit = allUnits.stream()
-                        .filter(u -> u.getId().equals(createdUnit.getId()))
-                        .findFirst()
-                        .orElseThrow(() -> new AssertionError("Створена одиниця виміру не знайдена в списку GET ALL"));
-
-                assertThat(persistedUnit.getName())
-                        .as("Назва в БД має бути ідентичною")
-                        .isEqualTo(requestBody.getName());
-
-                assertThat(persistedUnit.getShortName())
-                        .as("Назва в БД має бути ідентичною")
-                        .isEqualTo(requestBody.getShortName());
-            });
-        });
+        // Verified object from database
+        verifyCreatedEntity(
+                response,
+                requestBody,
+                ApiEndpointDefinition.MEASUREMENT_UNIT_GET_ALL,
+                MeasurementUnitResponse.class
+        );
     }
 
     // =========================================================================

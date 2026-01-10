@@ -4,22 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="add tests">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/plan/PlanDataFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/plan/PlanRequestBodyFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/request/PlanRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/PlanResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/plans/plan-response-list-schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/resources/schemas/plans/plan-response-schema.json" afterDir="false" />
+    <list default="true" id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="add functional tests for measurement units">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpointDefinition.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/api/endpoints/ApiEndpointDefinition.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/RequestBodyFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/RequestBodyFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/storage/StorageDataFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/storage/StorageDataFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/storage/StorageRequestBodyFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/storage/StorageRequestBodyFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/fixtures/RbacFixture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/fixtures/RbacFixture.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/test_context/ContextKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/test_context/ContextKey.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/test_context/RbacTestContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/test_context/RbacTestContext.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/rbac-policy.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/rbac-policy.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/listeners/GoogleSheetsReportListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/listeners/GoogleSheetsReportListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/GoogleSheetsHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/GoogleSheetsHelper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/BaseFunctionalTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/BaseFunctionalTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/measurement_unit/MeasurementUnitTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/measurement_unit/MeasurementUnitTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -118,6 +108,7 @@
       <command value="mvn clean test -Denv=debug -Dsuite=smoke" />
       <command value="mvn clean install -DskipTests" />
       <command value="mvn clean test -Denv=debug -Dsuite=test-dev" />
+      <command value="mvn clean test -Denv=debug -Dsuite=functional" />
       <command value="mvn allure:serve" />
     </option>
   </component>
@@ -197,14 +188,31 @@
       <option name="project" value="LOCAL" />
       <updated>1767904759496</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="add rbac tests">
+      <option name="closed" value="true" />
+      <created>1768030986417</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1768030986417</updated>
+    </task>
+    <task id="LOCAL-00008" summary="add functional tests for measurement units">
+      <option name="closed" value="true" />
+      <created>1768051559192</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1768051559192</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="add rbac tests" />
     <MESSAGE value="change test data management" />
     <MESSAGE value="improve test data management" />
     <MESSAGE value="add tests" />
-    <option name="LAST_COMMIT_MESSAGE" value="add tests" />
+    <MESSAGE value="add rbac tests" />
+    <MESSAGE value="add functional tests for measurement units" />
+    <option name="LAST_COMMIT_MESSAGE" value="add functional tests for measurement units" />
   </component>
 </project>

@@ -14,7 +14,8 @@ import java.time.format.DateTimeFormatter;
 public class GoogleSheetsReportListener implements ITestListener, ISuiteListener {
 
     private GoogleSheetsHelper sheetsHelper;
-    private long startTime;
+    // ✅ Використовуємо ThreadLocal для коректного розрахунку часу в паралельних тестах
+    private final ThreadLocal<Long> startTime = new ThreadLocal<>();
 
     @Override
     public void onStart(ISuite suite) {
@@ -33,9 +34,24 @@ public class GoogleSheetsReportListener implements ITestListener, ISuiteListener
         }
     }
 
+    /**
+     * 🔥 КРИТИЧНО: Викликаємо flushAll() після завершення всіх тестів сюїти
+     */
+    @Override
+    public void onFinish(ISuite suite) {
+        if (sheetsHelper != null) {
+            try {
+                sheetsHelper.flushAll();
+                log.info("✅ All buffered results have been flushed to Google Sheets");
+            } catch (Exception e) {
+                log.error("❌ Failed to flush results to Google Sheets: {}", e.getMessage());
+            }
+        }
+    }
+
     @Override
     public void onTestStart(ITestResult result) {
-        startTime = System.currentTimeMillis();
+        startTime.set(System.currentTimeMillis());
     }
 
     @Override
@@ -61,11 +77,14 @@ public class GoogleSheetsReportListener implements ITestListener, ISuiteListener
         }
 
         try {
-            long executionTime = System.currentTimeMillis() - startTime;
-            String formattedTime = String.format("%.2fs", executionTime / 1000.0);
+            // ✅ Розрахунок часу з ThreadLocal
+            long start = startTime.get() != null ? startTime.get() : System.currentTimeMillis();
+            long duration = System.currentTimeMillis() - start;
+            startTime.remove(); // Очищуємо пам'ять потоку
+
+            String formattedTime = String.format("%.2fs", duration / 1000.0);
             String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-            // Використовуємо новий екстрактор
             String testId = TestCaseIdExtractor.getTestCaseId(result);
             String requirementId = extractRequirementId(result);
             String testName = result.getMethod().getMethodName();
@@ -83,24 +102,19 @@ public class GoogleSheetsReportListener implements ITestListener, ISuiteListener
                     .errorMessage(errorMessage)
                     .build();
 
+            // Тепер ці методи просто додають дані в буфер (без HTTP запиту)
             sheetsHelper.appendTestResult(testResult);
 
-            // Оновити traceability matrix
             if (requirementId != null && !requirementId.isEmpty()) {
-                sheetsHelper.updateTraceability(testId, requirementId, testName, status);
+                // ⚠️ Виправив порядок аргументів: спочатку requirementId, потім testId
+                sheetsHelper.updateTraceability(requirementId, testId, testName, status);
             }
 
-            log.debug("📝 Test result saved: {} - {}", testId, status);
-
         } catch (Exception e) {
-            log.error("❌ Failed to save test result to Google Sheets: {}", e.getMessage());
+            log.error("❌ Error queueing result for Google Sheets: {}", e.getMessage());
         }
     }
 
-    /**
-     * Витягує Requirement ID з @Story анотації
-     * @Story("REQ-AUTH-001: User Authentication") → "REQ-AUTH-001"
-     */
     private String extractRequirementId(ITestResult result) {
         try {
             Story story = result.getMethod()
@@ -110,7 +124,6 @@ public class GoogleSheetsReportListener implements ITestListener, ISuiteListener
 
             if (story != null && story.value() != null) {
                 String value = story.value();
-                // Витягуємо ID з формату "REQ-AUTH-001: Description"
                 if (value.contains(":")) {
                     return value.split(":")[0].trim();
                 }
