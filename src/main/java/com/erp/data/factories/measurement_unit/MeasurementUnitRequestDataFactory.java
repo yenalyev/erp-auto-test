@@ -53,10 +53,10 @@ public class MeasurementUnitRequestDataFactory {
         return missingRequests;
     }
 
-    public static MeasurementUnitRequest.MeasurementUnitRequestBuilder defaultMeasurementUnit() {
+    public static MeasurementUnitRequest.MeasurementUnitRequestBuilder createRandom() {
         return MeasurementUnitRequest.builder()
-                .name(FakerProvider.ukrainian().commerce().material())
-                .shortName(FakerProvider.ukrainian().commerce().color());
+                .name(FakerProvider.ukrainian().commerce().material() + " : " + System.currentTimeMillis())
+                .shortName(FakerProvider.ukrainian().commerce().color() + " : " + System.currentTimeMillis());
     }
 
     public static MeasurementUnitRequest.MeasurementUnitRequestBuilder create(String name,

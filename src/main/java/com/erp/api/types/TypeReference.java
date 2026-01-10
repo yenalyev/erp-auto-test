@@ -4,7 +4,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
- * 🎯 Type token для збереження generic типів
+ * Type token для збереження generic типів
  * <p>
  * Вирішує проблему type erasure в Java, дозволяючи зберігати
  * повну інформацію про generic типи типу List<ResourceResponse>

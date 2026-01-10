@@ -1,5 +1,6 @@
 package com.erp.utils.helpers;
 
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.models.rbac.EndpointAccessRule;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
@@ -40,6 +41,34 @@ public class AllureHelper {
             }
         } catch (Exception e) {
             log.error("Failed to read schema file for attachment", e);
+        }
+    }
+
+
+    /**
+     * 🔥 Версія для функціональних тестів (використовує ApiEndpointDefinition)
+     */
+    @Step("Validation Details for {definition.name}")
+    public static void attachSchemaValidationInfo(ApiEndpointDefinition definition, Response response) {
+        // 1. Прикріплюємо Actual Body
+        String actualJson = response.jsonPath().prettify();
+        Allure.addAttachment("🔍 Actual Response Body", "application/json", actualJson, "json");
+
+        // 2. Прикріплюємо Expected Schema
+        String schemaPath = definition.getSchemaPath();
+        if (schemaPath == null || schemaPath.isEmpty()) {
+            log.warn("No schema path defined for endpoint: {}", definition.name());
+            return;
+        }
+
+        try (InputStream schemaStream = AllureHelper.class.getClassLoader().getResourceAsStream(schemaPath)) {
+            if (schemaStream != null) {
+                String schemaContent = new String(schemaStream.readAllBytes(), StandardCharsets.UTF_8);
+                Allure.addAttachment("📜 Expected JSON Schema (" + schemaPath + ")",
+                        "application/json", schemaContent, "json");
+            }
+        } catch (Exception e) {
+            log.error("Failed to read schema file: {}", schemaPath, e);
         }
     }
 

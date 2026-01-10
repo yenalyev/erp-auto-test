@@ -8,7 +8,7 @@ public class MeasurementUnitResponseBodyFactory {
     public static void registerStrategies() {
         // POST /api/v1/measurement-unit
         register(ApiEndpointDefinition.MEASUREMENT_UNIT_POST_CREATE, context -> {
-                    return MeasurementUnitRequestDataFactory.defaultMeasurementUnit().build();
+                    return MeasurementUnitRequestDataFactory.createRandom().build();
                 }
         );
 

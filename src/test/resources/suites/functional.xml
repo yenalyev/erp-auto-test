@@ -1,0 +1,16 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Test-Dev Test Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+        <listener class-name="com.erp.listeners.AllureTestCaseIdListener"/>
+
+    </listeners>
+
+    <test name="Functional Tests">
+        <classes>
+            <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
+        </classes>
+    </test>
+</suite>

@@ -4,7 +4,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.RbacFixture;
 import com.erp.models.rbac.EndpointAccessRule;
-import com.erp.test_context.RbacTestContext;
+import com.erp.test_context.GlobalTestContext;
 import com.erp.tests.BaseTest;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
@@ -21,8 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class BaseRbacTest extends BaseTest {
 
-    protected final RbacTestContext testContext = new RbacTestContext();
     protected RbacFixture rbacFixture;
+
 
     @BeforeClass(alwaysRun = true)
     public void rbacClassSetup() {

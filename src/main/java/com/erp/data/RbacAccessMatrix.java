@@ -4,7 +4,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.models.rbac.EndpointAccessRule;
 import com.erp.test_context.ContextKey;
-import com.erp.test_context.RbacTestContext;
+import com.erp.test_context.GlobalTestContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Data;
@@ -36,7 +36,7 @@ public class RbacAccessMatrix {
     /**
      * Генерує test data для TestNG DataProvider
      */
-    public static Object[][] generateTestData(RbacTestContext context) {
+    public static Object[][] generateTestData(GlobalTestContext context) {
         List<Object[]> testCases = new ArrayList<>();
 
         // Завантажуємо правила з YAML файла

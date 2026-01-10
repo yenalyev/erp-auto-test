@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 🎯 RBAC Test Context - Runtime Data Storage
+ * Global Test Context - Runtime Data Storage
  * <p>
  * Зберігає динамічно створені тестові дані для RBAC тестів:
  * <p>
@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Data
-public class RbacTestContext implements TestContext {
+public class GlobalTestContext implements TestContext {
 
     private Map<UserRole, Long> createdResources = new ConcurrentHashMap<>();
 
@@ -52,7 +52,7 @@ public class RbacTestContext implements TestContext {
 
 
     // ============================================
-    // ✅ Validation Methods
+    // Validation Methods
     // ============================================
 
     /**
@@ -64,7 +64,7 @@ public class RbacTestContext implements TestContext {
 
 
     // ============================================
-    // 📊 Logging & Debugging
+    // Logging & Debugging
     // ============================================
 
     /**
@@ -72,10 +72,10 @@ public class RbacTestContext implements TestContext {
      */
     public void logInfo() {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📊 RBAC Test Context State");
+        log.info(" Global Test Context State");
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-        log.info("🌍 Shared Resources:");
+        log.info("   Shared Resources:");
         log.info("   Unit ID:          {}", formatId(sharedUnitId));
         log.info("   Resource ID:      {}", formatId(sharedResourceId));
         log.info("   Tech Map ID:      {}", formatId(sharedTechMapId));
@@ -115,7 +115,7 @@ public class RbacTestContext implements TestContext {
         summary.append("RBAC Test Context Summary\n");
         summary.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
 
-        summary.append("🌍 Shared Resources:\n");
+        summary.append("  Shared Resources:\n");
         summary.append("  Unit ID:     ").append(formatId(sharedUnitId)).append("\n");
         summary.append("  Resource ID: ").append(formatId(sharedResourceId)).append("\n");
         summary.append("  Tech Map ID: ").append(formatId(sharedTechMapId)).append("\n");
@@ -130,7 +130,7 @@ public class RbacTestContext implements TestContext {
             );
         }
 
-        summary.append("\n📊 Status:\n");
+        summary.append("\n Status:\n");
         summary.append("  All Required Resources: ")
                 .append(hasAllRequiredResources() ? "✅ Yes" : "❌ No")
                 .append("\n");

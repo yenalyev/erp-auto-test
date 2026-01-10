@@ -2,7 +2,11 @@ package com.erp.tests;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.clients.SessionClient;
+import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.enums.UserRole;
 import com.erp.services.CleanupService;
+import com.erp.test_context.GlobalTestContext;
+import com.erp.test_context.TestContext;
 import com.erp.utils.TestcontainersManager;
 import com.erp.utils.auth.AuthService;
 import com.erp.utils.config.ConfigProvider;
@@ -13,16 +17,24 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @Slf4j
 public abstract class BaseTest {
-    protected static ApiExecutor apiExecutor;
+    // Кожен клас повинен мати свій екземпляр
+    protected ApiExecutor apiExecutor;
+    protected GlobalTestContext testContext;
+
+   // protected static ApiExecutor apiExecutor;
     protected static RequestSpecification requestSpec;
     protected static AuthService authService;
     protected static CleanupService cleanupService;
@@ -109,10 +121,21 @@ public abstract class BaseTest {
         log.info("✅ Test suite cleanup completed");
     }
 
+
     @BeforeClass(alwaysRun = true)
-    public void classSetup() {
+    public void baseTestClassSetup() {
         log.info("📦 Setting up test class: {}", this.getClass().getSimpleName());
+        log.info("Initializing Base Test Context for: {}", this.getClass().getSimpleName());
+
+        // 1. Створюємо новий контекст для кожного тестового класу
+        // Далі класи можуть перевизначити тестовий контекст
+        this.testContext = new GlobalTestContext();
+
+        // 2. Ініціалізуємо Executor саме з цим контекстом
+        this.apiExecutor = new ApiExecutor(sessionClient, authService);
     }
+
+
 
     @AfterClass(alwaysRun = true)
     public void classTeardown() {
@@ -259,6 +282,23 @@ public abstract class BaseTest {
             }
             return;
         }
+    }
+
+    //
+    @Step("Верифікація цілісності даних: кількість записів не змінилася")
+    protected <T> void assertDatabaseCountUnchanged(ApiEndpointDefinition getEndpoint,
+                                                    long initialCount,
+                                                    Class<T> responseClass,
+                                                    Predicate<T> filter) {
+        Response response = apiExecutor.execute(getEndpoint, UserRole.ADMIN);
+        // Використовуємо responseClass для універсальності
+        List<T> items = response.jsonPath().getList("", responseClass);
+
+        long currentCount = items.stream().filter(filter).count();
+
+        assertThat(currentCount)
+                .as("Кількість записів у базі для " + responseClass.getSimpleName())
+                .isEqualTo(initialCount);
     }
 
     /**
