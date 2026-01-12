@@ -21,8 +21,8 @@ public class TestCaseIdListener implements IInvokedMethodListener {
             if (annotation != null) {
                 String testCaseId = annotation.value();
 
-                // Додаємо в Allure як TMS Link (буде клікабельно в звіті)
-                Allure.tms("TestCase", testCaseId);
+//                // Додаємо в Allure як TMS Link (буде клікабельно в звіті)
+//                Allure.tms("TestCase", testCaseId);
 
                 // Додаємо як label для фільтрації
                 Allure.label("testCaseId", testCaseId);

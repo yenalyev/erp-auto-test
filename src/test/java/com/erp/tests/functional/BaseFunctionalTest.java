@@ -4,6 +4,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.tests.BaseTest;
 import com.erp.utils.helpers.AllureHelper;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Allure;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,7 @@ import org.testng.annotations.BeforeClass;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -102,5 +104,21 @@ public abstract class BaseFunctionalTest extends BaseTest {
                 assertFieldsMatch(request, persistedEntity);
             });
         });
+    }
+
+
+    protected <RES> long getDbCount(ApiEndpointDefinition endpoint,
+                                    UserRole userRole,
+                                    Class<RES> clazz,
+                                    Predicate<RES> filter) {
+        return DatabaseIntegrityValidator.getRecordCount(apiExecutor, endpoint, userRole, clazz, filter);
+    }
+
+    protected <RES> void assertDbUnchanged(ApiEndpointDefinition endpoint,
+                                           UserRole userRole,
+                                           long countBefore,
+                                           Class<RES> clazz,
+                                           Predicate<RES> filter) {
+        DatabaseIntegrityValidator.assertDatabaseCountUnchanged(apiExecutor, endpoint, userRole, countBefore, clazz, filter);
     }
 }

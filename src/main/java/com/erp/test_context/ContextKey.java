@@ -32,7 +32,8 @@ public enum ContextKey {
     DYNAMIC_PRODUCTIONS("dynamic_productions", List.class ),
     DYNAMIC_STORAGE("dynamicStorage",StorageResponse .class ),
     DYNAMIC_PLAN("dynamicPlan",PlanResponse .class ),
-    DYNAMIC_PLAN_LIST("dynamicPlanList",List.class );
+    DYNAMIC_PLAN_LIST("dynamicPlanList",List.class ),
+    SHARED_STORAGE_LIST("sharedStorageList", List.class);
     private final String name;
     private final Class<?> type;
 }

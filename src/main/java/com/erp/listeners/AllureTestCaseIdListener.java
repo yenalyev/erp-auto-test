@@ -24,7 +24,7 @@ public class AllureTestCaseIdListener implements IInvokedMethodListener {
             if (TestCaseIdExtractor.hasTestCaseId(testMethod)) {
                 String testCaseId = TestCaseIdExtractor.getTestCaseId(testMethod);
 
-                // Додаємо TMS Link (буде клікабельно в Allure)
+                // Додаємо TMS Link
                 Allure.tms("TestCase", testCaseId);
 
                 // Додаємо як label для фільтрації

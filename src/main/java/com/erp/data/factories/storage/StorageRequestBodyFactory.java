@@ -12,7 +12,7 @@ public class StorageRequestBodyFactory {
     public static void registerStrategies() {
         // POST /api/v1/storages - create with random name
         register(ApiEndpointDefinition.STORAGE_POST_CREATE, context ->
-                StorageDataFactory.defaultStorage().build()
+                StorageDataFactory.randomStorage().build()
         );
 
 

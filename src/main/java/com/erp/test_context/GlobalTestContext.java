@@ -40,6 +40,7 @@ public class GlobalTestContext implements TestContext {
     private Long sharedTechMapId;
     private Long sharedOrderId;
     private List<ResourceResponse> sharedAvailableResources;
+    private List<StorageResponse> sharedStorageList;
 
     //dynamic resources for update/delete operation
     private TechnologicalMapResponse dynamicTechnologicalMap;
@@ -173,6 +174,7 @@ public class GlobalTestContext implements TestContext {
             case DYNAMIC_STORAGE -> dynamicStorage;
             case DYNAMIC_PLAN -> dynamicPlan;
             case DYNAMIC_PLAN_LIST -> dynamicPlanList;
+            case SHARED_STORAGE_LIST -> sharedStorageList;
             default -> attributes.get(key); // Шукаємо в мапі за Enum ключем
         };
         return (T) value;
@@ -200,6 +202,7 @@ public class GlobalTestContext implements TestContext {
             case DYNAMIC_STORAGE -> this.dynamicStorage = (StorageResponse) value;
             case DYNAMIC_PLAN -> this.dynamicPlan = (PlanResponse) value;
             case DYNAMIC_PLAN_LIST -> this.dynamicPlanList = (List<PlanResponse>) value;
+            case SHARED_STORAGE_LIST -> this.sharedStorageList = (List<StorageResponse>) value;
 
             default -> attributes.put(key, value);
         }

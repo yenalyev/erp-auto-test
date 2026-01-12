@@ -10,8 +10,9 @@
 
     <test name="Functional Tests">
         <classes>
-<!--            <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>-->
+            <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
+            <class name="com.erp.tests.functional.storage.StorageTest"/>
         </classes>
     </test>
 </suite>

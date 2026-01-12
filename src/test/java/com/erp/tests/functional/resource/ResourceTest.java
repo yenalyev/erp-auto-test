@@ -152,30 +152,33 @@ public class ResourceTest extends BaseFunctionalTest {
     public void testCreateDuplicateResource(ResourceRequest duplicateRequest, String scenario) {
         Allure.getLifecycle().updateTestCase(tc -> tc.setName("Negative: " + scenario));
 
-        // 1. Arrange: Безпечний підрахунок кількості
-        long countBefore = Allure.step("Отримати кількість записів для імені: " + duplicateRequest.getName(), () -> {
-            Response resp = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_GET_ALL, UserRole.ADMIN);
-            List<ResourceResponse> list = resp.jsonPath().getList("", ResourceResponse.class);
-
-            return list.stream()
-                    // ✅ StringUtils.equalsIgnoreCase безпечно обробляє null
-                    .filter(r -> StringUtils.equalsIgnoreCase(r.getName(), duplicateRequest.getName()))
-                    .count();
-        });
-
-        // 2. Act
-        Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, duplicateRequest);
-
-        // 3. Assert
-        assertThat(response.statusCode()).isEqualTo(400);
-
-        assertDatabaseCountUnchanged(
+        // 1. Arrange: Фіксуємо кількість записів до "диверсії"
+        long countBefore = getDbCount(
                 ApiEndpointDefinition.RESOURCE_GET_ALL,
-                countBefore,
+                UserRole.ADMIN,
                 ResourceResponse.class,
-                // Також використовуємо тут для консистентності
                 r -> StringUtils.equalsIgnoreCase(r.getName(), duplicateRequest.getName())
         );
+
+        // 2. Act: Спроба створення (зберігаємо Response)
+        Response response = Allure.step("Спроба створити дублікат через POST", () ->
+                apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, duplicateRequest)
+        );
+
+        // 3. Assert: Перевірка статусу та цілісності
+        Allure.step("Верифікація результатів", () -> {
+            assertThat(response.statusCode())
+                    .as("Сервер мав повернути помилку 400 для дубліката (" + scenario + ")")
+                    .isEqualTo(400);
+
+            assertDbUnchanged(
+                    ApiEndpointDefinition.RESOURCE_GET_ALL,
+                    UserRole.ADMIN,
+                    countBefore,
+                    ResourceResponse.class,
+                    r -> StringUtils.equalsIgnoreCase(r.getName(), duplicateRequest.getName())
+            );
+        });
     }
 
     /**
