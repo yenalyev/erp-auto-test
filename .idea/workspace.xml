@@ -5,19 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="add resource tests">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/fixtures/StorageFixture.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/DatabaseIntegrityValidator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/storage/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/storage/StorageTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/storage/StorageDataFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/storage/StorageDataFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/storage/StorageRequestBodyFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/data/factories/storage/StorageRequestBodyFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/listeners/AllureTestCaseIdListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/listeners/AllureTestCaseIdListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/listeners/TestCaseIdListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/listeners/TestCaseIdListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/test_context/ContextKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/test_context/ContextKey.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/test_context/GlobalTestContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/test_context/GlobalTestContext.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/BaseFunctionalTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/BaseFunctionalTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/AllureHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/AllureHelper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/measurement_unit/MeasurementUnitTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/measurement_unit/MeasurementUnitTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/resource/ResourceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/resource/ResourceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/config/config-dev.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/config-dev.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/config/debug.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/debug.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/resources/suites/functional.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/suites/functional.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -86,14 +80,17 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;TestNG.AuthTest.executor&quot;: &quot;Run&quot;,
     &quot;git-widget-placeholder&quot;: &quot;change__data__management&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.runner&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.runner&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
@@ -136,6 +133,7 @@
     <attachedChunks>
       <set>
         <option value="bundled-jdk-30f59d01ecdd-cffe25b9f5b3-intellij.indexing.shared.core-IU-253.28294.334" />
+        <option value="bundled-js-predefined-d6986cc7102b-c7e53b3be11b-JavaScript-IU-253.28294.334" />
       </set>
     </attachedChunks>
   </component>
@@ -149,6 +147,10 @@
       <workItem from="1766944253698" duration="5340000" />
       <workItem from="1766950188489" duration="705000" />
       <workItem from="1766950947157" duration="10909000" />
+      <workItem from="1768469580933" duration="8345000" />
+      <workItem from="1768820163218" duration="1678000" />
+      <workItem from="1770051338873" duration="9788000" />
+      <workItem from="1771331266972" duration="645000" />
     </task>
     <task id="LOCAL-00001" summary="git commit -m &quot;feat: Initial project setup&#10;&#10;- Maven project structure (Java 8)&#10;- Core dependencies (RestAssured, TestNG, Allure, Lombok)&#10;- BaseClient &#10;- Configuration layer (TestConfig, properties)&#10;- Logging and test suite setup&quot;">
       <created>1766953268129</created>
@@ -231,6 +233,9 @@
     </task>
     <option name="localTasksCounter" value="11" />
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="change test data management" />

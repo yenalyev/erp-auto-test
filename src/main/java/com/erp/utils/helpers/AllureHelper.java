@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 public class AllureHelper {
 
     /**
-     * 🔥 Прикріплює очікувану схему та фактичний JSON в Allure для порівняння
+     * Прикріплює очікувану схему та фактичний JSON в Allure для порівняння
      */
     @Step("Attach Schema Validation Details (Expected vs Actual)")
     public static void attachSchemaValidationInfo(EndpointAccessRule rule, Response response) {

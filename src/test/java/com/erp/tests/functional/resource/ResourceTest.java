@@ -152,7 +152,7 @@ public class ResourceTest extends BaseFunctionalTest {
     public void testCreateDuplicateResource(ResourceRequest duplicateRequest, String scenario) {
         Allure.getLifecycle().updateTestCase(tc -> tc.setName("Negative: " + scenario));
 
-        // 1. Arrange: Фіксуємо кількість записів до "диверсії"
+        // 1. Arrange: Фіксуємо кількість записів до
         long countBefore = getDbCount(
                 ApiEndpointDefinition.RESOURCE_GET_ALL,
                 UserRole.ADMIN,

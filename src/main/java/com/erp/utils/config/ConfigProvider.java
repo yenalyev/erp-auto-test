@@ -14,15 +14,15 @@ public class ConfigProvider {
 
     private static void initConfig() {
         String env = System.getProperty("env", "debug");
-        log.info("📋 Loading configuration for environment: {}", env);
+        log.info("Loading configuration for environment: {}", env);
 
         System.setProperty("env", env);
         config = ConfigFactory.create(TestConfig.class, System.getProperties());
 
         log.info("✅ Configuration loaded successfully");
-        log.info("🌐 Base URL: {}", config.baseUrl());
-        log.info("🔐 Keycloak URL: {}", config.keycloakUrl());
-        log.info("👤 Auth Username: {}", config.authUsername());
+        log.info("Base URL: {}", config.baseUrl());
+        log.info("Keycloak URL: {}", config.keycloakUrl());
+        log.info("Auth Username: {}", config.authUsername());
     }
 
     public static TestConfig getConfig() {
@@ -58,7 +58,7 @@ public class ConfigProvider {
         return config.authPassword();
     }
 
-    // ✅ Database methods
+    // Database methods
     public static String getDbUrl() {
         return config.dbUrl();
     }

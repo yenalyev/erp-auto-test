@@ -155,7 +155,7 @@ public class MeasurementUnitTest extends BaseFunctionalTest {
 
                 { MeasurementUnitRequest.builder()
                         .name(target.getName())
-                        .shortName(target.getShortName()).build(), "Duplicate Short Name" }
+                        .shortName(target.getShortName()).build(), "Duplicate ShortName and Name" }
         };
     }
 
