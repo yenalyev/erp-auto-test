@@ -123,6 +123,46 @@ public class TechnologicalMapFixture extends BaseFixture {
         return getTechMapsByName(storageId, role, name).size();
     }
 
+    @Step("GET active tech maps for storage {storageId} by name")
+    public List<TechnologicalMapResponse> getActiveTechMapsByName(Long storageId, UserRole role, String name) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_GET_ACTIVE_BY_STORAGE_AND_NAME,
+                role,
+                null,
+                String.valueOf(storageId),
+                name);
+        validateSuccess(response, "Get active tech maps for storage " + storageId + " name=" + name);
+        return DatabaseIntegrityValidator.extractList(response, TechnologicalMapResponse.class);
+    }
+
+    public long countActiveTechMapsByName(Long storageId, UserRole role, String name) {
+        return getActiveTechMapsByName(storageId, role, name).size();
+    }
+
+    @Step("Створити техкарту для локації {storageId} (режим EDIT_ALLOWED)")
+    public TechnologicalMapResponse createTechMapAs(UserRole role, Long storageId) {
+        setMode(storageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
+
+        TechnologicalMapRequest request = buildOwner1CreateRequest();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_CREATE,
+                role,
+                request);
+        validateSuccess(response, "Create tech map for storage " + storageId);
+
+        return response.as(TechnologicalMapResponse.class);
+    }
+
+    @Step("Перевірити відмову через закритий режим редагування для локації {storageId}")
+    public void assertEditForbidden(Response response, Long storageId) {
+        assertThat(response.statusCode()).isEqualTo(400);
+        String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
+        assertThat(errorMessage)
+                .as("Повідомлення про заборону редагування")
+                .contains("закрито")
+                .contains(String.valueOf(storageId));
+    }
+
     @Step("Побудувати запит на створення техкарти для локації Owner1")
     public TechnologicalMapRequest buildOwner1CreateRequest() {
         List<ResourceResponse> resources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);

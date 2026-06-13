@@ -177,6 +177,26 @@ public enum ApiEndpointDefinition {
             "UPDATE_TECH_MAP_NAME"
     ),
 
+    TECH_MAP_DEACTIVATE(
+            "/api/v1/technological-maps/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Deactivate (archive) technological map",
+            null,
+            null,
+            null
+    ),
+
+    TECH_MAP_GET_ACTIVE_BY_STORAGE_AND_NAME(
+            "/api/v1/technological-maps?storageIds={storageId}&name={name}&isActive=true&size=10",
+            Method.GET,
+            "schemas/technological-maps/technological-map-response-list-schema.json",
+            "Get active technological maps filtered by storage and name",
+            null,
+            new TypeReference<List<TechnologicalMapResponse>>() {},
+            null
+    ),
+
     TECH_MAP_MODE_GET(
             "/api/v1/technological-maps/mode?storageId={storageId}",
             Method.GET,

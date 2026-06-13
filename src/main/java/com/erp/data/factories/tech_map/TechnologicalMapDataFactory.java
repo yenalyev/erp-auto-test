@@ -86,6 +86,22 @@ public class TechnologicalMapDataFactory {
     }
 
     /**
+     * Клон техкарти (як у UI: нова назва, ті самі input/output).
+     */
+    public static TechnologicalMapRequest cloneFrom(@NonNull TechnologicalMapResponse source) {
+        return fromExisting(source)
+                .name(source.getName() + " - Копія " + System.currentTimeMillis())
+                .build();
+    }
+
+    /**
+     * Update request з новою назвою (input/output без змін).
+     */
+    public static TechnologicalMapRequest withRenamed(@NonNull TechnologicalMapResponse source, String newName) {
+        return fromExisting(source).name(newName).build();
+    }
+
+    /**
      * Створює request на основі існуючої відповіді API (для update).
      */
     public static TechnologicalMapRequest.TechnologicalMapRequestBuilder fromExisting(
