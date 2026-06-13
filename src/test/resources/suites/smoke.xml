@@ -3,14 +3,14 @@
 
     <listeners>
         <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
-        <listener class-name="com.erp.listeners.AllureTestCaseIdListener"/>
-
     </listeners>
 
-    <test name="Authentication Tests">
+    <test name="Login Smoke">
         <classes>
-            <class name="com.erp.tests.auth.AuthenticationTest"/>
+            <class name="com.erp.tests.auth.LoginSmokeTest"/>
         </classes>
     </test>
+
 </suite>

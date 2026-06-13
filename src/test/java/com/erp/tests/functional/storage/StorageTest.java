@@ -35,9 +35,6 @@ public class StorageTest extends BaseFunctionalTest {
         if (testContext == null) {
             baseTestClassSetup();
         }
-        if (testContext == null) {
-            baseTestClassSetup();
-        }
         // Ініціалізуємо саме StorageFixture
         storageFixture = new StorageFixture(testContext, apiExecutor);
 

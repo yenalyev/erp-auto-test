@@ -33,7 +33,9 @@ public class MeasurementUnitRequestDataFactory {
     public static List<MeasurementUnitRequest> getMissingUnits(List<MeasurementUnitResponse> existingUnits,
                                                                int targetTotal) {
         List<MeasurementUnitRequest> missingRequests = new ArrayList<>();
-        int currentCount = (existingUnits == null) ? 0 : existingUnits.size();
+        int currentCount = (existingUnits == null) ? 0 : (int) existingUnits.stream()
+                .filter(u -> u != null && u.getId() != null)
+                .count();
 
         for (String[] candidate : REAL_UNITS) {
             // Якщо ми вже досягли цілі (база + те що плануємо створити), зупиняємось
@@ -44,7 +46,9 @@ public class MeasurementUnitRequestDataFactory {
 
             // Перевірка на дублікат за ім'ям або скороченням
             boolean alreadyExists = existingUnits != null && existingUnits.stream()
-                    .anyMatch(u -> u.getName().equalsIgnoreCase(name) || u.getShortName().equalsIgnoreCase(shortName));
+                    .filter(u -> u != null && u.getId() != null)
+                    .anyMatch(u -> name.equalsIgnoreCase(u.getName())
+                            || shortName.equalsIgnoreCase(u.getShortName()));
 
             if (!alreadyExists) {
                 missingRequests.add(create(name, shortName).build());

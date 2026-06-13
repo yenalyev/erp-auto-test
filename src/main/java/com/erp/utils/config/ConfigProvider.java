@@ -20,7 +20,8 @@ public class ConfigProvider {
         config = ConfigFactory.create(TestConfig.class, System.getProperties());
 
         log.info("✅ Configuration loaded successfully");
-        log.info("Base URL: {}", config.baseUrl());
+        log.info("Base URL (frontend): {}", config.baseUrl());
+        log.info("Backend URL (API): {}", getBackendUrl());
         log.info("Keycloak URL: {}", config.keycloakUrl());
         log.info("Auth Username: {}", config.authUsername());
     }
@@ -32,6 +33,18 @@ public class ConfigProvider {
     // Convenience methods
     public static String getBaseUrl() {
         return config.baseUrl();
+    }
+
+    /**
+     * Backend root used for {@code /login} and as RestAssured base URI ({@code /api/v1/...} paths).
+     * On dev/stage this is often {@code {base.url}/server}; locally equals {@code base.url}.
+     */
+    public static String getBackendUrl() {
+        String backend = config.backendUrl();
+        if (backend == null || backend.isBlank()) {
+            return config.baseUrl();
+        }
+        return backend.replaceAll("/+$", "");
     }
 
     public static String getKeycloakUrl() {
@@ -87,11 +100,75 @@ public class ConfigProvider {
         initConfig();
     }
 
+    // User credentials
+    public static String getAdminUsername()  { return config.adminUsername(); }
+    public static String getAdminPassword()  { return config.adminPassword(); }
+    public static String getOwner1Username() { return config.owner1Username(); }
+    public static String getOwner1Password() { return config.owner1Password(); }
+    public static String getOwner2Username() { return config.owner2Username(); }
+    public static String getOwner2Password() { return config.owner2Password(); }
+    public static String getOwner3Username() { return config.owner3Username(); }
+    public static String getOwner3Password() { return config.owner3Password(); }
+
+    // Storage IDs per owner
+    public static long getOwner1StorageId()     { return config.owner1StorageId(); }
+    public static long getOwner2StorageId()     { return config.owner2StorageId(); }
+    public static long getIncorrectStorageId()  { return config.incorrectStorageId(); }
+
     public static String getGoogleSheetsSpreadsheetId() {
         return config.googleSheetsSpreadsheetId();
     }
 
     public static boolean isGoogleSheetsEnabled() {
         return config.googleSheetsEnabled();
+    }
+
+    public static boolean isTcmEnabled() {
+        return config.tcmEnabled() && config.tcmTestPlanId() > 0 && !config.tcmApiToken().isBlank();
+    }
+
+    public static String getTcmBaseUrl() {
+        return config.tcmBaseUrl();
+    }
+
+    public static String getTcmApiToken() {
+        return config.tcmApiToken();
+    }
+
+    public static long getTcmTestPlanId() {
+        return config.tcmTestPlanId();
+    }
+
+    // SSH Tunnel methods
+    public static boolean isSshEnabled() {
+        return config.sshEnabled();
+    }
+
+    public static String getSshHost() {
+        return config.sshHost();
+    }
+
+    public static int getSshPort() {
+        return config.sshPort();
+    }
+
+    public static String getSshUsername() {
+        return config.sshUsername();
+    }
+
+    public static String getSshKeyPath() {
+        return config.sshKeyPath();
+    }
+
+    public static String getSshRemoteDbHost() {
+        return config.sshRemoteDbHost();
+    }
+
+    public static int getSshRemoteDbPort() {
+        return config.sshRemoteDbPort();
+    }
+
+    public static int getSshLocalPort() {
+        return config.sshLocalPort();
     }
 }

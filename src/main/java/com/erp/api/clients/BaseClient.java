@@ -4,6 +4,8 @@ import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -31,13 +33,25 @@ public abstract class BaseClient {
     /**
      * Create default request specification
      */
+    private static LogDetail httpLogDetail() {
+        return ConfigProvider.verboseLogging() ? LogDetail.ALL : LogDetail.URI;
+    }
+
     private RequestSpecification createRequestSpec() {
+        int timeoutMs = ConfigProvider.getTimeout() * 1000;
+        RestAssuredConfig restConfig = RestAssuredConfig.config()
+                .httpClient(HttpClientConfig.httpClientConfig()
+                        .setParam("http.connection.timeout", timeoutMs)
+                        .setParam("http.socket.timeout", timeoutMs)
+                        .setParam("http.connection-manager.timeout", (long) timeoutMs));
+
         RequestSpecBuilder builder = new RequestSpecBuilder()
-                .setBaseUri(ConfigProvider.getBaseUrl())
+                .setConfig(restConfig)
+                .setBaseUri(ConfigProvider.getBackendUrl())
                 .setContentType(ContentType.JSON)
                 .setAccept(ContentType.JSON)
                 .addFilter(new AllureRestAssured())
-                .log(LogDetail.ALL);
+                .log(httpLogDetail());
 
         // ✅ Додаємо токен якщо він є
         if (authToken != null && !authToken.isEmpty()) {
@@ -52,7 +66,7 @@ public abstract class BaseClient {
      */
     private ResponseSpecification createResponseSpec() {
         return new ResponseSpecBuilder()
-                .log(LogDetail.ALL)
+                .log(httpLogDetail())
                 .build();
     }
 

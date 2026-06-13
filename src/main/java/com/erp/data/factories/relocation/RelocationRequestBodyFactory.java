@@ -7,6 +7,8 @@ import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
 
+import java.math.BigDecimal;
+
 import static com.erp.data.RequestBodyFactory.register;
 
 public class RelocationRequestBodyFactory {
@@ -17,7 +19,7 @@ public class RelocationRequestBodyFactory {
                     Long toStoreId = context.get(ContextKey.OWNER_2_STORAGE_ID);
             ResourceResponse resource = context.get(ContextKey.SHARED_RESOURCE);
             return RelocationDataFactory.simpleRelocation(fromStoreId,
-                    toStoreId, resource, FakerProvider.price(1D, 100D)).build();
+                    toStoreId, resource, BigDecimal.valueOf(FakerProvider.price(1D, 100D))).build();
                 }
         );
     }

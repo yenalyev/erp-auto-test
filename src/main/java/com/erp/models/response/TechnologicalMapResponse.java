@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder(toBuilder = true)
@@ -17,12 +18,12 @@ import java.util.List;
 public class TechnologicalMapResponse {
     private Long id;
     private String name;
+    private String type;
     private Long version;
     private String groupId;
-    private Boolean isActive;
-    private Instant createdAt;
+    private Instant dateTime;
+    private Set<SimpleEntityResponse> storages;
 
     private List<ResourceUsageResponse> input;
     private List<ResourceUsageResponse> output;
-    private List<AlternativeGroupResponse> alternatives;
 }

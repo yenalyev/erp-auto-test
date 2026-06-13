@@ -86,7 +86,7 @@ public abstract class BaseFunctionalTest extends BaseTest {
                 Response getResponse = apiExecutor.execute(getListEndpoint, UserRole.ADMIN);
                 AllureHelper.attachResponseDetails(getResponse);
 
-                List<RES> allUnits = getResponse.jsonPath().getList("", responseClass);
+                List<RES> allUnits = DatabaseIntegrityValidator.extractList(getResponse, responseClass);
 
                 // Знаходимо об'єкт за ID (використовуємо рефлексію для отримання ID)
                 RES persistedEntity = allUnits.stream()

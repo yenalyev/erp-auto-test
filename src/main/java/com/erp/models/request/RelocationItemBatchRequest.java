@@ -6,17 +6,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProductionRequest {
-    private String description;
-    private Long technologicalMapId;
-    private Double amount;
-    private Long storageId;
-    private List<Long> selectedOptionIds;
+public class RelocationItemBatchRequest {
+    private String batchNumber;
+    private BigDecimal amount;
+    private Boolean isProduced;
 }

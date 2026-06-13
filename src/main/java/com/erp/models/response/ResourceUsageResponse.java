@@ -14,4 +14,5 @@ import lombok.NoArgsConstructor;
 public class ResourceUsageResponse {
     private ResourceResponse resource;
     private Double amount;
+    private Double totalAmount;
 }

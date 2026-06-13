@@ -24,6 +24,13 @@ public class AuthService {
     private final Map<String, TokenInfo> tokenCache = new HashMap<>();
     private final Map<String, SessionInfo> sessionCache = new HashMap<>();
 
+    private PlaywrightSessionProvider playwrightSessionProvider;
+
+    public void setPlaywrightSessionProvider(PlaywrightSessionProvider provider) {
+        this.playwrightSessionProvider = provider;
+        log.info("🎭 PlaywrightSessionProvider registered in AuthService");
+    }
+
     public AuthService(String baseUrl) {
         this.baseUrl = baseUrl;
         this.keycloakUrl = ConfigProvider.getKeycloakUrl();
@@ -538,6 +545,11 @@ public class AuthService {
      */
     @Step("Browser login with redirect URI for user: {username}")
     public Map<String, String> loginWithRedirectUri(String username, String password, String targetUrl) {
+        if (playwrightSessionProvider != null) {
+            log.info("🎭 Delegating login to Playwright (headless browser) for user: {}", username);
+            return playwrightSessionProvider.getSession(username, password);
+        }
+
         log.info("🚀 Starting NEW browser login flow with redirectUri");
         log.info("   Username: {}", username);
         log.info("   Target URL: {}", targetUrl);

@@ -3,9 +3,8 @@
 
     <listeners>
         <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
-        <listener class-name="com.erp.listeners.AllureTestCaseIdListener"/>
-
     </listeners>
 
     <test name="Functional Tests">

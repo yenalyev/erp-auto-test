@@ -14,8 +14,8 @@
     <description>Test Automation Framework for ERP System</description>
 
     <properties>
-        <env>debug</env>
-        <suite>test-dev</suite>
+        <env>dev</env>
+        <suite>dev-test</suite>
         <!-- Java  -->
         <java.version>21</java.version>
         <maven.compiler.source>21</maven.compiler.source>
@@ -36,6 +36,7 @@
         <commons-io.version>2.17.0</commons-io.version>
         <testcontainers.version>1.20.4</testcontainers.version>
         <postgresql.version>42.7.4</postgresql.version>
+        <playwright.version>1.50.0</playwright.version>
 
         <!-- Plugins -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -275,6 +276,20 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.12.0</version>
         </dependency>
+
+        <!-- Playwright — headless browser for OAuth2 session auth -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>${playwright.version}</version>
+        </dependency>
+
+        <!-- JSch — SSH tunneling for remote database access -->
+        <dependency>
+            <groupId>com.github.mwiede</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.2.20</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -325,6 +340,9 @@
                     </systemPropertyVariables>
                     <argLine>
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+                        -Dfile.encoding=UTF-8
+                        -Dstdout.encoding=UTF-8
+                        -Dstderr.encoding=UTF-8
                         --add-opens java.base/java.lang=ALL-UNNAMED
                         --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.time=ALL-UNNAMED
@@ -343,6 +361,27 @@
                         <version>${aspectj.version}</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+
+            <!-- Playwright browser installer: run with  mvn playwright:install -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>install-chromium</id>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>com.microsoft.playwright.CLI</mainClass>
+                            <arguments>
+                                <argument>install</argument>
+                                <argument>chromium</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Allure Maven Plugin -->

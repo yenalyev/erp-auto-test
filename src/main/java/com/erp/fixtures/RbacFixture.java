@@ -21,6 +21,7 @@ public class RbacFixture extends BaseFixture {
     public void prepareFullRbacContext() {
         log.info("Starting ERP test data generation...");
         fetchSharedUnit(5);
+        fetchSharedResourceCategory();
         setupSharedResource();
         setupSharedResourceList(4);
         prepareTechMapForUpdate();

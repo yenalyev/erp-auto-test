@@ -18,6 +18,7 @@ public class ResourceFixture extends BaseFixture {
     public void prepareContext() {
         log.info("Starting Measurement Unit functional test data generation...");
         fetchSharedUnit(5);
+        fetchSharedResourceCategory();
         setupSharedResourceList(5);
     }
 

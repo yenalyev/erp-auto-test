@@ -2,7 +2,7 @@ package com.erp.tests.functional.resource;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
-import com.erp.data.factories.ResourceDataFactory;
+import com.erp.data.RequestBodyFactory;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.models.request.ResourceRequest;
@@ -60,9 +60,8 @@ public class ResourceTest extends BaseFunctionalTest {
     @Description("Успішне створення ресурсу та перевірка зв'язку з Measurement Unit")
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateResource() {
-        // 1. Arrange: Отримуємо ID існуючої одиниці виміру з контексту
-        ResourceResponse sharedResource = testContext.get(ContextKey.SHARED_RESOURCE);
-        ResourceRequest requestBody = ResourceDataFactory.defaultResource(sharedResource.getId()).build();
+        // 1. Arrange: генеруємо тіло запиту через фабрику (зчитує SHARED_UNIT_ID та SHARED_RESOURCE_CATEGORY_ID з контексту)
+        ResourceRequest requestBody = (ResourceRequest) RequestBodyFactory.generate(ApiEndpointDefinition.RESOURCE_CREATE, testContext);
 
         // 2. Act: Створення ресурсу
         Response response = Allure.step("STEP 1: Створення ресурсу через POST", () ->

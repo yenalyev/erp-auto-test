@@ -8,10 +8,12 @@ import lombok.NonNull;
 public class ResourceDataFactory {
 
     // Повертаємо ResourceRequestBuilder
-    public static ResourceRequest.ResourceRequestBuilder defaultResource(@NonNull Long measurementUnitId) {
+    public static ResourceRequest.ResourceRequestBuilder defaultResource(@NonNull Long measurementUnitId,
+                                                                        @NonNull Long categoryId) {
         return ResourceRequest.builder()
                 .name(FakerProvider.ukrainian().commerce().productName())
-                .measurementUnitId(measurementUnitId);
+                .measurementUnitId(measurementUnitId)
+                .categoryId(categoryId);
     }
 
     /**

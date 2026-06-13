@@ -11,6 +11,8 @@ import com.erp.enums.UserRole;
 import com.erp.models.request.MeasurementUnitRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.*;
+import com.erp.utils.helpers.ApiResponseHelper;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import io.qameta.allure.Step;
@@ -22,6 +24,7 @@ import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -37,7 +40,8 @@ public abstract class BaseFixture {
 
         // 1. Отримуємо те, що вже є
         Response response = apiExecutor.execute(getEndpoint, UserRole.ADMIN);
-        List<MeasurementUnitResponse> existing = response.jsonPath().getList("", MeasurementUnitResponse.class);
+        List<MeasurementUnitResponse> existing = ApiResponseHelper.parseList(
+                response, MeasurementUnitResponse.class, "GET measurement units");
         if (existing == null) existing = new ArrayList<>();
 
         // 2. Запитуємо у фабрики список того, чого не вистачає до 5 одиниць
@@ -53,14 +57,38 @@ public abstract class BaseFixture {
 
             // 3. Оновлюємо фінальний список після створення
             response = apiExecutor.execute(getEndpoint, UserRole.ADMIN);
-            existing = response.jsonPath().getList("", MeasurementUnitResponse.class);
+            existing = ApiResponseHelper.parseList(
+                    response, MeasurementUnitResponse.class, "GET measurement units after create");
         }
 
         // 4. Зберігаємо в контекст
-        testContext.set(ContextKey.SHARED_UNIT_ID, existing.get(0).getId());
-        testContext.set(ContextKey.SHARED_MEASUREMENT_UNIT_LIST, existing);
+        List<MeasurementUnitResponse> validUnits = existing.stream()
+                .filter(Objects::nonNull)
+                .filter(u -> u.getId() != null)
+                .toList();
+        if (validUnits.isEmpty()) {
+            throw new IllegalStateException(
+                    "No measurement units available after setup (GET status="
+                            + response.statusCode() + ")");
+        }
+        testContext.set(ContextKey.SHARED_UNIT_ID, validUnits.getFirst().getId());
+        testContext.set(ContextKey.SHARED_MEASUREMENT_UNIT_LIST, new ArrayList<>(validUnits));
 
-        log.info("✅ Measurement units ready. Total: {}", existing.size());
+        log.info("✅ Measurement units ready. Total: {}", validUnits.size());
+    }
+
+    @Step("Fetch Shared Resource Category")
+    public void fetchSharedResourceCategory() {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CATEGORY_GET_ALL, UserRole.ADMIN);
+        List<ResourceCategoryResponse> categories = response.jsonPath().getList("", ResourceCategoryResponse.class);
+
+        if (categories == null || categories.isEmpty()) {
+            throw new IllegalStateException("No resource categories found in the system. " +
+                    "Cannot create a resource without a categoryId.");
+        }
+
+        testContext.set(ContextKey.SHARED_RESOURCE_CATEGORY_ID, categories.get(0).getId());
+        log.info("✅ Resource category ready. Using categoryId: {}", categories.get(0).getId());
     }
 
     @Step("Create Shared Resource")
@@ -87,7 +115,7 @@ public abstract class BaseFixture {
 
         // Гарантуємо, що список можна змінювати (ArrayList)
         List<ResourceResponse> allResources = new ArrayList<>(
-                response.jsonPath().getList("", ResourceResponse.class)
+                DatabaseIntegrityValidator.extractList(response, ResourceResponse.class)
         );
 
         if (allResources.size() < length) {
@@ -120,8 +148,8 @@ public abstract class BaseFixture {
         Response response = apiExecutor.execute(getEndpoint, userRole, userRole.getStoreId());
 
         // Гарантуємо, що список можна змінювати (ArrayList)
-        List<ProductionResponse> allProductions = new ArrayList<>(
-                response.jsonPath().getList("", ProductionResponse.class)
+        List<ManufacturingItemResponse> allProductions = new ArrayList<>(
+                DatabaseIntegrityValidator.extractList(response, ManufacturingItemResponse.class)
         );
 
         if (allProductions.size() < length) {
@@ -138,19 +166,20 @@ public abstract class BaseFixture {
             TechnologicalMapResponse techMapGuaranteed = testContext.get(ContextKey.DYNAMIC_TECH_MAP);
 
             for (int i = 0; i < needed; i++) {
-                //Create productions
-                Object body = ProductionDataFactory
-                        .simpleProduction(Long.valueOf(userRole.getStoreId()),
-                                techMapGuaranteed, FakerProvider.price(1D,100D));
+                Object body = ProductionDataFactory.buildCreateRequest(
+                        techMapGuaranteed, FakerProvider.price(1D, 100D));
 
-                ApiEndpointDefinition createEndpoint =
-                        ApiEndpointDefinition.PRODUCTION_POST_CREATE_BY_OWNER_1_STORE_ID;
+                ApiEndpointDefinition createEndpoint = ApiEndpointDefinition.PRODUCTION_POST_CREATE;
 
-                Response createResponse = apiExecutor.execute(createEndpoint, userRole, body, userRole.getStoreId());
+                Response createResponse = apiExecutor.execute(
+                        createEndpoint, userRole, body, userRole.getStoreId());
                 validateSuccess(createResponse, "Create Production during setup");
 
-                ProductionResponse createdRProduction = createResponse.as(ProductionResponse.class);
-                allProductions.add(createdRProduction);
+                List<ManufacturingItemResponse> created = createResponse.jsonPath()
+                        .getList("", ManufacturingItemResponse.class);
+                if (created != null) {
+                    allProductions.addAll(created);
+                }
             }
         }
 
@@ -162,7 +191,9 @@ public abstract class BaseFixture {
         List<ResourceResponse> sharedResources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
 
         // Створюємо техкарту через API
-        TechnologicalMapRequest createRequest = TechnologicalMapDataFactory.createSimpleTechMap(sharedResources).build();
+        Long storageId = com.erp.utils.config.ConfigProvider.getOwner1StorageId();
+        TechnologicalMapRequest createRequest = TechnologicalMapDataFactory
+                .createProductionTechMap(sharedResources, storageId).build();
         Response response = apiExecutor.execute(ApiEndpointDefinition.TECH_MAP_CREATE, UserRole.ADMIN, createRequest);
 
         TechnologicalMapResponse createdMap = response.as(TechnologicalMapResponse.class);
@@ -241,7 +272,7 @@ public abstract class BaseFixture {
 
 
 
-    private void validateSuccess(Response response, String action) {
+    protected void validateSuccess(Response response, String action) {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             log.error("ERROR {} failed! Status: {}. Body: {}", action,
                     response.statusCode(), response.body().asString());

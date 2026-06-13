@@ -5,22 +5,25 @@
   "required": [
     "id",
     "name",
+    "type",
     "version",
     "groupId",
-    "isActive",
-    "createdAt",
+    "dateTime",
     "input",
-    "output",
-    "alternatives"
+    "output"
   ],
   "properties": {
     "id": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 1
     },
     "name": {
       "type": "string",
       "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": ["PRODUCTION", "DISASSEMBLE"]
     },
     "version": {
       "type": "integer",
@@ -28,16 +31,23 @@
     },
     "groupId": {
       "type": "string",
-      "format": "uuid",
-      "description": "Унікальний ідентифікатор групи техкарт"
+      "format": "uuid"
     },
-    "isActive": {
-      "type": "boolean"
-    },
-    "createdAt": {
+    "dateTime": {
       "type": "string",
-      "format": "date-time",
-      "description": "ISO 8601 формат дати та часу (Instant)"
+      "format": "date-time"
+    },
+    "storages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1 },
+          "name": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      }
     },
     "input": {
       "type": "array",
@@ -52,14 +62,7 @@
       "items": {
         "$ref": "resource-usage-response-schema.json"
       }
-    },
-    "alternatives": {
-      "type": "array",
-      "minItems": 0,
-      "items": {
-        "$ref": "alternative-group-response-schema.json"
-      }
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

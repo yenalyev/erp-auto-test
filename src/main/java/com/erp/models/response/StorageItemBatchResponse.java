@@ -13,11 +13,10 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProductionResponse {
-    private String id;
-    private String description;
-    private Long technologicalMapId;
+public class StorageItemBatchResponse {
+    private Long id;
     private Double amount;
-    private Instant createdAt;
-    private String storageId;
+    private Instant date;
+    private String batchNumber;
+    private Boolean isProduced;
 }

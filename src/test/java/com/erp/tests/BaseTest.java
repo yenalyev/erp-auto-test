@@ -9,8 +9,10 @@ import com.erp.test_context.GlobalTestContext;
 import com.erp.test_context.TestContext;
 import com.erp.utils.TestcontainersManager;
 import com.erp.utils.auth.AuthService;
+import com.erp.utils.auth.PlaywrightSessionProvider;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.DatabaseHelper;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -20,6 +22,7 @@ import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import java.util.ArrayList;
@@ -42,9 +45,14 @@ public abstract class BaseTest {
 
     private static String baseUrl;
     private static String authToken;
+    private static boolean tokenAuthAvailable;
     private static boolean isTestcontainersMode;
     private static boolean useDocker;
     protected static SessionClient sessionClient;
+    private static PlaywrightSessionProvider playwrightSessionProvider;
+
+    /** Set when {@link #globalSetup()} aborts (e.g. DB pre-flight); blocks {@link #baseTestClassSetup()}. */
+    private static volatile String suiteSkipReason;
 
     // Зберігаємо створені ресурси для cleanup
     protected List<String> createdItemIds = new ArrayList<>();
@@ -76,14 +84,27 @@ public abstract class BaseTest {
             }
         } else {
             log.info("📝 Running WITHOUT Testcontainers (using config from properties)");
-            baseUrl = ConfigProvider.getBaseUrl();  // ✅ Змінено
+            baseUrl = ConfigProvider.getBackendUrl();
         }
 
-        log.info("🌐 Base URL: {}", baseUrl);
+        log.info("🌐 Backend URL (API + login): {}", baseUrl);
+        log.info("🖥️  Frontend URL (UI): {}", ConfigProvider.getBaseUrl());
 
         // Ініціалізуємо сервіси
         authService = new AuthService(baseUrl);
         cleanupService = new CleanupService(baseUrl);
+
+        // Playwright потрібен лише для remote-середовищ (dev, staging, debug).
+        // Testcontainers-режим використовує прямий token-based auth через локальний Keycloak.
+        if (!isTestcontainersMode) {
+            try {
+                playwrightSessionProvider = new PlaywrightSessionProvider(ConfigProvider.getBackendUrl());
+                authService.setPlaywrightSessionProvider(playwrightSessionProvider);
+            } catch (Exception e) {
+                log.warn("⚠️  Playwright initialization failed — falling back to RestAssured auth flow");
+                log.warn("    Причина: {}. Встанови Chromium: mvn exec:java@install-chromium", e.getMessage());
+            }
+        }
 
         sessionClient = new SessionClient();
         // Ініціалізуємо ApiExecutor (використовує sessionClient для запитів та authService для кешування сесій)
@@ -91,11 +112,12 @@ public abstract class BaseTest {
 
         // Database Helper тільки якщо потрібен
         if (shouldInitializeDatabase()) {
-            dbHelper = new DatabaseHelper();
+            initDatabaseOrSkip();
         }
 
         // Отримуємо токен авторизації
         authToken = authenticateUser();
+        tokenAuthAvailable = (authToken != null);
 
         // Налаштовуємо RestAssured
         configureRestAssured();
@@ -118,12 +140,20 @@ public abstract class BaseTest {
             dbHelper.closeConnection();
         }
 
+        // Закриваємо Playwright браузер
+        if (playwrightSessionProvider != null) {
+            playwrightSessionProvider.close();
+        }
+
         log.info("✅ Test suite cleanup completed");
     }
 
 
     @BeforeClass(alwaysRun = true)
     public void baseTestClassSetup() {
+        if (suiteSkipReason != null) {
+            throw new SkipException(suiteSkipReason);
+        }
         log.info("📦 Setting up test class: {}", this.getClass().getSimpleName());
         log.info("Initializing Base Test Context for: {}", this.getClass().getSimpleName());
 
@@ -150,11 +180,15 @@ public abstract class BaseTest {
         createdItemIds.clear();
         createdOrderIds.clear();
 
-        // Оновлюємо токен якщо потрібно (перевіряємо expiration)
-        if (authService.isTokenExpired(authToken)) {
-            log.info("🔄 Token expired, refreshing...");
-            authToken = authenticateUser();
-            updateRequestSpecWithToken();
+        // Оновлюємо токен тільки якщо Keycloak був доступний під час globalSetup.
+        // Якщо токен не вдалося отримати на старті — не повторюємо спроби перед кожним тестом.
+        if (tokenAuthAvailable && authService.isTokenExpired(authToken)) {
+            log.debug("Token expired, refreshing...");
+            String refreshed = authenticateUser();
+            if (refreshed != null) {
+                authToken = refreshed;
+                updateRequestSpecWithToken();
+            }
         }
     }
 
@@ -169,9 +203,10 @@ public abstract class BaseTest {
     }
 
     /**
-     * Перевірка чи потрібно ініціалізувати Database Helper
+     * Перевірка чи потрібно ініціалізувати Database Helper.
+     * UI-тести перевизначають у {@link com.erp.tests.ui.BaseUITest}.
      */
-    private boolean shouldInitializeDatabase() {
+    protected boolean shouldInitializeDatabase() {
         String profile = System.getProperty("env", "debug");
 
         // ✅ Використовуємо ConfigProvider
@@ -179,23 +214,90 @@ public abstract class BaseTest {
     }
 
     /**
-     * Автентифікація через Keycloak
+     * Initializes the database connection and validates it with a ping.
+     * If the SSH tunnel or JDBC connection cannot be established, throws
+     * {@link SkipException} so that the entire suite is marked as SKIPPED
+     * rather than FAILED — preventing useless test runs against a broken DB.
+     */
+    private void initDatabaseOrSkip() {
+        boolean sshMode = ConfigProvider.isSshEnabled();
+        String phase = sshMode ? "SSH tunnel" : "database";
+
+        log.info("Checking {} connectivity before running tests...", phase);
+
+        try {
+            dbHelper = new DatabaseHelper();
+        } catch (Exception e) {
+            String hint = buildDbHint(sshMode, e);
+            String msg = String.format(
+                    "Pre-flight check failed: cannot connect to the database%s.%n" +
+                    "Reason: %s%n%s%n" +
+                    "Fix the issue and re-run, or set use.database=false to skip DB checks.",
+                    sshMode ? " via SSH tunnel" : "",
+                    e.getMessage(),
+                    hint
+            );
+            log.error(msg);
+            suiteSkipReason = msg;
+            throw new SkipException(msg);
+        }
+
+        if (!dbHelper.ping()) {
+            String msg = "Pre-flight check failed: database is reachable but SELECT 1 returned no response. " +
+                         "Check DB credentials and permissions.";
+            log.error(msg);
+            dbHelper.closeConnection();
+            dbHelper = null;
+            suiteSkipReason = msg;
+            throw new SkipException(msg);
+        }
+
+        log.info("Database pre-flight check passed — connection is healthy");
+    }
+
+    private String buildDbHint(boolean sshMode, Exception cause) {
+        if (sshMode) {
+            String rootMessage = cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage();
+            if (rootMessage != null && rootMessage.contains("Connection refused")) {
+                return "Hint: SSH host is unreachable. Check ssh.host, ssh.port and firewall rules in dev.properties.";
+            }
+            if (rootMessage != null && (rootMessage.contains("Auth fail") || rootMessage.contains("publickey"))) {
+                return "Hint: SSH key rejected. Verify ssh.key.path points to the correct private key file.";
+            }
+            if (cause instanceof IllegalStateException) {
+                return "Hint: Fill in ssh.host, ssh.username and ssh.key.path in dev.properties.";
+            }
+            return "Hint: Check ssh.* properties in dev.properties.";
+        }
+        return "Hint: Check db.url, db.username and db.password in properties.";
+    }
+
+    /**
+     * Автентифікація через Keycloak (token-based).
+     * Повертає null якщо Keycloak недоступний — у такому разі suite продовжується
+     * в session-only режимі (автентифікація через Playwright).
      */
     @Step("Authenticate user and get access token")
     private String authenticateUser() {
-        // ✅ Отримуємо credentials з ConfigProvider
+        if (playwrightSessionProvider != null) {
+            log.info("🎭 Playwright session auth enabled — skipping Keycloak token grant");
+            return null;
+        }
+
         String username = ConfigProvider.getAuthUsername();
         String password = ConfigProvider.getAuthPassword();
 
-        log.info("🔐 Authenticating user: {}", username);
+        log.info("🔐 Authenticating user via Keycloak token grant: {}", username);
 
         try {
             String token = authService.getAccessToken(username, password);
-            log.info("✅ Authentication successful");
+            log.info("✅ Token authentication successful");
             return token;
         } catch (Exception e) {
-            log.error("❌ Authentication failed: {}", e.getMessage());
-            throw new RuntimeException("Failed to authenticate", e);
+            log.warn("⚠️  Token authentication unavailable (Keycloak not reachable at {}): {}",
+                    ConfigProvider.getKeycloakUrl(), e.getMessage());
+            log.warn("⚠️  Running in session-only mode — use Playwright-based auth (getSessionForUser)");
+            return null;
         }
     }
 
@@ -229,14 +331,18 @@ public abstract class BaseTest {
     private void configureRestAssured() {
         RestAssured.baseURI = baseUrl;
 
-        requestSpec = new RequestSpecBuilder()
+        RequestSpecBuilder builder = new RequestSpecBuilder()
                 .setBaseUri(baseUrl)
-                .addHeader("Authorization", "Bearer " + authToken)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
                 .setRelaxedHTTPSValidation()
-                .log(LogDetail.ALL)
-                .build();
+                .log(LogDetail.ALL);
+
+        if (authToken != null) {
+            builder.addHeader("Authorization", "Bearer " + authToken);
+        }
+
+        requestSpec = builder.build();
 
         // ✅ Використовуємо ConfigProvider
         if (ConfigProvider.verboseLogging()) {
@@ -253,6 +359,11 @@ public abstract class BaseTest {
      * Оновлення токена в RequestSpec
      */
     private void updateRequestSpecWithToken() {
+        if (authToken == null) {
+            log.debug("⏭️  Skipping requestSpec update — no token available (session-only mode)");
+            return;
+        }
+
         requestSpec = new RequestSpecBuilder()
                 .setBaseUri(baseUrl)
                 .addHeader("Authorization", "Bearer " + authToken)
@@ -291,8 +402,7 @@ public abstract class BaseTest {
                                                     Class<T> responseClass,
                                                     Predicate<T> filter) {
         Response response = apiExecutor.execute(getEndpoint, UserRole.ADMIN);
-        // Використовуємо responseClass для універсальності
-        List<T> items = response.jsonPath().getList("", responseClass);
+        List<T> items = DatabaseIntegrityValidator.extractList(response, responseClass);
 
         long currentCount = items.stream().filter(filter).count();
 
@@ -333,5 +443,13 @@ public abstract class BaseTest {
      */
     protected DatabaseHelper getDbHelper() {
         return dbHelper;
+    }
+
+    /**
+     * Expose the shared PlaywrightSessionProvider so UI-test subclasses can
+     * reuse the already-launched Browser instance.
+     */
+    protected static PlaywrightSessionProvider getPlaywrightSessionProvider() {
+        return playwrightSessionProvider;
     }
 }

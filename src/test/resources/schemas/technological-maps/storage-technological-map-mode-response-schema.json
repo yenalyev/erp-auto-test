@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Storage Technological Map Mode Response",
+  "type": "object",
+  "required": ["storageId", "mode"],
+  "properties": {
+    "storageId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["READ_ONLY", "EDIT_ALLOWED"]
+    }
+  },
+  "additionalProperties": false
+}

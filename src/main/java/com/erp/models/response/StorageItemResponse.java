@@ -15,4 +15,6 @@ public class StorageItemResponse {
     private Long id;
     private ResourceResponse resource;
     private Double amount;
+    private Integer weight;
+    private Double alertLimit;
 }

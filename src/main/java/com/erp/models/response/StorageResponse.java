@@ -16,5 +16,7 @@ import java.util.List;
 public class StorageResponse {
     private Long id;
     private String name;
+    /** Backend {@code UnitType} name, e.g. SUPPLIER, STORAGE, PRODUCTION. */
+    private String type;
     private List<StorageItemResponse> items;
 }

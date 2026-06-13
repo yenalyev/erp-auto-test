@@ -178,12 +178,27 @@ rules:
     description: "Отримати статистику плану по Бізнес Юніту з невалідним ід (немає такого бізнес юніту)
      (STORAGES): ніхто не отримує доступ ні ADMIN ні OWNER_1 ні ANONYMOUS"
 
-  - endpointName: "PRODUCTION_POST_CREATE_BY_OWNER_1_STORE_ID"
+  - endpointName: "PRODUCTION_POST_CREATE"
+    contextKey: "OWNER_1_STORAGE_ID"
     allowedRoles: [ OWNER_1 ]
     deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
     bodyType: "CREATE_SIMPLE_PRODUCTION"
     description: "Додати запис в журнал виробництва по Бізнес Юніту який належить OWNER_1 (STORAGES): 
     має право тільки OWNER_1. ADMIN, OWNER_2, ANONYMOUS - не мають права"
+
+  - endpointName: "STORAGE_INVENTORY_GET"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Читання залишків складу OWNER_1"
+
+  - endpointName: "STORAGE_INVENTORY_PUT"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS, OWNER_2 ]
+    bodyType: null
+    description: "Інвентаризація (оновлення залишків) складу OWNER_1"
 
   # ========================================
   # RELOCATION ENDPOINTS

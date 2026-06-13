@@ -4,8 +4,23 @@
   "type": "object",
   "required": ["resource", "amount"],
   "properties": {
-    "resource": { "$ref": "../resource-response-schema.json" },
-    "amount": { "type": "number", "minimum": 0 }
+    "resource": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string" },
+        "active": { "type": "boolean" },
+        "category": { "type": "object" },
+        "imagePath": { "type": ["string", "null"] },
+        "properties": { "type": "array" },
+        "unit": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "amount": { "type": "number", "minimum": 0 },
+    "totalAmount": { "type": ["number", "null"] }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

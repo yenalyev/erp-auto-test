@@ -16,6 +16,46 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class DatabaseIntegrityValidator {
 
     /**
+     * Extracts a list from either a plain JSON array or a Spring-paginated response
+     * that wraps items in a {@code "content"} field (e.g. {@code PagedModel}).
+     */
+    public static <RES> List<RES> extractList(Response response, Class<RES> responseClass) {
+        String body = response.getBody().asString();
+        if (body == null) {
+            return List.of();
+        }
+        String trimmed = body.stripLeading();
+        if (trimmed.startsWith("[")) {
+            List<RES> root = response.jsonPath().getList("$", responseClass);
+            return root != null ? root : List.of();
+        }
+        if (trimmed.startsWith("{")) {
+            if (response.jsonPath().get("content") != null) {
+                List<RES> paged = response.jsonPath().getList("content", responseClass);
+                return paged != null ? paged : List.of();
+            }
+        }
+        List<RES> fallback = response.jsonPath().getList("", responseClass);
+        return fallback != null ? fallback : List.of();
+    }
+
+    /**
+     * Total element count from Spring {@code PagedModel} ({@code page.totalElements}).
+     * Falls back to {@link #extractList} size when pagination metadata is absent.
+     */
+    public static long extractPageTotalElements(Response response) {
+        Long total = response.jsonPath().getLong("page.totalElements");
+        if (total != null) {
+            return total;
+        }
+        Integer totalInt = response.jsonPath().getInt("page.totalElements");
+        if (totalInt != null) {
+            return totalInt.longValue();
+        }
+        return extractList(response, Object.class).size();
+    }
+
+    /**
      * Отримує кількість записів у базі даних, що відповідають певному фільтру.
      * Використовується у фазі Arrange перед виконанням дії.
      */
@@ -26,7 +66,7 @@ public class DatabaseIntegrityValidator {
                                             Predicate<RES> filter) {
         return Allure.step("Отримання поточної кількості записів для перевірки цілісності", () -> {
             Response response = apiExecutor.execute(endpoint, userRole);
-            List<RES> list = response.jsonPath().getList("", responseClass);
+            List<RES> list = extractList(response, responseClass);
 
             if (list == null) return 0L;
 

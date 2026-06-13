@@ -19,7 +19,12 @@ public class ResourceRequestBodyFactory {
                         throw new IllegalStateException("ERROR - Test Setup Error: 'sharedUnitId' is " +
                                 "missing in RbacTestContext. Make sure RbacTestFixtures.prepareEnvironment() was called.");
                     }
-                    return ResourceDataFactory.defaultResource(unitId).build();
+                    Long categoryId = context.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+                    if (categoryId == null) {
+                        throw new IllegalStateException("ERROR - Test Setup Error: 'sharedResourceCategoryId' is " +
+                                "missing in context. Make sure fetchSharedResourceCategory() was called before setupSharedResource().");
+                    }
+                    return ResourceDataFactory.defaultResource(unitId, categoryId).build();
                 }
 
         );

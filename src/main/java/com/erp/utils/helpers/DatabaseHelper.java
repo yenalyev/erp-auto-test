@@ -1,5 +1,6 @@
 package com.erp.utils.helpers;
 
+import com.erp.utils.SshTunnelManager;
 import com.erp.utils.TestcontainersManager;
 import com.erp.utils.config.ConfigProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -13,12 +14,12 @@ public class DatabaseHelper {
     private final String jdbcUrl;
     private final String username;
     private final String password;
+    private SshTunnelManager sshTunnelManager;
 
     public DatabaseHelper() {
         String profile = System.getProperty("env", "local");
 
         if ("local".equals(profile)) {
-            // Для Testcontainers
             if (TestcontainersManager.isRunning()) {
                 this.jdbcUrl = TestcontainersManager.getDatabaseUrl();
                 this.username = TestcontainersManager.getDatabaseUsername();
@@ -27,13 +28,18 @@ public class DatabaseHelper {
                 throw new IllegalStateException("Testcontainers not started for local profile");
             }
         } else {
-            // ✅ Використовуємо ConfigProvider
-            this.jdbcUrl = ConfigProvider.getDbUrl();
             this.username = ConfigProvider.getDbUsername();
             this.password = ConfigProvider.getDbPassword();
+
+            if (ConfigProvider.isSshEnabled()) {
+                sshTunnelManager = new SshTunnelManager();
+                this.jdbcUrl = sshTunnelManager.open(ConfigProvider.getDbUrl());
+            } else {
+                this.jdbcUrl = ConfigProvider.getDbUrl();
+            }
         }
 
-        log.info("🗄️  DatabaseHelper initialized");
+        log.info("DatabaseHelper initialized");
         log.debug("   JDBC URL: {}", maskPassword(jdbcUrl));
 
         connect();
@@ -53,6 +59,23 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Validates that the connection is alive by executing {@code SELECT 1}.
+     *
+     * @return {@code true} if the database responded; {@code false} otherwise
+     */
+    public boolean ping() {
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("SELECT 1")) {
+            boolean alive = rs.next();
+            log.debug("DB ping: {}", alive ? "OK" : "no rows returned");
+            return alive;
+        } catch (SQLException e) {
+            log.warn("DB ping failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
     public ResultSet executeQuery(String sql) throws SQLException {
         Statement statement = connection.createStatement();
         return statement.executeQuery(sql);
@@ -67,10 +90,15 @@ public class DatabaseHelper {
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
-                log.info("✅ Database connection closed");
+                log.info("Database connection closed");
             }
         } catch (SQLException e) {
-            log.error("❌ Failed to close connection: {}", e.getMessage());
+            log.error("Failed to close connection: {}", e.getMessage());
+        } finally {
+            if (sshTunnelManager != null) {
+                sshTunnelManager.close();
+                sshTunnelManager = null;
+            }
         }
     }
 

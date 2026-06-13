@@ -2,6 +2,7 @@ package com.erp.test_context;
 
 import com.erp.enums.UserRole;
 import com.erp.models.response.*;
+import com.erp.utils.config.ConfigProvider;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,7 +47,7 @@ public class GlobalTestContext implements TestContext {
     private TechnologicalMapResponse dynamicTechnologicalMap;
     private Long dynamicTechnologicalMapId;
     private String dynamicTechnologicalMapNewName;
-    private List<ProductionResponse> dynamicProductionList;
+    private List<ManufacturingItemResponse> dynamicProductionList;
     private StorageResponse dynamicStorage;
     private PlanResponse dynamicPlan;
     private List<PlanResponse> dynamicPlanList;
@@ -167,9 +168,9 @@ public class GlobalTestContext implements TestContext {
             case DYNAMIC_TECH_MAP -> dynamicTechnologicalMap;
             case DYNAMIC_TECH_MAP_ID -> dynamicTechnologicalMapId;
             case DYNAMIC_TECH_MAP_NEW_NAME -> dynamicTechnologicalMapNewName;
-            case OWNER_1_STORAGE_ID -> 1L;
-            case OWNER_2_STORAGE_ID -> 2L;
-            case OWNER_INCORRECT_STORAGE_ID -> 9999L;
+            case OWNER_1_STORAGE_ID -> ConfigProvider.getOwner1StorageId();
+            case OWNER_2_STORAGE_ID -> ConfigProvider.getOwner2StorageId();
+            case OWNER_INCORRECT_STORAGE_ID -> ConfigProvider.getIncorrectStorageId();
             case DYNAMIC_PRODUCTIONS ->  dynamicProductionList;
             case DYNAMIC_STORAGE -> dynamicStorage;
             case DYNAMIC_PLAN -> dynamicPlan;
@@ -184,7 +185,8 @@ public class GlobalTestContext implements TestContext {
     @SuppressWarnings("unchecked")
     public <T> void set(ContextKey key, T value) {
         if (value == null) {
-            log.warn("⚠️ Setting null value for key: {}", key);
+            log.warn("⚠️ Skipping null value for key: {}", key);
+            return;
         }
 
         switch (key) {
@@ -198,7 +200,7 @@ public class GlobalTestContext implements TestContext {
             case DYNAMIC_TECH_MAP -> this.dynamicTechnologicalMap = (TechnologicalMapResponse) value;
             case DYNAMIC_TECH_MAP_ID -> this.dynamicTechnologicalMapId = (Long) value;
             case DYNAMIC_TECH_MAP_NEW_NAME -> this.dynamicTechnologicalMapNewName = (String)value;
-            case DYNAMIC_PRODUCTIONS -> this.dynamicProductionList = (List<ProductionResponse>) value;
+            case DYNAMIC_PRODUCTIONS -> this.dynamicProductionList = (List<ManufacturingItemResponse>) value;
             case DYNAMIC_STORAGE -> this.dynamicStorage = (StorageResponse) value;
             case DYNAMIC_PLAN -> this.dynamicPlan = (PlanResponse) value;
             case DYNAMIC_PLAN_LIST -> this.dynamicPlanList = (List<PlanResponse>) value;

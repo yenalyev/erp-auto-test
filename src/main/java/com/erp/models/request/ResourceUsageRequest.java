@@ -6,6 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -13,5 +17,12 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ResourceUsageRequest {
     private Long resourceId;
-    private Double amount;
+    private BigDecimal amount;
+    @Builder.Default
+    private List<RelocationItemBatchRequest> batches = new ArrayList<>();
+
+    public ResourceUsageRequest(Long resourceId, Double amount) {
+        this.resourceId = resourceId;
+        this.amount = amount == null ? null : BigDecimal.valueOf(amount);
+    }
 }

@@ -4,12 +4,13 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
+import com.erp.utils.config.ConfigProvider;
 
 import java.util.List;
 import java.util.UUID;
 
 import static com.erp.data.RequestBodyFactory.register;
-import static com.erp.data.factories.tech_map.TechnologicalMapDataFactory.createSimpleTechMap;
+import static com.erp.data.factories.tech_map.TechnologicalMapDataFactory.createProductionTechMap;
 
 public class TechnologicalMapRequestBodyFactory {
     public static void registerStrategies() {
@@ -22,7 +23,9 @@ public class TechnologicalMapRequestBodyFactory {
                                 "missing or too small in RbacTestContext. " +
                                 "Make sure RbacTestFixtures.prepareEnvironment() was called.");
                     }
-                    return createSimpleTechMap(sharedResourceList).build();
+                    return createProductionTechMap(
+                            sharedResourceList,
+                            ConfigProvider.getOwner1StorageId()).build();
                 }
 
         );

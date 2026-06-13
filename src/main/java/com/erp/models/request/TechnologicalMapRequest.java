@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +16,8 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TechnologicalMapRequest {
     private String name;
+    private String type;
     private List<ResourceUsageRequest> input;
     private List<ResourceUsageRequest> output;
-    private List<AlternativeGroupRequest> alternatives;
+    private Set<Long> storageIds;
 }
