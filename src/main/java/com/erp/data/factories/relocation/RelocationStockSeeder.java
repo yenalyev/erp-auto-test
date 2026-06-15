@@ -11,6 +11,7 @@ import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ import java.util.Map;
  * Mirrors backend {@link org.pm.tk.service.impl.RelocationServiceImpl#receive}.
  */
 @UtilityClass
+@Slf4j
 public class RelocationStockSeeder {
 
     @Step("Receive resources from SUPPLIER into storage {recipientStorageId}")
@@ -44,8 +46,10 @@ public class RelocationStockSeeder {
                 .items(items)
                 .build();
 
+        log.info("Seeding stock via relocation receive: storage={}, resources={}", recipientStorageId, amountsByResourceId);
         Response response = apiExecutor.executeRelocationReceive(request, role);
         int status = response.statusCode();
+        log.info("Relocation receive completed with status {}", status);
         if (status < 200 || status >= 300) {
             throw new IllegalStateException(
                     "Relocation receive failed (status=" + status + "): " + response.getBody().asString());

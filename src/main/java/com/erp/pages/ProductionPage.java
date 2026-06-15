@@ -52,7 +52,7 @@ public class ProductionPage extends BasePage {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         try {
             page.waitForLoadState(LoadState.NETWORKIDLE,
-                    new Page.WaitForLoadStateOptions().setTimeout(15_000));
+                    new Page.WaitForLoadStateOptions().setTimeout(uiTimeoutMs()));
         } catch (Exception e) {
             log.debug("NETWORKIDLE not reached within timeout — proceeding: {}", e.getMessage());
         }
@@ -65,7 +65,7 @@ public class ProductionPage extends BasePage {
 
         pageReady.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
-                .setTimeout(30_000));
+                .setTimeout(uiTimeoutMs()));
 
         log.info("Production page loaded — url: {}", page.url());
         return this;

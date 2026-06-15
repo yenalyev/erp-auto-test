@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NonSeriesProductionResponse",
+  "type": "object",
+  "required": ["id", "product", "amount", "status"],
+  "properties": {
+    "id": { "type": "integer" },
+    "start": { "type": ["string", "null"], "format": "date" },
+    "end": { "type": ["string", "null"], "format": "date" },
+    "workerQty": { "type": "integer" },
+    "product": { "type": "string" },
+    "amount": { "type": "number" },
+    "description": { "type": ["string", "null"] },
+    "status": { "type": "string", "enum": ["IN_PROGRESS", "DONE"] },
+    "storage": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "resourceUsageList": {
+      "type": "array",
+      "items": { "$ref": "non-series-production-resource-usage-response-schema.json" }
+    }
+  },
+  "additionalProperties": true
+}

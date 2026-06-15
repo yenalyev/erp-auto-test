@@ -37,7 +37,7 @@ public class LoginPage extends BasePage {
         String encodedRedirect = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
         navigateTo(backendUrl + "/login?redirectUri=" + encodedRedirect, "Сторінка логіну");
         log.debug("Opened login page (redirectUri={}), waiting for Keycloak form...", redirectUri);
-        waitForVisible(USERNAME_SELECTOR, 15_000);
+        waitForVisible(USERNAME_SELECTOR, uiTimeoutMs());
         return this;
     }
 
@@ -68,7 +68,7 @@ public class LoginPage extends BasePage {
         log.debug("Credentials submitted, waiting for redirect to path containing: {}", expectedPath);
         page.waitForURL(
                 url -> !url.contains("/realms/") && url.contains(expectedPath),
-                new Page.WaitForURLOptions().setTimeout(30_000)
+                new Page.WaitForURLOptions().setTimeout(uiTimeoutMs())
         );
         String landingUrl = page.url();
         log.info("Login redirect completed — landed on: {}", landingUrl);

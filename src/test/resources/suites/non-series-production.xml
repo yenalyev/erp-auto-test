@@ -1,0 +1,21 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Non-Series Production Test Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Non-Series Production API">
+        <classes>
+            <class name="com.erp.tests.functional.non_series_production.NonSeriesProductionTest"/>
+        </classes>
+    </test>
+
+    <test name="Non-Series Production UI">
+        <classes>
+            <class name="com.erp.tests.ui.NonSeriesProductionUITest"/>
+        </classes>
+    </test>
+</suite>

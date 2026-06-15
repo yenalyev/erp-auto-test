@@ -1,5 +1,6 @@
 package com.erp.pages;
 
+import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import io.qameta.allure.Allure;
@@ -19,6 +20,11 @@ public abstract class BasePage {
 
     protected BasePage(Page page) {
         this.page = page;
+    }
+
+    /** Playwright wait budget for UI element interactions (from {@code ui.timeout} config). */
+    protected int uiTimeoutMs() {
+        return ConfigProvider.getUiTimeoutSeconds() * 1000;
     }
 
     /**

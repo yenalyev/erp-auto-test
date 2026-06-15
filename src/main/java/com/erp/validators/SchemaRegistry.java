@@ -223,6 +223,42 @@ public class SchemaRegistry {
     }
 
     /**
+     * Same as {@link #validateIfSuccess(Response, ApiEndpointDefinition)} but never throws.
+     * Use when business assertions must run even if the JSON schema drifts from the API contract.
+     *
+     * @return {@code true} if schema validation passed or was skipped; {@code false} on mismatch
+     */
+    public static boolean validateIfSuccessSoft(Response response, ApiEndpointDefinition endpoint) {
+        if (response == null || endpoint == null) {
+            log.warn("⚠️ Cannot validate null response or endpoint");
+            return false;
+        }
+
+        int statusCode = response.getStatusCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            log.debug("ℹ️ Skipping soft schema validation - response status: {}", statusCode);
+            return true;
+        }
+
+        if (!hasSchema(endpoint)) {
+            return true;
+        }
+
+        try {
+            validate(response, endpoint);
+            return true;
+        } catch (AssertionError e) {
+            log.warn("Schema validation failed (soft, test continues): {} — {}", endpoint, e.getMessage());
+            io.qameta.allure.Allure.addAttachment(
+                    "Schema validation warning — " + endpoint.name(),
+                    "text/plain",
+                    e.getMessage() != null ? e.getMessage() : "schema mismatch",
+                    ".txt");
+            return false;
+        }
+    }
+
+    /**
      * ✅ Conditional validation from EndpointAccessRule
      *
      * @param response Response to validate

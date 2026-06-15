@@ -96,6 +96,16 @@ public class ConfigProvider {
         return config.timeout();
     }
 
+    public static int getUiTimeoutSeconds() {
+        return config.uiTimeout();
+    }
+
+    /** @deprecated use {@link #getUiTimeoutSeconds()} */
+    @Deprecated
+    public static int getUiFilterWaitTimeoutSeconds() {
+        return getUiTimeoutSeconds();
+    }
+
     public static void reload() {
         initConfig();
     }

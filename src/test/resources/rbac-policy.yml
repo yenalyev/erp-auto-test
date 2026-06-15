@@ -186,6 +186,34 @@ rules:
     description: "Додати запис в журнал виробництва по Бізнес Юніту який належить OWNER_1 (STORAGES): 
     має право тільки OWNER_1. ADMIN, OWNER_2, ANONYMOUS - не мають права"
 
+  - endpointName: "NON_SERIES_PRODUCTION_GET_ALL"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Отримати журнал несерійного виробництва OWNER_1"
+
+  - endpointName: "NON_SERIES_PRODUCTION_GET_BY_ID"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Отримати запис несерійного виробництва за id з storageId query param"
+
+  - endpointName: "NON_SERIES_PRODUCTION_POST_CREATE"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
+    bodyType: "CREATE_NON_SERIES_PRODUCTION"
+    description: "Створити запис несерійного виробництва OWNER_1 — тільки OWNER_1"
+
+  - endpointName: "NON_SERIES_PRODUCTION_PUT_UPDATE"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
+    bodyType: "UPDATE_NON_SERIES_PRODUCTION"
+    description: "Оновити запис несерійного виробництва OWNER_1 — тільки OWNER_1"
+
   - endpointName: "STORAGE_INVENTORY_GET"
     contextKey: "OWNER_1_STORAGE_ID"
     allowedRoles: [ ADMIN, OWNER_1 ]

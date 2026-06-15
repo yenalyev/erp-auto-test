@@ -73,6 +73,11 @@ public interface TestConfig extends Config {
     @DefaultValue("30")
     int timeout();
 
+    /** Max wait (seconds) for Playwright actions and UI element visibility. */
+    @Key("ui.timeout")
+    @DefaultValue("30")
+    int uiTimeout();
+
     // User Credentials
     @Key("user.admin.username")
     @DefaultValue("admin")

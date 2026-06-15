@@ -79,7 +79,10 @@ public abstract class BaseUITest extends BaseTest {
     public void testSetup() {
         super.testSetup();
         page = browserContext.newPage();
-        log.debug("New Page created for test method");
+        int timeoutMs = com.erp.utils.config.ConfigProvider.getUiTimeoutSeconds() * 1000;
+        page.setDefaultTimeout(timeoutMs);
+        page.setDefaultNavigationTimeout(timeoutMs);
+        log.debug("New Page created with UI timeout {}ms", timeoutMs);
     }
 
     /**

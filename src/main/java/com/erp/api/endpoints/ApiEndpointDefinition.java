@@ -354,6 +354,70 @@ public enum ApiEndpointDefinition {
     ),
 
     // ========================================
+    // NON-SERIES PRODUCTION ENDPOINTS
+    // ========================================
+
+    NON_SERIES_PRODUCTION_GET_ALL(
+            "/api/v1/non-series-production?storageIds={id}&size=500",
+            Method.GET,
+            "schemas/non-series-production/non-series-production-response-list-schema.json",
+            "Get all non-series production by store",
+            null,
+            new TypeReference<List<NonSeriesProductionResponse>>() {},
+            null
+    ),
+
+    NON_SERIES_PRODUCTION_GET_TOTAL(
+            "/api/v1/non-series-production/total?storageIds={id}",
+            Method.GET,
+            "schemas/non-series-production/non-series-production-total-response-schema.json",
+            "Get non-series production total amount",
+            null,
+            new TypeReference<NonSeriesProductionTotalResponse>() {},
+            null
+    ),
+
+    NON_SERIES_PRODUCTION_GET_BY_ID(
+            "/api/v1/non-series-production/{id}?storageId={storageId}",
+            Method.GET,
+            "schemas/non-series-production/non-series-production-response-schema.json",
+            "Get non-series production by id",
+            null,
+            new TypeReference<NonSeriesProductionResponse>() {},
+            null
+    ),
+
+    NON_SERIES_PRODUCTION_POST_CREATE(
+            "/api/v1/non-series-production",
+            Method.POST,
+            "schemas/non-series-production/non-series-production-response-schema.json",
+            "Create non-series production",
+            new TypeReference<NonSeriesProductionRequest>() {},
+            new TypeReference<NonSeriesProductionResponse>() {},
+            "CREATE_NON_SERIES_PRODUCTION"
+    ),
+
+    NON_SERIES_PRODUCTION_PUT_UPDATE(
+            "/api/v1/non-series-production/{id}",
+            Method.PUT,
+            "schemas/non-series-production/non-series-production-response-schema.json",
+            "Update non-series production",
+            new TypeReference<NonSeriesProductionRequest>() {},
+            new TypeReference<NonSeriesProductionResponse>() {},
+            "UPDATE_NON_SERIES_PRODUCTION"
+    ),
+
+    NON_SERIES_PRODUCTION_DELETE(
+            "/api/v1/non-series-production/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete non-series production",
+            null,
+            null,
+            "DELETE_NON_SERIES_PRODUCTION"
+    ),
+
+    // ========================================
     // INVENTORY ENDPOINTS
     // ========================================
 

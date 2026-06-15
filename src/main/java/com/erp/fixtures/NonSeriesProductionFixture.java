@@ -1,0 +1,166 @@
+package com.erp.fixtures;
+
+import com.erp.api.clients.ApiExecutor;
+import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.non_series_production.NonSeriesProductionDataFactory;
+import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.enums.NonSeriesProductionStatus;
+import com.erp.enums.UserRole;
+import com.erp.models.request.NonSeriesProductionRequest;
+import com.erp.models.response.NonSeriesProductionResponse;
+import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageItemResponse;
+import com.erp.test_context.ContextKey;
+import com.erp.test_context.TestContext;
+import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
+import io.qameta.allure.Step;
+import io.restassured.response.Response;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
+public class NonSeriesProductionFixture extends BaseFixture {
+
+    public static final double DEFAULT_SEEDED_STOCK = 50.0;
+
+    public NonSeriesProductionFixture(TestContext testContext, ApiExecutor apiExecutor) {
+        super(testContext, apiExecutor);
+    }
+
+    @Step("FIXTURE: Підготовка середовища для тестів несерійного виробництва")
+    public void prepareContext() {
+        if (testContext.get(ContextKey.NON_SERIES_RESOURCE_ID) != null) {
+            return;
+        }
+
+        Long storageId = ConfigProvider.getOwner1StorageId();
+        ResourceResponse resource = resolveResourceForStorage(storageId);
+
+        RelocationStockSeeder.receiveFromSupplier(
+                apiExecutor,
+                UserRole.OWNER_1,
+                storageId,
+                Map.of(resource.getId(), DEFAULT_SEEDED_STOCK));
+
+        double stockAfterSeed = getResourceStock(storageId, resource.getId());
+
+        testContext.set(ContextKey.NON_SERIES_RESOURCE_ID, resource.getId());
+        testContext.set(ContextKey.NON_SERIES_RESOURCE_NAME, resource.getName());
+        testContext.set(ContextKey.NON_SERIES_SEEDED_STOCK, stockAfterSeed);
+
+        log.info("Non-series production fixture ready: storage={}, resource={} ({}), stock={}",
+                storageId, resource.getId(), resource.getName(), stockAfterSeed);
+    }
+
+    /**
+     * Picks a resource already present on the target storage inventory (fast path for UI tests).
+     * Falls back to creating a single resource without loading the full resources catalog.
+     */
+    @Step("FIXTURE: Resolve resource for storage {storageId}")
+    private ResourceResponse resolveResourceForStorage(Long storageId) {
+        Response invResponse = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_GET,
+                UserRole.OWNER_1,
+                String.valueOf(storageId));
+        List<StorageItemResponse> items = DatabaseIntegrityValidator.extractList(
+                invResponse, StorageItemResponse.class);
+
+        for (StorageItemResponse item : items) {
+            if (item.getResource() != null && item.getResource().getId() != null) {
+                log.info("Using resource from storage inventory: id={}, name={}",
+                        item.getResource().getId(), item.getResource().getName());
+                return item.getResource();
+            }
+        }
+
+        log.info("Storage {} has no inventory items — creating a single resource", storageId);
+        fetchSharedUnit(1);
+        fetchSharedResourceCategory();
+        setupSharedResource();
+        ResourceResponse created = testContext.get(ContextKey.SHARED_RESOURCE);
+        if (created == null) {
+            throw new IllegalStateException("Failed to create resource for non-series production fixture");
+        }
+        return created;
+    }
+
+    @Step("FIXTURE: Ensure stock ≥ {minimum} for resource {resourceId} on storage {storageId}")
+    public double ensureStockAtLeast(Long storageId, Long resourceId, double minimum) {
+        double current = getResourceStock(storageId, resourceId);
+        if (current >= minimum) {
+            return current;
+        }
+        double toAdd = minimum - current;
+        RelocationStockSeeder.receiveFromSupplier(
+                apiExecutor,
+                UserRole.OWNER_1,
+                storageId,
+                Map.of(resourceId, toAdd));
+        double after = getResourceStock(storageId, resourceId);
+        log.info("Topped up stock for resource {}: {} → {}", resourceId, current, after);
+        return after;
+    }
+
+    @Step("API: GET non-series production /{id}?storageId={storageId}")
+    public NonSeriesProductionResponse getById(Long id, Long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.NON_SERIES_PRODUCTION_GET_BY_ID,
+                UserRole.OWNER_1,
+                null,
+                String.valueOf(id),
+                String.valueOf(storageId));
+        validateSuccess(response, "Get non-series production by id");
+
+        try {
+            return response.as(NonSeriesProductionResponse.class);
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "Failed to parse non-series production GET response: " + response.getBody().asString(), e);
+        }
+    }
+
+    @Step("API: Створити несерійне виробництво (status={status})")
+    public NonSeriesProductionResponse createAs(UserRole role,
+                                                NonSeriesProductionStatus status,
+                                                String product,
+                                                double productAmount,
+                                                Long resourceId,
+                                                double resourceAmountPerUnit) {
+        Long storageId = ConfigProvider.getOwner1StorageId();
+        NonSeriesProductionRequest request = NonSeriesProductionDataFactory.buildCreateRequest(
+                storageId,
+                status,
+                product,
+                productAmount,
+                List.of(NonSeriesProductionDataFactory.usage(resourceId, resourceAmountPerUnit)));
+
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.NON_SERIES_PRODUCTION_POST_CREATE, role, request);
+        validateSuccess(response, "Create non-series production");
+
+        try {
+            return response.as(NonSeriesProductionResponse.class);
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "Failed to parse non-series production response: " + response.getBody().asString(), e);
+        }
+    }
+
+    @Step("API: Отримати залишок ресурсу {resourceId} на складі {storageId}")
+    public double getResourceStock(Long storageId, Long resourceId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_GET,
+                UserRole.OWNER_1,
+                String.valueOf(storageId));
+        List<StorageItemResponse> items = DatabaseIntegrityValidator.extractList(
+                response, StorageItemResponse.class);
+        return items.stream()
+                .filter(item -> item.getResource() != null && resourceId.equals(item.getResource().getId()))
+                .mapToDouble(item -> item.getAmount() != null ? item.getAmount() : 0.0)
+                .findFirst()
+                .orElse(0.0);
+    }
+}
