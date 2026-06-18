@@ -7,9 +7,15 @@
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
 
-    <test name="Production Tests">
+    <test name="Production API">
         <classes>
             <class name="com.erp.tests.functional.production.ProductionTest"/>
+        </classes>
+    </test>
+
+    <test name="Production UI">
+        <classes>
+            <class name="com.erp.tests.ui.ProductionUITest"/>
         </classes>
     </test>
 </suite>

@@ -4,7 +4,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.RbacFixture;
 import com.erp.models.rbac.EndpointAccessRule;
-import com.erp.test_context.GlobalTestContext;
+import com.erp.test_context.ContextKey;
 import com.erp.tests.BaseTest;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
@@ -95,9 +95,15 @@ public class BaseRbacTest extends BaseTest {
                 throw new RuntimeException("Test Setup Failed: ID not found via key " + rule.getContextKey());
             }
 
-            // 🔥 ВАЖЛИВО: Замінюємо {id} на реальне число (наприклад, "123")
-            // RestAssured отримає чистий URL без плейсхолдерів
-            finalPath = definition.getPath(id);
+            if (definition.getPathVariablesCount() > 1) {
+                Object storageId = testContext.get(ContextKey.OWNER_1_STORAGE_ID);
+                if (storageId == null) {
+                    storageId = com.erp.utils.config.ConfigProvider.getOwner1StorageId();
+                }
+                finalPath = definition.getPath(id, storageId);
+            } else {
+                finalPath = definition.getPath(id);
+            }
         } else {
             finalPath = definition.getPathTemplate();
         }

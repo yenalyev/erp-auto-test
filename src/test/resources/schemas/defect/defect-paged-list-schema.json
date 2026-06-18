@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PagedDefectResponse",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "$ref": "defect-response-schema.json"
+      }
+    }
+  },
+  "required": ["content"],
+  "additionalProperties": true
+}

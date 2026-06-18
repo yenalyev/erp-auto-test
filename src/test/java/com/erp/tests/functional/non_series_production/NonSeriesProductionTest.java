@@ -6,6 +6,7 @@ import com.erp.data.factories.non_series_production.NonSeriesProductionDataFacto
 import com.erp.enums.NonSeriesProductionStatus;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.NonSeriesProductionFixture;
+import com.erp.models.query.NonSeriesProductionQuery;
 import com.erp.models.request.NonSeriesProductionRequest;
 import com.erp.models.response.NonSeriesProductionResponse;
 import com.erp.test_context.ContextKey;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -240,11 +242,158 @@ public class NonSeriesProductionTest extends BaseFunctionalTest {
         });
     }
 
+    @Test(priority = 40)
+    @TestCaseId("TC-NSP-004")
+    @Story("Total volume calculation")
+    @Description("""
+            GET /non-series-production/total має повертати суму об'ємів записів,
+            що відповідають фільтрам productSearch та statuses (як і список).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testTotalAmountMatchesFilteredListSum() {
+        String searchPrefix = NonSeriesProductionDataFactory.uniqueProductSearchPrefix();
+        fixture.ensureStockAtLeast(storageId, resourceId, 20.0);
+
+        Allure.step("Створити тестові записи з різним об'ємом і статусом", () -> {
+            fixture.createAs(
+                    UserRole.OWNER_1,
+                    NonSeriesProductionStatus.IN_PROGRESS,
+                    searchPrefix + "-A",
+                    2,
+                    resourceId,
+                    1.0);
+            fixture.createAs(
+                    UserRole.OWNER_1,
+                    NonSeriesProductionStatus.DONE,
+                    searchPrefix + "-B",
+                    3,
+                    resourceId,
+                    1.0);
+            Allure.parameter("productSearch", searchPrefix);
+        });
+
+        NonSeriesProductionQuery baseQuery = NonSeriesProductionQuery.builder()
+                .storageId(storageId)
+                .productSearch(searchPrefix)
+                .pageSize(500)
+                .build();
+
+        Allure.step("Без фільтра статусу: total = сума amount у списку", () -> {
+            List<NonSeriesProductionResponse> list = fixture.getList(baseQuery);
+            BigDecimal listSum = NonSeriesProductionFixture.sumAmounts(list);
+            BigDecimal apiTotal = fixture.getTotalAmount(baseQuery);
+
+            assertThat(list).hasSizeGreaterThanOrEqualTo(2);
+            assertThat(listSum).isEqualByComparingTo(BigDecimal.valueOf(5));
+            assertThat(apiTotal).isEqualByComparingTo(listSum);
+
+            Allure.parameter("listSum", listSum);
+            Allure.parameter("apiTotal", apiTotal);
+        });
+
+        Allure.step("Фільтр statuses=IN_PROGRESS: total = 2", () -> {
+            NonSeriesProductionQuery query = NonSeriesProductionQuery.builder()
+                    .storageId(storageId)
+                    .productSearch(searchPrefix)
+                    .statuses(List.of(NonSeriesProductionStatus.IN_PROGRESS))
+                    .pageSize(500)
+                    .build();
+
+            BigDecimal listSum = NonSeriesProductionFixture.sumAmounts(fixture.getList(query));
+            BigDecimal apiTotal = fixture.getTotalAmount(query);
+
+            assertThat(listSum).isEqualByComparingTo(BigDecimal.valueOf(2));
+            assertThat(apiTotal).isEqualByComparingTo(listSum);
+        });
+
+        Allure.step("Фільтр statuses=DONE: total = 3", () -> {
+            NonSeriesProductionQuery query = NonSeriesProductionQuery.builder()
+                    .storageId(storageId)
+                    .productSearch(searchPrefix)
+                    .statuses(List.of(NonSeriesProductionStatus.DONE))
+                    .pageSize(500)
+                    .build();
+
+            BigDecimal listSum = NonSeriesProductionFixture.sumAmounts(fixture.getList(query));
+            BigDecimal apiTotal = fixture.getTotalAmount(query);
+
+            assertThat(listSum).isEqualByComparingTo(BigDecimal.valueOf(3));
+            assertThat(apiTotal).isEqualByComparingTo(listSum);
+        });
+    }
+
+    @Test(priority = 50)
+    @TestCaseId("TC-NSP-005")
+    @Story("Delete non-series production")
+    @Description("При видаленні несерійного виробництва ресурси повертаються на склад (AC-05)")
+    @Severity(SeverityLevel.CRITICAL)
+    public void testDeleteRestoresStockToWarehouse() {
+        double productAmount = 2.0;
+        double usagePerUnit = 4.0;
+        String product = NonSeriesProductionDataFactory.uniqueProductName();
+        double expectedDeduction = usagePerUnit * productAmount;
+
+        double stockBefore = fixture.getResourceStock(storageId, resourceId);
+        assertThat(stockBefore)
+                .as("На складі має бути достатньо сировини для тесту (потрібно %.2f)", expectedDeduction)
+                .isGreaterThanOrEqualTo(expectedDeduction);
+
+        long recordsBefore = countNonSeriesProductions();
+
+        NonSeriesProductionResponse created = Allure.step(
+                "Створити несерійне виробництво «В роботі» з відомою витратою сировини", () ->
+                        fixture.createAs(
+                                UserRole.OWNER_1,
+                                NonSeriesProductionStatus.IN_PROGRESS,
+                                product,
+                                productAmount,
+                                resourceId,
+                                usagePerUnit));
+
+        assertThat(created.getId()).isNotNull();
+
+        Allure.step("Перевірити списання сировини після створення", () -> {
+            double stockAfterCreate = fixture.getResourceStock(storageId, resourceId);
+            assertThat(stockAfterCreate).isCloseTo(stockBefore - expectedDeduction, within(0.01));
+            Allure.parameter("stockBefore", stockBefore);
+            Allure.parameter("stockAfterCreate", stockAfterCreate);
+            Allure.parameter("expectedDeduction", expectedDeduction);
+        });
+
+        Allure.step("Видалити несерійне виробництво", () -> {
+            fixture.deleteAs(UserRole.OWNER_1, created.getId(), storageId);
+            Allure.parameter("deletedId", created.getId());
+        });
+
+        Allure.step("Перевірити повернення сировини на склад", () -> {
+            double stockAfterDelete = fixture.getResourceStock(storageId, resourceId);
+            assertThat(stockAfterDelete).isCloseTo(stockBefore, within(0.01));
+            Allure.parameter("stockAfterDelete", stockAfterDelete);
+        });
+
+        Allure.step("Перевірити, що запис видалено з журналу", () -> {
+            Response getResponse = apiExecutor.execute(
+                    ApiEndpointDefinition.NON_SERIES_PRODUCTION_GET_BY_ID,
+                    UserRole.OWNER_1,
+                    null,
+                    String.valueOf(created.getId()),
+                    String.valueOf(storageId));
+            assertThat(getResponse.statusCode()).isEqualTo(404);
+
+            long recordsAfter = countNonSeriesProductions();
+            assertThat(recordsAfter).isEqualTo(recordsBefore);
+        });
+    }
+
     private long countNonSeriesProductions() {
-        Response listResponse = apiExecutor.execute(
+        NonSeriesProductionQuery query = NonSeriesProductionQuery.builder()
+                .storageId(storageId)
+                .pageSize(500)
+                .build();
+        Response listResponse = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.NON_SERIES_PRODUCTION_GET_ALL,
                 UserRole.OWNER_1,
-                String.valueOf(storageId));
+                query.toListQueryParams());
         return DatabaseIntegrityValidator.extractPageTotalElements(listResponse);
     }
 }

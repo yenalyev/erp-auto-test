@@ -42,7 +42,19 @@ public enum ContextKey {
     DYNAMIC_STORAGE("dynamicStorage",StorageResponse .class ),
     DYNAMIC_PLAN("dynamicPlan",PlanResponse .class ),
     DYNAMIC_PLAN_LIST("dynamicPlanList",List.class ),
-    SHARED_STORAGE_LIST("sharedStorageList", List.class);
+    SHARED_STORAGE_LIST("sharedStorageList", List.class),
+    RELOCATION_ID("relocationId", Long.class),
+    RELOCATION_CREATED_ID("relocationCreatedId", Long.class),
+    RELOCATION_AUTO_FINISHED_SEND_ID("relocationAutoFinishedSendId", Long.class),
+    RELOCATION_SUPPLIER_ID("relocationSupplierId", Long.class),
+    RELOCATION_UNIT_STORAGE_ID("relocationUnitStorageId", Long.class),
+    RELOCATION_RESOURCE_ID("relocationResourceId", Long.class),
+    EQUIPMENT_ID("equipmentId", Long.class),
+    EQUIPMENT_CATEGORY_ID("equipmentCategoryId", Long.class),
+    DEFECT_ID("defectId", Long.class),
+    DEFECT_RESOURCE_ID("defectResourceId", Long.class),
+    DEFECT_PRODUCTION_PROCESS_ID("defectProductionProcessId", Long.class),
+    DEFECT_RELOCATION_ID("defectRelocationId", Long.class);
     private final String name;
     private final Class<?> type;
 }

@@ -75,6 +75,11 @@ public class NonSeriesProductionDataFactory {
         + "-" + UUID.randomUUID().toString().substring(0, 6);
   }
 
+  /** Shared prefix for product-search filter tests (multiple products under one search term). */
+  public static String uniqueProductSearchPrefix() {
+    return "NSP-Total-" + UUID.randomUUID().toString().substring(0, 8);
+  }
+
   /**
    * Integer per-unit usage so {@code productAmount × usage} is strictly greater than
    * {@code minUsageFraction × stock} and still fits within {@code availableStock}.

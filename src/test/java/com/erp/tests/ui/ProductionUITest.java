@@ -8,7 +8,6 @@ import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
 
 import java.util.Map;
 
@@ -38,7 +37,10 @@ public class ProductionUITest extends BaseUITest {
                 .split("/")[0];
 
         injectSessionCookies(cookies, domain);
-        log.info("OWNER_1 session injected — domain: {}", domain);
+        long storageId = ConfigProvider.getOwner1StorageId();
+        browserContext.addInitScript(
+                "localStorage.setItem('selectedStorageId', '" + storageId + "');");
+        log.info("OWNER_1 session injected — domain: {}, storageId: {}", domain, storageId);
     }
 
     @Test
@@ -46,12 +48,11 @@ public class ProductionUITest extends BaseUITest {
     @Story("Production Journal — page structure smoke")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Після логіну OWNER_1 відкриває сторінку журналу виготовленої продукції.
+            Після логіну OWNER_1 відкриває сторінку журналу виробництва (/production).
             Перевіряється наявність:
-            — заголовку "Журнал виготовленої продукції"
-            — кнопки "Додати"
-            — блоку фільтрів: поле "Продукт", датапікери "З" і "По", кнопка "Очистити"
-            — блоку з виготовленою продукцією
+            — кнопок «Виготовлення» та «Розбір»
+            — фільтрів: поле «Продукт», датапікери «З» і «По», кнопка «Очистити»
+            — таблиці з виробництвом
             Додатково робиться скріншот сторінки.
             """)
     public void productionJournalPageSmokeTest() {
@@ -62,36 +63,32 @@ public class ProductionUITest extends BaseUITest {
 
         productionPage.attachScreenshot("Production Journal — initial load");
 
-        assertThat(productionPage.isTitleVisible())
-                .as("Заголовок 'Журнал виготовленої продукції' має бути видимим")
+        assertThat(productionPage.isManufacturingButtonVisible())
+                .as("Кнопка «Виготовлення» має бути видимою")
                 .isTrue();
 
-        assertThat(productionPage.isAddButtonVisible())
-                .as("Кнопка 'Додати' має бути видимою")
+        assertThat(productionPage.isDisassembleButtonVisible())
+                .as("Кнопка «Розбір» має бути видимою")
                 .isTrue();
 
-        assertThat(productionPage.isFilterBlockVisible())
-                .as("Блок фільтрів має бути видимим")
-                .isTrue();
-
-        assertThat(productionPage.isProductInputVisible())
-                .as("Поле фільтру 'Продукт' (input[placeholder='Пошук...']) має бути видимим")
+        assertThat(productionPage.isProductFilterVisible())
+                .as("Поле фільтру «Продукт» має бути видимим")
                 .isTrue();
 
         assertThat(productionPage.isDateFromVisible())
-                .as("Датапікер 'З' має бути видимим")
+                .as("Датапікер «З» має бути видимим")
                 .isTrue();
 
         assertThat(productionPage.isDateToVisible())
-                .as("Датапікер 'По' має бути видимим")
+                .as("Датапікер «По» має бути видимим")
                 .isTrue();
 
         assertThat(productionPage.isClearButtonVisible())
-                .as("Кнопка 'Очистити' має бути видимою")
+                .as("Кнопка «Очистити» має бути видимою")
                 .isTrue();
 
         assertThat(productionPage.isProductionTableVisible())
-                .as("Блок з виготовленою продукцією має бути видимим")
+                .as("Таблиця виробництва має бути видимою")
                 .isTrue();
 
         productionPage.attachScreenshot("Production Journal — all assertions passed");

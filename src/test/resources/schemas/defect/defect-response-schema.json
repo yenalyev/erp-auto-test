@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DefectResponse",
+  "type": "object",
+  "required": ["id", "amount", "type"],
+  "properties": {
+    "id": { "type": "integer" },
+    "date": { "type": ["string", "null"], "format": "date" },
+    "storage": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": ["string", "null"] }
+      }
+    },
+    "resource": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": ["string", "null"] }
+      }
+    },
+    "description": { "type": ["string", "null"] },
+    "amount": { "type": "number" },
+    "type": { "type": "string", "enum": ["PRODUCTION", "RELOCATION", "RELOCATION_FROM_UNIT", "STORAGE"] },
+    "relocationId": { "type": ["integer", "null"] },
+    "productionProcessId": { "type": ["integer", "null"] },
+    "sender": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": ["string", "null"] }
+      }
+    },
+    "isProduced": { "type": ["boolean", "null"] },
+    "defectBatches": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object",
+        "properties": {
+          "batchNumber": { "type": ["string", "null"] },
+          "isProduced": { "type": ["boolean", "null"] },
+          "amount": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "writeOffAmount": { "type": ["number", "null"] }
+  },
+  "additionalProperties": true
+}

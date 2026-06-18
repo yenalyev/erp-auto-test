@@ -2,8 +2,10 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.non_series_production.NonSeriesProductionDataFactory;
+import com.erp.enums.NonSeriesProductionStatus;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.NonSeriesProductionFixture;
+import com.erp.models.query.NonSeriesProductionQuery;
 import com.erp.pages.NonSeriesProductionFormPage;
 import com.erp.pages.NonSeriesProductionListPage;
 import com.erp.test_context.ContextKey;
@@ -14,6 +16,10 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.erp.models.response.NonSeriesProductionResponse;
+
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -130,6 +136,151 @@ public class NonSeriesProductionUITest extends BaseUITest {
                 productName, productAmount, usagePerUnit, trimmedResourceName, "TC-UI-NSP-002");
     }
 
+    @Test(priority = 15)
+    @TestCaseId("TC-UI-NSP-004")
+    @Story("Create non-series production without resources")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            OWNER_1 створює несерійне виробництво без додавання сировини (AC-06, TC-NON-SER-MAN-008).
+            Перед тестом фіксуємо залишки на складі через API; після — перевіряємо запис у журналі
+            і що залишки не змінились.
+            """)
+    public void createWithoutResourcesLeavesStockUnchanged() {
+        final String productName = NonSeriesProductionDataFactory.uniqueProductName();
+        final Map<Long, Double> stockBefore = fixture.getInventorySnapshot(storageId);
+
+        assertThat(stockBefore)
+                .as("На складі має бути хоча б один ресурс для перевірки незмінності залишків")
+                .isNotEmpty();
+
+        Allure.parameter("stockSnapshotBefore", stockBefore);
+        log.info("TC-UI-NSP-004: product={}, stockSnapshot={}", productName, stockBefore);
+
+        NonSeriesProductionListPage listPage = new NonSeriesProductionListPage(page);
+
+        Allure.step("Відкрити журнал несерійного виробництва", () -> {
+            listPage.open();
+            listPage.attachScreenshot("TC-UI-NSP-004 — list initial");
+        });
+
+        NonSeriesProductionFormPage createForm = Allure.step(
+                "Створити виріб без використаної сировини", () -> {
+                    NonSeriesProductionFormPage form = listPage.clickNewItem();
+                    form.fillProductName(productName)
+                            .setProductAmount(1)
+                            .setWorkerQty(2)
+                            .selectStatusInProgress();
+                    form.attachScreenshot("TC-UI-NSP-004 — create form before save");
+                    return form;
+                });
+
+        final NonSeriesProductionListPage listAfterCreate = Allure.step("Зберегти новий виріб", () -> {
+            NonSeriesProductionListPage saved = createForm.saveProduct();
+            assertThat(saved.isOnListPage())
+                    .as("Після створення має бути редирект на /non-series-production")
+                    .isTrue();
+            return saved;
+        });
+
+        Allure.step("Перевірити, що виріб створено зі статусом «В роботі»", () -> {
+            listAfterCreate.filterByProduct(productName);
+            listAfterCreate.attachScreenshot("TC-UI-NSP-004 — list after create");
+
+            assertThat(listAfterCreate.isProductVisible(productName))
+                    .as("Виріб '%s' має з'явитися в журналі", productName)
+                    .isTrue();
+            assertThat(listAfterCreate.isInProgressStatusVisibleForProduct(productName))
+                    .as("Статус виробу '%s' має бути «В роботі»", productName)
+                    .isTrue();
+        });
+
+        Allure.step("Перевірити запис через API і відсутність використаної сировини", () -> {
+            NonSeriesProductionResponse created = fixture.findByProduct(productName);
+            assertThat(created.getId()).isNotNull();
+            assertThat(created.getAmount()).isEqualByComparingTo(BigDecimal.ONE);
+            assertThat(created.getStatus()).isEqualTo(NonSeriesProductionStatus.IN_PROGRESS);
+            assertThat(created.getResourceUsageList())
+                    .as("Несерійне виробництво без сировини має мати порожній список витрат")
+                    .isEmpty();
+
+            Allure.parameter("createdId", created.getId());
+        });
+
+        Allure.step("Перевірити, що залишки на складі не змінились", () -> {
+            fixture.assertInventoryUnchanged(storageId, stockBefore);
+        });
+
+        Allure.parameter("User", UserRole.OWNER_1.getUsername());
+        Allure.parameter("Product", productName);
+        Allure.parameter("URL", listAfterCreate.currentUrl());
+
+        log.info("TC-UI-NSP-004 PASSED — url: {}", listAfterCreate.currentUrl());
+    }
+
+    @Test(priority = 5)
+    @TestCaseId("TC-UI-NSP-003")
+    @Story("Total volume display")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Після застосування фільтрів «Пошук виробу» та «Статус» UI показує «Загальний об'єм: N од»,
+            де N збігається з GET /non-series-production/total для тих самих параметрів.
+            """)
+    public void displayedTotalVolumeMatchesApiWithFilters() {
+        final String searchPrefix = NonSeriesProductionDataFactory.uniqueProductSearchPrefix();
+        fixture.ensureStockAtLeast(storageId, resourceId, 20.0);
+
+        Allure.step("Підготувати тестові записи через API", () -> {
+            fixture.createAs(
+                    UserRole.OWNER_1,
+                    NonSeriesProductionStatus.IN_PROGRESS,
+                    searchPrefix + "-A",
+                    2,
+                    resourceId,
+                    1.0);
+            fixture.createAs(
+                    UserRole.OWNER_1,
+                    NonSeriesProductionStatus.DONE,
+                    searchPrefix + "-B",
+                    3,
+                    resourceId,
+                    1.0);
+            Allure.parameter("productSearch", searchPrefix);
+        });
+
+        NonSeriesProductionQuery query = NonSeriesProductionQuery.builder()
+                .storageId(storageId)
+                .productSearch(searchPrefix)
+                .statuses(List.of(NonSeriesProductionStatus.IN_PROGRESS))
+                .build();
+        final BigDecimal expectedTotal = fixture.getTotalAmount(query);
+
+        NonSeriesProductionListPage listPage = new NonSeriesProductionListPage(page);
+
+        Allure.step("Відкрити журнал і застосувати фільтри", () -> {
+            listPage.open();
+            listPage.filterByProduct(searchPrefix);
+            listPage.filterByStatus("В роботі");
+            listPage.attachScreenshot("TC-UI-NSP-003 — filtered list with total");
+        });
+
+        Allure.step("Перевірити «Загальний об'єм» на UI проти API", () -> {
+            listPage.waitForDisplayedTotalVolume(expectedTotal);
+
+            assertThat(listPage.getDisplayedTotalVolume())
+                    .as("UI total for productSearch='%s' and status IN_PROGRESS", searchPrefix)
+                    .isEqualByComparingTo(expectedTotal);
+            assertThat(expectedTotal)
+                    .as("Очікуваний об'єм для підготовлених даних")
+                    .isEqualByComparingTo(BigDecimal.valueOf(2));
+
+            Allure.parameter("expectedTotal", expectedTotal);
+            Allure.parameter("displayedTotal", listPage.getDisplayedTotalVolume());
+        });
+
+        log.info("TC-UI-NSP-003 PASSED — expected={}, displayed={}",
+                expectedTotal, listPage.getDisplayedTotalVolume());
+    }
+
     private void runCreateInProgressEditToDoneFlow(String productName,
                                                    int productAmount,
                                                    double usagePerUnit,
@@ -183,14 +334,22 @@ public class NonSeriesProductionUITest extends BaseUITest {
                     return form;
                 });
 
-        Allure.step("Перевірити доступну кількість сировини у блоці «Використана сировина на одиницю»", () -> {
-            double stockAfterCreate = fixture.getResourceStock(storageId, resourceId);
-            double expectedAvailable = stockAfterCreate + usagePerUnit;
-            editForm.assertResourceRowShowsAvailableQuantity(trimmedResourceName, expectedAvailable);
-            editForm.attachScreenshot(testId + " — edit form resource availability");
-            Allure.parameter("stockAfterCreate", stockAfterCreate);
-            Allure.parameter("usagePerUnit", usagePerUnit);
+        Allure.step("Перевірити «доступно» у блоці «Використана сировина на одиницю» "
+                + "(витрата на це НСВ + залишок API)", () -> {
+            double apiInventoryAmount = fixture.getResourceStock(storageId, resourceId);
+            double consumedForProduction = usagePerUnit * productAmount;
+            double expectedAvailable = consumedForProduction + apiInventoryAmount;
+            double uiDisplayedAvailable = editForm.getDisplayedAvailableQuantity(trimmedResourceName);
+
+            Allure.parameter("consumedForProduction", consumedForProduction);
+            Allure.parameter("apiInventoryAmount", apiInventoryAmount);
             Allure.parameter("expectedAvailable", expectedAvailable);
+            Allure.parameter("uiDisplayedAvailable", uiDisplayedAvailable);
+            Allure.parameter("uiMinusExpectedDelta", uiDisplayedAvailable - expectedAvailable);
+
+            editForm.assertDisplayedAvailableMatchesConsumedPlusInventory(
+                    trimmedResourceName, consumedForProduction, apiInventoryAmount);
+            editForm.attachScreenshot(testId + " — edit form resource availability");
         });
 
         Allure.step("Змінити статус на «Завершено»", () -> {
@@ -199,7 +358,8 @@ public class NonSeriesProductionUITest extends BaseUITest {
         });
 
         final NonSeriesProductionListPage listAfterUpdate = Allure.step(
-                "Натиснути кнопку «Зберегти виріб»", () -> {
+                "Перевірити активність кнопки «Зберегти виріб» і зберегти зміни", () -> {
+                    editForm.assertSaveButtonPresent();
                     NonSeriesProductionListPage saved = editForm.saveProduct();
                     assertThat(saved.isOnListPage())
                             .as("Після редагування має бути редирект на /non-series-production")

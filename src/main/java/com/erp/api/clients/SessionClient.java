@@ -25,9 +25,23 @@ public class SessionClient extends BaseClient {
             Object body,
             Map<String, String> cookies
     ) {
+        return executeWithCookies(method, path, body, cookies, Map.of());
+    }
+
+    public Response executeWithCookies(
+            io.restassured.http.Method method,
+            String path,
+            Object body,
+            Map<String, String> cookies,
+            Map<String, ?> queryParams
+    ) {
         var requestBuilder = given()
                 .spec(requestSpec)
                 .cookies(cookies != null ? cookies : Map.of());
+
+        if (queryParams != null && !queryParams.isEmpty()) {
+            requestBuilder = requestBuilder.queryParams(queryParams);
+        }
 
         if (body != null) {
             requestBuilder = requestBuilder.body(body);
@@ -51,6 +65,28 @@ public class SessionClient extends BaseClient {
             String partName,
             Object jsonPart
     ) {
+        return executeMultipart(io.restassured.http.Method.POST, path, cookies, partName, jsonPart);
+    }
+
+    /**
+     * Multipart PUT (e.g. {@code PUT /relocations/{id}/receive}).
+     */
+    public Response executeMultipartPut(
+            String path,
+            Map<String, String> cookies,
+            String partName,
+            Object jsonPart
+    ) {
+        return executeMultipart(io.restassured.http.Method.PUT, path, cookies, partName, jsonPart);
+    }
+
+    private Response executeMultipart(
+            io.restassured.http.Method method,
+            String path,
+            Map<String, String> cookies,
+            String partName,
+            Object jsonPart
+    ) {
         try {
             String json = MULTIPART_MAPPER.writeValueAsString(jsonPart);
             return given()
@@ -64,7 +100,7 @@ public class SessionClient extends BaseClient {
                             .build())
                     .filter(new io.qameta.allure.restassured.AllureRestAssured())
                     .when()
-                    .post(path)
+                    .request(method, path)
                     .then()
                     .spec(responseSpec)
                     .extract()

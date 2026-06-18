@@ -2,6 +2,7 @@ package com.erp.data;
 
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceRequestBodyFactory;
+import com.erp.data.factories.defect.DefectRequestBodyFactory;
 import com.erp.data.factories.measurement_unit.MeasurementUnitResponseBodyFactory;
 import com.erp.data.factories.non_series_production.NonSeriesProductionRequestBodyFactory;
 import com.erp.data.factories.plan.PlanRequestBodyFactory;
@@ -32,6 +33,7 @@ public class RequestBodyFactory {
         RelocationRequestBodyFactory.registerStrategies();
         PlanRequestBodyFactory.registerStrategies();
         NonSeriesProductionRequestBodyFactory.registerStrategies();
+        DefectRequestBodyFactory.registerStrategies();
     }
 
     /**

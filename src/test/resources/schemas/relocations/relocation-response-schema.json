@@ -1,39 +1,91 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "RelocationResponse",
-  "description": "Schema for resource relocation between storages",
+  "description": "Matches backend org.pm.tk.dto.response.RelocationResponse",
   "type": "object",
   "properties": {
-    "id": {
+    "id": { "type": "integer" },
+    "type": { "type": "string", "enum": ["RESOURCE", "EQUIPMENT"] },
+    "state": {
       "type": "string",
-      "description": "Unique identifier of the relocation record"
+      "enum": ["CREATED", "AUTO_FINISHED", "FINISHED", "CANCELLED", "RETURNED", "LOST"]
     },
-    "description": {
-      "type": "string",
-      "description": "Optional description of the relocation"
-    },
+    "description": { "type": ["string", "null"] },
+    "invoiceNumber": { "type": ["string", "null"] },
     "items": {
       "type": "array",
-      "minItems": 1,
-      "description": "List of resources being relocated",
-      "items": {
-        "$ref": "../technological-maps/resource-usage-response-schema.json"
-      }
+      "items": { "$ref": "#/definitions/relocationItem" }
     },
-    "fromStorageId": {
-      "type": "integer",
-      "description": "Source storage identifier"
+    "equipmentItems": {
+      "type": "array",
+      "items": { "type": "object" }
     },
-    "toStorageId": {
-      "type": "integer",
-      "description": "Destination storage identifier"
-    }
+    "sender": { "$ref": "#/definitions/simpleEntity" },
+    "recipient": { "$ref": "#/definitions/simpleEntity" },
+    "date": { "type": ["string", "null"], "format": "date" },
+    "canGenerateInvoice": { "type": ["boolean", "null"] },
+    "hasExternalInvoicePhoto": { "type": ["boolean", "null"] },
+    "isPaidByCash": { "type": ["boolean", "null"] },
+    "paidAmount": { "type": ["number", "null"] },
+    "sendingPersonName": { "type": ["string", "null"] },
+    "sendingPersonRank": { "type": ["string", "null"] },
+    "receivingPersonName": { "type": ["string", "null"] },
+    "receivingPersonRank": { "type": ["string", "null"] },
+    "files": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "createdAt": { "type": ["string", "null"], "format": "date-time" }
   },
-  "required": [
-    "id",
-    "items",
-    "fromStorageId",
-    "toStorageId"
-  ],
-  "additionalProperties": false
+  "required": ["id", "state"],
+  "additionalProperties": true,
+  "definitions": {
+    "simpleEntity": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": ["string", "null"] }
+      },
+      "required": ["id"],
+      "additionalProperties": true
+    },
+    "relocationItemBatch": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "amount": { "type": "number" },
+        "batchNumber": { "type": ["string", "null"] },
+        "isProduced": { "type": ["boolean", "null"] }
+      },
+      "required": ["amount"],
+      "additionalProperties": true
+    },
+    "relocationItem": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": ["object", "null"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": ["string", "null"] },
+            "active": { "type": ["boolean", "null"] },
+            "category": { "type": ["object", "null"] },
+            "imagePath": { "type": ["string", "null"] },
+            "properties": { "type": ["object", "array", "null"] },
+            "unit": { "type": ["object", "null"] },
+            "updatedAt": { "type": ["string", "null"] }
+          },
+          "required": ["id"],
+          "additionalProperties": true
+        },
+        "amount": { "type": "number" },
+        "batches": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/relocationItemBatch" }
+        }
+      },
+      "required": ["resource", "amount"],
+      "additionalProperties": true
+    }
+  }
 }

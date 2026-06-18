@@ -7,7 +7,9 @@ import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.NonSeriesProductionStatus;
 import com.erp.enums.UserRole;
 import com.erp.models.request.NonSeriesProductionRequest;
+import com.erp.models.query.NonSeriesProductionQuery;
 import com.erp.models.response.NonSeriesProductionResponse;
+import com.erp.models.response.NonSeriesProductionTotalResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.test_context.ContextKey;
@@ -18,8 +20,12 @@ import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.math.BigDecimal;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 public class NonSeriesProductionFixture extends BaseFixture {
@@ -149,18 +155,91 @@ public class NonSeriesProductionFixture extends BaseFixture {
         }
     }
 
+    @Step("API: Видалити несерійне виробництво /{id}?storageId={storageId}")
+    public void deleteAs(UserRole role, Long id, Long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.NON_SERIES_PRODUCTION_DELETE,
+                role,
+                null,
+                String.valueOf(id),
+                String.valueOf(storageId));
+        validateSuccess(response, "Delete non-series production");
+    }
+
     @Step("API: Отримати залишок ресурсу {resourceId} на складі {storageId}")
     public double getResourceStock(Long storageId, Long resourceId) {
+        return getInventorySnapshot(storageId).getOrDefault(resourceId, 0.0);
+    }
+
+    @Step("API: Знімок залишків усіх ресурсів на складі {storageId}")
+    public Map<Long, Double> getInventorySnapshot(Long storageId) {
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_INVENTORY_GET,
                 UserRole.OWNER_1,
                 String.valueOf(storageId));
         List<StorageItemResponse> items = DatabaseIntegrityValidator.extractList(
                 response, StorageItemResponse.class);
-        return items.stream()
-                .filter(item -> item.getResource() != null && resourceId.equals(item.getResource().getId()))
-                .mapToDouble(item -> item.getAmount() != null ? item.getAmount() : 0.0)
+
+        Map<Long, Double> snapshot = new LinkedHashMap<>();
+        for (StorageItemResponse item : items) {
+            if (item.getResource() != null && item.getResource().getId() != null) {
+                snapshot.put(item.getResource().getId(),
+                        item.getAmount() != null ? item.getAmount() : 0.0);
+            }
+        }
+        return snapshot;
+    }
+
+    @Step("API: Перевірити, що залишки на складі {storageId} не змінились")
+    public void assertInventoryUnchanged(Long storageId, Map<Long, Double> before) {
+        Map<Long, Double> after = getInventorySnapshot(storageId);
+        assertThat(after)
+                .as("Знімок залишків після операції має збігатися зі знімком до неї")
+                .isEqualTo(before);
+    }
+
+    @Step("API: Знайти несерійне виробництво за назвою «{product}»")
+    public NonSeriesProductionResponse findByProduct(String product) {
+        Long storageId = ConfigProvider.getOwner1StorageId();
+        NonSeriesProductionQuery query = NonSeriesProductionQuery.builder()
+                .storageId(storageId)
+                .productSearch(product)
+                .pageSize(50)
+                .build();
+        return getList(query).stream()
+                .filter(record -> product.equals(record.getProduct()))
                 .findFirst()
-                .orElse(0.0);
+                .orElseThrow(() -> new IllegalStateException(
+                        "Non-series production not found for product: " + product));
+    }
+
+    @Step("API: GET non-series production list with filters")
+    public List<NonSeriesProductionResponse> getList(NonSeriesProductionQuery query) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.NON_SERIES_PRODUCTION_GET_ALL,
+                UserRole.OWNER_1,
+                query.toListQueryParams());
+        validateSuccess(response, "Get non-series production list");
+
+        return DatabaseIntegrityValidator.extractList(response, NonSeriesProductionResponse.class);
+    }
+
+    @Step("API: GET non-series production total with filters")
+    public BigDecimal getTotalAmount(NonSeriesProductionQuery query) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.NON_SERIES_PRODUCTION_GET_TOTAL,
+                UserRole.OWNER_1,
+                query.toTotalQueryParams());
+        validateSuccess(response, "Get non-series production total");
+
+        NonSeriesProductionTotalResponse total = response.as(NonSeriesProductionTotalResponse.class);
+        return total.getTotalAmount() != null ? total.getTotalAmount() : BigDecimal.ZERO;
+    }
+
+    public static BigDecimal sumAmounts(List<NonSeriesProductionResponse> records) {
+        return records.stream()
+                .map(NonSeriesProductionResponse::getAmount)
+                .map(amount -> amount != null ? amount : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

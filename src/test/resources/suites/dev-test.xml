@@ -7,10 +7,4 @@
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
 
-    <test name="Production UI">
-        <classes>
-            <class name="com.erp.tests.ui.ProductionUITest"/>
-        </classes>
-    </test>
-
 </suite>

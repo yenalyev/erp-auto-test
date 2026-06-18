@@ -183,6 +183,7 @@ public class TechnologicalMapTest extends BaseFunctionalTest {
 
     @TestCaseId("TC-MFG-019")
 
+
     @Story("Create tech map — edit forbidden")
 
     @Description("ADMIN закриває редагування техкарт для локації Owner1, Owner1 не може створити техкарту")

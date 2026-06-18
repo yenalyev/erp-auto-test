@@ -193,6 +193,13 @@ rules:
     bodyType: null
     description: "Отримати журнал несерійного виробництва OWNER_1"
 
+  - endpointName: "NON_SERIES_PRODUCTION_GET_TOTAL"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Отримати загальний об'єм несерійного виробництва з урахуванням фільтрів"
+
   - endpointName: "NON_SERIES_PRODUCTION_GET_BY_ID"
     contextKey: "OWNER_1_STORAGE_ID"
     allowedRoles: [ ADMIN, OWNER_1 ]
@@ -262,3 +269,88 @@ rules:
     bodyType: "CREATE_SIMPLE_RELOCATION"
     description: "Зробити переміщення з Бізнес Юніта 1 на Бізнес Юніт 2
      (STORAGES): OWNER_1 має можлиівість створити. ADMIN, OWNER_2, ANONYMOUS - не можуть створити таке переміщення"
+
+  - endpointName: "RELOCATION_GET_PAGE"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Список переміщень (paged) для OWNER_1 storage"
+
+  - endpointName: "RELOCATION_GET_PAGE"
+    contextKey: "OWNER_2_STORAGE_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Список переміщень для OWNER_2 — лише ADMIN"
+
+  - endpointName: "RELOCATION_POST_SEND"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: "CREATE_SIMPLE_RELOCATION"
+    description: "POST /relocations/send від OWNER_1"
+
+  - endpointName: "RELOCATION_POST_RECEIVE"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "POST /relocations/receive (зовнішнє отримання)"
+
+  - endpointName: "RELOCATION_PUT_UPDATE_RECEIVE"
+    contextKey: "RELOCATION_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Редагування зовнішнього receive — ADMIN та OWNER_1"
+
+  - endpointName: "RELOCATION_PUT_UPDATE_SEND"
+    contextKey: "RELOCATION_AUTO_FINISHED_SEND_ID"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Редагування AUTO_FINISHED send (storage→UNIT)"
+
+  - endpointName: "RELOCATION_PUT_RESOLVE"
+    contextKey: "RELOCATION_CREATED_ID"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Resolve CREATED relocation — recipient/sender OWNER_1"
+
+  - endpointName: "RELOCATION_DELETE"
+    contextKey: "RELOCATION_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Видалення AUTO_FINISHED relocation — ADMIN та OWNER_1"
+
+  - endpointName: "RELOCATION_GET_EXPORT"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Експорт журналу переміщень у Excel"
+
+  - endpointName: "EQUIPMENT_RELOCATION_POST_SEND"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "POST /relocations/equipment/send від OWNER_1"
+
+  # ========================================
+  # DEFECT ENDPOINTS ("Брак") — REQ-DEF-001 AC-01
+  # @Owner і @Admin мають повний доступ; інші ролі — ні
+  # ========================================
+
+  - endpointName: "DEFECT_POST_CREATE"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: "CREATE_DEFECT"
+    description: "Створити запис про брак на складі OWNER_1: ADMIN та OWNER_1 — можуть, OWNER_2 і ANONYMOUS - ні"
+
+  - endpointName: "DEFECT_GET_BY_ID"
+    contextKey: "DEFECT_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати запис про брак за id (storageId OWNER_1): ADMIN та OWNER_1 — можуть, OWNER_2 і ANONYMOUS - ні"

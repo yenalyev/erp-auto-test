@@ -353,12 +353,32 @@ public enum ApiEndpointDefinition {
             "CREATE_PRODUCTIONS"
     ),
 
+    PRODUCTION_PUT_UPDATE(
+            "/api/v1/productions/{id}/{storageId}",
+            Method.PUT,
+            "schemas/productions/manufacturing-item-response-schema.json",
+            "Update production",
+            new TypeReference<ManufacturingListRequest>() {},
+            new TypeReference<ManufacturingItemResponse>() {},
+            "UPDATE_PRODUCTION"
+    ),
+
+    PRODUCTION_DELETE(
+            "/api/v1/productions/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete production",
+            null,
+            null,
+            "DELETE_PRODUCTION"
+    ),
+
     // ========================================
     // NON-SERIES PRODUCTION ENDPOINTS
     // ========================================
 
     NON_SERIES_PRODUCTION_GET_ALL(
-            "/api/v1/non-series-production?storageIds={id}&size=500",
+            "/api/v1/non-series-production",
             Method.GET,
             "schemas/non-series-production/non-series-production-response-list-schema.json",
             "Get all non-series production by store",
@@ -368,7 +388,7 @@ public enum ApiEndpointDefinition {
     ),
 
     NON_SERIES_PRODUCTION_GET_TOTAL(
-            "/api/v1/non-series-production/total?storageIds={id}",
+            "/api/v1/non-series-production/total",
             Method.GET,
             "schemas/non-series-production/non-series-production-total-response-schema.json",
             "Get non-series production total amount",
@@ -455,7 +475,17 @@ public enum ApiEndpointDefinition {
             "/api/v1/storages/{id}/inventory/{storageItemId}/batches?isProduced=true",
             Method.GET,
             "schemas/inventory/storage-item-batch-list-schema.json",
-            "Get storage item batches",
+            "Get storage item produced batches",
+            null,
+            new TypeReference<List<StorageItemBatchResponse>>() {},
+            null
+    ),
+
+    STORAGE_INVENTORY_BATCHES_GET_NON_PRODUCED(
+            "/api/v1/storages/{id}/inventory/{storageItemId}/batches?isProduced=false",
+            Method.GET,
+            "schemas/inventory/storage-item-batch-list-schema.json",
+            "Get storage item non-produced batches",
             null,
             new TypeReference<List<StorageItemBatchResponse>>() {},
             null
@@ -464,25 +494,69 @@ public enum ApiEndpointDefinition {
     // ========================================
     // RELOCATION ENDPOINTS
     // ========================================
-    RELOCATION_GET_ALL_BY_STORE_ID(
-            "/api/v1/relocations?storageId={id}",
+    RELOCATION_GET_PAGE(
+            "/api/v1/relocations",
             Method.GET,
-            "schemas/relocations/relocation-response-list-schema.json",
-            "Get all relocation by store",
+            "schemas/relocations/relocation-paged-list-schema.json",
+            "Get relocations page",
             null,
-            new TypeReference<List<RelocationResponse>>() {},
+            new TypeReference<PagedRelocationResponse>() {},
             null
     ),
 
-    RELOCATION_POST_CREATE_BY_STORE_ID(
+    /** @deprecated use {@link #RELOCATION_GET_PAGE} */
+    @Deprecated
+    RELOCATION_GET_ALL_BY_STORE_ID(
             "/api/v1/relocations",
+            Method.GET,
+            "schemas/relocations/relocation-paged-list-schema.json",
+            "Get relocations page (legacy alias)",
+            null,
+            new TypeReference<PagedRelocationResponse>() {},
+            null
+    ),
+
+    RELOCATION_GET_CREATION_OPTIONS(
+            "/api/v1/relocations/creation-options?storageId={id}",
+            Method.GET,
+            "schemas/relocations/relocation-creation-options-schema.json",
+            "Get relocation creation options",
+            null,
+            new TypeReference<RelocationCreationOptionsResponse>() {},
+            null
+    ),
+
+    RELOCATION_GET_EXPORT(
+            "/api/v1/relocations/export",
+            Method.GET,
+            null,
+            "Export relocations to Excel",
+            null,
+            new TypeReference<byte[]>() {},
+            null
+    ),
+
+    RELOCATION_POST_SEND(
+            "/api/v1/relocations/send?generateInvoice=false",
             Method.POST,
             "schemas/relocations/relocation-response-schema.json",
-                    "Create relocation by store",
-                    new TypeReference<RelocationRequest>() {},
-                    new TypeReference<ResourceResponse>() {},
+            "Send resources (storage → storage/UNIT)",
+            new TypeReference<RelocationOutputRequest>() {},
+            new TypeReference<RelocationResponse>() {},
             "CREATE_RELOCATIONS"
-            ),
+    ),
+
+    /** @deprecated use {@link #RELOCATION_POST_SEND} */
+    @Deprecated
+    RELOCATION_POST_CREATE_BY_STORE_ID(
+            "/api/v1/relocations/send?generateInvoice=false",
+            Method.POST,
+            "schemas/relocations/relocation-response-schema.json",
+            "Send resources (legacy alias)",
+            new TypeReference<RelocationOutputRequest>() {},
+            new TypeReference<RelocationResponse>() {},
+            "CREATE_RELOCATIONS"
+    ),
 
     RELOCATION_POST_RECEIVE(
             "/api/v1/relocations/receive",
@@ -491,6 +565,225 @@ public enum ApiEndpointDefinition {
             "Receive resources (SUPPLIER → storage, AUTO_FINISHED)",
             new TypeReference<RelocationInputRequest>() {},
             new TypeReference<RelocationResponse>() {},
+            null
+    ),
+
+    RELOCATION_PUT_RESOLVE(
+            "/api/v1/relocations/{id}/resolve?storageId={storageId}",
+            Method.PUT,
+            "schemas/relocations/relocation-response-schema.json",
+            "Resolve relocation state",
+            new TypeReference<RelocationUpdateRequest>() {},
+            new TypeReference<RelocationResponse>() {},
+            null
+    ),
+
+    RELOCATION_PUT_UPDATE_SEND(
+            "/api/v1/relocations/{id}/send?storageId={storageId}",
+            Method.PUT,
+            "schemas/relocations/relocation-response-schema.json",
+            "Edit outbound relocation (AUTO_FINISHED)",
+            new TypeReference<RelocationOutputEditRequest>() {},
+            new TypeReference<RelocationResponse>() {},
+            null
+    ),
+
+    RELOCATION_PUT_UPDATE_RECEIVE(
+            "/api/v1/relocations/{id}/receive?storageId={storageId}",
+            Method.PUT,
+            "schemas/relocations/relocation-response-schema.json",
+            "Edit inbound relocation (AUTO_FINISHED)",
+            new TypeReference<RelocationInputEditRequest>() {},
+            new TypeReference<RelocationResponse>() {},
+            null
+    ),
+
+    RELOCATION_DELETE(
+            "/api/v1/relocations/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete AUTO_FINISHED relocation",
+            null,
+            new TypeReference<Void>() {},
+            null
+    ),
+
+    // ========================================
+    // EQUIPMENT RELOCATION ENDPOINTS
+    // ========================================
+    EQUIPMENT_RELOCATION_POST_SEND(
+            "/api/v1/relocations/equipment/send",
+            Method.POST,
+            "schemas/relocations/relocation-response-schema.json",
+            "Send equipment relocation",
+            new TypeReference<EquipmentRelocationSendRequest>() {},
+            new TypeReference<RelocationResponse>() {},
+            null
+    ),
+
+    EQUIPMENT_RELOCATION_PUT_UPDATE_SEND(
+            "/api/v1/relocations/equipment/{id}/send?storageId={storageId}",
+            Method.PUT,
+            "schemas/relocations/relocation-response-schema.json",
+            "Edit equipment outbound relocation",
+            new TypeReference<EquipmentRelocationSendEditRequest>() {},
+            new TypeReference<RelocationResponse>() {},
+            null
+    ),
+
+    EQUIPMENT_RELOCATION_PUT_UPDATE_RECEIVE(
+            "/api/v1/relocations/equipment/{id}/receive?storageId={storageId}",
+            Method.PUT,
+            "schemas/relocations/relocation-response-schema.json",
+            "Edit equipment inbound relocation",
+            new TypeReference<EquipmentRelocationReceiveEditRequest>() {},
+            new TypeReference<RelocationResponse>() {},
+            null
+    ),
+
+    // ========================================
+    // EQUIPMENT ENDPOINTS
+    // ========================================
+    EQUIPMENT_GET_PAGE(
+            "/api/v1/equipment",
+            Method.GET,
+            "schemas/equipment/equipment-page-schema.json",
+            "Get equipment page",
+            null,
+            new TypeReference<PagedEquipmentResponse>() {},
+            null
+    ),
+
+    EQUIPMENT_CATEGORY_GET_ALL(
+            "/api/v1/equipment-categories",
+            Method.GET,
+            "schemas/equipment/equipment-category-list-schema.json",
+            "Get equipment categories",
+            null,
+            new TypeReference<List<EquipmentCategoryResponse>>() {},
+            null
+    ),
+
+    EQUIPMENT_POST_CREATE(
+            "/api/v1/equipment",
+            Method.POST,
+            "schemas/equipment/equipment-response-schema.json",
+            "Create equipment",
+            new TypeReference<EquipmentRequest>() {},
+            new TypeReference<EquipmentResponse>() {},
+            null
+    ),
+
+    EQUIPMENT_PUT_STATUS(
+            "/api/v1/equipment/{id}/status",
+            Method.PUT,
+            "schemas/equipment/equipment-response-schema.json",
+            "Change equipment status",
+            new TypeReference<EquipmentStatusUpdateRequest>() {},
+            new TypeReference<EquipmentResponse>() {},
+            null
+    ),
+
+    // ========================================
+    // DEFECT ENDPOINTS ("Брак")
+    // ========================================
+    DEFECT_GET_PAGE(
+            "/api/v1/defects",
+            Method.GET,
+            "schemas/defect/defect-paged-list-schema.json",
+            "Get defects page (filtered by storageIds, resourceSearch, dates, types)",
+            null,
+            null,
+            null
+    ),
+
+    DEFECT_GET_BY_ID(
+            "/api/v1/defects/{id}?storageId={storageId}",
+            Method.GET,
+            "schemas/defect/defect-response-schema.json",
+            "Get defect by id",
+            null,
+            new TypeReference<DefectResponse>() {},
+            null
+    ),
+
+    DEFECT_GET_LINKED_PRODUCTION_IDS(
+            "/api/v1/defects/linked-production-ids",
+            Method.GET,
+            null,
+            "Get production process ids available for production defects",
+            null,
+            new TypeReference<List<Long>>() {},
+            null
+    ),
+
+    DEFECT_GET_LINKED_RELOCATION_IDS(
+            "/api/v1/defects/linked-relocation-ids",
+            Method.GET,
+            null,
+            "Get relocation ids available for relocation defects",
+            null,
+            new TypeReference<List<Long>>() {},
+            null
+    ),
+
+    DEFECT_POST_CREATE(
+            "/api/v1/defects",
+            Method.POST,
+            "schemas/defect/defect-response-schema.json",
+            "Create defect",
+            new TypeReference<DefectRequest>() {},
+            new TypeReference<DefectResponse>() {},
+            "CREATE_DEFECT"
+    ),
+
+    DEFECT_PUT_UPDATE(
+            "/api/v1/defects/{id}",
+            Method.PUT,
+            "schemas/defect/defect-response-schema.json",
+            "Update defect",
+            new TypeReference<DefectRequest>() {},
+            new TypeReference<DefectResponse>() {},
+            "UPDATE_DEFECT"
+    ),
+
+    DEFECT_DELETE(
+            "/api/v1/defects/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete defect (restores remaining amount to stock)",
+            null,
+            new TypeReference<Void>() {},
+            null
+    ),
+
+    DEFECT_POST_WRITE_OFF(
+            "/api/v1/defects/write-off",
+            Method.POST,
+            "schemas/defect/defect-write-off-response-schema.json",
+            "Write off defect ('Списати')",
+            new TypeReference<DefectWriteOffRequest>() {},
+            new TypeReference<DefectWriteOffResponse>() {},
+            "CREATE_DEFECT_WRITE_OFF"
+    ),
+
+    DEFECT_GET_WRITE_OFFS(
+            "/api/v1/defects/write-off/{defectId}?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get write-offs for a defect",
+            null,
+            new TypeReference<List<DefectWriteOffResponse>>() {},
+            null
+    ),
+
+    DEFECT_DELETE_WRITE_OFF(
+            "/api/v1/defects/write-off/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Cancel (delete) a defect write-off",
+            null,
+            new TypeReference<Void>() {},
             null
     );
 

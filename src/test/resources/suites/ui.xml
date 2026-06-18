@@ -13,4 +13,11 @@
         </classes>
     </test>
 
+    <test name="Relocation UI">
+        <classes>
+            <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
+        </classes>
+    </test>
+
 </suite>

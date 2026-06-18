@@ -1,5 +1,6 @@
 package com.erp.pages;
 
+import com.erp.exceptions.ProductBugException;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -12,7 +13,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 
 /**
  * Page Object for create/edit non-series production form.
@@ -23,6 +23,11 @@ public class NonSeriesProductionFormPage extends BasePage {
     private static final String FORM_TITLE_CREATE = "Створення виробу";
     private static final String FORM_TITLE_EDIT = "Редагування виробу";
     private static final String SAVE_BUTTON = "Зберегти виріб";
+    /**
+     * Max wait for «Зберегти виріб» to become enabled after form changes.
+     * Client-side validation should settle within a few seconds; longer disabled state = product bug.
+     */
+    private static final int SAVE_BUTTON_ENABLE_TIMEOUT_MS = 5_000;
     private static final String ADD_RESOURCE_BUTTON = "Додати";
     private static final String RESOURCE_COMBO_PLACEHOLDER = "Оберіть сировину...";
     private static final String RAW_MATERIALS_SECTION = "Використана сировина на одиницю";
@@ -172,11 +177,9 @@ public class NonSeriesProductionFormPage extends BasePage {
         return this;
     }
 
-    public NonSeriesProductionFormPage assertResourceRowShowsAvailableQuantity(String resourceName,
-                                                                             double expectedAvailable) {
+    public double getDisplayedAvailableQuantity(String resourceName) {
         String trimmedName = resourceName == null ? "" : resourceName.trim();
         Locator resourceCombo = waitForResourceComboWithName(trimmedName);
-
         String displayText = resourceCombo.inputValue();
         assertThat(displayText)
                 .as("Поле сировини має містити назву ресурсу «%s»", trimmedName)
@@ -184,12 +187,28 @@ public class NonSeriesProductionFormPage extends BasePage {
         assertThat(displayText)
                 .as("Поле сировини має показувати доступний залишок (формат «… - доступно: Nод.»)")
                 .contains("доступно:");
+        return parseAvailableQuantity(displayText);
+    }
 
-        double displayedAvailable = parseAvailableQuantity(displayText);
-        assertThat(displayedAvailable)
-                .as("Доступна кількість для «%s» у блоці «%s»", trimmedName, RAW_MATERIALS_SECTION)
-                .isCloseTo(expectedAvailable, within(0.01));
-        return this;
+    /**
+     * UI «доступно» = витрата на це несерійне виробництво + залишок з {@code GET /storages/{id}/inventory}.
+     */
+    public NonSeriesProductionFormPage assertDisplayedAvailableMatchesConsumedPlusInventory(
+            String resourceName,
+            double consumedForProduction,
+            double apiInventoryAmount) {
+        double expectedAvailable = consumedForProduction + apiInventoryAmount;
+        double displayed = getDisplayedAvailableQuantity(resourceName);
+        if (Math.abs(displayed - expectedAvailable) <= 0.01) {
+            return this;
+        }
+
+        attachScreenshot("PRODUCT BUG — UI «доступно» ≠ витрата + API залишок");
+        throw new ProductBugException(String.format(
+                "[PRODUCT BUG] UI «доступно» (%.2f) не збігається з очікуваним "
+                        + "(витрата %.2f + API залишок %.2f = %.2f), різниця %.2f. URL: %s",
+                displayed, consumedForProduction, apiInventoryAmount, expectedAvailable,
+                displayed - expectedAvailable, page.url()));
     }
 
     private Locator waitForResourceComboWithName(String resourceName) {
@@ -222,11 +241,47 @@ public class NonSeriesProductionFormPage extends BasePage {
         return Double.parseDouble(matcher.group(1).replace(',', '.'));
     }
 
+    public NonSeriesProductionFormPage assertSaveButtonPresent() {
+        assertThat(saveButton().count())
+                .as("Кнопка «%s» має бути на формі", SAVE_BUTTON)
+                .isGreaterThan(0);
+        assertThat(saveButton().isVisible())
+                .as("Кнопка «%s» має бути видимою", SAVE_BUTTON)
+                .isTrue();
+        return this;
+    }
+
+    /**
+     * Waits until save is clickable. If the button stays disabled past {@code timeoutMs},
+     * fails with {@link ProductBugException} (application defect, not a flaky wait).
+     */
+    public NonSeriesProductionFormPage assertSaveButtonEnabledWithin(int timeoutMs) {
+        assertSaveButtonPresent();
+
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            if (saveButton().isEnabled()) {
+                return this;
+            }
+            page.waitForTimeout(200);
+        }
+
+        attachScreenshot("PRODUCT BUG — «" + SAVE_BUTTON + "» disabled");
+        throw new ProductBugException(String.format(
+                "[PRODUCT BUG] Кнопка «%s» залишається неактивною більш ніж %d с після зміни форми. URL: %s",
+                SAVE_BUTTON, timeoutMs / 1000, page.url()));
+    }
+
     public NonSeriesProductionListPage saveProduct() {
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SAVE_BUTTON)).click();
+        assertSaveButtonEnabledWithin(SAVE_BUTTON_ENABLE_TIMEOUT_MS);
+        saveButton().click();
         page.waitForURL("**" + NonSeriesProductionListPage.PATH,
                 new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
         return new NonSeriesProductionListPage(page).waitForLoaded();
+    }
+
+    private Locator saveButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SAVE_BUTTON));
     }
 
     private Locator rawMaterialsCard() {
