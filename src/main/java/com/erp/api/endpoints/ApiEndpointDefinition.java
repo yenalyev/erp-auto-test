@@ -89,6 +89,76 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    APP_CONFIG_GET_ALL(
+            "/api/v1/app-config",
+            Method.GET,
+            null,
+            "Get application configuration",
+            null,
+            new TypeReference<List<Object>>() {},
+            null
+    ),
+
+    RESOURCE_GET_BY_ID(
+            "/api/v1/resources/{id}",
+            Method.GET,
+            "schemas/resource-response-schema.json",
+            "Get resource by id",
+            null,
+            new TypeReference<ResourceResponse>() {},
+            null
+    ),
+
+    RESOURCE_AUTOCOMPLETE(
+            "/api/v1/resources/autocomplete",
+            Method.GET,
+            null,
+            "Autocomplete resources",
+            null,
+            new TypeReference<List<ResourceResponse>>() {},
+            null
+    ),
+
+    RESOURCE_DEACTIVATE(
+            "/api/v1/resources/{id}",
+            Method.DELETE,
+            null,
+            "Deactivate (soft delete) resource",
+            null,
+            null,
+            "DEACTIVATE"
+    ),
+
+    RESOURCE_UNARCHIVE(
+            "/api/v1/resources/unarchive/{id}",
+            Method.PUT,
+            null,
+            "Reactivate (unarchive) resource",
+            null,
+            null,
+            "UNARCHIVE"
+    ),
+
+    RESOURCE_PRICE_GET_PAGE(
+            "/api/v1/resources-price",
+            Method.GET,
+            null,
+            "Get resource prices page",
+            null,
+            new TypeReference<List<ResourcePriceResponse>>() {},
+            null
+    ),
+
+    ALERT_POST_CREATE(
+            "/api/v1/alerts",
+            Method.POST,
+            null,
+            "Create storage alert",
+            new TypeReference<StorageAlertRequest>() {},
+            null,
+            "CREATE_ALERT"
+    ),
+
     // ========================================
     // MEASUREMENT UNIT ENDPOINTS
     // ========================================
@@ -313,6 +383,16 @@ public enum ApiEndpointDefinition {
     // PRODUCTION ENDPOINTS
     // ========================================
 
+    PRODUCTION_GET_JOURNAL_PAGE(
+            "/api/v1/productions",
+            Method.GET,
+            "schemas/productions/production-response-list-schema.json",
+            "Get production journal page (UI-aligned filters and sort)",
+            null,
+            new TypeReference<List<ManufacturingItemResponse>>() {},
+            null
+    ),
+
     PRODUCTION_GET_ALL_BY_STORE_ID(
             "/api/v1/productions?storageIds={id}&size=500",
             Method.GET,
@@ -371,6 +451,20 @@ public enum ApiEndpointDefinition {
             null,
             null,
             "DELETE_PRODUCTION"
+    ),
+
+    // ========================================
+    // DISASSEMBLE ENDPOINTS
+    // ========================================
+
+    DISASSEMBLE_POST_CREATE(
+            "/api/v1/disassemble/{storageId}",
+            Method.POST,
+            null,
+            "Create disassemble",
+            new TypeReference<DisassembleListRequest>() {},
+            null,
+            "CREATE_DISASSEMBLE"
     ),
 
     // ========================================
@@ -488,6 +582,69 @@ public enum ApiEndpointDefinition {
             "Get storage item non-produced batches",
             null,
             new TypeReference<List<StorageItemBatchResponse>>() {},
+            null
+    ),
+
+    STORAGE_INVENTORY_STATUS_GET(
+            "/api/v1/storages/{id}/inventory/status",
+            Method.GET,
+            "schemas/inventory/inventory-session-status-schema.json",
+            "Get material inventory session status",
+            null,
+            new TypeReference<InventorySessionStatus>() {},
+            null
+    ),
+
+    STORAGE_INVENTORY_STATUS_PUT(
+            "/api/v1/storages/{id}/inventory/status",
+            Method.PUT,
+            "schemas/inventory/inventory-session-status-schema.json",
+            "Open or close material inventory session",
+            new TypeReference<InventorySessionStatus>() {},
+            new TypeReference<InventorySessionStatus>() {},
+            "OPEN_INVENTORY_SESSION"
+    ),
+
+    STORAGE_INVENTORY_MULTI_GET(
+            "/api/v1/storages/inventory",
+            Method.GET,
+            "schemas/inventory/multi-location-inventory-list-schema.json",
+            "Get multi-location inventory page",
+            null,
+            new TypeReference<List<StorageItemResponse>>() {},
+            null
+    ),
+
+    EXPORT_REMAINDER_GET(
+            "/api/v1/export-analytics/export-remainder",
+            Method.GET,
+            null,
+            "Export storage remainders XLSX",
+            null,
+            null,
+            null
+    ),
+
+    RESOURCE_OPERATION_HISTORY_GET(
+            "/api/v1/statistics/resource-operation-history",
+            Method.GET,
+            null,
+            "Get resource operation history",
+            null,
+            null,
+            null
+    ),
+
+    // ========================================
+    // RESOURCE VIEWER ENDPOINTS
+    // ========================================
+    RESOURCE_VIEWER_RELOCATIONS_SUM(
+            "/api/v1/resources-viewer/relocations/sum",
+            Method.GET,
+            "schemas/resource-viewer/resource-relocation-sum-list-schema.json",
+            "Get relocated resources sum (aggregated by resource, sorted by name)",
+            null,
+            new TypeReference<List<ResourceRelocationSumViewerResponse>>() {},
             null
     ),
 

@@ -13,6 +13,12 @@
         </classes>
     </test>
 
+    <test name="Resources UI">
+        <classes>
+            <class name="com.erp.tests.ui.ResourceAutocompleteUiTest"/>
+        </classes>
+    </test>
+
     <test name="Relocation UI">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>

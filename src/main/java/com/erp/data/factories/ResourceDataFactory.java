@@ -16,6 +16,14 @@ public class ResourceDataFactory {
                 .categoryId(categoryId);
     }
 
+    public static ResourceRequest uniqueResource(@NonNull String namePrefix,
+                                                 @NonNull Long measurementUnitId,
+                                                 @NonNull Long categoryId) {
+        return defaultResource(measurementUnitId, categoryId)
+                .name(namePrefix + com.erp.utils.data.DataUtils.getUniqueSuffix())
+                .build();
+    }
+
     /**
      * 🔥 Створює реквест на основі існуючої відповіді.
      * Це дозволяє взяти існуючий об'єкт і змінити в ньому лише одне поле.
