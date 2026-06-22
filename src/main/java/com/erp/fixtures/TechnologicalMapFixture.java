@@ -142,13 +142,24 @@ public class TechnologicalMapFixture extends BaseFixture {
     @Step("Створити техкарту для локації {storageId} (режим EDIT_ALLOWED)")
     public TechnologicalMapResponse createTechMapAs(UserRole role, Long storageId) {
         setMode(storageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
+        return createTechMapWithRequest(role, buildOwner1CreateRequest());
+    }
 
-        TechnologicalMapRequest request = buildOwner1CreateRequest();
+    @Step("Створити техкарту з кастомним запитом")
+    public TechnologicalMapResponse createTechMapWithRequest(UserRole role, TechnologicalMapRequest request) {
+        if (request.getStorageIds() != null && !request.getStorageIds().isEmpty()) {
+            for (Long storageId : request.getStorageIds()) {
+                setMode(storageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
+            }
+        } else {
+            setMode(getOwner1StorageId(), StorageTechnologicalMapMode.EDIT_ALLOWED);
+        }
+
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.TECH_MAP_CREATE,
                 role,
                 request);
-        validateSuccess(response, "Create tech map for storage " + storageId);
+        validateSuccess(response, "Create tech map");
 
         return response.as(TechnologicalMapResponse.class);
     }

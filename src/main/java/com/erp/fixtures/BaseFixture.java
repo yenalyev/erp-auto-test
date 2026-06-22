@@ -257,7 +257,7 @@ public abstract class BaseFixture {
                 // Якщо для створення потрібен storageId в URL, передайте його третім параметром
                 Object body = RequestBodyFactory.generate(createEndpoint, testContext);
 
-                Response createResponse = apiExecutor.execute(createEndpoint, UserRole.ADMIN, body, storageId);
+                Response createResponse = apiExecutor.execute(createEndpoint, UserRole.ADMIN, body);
                 validateSuccess(createResponse, "Create Plan during setup");
 
                 PlanResponse createdPlan = createResponse.as(PlanResponse.class);
@@ -267,6 +267,10 @@ public abstract class BaseFixture {
 
         // Зберігаємо список у контекст ПЕРЕД завершенням фікстури
         testContext.set(ContextKey.DYNAMIC_PLAN_LIST, allPlans);
+        if (!allPlans.isEmpty()) {
+            testContext.set(ContextKey.DYNAMIC_PLAN, allPlans.getFirst());
+            testContext.set(ContextKey.DYNAMIC_PLAN_ID, allPlans.getFirst().getId());
+        }
         log.info("DYNAMIC_PLAN_LIST - " + testContext.get(ContextKey.DYNAMIC_PLAN_LIST));
     }
 

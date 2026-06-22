@@ -38,4 +38,17 @@ public class InventoryDataFactory {
                 .toList();
         return InventoryRequest.builder().resources(resources).build();
     }
+
+    public static InventoryRequest copyExcept(List<StorageItemResponse> existingItems, Long excludeResourceId) {
+        Map<Long, Double> amounts = new LinkedHashMap<>();
+        if (existingItems != null) {
+            for (StorageItemResponse item : existingItems) {
+                if (item.getResource() != null && item.getResource().getId() != null
+                        && !item.getResource().getId().equals(excludeResourceId)) {
+                    amounts.put(item.getResource().getId(), item.getAmount());
+                }
+            }
+        }
+        return seedAmounts(amounts);
+    }
 }

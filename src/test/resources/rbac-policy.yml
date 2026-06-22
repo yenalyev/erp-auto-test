@@ -149,6 +149,77 @@ rules:
     description: "Змінити дату плану виробництва по Бізнес Юніту який належить OWNER_1 (STORAGES): 
     ADMIN має право, OWNER_1 та ANONYMOUS - ні"
 
+  - endpointName: "PLAN_GET_BY_ID"
+    contextKey: "DYNAMIC_PLAN_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати план виробництва за id для OWNER_1 storage: ADMIN та OWNER_1 — так, OWNER_2 та ANONYMOUS — ні"
+
+  - endpointName: "PLAN_DELETE"
+    contextKey: "DYNAMIC_PLAN_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Видалити план виробництва: лише ADMIN"
+
+  # ========================================
+  # GLOBAL PLAN ENDPOINTS
+  # ========================================
+
+  - endpointName: "GLOBAL_PLAN_GET_ALL"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Список глобальних планів: ADMIN — так, OWNER_* та ANONYMOUS — ні"
+
+  - endpointName: "GLOBAL_PLAN_GET_BY_ID"
+    contextKey: "GLOBAL_PLAN_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати глобальний план за id: ADMIN — так"
+
+  - endpointName: "GLOBAL_PLAN_POST_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: "CREATE_GLOBAL_PLAN"
+    description: "Створити глобальний план: ADMIN — так"
+
+  - endpointName: "GLOBAL_PLAN_PUT_UPDATE"
+    contextKey: "GLOBAL_PLAN_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: "UPDATE_GLOBAL_PLAN"
+    description: "Оновити глобальний план: ADMIN — так"
+
+  - endpointName: "GLOBAL_PLAN_DELETE"
+    contextKey: "GLOBAL_PLAN_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Видалити глобальний план: ADMIN — так"
+
+  - endpointName: "GLOBAL_PLAN_DECOMPOSE"
+    contextKey: "GLOBAL_PLAN_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Декомпозиція глобального плану: ADMIN — так"
+
+  - endpointName: "GLOBAL_PLAN_GENERATE"
+    contextKey: "GLOBAL_PLAN_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Генерація планів по локаціях: ADMIN — так"
+
+  - endpointName: "GLOBAL_PLAN_REQUIREMENTS_EXPORT"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Експорт потреб ресурсів: ADMIN — так"
+
 
   # ========================================
   # PRODUCTION ENDPOINTS
@@ -234,6 +305,20 @@ rules:
     deniedRoles: [ ANONYMOUS, OWNER_2 ]
     bodyType: null
     description: "Інвентаризація (оновлення залишків) складу OWNER_1"
+
+  - endpointName: "STORAGE_INVENTORY_STATUS_PUT"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: "OPEN_INVENTORY_SESSION"
+    description: "Відкрити/закрити сесію інвентаризації — тільки ADMIN"
+
+  - endpointName: "STORAGE_INVENTORY_STATUS_GET"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Читання статусу сесії інвентаризації складу OWNER_1"
 
   # ========================================
   # RELOCATION ENDPOINTS
@@ -354,3 +439,13 @@ rules:
     deniedRoles: [ OWNER_2, ANONYMOUS ]
     bodyType: null
     description: "Отримати запис про брак за id (storageId OWNER_1): ADMIN та OWNER_1 — можуть, OWNER_2 і ANONYMOUS - ні"
+
+  # ========================================
+  # RESOURCE VIEWER ENDPOINTS
+  # ========================================
+
+  - endpointName: "RESOURCE_VIEWER_RELOCATIONS_SUM"
+    allowedRoles: [ ADMIN, RESOURCE_VIEWER ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ANONYMOUS ]
+    bodyType: null
+    description: "Сума переміщень resource-viewer: тільки ADMIN і RESOURCE_VIEWER (wolf)"

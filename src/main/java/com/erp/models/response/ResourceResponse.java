@@ -14,5 +14,6 @@ import lombok.NoArgsConstructor;
 public class ResourceResponse {
         private Long id;
         private String name;
+        private Boolean active;
         private MeasurementUnitResponse unit;
 }

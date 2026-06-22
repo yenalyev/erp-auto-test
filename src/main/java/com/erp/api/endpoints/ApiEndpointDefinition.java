@@ -379,6 +379,110 @@ public enum ApiEndpointDefinition {
             "UPDATE_PLAN"
     ),
 
+    PLAN_GET_BY_ID(
+            "/api/v1/plans/{id}",
+            Method.GET,
+            "schemas/plans/plan-response-schema.json",
+            "Get plan by id",
+            null,
+            new TypeReference<PlanResponse>() {},
+            null
+    ),
+
+    PLAN_DELETE(
+            "/api/v1/plans/{id}",
+            Method.DELETE,
+            null,
+            "Delete plan",
+            null,
+            null,
+            null
+    ),
+
+    // ========================================
+    // GLOBAL PLAN ENDPOINTS
+    // ========================================
+
+    GLOBAL_PLAN_GET_ALL(
+            "/api/v1/global-plans",
+            Method.GET,
+            "schemas/global-plans/global-plan-list-schema.json",
+            "Get all global plans",
+            null,
+            new TypeReference<List<GlobalPlanResponse>>() {},
+            null
+    ),
+
+    GLOBAL_PLAN_GET_BY_ID(
+            "/api/v1/global-plans/{id}",
+            Method.GET,
+            "schemas/global-plans/global-plan-response-schema.json",
+            "Get global plan by id",
+            null,
+            new TypeReference<GlobalPlanResponse>() {},
+            null
+    ),
+
+    GLOBAL_PLAN_POST_CREATE(
+            "/api/v1/global-plans",
+            Method.POST,
+            "schemas/global-plans/global-plan-response-schema.json",
+            "Create global plan",
+            new TypeReference<GlobalPlanRequest>() {},
+            new TypeReference<GlobalPlanResponse>() {},
+            "CREATE_GLOBAL_PLAN"
+    ),
+
+    GLOBAL_PLAN_PUT_UPDATE(
+            "/api/v1/global-plans/{id}",
+            Method.PUT,
+            "schemas/global-plans/global-plan-response-schema.json",
+            "Update global plan",
+            new TypeReference<GlobalPlanRequest>() {},
+            new TypeReference<GlobalPlanResponse>() {},
+            "UPDATE_GLOBAL_PLAN"
+    ),
+
+    GLOBAL_PLAN_DELETE(
+            "/api/v1/global-plans/{id}",
+            Method.DELETE,
+            null,
+            "Delete global plan",
+            null,
+            null,
+            null
+    ),
+
+    GLOBAL_PLAN_DECOMPOSE(
+            "/api/v1/global-plans/{id}/decompose",
+            Method.POST,
+            "schemas/global-plans/decomposition-response-schema.json",
+            "Decompose global plan",
+            new TypeReference<DecompositionRequest>() {},
+            new TypeReference<DecompositionResponse>() {},
+            null
+    ),
+
+    GLOBAL_PLAN_GENERATE(
+            "/api/v1/global-plans/{id}/generate",
+            Method.POST,
+            "schemas/global-plans/generation-response-schema.json",
+            "Generate per-location plans from global plan",
+            new TypeReference<DecompositionRequest>() {},
+            new TypeReference<GenerationResponse>() {},
+            null
+    ),
+
+    GLOBAL_PLAN_REQUIREMENTS_EXPORT(
+            "/api/v1/global-plans/requirements/export",
+            Method.POST,
+            null,
+            "Export global plan requirements to Excel",
+            new TypeReference<RequirementsExportRequest>() {},
+            null,
+            null
+    ),
+
     // ========================================
     // PRODUCTION ENDPOINTS
     // ========================================

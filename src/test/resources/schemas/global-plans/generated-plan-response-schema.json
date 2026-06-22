@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GeneratedPlanResponse",
+  "type": "object",
+  "required": ["planId", "storage"],
+  "properties": {
+    "planId": { "type": "integer" },
+    "storage": { "$ref": "../simple-entity-schema.json" }
+  },
+  "additionalProperties": true
+}

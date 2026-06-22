@@ -20,7 +20,10 @@
       "type": "string",
       "description": "Скорочена назва (наприклад, кг)",
       "minLength": 1
+    },
+    "active": {
+      "type": ["boolean", "null"]
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

@@ -1,0 +1,23 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Global Plans Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Global Plans API">
+        <classes>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanDecompositionApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanGenerationApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Global Plans UI">
+        <classes>
+            <class name="com.erp.tests.ui.GlobalPlansUiTest"/>
+        </classes>
+    </test>
+</suite>

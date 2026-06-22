@@ -1,0 +1,54 @@
+---
+description: Патерни написання API та RBAC тестів
+globs: src/test/java/**/*.java
+alwaysApply: false
+---
+
+# API Test Patterns
+
+## Adding a new API test
+
+1. Add endpoint to `ApiEndpointDefinition` (path, method, DTO types, schema path, operation discriminator if needed)
+2. Register body strategy in `RequestBodyFactory` (for POST/PUT)
+3. Add RBAC rule in `rbac-policy.yml` if access control applies
+4. Create fixture in `src/main/java/com/erp/fixtures/` if shared setup needed
+5. Add test class extending `BaseFunctionalTest` (or use auto-generated RBAC matrix)
+6. Register class in appropriate suite XML under `src/test/resources/suites/`
+
+## Functional test template (follow ResourceTest)
+
+```java
+@TestCaseId("TC-XXX-001")
+public void testCreateEntity() {
+    var body = RequestBodyFactory.generate(ApiEndpointDefinition.ENTITY_CREATE, testContext);
+    Response response = apiExecutor.execute(ApiEndpointDefinition.ENTITY_CREATE, UserRole.ADMIN, body);
+    assertThat(response.statusCode()).isEqualTo(200);
+    SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.ENTITY_CREATE);
+    verifyCreatedEntity(response, body, ApiEndpointDefinition.ENTITY_GET_ALL, EntityResponse.class);
+}
+```
+
+Negative tests: TestNG `@DataProvider` + `assertDbUnchanged()` before/after.
+
+## Auth (remote dev/staging)
+
+- **Do not use Keycloak REST** (`localhost:8090` password grant) for functional API tests on remote envs
+- Auth = **Playwright headless browser** → `/server/login?redirectUri=` → Keycloak HTML form → session cookies
+- Use `ApiExecutor.execute(..., UserRole.ADMIN|OWNER_1, ...)` — sessions are cached per role
+- Never hardcode credentials in tests; use `UserRole` + `ConfigProvider`
+
+## Conventions
+
+- Always annotate with `@TestCaseId("TC-...")` — listeners prefix Allure names
+- Use `@Epic` / `@Feature` / `@Story` / `@Severity` for Allure hierarchy
+- Use `Allure.step()` for multi-step scenarios
+- Use `UserRole` enum for credentials — never hardcode usernames/passwords in tests
+- Use `ApiExecutor.execute()` — do not call RestAssured directly in new functional tests
+- Assert with AssertJ (`assertThat`), not JUnit/Hamcrest
+- Do NOT import `org.testcontainers.shaded.*` — use `org.apache.commons.lang3`
+
+## Base class responsibilities
+
+- `BaseTest`: suite setup (auth, DB pre-flight, Playwright), `@BeforeMethod` token refresh
+- `BaseFunctionalTest`: `verifyCreatedEntity()`, reflection field match, DB count via API lists
+- `BaseRbacTest`: separate session cache — legacy path, avoid extending patterns from it

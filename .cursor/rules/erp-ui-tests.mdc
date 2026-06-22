@@ -1,0 +1,49 @@
+---
+description: Playwright UI тести та Page Object Model
+globs: "{src/main/java/com/erp/pages/**,src/test/java/com/erp/tests/ui/**}"
+alwaysApply: false
+---
+
+# UI Test Patterns
+
+## Page Object Model
+
+- Base: `BasePage` — waits, screenshots, Allure attachments
+- Pages: `LoginPage`, `AppSidebarPage`, `ProductionPage` in `src/main/java/com/erp/pages/`
+- Tests: extend `BaseUITest` in `src/test/java/com/erp/tests/ui/`
+
+## Lifecycle (BaseUITest)
+
+- Suite: shared `Browser` via `PlaywrightSessionProvider`
+- Class: isolated `BrowserContext` with `ignoreHTTPSErrors=true`
+- Method: fresh `Page`; failure screenshot attached to Allure in `@AfterMethod`
+
+## Selectors
+
+Keycloak login (shared with `PlaywrightSessionProvider`): `#username`, `#password`, `#kc-login`
+
+Prefer stable selectors:
+- `data-testid` (ask frontend team to add)
+- role/text locators over Tailwind utility classes
+
+Current brittle patterns to avoid copying: hardcoded Ukrainian UI strings, CSS class chains like `.text-gray-900`.
+
+## Auth reuse
+
+API tests get sessions via `PlaywrightSessionProvider.getSession()`. UI tests use the same browser infrastructure — do not create separate browser launch logic.
+
+## Running UI tests
+
+```bash
+mvn test -Denv=dev -Dsuite=ui-dev      # LoginLogoutUITest (admin + owner1)
+mvn test -Denv=dev -Dsuite=ui          # LoginUITest
+mvn test -Denv=dev -Dsuite=dev-test    # ProductionUITest (pom default)
+mvn exec:java@install-chromium         # first-time browser install
+```
+
+## Adding a new UI test
+
+1. Create page class extending `BasePage`
+2. Create test class extending `BaseUITest`
+3. Add to `src/test/resources/suites/ui.xml` (or master regression suite)
+4. Use `@TestCaseId`, Allure annotations consistent with API tests

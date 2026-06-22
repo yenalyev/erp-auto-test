@@ -1,0 +1,66 @@
+---
+description: Патерни розширення framework-коду (main)
+globs: src/main/java/**/*.java
+alwaysApply: false
+---
+
+# Framework Extension Patterns
+
+## ApiEndpointDefinition — always edit first
+
+Every endpoint is one enum constant with: path template `{id}`, HTTP method, schema path, request/response `TypeReference<T>`, optional `operation` discriminator for same-path endpoints.
+
+Never duplicate endpoint paths elsewhere — tests, fixtures, and RBAC must reference the enum.
+
+## Request body generation
+
+- Strategy interface: `RequestBodyStrategy`
+- Registry: `RequestBodyFactory` maps `ApiEndpointDefinition` → strategy
+- Domain split: `*DataFactory` (builders) + `*RequestBodyFactory` (endpoint strategies registered in static block)
+- Use `FakerProvider` (Ukrainian locale) for random test data
+
+## Fixtures
+
+Extend `BaseFixture`, call `ApiExecutor` + store IDs in `TestContext` via `ContextKey`. Example: `ResourceFixture.prepareContext()`.
+
+Fixtures belong in `src/main/java/com/erp/fixtures/`, not in test classes.
+
+## Models
+
+- Request DTOs: `src/main/java/com/erp/models/request/` (Lombok builders)
+- Response DTOs: `src/main/java/com/erp/models/response/`
+- Add matching JSON schema in `src/test/resources/schemas/`
+
+## Auth changes
+
+Remote envs (dev, staging): **session auth via Playwright browser login only** — do NOT call local Keycloak (`auth.keycloak.url=http://localhost:8090`) for API functional tests.
+
+Flow:
+```
+GET {backend.url}/login?redirectUri={base.url}
+ → Keycloak form (#username, #password, #kc-login)
+ → redirect back to app
+ → JSESSIONID cookie valid for GET /api/v1/users/me
+```
+
+- `PlaywrightSessionProvider` is the primary auth path when initialized
+- `BaseTest.globalSetup()` skips Keycloak token grant when Playwright is available
+- Session is verified by polling `GET /api/v1/users/me` until 200 (not by JSESSIONID presence alone)
+- `AuthService.getSessionForUser()` → Playwright; legacy RestAssured OAuth redirect is fallback only
+- When modifying auth, consolidate caches — do not add a 4th session cache
+
+## Config
+
+Add new properties to `TestConfig` interface + getter in `ConfigProvider`. Per-env overrides in `src/test/resources/config/{env}.properties`. Never commit real passwords or client secrets.
+
+## Validation
+
+- Contract: `SchemaRegistry.validateIfSuccess(response, endpoint)`
+- DB integrity: `DatabaseIntegrityValidator` counts via API GET lists (not raw SQL in tests)
+- `DatabaseHelper` is for pre-flight ping / SSH tunnel only
+
+## Code style
+
+- Match existing patterns: SLF4J logging, Lombok, `@Step` on framework methods for Allure
+- Keep framework code in `src/main/java`, tests thin in `src/test/java`
+- Minimize scope — one endpoint / one concern per change

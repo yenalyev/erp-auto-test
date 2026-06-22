@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DecompositionResponse",
+  "type": "object",
+  "required": ["blocks", "complete"],
+  "properties": {
+    "blocks": { "type": "array" },
+    "nextBlock": { "type": ["object", "null"] },
+    "complete": { "type": "boolean" },
+    "requirements": { "type": ["object", "null"] },
+    "locationPlans": { "type": ["array", "null"] }
+  },
+  "additionalProperties": true
+}

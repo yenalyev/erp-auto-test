@@ -2,61 +2,58 @@ package com.erp.data.factories.plan;
 
 import com.erp.data.FakerProvider;
 import com.erp.models.request.PlanRequest;
+import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.response.PlanResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.erp.models.response.ResourceResponse;
 import lombok.NonNull;
 
-import java.time.LocalDate;
+import java.util.List;
 
 public class PlanDataFactory {
 
     public static PlanRequest.PlanRequestBuilder createSimplePlan(Long storageId,
-                                                            Long resourceId,
-                                                            LocalDate from,
-                                                            LocalDate to,
-                                                            Double amount) {
-        if (null==storageId){
-            throw new IllegalStateException("ERROR - Test Setup Error: 'storageId' is null ");
+                                                                  Long resourceId,
+                                                                  int month,
+                                                                  int year,
+                                                                  Double amount) {
+        if (storageId == null) {
+            throw new IllegalStateException("ERROR - Test Setup Error: 'storageId' is null");
         }
-
-        if (null==resourceId){
-            throw new IllegalStateException("ERROR - Test Setup Error: 'resourceId' is null ");
+        if (resourceId == null) {
+            throw new IllegalStateException("ERROR - Test Setup Error: 'resourceId' is null");
         }
-
-        if (null==from){
-            throw new IllegalStateException("ERROR - Test Setup Error: LocalDate 'from' is null ");
+        if (amount == null) {
+            throw new IllegalStateException("ERROR - Test Setup Error: 'amount' is null");
         }
-
-        if (null==to){
-            throw new IllegalStateException("ERROR - Test Setup Error: LocalDate 'to' is null ");
-        }
-
-        if (null==amount){
-            throw new IllegalStateException("ERROR - Test Setup Error: 'amount' is null ");
-        }
-
 
         return PlanRequest.builder()
                 .description(FakerProvider.ukrainian().commerce().department())
                 .storageId(storageId)
-                .resourceId(resourceId)
-                .from(from)
-                .to(to)
-                .amount(amount);
+                .month(month)
+                .year(year)
+                .output(List.of(new ResourceUsageRequest(resourceId, amount)));
     }
 
+    public static PlanRequest.PlanRequestBuilder fromExisting(@NonNull PlanResponse response) {
+        List<ResourceUsageRequest> output = response.getOutput() == null
+                ? List.of()
+                : response.getOutput().stream()
+                .map(u -> new ResourceUsageRequest(u.getResource().getId(), u.getAmount()))
+                .toList();
 
-    /**
-     * 🔥 Створює реквест на основі існуючої відповіді.
-     * Це дозволяє взяти існуючий об'єкт і змінити в ньому лише одне поле.
-     */
-    public static PlanRequest.PlanRequestBuilder fromExisting(PlanResponse response) {
         return PlanRequest.builder()
                 .description(response.getDescription() + " UPDATED")
-                .storageId(response.getStorageId())
-                .resourceId(response.getResourceId())
-                .amount(response.getAmount())
-                .from(response.getFrom())
-                .to(response.getTo());
+                .storageId(response.getStorage() != null ? response.getStorage().getId() : null)
+                .month(response.getMonth())
+                .year(response.getYear())
+                .output(output);
+    }
+
+    public static PlanRequest.PlanRequestBuilder forResource(Long storageId,
+                                                             ResourceResponse resource,
+                                                             int month,
+                                                             int year,
+                                                             double amount) {
+        return createSimplePlan(storageId, resource.getId(), month, year, amount);
     }
 }

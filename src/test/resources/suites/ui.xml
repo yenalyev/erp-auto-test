@@ -26,4 +26,10 @@
         </classes>
     </test>
 
+    <test name="Global Plans UI">
+        <classes>
+            <class name="com.erp.tests.ui.GlobalPlansUiTest"/>
+        </classes>
+    </test>
+
 </suite>

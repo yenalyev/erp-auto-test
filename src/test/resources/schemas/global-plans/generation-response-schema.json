@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GenerationResponse",
+  "type": "object",
+  "required": ["id", "plans"],
+  "properties": {
+    "id": { "type": "integer" },
+    "plans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["plan", "replaced"],
+        "properties": {
+          "plan": { "$ref": "../plans/plan-response-schema.json" },
+          "replaced": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -33,6 +33,17 @@ public class RbacFixture extends BaseFixture {
         setupDynamicPlan(2);
         prepareRelocationRbacContext();
         prepareDefectRbacContext();
+        prepareGlobalPlanRbacContext();
+    }
+
+    @Step("Setup global plan entity for RBAC matrix")
+    public void prepareGlobalPlanRbacContext() {
+        if (testContext.get(ContextKey.GLOBAL_PLAN_ID) != null) {
+            return;
+        }
+        GlobalPlanFixture globalPlanFixture = new GlobalPlanFixture(testContext, apiExecutor);
+        globalPlanFixture.prepareDecompositionChain();
+        globalPlanFixture.createGlobalPlan(10.0);
     }
 
     @Step("Setup defect entity for RBAC matrix")

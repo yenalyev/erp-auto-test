@@ -15,6 +15,9 @@
             <class name="com.erp.tests.functional.storage.StorageTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanDecompositionApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanGenerationApiTest"/>
         </classes>
     </test>
 </suite>

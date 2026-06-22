@@ -111,6 +111,14 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String owner3Password();
 
+    @Key("user.resource-viewer.username")
+    @DefaultValue("wolf")
+    String resourceViewerUsername();
+
+    @Key("user.resource-viewer.password")
+    @DefaultValue("")
+    String resourceViewerPassword();
+
     // Storage IDs per owner role (resolved per environment)
     @Key("owner1.storage.id")
     @DefaultValue("1")

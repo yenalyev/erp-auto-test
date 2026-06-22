@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResourceRelocationSumViewerResponse",
+  "type": "object",
+  "properties": {
+    "resourceId": { "type": "integer" },
+    "resourceName": { "type": ["string", "null"] },
+    "shortName": { "type": ["string", "null"] },
+    "amount": { "type": "number" }
+  },
+  "required": ["resourceId", "amount"],
+  "additionalProperties": true
+}

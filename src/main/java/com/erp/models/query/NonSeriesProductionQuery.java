@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Value;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class NonSeriesProductionQuery {
 
     private static final String BASE_PATH = "/api/v1/non-series-production";
+    private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
 
     Long storageId;
     String productSearch;
@@ -54,10 +56,10 @@ public class NonSeriesProductionQuery {
             params.put("productSearch", productSearch);
         }
         if (startDate != null) {
-            params.put("startDate", startDate);
+            params.put("startDate", startDate.format(ISO_DATE));
         }
         if (endDate != null) {
-            params.put("endDate", endDate);
+            params.put("endDate", endDate.format(ISO_DATE));
         }
         if (statuses != null && !statuses.isEmpty()) {
             params.put("statuses", statuses.stream().map(Enum::name).toList());

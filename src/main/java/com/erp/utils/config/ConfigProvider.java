@@ -119,6 +119,8 @@ public class ConfigProvider {
     public static String getOwner2Password() { return config.owner2Password(); }
     public static String getOwner3Username() { return config.owner3Username(); }
     public static String getOwner3Password() { return config.owner3Password(); }
+    public static String getResourceViewerUsername() { return config.resourceViewerUsername(); }
+    public static String getResourceViewerPassword() { return config.resourceViewerPassword(); }
 
     // Storage IDs per owner
     public static long getOwner1StorageId()     { return config.owner1StorageId(); }

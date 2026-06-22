@@ -17,5 +17,5 @@
       "$ref": "measurement-unit-schema.json"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

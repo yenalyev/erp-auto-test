@@ -3,8 +3,10 @@ package com.erp.data;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceRequestBodyFactory;
 import com.erp.data.factories.defect.DefectRequestBodyFactory;
+import com.erp.data.factories.inventory.InventoryRequestBodyFactory;
 import com.erp.data.factories.measurement_unit.MeasurementUnitResponseBodyFactory;
 import com.erp.data.factories.non_series_production.NonSeriesProductionRequestBodyFactory;
+import com.erp.data.factories.global_plan.GlobalPlanRequestBodyFactory;
 import com.erp.data.factories.plan.PlanRequestBodyFactory;
 import com.erp.data.factories.production.ProductionRequestBodyFactory;
 import com.erp.data.factories.relocation.RelocationRequestBodyFactory;
@@ -32,8 +34,10 @@ public class RequestBodyFactory {
         ProductionRequestBodyFactory.registerStrategies();
         RelocationRequestBodyFactory.registerStrategies();
         PlanRequestBodyFactory.registerStrategies();
+        GlobalPlanRequestBodyFactory.registerStrategies();
         NonSeriesProductionRequestBodyFactory.registerStrategies();
         DefectRequestBodyFactory.registerStrategies();
+        InventoryRequestBodyFactory.registerStrategies();
     }
 
     /**

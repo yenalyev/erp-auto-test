@@ -5,7 +5,7 @@
   "type": "object",
   "properties": {
     "id": {
-      "type": "integer"
+      "type": ["integer", "null"]
     },
     "resource": {
       "$ref": "../resource-response-schema.json"
@@ -13,6 +13,12 @@
     "amount": {
       "type": "number",
       "description": "Quantity of the resource"
+    },
+    "weight": {
+      "type": "number"
+    },
+    "alertLimit": {
+      "type": ["number", "null"]
     }
   },
   "required": [
@@ -20,5 +26,5 @@
     "resource",
     "amount"
   ],
-  "additionalProperties": false
+  "additionalProperties": true
 }

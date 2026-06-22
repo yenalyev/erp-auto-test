@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Value;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,8 @@ import java.util.Map;
 @Value
 @Builder
 public class DefectQuery {
+
+    private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
 
     Long storageId;
     String resourceSearch;
@@ -40,7 +43,7 @@ public class DefectQuery {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("storageIds", storageId);
         if (date != null) {
-            params.put("date", date);
+            params.put("date", date.format(ISO_DATE));
         }
         if (resourceId != null) {
             params.put("resourceId", resourceId);
@@ -58,10 +61,10 @@ public class DefectQuery {
             params.put("resourceSearch", resourceSearch);
         }
         if (startDate != null) {
-            params.put("startDate", startDate);
+            params.put("startDate", startDate.format(ISO_DATE));
         }
         if (endDate != null) {
-            params.put("endDate", endDate);
+            params.put("endDate", endDate.format(ISO_DATE));
         }
         if (types != null && !types.isEmpty()) {
             params.put("types", types.stream().map(Enum::name).toList());

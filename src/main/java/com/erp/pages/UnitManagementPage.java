@@ -1,0 +1,355 @@
+package com.erp.pages;
+
+import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Download;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Page Object for the Unit Management (Залишки) page.
+ * URL: /unit-management
+ */
+@Slf4j
+public class UnitManagementPage extends BasePage {
+
+    private static final String PATH = "/unit-management";
+    private static final String PAGE_TITLE_TEXT = "Управління запасами";
+    private static final String OPEN_INVENTORY_BUTTON_TEXT = "Відкрити інвентаризацію";
+    private static final String CLOSE_INVENTORY_BUTTON_TEXT = "Закрити інвентаризацію";
+    private static final String CONDUCT_INVENTORY_BUTTON_TEXT = "Провести інвентаризацію";
+    private static final String EXPORT_TO_EXCEL_BUTTON_TEXT = "Експорт в Excel";
+    private static final String SEARCH_PLACEHOLDER = "Пошук...";
+    private static final String ALL_LOCATIONS_TOOLTIP = "Оберіть конкретну локацію для виконання дії";
+    private static final String ADMIN_CONDUCT_TOOLTIP = "Зверніться до адміністратора для проведення інвентаризації";
+
+    public UnitManagementPage(Page page) {
+        super(page);
+    }
+
+    public UnitManagementPage open() {
+        return openForStorage(null);
+    }
+
+    public UnitManagementPage openForAllLocations() {
+        String url = ConfigProvider.getBaseUrl() + PATH;
+        log.info("Opening Unit Management page in all-locations mode: {}", url);
+        page.navigate(url);
+        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        page.evaluate("localStorage.setItem('selectedStorageId', 'all');");
+        waitForInventoryTableDuring(() -> page.reload());
+        return waitForLoaded();
+    }
+
+    public UnitManagementPage openForStorage(Long storageId) {
+        String url = ConfigProvider.getBaseUrl() + PATH;
+        log.info("Opening Unit Management page: {}", url);
+        if (storageId != null) {
+            page.navigate(url);
+            page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+            page.evaluate("localStorage.setItem('selectedStorageId', '" + storageId + "');");
+            waitForInventoryTableDuring(() -> page.reload());
+        } else {
+            waitForInventoryTableDuring(() -> navigateTo(url, "Залишки (/unit-management)"));
+        }
+        return waitForLoaded();
+    }
+
+    public UnitManagementPage waitForLoaded() {
+        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        page.getByText(PAGE_TITLE_TEXT)
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    /** Reloads the page and waits for the inventory list GET to complete. */
+    public UnitManagementPage refreshInventoryTable() {
+        waitForInventoryTableDuring(() -> page.reload());
+        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        page.getByText(PAGE_TITLE_TEXT)
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isOpenInventoryButtonVisible() {
+        return inventoryToggleButton(OPEN_INVENTORY_BUTTON_TEXT).isVisible();
+    }
+
+    public boolean isCloseInventoryButtonVisible() {
+        return inventoryToggleButton(CLOSE_INVENTORY_BUTTON_TEXT).isVisible();
+    }
+
+    public boolean isConductInventoryButtonEnabled() {
+        return conductButton().isEnabled();
+    }
+
+    public boolean isExportToExcelButtonVisible() {
+        return exportToExcelButton().isVisible();
+    }
+
+    public boolean isExportToExcelButtonEnabled() {
+        return exportToExcelButton().isEnabled();
+    }
+
+    public ExportDownloadResult clickExportToExcelAndDownload() {
+        Download download = page.waitForDownload(() -> exportToExcelButton().click());
+        String suggestedFilename = download.suggestedFilename();
+        long sizeBytes = download.path() != null ? download.path().toFile().length() : 0L;
+        log.info("Unit management export download: {} ({} bytes)", suggestedFilename, sizeBytes);
+        return new ExportDownloadResult(suggestedFilename, sizeBytes);
+    }
+
+    public UnitManagementPage clickOpenInventory() {
+        Locator openBtn = inventoryToggleButton(OPEN_INVENTORY_BUTTON_TEXT);
+        openBtn.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        if (!openBtn.isEnabled()) {
+            throw new IllegalStateException("Кнопка «" + OPEN_INVENTORY_BUTTON_TEXT + "» недоступна");
+        }
+        openBtn.click();
+        inventoryToggleButton(CLOSE_INVENTORY_BUTTON_TEXT)
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage clickCloseInventory() {
+        waitForSessionOpenState(true);
+        Locator closeBtn = inventoryToggleButton(CLOSE_INVENTORY_BUTTON_TEXT);
+        if (!closeBtn.isEnabled()) {
+            throw new IllegalStateException("Кнопка «" + CLOSE_INVENTORY_BUTTON_TEXT + "» недоступна");
+        }
+        closeBtn.click();
+        inventoryToggleButton(OPEN_INVENTORY_BUTTON_TEXT)
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage clickConductInventory() {
+        waitForConductButtonEnabled();
+        conductButton().click();
+        page.waitForURL("**/inventory/**", new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage waitForSessionOpenState(boolean open) {
+        String label = open ? CLOSE_INVENTORY_BUTTON_TEXT : OPEN_INVENTORY_BUTTON_TEXT;
+        inventoryToggleButton(label).waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage waitForConductButtonEnabled() {
+        conductButton().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        page.waitForCondition(
+                () -> conductButton().isEnabled(),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage assertInventorySessionOpen() {
+        if (!isCloseInventoryButtonVisible()) {
+            throw new AssertionError("Очікувалась кнопка «" + CLOSE_INVENTORY_BUTTON_TEXT + "»");
+        }
+        return this;
+    }
+
+    public UnitManagementPage search(String query) {
+        Locator searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER).first();
+        waitForInventoryTableDuring(() -> searchInput.fill(query));
+        return this;
+    }
+
+    public UnitManagementPage waitForResourceInTable(String resourceName) {
+        try {
+            resourceRow(resourceName).waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        } catch (RuntimeException e) {
+            log.warn("Resource «{}» not found in table (url={})", resourceName, page.url());
+            attachScreenshot("Resource not in table — " + resourceName);
+            throw e;
+        }
+        return this;
+    }
+
+    public UnitManagementPage searchAndWaitForResource(String query, String resourceName) {
+        try {
+            search(query);
+            waitForResourceInTable(resourceName);
+        } catch (RuntimeException e) {
+            log.warn("Search «{}» did not surface resource «{}» (url={})", query, resourceName, page.url());
+            attachScreenshot("Search failed — " + resourceName);
+            throw e;
+        }
+        return this;
+    }
+
+    public boolean isResourceVisibleInTable(String resourceName) {
+        return resourceRow(resourceName).count() > 0;
+    }
+
+    public UnitManagementPage clickResourceAmountLink(String resourceName) {
+        Locator row = resourceRow(resourceName).first();
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        row.locator("button.text-blue-600, button[class*='text-blue-600']").first().click();
+        page.getByText("Партії ресурсу", new Page.GetByTextOptions().setExact(false))
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isAllLocationsTableVisible() {
+        Locator header = page.locator("table thead th")
+                .filter(new Locator.FilterOptions().setHasText("Локація"));
+        try {
+            header.first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+            return header.first().isVisible();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isBatchDialogVisible() {
+        return page.getByText("Партії ресурсу", new Page.GetByTextOptions().setExact(false)).isVisible()
+                || page.getByText("Номер партії").isVisible();
+    }
+
+    public boolean hasStockRows() {
+        return stockTableBodyRows().count() > 0;
+    }
+
+    public int stockRowCount() {
+        return stockTableBodyRows().count();
+    }
+
+    /** Waits until at least one data row appears in the main stock table. */
+    public UnitManagementPage waitForStockRows() {
+        page.waitForCondition(
+                () -> stockTableBodyRows().count() > 0,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    /**
+     * Asserts the stock table has rows; attaches a screenshot to Allure before failing
+     * so diagnostics are available even when the assertion runs inside an Allure step.
+     */
+    public UnitManagementPage assertHasStockRows() {
+        try {
+            waitForStockRows();
+        } catch (RuntimeException e) {
+            int count = stockTableBodyRows().count();
+            log.warn("Stock table empty after wait (count={}, url={})", count, page.url());
+            attachScreenshot("Empty stock table");
+            throw new AssertionError(String.format(
+                    "Таблиця «Залишки» не містить рядків (count=%d, url=%s)", count, page.url()), e);
+        }
+        return this;
+    }
+
+    public UnitManagementPage assertTableHeadersVisible() {
+        page.locator("table thead th")
+                .filter(new Locator.FilterOptions().setHasText("Ресурс"))
+                .first()
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        page.locator("table thead th")
+                .filter(new Locator.FilterOptions().setHasText("Кількість"))
+                .first()
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    /** Raw text from the quantity cell (e.g. "50 шт" or "50.5 кг"). */
+    public String getResourceAmountText(String resourceName) {
+        Locator row = resourceRow(resourceName).first();
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        Locator amountCell = row.locator("td").nth(3);
+        return amountCell.innerText().trim().replaceAll("\\s+", " ");
+    }
+
+    /** Parses numeric amount from the quantity cell. */
+    public double getResourceAmount(String resourceName) {
+        return parseAmountFromCellText(getResourceAmountText(resourceName));
+    }
+
+    public UnitManagementPage assertResourceAmountVisible(String resourceName, double expected) {
+        double actual = getResourceAmount(resourceName);
+        if (Math.abs(actual - expected) > 0.01) {
+            throw new AssertionError(String.format(
+                    "Очікувалась кількість %.2f для «%s», на UI: %.2f (%s)",
+                    expected, resourceName, actual, getResourceAmountText(resourceName)));
+        }
+        return this;
+    }
+
+    static double parseAmountFromCellText(String cellText) {
+        if (cellText == null || cellText.isBlank()) {
+            return 0.0;
+        }
+        String normalized = cellText.trim().replace(',', '.');
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("(-?\\d+(?:\\.\\d+)?)")
+                .matcher(normalized);
+        if (matcher.find()) {
+            return Double.parseDouble(matcher.group(1));
+        }
+        throw new IllegalArgumentException("Cannot parse amount from: " + cellText);
+    }
+
+    public boolean isOpenInventoryButtonDisabled() {
+        Locator btn = inventoryToggleButton(OPEN_INVENTORY_BUTTON_TEXT);
+        return btn.isVisible() && btn.isDisabled();
+    }
+
+    public String conductButtonTooltip() {
+        conductButton().hover();
+        Locator tip = page.locator("[role='tooltip']").filter(new Locator.FilterOptions()
+                .setHasText(ADMIN_CONDUCT_TOOLTIP));
+        if (tip.count() > 0 && tip.first().isVisible()) {
+            return tip.first().innerText();
+        }
+        return "";
+    }
+
+    private Locator inventoryToggleButton(String label) {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(label));
+    }
+
+    private Locator conductButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CONDUCT_INVENTORY_BUTTON_TEXT));
+    }
+
+    private Locator exportToExcelButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EXPORT_TO_EXCEL_BUTTON_TEXT));
+    }
+
+    public record ExportDownloadResult(String suggestedFilename, long sizeBytes) {}
+
+    private Locator stockTableBodyRows() {
+        Locator stockTable = page.locator("table").filter(new Locator.FilterOptions()
+                .setHas(page.locator("thead th").filter(new Locator.FilterOptions().setHasText("Ресурс"))));
+        return stockTable.locator("tbody tr");
+    }
+
+    private Locator resourceRow(String resourceName) {
+        String needle = resourceName.trim();
+        String rowFilter = needle.length() > 24 ? needle.substring(0, 24) : needle;
+        return stockTableBodyRows().filter(new Locator.FilterOptions().setHasText(rowFilter));
+    }
+
+    private void waitForInventoryTableDuring(Runnable action) {
+        try {
+            page.waitForResponse(
+                    response -> response.url().contains("/inventory")
+                            && !response.url().contains("/status")
+                            && !response.url().contains("/batches")
+                            && "GET".equals(response.request().method())
+                            && response.status() == 200,
+                    action);
+        } catch (Exception e) {
+            log.warn("Inventory table response wait timed out: {}", e.getMessage());
+            action.run();
+            page.waitForTimeout(2000);
+        }
+    }
+}

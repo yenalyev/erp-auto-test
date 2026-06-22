@@ -12,17 +12,38 @@
       "type": "string",
       "description": "Name of the storage"
     },
+    "alias": {
+      "type": ["string", "null"]
+    },
     "items": {
       "type": "array",
       "description": "List of storage items",
       "items": {
         "$ref": "storage-item-response-schema.json"
       }
+    },
+    "parent": {
+      "type": ["object", "null"]
+    },
+    "type": {
+      "type": ["string", "null"]
+    },
+    "relation": {
+      "type": ["string", "null"]
+    },
+    "active": {
+      "type": ["boolean", "null"]
+    },
+    "identifierNumber": {
+      "type": ["string", "null"]
+    },
+    "accessMode": {
+      "type": ["string", "null"]
     }
   },
   "required": [
     "id",
     "name"
   ],
-  "additionalProperties": false
+  "additionalProperties": true
 }

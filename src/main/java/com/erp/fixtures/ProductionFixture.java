@@ -4,11 +4,14 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.UserRole;
+import com.erp.models.query.ProductionJournalQuery;
 import com.erp.models.response.ManufacturingItemResponse;
+import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
+import com.erp.validators.SchemaRegistry;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -57,6 +60,59 @@ public class ProductionFixture extends BaseFixture {
         seedStockViaRelocation(storageId, input1, input2);
         log.info("Production fixture ready: techMap={}, storage={}, inputs=[{}, {}], outputResource={}",
                 techMap.getId(), storageId, input1, input2, output);
+    }
+
+    @Step("API: GET журнал виробництва (сторінка {query.page}, size={query.pageSize})")
+    public List<ManufacturingItemResponse> getJournalPage(ProductionJournalQuery query) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.PRODUCTION_GET_JOURNAL_PAGE,
+                UserRole.OWNER_1,
+                query.toQueryParams());
+        validateSuccess(response, "Get production journal page");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.PRODUCTION_GET_JOURNAL_PAGE);
+        return DatabaseIntegrityValidator.extractList(response, ManufacturingItemResponse.class);
+    }
+
+    @Step("API: GET totalElements журналу виробництва")
+    public long getJournalTotalElements(ProductionJournalQuery query) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.PRODUCTION_GET_JOURNAL_PAGE,
+                UserRole.OWNER_1,
+                query.toQueryParams());
+        validateSuccess(response, "Get production journal total elements");
+        return DatabaseIntegrityValidator.extractPageTotalElements(response);
+    }
+
+    @Step("API: GET категорії ресурсів")
+    public List<ResourceCategoryResponse> getResourceCategories() {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CATEGORY_GET_ALL, UserRole.OWNER_1);
+        validateSuccess(response, "Get resource categories");
+        return DatabaseIntegrityValidator.extractList(response, ResourceCategoryResponse.class);
+    }
+
+    @Step("API: Map productId → categoryId з довідника ресурсів")
+    public Map<Long, Long> getProductCategoryMap() {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_GET_ALL, UserRole.OWNER_1);
+        validateSuccess(response, "Get resources for category map");
+
+        boolean paged = response.getBody().asString().stripLeading().startsWith("{");
+        String listPath = paged ? "content" : "$";
+        List<Object> resources = response.jsonPath().getList(listPath);
+        if (resources == null || resources.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> productCategoryMap = new LinkedHashMap<>();
+        String itemPrefix = paged ? "content[%d]" : "[%d]";
+        for (int i = 0; i < resources.size(); i++) {
+            String prefix = String.format(itemPrefix, i);
+            Long resourceId = response.jsonPath().getLong(prefix + ".id");
+            Long categoryId = response.jsonPath().getLong(prefix + ".category.id");
+            if (resourceId != null && categoryId != null) {
+                productCategoryMap.put(resourceId, categoryId);
+            }
+        }
+        return productCategoryMap;
     }
 
     @Step("API: створити виробництво — {amount} од., партія «{batchNumber}»")

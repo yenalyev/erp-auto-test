@@ -1,0 +1,70 @@
+---
+description: Контекст ERP test automation — архітектура, стек, стратегія розвитку
+alwaysApply: true
+---
+
+# ERP Test Automation — Project Context
+
+Java 21 TestNG framework for ERP REST API testing (RBAC, contract validation, DB integrity) + emerging Playwright UI coverage.
+
+**Strategy: extend this codebase, do NOT rewrite from scratch.** Infrastructure (~97 main classes) outweighs test count (12 test classes). Refactor known debt incrementally.
+
+## Stack
+
+TestNG 7.10 · RestAssured 5.5 · Allure 2.29 · Playwright 1.50 · Owner config · AssertJ · Testcontainers · PostgreSQL + SSH tunnel
+
+## Architecture (Single Source of Truth)
+
+```
+Test → ApiExecutor → SessionClient (cookies) → RestAssured
+     → RequestBodyFactory (Strategy) → domain *DataFactory
+     → Fixture.prepareContext() → GlobalTestContext / ContextKey
+     → SchemaRegistry.validateIfSuccess()
+```
+
+Key files:
+- Endpoints SSOT: `src/main/java/com/erp/api/endpoints/ApiEndpointDefinition.java`
+- API execution: `ApiExecutor`, `SessionClient`, `BaseClient`
+- Auth: `AuthService`, `PlaywrightSessionProvider` (remote: browser form login, not local Keycloak token grant)
+- Config: `TestConfig`, `ConfigProvider` — merge `classpath:config/${env}.properties` + `default.properties`
+- RBAC matrix: `src/test/resources/rbac-policy.yml` → `RbacAccessMatrixTest` (~79 scenarios)
+- Schemas: `src/test/resources/schemas/` (32 JSON schemas)
+
+## Test hierarchy
+
+```
+BaseTest
+├── BaseFunctionalTest  — API CRUD (Resource, MeasurementUnit, Storage)
+├── BaseRbacTest        — YAML-driven access matrix
+└── BaseUITest          — Playwright (LoginPage, ProductionPage)
+```
+
+Suites: `src/test/resources/suites/` — run via `mvn test -Denv=dev -Dsuite=smoke|functional|ui|regression|...`
+
+Default pom: `env=dev`, `suite=dev-test` (only ProductionUITest).
+
+## Coverage gaps (priority for new work)
+
+Functional CRUD exists only for Resources, Measurement Units, Storages. See `.cursor/rules/tk-backend-sut.mdc` for full domain map.
+
+**Tier 1 API next:** Production (fix POST path), Tech maps, Plans, Relocations.  
+**Tier 1 UI:** login smoke only + sync ProductionPage with tk-ui.  
+**SUT repos:** backend `C:\Users\gigam\IdeaProjects\tk`, frontend `C:\Users\gigam\IdeaProjects\tk-ui`.
+
+Orphan tests: none — `AuthenticationTest` wired into `regression.xml`.
+
+## Known tech debt (do not worsen)
+
+- 3 duplicate session caches: `AuthService`, `ApiExecutor`, `BaseRbacTest` → consolidate when touching auth
+- `BaseTest` mixes static + instance state — risky with `parallel="classes"` in functional.xml
+- Cleanup stubbed in `BaseTest.cleanupTestData()` — `CleanupService` exists but underused
+- Credentials in `config/*.properties` — use env vars / CI secrets, never commit new secrets
+- RBAC bypasses `ApiExecutor` (raw RestAssured) — prefer ApiExecutor for new code
+- UI selectors use Tailwind classes + Ukrainian locale strings — prefer `data-testid` when adding pages
+
+## Roadmap phases
+
+0. Stabilize: master suite, session cache, secrets, parallel policy, cleanup
+1. API: functional CRUD for remaining domains
+2. UI: expand POM + critical user flows
+3. CI: smoke (PR) / regression (nightly) / ui suites + Allure

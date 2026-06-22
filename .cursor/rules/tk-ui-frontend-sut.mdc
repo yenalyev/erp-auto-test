@@ -1,0 +1,73 @@
+---
+description: SUT frontend — tk-ui (React SPA), routes, UI test constraints
+alwaysApply: true
+---
+
+# TK-UI Frontend (System Under Test)
+
+**Repo:** `C:\Users\gigam\IdeaProjects\tk-ui`  
+**Package name:** `cpm-erp`  
+**Stack:** React 19, TypeScript, Vite 7, React Router 7, Tailwind 4, shadcn/Radix, Axios, React Hook Form + Zod
+
+## Auth flow (matches erp-auto-test)
+
+```
+SPA load → GET /users/me (cookies)
+  → 401 → redirect backend /login?redirectUri=<origin>
+  → Keycloak #username, #password, #kc-login
+  → session cookie → SPA loads
+```
+
+Home `/` redirects to **first permitted sidebar route** (often `/production`).
+
+## Key routes (~40 screens)
+
+| Route | Page | Sidebar |
+|-------|------|---------|
+| `/production` | ProductionListPage | Виробництво |
+| `/production/createProduction` | Create wizard | — |
+| `/production/createDisassemble` | Disassemble create | — |
+| `/non-series-production` | Non-series list | Несерійне виробництво |
+| `/relocations` | RelocationPage | Видати/Отримати |
+| `/unit-management` | UnitManagementPage | Залишки |
+| `/plans`, `/plan-execution` | Plans | Виробничі плани / Виконання |
+| `/technological-maps` | Tech maps | Техкарти |
+| `/storage` | Storages | Локації |
+| `/resources` | Resources dictionary | Словник ресурсів |
+| `/measurement-units` | Units | Од. вимірювання |
+| `/statistic` | Statistics | Аналітика |
+| `/shifts` | Shifts | Виробнича зміна |
+
+Router source: `src/Router.tsx`, sidebar: `sidebarItems.ts`.
+
+## UI test constraints
+
+- **`data-testid`: none** — ask frontend team to add before UI CRUD tests
+- Selectors today: Ukrainian text, placeholders, Tailwind classes — **fragile**
+- **RBAC:** sidebar items gated by permissions; write actions blocked when "Всі локації" selected
+- Locale: Ukrainian throughout
+
+## ProductionPage vs current UI (important)
+
+| erp-auto-test expects | tk-ui reality |
+|----------------------|---------------|
+| Title "Журнал виготовленої продукції" | **No h1 title** on `/production` |
+| Button "Додати" | **"Виготовлення"** and **"Розбір"** |
+| Filter block Tailwind selector | Filters in flex wrapper; table has `rounded-xl border` |
+
+Login flow and redirect to `/production` — **correct**.
+
+## erp-auto-test UI coverage
+
+| Page Object | Tests | Status |
+|-------------|-------|--------|
+| `LoginPage` | TC-UI-001/002 | ✓ aligned |
+| `ProductionPage` | TC-UI-PROD-001 | **needs selector sync** |
+
+## UI test strategy
+
+- **Keep:** login smoke, production landing smoke (after ProductionPage fix)
+- **Defer:** create/edit wizards, relocations, plans UI — until `data-testid`
+- **API covers:** dictionary CRUD (resources, storage, units), production business logic
+
+When adding UI tests: prefer `data-testid` in tk-ui first, then update Page Objects in `com.erp.pages`.

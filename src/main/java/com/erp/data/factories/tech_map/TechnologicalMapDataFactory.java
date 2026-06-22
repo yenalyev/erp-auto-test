@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class TechnologicalMapDataFactory {
 
     public static final String TYPE_PRODUCTION = "PRODUCTION";
+    public static final String TYPE_DISASSEMBLE = "DISASSEMBLE";
 
     /**
      * @param resourceResponseList список доступних ресурсів
@@ -56,6 +57,25 @@ public class TechnologicalMapDataFactory {
     }
 
     /**
+     * Production tech map with explicit inputs/outputs bound to one or more storages.
+     */
+    public static TechnologicalMapRequest.TechnologicalMapRequestBuilder createProductionMapWithStorages(
+            String namePrefix,
+            List<ResourceUsageRequest> input,
+            List<ResourceUsageRequest> output,
+            Set<Long> storageIds) {
+        if (storageIds == null || storageIds.isEmpty()) {
+            throw new IllegalStateException("storageIds is required for technological map request");
+        }
+        return TechnologicalMapRequest.builder()
+                .name(namePrefix + "-" + System.currentTimeMillis())
+                .type(TYPE_PRODUCTION)
+                .input(input)
+                .output(output)
+                .storageIds(storageIds);
+    }
+
+    /**
      * Production tech map with fixed coefficients (predictable stock deltas).
      */
     public static TechnologicalMapRequest.TechnologicalMapRequestBuilder createProductionTechMap(
@@ -80,6 +100,36 @@ public class TechnologicalMapDataFactory {
         return TechnologicalMapRequest.builder()
                 .name("Production-TM-" + System.currentTimeMillis())
                 .type(TYPE_PRODUCTION)
+                .input(input)
+                .output(output)
+                .storageIds(Set.of(storageId));
+    }
+
+    /**
+     * Disassemble tech map: input = resource to disassemble, output = produced resource.
+     * Coefficients are fixed for predictable stock/history assertions.
+     */
+    public static TechnologicalMapRequest.TechnologicalMapRequestBuilder createDisassembleTechMap(
+            List<ResourceResponse> resourceResponseList,
+            Long storageId) {
+
+        if (resourceResponseList == null || resourceResponseList.size() < 2) {
+            throw new IllegalStateException("ERROR - Test Setup Error: need at least 2 resources for disassemble tech map");
+        }
+        if (storageId == null) {
+            throw new IllegalStateException("storageId is required for technological map request");
+        }
+
+        List<ResourceUsageRequest> input = List.of(
+                new ResourceUsageRequest(resourceResponseList.get(0).getId(), 1.0)
+        );
+        List<ResourceUsageRequest> output = List.of(
+                new ResourceUsageRequest(resourceResponseList.get(1).getId(), 0.5)
+        );
+
+        return TechnologicalMapRequest.builder()
+                .name("Disassemble-TM-" + System.currentTimeMillis())
+                .type(TYPE_DISASSEMBLE)
                 .input(input)
                 .output(output)
                 .storageIds(Set.of(storageId));
