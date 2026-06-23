@@ -1,0 +1,29 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Bot integration SLA — internal API endpoints used by whatsapp-bot and delivery-bot.
+
+  Run (dev):
+    mvn test -Denv=dev -Dsuite=bots
+
+  Run (staging):
+    mvn test -Denv=staging -Dsuite=bots
+    mvn test -Denv=stage -Dsuite=bots
+
+  Secrets: .env.dev or .env.staging (CLIENT_ID, CLIENT_SECRET, GET_TOKEN_URL, GET_DATA_URL, …).
+  Without GET_DATA_URL / GET_RELOCATIONS_DATA_URL, URLs are built from backend.url in config/{env}.properties.
+-->
+<suite name="Bot Internal API SLA" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Bot Internal API Latency">
+        <classes>
+            <class name="com.erp.tests.integration.BotInternalApiLatencyTest"/>
+        </classes>
+    </test>
+
+</suite>

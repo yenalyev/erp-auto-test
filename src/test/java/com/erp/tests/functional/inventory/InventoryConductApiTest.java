@@ -99,6 +99,8 @@ public class InventoryConductApiTest extends InventoryApiTestBase {
                 items, Map.of(newResource.getId(), 5.0));
         inventoryFixture.conductInventory(owner1StorageId, UserRole.ADMIN, request);
 
+        trackStorageResourceForCleanup(newResource.getId());
+
         assertThat(inventoryFixture.getResourceStock(owner1StorageId, newResource.getId(), UserRole.ADMIN))
                 .isCloseTo(5.0, within(0.01));
     }

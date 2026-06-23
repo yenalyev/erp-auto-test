@@ -61,3 +61,9 @@ Thumbs.db
 
 # Test output
 test-output/
+
+# Local env secrets (see .env.*.example)
+.env
+.env.dev
+.env.staging
+.env.stage

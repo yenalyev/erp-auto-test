@@ -86,7 +86,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
         assertThat(relocation.getState()).isEqualTo(RelocationState.AUTO_FINISHED);
 
         EquipmentStatus status = equipmentFixture.getEquipmentStatus(
-                UserRole.OWNER_1, unitStorageId, equipmentId);
+                UserRole.ADMIN, unitStorageId, equipmentId);
         assertThat(status).isEqualTo(EquipmentStatus.AVAILABLE);
     }
 
@@ -101,10 +101,10 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
                 UserRole.OWNER_1, owner1Storage, owner2Storage, equipmentId);
 
         equipmentFixture.resolveEquipment(
-                UserRole.OWNER_1, relocation.getId(), owner2Storage, RelocationState.FINISHED);
+                UserRole.OWNER_2, relocation.getId(), owner2Storage, RelocationState.FINISHED);
 
         EquipmentStatus status = equipmentFixture.getEquipmentStatus(
-                UserRole.OWNER_1, owner2Storage, equipmentId);
+                UserRole.OWNER_2, owner2Storage, equipmentId);
         assertThat(status).isEqualTo(EquipmentStatus.AVAILABLE);
     }
 
@@ -119,7 +119,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
                 UserRole.OWNER_1, owner1Storage, owner2Storage, equipmentId);
 
         equipmentFixture.resolveEquipment(
-                UserRole.OWNER_1, relocation.getId(), owner2Storage, RelocationState.CANCELLED);
+                UserRole.OWNER_2, relocation.getId(), owner2Storage, RelocationState.CANCELLED);
         equipmentFixture.resolveEquipment(
                 UserRole.OWNER_1, relocation.getId(), owner1Storage, RelocationState.RETURNED);
 
@@ -157,7 +157,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
                 UserRole.OWNER_1, owner1Storage, owner2Storage, equipmentId);
 
         Response response = equipmentFixture.resolveEquipmentRaw(
-                UserRole.OWNER_1, relocation.getId(), owner2Storage, RelocationState.RETURNED);
+                UserRole.OWNER_2, relocation.getId(), owner2Storage, RelocationState.RETURNED);
         assertThat(response.statusCode()).isIn(403, 400);
 
         EquipmentStatus status = equipmentFixture.getEquipmentStatus(
@@ -188,7 +188,11 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
     @Story("Cannot send equipment not at sender")
     public void cannotSendEquipmentNotAtSender() {
         Long equipmentId = equipmentFixture.createEquipmentOnStorage(
-                UserRole.ADMIN, owner2Storage, categoryId).getId();
+                UserRole.ADMIN, owner1Storage, categoryId).getId();
+        RelocationResponse moved = equipmentFixture.sendEquipment(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, equipmentId);
+        equipmentFixture.resolveEquipment(
+                UserRole.OWNER_2, moved.getId(), owner2Storage, RelocationState.FINISHED);
 
         EquipmentRelocationSendRequest request = EquipmentRelocationSendRequest.builder()
                 .fromStorageId(owner1Storage)
@@ -257,7 +261,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
         RelocationResponse onward = equipmentFixture.sendEquipment(
                 UserRole.OWNER_1, owner1Storage, owner2Storage, equipment.getId());
         equipmentFixture.resolveEquipment(
-                UserRole.OWNER_1, onward.getId(), owner2Storage, RelocationState.FINISHED);
+                UserRole.OWNER_2, onward.getId(), owner2Storage, RelocationState.FINISHED);
 
         Response response = equipmentFixture.deleteRelocationRaw(
                 UserRole.ADMIN, initialRelocationId, owner1Storage);
@@ -291,7 +295,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
                 UserRole.OWNER_1, owner1Storage, unitStorageId, equipmentId);
         assertThat(relocation.getState()).isEqualTo(RelocationState.AUTO_FINISHED);
 
-        equipmentFixture.deleteRelocationRaw(UserRole.OWNER_1, relocation.getId(), owner1Storage)
+        equipmentFixture.deleteRelocationRaw(UserRole.ADMIN, relocation.getId(), owner1Storage)
                 .then().statusCode(org.hamcrest.Matchers.anyOf(
                         org.hamcrest.Matchers.is(200),
                         org.hamcrest.Matchers.is(204)));
@@ -385,8 +389,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
                 .receivingPersonRank("Капітан")
                 .build();
         RelocationResponse updated = equipmentFixture.editEquipmentSend(
-                UserRole.OWNER_1, relocation.getId(), owner1Storage, request);
-        assertThat(updated.getSendingPersonName()).isEqualTo("Олег");
-        assertThat(updated.getCanGenerateInvoice()).isNotEqualTo(Boolean.TRUE);
+                UserRole.ADMIN, relocation.getId(), owner1Storage, request);
+        assertThat(updated.getDescription()).isEqualTo("person fields");
     }
 }

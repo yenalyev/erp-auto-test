@@ -66,10 +66,10 @@ public class EquipmentRelocationUITest extends BaseUITest {
         RelocationResponse relocation = equipmentFixture.sendEquipment(
                 UserRole.OWNER_1, owner1, owner2, equipmentId);
         equipmentFixture.resolveEquipment(
-                UserRole.OWNER_1, relocation.getId(), owner2, RelocationState.FINISHED);
+                UserRole.OWNER_2, relocation.getId(), owner2, RelocationState.FINISHED);
 
         EquipmentStatus status = equipmentFixture.getEquipmentStatus(
-                UserRole.OWNER_1, owner2, equipmentId);
+                UserRole.OWNER_2, owner2, equipmentId);
         assertThat(status).isEqualTo(EquipmentStatus.AVAILABLE);
 
         RelocationPage pageObj = new RelocationPage(page);

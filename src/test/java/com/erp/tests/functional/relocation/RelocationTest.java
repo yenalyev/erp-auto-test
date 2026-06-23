@@ -115,7 +115,7 @@ public class RelocationTest extends BaseFunctionalTest {
         ProductionStockAssertions.StockSnapshot senderBefore = RelocationStockAssertions.capture(
                 apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "відправник ДО send");
         ProductionStockAssertions.StockSnapshot recipientBefore = RelocationStockAssertions.capture(
-                apiExecutor, owner2Storage, UserRole.OWNER_1, tracked, "отримувач ДО send");
+                apiExecutor, owner2Storage, UserRole.OWNER_2, tracked, "отримувач ДО send");
 
         RelocationResponse created = Allure.step("POST send", () ->
                 fixture.createSend(UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, amount));
@@ -125,7 +125,7 @@ public class RelocationTest extends BaseFunctionalTest {
         ProductionStockAssertions.StockSnapshot senderAfter = RelocationStockAssertions.capture(
                 apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "відправник ПІСЛЯ send");
         ProductionStockAssertions.StockSnapshot recipientAfter = RelocationStockAssertions.capture(
-                apiExecutor, owner2Storage, UserRole.OWNER_1, tracked, "отримувач ПІСЛЯ send");
+                apiExecutor, owner2Storage, UserRole.OWNER_2, tracked, "отримувач ПІСЛЯ send");
 
         RelocationStockAssertions.assertDebitedFromSender(
                 senderBefore, senderAfter, owner1Storage, resourceId, amount, "CREATED send");
@@ -256,14 +256,14 @@ public class RelocationTest extends BaseFunctionalTest {
         RelocationResponse sent = fixture.createSend(
                 UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, amount);
         ProductionStockAssertions.StockSnapshot recipientBefore = RelocationStockAssertions.capture(
-                apiExecutor, owner2Storage, UserRole.OWNER_1, tracked, "отримувач ДО resolve");
+                apiExecutor, owner2Storage, UserRole.OWNER_2, tracked, "отримувач ДО resolve");
 
         RelocationResponse resolved = fixture.resolve(
-                UserRole.OWNER_1, sent.getId(), owner2Storage, RelocationState.FINISHED);
+                UserRole.OWNER_2, sent.getId(), owner2Storage, RelocationState.FINISHED);
         assertThat(resolved.getState()).isEqualTo(RelocationState.FINISHED);
 
         ProductionStockAssertions.StockSnapshot recipientAfter = RelocationStockAssertions.capture(
-                apiExecutor, owner2Storage, UserRole.OWNER_1, tracked, "отримувач ПІСЛЯ resolve");
+                apiExecutor, owner2Storage, UserRole.OWNER_2, tracked, "отримувач ПІСЛЯ resolve");
         RelocationStockAssertions.assertCreditedToRecipient(
                 recipientBefore, recipientAfter, owner2Storage, resourceId, amount, "FINISHED resolve");
     }
@@ -288,8 +288,8 @@ public class RelocationTest extends BaseFunctionalTest {
                 apiExecutor, owner1Storage, UserRole.OWNER_1, resourceId, batchNumber, false, "ДО edit");
 
         RelocationInputEditRequest edit = RelocationDataFactory.buildReceiveEditRequest(
-                resourceId, edited, batchNumber, "updated by OWNER_1");
-        fixture.editExternalReceive(UserRole.OWNER_1, created.getId(), owner1Storage, edit);
+                resourceId, edited, batchNumber, "updated by ADMIN");
+        fixture.editExternalReceive(UserRole.ADMIN, created.getId(), owner1Storage, edit);
 
         ProductionStockAssertions.StockSnapshot stockAfter = RelocationStockAssertions.capture(
                 apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ПІСЛЯ edit receive");
@@ -403,9 +403,12 @@ public class RelocationTest extends BaseFunctionalTest {
 
         RelocationInputEditRequest edit = RelocationDataFactory.buildReceiveEditRequest(
                 resourceId, 8.0, batchNumber, "forbidden");
-        Response response = apiExecutor.executeRelocationUpdateReceive(
+        Response owner1Response = apiExecutor.executeRelocationUpdateReceive(
+                created.getId(), owner1Storage, edit, UserRole.OWNER_1);
+        assertThat(owner1Response.statusCode()).isIn(403, 401);
+        Response owner2Response = apiExecutor.executeRelocationUpdateReceive(
                 created.getId(), owner1Storage, edit, UserRole.OWNER_2);
-        assertThat(response.statusCode()).isIn(403, 401);
+        assertThat(owner2Response.statusCode()).isIn(403, 401);
     }
 
     // --- E: Edit send ---
@@ -427,7 +430,7 @@ public class RelocationTest extends BaseFunctionalTest {
 
         RelocationOutputEditRequest edit = RelocationDataFactory.buildSendEditRequest(
                 resourceId, edited, "reduced send");
-        fixture.editSend(UserRole.OWNER_1, sent.getId(), owner1Storage, edit);
+        fixture.editSend(UserRole.ADMIN, sent.getId(), owner1Storage, edit);
 
         ProductionStockAssertions.StockSnapshot after = RelocationStockAssertions.capture(
                 apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ПІСЛЯ edit send");
@@ -447,7 +450,7 @@ public class RelocationTest extends BaseFunctionalTest {
                 resourceId, 3.0, "should fail");
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.RELOCATION_PUT_UPDATE_SEND,
-                UserRole.OWNER_1, edit, sent.getId(), owner1Storage);
+                UserRole.ADMIN, edit, sent.getId(), owner1Storage);
         assertThat(response.statusCode()).isEqualTo(400);
     }
 
@@ -460,7 +463,19 @@ public class RelocationTest extends BaseFunctionalTest {
         String batchNumber = RelocationDataFactory.uniqueBatchNumber();
         RelocationResponse created = fixture.createExternalReceive(
                 UserRole.OWNER_1, owner1Storage, resourceId, 10.0, batchNumber);
-        fixture.deleteRelocation(UserRole.OWNER_1, created.getId(), owner1Storage);
+        fixture.deleteRelocation(UserRole.ADMIN, created.getId(), owner1Storage);
+    }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-REL-060b")
+    @Story("RBAC negative delete")
+    public void testOwner1CannotDeleteRelocation() {
+        String batchNumber = RelocationDataFactory.uniqueBatchNumber();
+        RelocationResponse created = fixture.createExternalReceive(
+                UserRole.OWNER_1, owner1Storage, resourceId, 10.0, batchNumber);
+        Response response = fixture.deleteRelocationRaw(
+                UserRole.OWNER_1, created.getId(), owner1Storage);
+        assertThat(response.statusCode()).isIn(403, 401);
     }
 
     @Test(priority = 61)
@@ -470,7 +485,7 @@ public class RelocationTest extends BaseFunctionalTest {
         RelocationResponse sent = fixture.createSend(
                 UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, 5.0);
         Response response = apiExecutor.executeRelocationDelete(
-                sent.getId(), owner1Storage, UserRole.OWNER_1);
+                sent.getId(), owner1Storage, UserRole.ADMIN);
         assertThat(response.statusCode()).isEqualTo(400);
     }
 }

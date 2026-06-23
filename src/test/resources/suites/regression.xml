@@ -1,9 +1,15 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <!--
-  Full regression suite — all API + RBAC + UI test classes.
+  Full regression suite — API + RBAC + UI.
 
   Run:
     mvn test -Denv=dev -Dsuite=regression
+
+  Ordering notes:
+    - parallel="none" — tests run sequentially in document order.
+    - ResourceDeactivationTest (TC-RES-015 alerts) runs before Inventory API/UI
+      so alert teardown does not affect залишки tests on the same storage.
+    - Domain-focused subsets: smoke, functional, inventory, production, global-plans, ui, rbac.
 -->
 <suite name="ERP Regression Suite" parallel="none" verbose="1">
 
@@ -16,6 +22,7 @@
     <test name="Smoke">
         <classes>
             <class name="com.erp.tests.auth.LoginSmokeTest"/>
+            <class name="com.erp.tests.integration.BotInternalApiLatencyTest"/>
         </classes>
     </test>
 
@@ -38,6 +45,12 @@
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
             <class name="com.erp.tests.functional.resource.ResourceDeactivationTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
+        </classes>
+    </test>
+
+    <test name="Resource Viewer API">
+        <classes>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest"/>
         </classes>
     </test>
 
@@ -101,6 +114,7 @@
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
+            <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
         </classes>
     </test>
 

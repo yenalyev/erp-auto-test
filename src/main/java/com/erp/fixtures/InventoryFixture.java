@@ -195,6 +195,36 @@ public class InventoryFixture extends BaseFixture {
         conductInventory(storageId, role, request);
     }
 
+    @Step("API: Відновити залишок ресурсу {resourceId} до {targetAmount}")
+    public void resetResourceStock(long storageId, long resourceId, double targetAmount, UserRole role) {
+        ensureClosed(storageId);
+        openSession(storageId);
+        try {
+            setResourceAmount(storageId, role, resourceId, targetAmount);
+        } finally {
+            closeSession(storageId);
+        }
+    }
+
+    @Step("API: Прибрати ресурс {resourceId} зі складу {storageId}")
+    public void removeResourceFromStorage(long storageId, long resourceId, UserRole role) {
+        boolean onStorage = listItems(storageId, role).stream()
+                .anyMatch(i -> i.getResource() != null
+                        && Objects.equals(resourceId, i.getResource().getId()));
+        if (!onStorage) {
+            return;
+        }
+        ensureClosed(storageId);
+        openSession(storageId);
+        try {
+            List<StorageItemResponse> items = listItems(storageId, role);
+            InventoryRequest request = InventoryDataFactory.copyExcept(items, resourceId);
+            conductInventory(storageId, role, request);
+        } finally {
+            closeSession(storageId);
+        }
+    }
+
     @Step("API: Мульти-локаційний GET inventory")
     public Response getMultiLocationInventory(UserRole role, String locationsCsv) {
         return apiExecutor.executeWithQueryParams(

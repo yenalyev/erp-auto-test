@@ -20,6 +20,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ public class InventoryUiTest extends BaseUITest {
     private long storageId;
     private Long resourceId;
     private String resourceName;
+    private final List<Long> resourcesToCleanup = new ArrayList<>();
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -56,6 +58,7 @@ public class InventoryUiTest extends BaseUITest {
 
     @BeforeMethod(alwaysRun = true)
     public void prepareUiSession() {
+        resourcesToCleanup.clear();
         inventoryFixture.ensureClosed(storageId);
         relocationFixture.ensureStock(storageId, resourceId, 50.0);
         injectRoleSession(UserRole.ADMIN, storageId);
@@ -63,7 +66,28 @@ public class InventoryUiTest extends BaseUITest {
 
     @AfterMethod(alwaysRun = true)
     public void teardownInventoryUi() {
+        cleanupTrackedStorageResources();
         inventoryFixture.ensureClosed(storageId);
+        relocationFixture.ensureStock(storageId, resourceId, 50.0);
+    }
+
+    private void trackStorageResourceForCleanup(Long addedResourceId) {
+        if (addedResourceId != null
+                && !addedResourceId.equals(resourceId)
+                && !resourcesToCleanup.contains(addedResourceId)) {
+            resourcesToCleanup.add(addedResourceId);
+        }
+    }
+
+    private void cleanupTrackedStorageResources() {
+        for (Long addedResourceId : resourcesToCleanup) {
+            try {
+                inventoryFixture.removeResourceFromStorage(storageId, addedResourceId, UserRole.ADMIN);
+            } catch (Exception e) {
+                log.warn("UI inventory cleanup failed for resource {}: {}", addedResourceId, e.getMessage());
+            }
+        }
+        resourcesToCleanup.clear();
     }
 
     // --- REQ-WMS-003 session ---
@@ -309,6 +333,7 @@ public class InventoryUiTest extends BaseUITest {
         inventoryFixture.openSession(storageId);
         List<ResourceResponse> catalog = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
         ResourceResponse newRes = inventoryFixture.pickResourceNotOnStorage(storageId, UserRole.ADMIN, catalog);
+        trackStorageResourceForCleanup(newRes.getId());
         String newResourceName = newRes.getName().trim().replaceAll("\\s+", " ");
         Allure.parameter("newResourceName", newResourceName);
 

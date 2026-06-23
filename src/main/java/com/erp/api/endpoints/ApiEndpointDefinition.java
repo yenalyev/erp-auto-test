@@ -155,8 +155,38 @@ public enum ApiEndpointDefinition {
             null,
             "Create storage alert",
             new TypeReference<StorageAlertRequest>() {},
-            null,
+            new TypeReference<StorageAlertResponse>() {},
             "CREATE_ALERT"
+    ),
+
+    ALERT_GET_BY_STORAGE(
+            "/api/v1/alerts/storage/{storageId}",
+            Method.GET,
+            null,
+            "Get storage alert by storage id",
+            null,
+            new TypeReference<StorageAlertResponse>() {},
+            null
+    ),
+
+    ALERT_PUT_UPDATE(
+            "/api/v1/alerts/{id}",
+            Method.PUT,
+            null,
+            "Update storage alert",
+            new TypeReference<StorageAlertRequest>() {},
+            new TypeReference<StorageAlertResponse>() {},
+            "UPDATE_ALERT"
+    ),
+
+    ALERT_DELETE(
+            "/api/v1/alerts/{id}",
+            Method.DELETE,
+            null,
+            "Delete storage alert",
+            null,
+            null,
+            "DELETE_ALERT"
     ),
 
     // ========================================
@@ -1045,6 +1075,30 @@ public enum ApiEndpointDefinition {
             "Cancel (delete) a defect write-off",
             null,
             new TypeReference<Void>() {},
+            null
+    ),
+
+    // ========================================
+    // INTERNAL API (whatsapp-bot, delivery-bot)
+    // ========================================
+
+    INTERNAL_STORAGE_GET_ALL(
+            "/api/v1/internal/storages",
+            Method.GET,
+            null,
+            "Internal storages export for whatsapp-bot inventory sync",
+            null,
+            new TypeReference<List<StorageInternalResponse>>() {},
+            null
+    ),
+
+    INTERNAL_RELOCATION_GET_ALL(
+            "/api/v1/internal/relocations",
+            Method.GET,
+            null,
+            "Internal relocations export for delivery-bot sync",
+            null,
+            new TypeReference<List<RelocationInternalResponse>>() {},
             null
     );
 

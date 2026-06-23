@@ -4,9 +4,7 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceDataFactory;
 import com.erp.enums.UserRole;
-import com.erp.models.request.ResourceAlertRequest;
 import com.erp.models.request.ResourceRequest;
-import com.erp.models.request.StorageAlertRequest;
 import com.erp.models.response.ResourcePriceResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.test_context.TestContext;
@@ -15,7 +13,6 @@ import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,15 +131,8 @@ public class ResourceFixture extends BaseFixture {
 
     @Step("API: створити сповіщення про залишки для ресурсу {resourceId} на складі {storageId}")
     public void createStockAlert(UserRole role, Long storageId, Long resourceId, double limit) {
-        StorageAlertRequest request = StorageAlertRequest.builder()
-                .storageId(storageId)
-                .resourceAlerts(List.of(ResourceAlertRequest.builder()
-                        .resourceId(resourceId)
-                        .value(BigDecimal.valueOf(limit))
-                        .build()))
-                .build();
-        Response response = apiExecutor.execute(ApiEndpointDefinition.ALERT_POST_CREATE, role, request);
-        validateSuccess(response, "Create stock alert for resource " + resourceId);
+        new AlertFixture(testContext, apiExecutor)
+                .createOrUpdateStockAlert(role, storageId, resourceId, limit);
     }
 
     public boolean isPresentInActiveDictionary(UserRole role, Long resourceId) {

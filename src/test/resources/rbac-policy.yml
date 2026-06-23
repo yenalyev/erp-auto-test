@@ -383,31 +383,31 @@ rules:
 
   - endpointName: "RELOCATION_PUT_UPDATE_RECEIVE"
     contextKey: "RELOCATION_ID"
-    allowedRoles: [ ADMIN, OWNER_1 ]
-    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
     bodyType: null
-    description: "Редагування зовнішнього receive — ADMIN та OWNER_1"
+    description: "Редагування зовнішнього receive — лише ADMIN"
 
   - endpointName: "RELOCATION_PUT_UPDATE_SEND"
     contextKey: "RELOCATION_AUTO_FINISHED_SEND_ID"
-    allowedRoles: [ OWNER_1 ]
-    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
     bodyType: null
-    description: "Редагування AUTO_FINISHED send (storage→UNIT)"
+    description: "Редагування AUTO_FINISHED send — лише ADMIN"
 
   - endpointName: "RELOCATION_PUT_RESOLVE"
     contextKey: "RELOCATION_CREATED_ID"
-    allowedRoles: [ OWNER_1 ]
-    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    allowedRoles: [ OWNER_1, OWNER_2, ADMIN ]
+    deniedRoles: [ ANONYMOUS ]
     bodyType: null
-    description: "Resolve CREATED relocation — recipient/sender OWNER_1"
+    description: "Resolve CREATED relocation — recipient/sender owner або ADMIN"
 
   - endpointName: "RELOCATION_DELETE"
     contextKey: "RELOCATION_ID"
-    allowedRoles: [ ADMIN, OWNER_1 ]
-    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
     bodyType: null
-    description: "Видалення AUTO_FINISHED relocation — ADMIN та OWNER_1"
+    description: "Видалення relocation — лише ADMIN"
 
   - endpointName: "RELOCATION_GET_EXPORT"
     contextKey: "OWNER_1_STORAGE_ID"

@@ -8,6 +8,7 @@ import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.AlertFixture;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.ProductionFixture;
 import com.erp.fixtures.RelocationFixture;
@@ -57,6 +58,7 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
     private RelocationFixture relocationFixture;
     private InventoryFixture inventoryFixture;
     private ProductionFixture productionFixture;
+    private AlertFixture alertFixture;
 
     private Long owner1StorageId;
     private Long owner2StorageId;
@@ -72,6 +74,7 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         inventoryFixture = new InventoryFixture(testContext, apiExecutor);
         productionFixture = new ProductionFixture(testContext, apiExecutor);
+        alertFixture = new AlertFixture(testContext, apiExecutor);
 
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
@@ -274,20 +277,41 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
     @Description("Деактивація заборонена, якщо ресурс у сповіщенні про залишки")
     @Severity(SeverityLevel.CRITICAL)
     public void testCannotDeactivateResourceInStockAlert() {
+        AlertFixture.AlertSnapshot alertSnapshot = alertFixture.snapshotStorageAlert(
+                owner1StorageId, UserRole.ADMIN);
         ResourceResponse resource = resourceFixture.createUniqueResource("deact-alert-");
 
-        Allure.step("Arrange: створити сповіщення про залишки", () ->
-                resourceFixture.createStockAlert(UserRole.ADMIN, owner1StorageId, resource.getId(), 100.0));
+        try {
+            Allure.step("Arrange: створити сповіщення про залишки", () ->
+                    alertFixture.createOrUpdateStockAlert(
+                            UserRole.ADMIN, owner1StorageId, resource.getId(), 100.0));
 
-        Response response = Allure.step("Act: спроба деактивації", () ->
-                resourceFixture.deactivate(UserRole.ADMIN, resource.getId()));
+            Response response = Allure.step("Act: спроба деактивації", () ->
+                    resourceFixture.deactivate(UserRole.ADMIN, resource.getId()));
 
-        Allure.step("Assert: 400 + error message про сповіщення", () -> {
-            ResourceFixture.assertDeactivationRejected(response, DEACTIVATION_ERROR_FRAGMENT);
-            ResourceFixture.assertAnyErrorMessageContains(response, "сповіщеннях");
-            ResourceFixture.assertResourceStillActive(
-                    resourceFixture.getById(UserRole.ADMIN, resource.getId()));
-        });
+            Allure.step("Assert: 400 + error message про сповіщення", () -> {
+                ResourceFixture.assertDeactivationRejected(response, DEACTIVATION_ERROR_FRAGMENT);
+                ResourceFixture.assertAnyErrorMessageContains(response, "сповіщеннях");
+                ResourceFixture.assertResourceStillActive(
+                        resourceFixture.getById(UserRole.ADMIN, resource.getId()));
+            });
+        } finally {
+            Allure.step("Cleanup: відновити сповіщення, прибрати phantom stock, деактивувати ресурс", () -> {
+                alertFixture.restoreSnapshot(owner1StorageId, UserRole.ADMIN, alertSnapshot);
+                try {
+                    inventoryFixture.removeResourceFromStorage(
+                            owner1StorageId, resource.getId(), UserRole.ADMIN);
+                } catch (Exception e) {
+                    log.warn("Phantom stock cleanup failed for resource {}: {}",
+                            resource.getId(), e.getMessage());
+                }
+                Response deactivateResponse = resourceFixture.deactivate(UserRole.ADMIN, resource.getId());
+                if (deactivateResponse.statusCode() != 200) {
+                    log.warn("Test resource {} deactivation after cleanup returned HTTP {}",
+                            resource.getId(), deactivateResponse.statusCode());
+                }
+            });
+        }
     }
 
     // =========================================================================

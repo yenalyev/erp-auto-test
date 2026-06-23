@@ -13,10 +13,11 @@ public class ConfigProvider {
     }
 
     private static void initConfig() {
-        String env = System.getProperty("env", "debug");
+        String env = normalizeEnv(System.getProperty("env", "debug"));
         log.info("Loading configuration for environment: {}", env);
 
         System.setProperty("env", env);
+        DotEnvLoader.loadForProfile(env);
         config = ConfigFactory.create(TestConfig.class, System.getProperties());
 
         log.info("✅ Configuration loaded successfully");
@@ -24,6 +25,12 @@ public class ConfigProvider {
         log.info("Backend URL (API): {}", getBackendUrl());
         log.info("Keycloak URL: {}", config.keycloakUrl());
         log.info("Auth Username: {}", config.authUsername());
+        if (config.botApiTestsEnabled()) {
+            log.info("Bot OAuth: tokenUrl={}, clientId={}, secretConfigured={}",
+                    config.botOAuthTokenUrl(),
+                    config.botOAuthClientId(),
+                    !config.botOAuthClientSecret().isBlank());
+        }
     }
 
     public static TestConfig getConfig() {
@@ -110,6 +117,14 @@ public class ConfigProvider {
         initConfig();
     }
 
+    /** Maps CLI aliases to classpath config profile names ({@code config/{profile}.properties}). */
+    private static String normalizeEnv(String env) {
+        if ("stage".equalsIgnoreCase(env)) {
+            return "staging";
+        }
+        return env;
+    }
+
     // User credentials
     public static String getAdminUsername()  { return config.adminUsername(); }
     public static String getAdminPassword()  { return config.adminPassword(); }
@@ -182,5 +197,59 @@ public class ConfigProvider {
 
     public static int getSshLocalPort() {
         return config.sshLocalPort();
+    }
+
+    public static boolean isBotApiTestsEnabled() {
+        return config.botApiTestsEnabled()
+                && !getBotOAuthTokenUrl().isBlank()
+                && !getBotOAuthClientSecret().isBlank();
+    }
+
+    public static String getBotOAuthTokenUrl() {
+        return config.botOAuthTokenUrl();
+    }
+
+    public static String getBotOAuthClientId() {
+        return config.botOAuthClientId();
+    }
+
+    public static String getBotOAuthClientSecret() {
+        return config.botOAuthClientSecret();
+    }
+
+    public static String getBotOAuthGrantType() {
+        return config.botOAuthGrantType();
+    }
+
+    public static int getBotApiConnectTimeoutMs() {
+        return config.botApiTimeoutConnectSeconds() * 1000;
+    }
+
+    public static int getBotApiReadTimeoutMs() {
+        return config.botApiTimeoutReadSeconds() * 1000;
+    }
+
+    public static long getBotApiMaxResponseBytes() {
+        return config.botApiMaxResponseBytes();
+    }
+
+    public static int getBotApiMaxResponseSeconds() {
+        return config.botApiMaxResponseSeconds();
+    }
+
+    public static String getBotWhatsappDataUrl() {
+        String configured = config.botWhatsappDataUrl();
+        if (configured != null && !configured.isBlank()) {
+            return configured.strip();
+        }
+        return getBackendUrl() + com.erp.api.endpoints.ApiEndpointDefinition.INTERNAL_STORAGE_GET_ALL.getPath();
+    }
+
+    public static String getBotDeliveryDataUrl() {
+        String configured = config.botDeliveryDataUrl();
+        if (configured != null && !configured.isBlank()) {
+            return configured.strip();
+        }
+        return getBackendUrl() + com.erp.api.endpoints.ApiEndpointDefinition.INTERNAL_RELOCATION_GET_ALL.getPath();
     }
 }

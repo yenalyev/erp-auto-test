@@ -182,7 +182,7 @@ public class RelocationUITest extends BaseUITest {
         relocationPage.open().openActiveTab();
         relocationPage.attachScreenshot("Active relocations after send");
 
-        fixture.resolve(UserRole.OWNER_1, sent.getId(), ConfigProvider.getOwner2StorageId(),
+        fixture.resolve(UserRole.OWNER_2, sent.getId(), ConfigProvider.getOwner2StorageId(),
                 RelocationState.FINISHED);
 
         ProductionStockAssertions.StockSnapshot senderAfter = RelocationStockAssertions.capture(
@@ -226,7 +226,7 @@ public class RelocationUITest extends BaseUITest {
                 apiExecutor, storageId, UserRole.OWNER_1, tracked, "ДО cancel/return");
 
         fixture.cancelThenReturn(
-                UserRole.OWNER_1, UserRole.OWNER_1, storageId, owner2, resourceId, amount);
+                UserRole.OWNER_1, UserRole.OWNER_2, storageId, owner2, resourceId, amount);
 
         RelocationPage relocationPage = new RelocationPage(page);
         relocationPage.open().openHistoryTab();
@@ -242,6 +242,9 @@ public class RelocationUITest extends BaseUITest {
     @TestCaseId("TC-UI-REL-007")
     @Story("Edit AUTO_FINISHED send")
     public void editAutoFinishedSendViaJournal() {
+        injectRoleSession(UserRole.ADMIN, storageId);
+        page = browserContext.newPage();
+
         double initial = 8.0;
         double edited = 5.0;
         Long unitId = testContext.get(ContextKey.RELOCATION_UNIT_STORAGE_ID);
@@ -251,9 +254,9 @@ public class RelocationUITest extends BaseUITest {
                 UserRole.OWNER_1, storageId, unitId, resourceId, initial);
 
         ProductionStockAssertions.StockSnapshot before = RelocationStockAssertions.capture(
-                apiExecutor, storageId, UserRole.OWNER_1, tracked, "ДО edit send");
+                apiExecutor, storageId, UserRole.ADMIN, tracked, "ДО edit send");
 
-        fixture.editSend(UserRole.OWNER_1, sent.getId(), storageId,
+        fixture.editSend(UserRole.ADMIN, sent.getId(), storageId,
                 RelocationDataFactory.buildSendEditRequest(resourceId, edited, "ui edit send"));
 
         RelocationPage relocationPage = new RelocationPage(page);
@@ -261,7 +264,7 @@ public class RelocationUITest extends BaseUITest {
         relocationPage.attachScreenshot("History after send edit");
 
         ProductionStockAssertions.StockSnapshot after = RelocationStockAssertions.capture(
-                apiExecutor, storageId, UserRole.OWNER_1, tracked, "ПІСЛЯ edit send");
+                apiExecutor, storageId, UserRole.ADMIN, tracked, "ПІСЛЯ edit send");
         RelocationStockAssertions.assertCreditedToRecipient(
                 before, after, storageId, resourceId, initial - edited, "UI edit send revert");
     }

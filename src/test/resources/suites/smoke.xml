@@ -13,4 +13,10 @@
         </classes>
     </test>
 
+    <test name="Bot Internal API SLA">
+        <classes>
+            <class name="com.erp.tests.integration.BotInternalApiLatencyTest"/>
+        </classes>
+    </test>
+
 </suite>

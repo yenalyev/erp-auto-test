@@ -15,8 +15,8 @@ public class RelocationPage extends BasePage {
     private static final String RECEIVE_BUTTON = "Отримати";
     private static final String SEND_BUTTON = "Видати";
     private static final String HISTORY_RECEIVED_TAB = "Отримано";
-    private static final String ACTIVE_TAB = "Активні";
-    private static final String HISTORY_TAB = "Історія";
+    private static final String IN_TRANSIT_TAB = "В дорозі";
+    private static final String SENT_TAB = "Видано";
 
     public RelocationPage(Page page) {
         super(page);
@@ -52,17 +52,25 @@ public class RelocationPage extends BasePage {
     }
 
     public RelocationPage openActiveTab() {
-        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(ACTIVE_TAB)).click();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(IN_TRANSIT_TAB)).click();
         return this;
     }
 
     public RelocationPage openHistoryTab() {
-        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(HISTORY_TAB)).click();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(SENT_TAB)).click();
         return this;
     }
 
+    public RelocationPage openSentTab() {
+        return openHistoryTab();
+    }
+
+    public RelocationPage openInTransitTab() {
+        return openActiveTab();
+    }
+
     public boolean isActiveTabVisible() {
-        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(ACTIVE_TAB)).isVisible();
+        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(IN_TRANSIT_TAB)).isVisible();
     }
 
     public void clickResolveInRow(String rowText) {

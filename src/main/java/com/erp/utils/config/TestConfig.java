@@ -194,4 +194,56 @@ public interface TestConfig extends Config {
     @Key("ssh.local.port")
     @DefaultValue("5433")
     int sshLocalPort();
+
+    // Bot integrations (whatsapp-bot, delivery-bot) — OAuth2 client_credentials
+    @Key("bot.api.tests.enabled")
+    @DefaultValue("true")
+    boolean botApiTestsEnabled();
+
+    @Key("bot.oauth.token.url")
+    @DefaultValue("")
+    String botOAuthTokenUrl();
+
+    @Key("bot.oauth.client.id")
+    @DefaultValue("inventory-bot")
+    String botOAuthClientId();
+
+    @Key("bot.oauth.client.secret")
+    @DefaultValue("")
+    String botOAuthClientSecret();
+
+    /** OAuth2 grant_type ({@code GRANT_TYPE} in .env); same default as whatsapp-bot. */
+    @Key("bot.oauth.grant.type")
+    @DefaultValue("client_credentials")
+    String botOAuthGrantType();
+
+    /** Connect timeout for bot OAuth2 and internal API (seconds). */
+    @Key("bot.api.timeout.connect.seconds")
+    @DefaultValue("5")
+    int botApiTimeoutConnectSeconds();
+
+    /** Read timeout for bot OAuth2 and internal API (seconds). */
+    @Key("bot.api.timeout.read.seconds")
+    @DefaultValue("60")
+    int botApiTimeoutReadSeconds();
+
+    /** Max response body size for bot internal API GET (bytes). */
+    @Key("bot.api.max.response.bytes")
+    @DefaultValue("20971520")
+    long botApiMaxResponseBytes();
+
+    /** Max wall-clock time (seconds) for bot-facing API responses. */
+    @Key("bot.api.max.response.seconds")
+    @DefaultValue("30")
+    int botApiMaxResponseSeconds();
+
+    /** Full URL for whatsapp-bot sync ({@code GET_DATA_URL} in .env). */
+    @Key("bot.whatsapp.data.url")
+    @DefaultValue("")
+    String botWhatsappDataUrl();
+
+    /** Full URL for delivery-bot sync ({@code GET_RELOCATIONS_DATA_URL} in .env). */
+    @Key("bot.delivery.data.url")
+    @DefaultValue("")
+    String botDeliveryDataUrl();
 }
