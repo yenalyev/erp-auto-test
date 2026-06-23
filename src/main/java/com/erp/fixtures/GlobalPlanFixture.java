@@ -15,6 +15,7 @@ import com.erp.models.response.GenerationResponse;
 import com.erp.models.response.GlobalPlanResponse;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -104,13 +106,37 @@ public class GlobalPlanFixture extends BaseFixture {
         return chain;
     }
 
-    /** Allocates a fresh calendar month per global plan (one plan per month rule). */
+    /** Allocates a calendar month not used by an existing global plan (API + shared dev env). */
     public YearMonth nextUniquePeriod() {
         if (periodBase == null) {
             periodBase = GlobalPlanDataFactory.uniquePlanPeriod(3);
             periodOffset = 0;
         }
-        return periodBase.plusMonths(periodOffset++);
+        Set<String> occupied = new HashSet<>();
+        for (GlobalPlanResponse plan : getAllGlobalPlans()) {
+            occupied.add(plan.getYear() + "-" + plan.getMonth());
+        }
+        YearMonth candidate;
+        int attempts = 0;
+        do {
+            candidate = periodBase.plusMonths(periodOffset++);
+            attempts++;
+            if (attempts > 120) {
+                throw new IllegalStateException("No free global plan period found within 10 years");
+            }
+        } while (occupied.contains(candidate.getYear() + "-" + candidate.getMonthValue()));
+        log.info("Allocated unique global plan period {}/{}", candidate.getMonthValue(), candidate.getYear());
+        return candidate;
+    }
+
+    @Step("API: GET all global plans")
+    public List<GlobalPlanResponse> getAllGlobalPlans() {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.GLOBAL_PLAN_GET_ALL,
+                UserRole.ADMIN);
+        validateSuccess(response, "Get all global plans");
+        List<GlobalPlanResponse> plans = DatabaseIntegrityValidator.extractList(response, GlobalPlanResponse.class);
+        return plans != null ? plans : new ArrayList<>();
     }
 
     @Step("API: створити глобальний план output A={amount}")
@@ -249,6 +275,18 @@ public class GlobalPlanFixture extends BaseFixture {
             throw new IllegalStateException("GLOBAL_PLAN_CHAIN not prepared — call prepareDecompositionChain()");
         }
         return chain;
+    }
+
+    @Step("Resolve storage name for id {storageId}")
+    public String resolveStorageName(Long storageId) {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, UserRole.ADMIN);
+        validateSuccess(response, "Get storages for name lookup");
+        List<StorageResponse> storages = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
+        return storages.stream()
+                .filter(s -> storageId.equals(s.getId()))
+                .map(StorageResponse::getName)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Storage not found: " + storageId));
     }
 
     private TechnologicalMapResponse createMap(String name,

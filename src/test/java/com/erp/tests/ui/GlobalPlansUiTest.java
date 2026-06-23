@@ -108,7 +108,12 @@ public class GlobalPlansUiTest extends BaseUITest {
             """)
     public void freshCreateShowsFourTabsWithLateTabsDisabled() {
         GlobalPlansPage listPage = new GlobalPlansPage(page).open();
+        listPage.attachScreenshot("TC-GP-UI-SMOKE-003 — global plans list");
+
         GlobalPlanWizardPage wizard = listPage.clickCreatePlan();
+        wizard.attachScreenshot("TC-GP-UI-SMOKE-003 — wizard initial");
+
+        log.info("TC-GP-UI-SMOKE-003: verifying 4 tabs and late tabs disabled on fresh create");
 
         assertThat(wizard.isFirstTabVisible()).isTrue();
         assertThat(wizard.isTabVisible("2. Хто буде виробляти?")).isTrue();
@@ -117,5 +122,7 @@ public class GlobalPlansUiTest extends BaseUITest {
         assertThat(wizard.areLateTabsDisabledOnFreshCreate())
                 .as("Вкладки 3 і 4 мають бути заблоковані до завершення розподілу")
                 .isTrue();
+
+        wizard.attachScreenshot("TC-GP-UI-SMOKE-003 — tabs verified");
     }
 }

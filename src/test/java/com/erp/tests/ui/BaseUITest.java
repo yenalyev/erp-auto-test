@@ -122,6 +122,12 @@ public abstract class BaseUITest extends BaseTest {
         log.debug("Injected {} cookie(s) into BrowserContext", cookies.size());
     }
 
+    /** Global plans and cross-location flows need tech maps from all permitted storages. */
+    protected void injectAllLocationsView() {
+        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        log.debug("BrowserContext init script: selectedStorageId=all");
+    }
+
     private void attachScreenshotOnFailure(String testName) {
         try {
             byte[] screenshot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
