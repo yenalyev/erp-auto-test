@@ -83,6 +83,7 @@
         <classes>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
         </classes>
     </test>
@@ -107,6 +108,7 @@
         <classes>
             <class name="com.erp.tests.ui.LoginUITest"/>
             <class name="com.erp.tests.ui.LoginLogoutUITest"/>
+            <class name="com.erp.tests.ui.AccountantCabinetUITest"/>
         </classes>
     </test>
 

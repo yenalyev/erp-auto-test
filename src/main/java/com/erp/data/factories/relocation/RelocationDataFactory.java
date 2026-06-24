@@ -52,10 +52,19 @@ public final class RelocationDataFactory {
                                                            Long recipientId,
                                                            Long resourceId,
                                                            double amount) {
+        return buildSendRequest(senderId, recipientId, resourceId, amount,
+                FakerProvider.ukrainian().commerce().department());
+    }
+
+    public static RelocationOutputRequest buildSendRequest(Long senderId,
+                                                           Long recipientId,
+                                                           Long resourceId,
+                                                           double amount,
+                                                           String description) {
         return RelocationOutputRequest.builder()
                 .senderId(senderId)
                 .recipientId(recipientId)
-                .description(FakerProvider.ukrainian().commerce().department())
+                .description(description)
                 .date(LocalDate.now())
                 .items(List.of(usage(resourceId, amount)))
                 .sendingPersonName("Test Sender")

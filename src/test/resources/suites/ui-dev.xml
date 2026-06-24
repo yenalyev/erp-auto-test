@@ -10,6 +10,7 @@
     <test name="Login / Logout UI — admin + owner1">
         <classes>
             <class name="com.erp.tests.ui.LoginLogoutUITest"/>
+            <class name="com.erp.tests.ui.AccountantCabinetUITest"/>
         </classes>
     </test>
 

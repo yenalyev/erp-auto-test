@@ -10,8 +10,10 @@ import com.erp.models.request.RelocationInputEditRequest;
 import com.erp.models.request.RelocationInputRequest;
 import com.erp.models.request.RelocationOutputEditRequest;
 import com.erp.models.request.RelocationOutputRequest;
+import com.erp.models.query.RelocationJournalQuery;
 import com.erp.models.request.RelocationUpdateRequest;
 import com.erp.models.response.RelocationResponse;
+import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
@@ -109,7 +111,20 @@ public class RelocationFixture extends BaseFixture {
                                          Long recipientId,
                                          Long resourceId,
                                          double amount) {
-        RelocationOutputRequest request = RelocationDataFactory.buildSendRequest(
+        return createSendWithDescription(role, senderId, recipientId, resourceId, amount, null);
+    }
+
+    @Step("API: видача з маркером у примітках")
+    public RelocationResponse createSendWithDescription(UserRole role,
+                                                        Long senderId,
+                                                        Long recipientId,
+                                                        Long resourceId,
+                                                        double amount,
+                                                        String description) {
+        RelocationOutputRequest request = description != null
+                ? RelocationDataFactory.buildSendRequest(
+                senderId, recipientId, resourceId, amount, description)
+                : RelocationDataFactory.buildSendRequest(
                 senderId, recipientId, resourceId, amount);
         Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, role, request);
         validateSuccess(response, "Send relocation");
@@ -139,9 +154,17 @@ public class RelocationFixture extends BaseFixture {
                                       Long relocationId,
                                       Long storageId,
                                       RelocationState state) {
+        return resolve(role, relocationId, storageId, state, "erp-auto-test resolve");
+    }
+
+    public RelocationResponse resolve(UserRole role,
+                                      Long relocationId,
+                                      Long storageId,
+                                      RelocationState state,
+                                      String description) {
         RelocationUpdateRequest request = RelocationUpdateRequest.builder()
                 .state(state)
-                .description("erp-auto-test resolve")
+                .description(description)
                 .build();
         Response response = apiExecutor.executeRelocationResolve(relocationId, storageId, request, role);
         validateSuccess(response, "Resolve relocation");
@@ -242,6 +265,40 @@ public class RelocationFixture extends BaseFixture {
 
     public Long getSharedCategoryId() {
         return testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+    }
+
+    public String getSharedCategoryName() {
+        Long categoryId = getSharedCategoryId();
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CATEGORY_GET_ALL, UserRole.ADMIN);
+        List<ResourceCategoryResponse> categories =
+                DatabaseIntegrityValidator.extractList(response, ResourceCategoryResponse.class);
+        return categories.stream()
+                .filter(c -> categoryId.equals(c.getId()))
+                .map(ResourceCategoryResponse::getName)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Category not found for id=" + categoryId));
+    }
+
+    @Step("API: GET totalElements журналу переміщень")
+    public long getJournalTotalElements(RelocationJournalQuery query, UserRole role) {
+        Response response = getJournalPageResponse(query, role);
+        validateSuccess(response, "Get relocation journal total elements");
+        return DatabaseIntegrityValidator.extractPageTotalElements(response);
+    }
+
+    @Step("API: GET журнал переміщень (сторінка {query.page}, size={query.pageSize})")
+    public List<RelocationResponse> getJournalPage(RelocationJournalQuery query, UserRole role) {
+        Response response = getJournalPageResponse(query, role);
+        validateSuccess(response, "Get relocation journal page");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RELOCATION_GET_PAGE);
+        return DatabaseIntegrityValidator.extractList(response, RelocationResponse.class);
+    }
+
+    public Response getJournalPageResponse(RelocationJournalQuery query, UserRole role) {
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RELOCATION_GET_PAGE,
+                role,
+                query.toQueryParams());
     }
 
     public Long secondResourceId() {

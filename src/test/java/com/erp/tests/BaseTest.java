@@ -32,6 +32,10 @@ import java.util.function.Predicate;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @Slf4j
+@Listeners({
+        com.erp.listeners.TestCaseIdListener.class,
+        com.erp.listeners.TestCaseIdAnnotationTransformer.class
+})
 public abstract class BaseTest {
     // Кожен клас повинен мати свій екземпляр
     protected ApiExecutor apiExecutor;

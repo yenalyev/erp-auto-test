@@ -30,6 +30,7 @@ public class ProductionPage extends BasePage {
     private static final String DISASSEMBLE_BUTTON_TEXT = "Розбір";
     private static final String PRODUCT_LABEL_TEXT = "Продукт";
     private static final String CATEGORY_LABEL_TEXT = "Категорія";
+    private static final String WORK_TYPE_LABEL_TEXT = "Тип робіт";
     private static final String PRODUCT_INPUT_SELECTOR = "input[placeholder='Пошук...']";
     private static final String DATE_INPUT_SELECTOR = "input[type='date']";
     private static final String CLEAR_BUTTON_TEXT = "Очистити";
@@ -122,6 +123,14 @@ public class ProductionPage extends BasePage {
         }
         Locator input = page.locator(PRODUCT_INPUT_SELECTOR);
         return input.count() > 0 && input.first().isVisible();
+    }
+
+    public boolean isCategoryFilterVisible() {
+        return isFilterLabelVisible(CATEGORY_LABEL_TEXT);
+    }
+
+    public boolean isWorkTypeFilterVisible() {
+        return isFilterLabelVisible(WORK_TYPE_LABEL_TEXT);
     }
 
     public boolean isDateFromVisible() {
@@ -359,6 +368,11 @@ public class ProductionPage extends BasePage {
 
     private Locator productionTableWrapper() {
         return page.locator(PRODUCTION_TABLE_WRAPPER_SELECTOR).first();
+    }
+
+    private boolean isFilterLabelVisible(String labelText) {
+        Locator label = page.getByText(labelText, new Page.GetByTextOptions().setExact(true));
+        return label.count() > 0 && label.first().isVisible();
     }
 
     private boolean isNamedActionVisible(String name) {

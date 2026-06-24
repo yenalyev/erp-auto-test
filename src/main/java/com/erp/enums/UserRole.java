@@ -8,6 +8,7 @@ public enum UserRole {
     OWNER_2,
     OWNER_3,
     RESOURCE_VIEWER,
+    ACCOUNTANT,
     ANONYMOUS;
 
     public String getUsername() {
@@ -17,6 +18,7 @@ public enum UserRole {
             case OWNER_2         -> ConfigProvider.getOwner2Username();
             case OWNER_3         -> ConfigProvider.getOwner3Username();
             case RESOURCE_VIEWER -> ConfigProvider.getResourceViewerUsername();
+            case ACCOUNTANT      -> ConfigProvider.getAccountantUsername();
             case ANONYMOUS       -> "";
         };
     }
@@ -28,6 +30,7 @@ public enum UserRole {
             case OWNER_2         -> ConfigProvider.getOwner2Password();
             case OWNER_3         -> ConfigProvider.getOwner3Password();
             case RESOURCE_VIEWER -> ConfigProvider.getResourceViewerPassword();
+            case ACCOUNTANT      -> ConfigProvider.getAccountantPassword();
             case ANONYMOUS       -> "";
         };
     }
@@ -35,7 +38,7 @@ public enum UserRole {
     /** Returns the primary storage ID that belongs to this role, as a String path param. */
     public String getStoreId() {
         return switch (this) {
-            case ADMIN, RESOURCE_VIEWER -> "all";
+            case ADMIN, RESOURCE_VIEWER, ACCOUNTANT -> "all";
             case OWNER_1   -> String.valueOf(ConfigProvider.getOwner1StorageId());
             case OWNER_2   -> String.valueOf(ConfigProvider.getOwner2StorageId());
             case OWNER_3   -> "";

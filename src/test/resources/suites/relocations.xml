@@ -11,6 +11,7 @@
         <classes>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
         </classes>
     </test>
@@ -18,6 +19,7 @@
     <test name="Relocation UI">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
         </classes>
     </test>
