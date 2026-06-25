@@ -3,11 +3,15 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.RequestBodyFactory;
+import com.erp.data.factories.plan.PlanDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
+import com.erp.models.request.PlanRequest;
+import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.request.StorageTechnologicalMapModeRequest;
 import com.erp.models.request.TechnologicalMapRequest;
+import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageTechnologicalMapModeResponse;
 import com.erp.models.response.TechnologicalMapResponse;
@@ -17,10 +21,15 @@ import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
+import lombok.Builder;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -172,6 +181,133 @@ public class TechnologicalMapFixture extends BaseFixture {
                 .as("Повідомлення про заборону редагування")
                 .contains("закрито")
                 .contains(String.valueOf(storageId));
+    }
+
+    @Step("Перевірити відмову: техкарта використовується в актуальному плані")
+    public void assertUsedInPlanRejection(Response response) {
+        assertThat(response.statusCode()).isEqualTo(400);
+        String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
+        assertThat(errorMessage)
+                .as("Повідомлення про використання техкарти в плані")
+                .contains("плані");
+    }
+
+    @Step("{role}: DELETE deactivate tech map {techMapId} at storage {storageId}")
+    public Response deactivateTechMap(UserRole role, Long techMapId, Long storageId) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_DEACTIVATE,
+                role,
+                null,
+                String.valueOf(techMapId),
+                String.valueOf(storageId));
+    }
+
+    @Step("API: DELETE per-location plan {planId}")
+    public void deleteLocationPlan(Long planId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PLAN_DELETE,
+                UserRole.ADMIN,
+                String.valueOf(planId));
+        assertThat(response.statusCode()).isBetween(200, 299);
+    }
+
+    @Step("API: GET plans for storage {storageId}")
+    public List<PlanResponse> getLocationPlans(Long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PLAN_GET_ALL,
+                UserRole.ADMIN,
+                String.valueOf(storageId));
+        validateSuccess(response, "Get location plans for storage " + storageId);
+        List<PlanResponse> plans = DatabaseIntegrityValidator.extractList(response, PlanResponse.class);
+        return plans != null ? plans : new ArrayList<>();
+    }
+
+    @Step("Знайти вільний місяць для плану локації {storageId} починаючи з {start}")
+    public YearMonth nextFreeLocationPlanPeriod(Long storageId, YearMonth start) {
+        return nextFreeLocationPlanPeriod(storageId, start, true);
+    }
+
+    @Step("Знайти вільний місяць для плану локації {storageId} починаючи з {start} (backward={searchBackward})")
+    public YearMonth nextFreeLocationPlanPeriod(Long storageId, YearMonth start, boolean searchBackward) {
+        Set<String> occupied = new HashSet<>();
+        for (PlanResponse plan : getLocationPlans(storageId)) {
+            occupied.add(plan.getYear() + "-" + plan.getMonth());
+        }
+        YearMonth candidate = start;
+        int attempts = 0;
+        while (occupied.contains(candidate.getYear() + "-" + candidate.getMonthValue())) {
+            candidate = searchBackward ? candidate.minusMonths(1) : candidate.plusMonths(1);
+            attempts++;
+            if (attempts > 120) {
+                throw new IllegalStateException("No free location plan period found within 10 years for storage " + storageId);
+            }
+        }
+        return candidate;
+    }
+
+    @Step("API: створити per-location план для ресурсу {resourceId} на {period}")
+    public PlanResponse createLocationPlan(Long storageId, Long resourceId, YearMonth period, double amount) {
+        PlanRequest request = PlanDataFactory.createSimplePlan(
+                storageId,
+                resourceId,
+                period.getMonthValue(),
+                period.getYear(),
+                amount).build();
+
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PLAN_POST_CREATE,
+                UserRole.ADMIN,
+                request);
+        validateSuccess(response, "Create location plan for resource " + resourceId);
+        return response.as(PlanResponse.class);
+    }
+
+    @Step("API: створити актуальний per-location план для ресурсу {resourceId}")
+    public PlanResponse createActiveLocationPlan(Long storageId, Long resourceId, YearMonth startHint, double amount) {
+        YearMonth minimum = YearMonth.now().plusMonths(1);
+        YearMonth period = nextFreeLocationPlanPeriod(
+                storageId,
+                startHint.isBefore(minimum) ? minimum : startHint);
+        return createLocationPlan(storageId, resourceId, period, amount);
+    }
+
+    @Value
+    @Builder
+    public static class IsolatedTechMapContext {
+        ResourceResponse product;
+        TechnologicalMapResponse techMap;
+    }
+
+    @Step("Створити ізольовану production техкарту для локації {storageId}")
+    public IsolatedTechMapContext createIsolatedProductionTechMap(UserRole role, Long storageId) {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        ResourceResponse in1 = resourceFixture.createUniqueResource("TM-IN1-" + suffix);
+        ResourceResponse in2 = resourceFixture.createUniqueResource("TM-IN2-" + suffix);
+        ResourceResponse product = resourceFixture.createUniqueResource("TM-OUT-" + suffix);
+
+        TechnologicalMapRequest request = TechnologicalMapDataFactory.createProductionMapWithStorages(
+                "TM-PlanGuard",
+                List.of(
+                        new ResourceUsageRequest(in1.getId(), 2.0),
+                        new ResourceUsageRequest(in2.getId(), 1.0)),
+                List.of(new ResourceUsageRequest(product.getId(), 1.0)),
+                Set.of(storageId)).build();
+
+        TechnologicalMapResponse techMap = createTechMapWithRequest(role, request);
+        return IsolatedTechMapContext.builder()
+                .product(product)
+                .techMap(techMap)
+                .build();
+    }
+
+    @Step("Створити другу активну техкарту на той самий продукт")
+    public TechnologicalMapResponse createAlternateActiveTechMap(UserRole role, TechnologicalMapResponse source) {
+        TechnologicalMapRequest cloneRequest = TechnologicalMapDataFactory.cloneFrom(source);
+        return createTechMapWithRequest(role, cloneRequest);
+    }
+
+    public Long getOutputResourceId(TechnologicalMapResponse techMap) {
+        return techMap.getOutput().getFirst().getResource().getId();
     }
 
     @Step("Побудувати запит на створення техкарти для локації Owner1")
