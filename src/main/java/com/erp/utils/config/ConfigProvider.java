@@ -189,6 +189,10 @@ public class ConfigProvider {
         return config.sshKeyPath();
     }
 
+    public static String getSshPassword() {
+        return config.sshPassword();
+    }
+
     public static String getSshRemoteDbHost() {
         return config.sshRemoteDbHost();
     }

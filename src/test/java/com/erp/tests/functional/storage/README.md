@@ -1,37 +1,32 @@
-# Functional Tests: Storages (Бізнес Юніти)
+# Functional Tests: Storages (Локації / Бізнес-юніти)
 
 ## Огляд
-Цей набір тестів забезпечує повне покриття життєвого циклу та верифікацію цілісності даних для модуля **Storages** у розділі Master Data. Склади є основними вузлами для зберігання ресурсів та готової продукції, тому стабільність їхнього обліку є критичною для роботи всієї ERP-системи.
+
+API-тести життєвого циклу локацій: створення, оновлення, валідація, архівація та розархівація.
+Відповідають бекенд-контракту `StorageController` (`/api/v1/storages`).
 
 ---
 
 ## Тестові сценарії
 
-| ID | Назва сценарію | Опис перевірки | Severity |
-|:---|:---|:---|:---|
-| **TC-STR-001** | Happy Path: Створення | Успішне створення складу ADMIN-користувачем, валідація JSON-схеми та перевірка персистентності в БД. | **Critical** |
-| **TC-STR-002** | Валідація даних | Data-driven перевірка обов'язковості поля `name` (Null/Empty) та лімітів довжини (Boundary Testing). | **Normal** |
-| **TC-STR-003** | Контроль унікальності | Заборона створення дублікатів за назвою та верифікація цілісності БД (Integrity Check). | **Critical** |
+| ID | Клас | Сценарій | Severity |
+|:---|:-----|:---------|:---------|
+| **TC-STR-001** | `StorageTest` | Create — дочірня локація з `parentId`, `type=STORAGE`, `relation=INTERNAL` | Critical |
+| **TC-STR-002** | `StorageTest` | Update — повне PUT-тіло; змінюємо name, identifierNumber, accessMode; **relation** та решта без змін | Critical |
+| **TC-STR-003** | `StorageTest` | Duplicate name among active storages → 400 | Critical |
+| **TC-STR-004** | `StorageTest` | Validation — null/empty/blank `name` → 400 | Normal |
+| **TC-STR-005** | `StorageTest` | Relation guard — INTERNAL→EXTERNAL on update → 400 | Normal |
+| **TC-STR-006** | `StorageDeactivationTest` | Deactivate — `active=false`, hidden from `/names?isActive=true` | Critical |
+| **TC-STR-007** | `StorageDeactivationTest` | Unarchive — restore `active=true` | Critical |
+| **TC-STR-008** | `StorageDeactivationTest` | Reuse archived name for new POST | Normal |
 
----
-
-## Деталізація функціоналу
-
-### 1. Позитивний сценарій (Happy Path)
-* **Contract Validation:** Використання JSON Schema для перевірки структури об'єкта Storage.
-* **Database Sync:** Перевірка через Reflection API — автоматичне порівняння полів `Request` vs `Response` vs `Database` (через GET запит).
-
-### 2. Валідація вхідних даних (Data Quality)
-* **Mandatory Fields:** Система має відхиляти запити, якщо назва складу відсутня або порожня.
-* **Boundary Testing:** Верифікація обмеження довжини назви (255 символів) для запобігання помилкам переповнення на рівні бази даних.
-
-### 3. Бізнес-правила та цілісність (Business Rules)
-* **Uniqueness:** Перевірка унікальності назви складу. Система не повинна дозволяти створення двох складів з однаковим ім'ям у межах однієї організації.
-* **Integrity Check:** Використання `DatabaseIntegrityValidator` для гарантії того, що при невдалій спробі створення кількість складів у базі залишається незмінною (відсутність "фантомних" записів).
+RBAC: `STORAGE_GET_ALL`, `POST`, `PUT`, `GET_BY_ID`, `DELETE`, `UNARCHIVE` — у `rbac-policy.yml`.
 
 ---
 
 ## Технічні особливості
-* **Паралелізація:** Використання `DataUtils.generateWithUniqueSuffix()` для повної ізоляції даних між паралельними потоками.
-* **Фікстури:** Використання `storageFixture.setupDynamicBusinessUnit()` для підготовки початкового стану системи перед тестами.
-* **Звітність:** Allure-кроки розбиті на фази `STEP 1: Create`, `STEP 2: Validate`, `STEP 3: Verify Persistence`.
+
+- **Fixture:** `StorageFixture` — `createUniqueStorage`, `getById`, `deactivate`, `unarchive`, `getNames`
+- **Верифікація:** `verifyEntityViaGetById` / `verifyUpdatedEntity` у `BaseFunctionalTest`
+- **Схеми:** paged list (`storage-paged-list-schema.json`), names array (`storage-names-list-schema.json`)
+- **Запуск:** `mvn test -Denv=dev -Dtest=StorageTest,StorageDeactivationTest`

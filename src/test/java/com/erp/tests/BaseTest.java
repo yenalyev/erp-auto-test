@@ -266,10 +266,10 @@ public abstract class BaseTest {
                 return "Hint: SSH host is unreachable. Check ssh.host, ssh.port and firewall rules in dev.properties.";
             }
             if (rootMessage != null && (rootMessage.contains("Auth fail") || rootMessage.contains("publickey"))) {
-                return "Hint: SSH key rejected. Verify ssh.key.path points to the correct private key file.";
+                return "Hint: SSH auth failed. Verify ssh.key.path or ssh.password in dev.properties.";
             }
             if (cause instanceof IllegalStateException) {
-                return "Hint: Fill in ssh.host, ssh.username and ssh.key.path in dev.properties.";
+                return "Hint: Fill in ssh.host, ssh.username and either ssh.key.path or ssh.password in dev.properties.";
             }
             return "Hint: Check ssh.* properties in dev.properties.";
         }

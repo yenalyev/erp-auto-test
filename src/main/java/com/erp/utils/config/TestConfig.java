@@ -189,6 +189,11 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String sshKeyPath();
 
+    /** SSH password — alternative to {@link #sshKeyPath()}. Use one of them. */
+    @Key("ssh.password")
+    @DefaultValue("")
+    String sshPassword();
+
     /** Hostname of the PostgreSQL server as seen from the SSH server (usually localhost). */
     @Key("ssh.remote.db.host")
     @DefaultValue("localhost")

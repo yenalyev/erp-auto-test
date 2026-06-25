@@ -6,7 +6,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 
-TCM_PATH = r"C:\Users\gigam\Downloads\tcm-ERP__________-project-20260618.xlsx"
+TCM_PATH = r"C:\Users\gigam\Downloads\tcm-ERP__________-project-20260623.xlsx"
 PROJECT_ROOT = r"c:\Users\gigam\IdeaProjects\erp-auto-test"
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 

@@ -94,6 +94,27 @@ rules:
     bodyType: "UPDATE_STORAGE"
     description: "Змінити NAME існучого Бізнес Юніта (STORAGE): тільки ADMIN має право. OWNER_1 (власник STORAGE_1), OWNER_2 та ANONYMOUS - ні"
 
+  - endpointName: "STORAGE_GET_BY_ID"
+    contextKey: "DYNAMIC_STORAGE"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Отримати локацію за id: ADMIN та OWNER_1 мають право, ANONYMOUS - ні"
+
+  - endpointName: "STORAGE_DELETE_DEACTIVATE"
+    contextKey: "DYNAMIC_STORAGE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Архівувати (soft delete) локацію: тільки ADMIN має право, OWNER_1 та ANONYMOUS - ні"
+
+  - endpointName: "STORAGE_PUT_UNARCHIVE"
+    contextKey: "DYNAMIC_STORAGE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Розархівувати локацію: тільки ADMIN має право (глобальний business-unit::delete), OWNER_1 та ANONYMOUS - ні"
+
   # ========================================
   # STATISTIC ENDPOINTS
   # ========================================

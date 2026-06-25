@@ -13,6 +13,8 @@
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
+            <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>
+            <class name="com.erp.tests.functional.storage.StorageDeactivationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>

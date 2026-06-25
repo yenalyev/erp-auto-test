@@ -34,30 +34,83 @@ public abstract class BaseFunctionalTest extends BaseTest {
     // public void cleanup() { ... }
 
     private void assertFieldsMatch(Object request, Object response) {
-        // Отримуємо всі поля з класу Request (наприклад, name, shortName)
         Field[] fields = request.getClass().getDeclaredFields();
 
         for (Field field : fields) {
             field.setAccessible(true);
             try {
                 Object expectedValue = field.get(request);
+                if (expectedValue == null) {
+                    continue;
+                }
 
-                // Шукаємо поле з такою ж назвою у Response
-                Field responseField = response.getClass().getDeclaredField(field.getName());
+                Field responseField;
+                try {
+                    responseField = response.getClass().getDeclaredField(field.getName());
+                } catch (NoSuchFieldException e) {
+                    log.debug("Поле {} відсутнє в Response класі", field.getName());
+                    continue;
+                }
                 responseField.setAccessible(true);
                 Object actualValue = responseField.get(response);
 
-                assertThat(actualValue)
-                        .as("Поле '" + field.getName() + "' не збігається")
-                        .isEqualTo(expectedValue);
+                if (expectedValue instanceof Enum<?> enumValue) {
+                    assertThat(actualValue)
+                            .as("Поле '" + field.getName() + "' не збігається")
+                            .isEqualTo(enumValue.name());
+                } else {
+                    assertThat(actualValue)
+                            .as("Поле '" + field.getName() + "' не збігається")
+                            .isEqualTo(expectedValue);
+                }
 
-            } catch (NoSuchFieldException e) {
-                // Якщо в Response немає поля з такою назвою — ігноруємо або логуємо
-                log.debug("Поле {} відсутнє в Response класі", field.getName());
             } catch (IllegalAccessException e) {
                 throw new RuntimeException("Помилка рефлексії при порівнянні полів", e);
             }
         }
+    }
+
+    protected <REQ, RES> void verifyEntityViaGetById(Response mutationResponse,
+                                                     REQ request,
+                                                     ApiEndpointDefinition getByIdEndpoint,
+                                                     Class<RES> responseClass) {
+        RES mutatedEntity = mutationResponse.as(responseClass);
+
+        Allure.step("STEP 3: Верифікація через GET by id", () -> {
+            Allure.step("Перевірка полів Response Body (через Reflection)", () -> {
+                try {
+                    Object id = responseClass.getMethod("getId").invoke(mutatedEntity);
+                    assertThat(id).as("ID сутності не повинен бути порожнім").isNotNull();
+                } catch (Exception e) {
+                    log.warn("Не вдалося знайти метод getId у класі {}", responseClass.getSimpleName());
+                }
+                assertFieldsMatch(request, mutatedEntity);
+            });
+
+            Allure.step("Перевірка персистенції (GET by id)", () -> {
+                Object id;
+                try {
+                    id = responseClass.getMethod("getId").invoke(mutatedEntity);
+                } catch (Exception e) {
+                    throw new AssertionError("Не вдалося отримати id сутності", e);
+                }
+
+                Response getResponse = apiExecutor.execute(
+                        getByIdEndpoint, UserRole.ADMIN, String.valueOf(id));
+                AllureHelper.attachResponseDetails(getResponse);
+                assertThat(getResponse.statusCode()).isEqualTo(200);
+
+                RES persistedEntity = getResponse.as(responseClass);
+                assertFieldsMatch(request, persistedEntity);
+            });
+        });
+    }
+
+    protected <REQ, RES> void verifyUpdatedEntity(Response updateResponse,
+                                                    REQ request,
+                                                    ApiEndpointDefinition getByIdEndpoint,
+                                                    Class<RES> responseClass) {
+        verifyEntityViaGetById(updateResponse, request, getByIdEndpoint, responseClass);
     }
 
     protected <REQ, RES> void verifyCreatedEntity(Response response, REQ request,

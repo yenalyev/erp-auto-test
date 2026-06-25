@@ -39,6 +39,9 @@
     },
     "accessMode": {
       "type": ["string", "null"]
+    },
+    "nameForInvoices": {
+      "type": ["string", "null"]
     }
   },
   "required": [

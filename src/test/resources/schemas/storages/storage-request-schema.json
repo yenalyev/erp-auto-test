@@ -7,10 +7,28 @@
     "name": {
       "type": "string",
       "description": "The name identifier for the storage"
+    },
+    "alias": {
+      "type": ["string", "null"]
+    },
+    "parentId": {
+      "type": ["integer", "null"]
+    },
+    "type": {
+      "type": ["string", "null"]
+    },
+    "relation": {
+      "type": ["string", "null"]
+    },
+    "identifierNumber": {
+      "type": ["string", "null"]
+    },
+    "accessMode": {
+      "type": ["string", "null"]
+    },
+    "nameForInvoices": {
+      "type": ["string", "null"]
     }
   },
-  "required": [
-    "name"
-  ],
   "additionalProperties": false
 }

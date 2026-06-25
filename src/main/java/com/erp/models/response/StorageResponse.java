@@ -16,7 +16,14 @@ import java.util.List;
 public class StorageResponse {
     private Long id;
     private String name;
+    private String alias;
     /** Backend {@code UnitType} name, e.g. SUPPLIER, STORAGE, PRODUCTION. */
     private String type;
+    private String relation;
+    private Boolean active;
+    private String identifierNumber;
+    private String accessMode;
+    private String nameForInvoices;
+    private SimpleEntityResponse parent;
     private List<StorageItemResponse> items;
 }

@@ -13,8 +13,10 @@ import java.util.regex.Pattern;
  * Opens an SSH port-forward tunnel so that a remote PostgreSQL database
  * is accessible via a local port on the developer's machine.
  *
- * Equivalent shell command:
+ * Equivalent shell command (key auth):
  *   ssh -L {localPort}:{remoteDbHost}:{remoteDbPort} {sshUser}@{sshHost} -p {sshPort} -i {keyFile}
+ *
+ * Or password auth when {@code ssh.password} is set instead of {@code ssh.key.path}.
  *
  * Usage:
  *   SshTunnelManager tunnel = new SshTunnelManager();
@@ -46,26 +48,35 @@ public class SshTunnelManager implements AutoCloseable {
             return rewriteUrl(jdbcUrl);
         }
 
-        String sshHost     = ConfigProvider.getSshHost();
-        int    sshPort     = ConfigProvider.getSshPort();
-        String sshUser     = ConfigProvider.getSshUsername();
-        String sshKeyPath  = ConfigProvider.getSshKeyPath();
-        String remoteHost  = ConfigProvider.getSshRemoteDbHost();
-        int    remotePort  = ConfigProvider.getSshRemoteDbPort();
-        int    localPort   = ConfigProvider.getSshLocalPort();
+        String sshHost      = ConfigProvider.getSshHost();
+        int    sshPort      = ConfigProvider.getSshPort();
+        String sshUser      = ConfigProvider.getSshUsername();
+        String sshKeyPath   = ConfigProvider.getSshKeyPath();
+        String sshPassword  = ConfigProvider.getSshPassword();
+        String remoteHost   = ConfigProvider.getSshRemoteDbHost();
+        int    remotePort   = ConfigProvider.getSshRemoteDbPort();
+        int    localPort    = ConfigProvider.getSshLocalPort();
+        boolean keyAuth     = isConfigured(sshKeyPath);
 
-        validateConfig(sshHost, sshUser, sshKeyPath);
+        validateConfig(sshHost, sshUser, keyAuth, sshPassword);
 
-        log.info("Opening SSH tunnel: {}@{}:{} -L {}:{}:{}",
-                sshUser, sshHost, sshPort, localPort, remoteHost, remotePort);
+        log.info("Opening SSH tunnel ({}): {}@{}:{} -L {}:{}:{}",
+                keyAuth ? "key" : "password", sshUser, sshHost, sshPort, localPort, remoteHost, remotePort);
 
         try {
             JSch jsch = new JSch();
-            jsch.addIdentity(sshKeyPath);
+            if (keyAuth) {
+                jsch.addIdentity(sshKeyPath);
+            }
 
             session = jsch.getSession(sshUser, sshHost, sshPort);
             session.setConfig("StrictHostKeyChecking", "no");
-            session.setConfig("PreferredAuthentications", "publickey");
+            if (keyAuth) {
+                session.setConfig("PreferredAuthentications", "publickey");
+            } else {
+                session.setPassword(sshPassword);
+                session.setConfig("PreferredAuthentications", "password,keyboard-interactive");
+            }
             session.connect(15_000);
 
             session.setPortForwardingL(localPort, remoteHost, remotePort);
@@ -113,15 +124,23 @@ public class SshTunnelManager implements AutoCloseable {
         return jdbcUrl;
     }
 
-    private void validateConfig(String sshHost, String sshUser, String sshKeyPath) {
+    private void validateConfig(String sshHost, String sshUser, boolean keyAuth, String sshPassword) {
         if (sshHost == null || sshHost.isBlank()) {
             throw new IllegalStateException("ssh.host is not configured in properties");
         }
         if (sshUser == null || sshUser.isBlank()) {
             throw new IllegalStateException("ssh.username is not configured in properties");
         }
-        if (sshKeyPath == null || sshKeyPath.isBlank()) {
-            throw new IllegalStateException("ssh.key.path is not configured in properties");
+        if (keyAuth) {
+            return;
         }
+        if (!isConfigured(sshPassword)) {
+            throw new IllegalStateException(
+                    "Configure ssh.key.path or ssh.password for SSH tunnel authentication");
+        }
+    }
+
+    private static boolean isConfigured(String value) {
+        return value != null && !value.isBlank();
     }
 }

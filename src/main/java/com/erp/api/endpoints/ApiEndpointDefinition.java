@@ -324,8 +324,8 @@ public enum ApiEndpointDefinition {
     STORAGE_GET_ALL(
             "/api/v1/storages",
             Method.GET,
-            "schemas/storages/storage-response-list-schema.json",
-            "Get all storages",
+            "schemas/storages/storage-paged-list-schema.json",
+            "Get all storages (paged)",
             null,
             new TypeReference<List<StorageResponse>>() {},
             null
@@ -334,8 +334,28 @@ public enum ApiEndpointDefinition {
     STORAGE_GET_SUPPLIER(
             "/api/v1/storages?types=SUPPLIER&size=1",
             Method.GET,
-            "schemas/storages/storage-response-list-schema.json",
+            "schemas/storages/storage-paged-list-schema.json",
             "Get first SUPPLIER storage",
+            null,
+            new TypeReference<List<StorageResponse>>() {},
+            null
+    ),
+
+    STORAGE_GET_BY_ID(
+            "/api/v1/storages/{id}",
+            Method.GET,
+            "schemas/storages/storage-response-schema.json",
+            "Get storage by id",
+            null,
+            new TypeReference<StorageResponse>() {},
+            null
+    ),
+
+    STORAGE_GET_NAMES(
+            "/api/v1/storages/names",
+            Method.GET,
+            "schemas/storages/storage-names-list-schema.json",
+            "Get storage names list",
             null,
             new TypeReference<List<StorageResponse>>() {},
             null
@@ -355,10 +375,30 @@ public enum ApiEndpointDefinition {
             "/api/v1/storages/{id}",
             Method.PUT,
             "schemas/storages/storage-response-schema.json",
-            "Update storage name",
+            "Update storage",
             new TypeReference<StorageRequest>() {},
             new TypeReference<StorageResponse>() {},
             "UPDATE_STORAGE"
+    ),
+
+    STORAGE_DELETE_DEACTIVATE(
+            "/api/v1/storages/{id}",
+            Method.DELETE,
+            null,
+            "Deactivate (archive) storage",
+            null,
+            null,
+            "DEACTIVATE"
+    ),
+
+    STORAGE_PUT_UNARCHIVE(
+            "/api/v1/storages/unarchive/{id}",
+            Method.PUT,
+            null,
+            "Reactivate (unarchive) storage",
+            null,
+            null,
+            "UNARCHIVE"
     ),
 
     // ========================================

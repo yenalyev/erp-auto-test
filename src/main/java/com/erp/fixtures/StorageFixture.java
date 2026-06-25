@@ -8,24 +8,31 @@ import com.erp.models.request.StorageRequest;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
+import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 public class StorageFixture extends BaseFixture {
+
+    private final Set<Long> storagesToCleanup = new LinkedHashSet<>();
 
     public StorageFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
     }
 
-    /**
-     * Готує базове середовище для тестів складів.
-     * Створює один основний склад для загального використання.
-     */
     @Step("FIXTURE: Підготовка базового складу")
     public void prepareContext() {
         if (testContext.get(ContextKey.DYNAMIC_STORAGE) == null) {
@@ -33,15 +40,15 @@ public class StorageFixture extends BaseFixture {
         }
     }
 
-    /**
-     * Створює та зберігає в контекст один склад.
-     */
     @Step("FIXTURE: Створення спільного складу")
     public StorageResponse setupSharedStorage() {
-        StorageRequest request = StorageDataFactory.randomStorage().build();
+        StorageResponse parent = resolveParentUnit();
+        StorageRequest request = StorageDataFactory.childStorage(parent.getId(), "shared-").build();
 
-        StorageResponse response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_POST_CREATE, UserRole.ADMIN, request)
-                .as(StorageResponse.class);
+        Response createResponse = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_POST_CREATE, UserRole.ADMIN, request);
+        validateSuccess(createResponse, "Create shared storage");
+        StorageResponse response = createResponse.as(StorageResponse.class);
 
         List<StorageResponse> storageResponseList = List.of(response);
 
@@ -51,46 +58,204 @@ public class StorageFixture extends BaseFixture {
         return response;
     }
 
-    /**
-     * Гарантує наявність щонайменше {count} складів у системі.
-     * Перевіряє існуючі записи в базі і створює нові лише за потреби.
-     * * @param count Бажана кількість складів.
-     * @return Повний список складів (існуючі + новостворені).
-     */
     @Step("FIXTURE: Забезпечення наявності списку складів (мінімум {count})")
     public List<StorageResponse> setupSharedStorageList(int count) {
-        // 1. Отримуємо всі існуючі склади з бази
         Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, UserRole.ADMIN);
 
-        // Ініціалізуємо список, який можна змінювати
         List<StorageResponse> allStorages = new ArrayList<>();
         if (response.statusCode() == 200) {
-            List<StorageResponse> existing = response.jsonPath().getList("", StorageResponse.class);
+            List<StorageResponse> existing = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
             if (existing != null) {
                 allStorages.addAll(existing);
             }
         }
 
-        // 2. Якщо в базі менше складів, ніж нам потрібно — створюємо відсутні
         if (allStorages.size() < count) {
-            int currentSize = allStorages.size();
-            int needed = count - currentSize;
-            log.info("Database has {} storages. Creating {} more to reach {}", currentSize, needed, count);
+            int needed = count - allStorages.size();
+            log.info("Database has {} storages. Creating {} more to reach {}", allStorages.size(), needed, count);
 
             for (int i = 0; i < needed; i++) {
-                // Використовуємо метод створення одного складу
                 allStorages.add(setupSharedStorage());
             }
         }
 
-        // 3. Зберігаємо фінальний список у контекст для використання в тестах
         testContext.set(ContextKey.SHARED_STORAGE_LIST, allStorages);
 
-        // Також оновлюємо DYNAMIC_STORAGE першим доступним елементом для зручності
         if (!allStorages.isEmpty()) {
             testContext.set(ContextKey.DYNAMIC_STORAGE, allStorages.getFirst());
         }
 
         return allStorages;
+    }
+
+    @Step("API: альтернативний parent (SUPPLIER) для оновлення ієрархії")
+    public StorageResponse resolveSupplierParent() {
+        Response supplierResponse = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_SUPPLIER, UserRole.ADMIN);
+        validateSuccess(supplierResponse, "Get SUPPLIER storage for alternate parent");
+        List<StorageResponse> suppliers = DatabaseIntegrityValidator.extractList(supplierResponse, StorageResponse.class);
+        if (suppliers == null || suppliers.isEmpty()) {
+            throw new IllegalStateException("No SUPPLIER storage available for alternate parent");
+        }
+        return suppliers.getFirst();
+    }
+
+    @Step("API: альтернативний parent з /storages/names (як у формі оновлення UI)")
+    public StorageResponse resolveAlternateParent(Long currentParentId, Long selfId) {
+        List<StorageResponse> names = getNames(UserRole.ADMIN, true, null);
+        return names.stream()
+                .filter(s -> !Objects.equals(s.getId(), selfId))
+                .filter(s -> !Objects.equals(s.getId(), currentParentId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No alternate parent in /storages/names (currentParentId=" + currentParentId + ")"));
+    }
+
+    @Step("API: знайти батьківську локацію для дочірнього STORAGE")
+    public StorageResponse resolveParentUnit() {
+        Long ownerStorageId = ConfigProvider.getOwner1StorageId();
+        if (ownerStorageId != null) {
+            Response byId = apiExecutor.execute(
+                    ApiEndpointDefinition.STORAGE_GET_BY_ID, UserRole.ADMIN, String.valueOf(ownerStorageId));
+            if (byId.statusCode() == 200) {
+                return byId.as(StorageResponse.class);
+            }
+            log.warn("OWNER_1 storage {} not available as parent, status={}", ownerStorageId, byId.statusCode());
+        }
+
+        Response supplierResponse = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_SUPPLIER, UserRole.ADMIN);
+        validateSuccess(supplierResponse, "Get SUPPLIER storage for parent");
+        List<StorageResponse> suppliers = DatabaseIntegrityValidator.extractList(supplierResponse, StorageResponse.class);
+        if (suppliers != null && !suppliers.isEmpty()) {
+            return suppliers.getFirst();
+        }
+
+        Response allResponse = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, UserRole.ADMIN);
+        validateSuccess(allResponse, "Get storages for parent fallback");
+        List<StorageResponse> all = DatabaseIntegrityValidator.extractList(allResponse, StorageResponse.class);
+        if (all == null || all.isEmpty()) {
+            throw new IllegalStateException("No storages available to use as parent");
+        }
+        return all.getFirst();
+    }
+
+    @Step("API: створити дочірню локацію «{namePrefix}»")
+    public StorageResponse createChildStorage(String namePrefix) {
+        StorageResponse parent = resolveParentUnit();
+        return createChildStorage(parent.getId(), namePrefix);
+    }
+
+    @Step("API: POST створити локацію")
+    public StorageResponse createStorage(StorageRequest request) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_POST_CREATE, UserRole.ADMIN, request);
+        validateSuccess(response, "Create storage");
+        StorageResponse created = response.as(StorageResponse.class);
+        trackForCleanup(created.getId());
+        return created;
+    }
+
+    public void trackForCleanup(Long storageId) {
+        if (storageId != null) {
+            storagesToCleanup.add(storageId);
+        }
+    }
+
+    public void clearTrackedStorages() {
+        storagesToCleanup.clear();
+    }
+
+    @Step("FIXTURE: деактивувати тестові локації після тесту")
+    public void deactivateTrackedStorages(UserRole role) {
+        if (storagesToCleanup.isEmpty()) {
+            return;
+        }
+        for (Long storageId : List.copyOf(storagesToCleanup)) {
+            try {
+                Response response = deactivate(role, storageId);
+                if (response.statusCode() == 200) {
+                    log.debug("Cleanup: deactivated test storage id={}", storageId);
+                } else {
+                    log.warn("Cleanup: deactivate storage id={} returned HTTP {}", storageId, response.statusCode());
+                }
+            } catch (Exception e) {
+                log.warn("Cleanup: failed to deactivate storage id={}: {}", storageId, e.getMessage());
+            }
+        }
+        storagesToCleanup.clear();
+    }
+
+    @Step("API: створити дочірню локацію parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createChildStorage(Long parentId, String namePrefix) {
+        StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix).build();
+        return createStorage(request);
+    }
+
+    @Step("API: створити ізольовану локацію «{namePrefix}»")
+    public StorageResponse createUniqueStorage(String namePrefix) {
+        return createChildStorage(namePrefix);
+    }
+
+    @Step("API: GET локація id={storageId}")
+    public StorageResponse getById(UserRole role, Long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_GET_BY_ID, role, null, String.valueOf(storageId));
+        validateSuccess(response, "Get storage by id " + storageId);
+        return response.as(StorageResponse.class);
+    }
+
+    @Step("API: PUT оновити локацію id={storageId}")
+    public Response update(UserRole role, Long storageId, StorageRequest body) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_PUT_UPDATE, role, body, String.valueOf(storageId));
+    }
+
+    @Step("API: DELETE деактивувати локацію id={storageId}")
+    public Response deactivate(UserRole role, Long storageId) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_DELETE_DEACTIVATE, role, null, String.valueOf(storageId));
+    }
+
+    @Step("API: PUT розархівувати локацію id={storageId}")
+    public Response unarchive(UserRole role, Long storageId) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_PUT_UNARCHIVE, role, null, String.valueOf(storageId));
+    }
+
+    @Step("API: GET /storages/names isActive={isActive}")
+    public List<StorageResponse> getNames(UserRole role, Boolean isActive, String nameFilter) {
+        return getNames(role, isActive, nameFilter, null);
+    }
+
+    @Step("API: GET /storages/names isActive={isActive} id={storageId}")
+    public List<StorageResponse> getNames(UserRole role, Boolean isActive, String nameFilter, Long storageId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("page", 0);
+        params.put("size", 500);
+        if (isActive != null) {
+            params.put("isActive", isActive);
+        }
+        if (nameFilter != null && !nameFilter.isBlank()) {
+            params.put("name", nameFilter);
+        }
+        if (storageId != null) {
+            params.put("id", storageId);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_GET_NAMES, role, params);
+        validateSuccess(response, "Get storage names isActive=" + isActive);
+        return DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
+    }
+
+    public boolean isPresentInNames(UserRole role, Long storageId, Boolean isActive, String nameFilter) {
+        return getNames(role, isActive, nameFilter, storageId).stream()
+                .anyMatch(s -> Objects.equals(s.getId(), storageId));
+    }
+
+    public static void assertValidationError(Response response, String expectedField, String expectedMessageFragment) {
+        assertThat(response.statusCode()).as("Очікувався статус 400").isEqualTo(400);
+        assertThat(response.jsonPath().getString("errors[0].field")).isEqualTo(expectedField);
+        List<String> messages = response.jsonPath().getList("errors[0].messages");
+        assertThat(messages).isNotNull().isNotEmpty();
+        assertThat(messages.getFirst()).contains(expectedMessageFragment);
     }
 }
