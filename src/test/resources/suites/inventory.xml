@@ -18,6 +18,7 @@
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
+            <class name="com.erp.tests.functional.inventory.StorageRelationInventoryTest"/>
         </classes>
     </test>
 

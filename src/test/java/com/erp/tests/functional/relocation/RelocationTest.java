@@ -6,11 +6,14 @@ import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.RelocationFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.enums.StorageRelation;
 import com.erp.models.request.RelocationInputEditRequest;
 import com.erp.models.request.RelocationInputRequest;
 import com.erp.models.request.RelocationOutputEditRequest;
 import com.erp.models.response.PagedRelocationResponse;
 import com.erp.models.response.RelocationResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
@@ -21,6 +24,8 @@ import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -38,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RelocationTest extends BaseFunctionalTest {
 
     private RelocationFixture fixture;
+    private StorageFixture storageFixture;
     private Long owner1Storage;
     private Long owner2Storage;
     private Long supplierId;
@@ -47,6 +53,7 @@ public class RelocationTest extends BaseFunctionalTest {
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setupRelocationTests() {
         fixture = new RelocationFixture(testContext, apiExecutor);
+        storageFixture = new StorageFixture(testContext, apiExecutor);
         fixture.prepareContext();
         owner1Storage = ConfigProvider.getOwner1StorageId();
         owner2Storage = ConfigProvider.getOwner2StorageId();
@@ -59,6 +66,24 @@ public class RelocationTest extends BaseFunctionalTest {
     @BeforeMethod(alwaysRun = true)
     public void ensureStock() {
         fixture.ensureStock(owner1Storage, resourceId, 200.0);
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void cleanupRelationTestStorages() {
+        archiveRelationTestStorages();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupRelationTestStoragesAfterClass() {
+        archiveRelationTestStorages();
+    }
+
+    private void archiveRelationTestStorages() {
+        if ("staging".equals(System.getProperty("env", "debug"))) {
+            storageFixture.clearTrackedStorages();
+            return;
+        }
+        storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
     }
 
     // --- A: List / filters ---
@@ -487,5 +512,81 @@ public class RelocationTest extends BaseFunctionalTest {
         Response response = apiExecutor.executeRelocationDelete(
                 sent.getId(), owner1Storage, UserRole.ADMIN);
         assertThat(response.statusCode()).isEqualTo(400);
+    }
+
+    // --- F: Storage relation cross-cutting ---
+
+    @Test(priority = 70)
+    @TestCaseId("TC-REL-REL-001")
+    @Story("Send to EXTERNAL storage")
+    @Description("""
+            Що перевіряємо: send на EXTERNAL recipient завершується AUTO_FINISHED без зарахування залишку.
+            Тестові дані: відправник owner1Storage (INTERNAL), нова EXTERNAL child type=STORAGE (rel-ext-),
+            resourceId з fixture, amount=4, stock попередньо seed на owner1.
+            Очікування: state=AUTO_FINISHED, sender −4, EXTERNAL recipient stock без змін.
+            """)
+    public void testSendToExternalStorageAutoFinished() {
+        StorageResponse parent = storageFixture.resolveParentUnit();
+        StorageResponse externalRecipient = storageFixture.createExternalChildStorage(parent.getId(), "rel-ext-");
+        assertThat(externalRecipient.getRelation()).isEqualTo(StorageRelation.EXTERNAL.name());
+
+        double amount = 4.0;
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+
+        ProductionStockAssertions.StockSnapshot senderBefore = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ДО send→EXTERNAL");
+        ProductionStockAssertions.StockSnapshot recipientBefore = RelocationStockAssertions.capture(
+                apiExecutor, externalRecipient.getId(), UserRole.ADMIN, tracked, "EXTERNAL ДО send");
+
+        RelocationResponse sent = fixture.createSend(
+                UserRole.OWNER_1, owner1Storage, externalRecipient.getId(), resourceId, amount);
+
+        assertThat(sent.getState()).isEqualTo(RelocationState.AUTO_FINISHED);
+
+        ProductionStockAssertions.StockSnapshot senderAfter = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ПІСЛЯ send→EXTERNAL");
+        ProductionStockAssertions.StockSnapshot recipientAfter = RelocationStockAssertions.capture(
+                apiExecutor, externalRecipient.getId(), UserRole.ADMIN, tracked, "EXTERNAL ПІСЛЯ send");
+
+        RelocationStockAssertions.assertDebitedFromSender(
+                senderBefore, senderAfter, owner1Storage, resourceId, amount, "send→EXTERNAL");
+        RelocationStockAssertions.assertUnchanged(
+                recipientBefore, recipientAfter, externalRecipient.getId(), resourceId,
+                "EXTERNAL recipient");
+    }
+
+    @Test(priority = 71)
+    @TestCaseId("TC-REL-REL-002")
+    @Story("Send between new INTERNAL storages")
+    @Description("""
+            Що перевіряємо: INTERNAL→INTERNAL send лишається CREATED до resolve (регресія основного flow).
+            Тестові дані: дві нові INTERNAL child type=STORAGE (rel-int-snd-/rel-int-rcv-),
+            seed receive 18 од. на sender, send amount=3, resolve FINISHED на recipient.
+            Очікування: CREATED після send, +3 на recipient після resolve.
+            """)
+    public void testSendBetweenNewInternalStoragesCreatedUntilResolve() {
+        StorageResponse parent = storageFixture.resolveParentUnit();
+        StorageResponse sender = storageFixture.createChildStorage(parent.getId(), "rel-int-snd-");
+        StorageResponse recipient = storageFixture.createChildStorage(parent.getId(), "rel-int-rcv-");
+
+        double amount = 3.0;
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+        String batch = RelocationDataFactory.uniqueBatchNumber();
+        fixture.createExternalReceive(
+                UserRole.ADMIN, sender.getId(), resourceId, amount + 15, batch);
+
+        RelocationResponse sent = fixture.createSend(
+                UserRole.ADMIN, sender.getId(), recipient.getId(), resourceId, amount);
+        assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+
+        ProductionStockAssertions.StockSnapshot recipientBefore = RelocationStockAssertions.capture(
+                apiExecutor, recipient.getId(), UserRole.ADMIN, tracked, "отримувач ДО resolve");
+        fixture.resolve(UserRole.ADMIN, sent.getId(), recipient.getId(), RelocationState.FINISHED);
+        ProductionStockAssertions.StockSnapshot recipientAfter = RelocationStockAssertions.capture(
+                apiExecutor, recipient.getId(), UserRole.ADMIN, tracked, "отримувач ПІСЛЯ resolve");
+
+        RelocationStockAssertions.assertCreditedToRecipient(
+                recipientBefore, recipientAfter, recipient.getId(), resourceId, amount,
+                "INTERNAL→INTERNAL after resolve");
     }
 }

@@ -361,6 +361,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    STORAGE_GET_MY_UNITS(
+            "/api/v1/storages/names/my-units",
+            Method.GET,
+            "schemas/storages/storage-names-list-schema.json",
+            "Get internal units for current user",
+            null,
+            new TypeReference<List<StorageResponse>>() {},
+            null
+    ),
+
     STORAGE_POST_CREATE(
             "/api/v1/storages",
             Method.POST,

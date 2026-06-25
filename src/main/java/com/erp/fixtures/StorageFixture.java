@@ -3,6 +3,8 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.StorageRelation;
+import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.models.request.StorageRequest;
 import com.erp.models.response.StorageResponse;
@@ -144,7 +146,7 @@ public class StorageFixture extends BaseFixture {
         return createChildStorage(parent.getId(), namePrefix);
     }
 
-    @Step("API: POST створити локацію")
+    @Step("API: POST створити локацію (автоматично в cleanup-чергу для архівації)")
     public StorageResponse createStorage(StorageRequest request) {
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_POST_CREATE, UserRole.ADMIN, request);
@@ -157,6 +159,13 @@ public class StorageFixture extends BaseFixture {
     public void trackForCleanup(Long storageId) {
         if (storageId != null) {
             storagesToCleanup.add(storageId);
+        }
+    }
+
+    /** Виключити локацію з cleanup (наприклад, спільний контекст suite). */
+    public void untrackForCleanup(Long storageId) {
+        if (storageId != null) {
+            storagesToCleanup.remove(storageId);
         }
     }
 
@@ -187,6 +196,22 @@ public class StorageFixture extends BaseFixture {
     @Step("API: створити дочірню локацію parentId={parentId}, prefix={namePrefix}")
     public StorageResponse createChildStorage(Long parentId, String namePrefix) {
         StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix).build();
+        return createStorage(request);
+    }
+
+    @Step("API: створити EXTERNAL дочірню локацію parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createExternalChildStorage(Long parentId, String namePrefix) {
+        StorageRequest request = StorageDataFactory.externalStorage(parentId, namePrefix).build();
+        return createStorage(request);
+    }
+
+    @Step("API: POST створити локацію type={type}, relation={relation}, prefix={namePrefix}")
+    public StorageResponse createChildStorage(
+            Long parentId,
+            String namePrefix,
+            UnitType type,
+            StorageRelation relation) {
+        StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix, type, relation).build();
         return createStorage(request);
     }
 
@@ -223,16 +248,32 @@ public class StorageFixture extends BaseFixture {
 
     @Step("API: GET /storages/names isActive={isActive}")
     public List<StorageResponse> getNames(UserRole role, Boolean isActive, String nameFilter) {
-        return getNames(role, isActive, nameFilter, null);
+        return getNames(role, isActive, null, null, nameFilter, null);
     }
 
     @Step("API: GET /storages/names isActive={isActive} id={storageId}")
     public List<StorageResponse> getNames(UserRole role, Boolean isActive, String nameFilter, Long storageId) {
+        return getNames(role, isActive, null, null, nameFilter, storageId);
+    }
+
+    @Step("API: GET /storages/names relation={relation}")
+    public List<StorageResponse> getNames(UserRole role,
+                                         Boolean isActive,
+                                         StorageRelation relation,
+                                         List<UnitType> types,
+                                         String nameFilter,
+                                         Long storageId) {
         Map<String, Object> params = new HashMap<>();
         params.put("page", 0);
         params.put("size", 500);
         if (isActive != null) {
             params.put("isActive", isActive);
+        }
+        if (relation != null) {
+            params.put("relation", relation.name());
+        }
+        if (types != null && !types.isEmpty()) {
+            params.put("types", types.stream().map(UnitType::name).toList());
         }
         if (nameFilter != null && !nameFilter.isBlank()) {
             params.put("name", nameFilter);
@@ -242,7 +283,29 @@ public class StorageFixture extends BaseFixture {
         }
         Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.STORAGE_GET_NAMES, role, params);
-        validateSuccess(response, "Get storage names isActive=" + isActive);
+        validateSuccess(response, "Get storage names isActive=" + isActive + " relation=" + relation);
+        return DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
+    }
+
+    @Step("API: GET /storages/names/my-units")
+    public List<StorageResponse> getMyUnits(UserRole role) {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_MY_UNITS, role);
+        validateSuccess(response, "Get my internal units");
+        return DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
+    }
+
+    @Step("API: GET /storages з query params")
+    public Response getPage(UserRole role, Map<String, Object> queryParams) {
+        Map<String, Object> params = new HashMap<>(queryParams);
+        params.putIfAbsent("page", 0);
+        params.putIfAbsent("size", 500);
+        return apiExecutor.executeWithQueryParams(ApiEndpointDefinition.STORAGE_GET_ALL, role, params);
+    }
+
+    @Step("API: GET /storages content з query params")
+    public List<StorageResponse> getPageContent(UserRole role, Map<String, Object> queryParams) {
+        Response response = getPage(role, queryParams);
+        validateSuccess(response, "Get storages page");
         return DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
     }
 

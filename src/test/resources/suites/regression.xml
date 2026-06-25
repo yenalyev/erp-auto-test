@@ -45,6 +45,7 @@
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
             <class name="com.erp.tests.functional.resource.ResourceDeactivationTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
+            <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
             <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>
             <class name="com.erp.tests.functional.storage.StorageDeactivationTest"/>
         </classes>
@@ -87,6 +88,7 @@
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentSelectorContractTest"/>
         </classes>
     </test>
 
@@ -95,6 +97,7 @@
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
+            <class name="com.erp.tests.functional.inventory.StorageRelationInventoryTest"/>
         </classes>
     </test>
 

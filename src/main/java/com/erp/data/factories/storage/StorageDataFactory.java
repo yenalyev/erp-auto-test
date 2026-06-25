@@ -60,6 +60,31 @@ public class StorageDataFactory {
         return childStorage(parentId).name(uniqueName(namePrefix));
     }
 
+    /** UI default for new locations — EXTERNAL relation, type=STORAGE. */
+    public static StorageRequest.StorageRequestBuilder externalStorage(@NonNull Long parentId) {
+        return childStorage(parentId).relation(StorageRelation.EXTERNAL);
+    }
+
+    public static StorageRequest.StorageRequestBuilder externalStorage(@NonNull Long parentId, String namePrefix) {
+        return externalStorage(parentId).name(uniqueName(namePrefix));
+    }
+
+    /**
+     * Дочірня локація з явними {@code type} та {@code relation} — для тестів незалежності типу від relation.
+     */
+    public static StorageRequest.StorageRequestBuilder childStorage(
+            @NonNull Long parentId,
+            String namePrefix,
+            @NonNull UnitType type,
+            @NonNull StorageRelation relation) {
+        return StorageRequest.builder()
+                .name(uniqueName(namePrefix))
+                .type(type)
+                .parentId(parentId)
+                .relation(relation)
+                .accessMode(StorageAccessMode.FULL_ACCESS);
+    }
+
     /**
      * Rebuilds a PUT request from an existing storage, preserving fields required by the backend validator.
      */
