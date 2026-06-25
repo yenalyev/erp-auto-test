@@ -1,0 +1,20 @@
+package com.erp.models.response;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class StorageRegionMemberResponse {
+    private Long regionId;
+    private Long storageId;
+    private String name;
+    private String createdAt;
+    private String createdBy;
+}

@@ -32,6 +32,42 @@ API-тести життєвого циклу локацій: створення,
 | **TC-STR-017** | `StorageRelationTest` | GET `/storages?relation=EXTERNAL` + schema | Normal |
 | **TC-STR-018** | `StorageRelationTest` | relation filter незалежний від type (STORAGE, UNIT, PRODUCTION) | Critical |
 
+### Області видимості (Storage Regions)
+
+Термінологія бекенду: **RESTRICTED** → `accessMode=REGIONS`, **FULL** → `FULL_ACCESS`. Область = `StorageRegion`.
+
+| ID | Клас | Сценарій | Severity |
+|:---|:-----|:---------|:---------|
+| **TC-STR-REG-001** | `StorageRegionTest` | ADMIN POST `/storages/regions`: name + recipientStorage + accessMode; схема response | Critical |
+| **TC-STR-REG-002** | `StorageRegionTest` | GET `/storages/regions?name=` — фільтрований paged list містить створену область | Normal |
+| **TC-STR-REG-003** | `StorageRegionTest` | GET `/storages/regions/{id}` — id, name, recipientStorage | Critical |
+| **TC-STR-REG-004** | `StorageRegionTest` | PUT — зміна name, recipientStorage, accessMode (FULL_ACCESS→REGIONS) | Critical |
+| **TC-STR-REG-005** | `StorageRegionTest` | DELETE область → GET by id не 200 | Critical |
+| **TC-STR-REG-010** | `StorageRegionTest` | PUT/DELETE `/regions/{id}/locations` — додати A,B,C; видалити B,C; залишити A | Critical |
+| **TC-STR-REG-012** | `StorageRegionTest` | PUT/DELETE `/regions/{id}/members` — підрозділи-споживачі області | Critical |
+| **TC-STR-REG-014** | `StorageRegionTest` | Одна локація в двох областях — обидві містять її в locations (підготовка до union) | Normal |
+| **TC-STR-REG-015** | `StorageRegionTest` | GET `/storages/locations/suggest?name=` — autocomplete для адмін-UI | Normal |
+| **TC-STR-REG-050** | `StorageRegionTest` | Explicit grant: `PUT /storages/{visible}/locations?locations={viewer}`; revoke; перевірка links | Critical |
+| **TC-STR-REG-054** | `StorageRegionTest` | GET `/storages/{visible}/locations` — перегляд viewers з explicit grant | Normal |
+| **TC-STR-REG-020** | `StorageVisibilityTest` | POST підрозділ з `accessMode=REGIONS` (RESTRICTED) | Critical |
+| **TC-STR-REG-021** | `StorageVisibilityTest` | Контраст FULL vs REGIONS: OWNER_1 `/names` ширший; OWNER_2 рівно 1 (власний id); перевірка accessMode обох storages | Normal |
+| **TC-STR-REG-022** | `StorageVisibilityTest` | OWNER_2 без областей: `/names` = лише `owner2.storage.id` | Critical |
+| **TC-STR-REG-030** | `StorageVisibilityTest` | Region REGIONS: у `/names` — `region.name`, не `recipient.name`; outsider прихований | Critical |
+| **TC-STR-REG-031** | `StorageVisibilityTest` | Region FULL_ACCESS: реальні імена локацій у `/names` | Critical |
+| **TC-STR-REG-032** | `StorageVisibilityTest` | Member у 2 областях — union loc1 + loc2 у `/names` | Normal |
+| **TC-STR-REG-033** | `StorageVisibilityTest` | `/storages/names/my-units` — REGIONS owner: 1 internal unit | Normal |
+| **TC-STR-REG-040** | `StorageVisibilityTest` | Alias локації в FULL_ACCESS region → `name` у `/names` = alias | Critical |
+| **TC-STR-REG-052** | `StorageVisibilityTest` | Explicit grant → реальне `storage.name` у `/names` (не alias області) | Critical |
+
+**Передумова `StorageVisibilityTest`:** `@BeforeClass` тимчасово ставить `accessMode=REGIONS` для OWNER_2 (`owner2.storage.id`); `@AfterClass` відновлює.
+
+**Модель explicit grant:** `storage_location.storage_id` = видима локація, `location_storage_id` = viewer (підрозділ).
+
+**Запуск лише region-тестів:**
+```bash
+mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest
+```
+
 ### Пов’язані тести (інші suite)
 
 | ID | Клас | Сценарій |
@@ -42,14 +78,15 @@ API-тести життєвого циклу локацій: створення,
 | **TC-EQ-SEL-001..003** | `EquipmentSelectorContractTest` | Equipment form sender selector API |
 | **TC-REL-REL-001..002** | `RelocationTest` | Send→EXTERNAL AUTO_FINISHED; INTERNAL→INTERNAL resolve |
 
-RBAC: `STORAGE_GET_ALL`, `POST`, `PUT`, `GET_BY_ID`, `DELETE`, `UNARCHIVE` — у `rbac-policy.yml`.
+RBAC: `STORAGE_*`, `STORAGE_REGION_*`, `STORAGE_PUT_ADD_LOCATION_LINKS` — у `rbac-policy.yml`.
 
 ---
 
 ## Технічні особливості
 
 - **Fixture:** `StorageFixture` — `createUniqueStorage`, `createExternalChildStorage`, `getById`, `getNames(relation, types)`, `getPage`, `getMyUnits`
-- **Factory:** `StorageDataFactory.childStorage()` (INTERNAL default для backward compat), `externalStorage()` (UI default)
+- **Fixture:** `StorageRegionFixture` — CRUD областей, locations/members, explicit grants, cleanup
+- **Factory:** `StorageDataFactory.childStorage()` (INTERNAL default), `restrictedStorage()` (REGIONS), `StorageRegionDataFactory`
 - **Cleanup:** `createStorage` / `createChildStorage` / `createExternalChildStorage` → `trackForCleanup` → `DELETE /storages/{id}` у `@AfterMethod` + `@AfterClass` (`StorageApiTestBase`). На `staging` cleanup пропускається.
 - **Верифікація:** `verifyEntityViaGetById` / `verifyUpdatedEntity` у `BaseFunctionalTest`
 - **Схеми:** paged list (`storage-paged-list-schema.json`), names array (`storage-names-list-schema.json`)

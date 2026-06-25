@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StorageLocationLinkResponse",
+  "type": "object",
+  "properties": {
+    "storageId": { "type": ["integer", "null"] },
+    "regionId": { "type": ["integer", "null"] },
+    "locationId": { "type": ["integer", "null"] },
+    "name": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

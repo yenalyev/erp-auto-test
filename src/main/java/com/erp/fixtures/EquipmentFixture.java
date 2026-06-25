@@ -5,6 +5,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.FakerProvider;
 import com.erp.enums.EquipmentStatus;
 import com.erp.enums.UserRole;
+import com.erp.models.request.EquipmentAssignmentRequest;
 import com.erp.models.request.EquipmentRelocationReceiveEditRequest;
 import com.erp.models.request.EquipmentRelocationSendEditRequest;
 import com.erp.models.request.EquipmentRelocationSendRequest;
@@ -13,8 +14,10 @@ import com.erp.models.request.EquipmentStatusUpdateRequest;
 import com.erp.models.request.RelocationUpdateRequest;
 import com.erp.enums.RelocationState;
 import com.erp.models.response.EquipmentCategoryResponse;
+import com.erp.models.response.EquipmentGroupResponse;
 import com.erp.models.response.EquipmentResponse;
 import com.erp.models.response.EquipmentSimpleResponse;
+import com.erp.models.response.PagedEquipmentGroupResponse;
 import com.erp.models.response.PagedEquipmentResponse;
 import com.erp.models.response.PagedRelocationResponse;
 import com.erp.models.response.RelocationResponse;
@@ -168,6 +171,47 @@ public class EquipmentFixture extends BaseFixture {
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.EQUIPMENT_PUT_STATUS, role, request, equipmentId);
         validateSuccess(response, "Change equipment status");
+    }
+
+    @Step("API: закріпити обладнання {equipmentId} за співробітником {assigneeId}")
+    public EquipmentResponse assignEquipment(UserRole role, Long equipmentId, Long assigneeId) {
+        EquipmentAssignmentRequest request = EquipmentAssignmentRequest.builder()
+                .assigneeId(assigneeId)
+                .note("erp-auto-test assignment")
+                .build();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.EQUIPMENT_POST_ASSIGNMENT, role, request, equipmentId);
+        validateSuccess(response, "Assign equipment");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.EQUIPMENT_POST_ASSIGNMENT);
+        return response.as(EquipmentResponse.class);
+    }
+
+    @Step("API: grouped equipment для storage {storageId}, assigneeId={assigneeId}")
+    public List<EquipmentGroupResponse> getGroupedEquipment(UserRole role,
+                                                            Long storageId,
+                                                            Long assigneeId) {
+        Map<String, Object> params = new java.util.HashMap<>();
+        params.put("storageIds", storageId);
+        params.put("size", 100);
+        params.put("statuses", List.of(
+                EquipmentStatus.AVAILABLE.name(),
+                EquipmentStatus.ASSIGNED.name(),
+                EquipmentStatus.IN_REPAIR.name()));
+        if (assigneeId != null) {
+            params.put("assigneeId", assigneeId);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.EQUIPMENT_GET_GROUPED, role, params);
+        validateSuccess(response, "Get grouped equipment");
+        PagedEquipmentGroupResponse page = response.as(PagedEquipmentGroupResponse.class);
+        return page.getContent() != null ? page.getContent() : List.of();
+    }
+
+    public List<String> extractEquipmentNames(List<EquipmentGroupResponse> groups) {
+        return groups.stream()
+                .map(EquipmentGroupResponse::getName)
+                .filter(name -> name != null && !name.isBlank())
+                .toList();
     }
 
     public Response deleteRelocationRaw(UserRole role, Long relocationId, Long storageId) {

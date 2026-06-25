@@ -115,6 +115,60 @@ rules:
     bodyType: null
     description: "Розархівувати локацію: тільки ADMIN має право (глобальний business-unit::delete), OWNER_1 та ANONYMOUS - ні"
 
+  - endpointName: "STORAGE_REGION_GET_ALL"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Список областей видимості: ADMIN та OWNER_1 (business-unit-list::read)"
+
+  - endpointName: "STORAGE_REGION_GET_BY_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Деталі області видимості: ADMIN та OWNER_1"
+
+  - endpointName: "STORAGE_REGION_POST_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Створити область видимості: тільки ADMIN (business-unit::create)"
+
+  - endpointName: "STORAGE_REGION_PUT_UPDATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Оновити область видимості: тільки ADMIN"
+
+  - endpointName: "STORAGE_REGION_DELETE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Видалити область видимості: тільки ADMIN"
+
+  - endpointName: "STORAGE_REGION_PUT_ADD_LOCATIONS"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Додати локації до області видимості: тільки ADMIN"
+
+  - endpointName: "STORAGE_GET_LOCATION_LINKS"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Перегляд links видимості для підрозділу: ADMIN та OWNER_1"
+
+  - endpointName: "STORAGE_PUT_ADD_LOCATION_LINKS"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Ручний grant видимості локацій: тільки ADMIN"
+
+  - endpointName: "STORAGE_GET_LOCATION_SUGGEST"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Підказки для прив'язки областей видимості: ADMIN та OWNER_1"
+
   # ========================================
   # STATISTIC ENDPOINTS
   # ========================================

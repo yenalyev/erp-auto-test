@@ -48,6 +48,8 @@
             <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
             <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>
             <class name="com.erp.tests.functional.storage.StorageDeactivationTest"/>
+            <class name="com.erp.tests.functional.storage.StorageRegionTest"/>
+            <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
         </classes>
     </test>
 
@@ -142,6 +144,12 @@
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
+        </classes>
+    </test>
+
+    <test name="UI Equipment">
+        <classes>
+            <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
         </classes>
     </test>
 

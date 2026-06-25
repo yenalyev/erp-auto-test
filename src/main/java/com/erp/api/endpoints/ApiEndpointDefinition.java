@@ -412,6 +412,160 @@ public enum ApiEndpointDefinition {
     ),
 
     // ========================================
+    // STORAGE REGION (visibility area) ENDPOINTS
+    // ========================================
+
+    STORAGE_REGION_GET_ALL(
+            "/api/v1/storages/regions",
+            Method.GET,
+            "schemas/storages/storage-region-paged-list-schema.json",
+            "Get storage visibility regions (paged)",
+            null,
+            new TypeReference<List<StorageRegionResponse>>() {},
+            null
+    ),
+
+    STORAGE_REGION_POST_CREATE(
+            "/api/v1/storages/regions",
+            Method.POST,
+            "schemas/storages/storage-region-response-schema.json",
+            "Create storage visibility region",
+            new TypeReference<StorageRegionRequest>() {},
+            new TypeReference<StorageRegionResponse>() {},
+            "CREATE_REGION"
+    ),
+
+    STORAGE_REGION_GET_BY_ID(
+            "/api/v1/storages/regions/{regionId}",
+            Method.GET,
+            "schemas/storages/storage-region-response-schema.json",
+            "Get storage visibility region by id",
+            null,
+            new TypeReference<StorageRegionResponse>() {},
+            null
+    ),
+
+    STORAGE_REGION_PUT_UPDATE(
+            "/api/v1/storages/regions/{regionId}",
+            Method.PUT,
+            "schemas/storages/storage-region-response-schema.json",
+            "Update storage visibility region",
+            new TypeReference<StorageRegionRequest>() {},
+            new TypeReference<StorageRegionResponse>() {},
+            "UPDATE_REGION"
+    ),
+
+    STORAGE_REGION_DELETE(
+            "/api/v1/storages/regions/{regionId}",
+            Method.DELETE,
+            null,
+            "Delete storage visibility region",
+            null,
+            null,
+            "DELETE_REGION"
+    ),
+
+    STORAGE_REGION_GET_LOCATIONS(
+            "/api/v1/storages/regions/{regionId}/locations",
+            Method.GET,
+            "schemas/storages/storage-region-location-paged-list-schema.json",
+            "Get locations in visibility region",
+            null,
+            new TypeReference<List<StorageRegionLocationResponse>>() {},
+            null
+    ),
+
+    STORAGE_REGION_PUT_ADD_LOCATIONS(
+            "/api/v1/storages/regions/{regionId}/locations",
+            Method.PUT,
+            "schemas/storages/storage-region-response-schema.json",
+            "Add locations to visibility region",
+            null,
+            new TypeReference<StorageRegionResponse>() {},
+            "ADD_REGION_LOCATIONS"
+    ),
+
+    STORAGE_REGION_DELETE_LOCATIONS(
+            "/api/v1/storages/regions/{regionId}/locations",
+            Method.DELETE,
+            "schemas/storages/storage-region-response-schema.json",
+            "Remove locations from visibility region",
+            null,
+            new TypeReference<StorageRegionResponse>() {},
+            "REMOVE_REGION_LOCATIONS"
+    ),
+
+    STORAGE_REGION_GET_MEMBERS(
+            "/api/v1/storages/regions/{regionId}/members",
+            Method.GET,
+            "schemas/storages/storage-region-location-paged-list-schema.json",
+            "Get members of visibility region",
+            null,
+            new TypeReference<List<StorageRegionMemberResponse>>() {},
+            null
+    ),
+
+    STORAGE_REGION_PUT_ADD_MEMBERS(
+            "/api/v1/storages/regions/{regionId}/members",
+            Method.PUT,
+            "schemas/storages/storage-region-response-schema.json",
+            "Add members to visibility region",
+            null,
+            new TypeReference<StorageRegionResponse>() {},
+            "ADD_REGION_MEMBERS"
+    ),
+
+    STORAGE_REGION_DELETE_MEMBERS(
+            "/api/v1/storages/regions/{regionId}/members",
+            Method.DELETE,
+            "schemas/storages/storage-region-response-schema.json",
+            "Remove members from visibility region",
+            null,
+            new TypeReference<StorageRegionResponse>() {},
+            "REMOVE_REGION_MEMBERS"
+    ),
+
+    STORAGE_GET_LOCATION_LINKS(
+            "/api/v1/storages/{storageId}/locations",
+            Method.GET,
+            "schemas/storages/storage-location-link-paged-list-schema.json",
+            "Get explicit and regional location links for storage",
+            null,
+            new TypeReference<List<StorageLocationLinkResponse>>() {},
+            null
+    ),
+
+    STORAGE_PUT_ADD_LOCATION_LINKS(
+            "/api/v1/storages/{storageId}/locations",
+            Method.PUT,
+            null,
+            "Grant explicit location visibility to storage",
+            null,
+            null,
+            "ADD_STORAGE_LOCATION_LINKS"
+    ),
+
+    STORAGE_DELETE_LOCATION_LINKS(
+            "/api/v1/storages/{storageId}/locations",
+            Method.DELETE,
+            null,
+            "Revoke explicit location visibility from storage",
+            null,
+            null,
+            "REMOVE_STORAGE_LOCATION_LINKS"
+    ),
+
+    STORAGE_GET_LOCATION_SUGGEST(
+            "/api/v1/storages/locations/suggest",
+            Method.GET,
+            "schemas/storages/storage-location-suggest-paged-list-schema.json",
+            "Suggest storages and regions for visibility linking",
+            null,
+            new TypeReference<List<StorageLocationSuggestionResponse>>() {},
+            null
+    ),
+
+    // ========================================
     // STATISTIC ENDPOINTS
     // ========================================
 
@@ -1023,6 +1177,49 @@ public enum ApiEndpointDefinition {
             new TypeReference<EquipmentStatusUpdateRequest>() {},
             new TypeReference<EquipmentResponse>() {},
             null
+    ),
+
+    EQUIPMENT_GET_GROUPED(
+            "/api/v1/equipment/grouped",
+            Method.GET,
+            "schemas/equipment/equipment-grouped-page-schema.json",
+            "Get grouped equipment page",
+            null,
+            new TypeReference<PagedEquipmentGroupResponse>() {},
+            null
+    ),
+
+    EQUIPMENT_POST_ASSIGNMENT(
+            "/api/v1/equipment/{id}/assignments",
+            Method.POST,
+            "schemas/equipment/equipment-response-schema.json",
+            "Assign equipment to employee",
+            new TypeReference<EquipmentAssignmentRequest>() {},
+            new TypeReference<EquipmentResponse>() {},
+            null
+    ),
+
+    // ========================================
+    // EMPLOYEE ENDPOINTS
+    // ========================================
+    EMPLOYEE_GET_PAGE(
+            "/api/v1/employees",
+            Method.GET,
+            "schemas/employee/employee-page-schema.json",
+            "Get employees page",
+            null,
+            new TypeReference<PagedEmployeeResponse>() {},
+            null
+    ),
+
+    EMPLOYEE_POST_CREATE(
+            "/api/v1/employees",
+            Method.POST,
+            "schemas/employee/employee-response-schema.json",
+            "Create employee",
+            new TypeReference<EmployeeRequest>() {},
+            new TypeReference<EmployeeResponse>() {},
+            "CREATE"
     ),
 
     // ========================================

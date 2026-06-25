@@ -2,6 +2,7 @@ package com.erp.tests.functional.storage;
 
 import com.erp.enums.UserRole;
 import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.StorageRegionFixture;
 import com.erp.tests.functional.BaseFunctionalTest;
 import io.qameta.allure.Step;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.testng.annotations.BeforeClass;
 public abstract class StorageApiTestBase extends BaseFunctionalTest {
 
     protected StorageFixture storageFixture;
+    protected StorageRegionFixture regionFixture;
 
     @BeforeClass(alwaysRun = true)
     public void setupStorageApiBase() {
@@ -25,26 +27,29 @@ public abstract class StorageApiTestBase extends BaseFunctionalTest {
             baseTestClassSetup();
         }
         storageFixture = new StorageFixture(testContext, apiExecutor);
+        regionFixture = new StorageRegionFixture(testContext, apiExecutor);
     }
 
     @AfterMethod(alwaysRun = true)
     @Step("Cleanup: архівація тестових локацій після методу")
     public void cleanupCreatedStoragesAfterTest() {
-        archiveTrackedStorages();
+        cleanupTestArtifacts();
     }
 
     @AfterClass(alwaysRun = true)
     @Step("Cleanup: архівація тестових локацій після класу")
     public void cleanupCreatedStoragesAfterClass() {
-        archiveTrackedStorages();
+        cleanupTestArtifacts();
     }
 
-    private void archiveTrackedStorages() {
+    private void cleanupTestArtifacts() {
         if ("staging".equals(System.getProperty("env", "debug"))) {
-            log.warn("Staging mode — skipping automatic storage cleanup");
+            log.warn("Staging mode — skipping automatic storage/region cleanup");
+            regionFixture.clearTrackedRegions();
             storageFixture.clearTrackedStorages();
             return;
         }
+        regionFixture.deleteTrackedRegions(UserRole.ADMIN);
         storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
     }
 }

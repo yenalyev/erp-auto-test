@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StorageLocationSuggestionPagedResponse",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": ["integer", "null"] },
+          "name": { "type": ["string", "null"] },
+          "type": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "page": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}

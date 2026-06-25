@@ -16,6 +16,8 @@
             <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
             <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>
             <class name="com.erp.tests.functional.storage.StorageDeactivationTest"/>
+            <class name="com.erp.tests.functional.storage.StorageRegionTest"/>
+            <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>

@@ -60,6 +60,17 @@ public class StorageDataFactory {
         return childStorage(parentId).name(uniqueName(namePrefix));
     }
 
+    /** Підрозділ з обмеженою видимістю (accessMode=REGIONS). */
+    public static StorageRequest.StorageRequestBuilder restrictedStorage(@NonNull Long parentId, String namePrefix) {
+        return childStorage(parentId, namePrefix).accessMode(StorageAccessMode.REGIONS);
+    }
+
+    public static StorageRequest withAccessMode(
+            @NonNull StorageResponse existing,
+            @NonNull StorageAccessMode accessMode) {
+        return fromExisting(existing).accessMode(accessMode).build();
+    }
+
     /** UI default for new locations — EXTERNAL relation, type=STORAGE. */
     public static StorageRequest.StorageRequestBuilder externalStorage(@NonNull Long parentId) {
         return childStorage(parentId).relation(StorageRelation.EXTERNAL);

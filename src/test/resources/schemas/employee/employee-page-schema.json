@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PagedEmployeeResponse",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "callSign": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["content"],
+  "additionalProperties": true
+}
