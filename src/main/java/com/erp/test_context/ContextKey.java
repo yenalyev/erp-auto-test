@@ -63,7 +63,9 @@ public enum ContextKey {
     DEFECT_ID("defectId", Long.class),
     DEFECT_RESOURCE_ID("defectResourceId", Long.class),
     DEFECT_PRODUCTION_PROCESS_ID("defectProductionProcessId", Long.class),
-    DEFECT_RELOCATION_ID("defectRelocationId", Long.class);
+    DEFECT_RELOCATION_ID("defectRelocationId", Long.class),
+    /** Екіпаж (CREW storage) у області видимості CREWS для OWNER_1. */
+    CREW_STORAGE_ID("crewStorageId", Long.class);
     private final String name;
     private final Class<?> type;
 }

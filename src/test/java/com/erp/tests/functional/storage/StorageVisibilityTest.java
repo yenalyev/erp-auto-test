@@ -15,6 +15,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -286,6 +287,49 @@ public class StorageVisibilityTest extends StorageApiTestBase {
                 .toList();
 
         assertThat(visibleIds).contains(loc1.getId(), loc2.getId());
+        assertThat(new HashSet<>(visibleIds))
+                .as("Union двох областей не має дублювати id у /storages/names")
+                .hasSize(visibleIds.size());
+    }
+
+    @Test(priority = 55)
+    @TestCaseId("TC-STR-REG-034")
+    @Description("""
+            Member у трьох областях з однією спільною локацією — GET /storages/names?isActive=true
+            містить локацію рівно один раз (без дублікатів id).
+            Регресія: dropdown «Кому відправляю» не показує один підрозділ кілька разів.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testMemberInThreeRegionsNoDuplicateIdsInActiveNames() {
+        StorageResponse sharedLocation = storageFixture.createUniqueStorage("vis-dedup-loc-");
+        StorageResponse recipient1 = storageFixture.createUniqueStorage("vis-dedup-r1-");
+        StorageResponse recipient2 = storageFixture.createUniqueStorage("vis-dedup-r2-");
+        StorageResponse recipient3 = storageFixture.createUniqueStorage("vis-dedup-r3-");
+
+        StorageRegionResponse region1 = regionFixture.createRegion(
+                recipient1, StorageAccessMode.FULL_ACCESS, "vis-dedup-1-");
+        StorageRegionResponse region2 = regionFixture.createRegion(
+                recipient2, StorageAccessMode.FULL_ACCESS, "vis-dedup-2-");
+        StorageRegionResponse region3 = regionFixture.createRegion(
+                recipient3, StorageAccessMode.FULL_ACCESS, "vis-dedup-3-");
+
+        regionFixture.addRegionLocations(region1.getId(), sharedLocation.getId());
+        regionFixture.addRegionLocations(region2.getId(), sharedLocation.getId());
+        regionFixture.addRegionLocations(region3.getId(), sharedLocation.getId());
+        regionFixture.addRegionMembers(region1.getId(), owner2StorageId);
+        regionFixture.addRegionMembers(region2.getId(), owner2StorageId);
+        regionFixture.addRegionMembers(region3.getId(), owner2StorageId);
+
+        List<StorageResponse> names = storageFixture.getNames(UserRole.OWNER_2, true, null);
+        List<Long> ids = names.stream().map(StorageResponse::getId).toList();
+
+        assertThat(ids).contains(sharedLocation.getId());
+        assertThat(ids.stream().filter(id -> id.equals(sharedLocation.getId())).count())
+                .as("Спільна локація з трьох областей має з'явитись у /names лише один раз")
+                .isEqualTo(1);
+        assertThat(new HashSet<>(ids))
+                .as("Жодного дубліката id у відповіді /storages/names?isActive=true")
+                .hasSize(ids.size());
     }
 
     @Test(priority = 60)

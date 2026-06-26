@@ -199,6 +199,16 @@ public class StorageFixture extends BaseFixture {
         return createStorage(request);
     }
 
+    @Step("API: створити підрозділ UNIT parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createUnitStorage(Long parentId, String namePrefix) {
+        return createStorage(StorageDataFactory.unitStorage(parentId, namePrefix).build());
+    }
+
+    @Step("API: створити екіпаж CREW parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createCrewStorage(Long parentId, String namePrefix) {
+        return createStorage(StorageDataFactory.crewStorage(parentId, namePrefix).build());
+    }
+
     @Step("API: створити EXTERNAL дочірню локацію parentId={parentId}, prefix={namePrefix}")
     public StorageResponse createExternalChildStorage(Long parentId, String namePrefix) {
         StorageRequest request = StorageDataFactory.externalStorage(parentId, namePrefix).build();
@@ -244,6 +254,18 @@ public class StorageFixture extends BaseFixture {
     public Response unarchive(UserRole role, Long storageId) {
         return apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_PUT_UNARCHIVE, role, null, String.valueOf(storageId));
+    }
+
+    @Step("API: GET /storages/names isActive={isActive} (raw response)")
+    public Response getNamesRaw(UserRole role, Boolean isActive) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("page", 0);
+        params.put("size", 500);
+        if (isActive != null) {
+            params.put("isActive", isActive);
+        }
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_GET_NAMES, role, params);
     }
 
     @Step("API: GET /storages/names isActive={isActive}")

@@ -50,7 +50,12 @@
             <class name="com.erp.tests.functional.storage.StorageDeactivationTest"/>
             <class name="com.erp.tests.functional.storage.StorageRegionTest"/>
             <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.StorageNamesEndpointTest"/>
             <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.StorageCrewRegionTest"/>
+            <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
         </classes>
     </test>
 
@@ -144,6 +149,7 @@
     <test name="UI Relocation">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
         </classes>
     </test>

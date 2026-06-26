@@ -413,6 +413,20 @@ rules:
     bodyType: null
     description: "Читання статусу сесії інвентаризації складу OWNER_1"
 
+  - endpointName: "STORAGE_INVENTORY_GET"
+    contextKey: "CREW_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "OWNER_1 читає inventory екіпажу зі своєї області CREWS"
+
+  - endpointName: "STORAGE_GET_CREW_INVENTORY"
+    contextKey: null
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Звіт залишків екіпажів — member області CREWS"
+
   # ========================================
   # RELOCATION ENDPOINTS
   # ========================================

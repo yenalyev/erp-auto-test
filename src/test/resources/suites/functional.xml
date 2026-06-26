@@ -18,7 +18,12 @@
             <class name="com.erp.tests.functional.storage.StorageDeactivationTest"/>
             <class name="com.erp.tests.functional.storage.StorageRegionTest"/>
             <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.StorageNamesEndpointTest"/>
             <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.StorageCrewRegionTest"/>
+            <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>

@@ -60,6 +60,16 @@ public class StorageDataFactory {
         return childStorage(parentId).name(uniqueName(namePrefix));
     }
 
+    /** Підрозділ (UNIT) для ієрархії екіпажів. */
+    public static StorageRequest.StorageRequestBuilder unitStorage(@NonNull Long parentId, String namePrefix) {
+        return childStorage(parentId, namePrefix, UnitType.UNIT, StorageRelation.INTERNAL);
+    }
+
+    /** Екіпаж (CREW) — отримувач видачі. */
+    public static StorageRequest.StorageRequestBuilder crewStorage(@NonNull Long parentId, String namePrefix) {
+        return childStorage(parentId, namePrefix, UnitType.CREW, StorageRelation.INTERNAL);
+    }
+
     /** Підрозділ з обмеженою видимістю (accessMode=REGIONS). */
     public static StorageRequest.StorageRequestBuilder restrictedStorage(@NonNull Long parentId, String namePrefix) {
         return childStorage(parentId, namePrefix).accessMode(StorageAccessMode.REGIONS);

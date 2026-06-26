@@ -92,6 +92,24 @@ mvn test -Denv=dev -Dtest=StorageResourceVisibilityTest
 mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest
 ```
 
+### Області видимості CREWS (Видача на екіпажі)
+
+| ID | Клас | Сценарій | Severity |
+|:---|:-----|:---------|:---------|
+| **TC-STR-CREW-001..004** | `StorageCrewRegionTest` | CRUD області `accessMode=CREWS`, locations, members | Critical |
+| **TC-STR-CREW-005..006** | `CrewVisibilityTest` | `hasCrews`, crew-units, crew-names | Critical |
+| **TC-STR-CREW-011..012** | `CrewVisibilityTest` | Ієрархія UNIT та рекурсивний пошук екіпажів | Critical |
+| **TC-CREW-REL-001..003** | `CrewRelocationTest` | Send→CREW AUTO_FINISHED, journal, insufficient stock | Critical |
+| **TC-CREW-INV-001,006,007,008** | `CrewInventoryTest` | STOCK report; OWNER_1 direct inventory; OWNER_2 denied | Critical |
+| **TC-CREW-INV-002** | `CrewInventoryTest` | INCOME report — **disabled** (див. коментар у тесті) | Normal |
+
+**Запуск crew-тестів:**
+```bash
+mvn test -Denv=dev -Dtest=StorageCrewRegionTest,CrewVisibilityTest,CrewRelocationTest,CrewInventoryTest
+```
+
+**Fixture:** `CrewRegionFixture` — `prepareSingleCrewScenario`, `prepareHierarchyScenario`.
+
 ### Пов’язані тести (інші suite)
 
 | ID | Клас | Сценарій |

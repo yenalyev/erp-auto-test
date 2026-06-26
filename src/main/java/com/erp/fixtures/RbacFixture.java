@@ -32,8 +32,22 @@ public class RbacFixture extends BaseFixture {
         setupDynamicBusinessUnit();
         setupDynamicPlan(2);
         prepareRelocationRbacContext();
+        prepareCrewRbacContext();
         prepareDefectRbacContext();
         prepareGlobalPlanRbacContext();
+    }
+
+    @Step("Setup crew storage in CREWS region for RBAC matrix")
+    public void prepareCrewRbacContext() {
+        if (testContext.get(ContextKey.CREW_STORAGE_ID) != null) {
+            return;
+        }
+        StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
+        StorageRegionFixture regionFixture = new StorageRegionFixture(testContext, apiExecutor);
+        CrewRegionFixture crewFixture = new CrewRegionFixture(
+                testContext, apiExecutor, storageFixture, regionFixture);
+        storageFixture.prepareContext();
+        crewFixture.prepareSingleCrewScenario("rbac-crew-");
     }
 
     @Step("Setup global plan entity for RBAC matrix")

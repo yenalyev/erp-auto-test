@@ -371,6 +371,36 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    STORAGE_GET_CREW_UNITS(
+            "/api/v1/storages/names/crew-units?storageId={id}",
+            Method.GET,
+            "schemas/storages/storage-hierarchy-list-schema.json",
+            "Get hierarchical units that have crews for member storage",
+            null,
+            new TypeReference<List<StorageHierarchyResponse>>() {},
+            null
+    ),
+
+    STORAGE_GET_CREW_NAMES(
+            "/api/v1/storages/names/crews?parentId={id}",
+            Method.GET,
+            "schemas/storages/storage-names-list-schema.json",
+            "Get crew names by parent unit",
+            null,
+            new TypeReference<List<StorageResponse>>() {},
+            null
+    ),
+
+    STORAGE_GET_CREW_INVENTORY(
+            "/api/v1/storages/inventory/crews",
+            Method.GET,
+            "schemas/storages/crew-resource-stock-paged-list-schema.json",
+            "Get crew resource stock or income report",
+            null,
+            new TypeReference<List<CrewResourceStockResponse>>() {},
+            null
+    ),
+
     STORAGE_POST_CREATE(
             "/api/v1/storages",
             Method.POST,

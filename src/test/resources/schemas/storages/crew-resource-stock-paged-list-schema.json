@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CrewResourceStockPagedResponse",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "unit": { "type": ["object", "null"], "additionalProperties": true },
+          "crew": { "type": ["object", "null"], "additionalProperties": true },
+          "resource": { "type": ["object", "null"], "additionalProperties": true },
+          "amount": { "type": ["number", "null"] },
+          "income": { "type": ["number", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "page": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true
+}

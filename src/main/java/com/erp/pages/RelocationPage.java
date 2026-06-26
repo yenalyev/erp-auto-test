@@ -154,7 +154,9 @@ public class RelocationPage extends BasePage {
     }
 
     public RelocationCreateOutputPage clickSend() {
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SEND_BUTTON)).first().click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SEND_BUTTON))
+                .first()
+                .click();
         return new RelocationCreateOutputPage(page).waitForLoaded();
     }
 
