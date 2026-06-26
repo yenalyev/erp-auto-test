@@ -95,12 +95,20 @@ public class DefectFixture extends BaseFixture {
 
     @Step("FIXTURE: створити виробництво {amount} од., партія «{batchNumber}» (для браку на виробництві)")
     public ManufacturingItemResponse createProduction(double amount, String batchNumber) {
-        return productionFixture.createAs(UserRole.OWNER_1, storageId, techMap(), amount, batchNumber);
+        return createProductionAs(UserRole.OWNER_1, amount, batchNumber, LocalDate.now());
     }
 
     @Step("FIXTURE: створити виробництво {amount} од. з датою {date}")
     public ManufacturingItemResponse createProduction(double amount, String batchNumber, LocalDate date) {
-        return productionFixture.createAs(UserRole.OWNER_1, storageId, techMap(), amount, batchNumber, date);
+        return createProductionAs(UserRole.OWNER_1, amount, batchNumber, date);
+    }
+
+    @Step("FIXTURE: створити виробництво роллю {role}, {amount} од., дата {date}")
+    public ManufacturingItemResponse createProductionAs(UserRole role,
+                                                        double amount,
+                                                        String batchNumber,
+                                                        LocalDate date) {
+        return productionFixture.createAs(role, storageId, techMap(), amount, batchNumber, date);
     }
 
     /** Raw production create (no success validation) — для перевірки відхилення некоректних дат. */

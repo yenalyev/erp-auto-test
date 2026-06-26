@@ -586,29 +586,46 @@ public class DefectTest extends BaseFunctionalTest {
     @Test(priority = 70)
     @TestCaseId("TC-DEF-007")
     @Story("Production defect date window (Owner vs Admin)")
-    @Description("AC-01/02 (REQ-DEF-002): @Owner не може створити брак на виробництво старше 2 днів; "
-            + "@Admin — за будь-яку дату. Setup gap: precondition недосяжний через API")
+    @Description("AC-01/02 (REQ-DEF-002): @Owner не може створити брак на виробництво 3-денної давнини; @Admin може")
     @Severity(SeverityLevel.NORMAL)
     public void testProductionDefectDateWindow() {
-        // Документуємо обмеження бекенда: створити виробництво з датою старше 2 днів неможливо
-        // (POST /productions відповідає 400 «date cannot be older than 2 days»). Тому передумову
-        // «виробництво 3-денної давнини», на яке @Owner намагається списати брак, не можна підготувати
-        // через API. Перевіримо лише, що саме створення виробництва назад у часі блокується.
         Long outRes = fixture.outputResourceId();
         LocalDate threeDaysAgo = LocalDate.now().minusDays(3);
         String batch = ProductionDataFactory.uniqueBatchNumber();
 
-        Response backdated = fixture.createProductionRaw(UserRole.OWNER_1, 4.0, batch, threeDaysAgo);
-        Allure.step("Створення виробництва з датою 3-денної давнини відхиляється бекендом", () ->
-                assertThat(backdated.statusCode())
-                        .as("POST /productions має відхиляти дату старше 2 днів")
+        Response ownerBackdatedProduction = fixture.createProductionRaw(
+                UserRole.OWNER_1, 4.0, batch + "-owner-blocked", threeDaysAgo);
+        Allure.step("@Owner: POST /productions, дата " + threeDaysAgo, () ->
+                assertThat(ownerBackdatedProduction.statusCode())
+                        .as("Owner, виробництво 3-денної давнини")
                         .isGreaterThanOrEqualTo(400));
 
-        Allure.addAttachment("Setup gap (TC-DEF-007)", "text/plain",
-                "Брак-вікно @Owner vs @Admin (2 дні) не перевіряється через API: бекенд не дозволяє "
-                        + "створити виробництво назад у часі (POST /productions -> 400), тож «старе» виробництво "
-                        + "як джерело браку неможливо підготувати фікстурою. Правило вікна для браку — фронтендне.");
-        throw new SkipException("TC-DEF-007: precondition (backdated production) недосяжний через API — див. note.");
+        ManufacturingItemResponse oldProduction = fixture.createProductionAs(
+                UserRole.ADMIN, 5.0, batch, threeDaysAgo);
+        double produced = capturedBatchAmount(outRes, batch, "після виробництва Admin");
+        double defectAmount = round2(produced * 0.5);
+        DefectRequest defectRequest = DefectDataFactory.buildProductionDefect(
+                storageId, outRes, oldProduction.getId(), defectAmount, threeDaysAgo);
+
+        DefectResponse adminDefect = fixture.createAs(UserRole.ADMIN, defectRequest);
+        Allure.step("@Admin: POST /defects, дата " + threeDaysAgo, () -> {
+            assertThat(adminDefect.getType()).isEqualTo(DefectType.PRODUCTION);
+            assertThat(adminDefect.getProductionProcessId()).isEqualTo(oldProduction.getId());
+            assertThat(adminDefect.getDate()).isEqualTo(threeDaysAgo);
+        });
+        fixture.deleteAs(UserRole.ADMIN, adminDefect.getId());
+
+        Response ownerDefect = fixture.createRaw(UserRole.OWNER_1, defectRequest);
+        try {
+            Allure.step("@Owner: POST /defects, дата " + threeDaysAgo, () ->
+                    assertThat(ownerDefect.statusCode())
+                            .as("Owner, брак на виробництво 3-денної давнини (body=%s)", safeBody(ownerDefect))
+                            .isGreaterThanOrEqualTo(400));
+        } finally {
+            if (ownerDefect.statusCode() == 200) {
+                fixture.deleteAs(UserRole.ADMIN, ownerDefect.as(DefectResponse.class).getId());
+            }
+        }
     }
 
     @Test(priority = 160)
