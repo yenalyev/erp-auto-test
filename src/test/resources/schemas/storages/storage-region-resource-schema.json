@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StorageRegionResourceResponse",
+  "type": "object",
+  "properties": {
+    "regionId": { "type": ["integer", "null"] },
+    "resourceId": { "type": ["integer", "null"] },
+    "name": { "type": ["string", "null"] },
+    "createdAt": { "type": ["string", "null"] },
+    "createdBy": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

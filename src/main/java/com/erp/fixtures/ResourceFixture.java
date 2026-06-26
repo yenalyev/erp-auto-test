@@ -89,6 +89,43 @@ public class ResourceFixture extends BaseFixture {
         return DatabaseIntegrityValidator.extractList(response, ResourceResponse.class);
     }
 
+    @Step("API: autocomplete search='{search}' storageId={storageId}")
+    public List<ResourceResponse> autocompleteForStorage(
+            UserRole role, Long storageId, String search, boolean includeArchived) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("storageId", storageId);
+        params.put("search", search);
+        params.put("size", 50);
+        if (includeArchived) {
+            params.put("includeArchived", true);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RESOURCE_AUTOCOMPLETE, role, params);
+        validateSuccess(response, "Autocomplete resources storageId=" + storageId);
+        return DatabaseIntegrityValidator.extractList(response, ResourceResponse.class);
+    }
+
+    @Step("API: GET сторінка ресурсів storageId={storageId}")
+    public List<ResourceResponse> getPageForStorage(UserRole role, Long storageId, String name) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("page", 0);
+        params.put("size", 500);
+        params.put("storageId", storageId);
+        if (name != null && !name.isBlank()) {
+            params.put("name", name);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RESOURCE_GET_ALL, role, params);
+        validateSuccess(response, "Get resources page storageId=" + storageId);
+        return DatabaseIntegrityValidator.extractList(response, ResourceResponse.class);
+    }
+
+    public boolean isPresentInAutocompleteForStorage(
+            UserRole role, Long storageId, String search, Long resourceId, boolean includeArchived) {
+        return autocompleteForStorage(role, storageId, search, includeArchived).stream()
+                .anyMatch(r -> Objects.equals(r.getId(), resourceId));
+    }
+
     @Step("API: autocomplete search='{search}'")
     public List<ResourceResponse> autocomplete(UserRole role, String search, boolean includeArchived) {
         return autocomplete(role, search, includeArchived, null);

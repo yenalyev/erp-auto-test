@@ -525,6 +525,36 @@ public enum ApiEndpointDefinition {
             "REMOVE_REGION_MEMBERS"
     ),
 
+    STORAGE_REGION_GET_RESOURCES(
+            "/api/v1/storages/regions/{regionId}/resources",
+            Method.GET,
+            "schemas/storages/storage-region-resource-paged-list-schema.json",
+            "Get resources in visibility region",
+            null,
+            new TypeReference<List<StorageRegionResourceResponse>>() {},
+            null
+    ),
+
+    STORAGE_REGION_PUT_ADD_RESOURCES(
+            "/api/v1/storages/regions/{regionId}/resources",
+            Method.PUT,
+            "schemas/storages/storage-region-response-schema.json",
+            "Add resources to visibility region",
+            null,
+            new TypeReference<StorageRegionResponse>() {},
+            "ADD_REGION_RESOURCES"
+    ),
+
+    STORAGE_REGION_DELETE_RESOURCES(
+            "/api/v1/storages/regions/{regionId}/resources",
+            Method.DELETE,
+            "schemas/storages/storage-region-response-schema.json",
+            "Remove resources from visibility region",
+            null,
+            new TypeReference<StorageRegionResponse>() {},
+            "REMOVE_REGION_RESOURCES"
+    ),
+
     STORAGE_GET_LOCATION_LINKS(
             "/api/v1/storages/{storageId}/locations",
             Method.GET,

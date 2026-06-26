@@ -10,6 +10,7 @@ import com.erp.models.response.StorageLocationLinkResponse;
 import com.erp.models.response.StorageLocationSuggestionResponse;
 import com.erp.models.response.StorageRegionLocationResponse;
 import com.erp.models.response.StorageRegionMemberResponse;
+import com.erp.models.response.StorageRegionResourceResponse;
 import com.erp.models.response.StorageRegionResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.TestContext;
@@ -228,6 +229,45 @@ public class StorageRegionFixture extends BaseFixture {
                 String.valueOf(visibleStorageId));
         validateSuccess(response, "Remove explicit visibility for storage " + visibleStorageId);
         return response;
+    }
+
+    @Step("API: GET resources області id={regionId}")
+    public List<StorageRegionResourceResponse> getRegionResources(UserRole role, Long regionId) {
+        Map<String, Object> params = Map.of("page", 0, "size", 500);
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_REGION_GET_RESOURCES,
+                role,
+                params,
+                String.valueOf(regionId));
+        validateSuccess(response, "Get region resources " + regionId);
+        return DatabaseIntegrityValidator.extractList(response, StorageRegionResourceResponse.class);
+    }
+
+    @Step("API: PUT додати resources до області id={regionId}")
+    public StorageRegionResponse addRegionResources(Long regionId, Long... resourceIds) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_REGION_PUT_ADD_RESOURCES,
+                UserRole.ADMIN,
+                idListParams("resources", resourceIds),
+                String.valueOf(regionId));
+        validateSuccess(response, "Add resources to region " + regionId);
+        return response.as(StorageRegionResponse.class);
+    }
+
+    @Step("API: DELETE прибрати resources з області id={regionId}")
+    public StorageRegionResponse removeRegionResources(Long regionId, Long... resourceIds) {
+        Response response = removeRegionResourcesRaw(UserRole.ADMIN, regionId, resourceIds);
+        validateSuccess(response, "Remove resources from region " + regionId);
+        return response.as(StorageRegionResponse.class);
+    }
+
+    @Step("API: DELETE прибрати resources з області id={regionId} (raw)")
+    public Response removeRegionResourcesRaw(UserRole role, Long regionId, Long... resourceIds) {
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_REGION_DELETE_RESOURCES,
+                role,
+                idListParams("resources", resourceIds),
+                String.valueOf(regionId));
     }
 
     @Step("API: GET /storages/locations/suggest")

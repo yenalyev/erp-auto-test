@@ -151,6 +151,24 @@ rules:
     bodyType: null
     description: "Додати локації до області видимості: тільки ADMIN"
 
+  - endpointName: "STORAGE_REGION_GET_RESOURCES"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Список ресурсів області видимості: ADMIN та OWNER_1"
+
+  - endpointName: "STORAGE_REGION_PUT_ADD_RESOURCES"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Додати ресурси до області видимості: тільки ADMIN"
+
+  - endpointName: "STORAGE_REGION_DELETE_RESOURCES"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Прибрати ресурси з області видимості: тільки ADMIN"
+
   - endpointName: "STORAGE_GET_LOCATION_LINKS"
     allowedRoles: [ ADMIN, OWNER_1 ]
     deniedRoles: [ ANONYMOUS ]

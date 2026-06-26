@@ -59,6 +59,30 @@ API-тести життєвого циклу локацій: створення,
 | **TC-STR-REG-040** | `StorageVisibilityTest` | Alias локації в FULL_ACCESS region → `name` у `/names` = alias | Critical |
 | **TC-STR-REG-052** | `StorageVisibilityTest` | Explicit grant → реальне `storage.name` у `/names` (не alias області) | Critical |
 
+### Області видимості ресурсів (Resource Scopes)
+
+Термінологія: область з `accessMode=RESOURCES` + `PUT/GET/DELETE .../regions/{id}/resources`.
+RESTRICTED підрозділ = `accessMode=REGIONS`; фільтр номенклатури в `/resources/autocomplete?storageId=`.
+
+| ID | Клас | Сценарій | Severity |
+|:---|:-----|:---------|:---------|
+| **TC-STR-RES-001** | `StorageResourceVisibilityTest` | ADMIN: додати/видалити ресурси області; GET list | Critical |
+| **TC-STR-RES-002** | `StorageResourceVisibilityTest` | RESTRICTED без областей → autocomplete порожній | Critical |
+| **TC-STR-RES-003** | `StorageResourceVisibilityTest` | Member бачить лише granted у autocomplete та GET page | Critical |
+| **TC-STR-RES-004** | `StorageResourceVisibilityTest` | 2 області RESOURCES → union ресурсів | Normal |
+| **TC-STR-RES-005** | `StorageResourceVisibilityTest` | Internal relocation receive → auto-grant у селекторі | Critical |
+| **TC-STR-RES-006** | `StorageResourceVisibilityTest` | FULL_ACCESS vs RESTRICTED — контраст ширини номенклатури | Normal |
+| **TC-STR-RES-007** | `StorageResourceVisibilityTest` | DELETE ресурсу з області при stock>0 (guard 2.1.1) | Normal |
+| **TC-STR-RES-008** | `StorageResourceVisibilityTest` | Inventory PUT: ресурс поза областю → 400, stock не змінюється | Critical |
+| **TC-STR-RES-010** | `StorageResourceVisibilityTest` | Inventory PUT: ресурс з області → 200, stock оновлюється | Normal |
+| **TC-STR-RES-011** | `StorageResourceVisibilityTest` | INTERNAL→INTERNAL receive: outOfScope додається до видимості + stock | Critical |
+| **TC-STR-RES-009** | `StorageResourceVisibilityTest` | SUPPLIER receive невидимого ресурсу (4.1 / auto-grant 2.2) | Normal |
+
+**Запуск лише resource-visibility тестів:**
+```bash
+mvn test -Denv=dev -Dtest=StorageResourceVisibilityTest
+```
+
 **Передумова `StorageVisibilityTest`:** `@BeforeClass` тимчасово ставить `accessMode=REGIONS` для OWNER_2 (`owner2.storage.id`); `@AfterClass` відновлює.
 
 **Модель explicit grant:** `storage_location.storage_id` = видима локація, `location_storage_id` = viewer (підрозділ).

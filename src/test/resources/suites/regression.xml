@@ -50,6 +50,7 @@
             <class name="com.erp.tests.functional.storage.StorageDeactivationTest"/>
             <class name="com.erp.tests.functional.storage.StorageRegionTest"/>
             <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest"/>
         </classes>
     </test>
 
