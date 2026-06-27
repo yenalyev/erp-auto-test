@@ -1,0 +1,48 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Storage visibility regions — локації, ресурси, CREWS, UI селекторів.
+
+  Run:
+    mvn test -Denv=dev -Dsuite=storage-regions
+
+  Ordering notes:
+    - parallel="none" — спільний owner2.storage.id (ПМ БАР) у visibility/UI тестах.
+    - StorageRegionTest перед StorageVisibilityTest (CRUD областей → видимість у /names).
+    - StorageVisibilityTest @BeforeClass purge member/grants для owner2.
+-->
+<suite name="Storage Regions Test Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Storage Regions API">
+        <classes>
+            <class name="com.erp.tests.functional.storage.StorageRegionTest"/>
+            <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.StorageNamesEndpointTest"/>
+            <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.RelocationVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.RelocationInvoiceVisibilityTest"/>
+        </classes>
+    </test>
+
+    <test name="Storage Regions CREWS API">
+        <classes>
+            <class name="com.erp.tests.functional.storage.StorageCrewRegionTest"/>
+            <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
+        </classes>
+    </test>
+
+    <test name="Storage Regions UI">
+        <classes>
+            <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
+            <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
+        </classes>
+    </test>
+</suite>

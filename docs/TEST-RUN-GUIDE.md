@@ -88,6 +88,7 @@ suites/
 │   ├── non-series-production
 │   ├── relocations         ← переміщення / видати-отримати
 │   ├── inventory           ← інвентаризація (WMS)
+│   ├── storage-regions     ← області видимості (локації, ресурси, CREWS, UI)
 │   ├── global-plans        ← глобальні плани
 │   ├── technological-maps
 │   ├── defects             ← брак
@@ -194,6 +195,22 @@ mvn test "-Denv=local" "-Duse.docker=true" "-Dsuite=functional"
 |-----|-------|
 | API | `RelocationTest`, `RelocationExtendedTest`, `RelocationJournalSortApiTest`, `EquipmentRelocationTest` |
 | UI | `RelocationUITest`, `RelocationJournalFilterSortUITest`, `EquipmentRelocationUITest` |
+
+#### `storage-regions`
+
+**Коли:** зміни в областях видимості, `/storages/names`, resource scopes, CREWS, UI селекторів.
+
+`parallel="none"` — спільний `owner2.storage.id` у visibility-тестах.
+
+| Блок | Класи |
+|------|-------|
+| Location & resource API | `StorageRegionTest`, `StorageVisibilityTest`, `StorageNamesEndpointTest`, `StorageResourceVisibilityTest` |
+| CREWS API | `StorageCrewRegionTest`, `CrewVisibilityTest`, `CrewRelocationTest`, `CrewInventoryTest` |
+| UI | `RelocationSendRecipientUiTest`, `RelocationInvoiceVisibilityUiTest` |
+
+```powershell
+mvn test "-Denv=dev" "-Dsuite=storage-regions"
+```
 
 #### `inventory`
 
@@ -357,6 +374,9 @@ mvn test "-Denv=dev" "-Dsuite=regression"
 
 # Тільки переміщення (API + UI)
 mvn test "-Denv=dev" "-Dsuite=relocations"
+
+# Області видимості (локації, ресурси, CREWS, UI)
+mvn test "-Denv=dev" "-Dsuite=storage-regions"
 
 # RBAC-матриця
 mvn test "-Denv=dev" "-Dsuite=rbac"

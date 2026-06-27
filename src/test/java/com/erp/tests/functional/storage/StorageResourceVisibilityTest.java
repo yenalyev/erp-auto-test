@@ -70,10 +70,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 10)
     @TestCaseId("TC-STR-RES-001")
-    @Description("""
-            ADMIN додає ресурси до області видимості (accessMode=RESOURCES) і отримує їх список.
-            Очікування: PUT /regions/{id}/resources → 200; GET містить усі resourceId.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_001)
     @Severity(SeverityLevel.CRITICAL)
     public void testAddAndListRegionResources() {
         ResourceResponse resourceA = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "a-");
@@ -99,10 +96,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 20)
     @TestCaseId("TC-STR-RES-002")
-    @Description("""
-            RESTRICTED підрозділ без областей ресурсів не бачить номенклатуру в autocomplete
-            (storageId=підрозділ, accessMode≠FULL_ACCESS).
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_002)
     @Severity(SeverityLevel.CRITICAL)
     public void testRestrictedUnitWithoutResourceRegionsSeesNoCatalog() {
         ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "hidden-");
@@ -119,9 +113,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 30)
     @TestCaseId("TC-STR-RES-003")
-    @Description("""
-            Member RESTRICTED підрозділу бачить у селекторах лише ресурси з прив'язаної області RESOURCES.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_003)
     @Severity(SeverityLevel.CRITICAL)
     public void testRestrictedMemberSeesOnlyGrantedResources() {
         ResourceResponse granted = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "granted-");
@@ -145,9 +137,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 40)
     @TestCaseId("TC-STR-RES-004")
-    @Description("""
-            Підрозділ у двох областях RESOURCES отримує union дозволених ресурсів (об'єднання наборів).
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_004)
     @Severity(SeverityLevel.NORMAL)
     public void testTwoResourceRegionsUnion() {
         ResourceResponse r1 = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "u1-");
@@ -174,10 +164,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 50)
     @TestCaseId("TC-STR-RES-005")
-    @Description("""
-            Після internal relocation receive на RESTRICTED підрозділ ресурс автоматично з'являється
-            у autocomplete (auto-grant через relocation).
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_005)
     @Severity(SeverityLevel.CRITICAL)
     public void testInternalRelocationAutoGrantsResourceVisibility() {
         ResourceResponse inRegion = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "in-reg-");
@@ -215,9 +202,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 60)
     @TestCaseId("TC-STR-RES-006")
-    @Description("""
-            FULL_ACCESS підрозділ бачить ширшу номенклатуру, ніж RESTRICTED з однією областю RESOURCES.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_006)
     @Severity(SeverityLevel.NORMAL)
     public void testFullAccessSeesMoreResourcesThanRestricted() {
         ResourceResponse shared = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "shared-");
@@ -229,24 +214,28 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         RestrictedUnitSetup restricted = createRestrictedUnit("res-restricted-");
         regionFixture.addRegionResources(restricted.region().getId(), shared.getId());
 
-        List<ResourceResponse> fullResults = resourceFixture.autocompleteForStorage(
-                UserRole.ADMIN, fullAccess.getId(), RESOURCE_PREFIX, false);
-        List<ResourceResponse> restrictedResults = resourceFixture.autocompleteForStorage(
-                UserRole.ADMIN, restricted.unit().getId(), RESOURCE_PREFIX, false);
-
-        assertThat(fullResults.stream().map(ResourceResponse::getId))
-                .contains(shared.getId(), extra.getId());
-        assertThat(restrictedResults.stream().map(ResourceResponse::getId))
-                .contains(shared.getId())
-                .doesNotContain(extra.getId());
+        // Пошук за точним іменем: prefix res-vis- на dev часто дає ≥50 збігів (dirty data) і обрізається size=50.
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, fullAccess.getId(), shared.getName(), shared.getId(), false))
+                .as("FULL_ACCESS підрозділ бачить shared у autocomplete")
+                .isTrue();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, fullAccess.getId(), extra.getName(), extra.getId(), false))
+                .as("FULL_ACCESS підрозділ бачить extra поза областями")
+                .isTrue();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, restricted.unit().getId(), shared.getName(), shared.getId(), false))
+                .as("RESTRICTED бачить лише shared з області")
+                .isTrue();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, restricted.unit().getId(), extra.getName(), extra.getId(), false))
+                .as("RESTRICTED не бачить extra поза областю")
+                .isFalse();
     }
 
     @Test(priority = 70)
     @TestCaseId("TC-STR-RES-007")
-    @Description("""
-            Вимога 2.1.1: не можна прибрати ресурс з області видимості, якщо на локації є запас (>0).
-            Якщо бекенд ще не валідує — тест фіксує фактичну поведінку (HTTP 400 очікується).
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_007)
     @Severity(SeverityLevel.NORMAL)
     public void testRemoveResourceFromRegionBlockedWhenStockPresent() {
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "stock-guard-");
@@ -284,11 +273,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 80)
     @TestCaseId("TC-STR-RES-008")
-    @Description("""
-            Вимога 4.2: не можна додати під час інвентаризації ресурс, якого немає в області видимості.
-            Тестові дані: RESTRICTED підрозділ, область RESOURCES лише з visible; hidden не в області.
-            Очікування: PUT /storages/{id}/inventory → 400; залишок hidden на складі = 0.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_008)
     @Severity(SeverityLevel.CRITICAL)
     public void testInventoryRejectsResourceOutsideVisibilityScope() {
         ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "inv-vis-");
@@ -316,14 +301,21 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
                     setup.unit().getId(), UserRole.ADMIN, request);
 
             AllureHelper.attachResponseDetails(inventoryResponse);
+            if (inventoryResponse.statusCode() == 400) {
+                assertThat(inventoryFixture.getResourceStock(
+                        setup.unit().getId(), hidden.getId(), UserRole.ADMIN))
+                        .as("Залишок прихованого ресурсу не має змінитись")
+                        .isEqualTo(0.0);
+                return;
+            }
+
+            log.warn(
+                    "TC-STR-RES-008: бекенд прийняв inventory з ресурсом поза областю (status={}) — guard 4.2 не реалізовано; "
+                            + "UI не відтворює (autocomplete фільтрує за storageId)",
+                    inventoryResponse.statusCode());
             assertThat(inventoryResponse.statusCode())
                     .as("Інвентаризація з ресурсом поза областю видимості має бути відхилена (400)")
                     .isEqualTo(400);
-
-            assertThat(inventoryFixture.getResourceStock(
-                    setup.unit().getId(), hidden.getId(), UserRole.ADMIN))
-                    .as("Залишок прихованого ресурсу не має змінитись")
-                    .isEqualTo(0.0);
         } finally {
             inventoryFixture.ensureClosed(setup.unit().getId());
         }
@@ -331,10 +323,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 85)
     @TestCaseId("TC-STR-RES-010")
-    @Description("""
-            Контроль до TC-STR-RES-008: ресурс з області видимості можна додати під час інвентаризації
-            на RESTRICTED підрозділі (сесія відкрита).
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_010)
     @Severity(SeverityLevel.NORMAL)
     public void testInventoryAllowsResourceInsideVisibilityScope() {
         ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "inv-ok-");
@@ -367,13 +356,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 87)
     @TestCaseId("TC-STR-RES-011")
-    @Description("""
-            Вимога 2.2: INTERNAL→INTERNAL receive на RESTRICTED локацію розширює область видимості ресурсів.
-            Тестові дані: область RESOURCES містить лише inScope; outOfScope поза областю;
-            sender — інша INTERNAL локація (owner1.storage).
-            До receive: inScope у autocomplete, outOfScope — ні; stock на recipient = 0.
-            Два INTERNAL send (outOfScope, потім inScope) → FINISHED: обидва у autocomplete і на залишку.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_011)
     @Severity(SeverityLevel.CRITICAL)
     public void testInternalReceiveExpandsResourceVisibilityScope() {
         ResourceResponse inScope = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "recv-in-");
@@ -463,10 +446,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
     @Test(priority = 90)
     @TestCaseId("TC-STR-RES-009")
-    @Description("""
-            Вимога 4.1: отримання від SUPPLIER ресурсу поза областю видимості.
-            Очікування: 400; якщо бекенд auto-grant (2.2) — після receive ресурс з'являється в autocomplete.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_009)
     @Severity(SeverityLevel.NORMAL)
     public void testSupplierReceiveForNonVisibleResource() {
         ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "supp-");

@@ -1,8 +1,10 @@
 package com.erp.pages;
 
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -148,6 +150,47 @@ public class RelocationPage extends BasePage {
                 .count() > 0;
     }
 
+    public boolean isInvoiceLinkVisible(String invoiceNumber) {
+        return invoiceLink(invoiceNumber).count() > 0;
+    }
+
+    /**
+     * Клік по № накладної → axios blob + програмний {@code <a download>}; чекаємо Playwright {@link Download}.
+     */
+    public InvoiceUiDownloadResult clickInvoiceLinkAndWaitForDownload(String invoiceNumber) {
+        Locator link = invoiceLink(invoiceNumber);
+        link.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        Download download = page.waitForDownload(link::click);
+        String suggestedFilename = download.suggestedFilename();
+        long sizeBytes = download.path() != null ? download.path().toFile().length() : 0L;
+        log.info("Invoice UI download: {} ({} bytes)", suggestedFilename, sizeBytes);
+        return new InvoiceUiDownloadResult(suggestedFilename, sizeBytes);
+    }
+
+    /**
+     * Клік по посиланню не повинен ініціювати завантаження (наприклад, UNIT-відправник на «В дорозі»).
+     */
+    public void clickInvoiceLinkAndAssertNoDownload(String invoiceNumber, int noDownloadTimeoutMs) {
+        Locator link = invoiceLink(invoiceNumber);
+        link.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        try {
+            Download unexpected = page.waitForDownload(
+                    new Page.WaitForDownloadOptions().setTimeout(noDownloadTimeoutMs),
+                    link::click);
+            throw new AssertionError(
+                    "Unexpected file download after invoice link click: " + unexpected.suggestedFilename());
+        } catch (TimeoutError expected) {
+            log.info("Invoice link click produced no download within {}ms (expected)", noDownloadTimeoutMs);
+        }
+    }
+
+    public boolean isInvoiceNumberVisibleInRow(String rowMarker, String invoiceNumber) {
+        return journalTableWrapper().locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(rowMarker))
+                .filter(new Locator.FilterOptions().setHasText(invoiceNumber))
+                .count() > 0;
+    }
+
     public RelocationCreateInputPage clickReceive() {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(RECEIVE_BUTTON)).click();
         return new RelocationCreateInputPage(page).waitForLoaded();
@@ -161,6 +204,10 @@ public class RelocationPage extends BasePage {
     }
 
     public RelocationPage openReceivedHistoryTab() {
+        return openReceivedTab();
+    }
+
+    public RelocationPage openReceivedTab() {
         page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(HISTORY_RECEIVED_TAB)).click();
         waitForJournalDataSettled();
         return this;
@@ -264,6 +311,11 @@ public class RelocationPage extends BasePage {
                 .build();
     }
 
+    private Locator invoiceLink(String invoiceNumber) {
+        return journalTableWrapper().locator("a")
+                .filter(new Locator.FilterOptions().setHasText(invoiceNumber));
+    }
+
     private static String cellText(Locator cells, int index) {
         if (cells.count() <= index) {
             return null;
@@ -271,4 +323,6 @@ public class RelocationPage extends BasePage {
         String text = cells.nth(index).innerText();
         return text != null ? text.trim().replaceAll("\\s+", " ") : null;
     }
+
+    public record InvoiceUiDownloadResult(String suggestedFilename, long sizeBytes) {}
 }

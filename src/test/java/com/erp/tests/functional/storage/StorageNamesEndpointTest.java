@@ -35,10 +35,7 @@ public class StorageNamesEndpointTest extends StorageApiTestBase {
 
     @Test(priority = 10)
     @TestCaseId("TC-STR-NAMES-001")
-    @Description("""
-            GET /storages/names?isActive=true повертає 200, проходить JSON Schema
-            і містить обов'язкові поля id + name для кожного елемента.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_NAMES_001)
     @Severity(SeverityLevel.CRITICAL)
     public void testActiveNamesResponseContract() {
         Response response = storageFixture.getNamesRaw(UserRole.OWNER_1, true);
@@ -56,11 +53,7 @@ public class StorageNamesEndpointTest extends StorageApiTestBase {
 
     @Test(priority = 20)
     @TestCaseId("TC-STR-NAMES-002")
-    @Description("""
-            Кожен storage.id у відповіді /storages/names?isActive=true зустрічається рівно один раз.
-            Дублікати id (наприклад, однаковий підрозділ з кількох областей видимості)
-            ламають Combobox у формі видачі.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_NAMES_002)
     @Severity(SeverityLevel.CRITICAL)
     public void testActiveNamesListHasUniqueStorageIds() {
         List<StorageResponse> names = storageFixture.getNames(UserRole.OWNER_1, true, null);

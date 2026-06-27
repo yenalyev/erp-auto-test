@@ -66,9 +66,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
 
     @Test(priority = 10)
     @TestCaseId("TC-CREW-INV-001")
-    @Description("""
-            requestType=STOCK після видачі — crew + resource + amount у звіті.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_001)
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewResourceStockReport() {
         Map<String, Object> params = crewInventoryParams("STOCK");
@@ -95,9 +93,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
 
     @Test(priority = 20)
     @TestCaseId("TC-CREW-INV-007")
-    @Description("""
-            OWNER_1 (member області CREWS) читає GET /storages/{crewId}/inventory після видачі.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007)
     @Severity(SeverityLevel.CRITICAL)
     public void testOwner1CanReadCrewDirectInventory() {
         Response response = apiExecutor.execute(
@@ -116,9 +112,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
 
     @Test(priority = 25)
     @TestCaseId("TC-CREW-INV-008")
-    @Description("""
-            OWNER_2 (не member області CREWS) не має доступу до inventory чужого екіпажу.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_008)
     @Severity(SeverityLevel.NORMAL)
     public void testOwner2DeniedCrewDirectInventory() {
         Response response = apiExecutor.execute(
@@ -132,9 +126,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
 
     @Test(priority = 30)
     @TestCaseId("TC-CREW-INV-006")
-    @Description("""
-            Cross-check: STOCK-звіт /inventory/crews збігається з прямим inventory екіпажу для OWNER_1.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_006)
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewStockReportMatchesDirectInventory() {
         double directStock = relocationFixture.getResourceStock(
@@ -158,10 +150,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
 
     @Test(priority = 40, enabled = false)
     @TestCaseId("TC-CREW-INV-002")
-    @Description("""
-            requestType=INCOME — сума видач за період.
-            DISABLED: уточнити binding fromDate/toDate та фільтр unit на dev (повертає порожній content).
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_002)
     @Severity(SeverityLevel.NORMAL)
     public void testCrewResourceIncomeReport() {
         Map<String, Object> params = crewInventoryParams("INCOME");

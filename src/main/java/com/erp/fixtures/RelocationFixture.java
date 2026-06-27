@@ -121,17 +121,208 @@ public class RelocationFixture extends BaseFixture {
                                                         Long resourceId,
                                                         double amount,
                                                         String description) {
+        return createSendInternal(role, senderId, recipientId, resourceId, amount, description, false);
+    }
+
+    @Step("API: видача з асинхронною генерацією накладної")
+    public RelocationResponse createSendWithInvoice(UserRole role,
+                                                  Long senderId,
+                                                  Long recipientId,
+                                                  Long resourceId,
+                                                  double amount,
+                                                  String description) {
+        return createSendInternal(role, senderId, recipientId, resourceId, amount, description, true);
+    }
+
+    private RelocationResponse createSendInternal(UserRole role,
+                                                  Long senderId,
+                                                  Long recipientId,
+                                                  Long resourceId,
+                                                  double amount,
+                                                  String description,
+                                                  boolean generateInvoice) {
         RelocationOutputRequest request = description != null
                 ? RelocationDataFactory.buildSendRequest(
                 senderId, recipientId, resourceId, amount, description)
                 : RelocationDataFactory.buildSendRequest(
                 senderId, recipientId, resourceId, amount);
-        Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, role, request);
-        validateSuccess(response, "Send relocation");
-        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RELOCATION_POST_SEND);
+        ApiEndpointDefinition endpoint = generateInvoice
+                ? ApiEndpointDefinition.RELOCATION_POST_SEND_WITH_INVOICE
+                : ApiEndpointDefinition.RELOCATION_POST_SEND;
+        Response response = apiExecutor.execute(endpoint, role, request);
+        validateSuccess(response, generateInvoice ? "Send relocation with invoice" : "Send relocation");
+        SchemaRegistry.validateIfSuccess(response, endpoint);
         RelocationResponse relocation = response.as(RelocationResponse.class);
         testContext.set(ContextKey.RELOCATION_ID, relocation.getId());
         return relocation;
+    }
+
+    @Step("API: знайти переміщення «В дорозі» за маркером у примітках")
+    public RelocationResponse findInTransitByDescription(UserRole role, Long storageId, String description) {
+        Response response = getInTransitJournalResponse(role, storageId);
+        validateSuccess(response, "Get in-transit relocations");
+        List<RelocationResponse> page = DatabaseIntegrityValidator.extractList(response, RelocationResponse.class);
+        return page.stream()
+                .filter(r -> r.getDescription() != null && r.getDescription().contains(description))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Step("API: очікування № накладної у журналі «В дорозі»")
+    public RelocationResponse waitForInTransitWithInvoiceNumber(UserRole role,
+                                                                Long storageId,
+                                                                String description,
+                                                                int timeoutSeconds) {
+        return waitForJournalWithInvoiceNumber(
+                role, storageId, description, timeoutSeconds, this::findInTransitByDescription);
+    }
+
+    @Step("API: очікування № накладної у журналі «В дорозі» (до {maxAttempts} спроб)")
+    public RelocationResponse waitForInTransitWithInvoiceNumberAttempts(UserRole role,
+                                                                        Long storageId,
+                                                                        String description,
+                                                                        int maxAttempts) {
+        return waitForJournalWithInvoiceNumberByAttempts(
+                role, storageId, description, maxAttempts, this::findInTransitByDescription);
+    }
+
+    @Step("API: знайти запис історії «Видано»/«Отримано» за маркером у примітках")
+    public RelocationResponse findHistoryByDescription(UserRole role,
+                                                       Long storageId,
+                                                       RelocationJournalQuery.Perspective perspective,
+                                                       String description) {
+        RelocationJournalQuery query = RelocationJournalQuery.builder()
+                .storageId(storageId)
+                .perspective(perspective)
+                .pageSize(100)
+                .build();
+        Response response = getJournalPageResponse(query, role);
+        validateSuccess(response, "Get relocation history (" + perspective + ")");
+        List<RelocationResponse> page = DatabaseIntegrityValidator.extractList(response, RelocationResponse.class);
+        return page.stream()
+                .filter(r -> r.getDescription() != null && r.getDescription().contains(description))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Step("API: очікування № накладної у вкладці «Видано»")
+    public RelocationResponse waitForSentHistoryWithInvoiceNumber(UserRole role,
+                                                                  Long storageId,
+                                                                  String description,
+                                                                  int timeoutSeconds) {
+        return waitForJournalWithInvoiceNumber(
+                role,
+                storageId,
+                description,
+                timeoutSeconds,
+                (r, s, d) -> findHistoryByDescription(r, s, RelocationJournalQuery.Perspective.SENT, d));
+    }
+
+    @Step("API: очікування № накладної у вкладці «Видано» (до {maxAttempts} спроб)")
+    public RelocationResponse waitForSentHistoryWithInvoiceNumberAttempts(UserRole role,
+                                                                          Long storageId,
+                                                                          String description,
+                                                                          int maxAttempts) {
+        return waitForJournalWithInvoiceNumberByAttempts(
+                role,
+                storageId,
+                description,
+                maxAttempts,
+                (r, s, d) -> findHistoryByDescription(r, s, RelocationJournalQuery.Perspective.SENT, d));
+    }
+
+    @Step("API: очікування № накладної у вкладці «Отримано»")
+    public RelocationResponse waitForReceivedHistoryWithInvoiceNumber(UserRole role,
+                                                                    Long storageId,
+                                                                    String description,
+                                                                    int timeoutSeconds) {
+        return waitForJournalWithInvoiceNumber(
+                role,
+                storageId,
+                description,
+                timeoutSeconds,
+                (r, s, d) -> findHistoryByDescription(r, s, RelocationJournalQuery.Perspective.RECEIVED, d));
+    }
+
+    @Step("API: очікування № накладної у вкладці «Отримано» (до {maxAttempts} спроб)")
+    public RelocationResponse waitForReceivedHistoryWithInvoiceNumberAttempts(UserRole role,
+                                                                              Long storageId,
+                                                                              String description,
+                                                                              int maxAttempts) {
+        return waitForJournalWithInvoiceNumberByAttempts(
+                role,
+                storageId,
+                description,
+                maxAttempts,
+                (r, s, d) -> findHistoryByDescription(r, s, RelocationJournalQuery.Perspective.RECEIVED, d));
+    }
+
+    private RelocationResponse waitForJournalWithInvoiceNumber(
+            UserRole role,
+            Long storageId,
+            String description,
+            int timeoutSeconds,
+            JournalLookup lookup) {
+        long deadline = System.currentTimeMillis() + timeoutSeconds * 1_000L;
+        while (System.currentTimeMillis() < deadline) {
+            RelocationResponse relocation = lookup.find(role, storageId, description);
+            if (relocation != null
+                    && relocation.getInvoiceNumber() != null
+                    && !relocation.getInvoiceNumber().isBlank()) {
+                return relocation;
+            }
+            sleep(1_000);
+        }
+        throw new IllegalStateException(
+                "Relocation with invoice number not found for marker '" + description + "' within " + timeoutSeconds + "s");
+    }
+
+    private RelocationResponse waitForJournalWithInvoiceNumberByAttempts(
+            UserRole role,
+            Long storageId,
+            String description,
+            int maxAttempts,
+            JournalLookup lookup) {
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            RelocationResponse relocation = lookup.find(role, storageId, description);
+            if (relocation != null
+                    && relocation.getInvoiceNumber() != null
+                    && !relocation.getInvoiceNumber().isBlank()) {
+                return relocation;
+            }
+            if (attempt < maxAttempts) {
+                sleep(2_000);
+            }
+        }
+        throw new IllegalStateException(
+                "Relocation with invoice number not found for marker '" + description + "' after " + maxAttempts + " attempts");
+    }
+
+    @FunctionalInterface
+    private interface JournalLookup {
+        RelocationResponse find(UserRole role, Long storageId, String description);
+    }
+
+    private Response getInTransitJournalResponse(UserRole role, Long storageId) {
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RELOCATION_GET_PAGE,
+                role,
+                Map.of(
+                        "page", 0,
+                        "size", 100,
+                        "senderIds", storageId,
+                        "receiverIds", storageId,
+                        "isOr", true,
+                        "states", List.of("CREATED", "CANCELLED")));
+    }
+
+    private static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for relocation journal", e);
+        }
     }
 
     @Step("API: видача з партією {batchNumber}")

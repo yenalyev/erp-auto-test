@@ -54,7 +54,8 @@ API-тести життєвого циклу локацій: створення,
 | **TC-STR-REG-022** | `StorageVisibilityTest` | OWNER_2 без областей: `/names` = лише `owner2.storage.id` | Critical |
 | **TC-STR-REG-030** | `StorageVisibilityTest` | Region REGIONS: у `/names` — `region.name`, не `recipient.name`; outsider прихований | Critical |
 | **TC-STR-REG-031** | `StorageVisibilityTest` | Region FULL_ACCESS: реальні імена локацій у `/names` | Critical |
-| **TC-STR-REG-032** | `StorageVisibilityTest` | Member у 2 областях — union loc1 + loc2 у `/names` | Normal |
+| **TC-STR-REG-034** | `StorageVisibilityTest` | Member у 3 областях — спільна локація без дублікатів id у `/names` | Critical |
+| **TC-STR-REG-035** | `StorageVisibilityTest` | TC-STR-REG-034 × типи STORAGE/UNIT/PRODUCTION та FULL_ACCESS/REGIONS/змішані | Critical |
 | **TC-STR-REG-033** | `StorageVisibilityTest` | `/storages/names/my-units` — REGIONS owner: 1 internal unit | Normal |
 | **TC-STR-REG-040** | `StorageVisibilityTest` | Alias локації в FULL_ACCESS region → `name` у `/names` = alias | Critical |
 | **TC-STR-REG-052** | `StorageVisibilityTest` | Explicit grant → реальне `storage.name` у `/names` (не alias області) | Critical |
@@ -78,18 +79,57 @@ RESTRICTED підрозділ = `accessMode=REGIONS`; фільтр номенк�
 | **TC-STR-RES-011** | `StorageResourceVisibilityTest` | INTERNAL→INTERNAL receive: outOfScope додається до видимості + stock | Critical |
 | **TC-STR-RES-009** | `StorageResourceVisibilityTest` | SUPPLIER receive невидимого ресурсу (4.1 / auto-grant 2.2) | Normal |
 
+### Переміщення × області видимості (Relocation Visibility)
+
+**Матриця покриття:** що вже було vs що додає `RelocationVisibilityTest`.
+
+| Категорія | Наявні ID (суміжні) | Що перевіряють | Прогалина |
+|:----------|:--------------------|:---------------|:----------|
+| `/names` без send | TC-STR-REG-030..035 | Селектор локацій для REGIONS-member | Не викликають `POST send` |
+| Resource auto-grant | TC-STR-RES-005, 011 | Receive розширює autocomplete | Не guard send до чужої **локації** |
+| CREWS discovery | TC-STR-CREW-005/006 | `hasCrews` in/out області | Лише CREWS, не location regions |
+| UI dropdown (позитив) | TC-UI-REL-010 | «Кому відправляю» = `/names`, dedup | Без негативу outsider |
+| UI invoice in-region | TC-UI-REL-011..014 | Накладна при видачі в області | Журнал/негативи |
+| Загальний relocation | TC-REL-010, TC-REL-005 | Lifecycle без REGIONS setup | Owner1↔Owner2 без областей |
+
+| ID | Клас | Сценарій | Severity |
+|:---|:-----|:---------|:---------|
+| **TC-REL-VIS-001** | `RelocationVisibilityTest` | Send в межах області (OWNER_2 member) → CREATED, stock −N | Critical |
+| **TC-REL-VIS-002** | `RelocationVisibilityTest` | Send поза областю → 4xx, stock без змін | Critical |
+| **TC-REL-VIS-003** | `RelocationVisibilityTest` | Resolve FINISHED отримувачем у області | Critical |
+| **TC-REL-VIS-004** | `RelocationVisibilityTest` | Resolve з outsider storageId → 4xx | Critical |
+| **TC-REL-VIS-005** | `RelocationVisibilityTest` | REGIONS alias: `/names` містить ім'я області; send дозволено | Critical |
+| **TC-REL-VIS-009** | `RelocationVisibilityTest` | Send на аліас REGIONS → `recipient.id` = anchor; stock на anchor після FINISHED | Critical |
+| **TC-REL-VIS-007** | `RelocationVisibilityTest` | Explicit grant → send на granted локацію | Critical |
+| **TC-REL-VIS-008** | `RelocationVisibilityTest` | Revoke grant → повторний send заборонено | Normal |
+| **TC-REL-VIS-010** | `RelocationVisibilityTest` | Send ресурсом з області RESOURCES → 200 | Critical |
+| **TC-REL-VIS-011** | `RelocationVisibilityTest` | Send ресурсом поза областю RESOURCES → 4xx | Critical |
+| **TC-UI-REL-VIS-001** | `RelocationVisibilityUiTest` | Dropdown: outsider відсутній у «Кому відправляю» | Critical |
+| **TC-UI-REL-VIS-002** | `RelocationVisibilityUiTest` | REGIONS: у dropdown ім'я області, не recipient.name | Critical |
+| **TC-UI-REL-VIS-003** | `RelocationVisibilityUiTest` | UI send на аліас → `recipient.id` = anchor (recipientStorage) | Critical |
+
+**Запуск лише relocation-visibility API:**
+```bash
+mvn test -Denv=dev -Dtest=RelocationVisibilityTest
+```
+
+**Suite (усі області видимості — API + CREWS + UI):**
+```bash
+mvn test -Denv=dev -Dsuite=storage-regions
+```
+
 **Запуск лише resource-visibility тестів:**
 ```bash
 mvn test -Denv=dev -Dtest=StorageResourceVisibilityTest
 ```
 
-**Передумова `StorageVisibilityTest`:** `@BeforeClass` тимчасово ставить `accessMode=REGIONS` для OWNER_2 (`owner2.storage.id`); `@AfterClass` відновлює.
+**Передумова `StorageVisibilityTest`:** `@BeforeClass` тимчасово ставить `accessMode=REGIONS` для OWNER_2 (`owner2.storage.id`) і **purge** member/grants через `purgeViewerVisibilityScope`; `@AfterClass` відновлює accessMode.
 
 **Модель explicit grant:** `storage_location.storage_id` = видима локація, `location_storage_id` = viewer (підрозділ).
 
-**Запуск лише region-тестів:**
+**Запуск лише location-region API (без CREWS/UI):**
 ```bash
-mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest
+mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest,StorageNamesEndpointTest,StorageResourceVisibilityTest
 ```
 
 ### Області видимості CREWS (Видача на екіпажі)
@@ -119,6 +159,8 @@ mvn test -Denv=dev -Dtest=StorageCrewRegionTest,CrewVisibilityTest,CrewRelocatio
 | **TC-INV-REL-005** | `StorageRelationInventoryTest` | EXTERNAL receive no-op для STORAGE, UNIT, PRODUCTION |
 | **TC-EQ-SEL-001..003** | `EquipmentSelectorContractTest` | Equipment form sender selector API |
 | **TC-REL-REL-001..002** | `RelocationTest` | Send→EXTERNAL AUTO_FINISHED; INTERNAL→INTERNAL resolve |
+| **TC-REL-VIS-001..011** | `RelocationVisibilityTest` | Send/resolve in/out location & resource visibility regions |
+| **TC-UI-REL-VIS-001..003** | `RelocationVisibilityUiTest` | UI dropdown in/out scope + send на REGIONS alias |
 
 RBAC: `STORAGE_*`, `STORAGE_REGION_*`, `STORAGE_PUT_ADD_LOCATION_LINKS` — у `rbac-policy.yml`.
 

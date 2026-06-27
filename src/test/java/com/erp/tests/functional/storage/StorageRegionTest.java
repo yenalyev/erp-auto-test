@@ -53,7 +53,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Очікування: HTTP 200, схема storage-region-response; у response id, name, accessMode,
             recipientStorage.id збігаються з request.
             Cleanup: область у cleanup-черзі regionFixture.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateStorageRegion() {
         StorageResponse recipient = storageFixture.createUniqueStorage("reg-rec-");
@@ -83,7 +83,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Тестові дані: створюємо область reg-list- з accessMode=REGIONS; GET /storages/regions?name=
             з префіксом імені (перші 8 символів). Роль: ADMIN.
             Очікування: HTTP 200, створена область присутня у content.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.NORMAL)
     public void testFindRegionsByName() {
         StorageResponse recipient = storageFixture.createUniqueStorage("reg-list-");
@@ -102,7 +102,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Що перевіряємо: деталі області за id (картка редагування в UI).
             Тестові дані: область reg-get-, recipient reg-get-, accessMode=FULL_ACCESS.
             Очікування: GET /storages/regions/{id} повертає той самий id, name, recipientStorage.id.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testGetRegionDetails() {
         StorageResponse recipient = storageFixture.createUniqueStorage("reg-get-");
@@ -123,7 +123,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Тестові дані: область на recipientA (FULL_ACCESS) → PUT з новим name, recipientB,
             accessMode=REGIONS. Роль: ADMIN.
             Очікування: HTTP 200, GET підтверджує зміни в усіх трьох полях.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testUpdateRegion() {
         StorageResponse recipientA = storageFixture.createUniqueStorage("reg-upd-a-");
@@ -149,7 +149,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Що перевіряємо: видалення області видимості (soft admin action).
             Тестові дані: область reg-del-; перед DELETE знімаємо з cleanup-чергі (видаляємо вручну).
             Очікування: DELETE → 200; повторний GET /regions/{id} → не 200 (404).
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testDeleteRegion() {
         StorageResponse recipient = storageFixture.createUniqueStorage("reg-del-");
@@ -176,7 +176,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             потім PUT B (ідемпотентне накопичення); DELETE B+C.
             Очікування: після додавання GET .../locations містить 3 storageId; після видалення — лише A.
             API: PUT/DELETE /storages/regions/{regionId}/locations?locations=
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testAddAndRemoveRegionLocations() {
         StorageResponse recipient = storageFixture.createUniqueStorage("reg-loc-rec-");
@@ -209,7 +209,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             PUT members по одному, DELETE member B.
             Очікування: GET .../members містить обидва id; після DELETE — лише A.
             API: PUT/DELETE /storages/regions/{regionId}/members?members=
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testAddAndRemoveRegionMembers() {
         StorageResponse recipient = storageFixture.createUniqueStorage("reg-mem-rec-");
@@ -240,7 +240,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Тестові дані: sharedLocation у region1 і region2; member прив'язаний до обох областей.
             Очікування: GET locations кожної області окремо містить sharedLocation.storageId.
             Примітка: фактичний union у селекторах перевіряє StorageVisibilityTest (TC-STR-REG-032).
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.NORMAL)
     public void testLocationInTwoRegionsUnion() {
         StorageResponse sharedLocation = storageFixture.createUniqueStorage("reg-union-loc-");
@@ -276,7 +276,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Тестові дані: STORAGE reg-suggest-st- + область reg-suggest- з цією локацією в locations;
             GET /storages/locations/suggest?name= з унікальним фрагментом імені.
             Очікування: HTTP 200, непорожній content; серед name є збіг з токеном пошуку.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.NORMAL)
     public void testSuggestLocations() {
         StorageResponse storage = storageFixture.createUniqueStorage("reg-suggest-st-");
@@ -302,7 +302,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Тестові дані: viewer reg-explicit-view-; visibleA, visibleB — окремі локації;
             PUT /storages/{visibleA}/locations?locations={viewer}, аналогічно для B; DELETE grant для B.
             Очікування: GET /storages/{visibleId}/locations показує viewer у locationId; після revoke B — link зник.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testExplicitGrantAndRevokeLocations() {
         StorageResponse viewer = storageFixture.createUniqueStorage("reg-explicit-view-");
@@ -333,7 +333,7 @@ public class StorageRegionTest extends StorageApiTestBase {
             Тестові дані: viewer + область (member) + explicit grant viewer←viaExplicit.
             Очікування: GET /storages/{viaExplicit}/locations містить viewer.id у locationId
             (explicit grant з точки зору видимої локації).
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.NORMAL)
     public void testGetStorageLocationLinks() {
         StorageResponse viewer = storageFixture.createUniqueStorage("reg-links-view-");

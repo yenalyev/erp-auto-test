@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
@@ -229,6 +230,66 @@ public class StorageRegionFixture extends BaseFixture {
                 String.valueOf(visibleStorageId));
         validateSuccess(response, "Remove explicit visibility for storage " + visibleStorageId);
         return response;
+    }
+
+    @Step("FIXTURE: очистити області/grants для viewer storageId={viewerStorageId}")
+    public void purgeViewerVisibilityScope(UserRole role, Long viewerStorageId, StorageFixture storageFixture) {
+        purgeRegionMemberships(role, viewerStorageId);
+        purgeExplicitGrantsForViewer(role, viewerStorageId, storageFixture);
+        logRemainingViewerVisibility(viewerStorageId, storageFixture);
+    }
+
+    private void purgeRegionMemberships(UserRole role, Long viewerStorageId) {
+        List<StorageLocationLinkResponse> links = getStorageLocationLinks(role, viewerStorageId);
+        Set<Long> regionIds = new LinkedHashSet<>();
+        for (StorageLocationLinkResponse link : links) {
+            if (link.getRegionId() != null) {
+                regionIds.add(link.getRegionId());
+            }
+        }
+        for (Long regionId : regionIds) {
+            try {
+                removeRegionMembers(regionId, viewerStorageId);
+                log.info("Purge: removed viewer {} from region {}", viewerStorageId, regionId);
+            } catch (Exception e) {
+                log.warn("Purge: failed to remove viewer {} from region {}: {}",
+                        viewerStorageId, regionId, e.getMessage());
+            }
+        }
+    }
+
+    private void purgeExplicitGrantsForViewer(UserRole role, Long viewerStorageId, StorageFixture storageFixture) {
+        List<StorageResponse> visibleNames = storageFixture.getNames(UserRole.OWNER_2, true, null);
+        for (StorageResponse visible : visibleNames) {
+            if (Objects.equals(visible.getId(), viewerStorageId)) {
+                continue;
+            }
+            try {
+                List<StorageLocationLinkResponse> viewers =
+                        getStorageLocationLinks(role, visible.getId());
+                boolean viewerLinked = viewers.stream()
+                        .anyMatch(link -> Objects.equals(link.getLocationId(), viewerStorageId));
+                if (viewerLinked) {
+                    removeExplicitLocations(visible.getId(), viewerStorageId);
+                    log.info("Purge: revoked explicit grant visible={} viewer={}",
+                            visible.getId(), viewerStorageId);
+                }
+            } catch (Exception e) {
+                log.warn("Purge: failed to revoke grant visible={} viewer={}: {}",
+                        visible.getId(), viewerStorageId, e.getMessage());
+            }
+        }
+    }
+
+    private void logRemainingViewerVisibility(Long viewerStorageId, StorageFixture storageFixture) {
+        List<StorageResponse> names = storageFixture.getNames(UserRole.OWNER_2, true, null);
+        List<Long> ids = names.stream().map(StorageResponse::getId).toList();
+        if (ids.size() == 1 && Objects.equals(ids.getFirst(), viewerStorageId)) {
+            log.info("Purge: viewer {} sees only own storage in /names", viewerStorageId);
+            return;
+        }
+        log.warn("Purge: viewer {} still sees {} entries in /names: {}",
+                viewerStorageId, ids.size(), ids);
     }
 
     @Step("API: GET resources області id={regionId}")

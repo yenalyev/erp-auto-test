@@ -40,10 +40,7 @@ public class StorageCrewRegionTest extends CrewApiTestBase {
 
     @Test(priority = 10)
     @TestCaseId("TC-STR-CREW-001")
-    @Description("""
-            ADMIN створює область видимості з accessMode=CREWS.
-            Очікування: HTTP 200, схема storage-region-response, accessMode=CREWS.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_001)
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateCrewRegion() {
         StorageResponse recipient = storageFixture.createUnitStorage(
@@ -67,9 +64,7 @@ public class StorageCrewRegionTest extends CrewApiTestBase {
 
     @Test(priority = 20)
     @TestCaseId("TC-STR-CREW-002")
-    @Description("""
-            PUT/GET locations для області CREWS: UNIT як location для пошуку екіпажів.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_002)
     @Severity(SeverityLevel.CRITICAL)
     public void testAddAndListCrewRegionLocations() {
         CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("crew-loc-");
@@ -83,9 +78,7 @@ public class StorageCrewRegionTest extends CrewApiTestBase {
 
     @Test(priority = 30)
     @TestCaseId("TC-STR-CREW-003")
-    @Description("""
-            PUT/GET members для області CREWS: підрозділ-споживач отримує доступ до екіпажів.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_003)
     @Severity(SeverityLevel.CRITICAL)
     public void testAddAndListCrewRegionMembers() {
         CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("crew-mem-");
@@ -98,9 +91,7 @@ public class StorageCrewRegionTest extends CrewApiTestBase {
 
     @Test(priority = 40)
     @TestCaseId("TC-STR-CREW-004")
-    @Description("""
-            GET /storages/regions/{id} повертає область CREWS з коректним recipient.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_004)
     @Severity(SeverityLevel.NORMAL)
     public void testGetCrewRegionById() {
         CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("crew-get-");

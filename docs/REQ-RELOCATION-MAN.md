@@ -69,6 +69,10 @@ AUTO_FINISHED → редагування / видалення
 
 **AC-07:** Обладнання при видачі переходить у IN_TRANSIT; після FINISHED — AVAILABLE на складі отримувача.
 
+### Області видимості локацій (REGIONS)
+
+Автоматизація в suite `storage-regions`: **`RelocationVisibilityTest`** (API, TC-REL-VIS-001..011, 009), **`RelocationVisibilityUiTest`** (UI, TC-UI-REL-VIS-001..003). Див. також `src/test/java/com/erp/tests/functional/storage/README.md` — матриця наявне vs gap (TC-STR-REG/RES/CREW/UI-REL).
+
 ---
 
 ## Загальні Preconditions (для більшості кейсів)

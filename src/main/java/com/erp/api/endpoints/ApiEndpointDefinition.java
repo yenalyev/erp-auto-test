@@ -1101,6 +1101,36 @@ public enum ApiEndpointDefinition {
             "CREATE_RELOCATIONS"
     ),
 
+    RELOCATION_POST_SEND_WITH_INVOICE(
+            "/api/v1/relocations/send?generateInvoice=true",
+            Method.POST,
+            "schemas/relocations/relocation-response-schema.json",
+            "Send resources with async invoice generation",
+            new TypeReference<RelocationOutputRequest>() {},
+            new TypeReference<RelocationResponse>() {},
+            "CREATE_RELOCATIONS"
+    ),
+
+    INVOICE_GET_EXISTS(
+            "/api/v1/invoice/{id}/exists",
+            Method.GET,
+            null,
+            "Check whether invoice file exists for relocation",
+            null,
+            new TypeReference<java.util.Map<String, Boolean>>() {},
+            null
+    ),
+
+    INVOICE_GET_DOWNLOAD(
+            "/api/v1/invoice/{id}",
+            Method.GET,
+            null,
+            "Download generated invoice file",
+            null,
+            new TypeReference<byte[]>() {},
+            null
+    ),
+
     /** @deprecated use {@link #RELOCATION_POST_SEND} */
     @Deprecated
     RELOCATION_POST_CREATE_BY_STORE_ID(

@@ -55,9 +55,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
 
     @Test(priority = 10)
     @TestCaseId("TC-CREW-REL-001")
-    @Description("""
-            Happy path: видача UNIT→CREW; state=AUTO_FINISHED; stock sender −N, crew +N.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_REL_001)
     @Severity(SeverityLevel.CRITICAL)
     public void testSendToCrewAutoFinished() {
         ProductionStockAssertions.StockSnapshot beforeSender = RelocationStockAssertions.capture(
@@ -94,9 +92,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
 
     @Test(priority = 20)
     @TestCaseId("TC-CREW-REL-002")
-    @Description("""
-            Видача на екіпаж з'являється в журналі переміщень за recipientIds=crewId.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_REL_002)
     @Severity(SeverityLevel.NORMAL)
     public void testCrewRelocationVisibleInJournal() {
         RelocationResponse relocation = relocationFixture.createSend(
@@ -122,9 +118,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
 
     @Test(priority = 30)
     @TestCaseId("TC-CREW-REL-003")
-    @Description("""
-            Недостатній stock на sender → 400, залишки не змінюються.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_REL_003)
     @Severity(SeverityLevel.NORMAL)
     public void testSendToCrewInsufficientStock() {
         double currentStock = relocationFixture.getResourceStock(

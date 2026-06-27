@@ -51,7 +51,9 @@ public abstract class BaseUITest extends BaseTest {
 
         Browser browser = provider.getBrowser();
         browserContext = browser.newContext(
-                new Browser.NewContextOptions().setIgnoreHTTPSErrors(true)
+                new Browser.NewContextOptions()
+                        .setIgnoreHTTPSErrors(true)
+                        .setAcceptDownloads(true)
         );
         log.info("BrowserContext created for: {}", this.getClass().getSimpleName());
     }

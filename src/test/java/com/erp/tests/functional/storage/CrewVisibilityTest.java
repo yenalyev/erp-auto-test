@@ -38,9 +38,7 @@ public class CrewVisibilityTest extends CrewApiTestBase {
 
     @Test(priority = 10)
     @TestCaseId("TC-STR-CREW-005")
-    @Description("""
-            Member області CREWS → hasCrews=true; storage поза областю → hasCrews=false.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_005)
     @Severity(SeverityLevel.CRITICAL)
     public void testRelocationCreationOptionsHasCrews() {
         CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("crew-opt-");
@@ -56,9 +54,7 @@ public class CrewVisibilityTest extends CrewApiTestBase {
 
     @Test(priority = 20)
     @TestCaseId("TC-STR-CREW-006")
-    @Description("""
-            Область CREWS без members → hasCrews=false навіть якщо locations налаштовані.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_006)
     @Severity(SeverityLevel.CRITICAL)
     public void testHasCrewsFalseWithoutMembers() {
         StorageResponse unit = storageFixture.createUnitStorage(
@@ -77,9 +73,7 @@ public class CrewVisibilityTest extends CrewApiTestBase {
 
     @Test(priority = 30)
     @TestCaseId("TC-STR-CREW-011")
-    @Description("""
-            GET /storages/names/crew-units — ієрархія UNIT без CREW nodes.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_011)
     @Severity(SeverityLevel.CRITICAL)
     public void testGetCrewUnitsHierarchy() {
         CrewRegionScenario scenario = crewFixture.prepareHierarchyScenario("crew-hier-");
@@ -103,9 +97,7 @@ public class CrewVisibilityTest extends CrewApiTestBase {
 
     @Test(priority = 40)
     @TestCaseId("TC-STR-CREW-012")
-    @Description("""
-            GET /storages/names/crews?parentId= — екіпажі під дочірнім UNIT.
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_012)
     @Severity(SeverityLevel.CRITICAL)
     public void testGetCrewNamesByParent() {
         CrewRegionScenario scenario = crewFixture.prepareHierarchyScenario("crew-names-");

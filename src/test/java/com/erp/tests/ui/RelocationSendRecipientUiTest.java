@@ -11,6 +11,7 @@ import com.erp.models.response.StorageRegionResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.pages.RelocationCreateOutputPage;
 import com.erp.pages.RelocationPage;
+import com.erp.tests.functional.storage.StorageRegionsAllureDescriptions;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +58,7 @@ public class RelocationSendRecipientUiTest extends BaseUITest {
         regionFixture = new StorageRegionFixture(testContext, apiExecutor);
         owner2StorageId = ConfigProvider.getOwner2StorageId();
         ensureOwner2RestrictedAccess();
+        regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
     }
 
     @AfterClass(alwaysRun = true)
@@ -78,21 +80,7 @@ public class RelocationSendRecipientUiTest extends BaseUITest {
     @Test
     @TestCaseId("TC-UI-REL-010")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("""
-            Дзеркало TC-STR-REG-034 для UI форми видачі.
-            
-            Arrange (API):
-            - OWNER_2 (REGIONS) — member у 3 областях FULL_ACCESS;
-            - спільна локація в locations усіх трьох областей.
-            
-            Assert API:
-            - GET /storages/names?isActive=true містить спільну локацію рівно 1 раз (без дублікатів id).
-            
-            Assert UI (як useRelocationCreateOutput):
-            - toStorages = names фільтр: type≠SUPPLIER, id≠selectedStorageId;
-            - dropdown «Кому відправляю» не дублює label спільної локації;
-            - кожна видима опція UI ∈ дозволеному набору з API (області видимості).
-            """)
+    @Description(StorageRegionsAllureDescriptions.TC_UI_REL_010)
     public void sendFormRecipientListMatchesVisibilityRegions() {
         VisibilityScenario scenario = prepareThreeRegionsSharedLocationScenario();
         injectOwner2Session(owner2StorageId);

@@ -3,6 +3,8 @@ package com.erp.tests.functional.storage;
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.StorageAccessMode;
+import com.erp.enums.StorageRelation;
+import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.models.request.StorageRequest;
 import com.erp.models.response.StorageRegionResponse;
@@ -13,6 +15,7 @@ import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.HashSet;
@@ -46,6 +49,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
         SchemaRegistry.logSchemaCoverage();
         owner2StorageId = ConfigProvider.getOwner2StorageId();
         ensureOwner2RestrictedAccess();
+        regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
     }
 
     @AfterClass(alwaysRun = true)
@@ -91,7 +95,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             Тестові дані: дочірня локація vis-reg- під parent unit; POST як ADMIN.
             Очікування: HTTP 200, accessMode=REGIONS у POST response та GET by id.
             Cleanup: локація архівується через StorageApiTestBase.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateRestrictedStorage() {
         StorageResponse parent = storageFixture.resolveParentUnit();
@@ -128,7 +132,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             
             Очікування: owner2Names.size()==1 і owner1Names.size() > owner2Names.size().
             Не перевіряємо: точний склад списку OWNER_1 (залежить від даних dev/staging).
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.NORMAL)
     public void testFullAccessOwnerSeesMoreThanRestrictedOwner() {
         Long owner1StorageId = ConfigProvider.getOwner1StorageId();
@@ -183,7 +187,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             GET /storages/names?isActive=true як OWNER_2.
             Очікування: рівно 1 елемент — owner2.storage.id; foreign.id відсутній.
             Примітка: тест має priority=20, до створення областей у наступних тестах.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testRestrictedOwnerSeesOnlyOwnUnitWithoutRegions() {
         StorageResponse foreign = storageFixture.createUniqueStorage("vis-foreign-");
@@ -203,7 +207,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             Тестові дані: recipient vis-rec-, shared vis-shared-, outsider vis-out-;
             область vis-reg-r- (REGIONS) з locations=[recipient, shared], member=owner2StorageId.
             Очікування: OWNER_2 /names містить owner2 + region.name; немає outsider.id і recipient.name.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testRegionsModeShowsRegionNameInSelector() {
         StorageResponse recipient = storageFixture.createUniqueStorage("vis-rec-");
@@ -233,7 +237,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             Тестові дані: recipient vis-far-rec-, location vis-far-loc-, outsider vis-far-out-;
             область vis-far- (FULL_ACCESS), locations=[recipient, location], member=owner2StorageId.
             Очікування: OWNER_2 /names містить owner2, location.id з name=location.name; outsider відсутній.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testFullAccessRegionShowsLocationNames() {
         StorageResponse recipient = storageFixture.createUniqueStorage("vis-far-rec-");
@@ -264,7 +268,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             Що перевіряємо: member у двох областях отримує union видимості (об'єднання наборів).
             Тестові дані: region1→loc1, region2→loc2; OWNER_2 member в обох областях (FULL_ACCESS).
             Очікування: GET /storages/names як OWNER_2 містить loc1.id і loc2.id одночасно.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.NORMAL)
     public void testTwoRegionsUnionForMember() {
         StorageResponse recipient1 = storageFixture.createUniqueStorage("vis-uni-r1-");
@@ -292,16 +296,106 @@ public class StorageVisibilityTest extends StorageApiTestBase {
                 .hasSize(visibleIds.size());
     }
 
+    @Test(priority = 54, dataProvider = "threeRegionsSharedLocationDedupScenarios")
+    @TestCaseId("TC-STR-REG-035")
+    @Description("""
+            Розширення TC-STR-REG-034: member у трьох областях з однією спільною локацією —
+            GET /storages/names?isActive=true не дублює storage.id незалежно від type локації
+            та accessMode областей (FULL_ACCESS, REGIONS, змішані).
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testMemberInThreeRegionsNoDuplicateIdsAcrossTypesAndAccessModes(
+            String scenarioLabel,
+            UnitType sharedLocationType,
+            StorageAccessMode regionMode1,
+            StorageAccessMode regionMode2,
+            StorageAccessMode regionMode3) {
+        Allure.parameter("scenario", scenarioLabel);
+        Allure.parameter("sharedLocationType", sharedLocationType.name());
+        Allure.parameter("regionModes", regionMode1 + "/" + regionMode2 + "/" + regionMode3);
+
+        String prefix = "vis-dedup-v2-"
+                + sharedLocationType.name().toLowerCase() + "-"
+                + regionMode1.name().charAt(0)
+                + regionMode2.name().charAt(0)
+                + regionMode3.name().charAt(0) + "-";
+
+        StorageResponse sharedLocation = createSharedLocation(sharedLocationType, prefix + "loc-");
+        StorageResponse recipient1 = storageFixture.createUniqueStorage(prefix + "r1-");
+        StorageResponse recipient2 = storageFixture.createUniqueStorage(prefix + "r2-");
+        StorageResponse recipient3 = storageFixture.createUniqueStorage(prefix + "r3-");
+
+        StorageRegionResponse region1 = regionFixture.createRegion(
+                recipient1, regionMode1, prefix + "reg1-");
+        StorageRegionResponse region2 = regionFixture.createRegion(
+                recipient2, regionMode2, prefix + "reg2-");
+        StorageRegionResponse region3 = regionFixture.createRegion(
+                recipient3, regionMode3, prefix + "reg3-");
+
+        linkSharedLocationToThreeRegions(sharedLocation, region1, region2, region3);
+
+        assertSharedLocationVisibleOnceInActiveNames(
+                sharedLocation, scenarioLabel, regionMode1, regionMode2, regionMode3);
+    }
+
+    @DataProvider(name = "threeRegionsSharedLocationDedupScenarios")
+    public Object[][] threeRegionsSharedLocationDedupScenarios() {
+        return new Object[][] {
+                {
+                        "STORAGE location, усі області FULL_ACCESS",
+                        UnitType.STORAGE,
+                        StorageAccessMode.FULL_ACCESS,
+                        StorageAccessMode.FULL_ACCESS,
+                        StorageAccessMode.FULL_ACCESS
+                },
+                {
+                        "UNIT location, усі області FULL_ACCESS",
+                        UnitType.UNIT,
+                        StorageAccessMode.FULL_ACCESS,
+                        StorageAccessMode.FULL_ACCESS,
+                        StorageAccessMode.FULL_ACCESS
+                },
+                {
+                        "PRODUCTION location, усі області FULL_ACCESS",
+                        UnitType.PRODUCTION,
+                        StorageAccessMode.FULL_ACCESS,
+                        StorageAccessMode.FULL_ACCESS,
+                        StorageAccessMode.FULL_ACCESS
+                },
+                {
+                        "STORAGE location, усі області REGIONS",
+                        UnitType.STORAGE,
+                        StorageAccessMode.REGIONS,
+                        StorageAccessMode.REGIONS,
+                        StorageAccessMode.REGIONS
+                },
+                {
+                        "UNIT location, усі області REGIONS",
+                        UnitType.UNIT,
+                        StorageAccessMode.REGIONS,
+                        StorageAccessMode.REGIONS,
+                        StorageAccessMode.REGIONS
+                },
+                {
+                        "STORAGE location, змішані FULL_ACCESS + REGIONS",
+                        UnitType.STORAGE,
+                        StorageAccessMode.FULL_ACCESS,
+                        StorageAccessMode.REGIONS,
+                        StorageAccessMode.FULL_ACCESS
+                },
+        };
+    }
+
     @Test(priority = 55)
     @TestCaseId("TC-STR-REG-034")
     @Description("""
             Member у трьох областях з однією спільною локацією — GET /storages/names?isActive=true
             містить локацію рівно один раз (без дублікатів id).
             Регресія: dropdown «Кому відправляю» не показує один підрозділ кілька разів.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testMemberInThreeRegionsNoDuplicateIdsInActiveNames() {
-        StorageResponse sharedLocation = storageFixture.createUniqueStorage("vis-dedup-loc-");
+        StorageResponse sharedLocation = createSharedLocation(UnitType.STORAGE, "vis-dedup-loc-");
         StorageResponse recipient1 = storageFixture.createUniqueStorage("vis-dedup-r1-");
         StorageResponse recipient2 = storageFixture.createUniqueStorage("vis-dedup-r2-");
         StorageResponse recipient3 = storageFixture.createUniqueStorage("vis-dedup-r3-");
@@ -313,22 +407,63 @@ public class StorageVisibilityTest extends StorageApiTestBase {
         StorageRegionResponse region3 = regionFixture.createRegion(
                 recipient3, StorageAccessMode.FULL_ACCESS, "vis-dedup-3-");
 
+        linkSharedLocationToThreeRegions(sharedLocation, region1, region2, region3);
+        assertSharedLocationVisibleOnceInActiveNames(
+                sharedLocation,
+                "STORAGE + FULL_ACCESS (baseline TC-STR-REG-034)",
+                StorageAccessMode.FULL_ACCESS,
+                StorageAccessMode.FULL_ACCESS,
+                StorageAccessMode.FULL_ACCESS);
+    }
+
+    private StorageResponse createSharedLocation(UnitType type, String namePrefix) {
+        StorageResponse parent = storageFixture.resolveParentUnit();
+        return storageFixture.createChildStorage(
+                parent.getId(), namePrefix, type, StorageRelation.INTERNAL);
+    }
+
+    private void linkSharedLocationToThreeRegions(
+            StorageResponse sharedLocation,
+            StorageRegionResponse region1,
+            StorageRegionResponse region2,
+            StorageRegionResponse region3) {
         regionFixture.addRegionLocations(region1.getId(), sharedLocation.getId());
         regionFixture.addRegionLocations(region2.getId(), sharedLocation.getId());
         regionFixture.addRegionLocations(region3.getId(), sharedLocation.getId());
         regionFixture.addRegionMembers(region1.getId(), owner2StorageId);
         regionFixture.addRegionMembers(region2.getId(), owner2StorageId);
         regionFixture.addRegionMembers(region3.getId(), owner2StorageId);
+    }
 
+    private void assertSharedLocationVisibleOnceInActiveNames(
+            StorageResponse sharedLocation,
+            String scenarioLabel,
+            StorageAccessMode regionMode1,
+            StorageAccessMode regionMode2,
+            StorageAccessMode regionMode3) {
         List<StorageResponse> names = storageFixture.getNames(UserRole.OWNER_2, true, null);
         List<Long> ids = names.stream().map(StorageResponse::getId).toList();
 
-        assertThat(ids).contains(sharedLocation.getId());
-        assertThat(ids.stream().filter(id -> id.equals(sharedLocation.getId())).count())
-                .as("Спільна локація з трьох областей має з'явитись у /names лише один раз")
-                .isEqualTo(1);
+        boolean allRegionsAliasMode = regionMode1 == StorageAccessMode.REGIONS
+                && regionMode2 == StorageAccessMode.REGIONS
+                && regionMode3 == StorageAccessMode.REGIONS;
+
+        if (allRegionsAliasMode) {
+            // TC-STR-REG-030: REGIONS показує ім'я області, не storage.id спільної локації.
+            assertThat(ids)
+                    .as("[%s] REGIONS: спільна локація id=%d не віддається в /names як storage.id",
+                            scenarioLabel, sharedLocation.getId())
+                    .doesNotContain(sharedLocation.getId());
+        } else {
+            assertThat(ids)
+                    .as("[%s] Спільна локація id=%d має бути у /names", scenarioLabel, sharedLocation.getId())
+                    .contains(sharedLocation.getId());
+            assertThat(ids.stream().filter(id -> id.equals(sharedLocation.getId())).count())
+                    .as("[%s] Спільна локація з трьох областей — рівно один запис у /names", scenarioLabel)
+                    .isEqualTo(1);
+        }
         assertThat(new HashSet<>(ids))
-                .as("Жодного дубліката id у відповіді /storages/names?isActive=true")
+                .as("[%s] Жодного дубліката storage.id у /storages/names?isActive=true", scenarioLabel)
                 .hasSize(ids.size());
     }
 
@@ -338,7 +473,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             Що перевіряємо: селектор «мої підрозділи» для REGIONS owner не розширюється областями.
             Тестові дані: OWNER_2 у REGIONS (можуть існувати області з попередніх тестів у класі).
             Очікування: GET /storages/names/my-units — рівно 1 internal unit = owner2.storage.id.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.NORMAL)
     public void testMyUnitsForRestrictedOwner() {
         List<StorageResponse> units = storageFixture.getMyUnits(UserRole.OWNER_2);
@@ -354,7 +489,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             замість реальної назви (COALESCE(alias, name) на бекенді).
             Тестові дані: STORAGE vis-alias- з явним alias; область FULL_ACCESS, member=OWNER_2.
             Очікування: у /names для aliasedLocation.id поле name дорівнює alias, не storage.name.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testAliasShownInFullAccessRegion() {
         StorageResponse parent = storageFixture.resolveParentUnit();
@@ -386,19 +521,27 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             Тестові дані: granted vis-exp-grant-; PUT /storages/{granted}/locations?locations={owner2StorageId}.
             Очікування: OWNER_2 /names містить granted.id з name=granted.name (не ім'я області).
             Модель: storage_id=granted, location_storage_id=owner2 у storage_location.
-            """)
+            """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.CRITICAL)
     public void testExplicitGrantShowsRealName() {
         StorageResponse granted = storageFixture.createUniqueStorage("vis-exp-grant-");
 
         regionFixture.addExplicitLocations(granted.getId(), owner2StorageId);
 
-        List<StorageResponse> names = storageFixture.getNames(UserRole.OWNER_2, true, null);
-        StorageResponse visible = names.stream()
-                .filter(s -> Objects.equals(s.getId(), granted.getId()))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Explicitly granted location not in /names"));
+        try {
+            List<StorageResponse> names = storageFixture.getNames(UserRole.OWNER_2, true, null);
+            StorageResponse visible = names.stream()
+                    .filter(s -> Objects.equals(s.getId(), granted.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Explicitly granted location not in /names"));
 
-        assertThat(visible.getName()).isEqualTo(granted.getName());
+            assertThat(visible.getName()).isEqualTo(granted.getName());
+        } finally {
+            try {
+                regionFixture.removeExplicitLocations(granted.getId(), owner2StorageId);
+            } catch (Exception e) {
+                log.warn("TC-STR-REG-052 cleanup: failed to revoke explicit grant: {}", e.getMessage());
+            }
+        }
     }
 }
