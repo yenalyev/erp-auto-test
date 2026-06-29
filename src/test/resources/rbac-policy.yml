@@ -227,6 +227,12 @@ rules:
     description: "Подивитися всі плани по виробництву Бізнес Юніту який належить OWNER_1: 
     ADMIN та OWNER_1 мають право, OWNER_2 та ANONYMOUS - ні"
 
+  - endpointName: "PLAN_GET_ALL_ADMIN"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Подивитися всі плани по всіх локаціях (режим «Всі локації» на /plans): тільки ADMIN"
+
   - endpointName: "PLAN_POST_CREATE"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, ANONYMOUS ]

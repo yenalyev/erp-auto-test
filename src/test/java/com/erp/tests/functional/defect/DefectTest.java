@@ -5,6 +5,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.defect.DefectDataFactory;
 import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.enums.DefectType;
+import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.DefectFixture;
 import com.erp.models.query.DefectQuery;
@@ -25,7 +26,6 @@ import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -38,10 +38,6 @@ import static org.assertj.core.api.Assertions.within;
 
 /**
  * Functional API tests for the Defect ("Брак") domain (REQ-DEF), mirroring DefectController.
- *
- * <p>Several TCM cases verify rules enforced ONLY by the tk-ui frontend; the backend API allows
- * those operations. Such cases are skipped with a documented reason so the contract gap is visible
- * rather than silently passing.
  */
 @Slf4j
 @Epic("Defects")
@@ -127,7 +123,7 @@ public class DefectTest extends BaseFunctionalTest {
         RelocationResponse receipt = fixture.createExternalReceipt(resource, 10.0, batch);
 
         // Без браку переміщення не лінкується
-        List<Long> beforeDefect = linkedRelocationsOrSkip(resource, LocalDate.now());
+        List<Long> beforeDefect = linkedRelocations(resource, LocalDate.now());
         assertThat(beforeDefect)
                 .as("До створення браку переміщення не має повертатись у linked-relocation-ids")
                 .doesNotContain(receipt.getId());
@@ -136,7 +132,7 @@ public class DefectTest extends BaseFunctionalTest {
         fixture.createAs(UserRole.OWNER_1,
                 DefectDataFactory.buildRelocationDefect(storageId, resource, receipt.getId(), 4.0, LocalDate.now()));
 
-        List<Long> afterDefect = linkedRelocationsOrSkip(resource, LocalDate.now());
+        List<Long> afterDefect = linkedRelocations(resource, LocalDate.now());
         assertThat(afterDefect)
                 .as("Після створення браку id переміщення має повертатись у linked-relocation-ids")
                 .contains(receipt.getId());
@@ -561,13 +557,6 @@ public class DefectTest extends BaseFunctionalTest {
         DefectWriteOffRequest wo = DefectDataFactory.buildWriteOff(
                 created.getId(), storageId, 6.0, "erp-auto-test full write-off");
         Response woRaw = fixture.writeOffRaw(UserRole.OWNER_1, wo);
-        if (woRaw.statusCode() >= 500) {
-            Allure.addAttachment("Backend issue (TC-DEF-020)", "text/plain",
-                    "POST /defects/write-off повертає " + woRaw.statusCode() + " на dev-середовищі "
-                            + "(той самий payload проходить у backend DefectControllerIT). Ймовірний дефект "
-                            + "поточного деплою бекенда.\nbody=" + safeBody(woRaw));
-            throw new SkipException("TC-DEF-020: write-off повертає " + woRaw.statusCode() + " на dev — див. note.");
-        }
         assertThat(woRaw.statusCode()).as("write-off має повертати 200").isEqualTo(200);
         DefectWriteOffResponse woResp = woRaw.as(DefectWriteOffResponse.class);
         assertThat(woResp.getAmount().doubleValue()).isCloseTo(6.0, within(0.01));
@@ -582,6 +571,46 @@ public class DefectTest extends BaseFunctionalTest {
     // =====================================================================
     // Verify-then-decide: rules whose enforcement is checked at runtime
     // =====================================================================
+
+    @Test(priority = 50)
+    @TestCaseId("TC-DEF-005")
+    @Story("Cannot defect production batch in transit")
+    @Description("REQ-DEF-002 AC-05: брак на виробничу партію, що вже видана (CREATED), має бути відхилений API")
+    @Severity(SeverityLevel.NORMAL)
+    public void testCannotDefectProductionBatchInTransit() {
+        Long outRes = fixture.outputResourceId();
+        String batch = ProductionDataFactory.uniqueBatchNumber();
+        ManufacturingItemResponse prod = fixture.createProduction(5.0, batch);
+        double produced = capturedBatchAmount(outRes, batch, "після виробництва");
+
+        RelocationResponse sent = fixture.sendFromBatch(owner2Storage, outRes, produced, batch, true);
+        assertThat(sent.getState()).isIn(RelocationState.CREATED, RelocationState.AUTO_FINISHED);
+
+        Response resp = fixture.createRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildProductionDefect(storageId, outRes, prod.getId(), produced, LocalDate.now()));
+        Allure.step("Брак на партію в дорозі відхилено", () ->
+                assertThat(resp.statusCode()).as("body=%s", safeBody(resp)).isGreaterThanOrEqualTo(400));
+    }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-DEF-006")
+    @Story("Cannot defect production batch already shipped")
+    @Description("REQ-DEF-002: брак на партію після завершеного отримання одержувачем має бути відхилений")
+    @Severity(SeverityLevel.NORMAL)
+    public void testCannotDefectShippedProductionBatch() {
+        Long outRes = fixture.outputResourceId();
+        String batch = ProductionDataFactory.uniqueBatchNumber();
+        ManufacturingItemResponse prod = fixture.createProduction(5.0, batch);
+        double produced = capturedBatchAmount(outRes, batch, "після виробництва");
+
+        fixture.sendAndFinishAtRecipient(
+                UserRole.OWNER_2, owner2Storage, outRes, produced, batch, true);
+
+        Response resp = fixture.createRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildProductionDefect(storageId, outRes, prod.getId(), produced, LocalDate.now()));
+        Allure.step("Брак на вже відправлену партію відхилено", () ->
+                assertThat(resp.statusCode()).as("body=%s", safeBody(resp)).isGreaterThanOrEqualTo(400));
+    }
 
     @Test(priority = 70)
     @TestCaseId("TC-DEF-007")
@@ -628,105 +657,151 @@ public class DefectTest extends BaseFunctionalTest {
         }
     }
 
+    @Test(priority = 150)
+    @TestCaseId("TC-DEF-015")
+    @Story("Cannot delete defect with write-offs")
+    @Description("REQ-DEF-001 AC-07: видалення браку після часткового списання має бути заборонено")
+    @Severity(SeverityLevel.NORMAL)
+    public void testCannotDeleteDefectWithWriteOffs() {
+        DefectResponse created = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 6.0));
+
+        Response woResp = fixture.writeOffRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildWriteOff(created.getId(), storageId, 3.0, "partial write-off"));
+        assertThat(woResp.statusCode()).as("write-off setup").isEqualTo(200);
+
+        Response deleteResp = fixture.deleteRaw(UserRole.OWNER_1, created.getId());
+        Allure.step("DELETE браку зі списанням відхилено", () ->
+                assertThat(deleteResp.statusCode()).as("body=%s", safeBody(deleteResp)).isGreaterThanOrEqualTo(400));
+    }
+
     @Test(priority = 160)
     @TestCaseId("TC-DEF-016")
-    @Story("Outbound sends are not offered as defect sources (frontend-only)")
+    @Story("Outbound sends are not valid relocation defect sources")
+    @Description("Брак типу RELOCATION лише за отриманням; спроба прив'язати відправлення (send) має бути відхилена")
     @Severity(SeverityLevel.NORMAL)
     public void testSendsNotOfferedForDefect() {
-        throw new SkipException("Frontend-only rule: фільтрація доступних джерел браку (відправлення не "
-                + "пропонуються) відбувається у формі tk-ui. API-ендпоінт GET /defects/linked-relocation-ids "
-                + "повертає лише переміщення, для яких УЖЕ створено брак (контракт DefectControllerIT), а не "
-                + "перелік доступних джерел, тож це правило не може бути перевірене через API. Див. TC-DEF-002.");
+        Long resource = fixture.createFreshResource();
+        fixture.createExternalReceipt(resource, 10.0, "send-src-" + System.currentTimeMillis());
+        RelocationResponse send = fixture.getRelocationFixture().createSend(
+                UserRole.OWNER_1, storageId, owner2Storage, resource, 5.0);
+
+        Response resp = fixture.createRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildRelocationDefect(storageId, resource, send.getId(), 3.0, LocalDate.now()));
+        Allure.step("Брак за відправленням (не отриманням) відхилено", () ->
+                assertThat(resp.statusCode()).as("body=%s", safeBody(resp)).isGreaterThanOrEqualTo(400));
     }
 
     @Test(priority = 170)
     @TestCaseId("TC-DEF-017")
-    @Story("In-transit relocations are not offered as defect sources (frontend-only)")
+    @Story("In-transit relocations are not valid relocation defect sources")
+    @Description("Брак типу RELOCATION за переміщенням у статусі CREATED має бути відхилений")
     @Severity(SeverityLevel.NORMAL)
     public void testInTransitNotOfferedForDefect() {
-        throw new SkipException("Frontend-only rule: переміщення «В дорозі» (CREATED) не пропонуються у формі "
-                + "створення браку tk-ui. API не надає ендпоінта «доступні джерела»; linked-relocation-ids "
-                + "повертає лише переміщення з уже створеним браком. Тому правило статусу не перевіряється через API.");
-    }
+        Long resource = fixture.createFreshResource();
+        fixture.createExternalReceipt(resource, 10.0, "transit-" + System.currentTimeMillis());
+        RelocationResponse send = fixture.getRelocationFixture().createSend(
+                UserRole.OWNER_1, storageId, owner2Storage, resource, 5.0);
+        assertThat(send.getState()).isEqualTo(RelocationState.CREATED);
 
-    // =====================================================================
-    // Documented frontend-only gaps (backend allows the operation)
-    // =====================================================================
-
-    @Test(priority = 50)
-    @TestCaseId("TC-DEF-005")
-    @Story("Cannot defect production batch in transit (frontend-only)")
-    @Severity(SeverityLevel.NORMAL)
-    public void testCannotDefectProductionBatchInTransit() {
-        throw new SkipException("Frontend-only rule: backend does not block defects on a produced batch "
-                + "that is already sent / 'В дорозі'. Covered by tk-ui, not the API. See REQ-DEF-002 AC-05.");
-    }
-
-    @Test(priority = 60)
-    @TestCaseId("TC-DEF-006")
-    @Story("Cannot defect production batch already shipped (frontend-only)")
-    @Severity(SeverityLevel.NORMAL)
-    public void testCannotDefectShippedProductionBatch() {
-        throw new SkipException("Frontend-only rule: backend does not block defects on a produced batch "
-                + "already shipped to an external counterparty. Covered by tk-ui, not the API.");
-    }
-
-    @Test(priority = 150)
-    @TestCaseId("TC-DEF-015")
-    @Story("Cannot delete defect with write-offs (frontend-only)")
-    @Severity(SeverityLevel.NORMAL)
-    public void testCannotDeleteDefectWithWriteOffs() {
-        throw new SkipException("Frontend-only rule: tk-ui blocks deleting a defect when Списано > 0, "
-                + "but the backend DELETE /defects/{id} allows it (rolls back the remaining amount). "
-                + "See REQ-DEF-001 AC-07.");
+        Response resp = fixture.createRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildRelocationDefect(storageId, resource, send.getId(), 3.0, LocalDate.now()));
+        Allure.step("Брак за переміщенням CREATED відхилено", () ->
+                assertThat(resp.statusCode()).as("body=%s", safeBody(resp)).isGreaterThanOrEqualTo(400));
     }
 
     @Test(priority = 210)
     @TestCaseId("TC-DEF-021")
-    @Story("Cannot write off more than created in one step (frontend-only)")
+    @Story("Cannot write off more than created in one step")
+    @Description("REQ-DEF-005: списання більше залишку браку за один крок має бути відхилене")
     @Severity(SeverityLevel.NORMAL)
     public void testCannotWriteOffMoreThanCreatedSingle() {
-        throw new SkipException("Frontend-only rule: backend has no validator preventing write-off > remaining "
-                + "defect amount. tk-ui validates 'Перевищує залишок браку'. See REQ-DEF-005.");
+        DefectResponse created = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 6.0));
+
+        Response woResp = fixture.writeOffRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildWriteOff(created.getId(), storageId, 10.0, "over limit"));
+        Allure.step("Списання понад залишок відхилено", () ->
+                assertThat(woResp.statusCode()).as("body=%s", safeBody(woResp)).isGreaterThanOrEqualTo(400));
     }
 
     @Test(priority = 220)
     @TestCaseId("TC-DEF-022")
-    @Story("Cannot write off more than created stepwise (frontend-only)")
+    @Story("Cannot write off more than created stepwise")
+    @Description("REQ-DEF-005: кумулятивне списання понад залишок браку має бути відхилене")
     @Severity(SeverityLevel.NORMAL)
     public void testCannotWriteOffMoreThanCreatedStepwise() {
-        throw new SkipException("Frontend-only rule: backend does not validate cumulative write-off vs remaining "
-                + "defect amount. Enforced only by tk-ui. See REQ-DEF-005.");
+        DefectResponse created = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 6.0));
+
+        Response first = fixture.writeOffRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildWriteOff(created.getId(), storageId, 4.0, "step 1"));
+        assertThat(first.statusCode()).as("перше списання").isEqualTo(200);
+
+        Response second = fixture.writeOffRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildWriteOff(created.getId(), storageId, 3.0, "step 2 over limit"));
+        Allure.step("Друге списання понад залишок відхилено", () ->
+                assertThat(second.statusCode()).as("body=%s", safeBody(second)).isGreaterThanOrEqualTo(400));
     }
 
     @Test(priority = 240)
     @TestCaseId("TC-DEF-024")
     @Story("Return-from-unit defect consumes the returned batch")
+    @Description("Брак типу RELOCATION_FROM_UNIT після повернення з підрозділу зменшує залишок на величину браку")
     @Severity(SeverityLevel.NORMAL)
     public void testReturnFromUnitDefectConsumesReturnedBatch() {
-        throw new SkipException("Requires a real return-from-unit relocation lifecycle (send to UNIT then return), "
-                + "which is not yet supported by the relocation fixtures. The backend also ignores explicit "
-                + "non-produced defectBatches for the STORAGE path (uses FIFO), so the specific returned batch "
-                + "cannot be targeted via API without the relocationId of a return. Tracked as a setup gap.");
+        Long resource = fixture.createFreshResource();
+        String batch = "unit-ret-" + System.currentTimeMillis();
+        fixture.createExternalReceipt(resource, 10.0, batch);
+        double stockBefore = fixture.resourceStock(resource);
+
+        RelocationResponse returned = fixture.sendToUnitAndReturn(resource, 8.0, batch);
+
+        DefectResponse created = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildRelocationFromUnitDefect(
+                        storageId, resource, returned.getId(), 4.0, LocalDate.now()));
+        assertThat(created.getType()).isEqualTo(DefectType.RELOCATION_FROM_UNIT);
+
+        DefectStockAssertions.assertStockDebited(stockBefore, fixture.resourceStock(resource), 4.0,
+                "після браку RELOCATION_FROM_UNIT");
     }
 
     @Test(priority = 260)
     @TestCaseId("TC-DEF-026")
-    @Story("Cannot delete defect that was written off (frontend-only)")
+    @Story("Cannot delete defect that was written off")
+    @Description("REQ-DEF-001 AC-07: видалення повністю списаного браку має бути заборонено")
     @Severity(SeverityLevel.NORMAL)
     public void testCannotDeleteWrittenOffDefect() {
-        throw new SkipException("Frontend-only rule (duplicate of TC-DEF-015): backend DELETE /defects/{id} "
-                + "allows deleting a defect that has write-offs. Enforced only by tk-ui.");
+        DefectResponse created = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 5.0));
+
+        Response woResp = fixture.writeOffRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildWriteOff(created.getId(), storageId, 5.0, "full write-off"));
+        assertThat(woResp.statusCode()).as("повне списання").isEqualTo(200);
+
+        Response deleteResp = fixture.deleteRaw(UserRole.OWNER_1, created.getId());
+        Allure.step("DELETE повністю списаного браку відхилено", () ->
+                assertThat(deleteResp.statusCode()).as("body=%s", safeBody(deleteResp)).isGreaterThanOrEqualTo(400));
     }
 
     @Test(priority = 270)
     @TestCaseId("TC-DEF-027")
-    @Story("Cannot create production defect on shipped batch (frontend-only)")
+    @Story("Cannot create production defect on shipped batch")
+    @Description("Брак на виробничу партію після відправки зовнішньому контрагенту має бути відхилений")
     @Severity(SeverityLevel.NORMAL)
     public void testCannotCreateProductionDefectOnShippedBatch() {
-        throw new SkipException("Frontend-only rule: backend does not block a production defect on a batch that "
-                + "was already shipped (it fails only if the batch quantity is insufficient — see TC-DEF-013). "
-                + "The explicit 'already shipped' guard is enforced only by tk-ui. See REQ-DEF (general).");
+        Long outRes = fixture.outputResourceId();
+        String batch = ProductionDataFactory.uniqueBatchNumber();
+        ManufacturingItemResponse prod = fixture.createProduction(4.0, batch);
+        double produced = capturedBatchAmount(outRes, batch, "після виробництва");
+
+        fixture.sendAndFinishAtRecipient(
+                UserRole.OWNER_2, owner2Storage, outRes, produced, batch, true);
+
+        Response resp = fixture.createRaw(UserRole.OWNER_1,
+                DefectDataFactory.buildProductionDefect(storageId, outRes, prod.getId(), produced, LocalDate.now()));
+        Allure.step("Брак на відправлену партію відхилено", () ->
+                assertThat(resp.statusCode()).as("body=%s", safeBody(resp)).isGreaterThanOrEqualTo(400));
     }
 
     // =====================================================================
@@ -738,21 +813,10 @@ public class DefectTest extends BaseFunctionalTest {
                 apiExecutor, storageId, UserRole.OWNER_1, outputResourceId, batchNumber, phase).amount();
     }
 
-    /**
-     * Calls {@code linked-relocation-ids}; if the dev backend returns 5xx (known dev-build issue —
-     * the same query passes in DefectControllerIT) the case is skipped with a diagnostic attachment
-     * instead of producing a false failure.
-     */
-    private List<Long> linkedRelocationsOrSkip(Long resourceId, LocalDate date) {
+    private List<Long> linkedRelocations(Long resourceId, LocalDate date) {
         Response resp = fixture.getLinkedRelocationIdsRaw(UserRole.OWNER_1, resourceId, date);
-        if (resp.statusCode() >= 500) {
-            Allure.addAttachment("Backend issue (linked-relocation-ids)", "text/plain",
-                    "GET /defects/linked-relocation-ids повертає " + resp.statusCode() + " на dev-середовищі "
-                            + "(той самий запит проходить у backend DefectControllerIT). Ймовірний дефект "
-                            + "поточного деплою бекенда.\nbody=" + safeBody(resp));
-            throw new SkipException("linked-relocation-ids повертає " + resp.statusCode() + " на dev — див. note.");
-        }
-        assertThat(resp.statusCode()).as("linked-relocation-ids має повертати 200").isEqualTo(200);
+        assertThat(resp.statusCode()).as("linked-relocation-ids має повертати 200, body=%s", safeBody(resp))
+                .isEqualTo(200);
         List<Long> ids = resp.jsonPath().getList("", Long.class);
         return ids != null ? ids : List.of();
     }

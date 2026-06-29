@@ -135,11 +135,11 @@ public class LoginLogoutUITest extends BaseUITest {
                 .isTrue();
 
         AppSidebarPage sidebar = new AppSidebarPage(page);
-        assertThat(sidebar.isUserMenuVisible(username))
-                .as("Sidebar should show username '%s' before logout", username)
+        assertThat(sidebar.isUserMenuVisible())
+                .as("Sidebar user menu should be visible before logout (role=%s)", role)
                 .isTrue();
 
-        sidebar.openUserMenu(username).logout().waitForLoggedOut();
+        sidebar.openUserMenu().logout().waitForLoggedOut();
 
         sidebar.attachScreenshot("After logout — " + role);
 

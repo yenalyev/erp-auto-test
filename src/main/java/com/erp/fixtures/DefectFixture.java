@@ -18,6 +18,7 @@ import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
+import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
@@ -160,6 +161,42 @@ public class DefectFixture extends BaseFixture {
                                             String batchNumber, boolean isProduced) {
         return relocationFixture.createSendWithBatch(
                 UserRole.OWNER_1, storageId, recipientId, resourceId, amount, batchNumber, isProduced);
+    }
+
+    /**
+     * Issue to UNIT (OWNER_1), return to main storage (ADMIN — unit sender requires elevated scope on staging).
+     * Returns the return relocation for {@code RELOCATION_FROM_UNIT} defect source.
+     */
+    @Step("FIXTURE: видача на підрозділ і повернення партії «{batchNumber}»")
+    public RelocationResponse sendToUnitAndReturn(Long resourceId, double amount, String batchNumber) {
+        Long unitId = unitStorageId();
+        RelocationResponse toUnit = relocationFixture.createSendWithBatch(
+                UserRole.OWNER_1, storageId, unitId, resourceId, amount, batchNumber, false);
+        if (toUnit.getState() == RelocationState.CREATED) {
+            relocationFixture.resolve(UserRole.ADMIN, toUnit.getId(), unitId, RelocationState.FINISHED);
+        }
+        RelocationResponse fromUnit = relocationFixture.createSendWithBatch(
+                UserRole.ADMIN, unitId, storageId, resourceId, amount, batchNumber, false);
+        if (fromUnit.getState() == RelocationState.CREATED) {
+            return relocationFixture.resolve(
+                    UserRole.OWNER_1, fromUnit.getId(), storageId, RelocationState.FINISHED);
+        }
+        return fromUnit;
+    }
+
+    @Step("FIXTURE: видача на зовнішній склад і завершення отримання")
+    public RelocationResponse sendAndFinishAtRecipient(UserRole recipientRole,
+                                                     Long recipientStorageId,
+                                                     Long resourceId,
+                                                     double amount,
+                                                     String batchNumber,
+                                                     boolean isProduced) {
+        RelocationResponse sent = sendFromBatch(recipientStorageId, resourceId, amount, batchNumber, isProduced);
+        if (sent.getState() == RelocationState.CREATED) {
+            return relocationFixture.resolve(
+                    recipientRole, sent.getId(), recipientStorageId, RelocationState.FINISHED);
+        }
+        return sent;
     }
 
     @Step("FIXTURE: поповнити залишок ресурсу {resourceId} ≥ {minAmount}")

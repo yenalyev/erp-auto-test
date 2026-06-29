@@ -30,6 +30,8 @@ public class ExportAnalyticsPage extends BasePage {
 
     public ExportAnalyticsPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        AppSidebarPage sidebar = new AppSidebarPage(page);
+        sidebar.isSidebarVisible();
         page.getByText(PAGE_TITLE_TEXT)
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         return this;
@@ -40,7 +42,7 @@ public class ExportAnalyticsPage extends BasePage {
     }
 
     public boolean isSidebarLinkVisible() {
-        return page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(SIDEBAR_LINK_TEXT)).isVisible();
+        return new AppSidebarPage(page).isNavItemVisible(SIDEBAR_LINK_TEXT);
     }
 
     public ExportAnalyticsPage selectRemaindersExport() {

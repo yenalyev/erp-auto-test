@@ -26,7 +26,7 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
 
     @Override
     public void onStart(ISuite suite) {
-        if (!ConfigProvider.isTcmEnabled()) {
+        if (!ConfigProvider.isTcmReportingEnabled()) {
             log.info("TCM reporting is disabled");
             return;
         }
@@ -36,7 +36,7 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
 
     @Override
     public void onFinish(ISuite suite) {
-        if (!ConfigProvider.isTcmEnabled()) {
+        if (!ConfigProvider.isTcmReportingEnabled()) {
             return;
         }
         if (bufferedResults.isEmpty()) {
@@ -64,7 +64,7 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
 
     @Override
     public void onTestStart(ITestResult result) {
-        if (ConfigProvider.isTcmEnabled()) {
+        if (ConfigProvider.isTcmReportingEnabled()) {
             startTime.set(System.currentTimeMillis());
         }
     }
@@ -86,7 +86,7 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
     }
 
     private void bufferResult(ITestResult result, int status, String errorMessage) {
-        if (!ConfigProvider.isTcmEnabled()) {
+        if (!ConfigProvider.isTcmReportingEnabled()) {
             return;
         }
 

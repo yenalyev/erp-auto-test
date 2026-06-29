@@ -3,6 +3,7 @@ package com.erp.utils.helpers;
 import com.erp.dto.tcm.TcmImportResponse;
 import com.erp.dto.tcm.TcmResultDto;
 import com.erp.dto.tcm.TcmRunImportRequest;
+import com.erp.dto.tcm.TcmSuiteDto;
 import com.erp.utils.config.ConfigProvider;
 import io.restassured.http.ContentType;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,30 @@ public class TcmApiClient {
     public static final String API_TOKEN_HEADER = "X-TCM-Api-Token";
 
     private TcmApiClient() {
+    }
+
+    public static TcmSuiteDto fetchFeatureSuite(long featureId) {
+        return given()
+                .baseUri(ConfigProvider.getTcmBaseUrl())
+                .header(API_TOKEN_HEADER, ConfigProvider.getTcmApiToken())
+                .when()
+                .get("/api/autotest/suites/features/{featureId}", featureId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(TcmSuiteDto.class);
+    }
+
+    public static TcmSuiteDto fetchAcSuite(long acId) {
+        return given()
+                .baseUri(ConfigProvider.getTcmBaseUrl())
+                .header(API_TOKEN_HEADER, ConfigProvider.getTcmApiToken())
+                .when()
+                .get("/api/autotest/suites/ac/{acId}", acId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(TcmSuiteDto.class);
     }
 
     public static TcmImportResponse submitRun(TcmRunImportRequest request) {
@@ -53,14 +78,29 @@ public class TcmApiClient {
                     .build());
         }
 
-        return TcmRunImportRequest.builder()
-                .testPlanId(ConfigProvider.getTcmTestPlanId())
+        Long testPlanId = TcmScopeContext.getTestPlanId();
+        if (testPlanId == null || testPlanId <= 0) {
+            testPlanId = ConfigProvider.getTcmTestPlanId();
+        }
+
+        TcmRunImportRequest.TcmRunImportRequestBuilder builder = TcmRunImportRequest.builder()
                 .runName(runName)
                 .environment(env)
                 .suite(suiteName)
                 .buildName("Maven")
-                .results(results)
-                .build();
+                .results(results);
+
+        Long featureId = TcmScopeContext.getFeatureId();
+        Long acId = TcmScopeContext.getAcId();
+        if (featureId != null) {
+            builder.featureId(featureId);
+        } else if (acId != null) {
+            builder.acId(acId);
+        } else if (testPlanId > 0) {
+            builder.testPlanId(testPlanId);
+        }
+
+        return builder.build();
     }
 
     private static String mapStatus(int testngStatus) {

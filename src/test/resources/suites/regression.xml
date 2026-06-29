@@ -9,12 +9,16 @@
     - parallel="none" — tests run sequentially in document order.
     - ResourceDeactivationTest (TC-RES-015 alerts) runs before Inventory API/UI
       so alert teardown does not affect залишки tests on the same storage.
-    - Domain-focused subsets: smoke, functional, inventory, production, global-plans, ui, rbac.
+    - StorageRegionTest → StorageVisibilityTest → RelocationVisibility* (shared owner2 storage).
+    - Includes all domain suites: smoke, functional subsets, inventory, production,
+      relocations, storage-regions, global-plans, technological-maps, defects,
+      resource-viewer, rbac, ui, bots (smoke block).
 -->
 <suite name="ERP Regression Suite" parallel="none" verbose="1">
 
     <listeners>
         <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
         <listener class-name="com.erp.listeners.TcmReportListener"/>
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
@@ -52,6 +56,8 @@
             <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.StorageNamesEndpointTest"/>
             <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.RelocationVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.RelocationInvoiceVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.StorageCrewRegionTest"/>
             <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
@@ -115,6 +121,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanDecompositionApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanGenerationApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
         </classes>
     </test>
 
@@ -149,8 +156,10 @@
     <test name="UI Relocation">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
         </classes>
     </test>

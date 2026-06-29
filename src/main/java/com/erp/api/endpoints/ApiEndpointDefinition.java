@@ -653,6 +653,17 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    /** Admin «Всі локації» on /plans — no storageId filter. */
+    PLAN_GET_ALL_ADMIN(
+            "/api/v1/plans",
+            Method.GET,
+            "schemas/plans/plan-response-list-schema.json",
+            "Get all plans across locations (admin)",
+            null,
+            new TypeReference<List<PlanResponse>>() {},
+            null
+    ),
+
     PLAN_POST_CREATE(
             "/api/v1/plans",
             Method.POST,

@@ -51,19 +51,19 @@ public class InventoryEditPage extends BasePage {
     }
 
     public InventoryEditPage addResource(String resourceName, String amount) {
+        String normalizedName = resourceName.trim().replaceAll("\\s+", " ");
         page.locator("button[role='combobox']")
                 .filter(new Locator.FilterOptions().setHasText("Оберіть ресурс"))
                 .click();
-        String searchTerm = resourceName.trim();
-        if (searchTerm.length() < 2) {
-            searchTerm = resourceName;
-        } else {
-            searchTerm = searchTerm.substring(0, Math.min(searchTerm.length(), 8));
-        }
-        page.getByPlaceholder("Пошук...").last().fill(searchTerm);
-        page.waitForTimeout(500);
-        Locator option = page.locator("[cmdk-item], [role='option'], [data-slot='command-item']")
-                .filter(new Locator.FilterOptions().setHasText(resourceName.trim()))
+        String searchTerm = normalizedName.length() <= 8 ? normalizedName : normalizedName.substring(0, 8);
+        Locator search = page.getByPlaceholder("Пошук...").last();
+        page.waitForResponse(
+                response -> response.url().contains("/resources")
+                        && "GET".equals(response.request().method())
+                        && response.status() == 200,
+                () -> search.fill(searchTerm));
+        Locator option = page.locator("[role='option'], [cmdk-item], [data-slot='command-item']")
+                .filter(new Locator.FilterOptions().setHasText(normalizedName))
                 .first();
         option.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         option.click();

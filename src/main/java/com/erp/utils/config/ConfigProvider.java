@@ -153,7 +153,39 @@ public class ConfigProvider {
     }
 
     public static boolean isTcmEnabled() {
-        return config.tcmEnabled() && config.tcmTestPlanId() > 0 && !config.tcmApiToken().isBlank();
+        return isTcmReportingEnabled();
+    }
+
+    public static boolean isTcmReportingEnabled() {
+        if (!config.tcmEnabled() || config.tcmApiToken().isBlank()) {
+            return false;
+        }
+        if (getTcmFeatureId() != null || getTcmAcId() != null) {
+            return true;
+        }
+        return config.tcmTestPlanId() > 0;
+    }
+
+    public static Long getTcmFeatureId() {
+        return parseLongProperty("tcm.feature.id");
+    }
+
+    public static Long getTcmAcId() {
+        return parseLongProperty("tcm.ac.id");
+    }
+
+    private static Long parseLongProperty(String key) {
+        String raw = System.getProperty(key);
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            long value = Long.parseLong(raw.trim());
+            return value > 0 ? value : null;
+        } catch (NumberFormatException e) {
+            log.warn("Invalid {} value: {}", key, raw);
+            return null;
+        }
     }
 
     public static String getTcmBaseUrl() {

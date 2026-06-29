@@ -24,7 +24,10 @@ public class RelocationCreateInputPage extends BasePage {
     }
 
     public RelocationCreateInputPage fillInvoiceNumber(String invoiceNumber) {
-        page.getByLabel("№ накладної").fill(invoiceNumber);
+        page.locator("div.space-y-2")
+                .filter(new com.microsoft.playwright.Locator.FilterOptions().setHasText("№ Накладної"))
+                .locator("input")
+                .fill(invoiceNumber);
         return this;
     }
 

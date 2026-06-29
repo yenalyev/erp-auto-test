@@ -35,6 +35,7 @@ public class RbacFixture extends BaseFixture {
         prepareCrewRbacContext();
         prepareDefectRbacContext();
         prepareGlobalPlanRbacContext();
+        new NonSeriesProductionFixture(testContext, apiExecutor).prepareContext();
     }
 
     @Step("Setup crew storage in CREWS region for RBAC matrix")
