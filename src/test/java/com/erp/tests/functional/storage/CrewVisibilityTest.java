@@ -122,6 +122,36 @@ public class CrewVisibilityTest extends CrewApiTestBase {
         assertThat(outsideCrews).isEmpty();
     }
 
+    @Test(priority = 50)
+    @TestCaseId("TC-STR-CREW-013")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_013)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testGetCrewNamesRecursiveFromParentUnit() {
+        CrewRegionScenario scenario = crewFixture.prepareHierarchyScenario("crew-rec-");
+
+        List<StorageResponse> crewsFromParent = crewFixture.getCrewNames(
+                UserRole.OWNER_1, scenario.unit().getId(), null);
+        assertThat(crewsFromParent)
+                .extracting(StorageResponse::getId)
+                .contains(scenario.crew().getId());
+    }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-STR-CREW-014")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_CREW_014)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testGetCrewUnitsReturnsParentChildTree() {
+        CrewRegionScenario scenario = crewFixture.prepareHierarchyScenario("crew-tree-");
+
+        List<StorageHierarchyResponse> units =
+                crewFixture.getCrewUnits(UserRole.OWNER_1, scenario.memberStorageId());
+
+        assertThat(units.stream().map(StorageHierarchyResponse::getId))
+                .contains(scenario.unit().getId());
+        assertThat(CrewRegionFixture.hierarchyContainsUnitWithChild(
+                units, scenario.unit().getId(), scenario.childUnit().getId())).isTrue();
+    }
+
     private static void assertNoCrewNodes(List<StorageHierarchyResponse> nodes) {
         for (StorageHierarchyResponse node : nodes) {
             assertThat(node.getUnitType())

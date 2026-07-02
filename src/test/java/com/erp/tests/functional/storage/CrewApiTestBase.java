@@ -1,6 +1,7 @@
 package com.erp.tests.functional.storage;
 
 import com.erp.fixtures.CrewRegionFixture;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.utils.config.ConfigProvider;
@@ -16,6 +17,7 @@ public abstract class CrewApiTestBase extends StorageApiTestBase {
     protected CrewRegionFixture crewFixture;
     protected RelocationFixture relocationFixture;
     protected ResourceFixture resourceFixture;
+    protected InventoryFixture inventoryFixture;
     protected Long owner1StorageId;
     protected Long owner2StorageId;
 
@@ -25,6 +27,7 @@ public abstract class CrewApiTestBase extends StorageApiTestBase {
         crewFixture = new CrewRegionFixture(testContext, apiExecutor, storageFixture, regionFixture);
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        inventoryFixture = new InventoryFixture(testContext, apiExecutor);
         owner1StorageId = ConfigProvider.getOwner1StorageId();
         owner2StorageId = ConfigProvider.getOwner2StorageId();
         SchemaRegistry.logSchemaCoverage();

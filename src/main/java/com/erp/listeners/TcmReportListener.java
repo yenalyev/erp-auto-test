@@ -3,6 +3,7 @@ package com.erp.listeners;
 import com.erp.dto.tcm.TcmImportResponse;
 import com.erp.dto.tcm.TcmRunImportRequest;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.TcmScopeContext;
 import com.erp.utils.helpers.TestCaseIdExtractor;
 import com.erp.utils.helpers.TcmApiClient;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,12 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
             return;
         }
         if (bufferedResults.isEmpty()) {
+            if (TcmScopeContext.isActive()) {
+                String ids = String.join(", ", TcmScopeContext.getAllowedTestCaseIds());
+                throw new IllegalStateException(
+                        "Жоден тест не виконано для TCM scope. Automation ID не входить до цього Maven suite. "
+                                + "Очікувані ID: " + ids);
+            }
             log.info("No test results to send to TCM");
             return;
         }
@@ -57,6 +64,7 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
                     response.getUnmatched());
         } catch (Exception e) {
             log.error("Failed to send results to TCM: {}", e.getMessage(), e);
+            throw new IllegalStateException("Failed to send results to TCM: " + e.getMessage(), e);
         } finally {
             bufferedResults.clear();
         }

@@ -3,7 +3,10 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.RequestBodyFactory;
+import com.erp.data.factories.ResourceDataFactory;
 import com.erp.data.factories.inventory.InventoryDataFactory;
+import com.erp.models.request.ResourceRequest;
+import com.erp.test_context.ContextKey;
 import com.erp.enums.UserRole;
 import com.erp.models.request.InventoryRequest;
 import com.erp.models.response.InventorySessionStatus;
@@ -113,6 +116,29 @@ public class InventoryFixture extends BaseFixture {
                     "Newly created resource " + created.getId() + " already has stock on storage " + storageId);
         }
         log.info("Created catalog resource {} absent from storage {}", created.getId(), storageId);
+        return created;
+    }
+
+    @Step("API: Створити унікальний ресурс «{namePrefix}*», якого немає на складі {storageId}")
+    public ResourceResponse createUniqueCatalogResourceAbsentFromStorage(long storageId,
+                                                                         UserRole role,
+                                                                         String namePrefix) {
+        Long unitId = testContext.get(ContextKey.SHARED_UNIT_ID);
+        Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        if (unitId == null || categoryId == null) {
+            throw new IllegalStateException(
+                    "SHARED_UNIT_ID and SHARED_RESOURCE_CATEGORY_ID required for unique resource creation");
+        }
+        ResourceRequest body = ResourceDataFactory.uniqueResource(namePrefix, unitId, categoryId);
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, body);
+        validateSuccess(response, "Create unique catalog resource for inventory UI test");
+        ResourceResponse created = response.as(ResourceResponse.class);
+        if (getResourceStock(storageId, created.getId(), role) > 0) {
+            throw new IllegalStateException(
+                    "Newly created resource " + created.getId() + " already has stock on storage " + storageId);
+        }
+        log.info("Created unique catalog resource {} ({}) absent from storage {}",
+                created.getId(), created.getName(), storageId);
         return created;
     }
 

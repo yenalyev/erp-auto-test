@@ -1,5 +1,11 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="Relocation Test Suite" parallel="none" verbose="1">
+<!--
+  Equipment domain suite — CRUD, relocations, assignee filter.
+
+  Run:
+    mvn test -Denv=dev -Dsuite=equipment
+-->
+<suite name="Equipment Test Suite" parallel="none" verbose="1">
 
     <listeners>
         <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
@@ -9,19 +15,16 @@
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
 
-    <test name="Relocation API">
+    <test name="Equipment API">
         <classes>
-            <class name="com.erp.tests.functional.relocation.RelocationTest"/>
-            <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
-            <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentSelectorContractTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
         </classes>
     </test>
 
-    <test name="Relocation UI">
+    <test name="Equipment UI">
         <classes>
-            <class name="com.erp.tests.ui.RelocationUITest"/>
-            <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
         </classes>
     </test>

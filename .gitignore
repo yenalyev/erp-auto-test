@@ -67,3 +67,4 @@ test-output/
 .env.dev
 .env.staging
 .env.stage
+src/test/resources/google-credentials.json

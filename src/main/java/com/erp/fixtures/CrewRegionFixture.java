@@ -74,6 +74,7 @@ public class CrewRegionFixture extends BaseFixture {
                 .memberStorageId(memberId)
                 .build();
         testContext.set(ContextKey.CREW_STORAGE_ID, crew.getId());
+        testContext.set(ContextKey.CREW_PARENT_UNIT_ID, unit.getId());
         return scenario;
     }
 

@@ -16,7 +16,29 @@ alwaysApply: false
 
 - Suite: shared `Browser` via `PlaywrightSessionProvider`
 - Class: isolated `BrowserContext` with `ignoreHTTPSErrors=true`
-- Method: fresh `Page`; failure screenshot attached to Allure in `@AfterMethod`
+- Method: fresh `Page`; **full-page screenshot** attached to Allure in `@AfterMethod` (pass and fail)
+- Helper: `BaseUITest.attachScreenshot(label)` for mid-test captures
+
+## Screenshots (обов'язково)
+
+Кожен UI-тест **має** мати скріншоти в Allure:
+
+1. **Автоматично** — `BaseUITest` додає `{@TestCaseId} — final state` або `… — failure` після кожного методу.
+2. **Явно в тесті** — мінімум один `pageObject.attachScreenshot(...)` на ключовому кроці (після навігації / перед assert).
+3. **Іменування** — префікс `@TestCaseId`, потім короткий опис кроку: `TC-UI-CREW-002 — crew form filled`.
+4. **При падінні assert** — додатковий скрін перед `assertThat`, якщо стан UI неочевидний (див. `InventoryStockUiVerification`, `UnitManagementPage`).
+
+```java
+// ✅ GOOD
+RelocationPage journal = new RelocationPage(page).open();
+assertThat(journal.isIssueToCrewButtonVisible()).isTrue();
+journal.attachScreenshot("TC-UI-CREW-001 — issue to crew button visible");
+
+// ❌ BAD — лише покладатися на failure hook без step-скрінів на складних flow
+assertThat(inventoryPage.tableContainsResource(name)).isTrue();
+```
+
+API: `BasePage.attachScreenshot(String name)` — full-page PNG у поточний Allure step.
 
 ## Selectors
 
@@ -47,3 +69,4 @@ mvn exec:java@install-chromium         # first-time browser install
 2. Create test class extending `BaseUITest`
 3. Add to `src/test/resources/suites/ui.xml` (or master regression suite)
 4. Use `@TestCaseId`, Allure annotations consistent with API tests
+5. Add `pageObject.attachScreenshot("TC-… — step")` на ключових кроках (див. Screenshots вище)

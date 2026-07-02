@@ -16,6 +16,7 @@
         <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
         <listener class-name="com.erp.listeners.TcmScopeListener"/>
         <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
 
@@ -36,6 +37,10 @@
             <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewOperationHistoryTest"/>
+            <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest"/>
+            <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
+            <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
         </classes>
     </test>
 
@@ -44,6 +49,7 @@
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
         </classes>
     </test>
 </suite>

@@ -327,15 +327,17 @@ public class InventoryUiTest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Admin додає на склад ресурс, якого раніше не було, через форму інвентаризації
-            (autocomplete «Оберіть ресурс»). Очікується: 5 од. у таблиці «Залишки».
+            (autocomplete «Оберіть ресурс»). Ресурси, що вже є на формі/складі, не показуються
+            в autocomplete. Очікується: 5 од. у таблиці «Залишки».
             """)
     public void addNewResourceUi() {
         inventoryFixture.openSession(storageId);
-        List<ResourceResponse> catalog = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
-        ResourceResponse newRes = inventoryFixture.pickResourceNotOnStorage(storageId, UserRole.ADMIN, catalog);
+        ResourceResponse newRes = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                storageId, UserRole.ADMIN, "InvUI_");
         trackStorageResourceForCleanup(newRes.getId());
         String newResourceName = newRes.getName().trim().replaceAll("\\s+", " ");
         Allure.parameter("newResourceName", newResourceName);
+        Allure.parameter("existingResourceName", resourceName);
 
         Allure.step("Переконатися, що ресурсу ще немає у таблиці «Залишки»", () -> {
             UnitManagementPage stock = new UnitManagementPage(page).openForStorage(storageId).waitForLoaded();
@@ -350,6 +352,17 @@ public class InventoryUiTest extends BaseUITest {
             new UnitManagementPage(page).clickConductInventory();
             InventoryEditPage edit = new InventoryEditPage(page).waitForLoaded();
             edit.attachScreenshot("TC-WMS-003-009 — form before add");
+
+            assertThat(edit.isAddResourceOptionVisible(resourceName))
+                    .as("Ресурс, який уже є на складі, не повинен з'являтися в autocomplete «Оберіть ресурс»")
+                    .isFalse();
+            edit.closeAddResourceAutocomplete();
+
+            assertThat(edit.isAddResourceOptionVisible(newResourceName))
+                    .as("Новий ресурс має бути доступний у autocomplete")
+                    .isTrue();
+            edit.closeAddResourceAutocomplete();
+
             edit.addResource(newResourceName, "5");
             edit.attachScreenshot("TC-WMS-003-009 — form after add");
             assertThat(edit.isResourceListed(newResourceName))

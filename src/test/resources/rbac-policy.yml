@@ -433,6 +433,27 @@ rules:
     bodyType: null
     description: "Звіт залишків екіпажів — member області CREWS"
 
+  - endpointName: "STORAGE_GET_CREW_UNITS"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Ієрархія підрозділів з екіпажами для member CREWS region"
+
+  - endpointName: "STORAGE_GET_CREW_NAMES"
+    contextKey: "CREW_PARENT_UNIT_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "Список екіпажів під UNIT у CREWS region"
+
+  - endpointName: "RELOCATION_GET_CREATION_OPTIONS"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "creation-options hasCrews для member / outsider storage"
+
   # ========================================
   # RELOCATION ENDPOINTS
   # ========================================

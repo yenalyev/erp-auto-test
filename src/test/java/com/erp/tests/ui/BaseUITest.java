@@ -2,6 +2,7 @@ package com.erp.tests.ui;
 
 import com.erp.tests.BaseTest;
 import com.erp.utils.auth.PlaywrightSessionProvider;
+import com.erp.utils.helpers.TestCaseIdExtractor;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
@@ -22,7 +23,8 @@ import java.util.Map;
  *  - Suite-level Browser is shared via BaseTest → PlaywrightSessionProvider (single Chromium process).
  *  - Each test class gets its own BrowserContext (isolated cookies / storage).
  *  - Each test method gets its own Page, closed in @AfterMethod.
- *  - On test failure a full-page screenshot is attached to the Allure report automatically.
+ *  - A full-page screenshot is attached to the Allure report after every test (pass or fail).
+ *  - Use {@link #attachScreenshot(String)} for additional step captures inside tests.
  */
 @Slf4j
 public abstract class BaseUITest extends BaseTest {
@@ -88,14 +90,17 @@ public abstract class BaseUITest extends BaseTest {
     }
 
     /**
-     * Close the page after each test and attach a screenshot to Allure on failure.
+     * Close the page after each test and attach a full-page screenshot to Allure.
      */
     @AfterMethod(alwaysRun = true)
     public void uiTestTeardown(ITestResult result) {
         if (page != null) {
-            if (!result.isSuccess()) {
-                attachScreenshotOnFailure(result.getName());
-            }
+            String tcId = TestCaseIdExtractor.getTestCaseId(result);
+            String step = result.isSuccess() ? "final state" : "failure";
+            String label = "NO_ID".equals(tcId)
+                    ? "Screenshot — " + result.getName() + " — " + step
+                    : tcId + " — " + step;
+            attachScreenshot(label);
             try {
                 page.close();
             } catch (Exception e) {
@@ -130,14 +135,20 @@ public abstract class BaseUITest extends BaseTest {
         log.debug("BrowserContext init script: selectedStorageId=all");
     }
 
-    private void attachScreenshotOnFailure(String testName) {
+    /**
+     * Capture the current page and attach a full-page PNG to the Allure report.
+     */
+    protected void attachScreenshot(String label) {
+        if (page == null) {
+            log.warn("Cannot attach screenshot '{}': page is null", label);
+            return;
+        }
         try {
             byte[] screenshot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
-            Allure.addAttachment("Screenshot on failure — " + testName,
-                    "image/png", new java.io.ByteArrayInputStream(screenshot), ".png");
-            log.info("Screenshot attached to Allure for failed test: {}", testName);
+            Allure.addAttachment(label, "image/png", new java.io.ByteArrayInputStream(screenshot), ".png");
+            log.debug("Screenshot attached to Allure: {}", label);
         } catch (Exception e) {
-            log.warn("Could not capture failure screenshot for '{}': {}", testName, e.getMessage());
+            log.warn("Could not capture screenshot '{}': {}", label, e.getMessage());
         }
     }
 }

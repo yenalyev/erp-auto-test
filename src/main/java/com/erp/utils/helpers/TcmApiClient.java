@@ -51,16 +51,29 @@ public class TcmApiClient {
         String baseUrl = ConfigProvider.getTcmBaseUrl();
         String token = ConfigProvider.getTcmApiToken();
 
-        return given()
+        var response = given()
                 .baseUri(baseUrl)
                 .header(API_TOKEN_HEADER, token)
                 .contentType(ContentType.JSON)
                 .body(request)
                 .when()
-                .post("/api/autotest/runs")
-                .then()
-                .extract()
-                .as(TcmImportResponse.class);
+                .post("/api/autotest/runs");
+
+        int statusCode = response.getStatusCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            String body = response.getBody().asString();
+            throw new IllegalStateException(
+                    "TCM import failed with HTTP " + statusCode + ": " + summarizeErrorBody(body));
+        }
+        return response.as(TcmImportResponse.class);
+    }
+
+    private static String summarizeErrorBody(String body) {
+        if (body == null || body.isBlank()) {
+            return "(empty response)";
+        }
+        String trimmed = body.trim();
+        return trimmed.length() > 500 ? trimmed.substring(0, 500) + "…" : trimmed;
     }
 
     public static TcmRunImportRequest buildRequest(String suiteName, List<BufferedResult> bufferedResults) {
@@ -92,12 +105,16 @@ public class TcmApiClient {
 
         Long featureId = TcmScopeContext.getFeatureId();
         Long acId = TcmScopeContext.getAcId();
+        Long projectId = ConfigProvider.getTcmProjectId();
         if (featureId != null) {
             builder.featureId(featureId);
         } else if (acId != null) {
             builder.acId(acId);
         } else if (testPlanId > 0) {
             builder.testPlanId(testPlanId);
+        }
+        if (projectId != null && projectId > 0) {
+            builder.projectId(projectId);
         }
 
         return builder.build();

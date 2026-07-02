@@ -80,6 +80,10 @@ public class OperationHistoryPage extends BasePage {
         return summaryCardTitle("Вироблено").isVisible();
     }
 
+    public boolean isSummaryCardVisible(String cardTitle) {
+        return summaryCardTitle(cardTitle).isVisible();
+    }
+
     private Locator summaryCard(String cardTitle) {
         return page.locator("[data-slot='card']")
                 .filter(new Locator.FilterOptions().setHas(summaryCardTitle(cardTitle)));

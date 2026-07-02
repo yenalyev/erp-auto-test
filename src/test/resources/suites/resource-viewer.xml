@@ -11,12 +11,14 @@
         <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
         <listener class-name="com.erp.listeners.TcmScopeListener"/>
         <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
 
     <test name="Resource Viewer API">
         <classes>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationFilterTest"/>
         </classes>
     </test>
 </suite>

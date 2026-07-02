@@ -20,6 +20,7 @@
         <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
         <listener class-name="com.erp.listeners.TcmScopeListener"/>
         <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
 
@@ -121,6 +122,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanDecompositionApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanGenerationApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAfterTechMapDeactivationTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
         </classes>
     </test>

@@ -1,6 +1,7 @@
 package com.erp.pages;
 
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import io.qameta.allure.Allure;
@@ -102,5 +103,16 @@ public abstract class BasePage {
         page.screenshot(new Page.ScreenshotOptions().setPath(target).setFullPage(true));
         log.info("Screenshot saved: {}", target.toAbsolutePath());
         return target;
+    }
+
+    protected void waitForComboboxOptionsSettled() {
+        page.waitForCondition(() -> {
+            Locator items = page.locator("[data-slot='combobox-item']");
+            if (items.count() > 0) {
+                return true;
+            }
+            Locator empty = page.getByText("Не знайдено");
+            return empty.count() > 0 && empty.isVisible();
+        }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
     }
 }

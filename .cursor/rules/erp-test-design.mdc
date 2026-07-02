@@ -1,0 +1,65 @@
+---
+description: Чекліст дизайну сценаріїв — API/UI тести мають відтворювати реальний клієнтський flow
+globs: src/test/java/**/*.java,src/main/java/com/erp/fixtures/**
+alwaysApply: false
+---
+
+# Test Scenario Design
+
+Перед написанням тесту на user flow пройти чекліст. Деталі API-шаблонів — у `erp-api-tests.mdc`.
+
+## 1. Trace client payload
+
+Для API-тестів, що відтворюють UI або ручний кейс:
+
+- Прочитати відповідний hook/page у `tk-ui` або IT у `tk` (див. `tk-ui-frontend-sut.mdc`, `tk-backend-sut.mdc`).
+- У `@Description` явно вказати, **який request body шле клієнт** (не «викликати decompose», а «block 0 з assignments з snapshot»).
+
+## 2. Arrange → mutate → replay
+
+Якщо сценарій містить зміну стану (деактивація, видалення, зміна режиму):
+
+1. Arrange — повний початковий стан (create + generate + збережений snapshot).
+2. Mutate — дія, що змінює залежну сутність.
+3. Replay — **та сама операція**, що робить користувач (re-open, re-decompose), не спрощений варіант.
+
+## 3. Не підміняти payload «для зручності»
+
+Заборонено без явної причини в `@Description`:
+
+- порожні assignments замість snapshot з GET;
+- прямий API замість збереженого стану після попереднього кроку;
+- fixture minimum (`plusMonths(1)`) замість «поточний місяць», якщо кейс про поточний період.
+
+## 4. Persisted snapshot
+
+Якщо фіча зберігає JSON (global plan `decomposition`, wizard state):
+
+- assert після GET, що snapshot містить очікувані id (наприклад, deactivated tech map);
+- assert на **replay** цього snapshot після мутації залежних сутностей.
+
+## 5. Regression vs documentation
+
+Відомий дефект продукту:
+
+- assert **очікувану** поведінку (тест червоний до фіксу в SUT);
+- у `@Description`: блок **«Відомий дефект»** + поточна vs очікувана відповідь;
+- не фіксувати 400 як pass, якщо продуктова вимога — 200.
+
+## Референс: TC-GP-045 (пропущений баг)
+
+| Шар | Поведінка |
+|-----|-----------|
+| UI | `useGlobalPlanDecomposition.start` — block 0 з assignments з `plan.decomposition` |
+| Backend | `validateStructure` — inactive `technologicalMapId` → 400 |
+| Anti-pattern | decompose з порожніми assignments → 200, баг не видно |
+| Правильний тест | `GlobalPlanEditAfterTechMapDeactivationTest` / TC-GP-045 |
+
+```java
+// BAD — не відтворює UI start()
+decompose(planId, block0_with_empty_assignments);
+
+// GOOD — snapshot після generate + deactivated map A, alternate B активна
+decompose(planId, block0_with_saved_assignment_on_mapA);
+assertThat(response.statusCode()).isEqualTo(200); // regression until tk fix
+```

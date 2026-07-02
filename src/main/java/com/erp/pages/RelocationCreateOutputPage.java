@@ -152,17 +152,6 @@ public class RelocationCreateOutputPage extends BasePage {
         waitForComboboxOptionsSettled();
     }
 
-    private void waitForComboboxOptionsSettled() {
-        page.waitForCondition(() -> {
-            Locator items = page.locator(COMBOBOX_ITEM_SELECTOR);
-            if (items.count() > 0) {
-                return true;
-            }
-            Locator empty = page.getByText("Не знайдено");
-            return empty.count() > 0 && empty.isVisible();
-        }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
-    }
-
     private Locator recipientInput() {
         return page.getByPlaceholder(RECIPIENT_PLACEHOLDER);
     }

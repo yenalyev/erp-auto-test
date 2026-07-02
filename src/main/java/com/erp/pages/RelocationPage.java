@@ -19,9 +19,11 @@ import java.util.List;
 public class RelocationPage extends BasePage {
 
     public static final String PATH = "/relocations";
+    public static final String LOGISTICS_PATH = "/logistics";
 
     private static final String RECEIVE_BUTTON = "Отримати";
     private static final String SEND_BUTTON = "Видати";
+    private static final String ISSUE_TO_CREW_BUTTON = "Видати на екіпаж";
     private static final String HISTORY_RECEIVED_TAB = "Отримано";
     private static final String IN_TRANSIT_TAB = "В дорозі";
     private static final String SENT_TAB = "Видано";
@@ -36,8 +38,26 @@ public class RelocationPage extends BasePage {
     }
 
     public RelocationPage open() {
-        navigateTo(ConfigProvider.getBaseUrl() + PATH, "Журнал переміщень");
+        page.waitForResponse(
+                response -> response.url().contains("/creation-options") && response.ok(),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                () -> navigateTo(ConfigProvider.getBaseUrl() + PATH, "Журнал переміщень"));
         return waitForLoaded();
+    }
+
+    public RelocationPage openLogistics() {
+        navigateTo(ConfigProvider.getBaseUrl() + LOGISTICS_PATH, "Логістика");
+        return waitForLoaded();
+    }
+
+    public boolean isIssueToCrewButtonVisible() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ISSUE_TO_CREW_BUTTON))
+                .isVisible();
+    }
+
+    public RelocationCreateOutputCrewPage clickIssueToCrew() {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ISSUE_TO_CREW_BUTTON)).click();
+        return new RelocationCreateOutputCrewPage(page).waitForLoaded();
     }
 
     public RelocationPage waitForLoaded() {

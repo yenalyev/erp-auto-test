@@ -17,6 +17,7 @@ public class TcmRunImportRequest {
     private Long testPlanId;
     private Long featureId;
     private Long acId;
+    private Long projectId;
     private String runName;
     private String environment;
     private String version;

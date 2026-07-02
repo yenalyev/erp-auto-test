@@ -6,6 +6,10 @@ alwaysApply: false
 
 # API Test Patterns
 
+## Scenario design
+
+Тести на user flow мають відтворювати **той самий request**, що й клієнт (`tk-ui` / ручні кроки), після повного **arrange → mutate → replay**. Не підміняти payload спрощеним варіантом (порожній body замість snapshot тощо). Чекліст і референс TC-GP-045 — у `erp-test-design.mdc`.
+
 ## Adding a new API test
 
 1. Add endpoint to `ApiEndpointDefinition` (path, method, DTO types, schema path, operation discriminator if needed)

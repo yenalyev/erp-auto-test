@@ -196,6 +196,10 @@ public class ConfigProvider {
         return config.tcmApiToken();
     }
 
+    public static Long getTcmProjectId() {
+        return parseLongProperty("tcm.project.id");
+    }
+
     public static long getTcmTestPlanId() {
         return config.tcmTestPlanId();
     }

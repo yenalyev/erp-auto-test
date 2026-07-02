@@ -1034,6 +1034,56 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    EXPORT_CREW_STOCKS(
+            "/api/v1/export-analytics/crew-stocks",
+            Method.GET,
+            null,
+            "Export crew stocks XLSX",
+            null,
+            null,
+            null
+    ),
+
+    INVENTORY_WRITE_OFF_GET_PAGE(
+            "/api/v1/storages/inventory/write-off",
+            Method.GET,
+            null,
+            "Get inventory write-off reconciliation page",
+            null,
+            null,
+            null
+    ),
+
+    INVENTORY_WRITE_OFF_PUT_COMPLETE(
+            "/api/v1/storages/inventory/write-off/complete",
+            Method.PUT,
+            null,
+            "Complete inventory write-off reconciliation",
+            null,
+            null,
+            null
+    ),
+
+    INVENTORY_WRITE_OFF_PUT_REJECT(
+            "/api/v1/storages/inventory/write-off/reject",
+            Method.PUT,
+            null,
+            "Reject inventory write-off reconciliation",
+            null,
+            null,
+            null
+    ),
+
+    INVENTORY_WRITE_OFF_GET_SHORT_STATS(
+            "/api/v1/storages/inventory/write-off/short-stats",
+            Method.GET,
+            null,
+            "Get inventory write-off short stats",
+            null,
+            null,
+            null
+    ),
+
     RESOURCE_OPERATION_HISTORY_GET(
             "/api/v1/statistics/resource-operation-history",
             Method.GET,
@@ -1054,6 +1104,16 @@ public enum ApiEndpointDefinition {
             "Get relocated resources sum (aggregated by resource, sorted by name)",
             null,
             new TypeReference<List<ResourceRelocationSumViewerResponse>>() {},
+            null
+    ),
+
+    RESOURCE_VIEWER_RELOCATIONS_GET(
+            "/api/v1/resources-viewer/relocations",
+            Method.GET,
+            null,
+            "Get resource viewer relocation journal page",
+            null,
+            null,
             null
     ),
 

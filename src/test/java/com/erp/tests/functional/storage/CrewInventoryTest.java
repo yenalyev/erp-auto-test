@@ -11,11 +11,13 @@ import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,17 +150,17 @@ public class CrewInventoryTest extends CrewApiTestBase {
         assertThat(reported.doubleValue()).isCloseTo(directStock, within(0.01));
     }
 
-    @Test(priority = 40, enabled = false)
+    @Test(priority = 40)
     @TestCaseId("TC-CREW-INV-002")
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_002)
     @Severity(SeverityLevel.NORMAL)
     public void testCrewResourceIncomeReport() {
+        LocalDate today = LocalDate.now();
         Map<String, Object> params = crewInventoryParams("INCOME");
-        params.put("fromDate", "2020-01-01");
-        params.put("toDate", "2030-12-31");
+        params.put("fromDate", today.minusDays(1).toString());
+        params.put("toDate", today.plusDays(1).toString());
 
         List<CrewResourceStockResponse> rows = crewFixture.getCrewInventory(UserRole.OWNER_1, params);
-        assertThat(rows).isNotEmpty();
 
         double totalIncome = rows.stream()
                 .filter(r -> r.getCrew() != null
@@ -171,6 +173,57 @@ public class CrewInventoryTest extends CrewApiTestBase {
                 .sum();
 
         assertThat(totalIncome).isGreaterThanOrEqualTo(ISSUE_AMOUNT);
+    }
+
+    @Test(priority = 45)
+    @TestCaseId("TC-CREW-INV-009")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_009)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCrewInventorySessionOpenRbac() {
+        inventoryFixture.ensureClosed(scenario.crew().getId());
+
+        Response adminOpen = inventoryFixture.putStatus(
+                scenario.crew().getId(), UserRole.ADMIN, true);
+        assertThat(adminOpen.statusCode())
+                .as("ADMIN може відкрити сесію інвентаризації на crew storage")
+                .isBetween(200, 299);
+        inventoryFixture.ensureClosed(scenario.crew().getId());
+
+        Response owner2Open = inventoryFixture.putStatus(
+                scenario.crew().getId(), UserRole.OWNER_2, true);
+        assertThat(owner2Open.statusCode())
+                .as("OWNER_2 поза CREWS — відкриття сесії заборонено")
+                .isIn(403, 404);
+    }
+
+    @Test(priority = 50)
+    @TestCaseId("TC-CREW-INV-010")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_010)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCrewInventoryConductUpdatesStock() {
+        long crewId = scenario.crew().getId();
+        inventoryFixture.ensureClosed(crewId);
+        inventoryFixture.openSession(crewId);
+
+        double targetAmount = ISSUE_AMOUNT + 5.0;
+        try {
+            inventoryFixture.setResourceAmount(crewId, UserRole.ADMIN, resourceId, targetAmount);
+            double stock = relocationFixture.getResourceStock(crewId, resourceId, UserRole.ADMIN);
+            assertThat(stock).isCloseTo(targetAmount, within(0.01));
+        } finally {
+            inventoryFixture.closeSession(crewId);
+        }
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void closeCrewInventorySession() {
+        if (scenario != null && scenario.crew() != null) {
+            try {
+                inventoryFixture.ensureClosed(scenario.crew().getId());
+            } catch (Exception e) {
+                log.warn("Crew inventory session cleanup failed: {}", e.getMessage());
+            }
+        }
     }
 
     private Map<String, Object> crewInventoryParams(String requestType) {

@@ -238,6 +238,60 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: HTTP 400; stock snapshots unchanged.
             """ + ON_FAIL_STOCK;
 
+    public static final String TC_CREW_REL_004 = """
+            Що перевіряємо: multi-resource send (2+ рядки) → AUTO_FINISHED; stock обох ресурсів оновлюється.
+            Тестові дані: CrewRegionScenario; 2 унікальних ресурси з stock.
+            Очікуваний результат: state=AUTO_FINISHED; дебет sender / кредит crew для кожного resourceId.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_REL_005 = """
+            Що перевіряємо: OWNER_2 не може send на crew поза CREWS region.
+            Тестові дані: crew з OWNER_1 сценарію; сесія OWNER_2.
+            Очікуваний результат: HTTP 403 або 404; stock без змін.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_REL_006 = """
+            Що перевіряємо: видача з PRODUCTION sender → AUTO_FINISHED.
+            Тестові дані: ephemeral PRODUCTION child; stock; crew recipient.
+            Очікуваний результат: state=AUTO_FINISHED; stock PRODUCTION −N, crew +N.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_REL_007 = """
+            Що перевіряємо: видача на CREW видима в журналі отримувача (crew storage).
+            Тестові дані: send → crew; query receivedHistoryUi(crewId).
+            Очікуваний результат: relocation.id у сторінці журналу отримувача.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_REL_008 = """
+            Що перевіряємо: multi-item send — кожна позиція не перевищує stock на sender.
+            Тестові дані: 2 ресурси з відомим stock; суми в межах залишків.
+            Очікуваний результат: HTTP 200; stock snapshots коректні для обох.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_REL_009 = """
+            Що перевіряємо: UNIT→CREW relocation відсутній у GET /relocations для ACCOUNTANT.
+            Тестові дані: send UNIT→crew під OWNER_1; query як ACCOUNTANT.
+            Очікуваний результат: relocation.id не в результатах (бізнес-контракт логістики).
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_HIST_001 = """
+            Що перевіряємо: після createSend → totalRemovedResources на sender збільшується на ISSUE_AMOUNT.
+            Тестові дані: member storage; resource після видачі на crew.
+            Очікуваний результат: delta removed ≈ ISSUE_AMOUNT для resourceId (картка «Видано»).
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_CREW_013 = """
+            Що перевіряємо: getCrewNames(UNIT-A) рекурсивно містить crew з дочірнього UNIT-AB.
+            Тестові дані: prepareHierarchyScenario.
+            Очікуваний результат: crew.id у списку для батьківського UNIT.
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_CREW_014 = """
+            Що перевіряємо: getCrewUnits повертає дерево з батьком UNIT-A (не лише leaf units).
+            Тестові дані: prepareHierarchyScenario.
+            Очікуваний результат: root містить unitA.id; child unitAB під ним.
+            """ + ON_FAIL_API;
+
     public static final String TC_CREW_INV_001 = """
             Що перевіряємо: GET /storages/inventory/crews requestType=STOCK після видачі на CREW.
             Тестові дані: crew + resource після ISSUE_AMOUNT.
@@ -264,9 +318,20 @@ public final class StorageRegionsAllureDescriptions {
 
     public static final String TC_CREW_INV_002 = """
             Що перевіряємо: GET /storages/inventory/crews requestType=INCOME — сума видач за період.
-            Тестові дані: crew після ISSUE_AMOUNT; fromDate/toDate широкий діапазон.
-            Очікуваний результат: content не порожній; income≥ISSUE_AMOUNT для crew+resource.
-            DISABLED: уточнити binding fromDate/toDate на dev.
+            Тестові дані: crew після ISSUE_AMOUNT; fromDate/toDate = сьогодні ±1 день.
+            Очікуваний результат: income≥ISSUE_AMOUNT для crew+resource.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_009 = """
+            Що перевіряємо: PUT /storages/{crewId}/inventory/status open — ADMIN ✓, OWNER_2 ✗.
+            Тестові дані: crew з CREWS region.
+            Очікуваний результат: ADMIN → 200 open=true; OWNER_2 → 403.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_010 = """
+            Що перевіряємо: PUT /storages/{crewId}/inventory змінює amount на crew storage.
+            Тестові дані: відкрита сесія (ADMIN); conduct як ADMIN.
+            Очікуваний результат: stock оновлюється до target amount.
             """ + ON_FAIL_API;
 
     // --- UI relocation / invoice ---

@@ -1,17 +1,32 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.CrewRegionFixture;
+import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.fixtures.RelocationFixture;
+import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.StorageRegionFixture;
+import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.LoginPage;
 import com.erp.pages.ProductionPage;
+import com.erp.pages.RelocationPage;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,6 +42,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AccountantCabinetUITest extends BaseUITest {
 
     private static final String POST_LOGIN_PATH = "/production";
+    private static final double SEND_AMOUNT = 5.0;
+
+    private RelocationFixture relocationFixture;
+    private ResourceFixture resourceFixture;
+    private CrewRegionFixture crewFixture;
+    private StorageFixture storageFixture;
+    private Long resourceId;
+    private long owner1StorageId;
+    private long owner2StorageId;
 
     private static final List<String> EXPECTED_MAIN_SECTIONS = List.of(
             "Виробництво",
@@ -42,6 +66,24 @@ public class AccountantCabinetUITest extends BaseUITest {
             "Словник ресурсів",
             "Ціни"
     );
+
+    @BeforeClass(alwaysRun = true)
+    @Override
+    public void baseTestClassSetup() {
+        super.baseTestClassSetup();
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        StorageRegionFixture regionFixture = new StorageRegionFixture(testContext, apiExecutor);
+        crewFixture = new CrewRegionFixture(testContext, apiExecutor, storageFixture, regionFixture);
+        relocationFixture = new RelocationFixture(testContext, apiExecutor);
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        relocationFixture.prepareContext();
+        resourceFixture.fetchSharedUnit(3);
+        resourceFixture.fetchSharedResourceCategory();
+        owner1StorageId = ConfigProvider.getOwner1StorageId();
+        owner2StorageId = ConfigProvider.getOwner2StorageId();
+        ResourceResponse resource = resourceFixture.createUniqueResource("acc-ui-rel-");
+        resourceId = resource.getId();
+    }
 
     /** Fresh session — no cookies or persisted storage selection from prior tests. */
     @BeforeMethod(alwaysRun = true)
@@ -171,6 +213,74 @@ public class AccountantCabinetUITest extends BaseUITest {
             """)
     public void accountantLogoutTest() {
         performLogout();
+    }
+
+    @Test(priority = 3)
+    @TestCaseId("TC-UI-ACC-003")
+    @Story("Accountant workspace without UNIT")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після логіну accountant: my-units API не містить UNIT-локацій")
+    public void accountantWorkspaceExcludesUnitLocations() {
+        loginAsAccountant();
+
+        var apiResponse = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_MY_UNITS, UserRole.ACCOUNTANT);
+        assertThat(apiResponse.statusCode()).isEqualTo(200);
+        List<StorageResponse> units = DatabaseIntegrityValidator.extractList(apiResponse, StorageResponse.class);
+        assertThat(units.stream().filter(s -> "UNIT".equalsIgnoreCase(s.getType())).toList())
+                .as("API my-units для accountant не повинен містити UNIT")
+                .isEmpty();
+
+        AppSidebarPage sidebar = new AppSidebarPage(page);
+        assertThat(sidebar.collectWorkspaceLocationLabels()).isNotEmpty();
+    }
+
+    @Test(priority = 4)
+    @TestCaseId("TC-UI-ACC-004")
+    @Story("Accountant logistics filter")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Fixture UNIT→CREW через API; /logistics не показує crew у журналі")
+    public void accountantLogisticsHidesUnitToCrew() {
+        CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("acc-ui-crew-");
+        relocationFixture.ensureStock(scenario.unit().getId(), resourceId, 50.0);
+
+        relocationFixture.createSend(
+                UserRole.OWNER_1,
+                scenario.unit().getId(),
+                scenario.crew().getId(),
+                resourceId,
+                SEND_AMOUNT);
+
+        loginAsAccountant();
+        injectAccountantStorage(owner1StorageId);
+
+        RelocationPage logistics = new RelocationPage(page).openLogistics().openSentTab();
+        Set<String> journalText = logistics.getDisplayedJournalRows().stream()
+                .map(row -> (row.getSenderName() != null ? row.getSenderName() : "")
+                        + (row.getRecipientName() != null ? row.getRecipientName() : ""))
+                .collect(Collectors.toSet());
+
+        String crewMarker = scenario.crew().getName();
+        assertThat(journalText.stream().noneMatch(text -> text.contains(crewMarker)))
+                .as("UNIT→CREW не повинен з'являтися в логістиці accountant")
+                .isTrue();
+    }
+
+    private void loginAsAccountant() {
+        browserContext.clearCookies();
+        browserContext.addInitScript("localStorage.clear();");
+        String username = UserRole.ACCOUNTANT.getUsername();
+        String password = UserRole.ACCOUNTANT.getPassword();
+        String frontendUrl = ConfigProvider.getBaseUrl();
+        String backendUrl = ConfigProvider.getBackendUrl();
+        LoginPage loginPage = new LoginPage(page);
+        loginPage.open(backendUrl, frontendUrl + POST_LOGIN_PATH);
+        loginPage.login(username, password, POST_LOGIN_PATH);
+        new ProductionPage(page).waitForLoaded();
+    }
+
+    private void injectAccountantStorage(long storageId) {
+        page.evaluate("localStorage.setItem('selectedStorageId', '" + storageId + "');");
+        page.reload();
     }
 
     private void performLogout() {

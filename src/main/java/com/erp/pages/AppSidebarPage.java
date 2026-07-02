@@ -60,6 +60,32 @@ public class AppSidebarPage extends BasePage {
         return name;
     }
 
+    /** Opens workspace dropdown and returns all visible location labels. */
+    public java.util.List<String> collectWorkspaceLocationLabels() {
+        workspaceSelectorTrigger().click();
+        Locator options = page.locator("[data-radix-popper-content-wrapper] [role='option']");
+        options.first().waitFor(new Locator.WaitForOptions().setTimeout(5_000));
+        int count = options.count();
+        java.util.List<String> labels = new java.util.ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            String text = normalizeText(options.nth(i).innerText());
+            if (!text.isBlank() && !ALL_LOCATIONS_TEXT.equals(text)) {
+                labels.add(text);
+            }
+        }
+        page.keyboard().press("Escape");
+        return labels;
+    }
+
+    public AppSidebarPage selectWorkspaceByName(String locationName) {
+        workspaceSelectorTrigger().click();
+        page.locator("[data-radix-popper-content-wrapper] [role='option']")
+                .filter(new Locator.FilterOptions().setHasText(locationName))
+                .first()
+                .click();
+        return this;
+    }
+
     /** True when a sidebar nav link with the given label is visible. */
     public boolean isNavItemVisible(String label) {
         Locator link = sidebarNavLink(label);
