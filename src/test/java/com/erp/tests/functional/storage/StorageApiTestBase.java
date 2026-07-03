@@ -1,8 +1,8 @@
 package com.erp.tests.functional.storage;
 
-import com.erp.enums.UserRole;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.tests.functional.BaseFunctionalTest;
 import io.qameta.allure.Step;
 import lombok.extern.slf4j.Slf4j;
@@ -43,13 +43,6 @@ public abstract class StorageApiTestBase extends BaseFunctionalTest {
     }
 
     private void cleanupTestArtifacts() {
-        if ("staging".equals(System.getProperty("env", "debug"))) {
-            log.warn("Staging mode — skipping automatic storage/region cleanup");
-            regionFixture.clearTrackedRegions();
-            storageFixture.clearTrackedStorages();
-            return;
-        }
-        regionFixture.deleteTrackedRegions(UserRole.ADMIN);
-        storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
     }
 }

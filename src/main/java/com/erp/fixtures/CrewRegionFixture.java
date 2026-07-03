@@ -63,7 +63,7 @@ public class CrewRegionFixture extends BaseFixture {
 
         StorageRegionResponse region = regionFixture.createRegion(
                 unit, StorageAccessMode.CREWS, namePrefix + "reg-");
-        regionFixture.addRegionMembers(region.getId(), memberId);
+        addCrewRegionMembers(region.getId());
         regionFixture.addRegionLocations(region.getId(), unit.getId());
 
         CrewRegionScenario scenario = CrewRegionScenario.builder()
@@ -93,7 +93,7 @@ public class CrewRegionFixture extends BaseFixture {
 
         StorageRegionResponse region = regionFixture.createRegion(
                 unitA, StorageAccessMode.CREWS, namePrefix + "reg-");
-        regionFixture.addRegionMembers(region.getId(), memberId);
+        addCrewRegionMembers(region.getId());
         regionFixture.addRegionLocations(region.getId(), unitA.getId());
 
         return CrewRegionScenario.builder()
@@ -159,5 +159,16 @@ public class CrewRegionFixture extends BaseFixture {
             }
         }
         return false;
+    }
+
+    /** OWNER_1 (relocation API) + Crew-Manager UNIT member for appendGrantedCrews at login. */
+    private void addCrewRegionMembers(Long regionId) {
+        long ownerMember = ConfigProvider.getOwner1StorageId();
+        long crewManagerMember = ConfigProvider.getUnitStorageId();
+        if (crewManagerMember == ownerMember) {
+            regionFixture.addRegionMembers(regionId, ownerMember);
+        } else {
+            regionFixture.addRegionMembers(regionId, ownerMember, crewManagerMember);
+        }
     }
 }

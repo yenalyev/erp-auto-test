@@ -138,10 +138,13 @@ public class ConfigProvider {
     public static String getResourceViewerPassword() { return config.resourceViewerPassword(); }
     public static String getAccountantUsername() { return config.accountantUsername(); }
     public static String getAccountantPassword() { return config.accountantPassword(); }
+    public static String getCrewManagerUsername() { return config.crewManagerUsername(); }
+    public static String getCrewManagerPassword() { return config.crewManagerPassword(); }
 
     // Storage IDs per owner
     public static long getOwner1StorageId()     { return config.owner1StorageId(); }
     public static long getOwner2StorageId()     { return config.owner2StorageId(); }
+    public static long getUnitStorageId()       { return config.unitStorageId(); }
     public static long getIncorrectStorageId()  { return config.incorrectStorageId(); }
 
     public static String getGoogleSheetsSpreadsheetId() {

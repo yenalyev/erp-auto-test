@@ -8,11 +8,13 @@ import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.response.ResourceResponse;
 import com.erp.pages.*;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -35,10 +37,12 @@ public class CrewIssuanceUITest extends BaseUITest {
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
     private StorageFixture storageFixture;
+    private StorageRegionFixture regionFixture;
 
     private CrewRegionScenario flatScenario;
     private CrewRegionScenario hierarchyScenario;
     private long memberStorageId;
+    private long unitStorageId;
     private Long resourceId;
     private String resourceName;
 
@@ -47,7 +51,7 @@ public class CrewIssuanceUITest extends BaseUITest {
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         storageFixture = new StorageFixture(testContext, apiExecutor);
-        StorageRegionFixture regionFixture = new StorageRegionFixture(testContext, apiExecutor);
+        regionFixture = new StorageRegionFixture(testContext, apiExecutor);
         crewFixture = new CrewRegionFixture(testContext, apiExecutor, storageFixture, regionFixture);
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
@@ -58,12 +62,18 @@ public class CrewIssuanceUITest extends BaseUITest {
         relocationFixture.prepareContext();
 
         memberStorageId = ConfigProvider.getOwner1StorageId();
+        unitStorageId = ConfigProvider.getUnitStorageId();
         flatScenario = crewFixture.prepareSingleCrewScenario("ui-crew-flat-");
         hierarchyScenario = crewFixture.prepareHierarchyScenario("ui-crew-hier-");
 
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
         resourceName = resource.getName().trim();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupCrewIssuanceArtifacts() {
+        TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -230,9 +240,9 @@ public class CrewIssuanceUITest extends BaseUITest {
     @Story("Crew stock view")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Після API видачі — таблиця crews mode містить resource.
-            Відомий дефект (dev): UI викликає GET /storages/{crewId}/inventory, OWNER_1 отримує 403
-            (STOCK-звіт /storages/inventory/crews працює — див. TC-CREW-INV-001).
+            Після API видачі (OWNER_1) — таблиця crews mode містить resource.
+            UI-сесія: argument (Crew-Manager-ROLE, UNIT id=unit.storage.id) — inventory-list::{crew}::read
+            після appendGrantedCrews. OWNER_1 без Crew-Manager отримує 403 на GET /storages/{crewId}/inventory.
             """)
     public void testCrewStockVisibleInInventoryCrewsMode() {
         relocationFixture.createSend(
@@ -242,7 +252,8 @@ public class CrewIssuanceUITest extends BaseUITest {
                 resourceId,
                 ISSUE_AMOUNT);
 
-        InventoryCrewsModePage inventoryPage = new InventoryCrewsModePage(page).openCrewsMode(memberStorageId);
+        injectRoleSession(UserRole.CREW_MANAGER, unitStorageId);
+        InventoryCrewsModePage inventoryPage = new InventoryCrewsModePage(page).openCrewsMode(unitStorageId);
         inventoryPage.selectUnitByName(flatScenario.unit().getName())
                 .selectCrewByName(flatScenario.crew().getName());
 
@@ -257,10 +268,14 @@ public class CrewIssuanceUITest extends BaseUITest {
     @TestCaseId("TC-UI-CREW-011")
     @Story("Crew inventory session")
     @Severity(SeverityLevel.NORMAL)
-    @Description("ADMIN: обрати екіпаж → кнопка «Відкрити інвентаризацію» видима (OWNER_1 лише read)")
+    @Description("""
+            Після вибору екіпажу — кнопка «Відкрити/Закрити інвентаризацію» видима.
+            UI-сесія: argument (Crew-Manager-ROLE) — inventory-status::{crew}::update після appendGrantedCrews.
+            OWNER_1 / ADMIN без crew-шаблону — кнопка прихована (див. TC-CREW-INV-009).
+            """)
     public void testCrewInventorySessionButtonsAfterCrewSelected() {
-        injectRoleSession(UserRole.ADMIN, memberStorageId);
-        InventoryCrewsModePage inventoryPage = new InventoryCrewsModePage(page).openCrewsMode(memberStorageId);
+        injectRoleSession(UserRole.CREW_MANAGER, unitStorageId);
+        InventoryCrewsModePage inventoryPage = new InventoryCrewsModePage(page).openCrewsMode(unitStorageId);
         inventoryPage.selectUnitByName(flatScenario.unit().getName())
                 .selectCrewByName(flatScenario.crew().getName());
 

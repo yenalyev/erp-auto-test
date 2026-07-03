@@ -501,15 +501,8 @@ public class RelocationFixture extends BaseFixture {
     }
 
     public double getResourceStock(Long storageId, Long resourceId, UserRole role) {
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.STORAGE_INVENTORY_GET, role, String.valueOf(storageId));
-        List<com.erp.models.response.StorageItemResponse> items =
-                DatabaseIntegrityValidator.extractList(response, com.erp.models.response.StorageItemResponse.class);
-        return items.stream()
-                .filter(i -> i.getResource() != null && resourceId.equals(i.getResource().getId()))
-                .mapToDouble(i -> i.getAmount() != null ? i.getAmount() : 0.0)
-                .findFirst()
-                .orElse(0.0);
+        return com.erp.utils.helpers.ProductionStockAssertions.resourceStockExact(
+                apiExecutor, storageId, role, resourceId);
     }
 
     @Step("Знайти UNIT storage")

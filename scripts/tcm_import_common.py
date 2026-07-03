@@ -96,3 +96,87 @@ def write_xlsx(cases: list[Case], path: Path, project_name: str = "ERP Сист�
 
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
+
+
+def write_xlsx_with_features(
+    cases: list[Case],
+    path: Path,
+    *,
+    project_name: str = "ERP Система",
+    features: list[tuple] | None = None,
+    acceptance_criteria: list[tuple] | None = None,
+    meta_extra: list[tuple[str, str]] | None = None,
+) -> None:
+    """Write import XLSX including optional Features and AcceptanceCriteria sheets."""
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    meta = wb.create_sheet("Meta")
+    meta.append(["key", "value"])
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    for row in [
+        ("formatVersion", "1"),
+        ("exportedAt", now),
+        ("projectId", "1"),
+        ("projectName", project_name),
+        ("scope", "PROJECT"),
+        ("rootFeatureId", ""),
+        *(meta_extra or []),
+    ]:
+        meta.append(list(row))
+
+    if features:
+        feat_sheet = wb.create_sheet("Features")
+        feat_sheet.append([
+            "featureId", "parentFeatureId", "title", "description", "module",
+            "priority", "status", "author", "treeDepth", "sortOrder",
+        ])
+        for row in features:
+            feat_sheet.append([*row, "ACTIVE", AUTHOR])
+
+    if acceptance_criteria:
+        ac_sheet = wb.create_sheet("AcceptanceCriteria")
+        ac_sheet.append(["featureId", "acId", "text", "sortOrder"])
+        for row in acceptance_criteria:
+            ac_sheet.append(list(row))
+
+    tc_sheet = wb.create_sheet("TestCases")
+    tc_sheet.append([
+        "testId", "featureId", "acId", "title", "description", "priority", "severity", "status",
+        "testType", "preconditions", "expectedResult", "tags", "author", "jiraIssueKey", "roleName",
+        "parameterized", "dependencies",
+    ])
+    for c in cases:
+        tc_sheet.append([
+            c.test_id, c.feature_id, c.ac_id, c.title, c.description,
+            c.priority, c.severity, "ACTIVE", c.test_type,
+            c.preconditions, c.expected_result, c.tags, AUTHOR, "", c.role_name,
+            "false", "",
+        ])
+
+    steps_sheet = wb.create_sheet("Steps")
+    steps_sheet.append(["testId", "stepOrder", "actionText", "expectedText"])
+    for c in cases:
+        for s in c.steps:
+            steps_sheet.append([c.test_id, str(s.order), s.action, s.expected])
+
+    schema_sheet = wb.create_sheet("DatasetSchema")
+    schema_sheet.append(["testId", "fieldKey", "fieldLabel", "fieldType", "required", "sortOrder"])
+
+    params_sheet = wb.create_sheet("ParameterSets")
+    params_sheet.append(["testId", "setName", "active", "valuesJson"])
+
+    auto_sheet = wb.create_sheet("AutomationLinks")
+    auto_sheet.append(["testId", "layer", "automationTestId", "sortOrder"])
+    for c in cases:
+        if c.automation_layer and c.automation_test_id:
+            auto_sheet.append([c.test_id, c.automation_layer, c.automation_test_id, "0"])
+
+    cross_sheet = wb.create_sheet("CrossFeatures")
+    cross_sheet.append(["testId", "crossFeatureSlug"])
+    for c in cases:
+        for slug in c.cross_features:
+            cross_sheet.append([c.test_id, slug])
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(path)

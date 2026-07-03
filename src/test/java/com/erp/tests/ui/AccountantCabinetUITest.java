@@ -9,6 +9,7 @@ import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.pages.AppSidebarPage;
@@ -19,6 +20,7 @@ import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -48,6 +50,7 @@ public class AccountantCabinetUITest extends BaseUITest {
     private ResourceFixture resourceFixture;
     private CrewRegionFixture crewFixture;
     private StorageFixture storageFixture;
+    private StorageRegionFixture regionFixture;
     private Long resourceId;
     private long owner1StorageId;
     private long owner2StorageId;
@@ -72,7 +75,7 @@ public class AccountantCabinetUITest extends BaseUITest {
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         storageFixture = new StorageFixture(testContext, apiExecutor);
-        StorageRegionFixture regionFixture = new StorageRegionFixture(testContext, apiExecutor);
+        regionFixture = new StorageRegionFixture(testContext, apiExecutor);
         crewFixture = new CrewRegionFixture(testContext, apiExecutor, storageFixture, regionFixture);
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
@@ -83,6 +86,11 @@ public class AccountantCabinetUITest extends BaseUITest {
         owner2StorageId = ConfigProvider.getOwner2StorageId();
         ResourceResponse resource = resourceFixture.createUniqueResource("acc-ui-rel-");
         resourceId = resource.getId();
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void cleanupAccountantCabinetArtifacts() {
+        TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
     }
 
     /** Fresh session — no cookies or persisted storage selection from prior tests. */

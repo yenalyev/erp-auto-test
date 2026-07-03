@@ -168,7 +168,8 @@ public class NonSeriesProductionFixture extends BaseFixture {
 
     @Step("API: Отримати залишок ресурсу {resourceId} на складі {storageId}")
     public double getResourceStock(Long storageId, Long resourceId) {
-        return getInventorySnapshot(storageId).getOrDefault(resourceId, 0.0);
+        return com.erp.utils.helpers.ProductionStockAssertions.resourceStockExact(
+                apiExecutor, storageId, UserRole.OWNER_1, resourceId);
     }
 
     @Step("API: Знімок залишків усіх ресурсів на складі {storageId}")

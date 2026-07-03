@@ -13,6 +13,7 @@
         <classes>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapDeactivationPlanGuardTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapValidationTest"/>
         </classes>
     </test>
 </suite>

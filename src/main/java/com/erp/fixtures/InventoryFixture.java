@@ -61,11 +61,8 @@ public class InventoryFixture extends BaseFixture {
 
     @Step("API: Залишок ресурсу {resourceId} на складі {storageId}")
     public double getResourceStock(long storageId, long resourceId, UserRole role) {
-        return listItems(storageId, role).stream()
-                .filter(i -> i.getResource() != null && resourceId == i.getResource().getId())
-                .map(StorageItemResponse::getAmount)
-                .findFirst()
-                .orElse(0.0);
+        return com.erp.utils.helpers.ProductionStockAssertions.resourceStockExact(
+                apiExecutor, storageId, role, resourceId);
     }
 
     @Step("API: Перший ресурс з ненульовим залишком на складі {storageId}")

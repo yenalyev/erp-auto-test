@@ -1,14 +1,11 @@
 package com.erp.utils.helpers;
 
 import com.erp.api.clients.ApiExecutor;
-import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.models.response.StorageItemBatchResponse;
 import io.qameta.allure.Allure;
-import io.restassured.response.Response;
 import lombok.experimental.UtilityClass;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,7 +14,7 @@ import static org.assertj.core.api.Assertions.within;
 @UtilityClass
 public class ProductionBatchAssertions {
 
-    public record BatchSnapshot(String batchNumber, double amount, Long outputResourceId, Long storageItemId) {
+    public record BatchSnapshot(String batchNumber, double amount, Long outputResourceId) {
     }
 
     public static BatchSnapshot captureProducedBatch(ApiExecutor apiExecutor,
@@ -27,14 +24,13 @@ public class ProductionBatchAssertions {
                                                      String batchNumber,
                                                      String phaseLabel) {
         return Allure.step("Знімок виробничої партії «" + batchNumber + "» (" + phaseLabel + ")", () -> {
-            Long storageItemId = ProductionStockAssertions.findStorageItemId(
-                    apiExecutor, storageId, role, outputResourceId);
-            double amount = loadProducedBatchAmount(apiExecutor, storageId, role, storageItemId, batchNumber);
+            double amount = findProducedBatch(apiExecutor, storageId, role, outputResourceId, batchNumber)
+                    .map(StorageItemBatchResponse::getAmount)
+                    .orElse(0.0);
 
             Allure.parameter("batchNumber", batchNumber);
             Allure.parameter("batchAmount", amount);
             Allure.parameter("outputResourceId", outputResourceId);
-            Allure.parameter("storageItemId", storageItemId);
 
             String details = String.format(
                     "Партія «%s» продукту id=%d: %.2f од. (%s)",
@@ -42,7 +38,7 @@ public class ProductionBatchAssertions {
             Allure.addAttachment("Партія — " + phaseLabel, "text/plain", details);
             Allure.step(details);
 
-            return new BatchSnapshot(batchNumber, amount, outputResourceId, storageItemId);
+            return new BatchSnapshot(batchNumber, amount, outputResourceId);
         });
     }
 
@@ -92,10 +88,8 @@ public class ProductionBatchAssertions {
                                                  Long outputResourceId,
                                                  String batchNumber) {
         Allure.step("Партія «" + batchNumber + "» має бути видалена зі складу", () -> {
-            Long storageItemId = ProductionStockAssertions.findStorageItemId(
-                    apiExecutor, storageId, role, outputResourceId);
             Optional<StorageItemBatchResponse> batch = findProducedBatch(
-                    apiExecutor, storageId, role, storageItemId, batchNumber);
+                    apiExecutor, storageId, role, outputResourceId, batchNumber);
 
             assertThat(batch)
                     .as("Виробнича партія «%s» не повинна існувати", batchNumber)
@@ -104,35 +98,13 @@ public class ProductionBatchAssertions {
         });
     }
 
+    /** Exact lookup by {@code storageId + resourceId} — no {@code storageItemId} resolution needed. */
     public static Optional<StorageItemBatchResponse> findProducedBatch(ApiExecutor apiExecutor,
                                                                      Long storageId,
                                                                      UserRole role,
-                                                                     Long storageItemId,
+                                                                     Long outputResourceId,
                                                                      String batchNumber) {
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.STORAGE_INVENTORY_BATCHES_GET,
-                role,
-                null,
-                storageId,
-                storageItemId);
-        List<StorageItemBatchResponse> batches = response.jsonPath()
-                .getList("", StorageItemBatchResponse.class);
-        if (batches == null) {
-            return Optional.empty();
-        }
-        return batches.stream()
-                .filter(b -> batchNumber.equals(b.getBatchNumber()))
-                .findFirst();
-    }
-
-    private static double loadProducedBatchAmount(ApiExecutor apiExecutor,
-                                                  Long storageId,
-                                                  UserRole role,
-                                                  Long storageItemId,
-                                                  String batchNumber) {
-        return findProducedBatch(apiExecutor, storageId, role, storageItemId, batchNumber)
-                .map(StorageItemBatchResponse::getAmount)
-                .orElse(0.0);
+        return ProductionStockAssertions.findBatch(apiExecutor, storageId, role, outputResourceId, batchNumber, true);
     }
 
     private static String formatSigned(double value) {

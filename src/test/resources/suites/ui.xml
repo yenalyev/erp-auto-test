@@ -50,4 +50,10 @@
         </classes>
     </test>
 
+    <test name="Technological Maps UI">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
+        </classes>
+    </test>
+
 </suite>

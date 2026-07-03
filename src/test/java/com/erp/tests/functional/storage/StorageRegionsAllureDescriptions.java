@@ -299,9 +299,15 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_007 = """
-            Що перевіряємо: OWNER_1 читає GET /storages/{crewId}/inventory після видачі.
-            Тестові дані: member області CREWS; crew.id після send.
-            Очікуваний результат: HTTP 200; stock≈ISSUE_AMOUNT.
+            Що перевіряємо: OWNER_1 (Business_Unit_Owner) — GET /storages/{crewId}/inventory після видачі.
+            Тестові дані: crew з CREWS region; сесія alkatras без Crew-Manager.
+            Очікуваний результат: HTTP 403 — direct crew inventory лише для Crew-Manager (див. TC-CREW-INV-007b).
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_007B = """
+            Що перевіряємо: Crew-Manager (argument, UNIT) читає GET /storages/{crewId}/inventory після видачі.
+            Тестові дані: CREWS member=unit.storage.id; crew.id після send від OWNER_1.
+            Очікуваний результат: HTTP 200; stock≈ISSUE_AMOUNT (inventory-list::{crew}::read).
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_008 = """
@@ -311,9 +317,9 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_006 = """
-            Що перевіряємо: STOCK-звіт /inventory/crews = direct GET /storages/{crewId}/inventory.
-            Тестові дані: той самий crew/resource після видачі.
-            Очікуваний результат: amount у звіті == direct stock (±0.01).
+            Що перевіряємо: STOCK-звіт /inventory/crews = direct GET /storages/{crewId}/inventory (Crew-Manager).
+            Тестові дані: той самий crew/resource після видачі OWNER_1.
+            Очікуваний результат: amount у звіті == direct stock (±0.01) під CREW_MANAGER.
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_002 = """

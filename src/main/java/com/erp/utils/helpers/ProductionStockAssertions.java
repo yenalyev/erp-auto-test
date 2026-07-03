@@ -8,7 +8,11 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 
 import com.erp.enums.UserRole;
 
-import com.erp.models.response.StorageItemResponse;
+import com.erp.models.response.MultiLocationStorageItemResponse;
+
+import com.erp.models.response.StorageAmountResponse;
+
+import com.erp.models.response.StorageItemBatchResponse;
 
 import io.qameta.allure.Allure;
 
@@ -18,13 +22,15 @@ import lombok.experimental.UtilityClass;
 
 
 
-import java.util.HashMap;
-
 import java.util.LinkedHashMap;
 
 import java.util.List;
 
 import java.util.Map;
+
+import java.util.Objects;
+
+import java.util.Optional;
 
 import java.util.Set;
 
@@ -64,6 +70,10 @@ public class ProductionStockAssertions {
 
 
 
+    /**
+     * Exact stock snapshot for a set of resources on a single storage — uses the backend's
+     * {@code resourceIds} filter (no scanning/pagination, works regardless of storage size).
+     */
     public static StockSnapshot capture(ApiExecutor apiExecutor,
 
                                         Long storageId,
@@ -80,31 +90,37 @@ public class ProductionStockAssertions {
 
             Map<Long, String> names = new LinkedHashMap<>();
 
+            Response response = apiExecutor.executeWithQueryParams(
+                    ApiEndpointDefinition.STORAGE_INVENTORY_MULTI_GET,
+                    role,
+                    Map.of(
+                            "locations", storageId,
+                            "resourceIds", List.copyOf(resourceIds),
+                            "size", Math.max(resourceIds.size(), 1)));
+            List<MultiLocationStorageItemResponse> content = response.jsonPath()
+                    .getList("content", MultiLocationStorageItemResponse.class);
 
-
-            Map<Long, Double> tracked = loadAmountsForResources(
-
-                    apiExecutor, storageId, role, resourceIds,
-
-                    ApiEndpointDefinition.STORAGE_INVENTORY_GET_TRACKED, names);
-
-            amounts.putAll(tracked);
-
-
-
-            if (!amounts.keySet().containsAll(resourceIds)) {
-
-                loadAmountsForResources(
-
-                        apiExecutor, storageId, role, resourceIds,
-
-                        ApiEndpointDefinition.STORAGE_INVENTORY_GET, names)
-
-                        .forEach((id, amount) -> amounts.putIfAbsent(id, amount));
-
+            if (content != null) {
+                for (MultiLocationStorageItemResponse item : content) {
+                    if (item == null || item.getResource() == null || item.getResource().getId() == null) {
+                        continue;
+                    }
+                    Long resourceId = item.getResource().getId();
+                    if (!resourceIds.contains(resourceId)) {
+                        continue;
+                    }
+                    double amount = item.getLocations() == null ? 0.0 : item.getLocations().stream()
+                            .filter(loc -> loc.getStorage() != null && storageId.equals(loc.getStorage().getId()))
+                            .map(StorageAmountResponse::getAmount)
+                            .filter(Objects::nonNull)
+                            .findFirst()
+                            .orElse(0.0);
+                    amounts.put(resourceId, amount);
+                    if (item.getResource().getName() != null) {
+                        names.put(resourceId, item.getResource().getName().trim());
+                    }
+                }
             }
-
-
 
             for (Long resourceId : resourceIds) {
 
@@ -212,28 +228,69 @@ public class ProductionStockAssertions {
 
 
 
-    public static Long findStorageItemId(ApiExecutor apiExecutor,
-
-                                         Long storageId,
-
-                                         UserRole role,
-
-                                         Long resourceId) {
-
-        Long fromPage = findStorageItemIdInResponse(apiExecutor, storageId, role, resourceId,
-
-                ApiEndpointDefinition.STORAGE_INVENTORY_GET_TRACKED);
-
-        if (fromPage != null) {
-
-            return fromPage;
-
+    /**
+     * Exact stock lookup for a single resource on a single storage — uses the backend's
+     * {@code resourceIds} filter (no scanning/pagination, works regardless of storage size).
+     */
+    public static double resourceStockExact(ApiExecutor apiExecutor,
+                                            Long storageId,
+                                            UserRole role,
+                                            Long resourceId) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_INVENTORY_MULTI_GET,
+                role,
+                Map.of("locations", storageId, "resourceIds", resourceId, "size", 1));
+        List<MultiLocationStorageItemResponse> content = response.jsonPath()
+                .getList("content", MultiLocationStorageItemResponse.class);
+        if (content == null || content.isEmpty()) {
+            return 0.0;
         }
+        return content.stream()
+                .filter(Objects::nonNull)
+                .map(MultiLocationStorageItemResponse::getLocations)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .filter(loc -> loc.getStorage() != null && storageId.equals(loc.getStorage().getId()))
+                .map(StorageAmountResponse::getAmount)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(0.0);
+    }
 
-        return findStorageItemIdInResponse(apiExecutor, storageId, role, resourceId,
+    /**
+     * Exact batch lookup by {@code storageId + resourceId} — no {@code storageItemId} resolution
+     * needed, so it can never hit {@code .../inventory/null/batches}.
+     */
+    public static List<StorageItemBatchResponse> queryBatches(ApiExecutor apiExecutor,
+                                                              Long storageId,
+                                                              UserRole role,
+                                                              Long resourceId,
+                                                              Boolean isProduced,
+                                                              String batchNumber) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("storageId", storageId);
+        params.put("resourceId", resourceId);
+        if (isProduced != null) {
+            params.put("isProduced", isProduced);
+        }
+        if (batchNumber != null) {
+            params.put("batchNumber", batchNumber);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_ITEM_BATCHES_GET_BY_RESOURCE, role, params);
+        return ApiResponseHelper.parseList(response, StorageItemBatchResponse.class,
+                "GET storage-items/batches (storageId=" + storageId + ", resourceId=" + resourceId + ")");
+    }
 
-                ApiEndpointDefinition.STORAGE_INVENTORY_GET);
-
+    public static Optional<StorageItemBatchResponse> findBatch(ApiExecutor apiExecutor,
+                                                               Long storageId,
+                                                               UserRole role,
+                                                               Long resourceId,
+                                                               String batchNumber,
+                                                               Boolean isProduced) {
+        return queryBatches(apiExecutor, storageId, role, resourceId, isProduced, batchNumber).stream()
+                .filter(b -> batchNumber.equals(b.getBatchNumber()))
+                .findFirst();
     }
 
 
@@ -325,90 +382,6 @@ public class ProductionStockAssertions {
     }
 
 
-
-    private static Map<Long, Double> loadAmountsForResources(ApiExecutor apiExecutor,
-
-                                                             Long storageId,
-
-                                                             UserRole role,
-
-                                                             Set<Long> resourceIds,
-
-                                                             ApiEndpointDefinition endpoint,
-
-                                                             Map<Long, String> namesOut) {
-
-        Response response = apiExecutor.execute(endpoint, role, String.valueOf(storageId));
-
-        List<StorageItemResponse> items = ApiResponseHelper.parseList(
-
-                response, StorageItemResponse.class, "GET inventory for storage " + storageId);
-
-        Map<Long, Double> amounts = new HashMap<>();
-
-        if (items == null) {
-
-            return amounts;
-
-        }
-
-        for (StorageItemResponse item : items) {
-
-            if (item.getResource() != null && resourceIds.contains(item.getResource().getId())) {
-
-                Long id = item.getResource().getId();
-
-                amounts.put(id, item.getAmount() != null ? item.getAmount() : 0.0);
-
-                if (item.getResource().getName() != null) {
-
-                    namesOut.put(id, item.getResource().getName().trim());
-
-                }
-
-            }
-
-        }
-
-        return amounts;
-
-    }
-
-
-
-    private static Long findStorageItemIdInResponse(ApiExecutor apiExecutor,
-
-                                                    Long storageId,
-
-                                                    UserRole role,
-
-                                                    Long resourceId,
-
-                                                    ApiEndpointDefinition endpoint) {
-
-        Response response = apiExecutor.execute(endpoint, role, String.valueOf(storageId));
-
-        List<StorageItemResponse> items = ApiResponseHelper.parseList(
-
-                response, StorageItemResponse.class, "GET inventory item id");
-
-        if (items == null) {
-
-            return null;
-
-        }
-
-        return items.stream()
-
-                .filter(i -> i.getResource() != null && resourceId.equals(i.getResource().getId()))
-
-                .map(StorageItemResponse::getId)
-
-                .findFirst()
-
-                .orElse(null);
-
-    }
 
 }
 

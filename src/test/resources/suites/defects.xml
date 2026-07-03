@@ -14,4 +14,10 @@
             <class name="com.erp.tests.functional.defect.DefectTest"/>
         </classes>
     </test>
+
+    <test name="Defect Management UI">
+        <classes>
+            <class name="com.erp.tests.ui.DefectUITest"/>
+        </classes>
+    </test>
 </suite>

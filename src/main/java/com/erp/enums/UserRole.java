@@ -9,6 +9,8 @@ public enum UserRole {
     OWNER_3,
     RESOURCE_VIEWER,
     ACCOUNTANT,
+    /** Dev/staging: argument — Crew-Manager-ROLE, UNIT storage ({@code unit.storage.id}). */
+    CREW_MANAGER,
     ANONYMOUS;
 
     public String getUsername() {
@@ -19,6 +21,7 @@ public enum UserRole {
             case OWNER_3         -> ConfigProvider.getOwner3Username();
             case RESOURCE_VIEWER -> ConfigProvider.getResourceViewerUsername();
             case ACCOUNTANT      -> ConfigProvider.getAccountantUsername();
+            case CREW_MANAGER    -> ConfigProvider.getCrewManagerUsername();
             case ANONYMOUS       -> "";
         };
     }
@@ -31,6 +34,7 @@ public enum UserRole {
             case OWNER_3         -> ConfigProvider.getOwner3Password();
             case RESOURCE_VIEWER -> ConfigProvider.getResourceViewerPassword();
             case ACCOUNTANT      -> ConfigProvider.getAccountantPassword();
+            case CREW_MANAGER    -> ConfigProvider.getCrewManagerPassword();
             case ANONYMOUS       -> "";
         };
     }
@@ -40,8 +44,9 @@ public enum UserRole {
         return switch (this) {
             case ADMIN, RESOURCE_VIEWER, ACCOUNTANT -> "all";
             case OWNER_1   -> String.valueOf(ConfigProvider.getOwner1StorageId());
-            case OWNER_2   -> String.valueOf(ConfigProvider.getOwner2StorageId());
-            case OWNER_3   -> "";
+            case OWNER_2       -> String.valueOf(ConfigProvider.getOwner2StorageId());
+            case CREW_MANAGER  -> String.valueOf(ConfigProvider.getUnitStorageId());
+            case OWNER_3       -> "";
             case ANONYMOUS -> "";
         };
     }

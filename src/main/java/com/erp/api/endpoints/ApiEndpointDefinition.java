@@ -994,6 +994,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    STORAGE_ITEM_BATCHES_GET_BY_RESOURCE(
+            "/api/v1/storage-items/batches",
+            Method.GET,
+            "schemas/inventory/storage-item-batch-list-schema.json",
+            "Get storage item batches by storageId + resourceId (exact lookup, no storageItemId scan)",
+            null,
+            new TypeReference<List<StorageItemBatchResponse>>() {},
+            null
+    ),
+
     STORAGE_INVENTORY_STATUS_GET(
             "/api/v1/storages/{id}/inventory/status",
             Method.GET,
@@ -1018,9 +1028,9 @@ public enum ApiEndpointDefinition {
             "/api/v1/storages/inventory",
             Method.GET,
             "schemas/inventory/multi-location-inventory-list-schema.json",
-            "Get multi-location inventory page",
+            "Get multi-location inventory page (supports exact locations + resourceIds filter)",
             null,
-            new TypeReference<List<StorageItemResponse>>() {},
+            new TypeReference<List<MultiLocationStorageItemResponse>>() {},
             null
     ),
 

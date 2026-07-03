@@ -25,6 +25,8 @@ Extend `BaseFixture`, call `ApiExecutor` + store IDs in `TestContext` via `Conte
 
 Fixtures belong in `src/main/java/com/erp/fixtures/`, not in test classes.
 
+**Cleanup:** `StorageFixture#create*` і `StorageRegionFixture#createRegion` автоматично `trackForCleanup`. Після тесту — `TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture)` або extends `StorageApiTestBase`. Деталі — `erp-test-design.mdc` §6.
+
 ## Models
 
 - Request DTOs: `src/main/java/com/erp/models/request/` (Lombok builders)

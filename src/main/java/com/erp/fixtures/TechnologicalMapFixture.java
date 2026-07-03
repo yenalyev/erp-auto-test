@@ -192,6 +192,29 @@ public class TechnologicalMapFixture extends BaseFixture {
                 .contains("плані");
     }
 
+    @Step("Перевірити відмову: техкарта використовується в глобальному плані")
+    public void assertUsedInGlobalPlanRejection(Response response, String expectedPlanDescription) {
+        assertThat(response.statusCode()).isEqualTo(400);
+        String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
+        assertThat(errorMessage)
+                .as("Повідомлення про використання техкарти в глобальному плані")
+                .contains("глобальному плані")
+                .contains(expectedPlanDescription);
+    }
+
+    @Step("Перевірити відмову: ресурс одночасно у input і output")
+    public void assertInputOutputOverlapRejection(Response response, String expectedResourceName) {
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.jsonPath().getString("errors[0].field"))
+                .as("Поле помилки валідації")
+                .isEqualTo("output");
+        String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
+        assertThat(errorMessage)
+                .as("Повідомлення про перетин input/output")
+                .contains("не може бути одночасно вхідним і вихідним")
+                .contains(expectedResourceName);
+    }
+
     @Step("{role}: DELETE deactivate tech map {techMapId} at storage {storageId}")
     public Response deactivateTechMap(UserRole role, Long techMapId, Long storageId) {
         return apiExecutor.execute(

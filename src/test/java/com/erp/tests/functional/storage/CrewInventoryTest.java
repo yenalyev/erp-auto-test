@@ -64,6 +64,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
                 scenario.crew().getId(),
                 resourceId,
                 ISSUE_AMOUNT);
+        invalidateCrewManagerSession();
     }
 
     @Test(priority = 10)
@@ -97,18 +98,33 @@ public class CrewInventoryTest extends CrewApiTestBase {
     @TestCaseId("TC-CREW-INV-007")
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007)
     @Severity(SeverityLevel.CRITICAL)
-    public void testOwner1CanReadCrewDirectInventory() {
+    public void testOwner1DeniedCrewDirectInventory() {
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_INVENTORY_GET,
                 UserRole.OWNER_1,
                 String.valueOf(scenario.crew().getId()));
         assertThat(response.statusCode())
-                .as("OWNER_1 має доступ до inventory екіпажу зі своєї області CREWS")
+                .as("OWNER_1 без Crew-Manager — direct inventory екіпажу заборонено")
+                .isEqualTo(403);
+    }
+
+    @Test(priority = 22)
+    @TestCaseId("TC-CREW-INV-007b")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007B)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCrewManagerCanReadCrewDirectInventory() {
+        invalidateCrewManagerSession();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_GET,
+                UserRole.CREW_MANAGER,
+                String.valueOf(scenario.crew().getId()));
+        assertThat(response.statusCode())
+                .as("Crew-Manager (argument) має inventory-list::{crew}::read")
                 .isEqualTo(200);
         SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_GET);
 
         double stock = relocationFixture.getResourceStock(
-                scenario.crew().getId(), resourceId, UserRole.OWNER_1);
+                scenario.crew().getId(), resourceId, UserRole.CREW_MANAGER);
         assertThat(stock).isCloseTo(ISSUE_AMOUNT, within(0.01));
     }
 
@@ -131,8 +147,9 @@ public class CrewInventoryTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_006)
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewStockReportMatchesDirectInventory() {
+        invalidateCrewManagerSession();
         double directStock = relocationFixture.getResourceStock(
-                scenario.crew().getId(), resourceId, UserRole.OWNER_1);
+                scenario.crew().getId(), resourceId, UserRole.CREW_MANAGER);
 
         Map<String, Object> params = crewInventoryParams("STOCK");
         List<CrewResourceStockResponse> rows = crewFixture.getCrewInventory(UserRole.OWNER_1, params);
@@ -224,6 +241,12 @@ public class CrewInventoryTest extends CrewApiTestBase {
                 log.warn("Crew inventory session cleanup failed: {}", e.getMessage());
             }
         }
+    }
+
+    private void invalidateCrewManagerSession() {
+        authService.invalidateSession(
+                UserRole.CREW_MANAGER.getUsername(),
+                UserRole.CREW_MANAGER.getPassword());
     }
 
     private Map<String, Object> crewInventoryParams(String requestType) {

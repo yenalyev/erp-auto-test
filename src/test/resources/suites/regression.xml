@@ -76,6 +76,7 @@
         <classes>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapDeactivationPlanGuardTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapValidationTest"/>
         </classes>
     </test>
 
@@ -123,6 +124,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanDecompositionApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanGenerationApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAfterTechMapDeactivationTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanTechMapDeactivationGuardTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
         </classes>
     </test>

@@ -16,8 +16,12 @@ alwaysApply: false
 2. Register body strategy in `RequestBodyFactory` (for POST/PUT)
 3. Add RBAC rule in `rbac-policy.yml` if access control applies
 4. Create fixture in `src/main/java/com/erp/fixtures/` if shared setup needed
-5. Add test class extending `BaseFunctionalTest` (or use auto-generated RBAC matrix)
+5. Add test class extending `BaseFunctionalTest` (or `StorageApiTestBase` if створюються локації/області)
 6. Register class in appropriate suite XML under `src/test/resources/suites/`
+
+## Cleanup
+
+Тести, що створюють локації/області, **мають** extends `StorageApiTestBase` або викликати `TestArtifactCleanup` у `@AfterMethod`/`@AfterClass`. Див. `erp-test-design.mdc` §6.
 
 ## Functional test template (follow ResourceTest)
 

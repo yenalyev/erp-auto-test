@@ -8,9 +8,9 @@ import com.erp.models.query.ProductionJournalQuery;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
-import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
+import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.validators.SchemaRegistry;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
@@ -185,20 +185,7 @@ public class ProductionFixture extends BaseFixture {
 
     @Step("API: Отримати залишок ресурсу {resourceId} на складі {storageId}")
     public double getResourceStock(Long storageId, Long resourceId) {
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.STORAGE_INVENTORY_GET,
-                UserRole.OWNER_1,
-                String.valueOf(storageId));
-        List<StorageItemResponse> items = DatabaseIntegrityValidator.extractList(
-                response, StorageItemResponse.class);
-        if (items == null) {
-            return 0.0;
-        }
-        return items.stream()
-                .filter(i -> i.getResource() != null && resourceId.equals(i.getResource().getId()))
-                .map(i -> i.getAmount() != null ? i.getAmount() : 0.0)
-                .findFirst()
-                .orElse(0.0);
+        return ProductionStockAssertions.resourceStockExact(apiExecutor, storageId, UserRole.OWNER_1, resourceId);
     }
 
     private void topUpIfNeeded(Long storageId, Long resourceId, double minimum) {
@@ -212,7 +199,8 @@ public class ProductionFixture extends BaseFixture {
                 UserRole.OWNER_1,
                 storageId,
                 Map.of(resourceId, toAdd));
-        log.info("Topped up resource {} on storage {}: {} → {}", resourceId, storageId, current, minimum);
+        double after = getResourceStock(storageId, resourceId);
+        log.info("Topped up resource {} on storage {}: {} → {}", resourceId, storageId, current, after);
     }
 
     @Step("FIXTURE: Seed input stock via relocation receive (SUPPLIER → storage {storageId})")

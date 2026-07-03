@@ -6,6 +6,7 @@ import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.request.StorageRequest;
 import com.erp.models.response.StorageRegionResponse;
 import com.erp.models.response.StorageResponse;
@@ -68,13 +69,7 @@ public class RelocationSendRecipientUiTest extends BaseUITest {
 
     @AfterMethod(alwaysRun = true)
     public void cleanupVisibilityScenario() {
-        if ("staging".equals(System.getProperty("env", "debug"))) {
-            regionFixture.clearTrackedRegions();
-            storageFixture.clearTrackedStorages();
-            return;
-        }
-        regionFixture.deleteTrackedRegions(UserRole.ADMIN);
-        storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
     }
 
     @Test

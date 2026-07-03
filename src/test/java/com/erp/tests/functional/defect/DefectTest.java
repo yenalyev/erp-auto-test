@@ -554,8 +554,8 @@ public class DefectTest extends BaseFunctionalTest {
         DefectResponse created = fixture.createAs(UserRole.OWNER_1,
                 DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 6.0));
 
-        DefectWriteOffRequest wo = DefectDataFactory.buildWriteOff(
-                created.getId(), storageId, 6.0, "erp-auto-test full write-off");
+        DefectWriteOffRequest wo = DefectDataFactory.buildWriteOffForDefect(
+                created, storageId, 6.0, "erp-auto-test full write-off");
         Response woRaw = fixture.writeOffRaw(UserRole.OWNER_1, wo);
         assertThat(woRaw.statusCode()).as("write-off має повертати 200").isEqualTo(200);
         DefectWriteOffResponse woResp = woRaw.as(DefectWriteOffResponse.class);
@@ -667,7 +667,7 @@ public class DefectTest extends BaseFunctionalTest {
                 DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 6.0));
 
         Response woResp = fixture.writeOffRaw(UserRole.OWNER_1,
-                DefectDataFactory.buildWriteOff(created.getId(), storageId, 3.0, "partial write-off"));
+                DefectDataFactory.buildWriteOffForDefect(created, storageId, 3.0, "partial write-off"));
         assertThat(woResp.statusCode()).as("write-off setup").isEqualTo(200);
 
         Response deleteResp = fixture.deleteRaw(UserRole.OWNER_1, created.getId());
@@ -720,7 +720,7 @@ public class DefectTest extends BaseFunctionalTest {
                 DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 6.0));
 
         Response woResp = fixture.writeOffRaw(UserRole.OWNER_1,
-                DefectDataFactory.buildWriteOff(created.getId(), storageId, 10.0, "over limit"));
+                DefectDataFactory.buildWriteOffForDefect(created, storageId, 10.0, "over limit"));
         Allure.step("Списання понад залишок відхилено", () ->
                 assertThat(woResp.statusCode()).as("body=%s", safeBody(woResp)).isGreaterThanOrEqualTo(400));
     }
@@ -735,11 +735,11 @@ public class DefectTest extends BaseFunctionalTest {
                 DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 6.0));
 
         Response first = fixture.writeOffRaw(UserRole.OWNER_1,
-                DefectDataFactory.buildWriteOff(created.getId(), storageId, 4.0, "step 1"));
+                DefectDataFactory.buildWriteOffForDefect(created, storageId, 4.0, "step 1"));
         assertThat(first.statusCode()).as("перше списання").isEqualTo(200);
 
         Response second = fixture.writeOffRaw(UserRole.OWNER_1,
-                DefectDataFactory.buildWriteOff(created.getId(), storageId, 3.0, "step 2 over limit"));
+                DefectDataFactory.buildWriteOffForDefect(created, storageId, 3.0, "step 2 over limit"));
         Allure.step("Друге списання понад залишок відхилено", () ->
                 assertThat(second.statusCode()).as("body=%s", safeBody(second)).isGreaterThanOrEqualTo(400));
     }
@@ -776,7 +776,7 @@ public class DefectTest extends BaseFunctionalTest {
                 DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 5.0));
 
         Response woResp = fixture.writeOffRaw(UserRole.OWNER_1,
-                DefectDataFactory.buildWriteOff(created.getId(), storageId, 5.0, "full write-off"));
+                DefectDataFactory.buildWriteOffForDefect(created, storageId, 5.0, "full write-off"));
         assertThat(woResp.statusCode()).as("повне списання").isEqualTo(200);
 
         Response deleteResp = fixture.deleteRaw(UserRole.OWNER_1, created.getId());

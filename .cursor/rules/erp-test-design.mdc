@@ -46,6 +46,34 @@ alwaysApply: false
 - у `@Description`: блок **«Відомий дефект»** + поточна vs очікувана відповідь;
 - не фіксувати 400 як pass, якщо продуктова вимога — 200.
 
+## 6. Cleanup тестових артефактів (обов'язково)
+
+Після тесту **завжди** прибирати дані, створені для arrange:
+
+| Сутність | Як створюється | Cleanup |
+|----------|----------------|---------|
+| Локації (UNIT/CREW/STORAGE/…) | `StorageFixture#create*` | `deactivate` (архівація) через `trackForCleanup` |
+| Області видимості | `StorageRegionFixture#createRegion` | `DELETE` через `trackForCleanup` |
+| Ресурси (ізольовані) | `ResourceFixture#createUniqueResource` | deactivate / delete за патерном класу |
+
+**API-тести локацій/областей:** extends [`StorageApiTestBase`](src/test/java/com/erp/tests/functional/storage/StorageApiTestBase.java) — `@AfterMethod` + `@AfterClass` викликають [`TestArtifactCleanup`](src/main/java/com/erp/fixtures/TestArtifactCleanup.java).
+
+**UI / інші тести з fixtures:** явний `@AfterMethod` або `@AfterClass`:
+
+```java
+@AfterMethod(alwaysRun = true) // або @AfterClass для setup у @BeforeClass
+public void cleanupArtifacts() {
+    TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
+}
+```
+
+Правила:
+
+- `createStorage` / `createRegion` автоматично додають id у cleanup-чергу — **не** викликати cleanup вручну для кожного id.
+- `@BeforeClass` setup → `@AfterClass` cleanup; per-method arrange → `@AfterMethod`.
+- **staging:** cleanup пропускається (лише `clearTracked*`), як у `TestArtifactCleanup`.
+- Тест, що свідомо видаляє сутність у тілі (напр. `StorageRegionTest` DELETE), — `untrackForCleanup(id)` перед ручним DELETE.
+
 ## Референс: TC-GP-045 (пропущений баг)
 
 | Шар | Поведінка |

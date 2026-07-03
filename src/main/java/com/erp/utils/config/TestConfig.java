@@ -127,6 +127,15 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String accountantPassword();
 
+    /** Crew-Manager test user (dev: argument, Keycloak Crew-Manager-ROLE). */
+    @Key("user.unit.username")
+    @DefaultValue("argument")
+    String crewManagerUsername();
+
+    @Key("user.unit.password")
+    @DefaultValue("")
+    String crewManagerPassword();
+
     // Storage IDs per owner role (resolved per environment)
     @Key("owner1.storage.id")
     @DefaultValue("1")
@@ -135,6 +144,11 @@ public interface TestConfig extends Config {
     @Key("owner2.storage.id")
     @DefaultValue("2")
     long owner2StorageId();
+
+    /** UNIT storage id for Crew-Manager user ({@code var_business_unit_id} in Keycloak). */
+    @Key("unit.storage.id")
+    @DefaultValue("77")
+    long unitStorageId();
 
     /** A storage ID that is guaranteed not to exist; PostgreSQL never assigns negative IDs. */
     @Key("incorrect.storage.id")

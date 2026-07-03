@@ -5,10 +5,13 @@ import com.erp.models.common.DefectBatchItem;
 import com.erp.models.common.DefectWriteOffBatch;
 import com.erp.models.request.DefectRequest;
 import com.erp.models.request.DefectWriteOffRequest;
+import com.erp.models.response.DefectResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Static builders for defect ("Брак") request bodies, mirroring backend {@code DefectRequest} /
@@ -118,6 +121,47 @@ public final class DefectDataFactory {
                 .defectId(defectId)
                 .storageId(storageId)
                 .amount(BigDecimal.valueOf(amount))
+                .description(description)
+                .build();
+    }
+
+    /**
+     * Builds a write-off request whose {@code batches} mirror the target defect's own
+     * {@code defectBatches}, the way the real client (tk-ui {@code DefectWriteOffDialog}) always
+     * does — it never sends {@code batches=null} when the defect has a batch breakdown.
+     * See {@code erp-api-tests.mdc}: tests must replay the same request shape as the real client.
+     *
+     * <p>For the common single-batch case (all resources seeded in this suite collapse into one
+     * batch — see {@code RelocationStockSeeder}), the requested {@code amount} is written onto
+     * that batch even if it differs from the batch's current remaining amount, so over-limit /
+     * partial write-off negative scenarios remain structurally valid requests.
+     */
+    public static DefectWriteOffRequest buildWriteOffForDefect(DefectResponse defect,
+                                                               Long storageId,
+                                                               double amount,
+                                                               String description) {
+        List<DefectBatchItem> defectBatches = defect.getDefectBatches();
+        if (defectBatches == null || defectBatches.isEmpty()) {
+            return buildWriteOff(defect.getId(), storageId, amount, description);
+        }
+
+        List<DefectWriteOffBatch> batches = defectBatches.stream()
+                .map(b -> DefectWriteOffBatch.builder()
+                        .batchNumber(b.getBatchNumber())
+                        .amount(b.getAmount())
+                        .build())
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        double sum = batches.stream().mapToDouble(b -> b.getAmount().doubleValue()).sum();
+        if (batches.size() == 1 && Math.abs(sum - amount) > 0.0001) {
+            batches.get(0).setAmount(BigDecimal.valueOf(amount));
+        }
+
+        return DefectWriteOffRequest.builder()
+                .defectId(defect.getId())
+                .storageId(storageId)
+                .amount(BigDecimal.valueOf(amount))
+                .batches(batches)
                 .description(description)
                 .build();
     }

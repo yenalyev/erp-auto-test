@@ -7,13 +7,11 @@ import com.erp.fixtures.CrewRegionFixture;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
-import com.erp.fixtures.StorageFixture;
-import com.erp.fixtures.StorageRegionFixture;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceRelocationSumViewerResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
-import com.erp.tests.functional.BaseFunctionalTest;
+import com.erp.tests.functional.storage.StorageApiTestBase;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
@@ -34,14 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @Epic("Resource Viewer")
 @Feature("Relocation journal filter")
-public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
+public class ResourceViewerRelocationFilterTest extends StorageApiTestBase {
 
     private static final String RESOURCE_PREFIX = "rvw-rel-";
     private static final double SEND_AMOUNT = 6.0;
 
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
-    private StorageFixture storageFixture;
     private CrewRegionFixture crewFixture;
 
     private Long owner1StorageId;
@@ -50,13 +47,8 @@ public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
     private StorageResponse secondUnit;
     private CrewRegionScenario crewScenario;
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(alwaysRun = true, dependsOnMethods = "setupStorageApiBase")
     public void setupResourceViewerRelocationFilterTests() {
-        if (testContext == null) {
-            baseTestClassSetup();
-        }
-        storageFixture = new StorageFixture(testContext, apiExecutor);
-        StorageRegionFixture regionFixture = new StorageRegionFixture(testContext, apiExecutor);
         crewFixture = new CrewRegionFixture(testContext, apiExecutor, storageFixture, regionFixture);
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);

@@ -1,12 +1,9 @@
 package com.erp.utils.helpers;
 
 import com.erp.api.clients.ApiExecutor;
-import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.models.response.StorageItemBatchResponse;
-import com.erp.models.response.StorageItemResponse;
 import io.qameta.allure.Allure;
-import io.restassured.response.Response;
 import lombok.experimental.UtilityClass;
 
 import java.util.List;
@@ -22,22 +19,6 @@ import static org.assertj.core.api.Assertions.within;
  */
 @UtilityClass
 public class DefectStockAssertions {
-
-    /** Total amount of a single resource on a storage. */
-    public static double resourceStock(ApiExecutor apiExecutor,
-                                       Long storageId,
-                                       UserRole role,
-                                       Long resourceId) {
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.STORAGE_INVENTORY_GET, role, String.valueOf(storageId));
-        List<StorageItemResponse> items = DatabaseIntegrityValidator.extractList(
-                response, StorageItemResponse.class);
-        return items.stream()
-                .filter(i -> i.getResource() != null && resourceId.equals(i.getResource().getId()))
-                .map(i -> i.getAmount() != null ? i.getAmount() : 0.0)
-                .findFirst()
-                .orElse(0.0);
-    }
 
     public static void assertStockDebited(double before,
                                           double after,
@@ -66,8 +47,7 @@ public class DefectStockAssertions {
                                                                     UserRole role,
                                                                     Long resourceId,
                                                                     String phaseLabel) {
-        return batches(apiExecutor, storageId, role, resourceId,
-                ApiEndpointDefinition.STORAGE_INVENTORY_BATCHES_GET_NON_PRODUCED, phaseLabel);
+        return batches(apiExecutor, storageId, role, resourceId, false, phaseLabel);
     }
 
     /** Ordered list of produced batches for a resource. */
@@ -76,8 +56,7 @@ public class DefectStockAssertions {
                                                                  UserRole role,
                                                                  Long resourceId,
                                                                  String phaseLabel) {
-        return batches(apiExecutor, storageId, role, resourceId,
-                ApiEndpointDefinition.STORAGE_INVENTORY_BATCHES_GET, phaseLabel);
+        return batches(apiExecutor, storageId, role, resourceId, true, phaseLabel);
     }
 
     public static double batchAmount(List<StorageItemBatchResponse> batches, String batchNumber) {
@@ -96,19 +75,10 @@ public class DefectStockAssertions {
                                                          Long storageId,
                                                          UserRole role,
                                                          Long resourceId,
-                                                         ApiEndpointDefinition endpoint,
+                                                         boolean isProduced,
                                                          String phaseLabel) {
-        Long storageItemId = ProductionStockAssertions.findStorageItemId(
-                apiExecutor, storageId, role, resourceId);
-        if (storageItemId == null) {
-            return List.of();
-        }
-        Response response = apiExecutor.execute(endpoint, role, null, storageId, storageItemId);
-        List<StorageItemBatchResponse> batches = response.jsonPath()
-                .getList("", StorageItemBatchResponse.class);
-        if (batches == null) {
-            batches = List.of();
-        }
+        List<StorageItemBatchResponse> batches = ProductionStockAssertions.queryBatches(
+                apiExecutor, storageId, role, resourceId, isProduced, null);
         String table = batches.stream()
                 .map(b -> String.format("«%s»: %.2f", b.getBatchNumber(),
                         b.getAmount() != null ? b.getAmount() : 0.0))

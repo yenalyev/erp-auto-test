@@ -140,7 +140,7 @@ mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest,StorageNamesEn
 | **TC-STR-CREW-005..006** | `CrewVisibilityTest` | `hasCrews`, crew-units, crew-names | Critical |
 | **TC-STR-CREW-011..012** | `CrewVisibilityTest` | Ієрархія UNIT та рекурсивний пошук екіпажів | Critical |
 | **TC-CREW-REL-001..003** | `CrewRelocationTest` | Send→CREW AUTO_FINISHED, journal, insufficient stock | Critical |
-| **TC-CREW-INV-001,006,007,008** | `CrewInventoryTest` | STOCK report; OWNER_1 direct inventory; OWNER_2 denied | Critical |
+| **TC-CREW-INV-001,006,007,007b,008** | `CrewInventoryTest` | STOCK report; OWNER_1 denied direct; Crew-Manager direct; OWNER_2 denied | Critical |
 | **TC-CREW-INV-002** | `CrewInventoryTest` | INCOME report — **disabled** (див. коментар у тесті) | Normal |
 
 **Запуск crew-тестів:**
@@ -149,6 +149,10 @@ mvn test -Denv=dev -Dtest=StorageCrewRegionTest,CrewVisibilityTest,CrewRelocatio
 ```
 
 **Fixture:** `CrewRegionFixture` — `prepareSingleCrewScenario`, `prepareHierarchyScenario`.
+
+**Crew-Manager UI/API:** `user.unit.username=argument` (`UserRole.CREW_MANAGER`), `unit.storage.id=77` — Keycloak `Crew-Manager-ROLE` для direct crew inventory (`TC-UI-CREW-004`, `TC-CREW-INV-007b`).
+
+**Cleanup:** API crew-тести extends `CrewApiTestBase` → `StorageApiTestBase` (`@AfterMethod`/`@AfterClass`). UI — `TestArtifactCleanup` (див. `CrewIssuanceUITest`).
 
 ### Пов’язані тести (інші suite)
 

@@ -70,3 +70,13 @@ mvn exec:java@install-chromium         # first-time browser install
 3. Add to `src/test/resources/suites/ui.xml` (or master regression suite)
 4. Use `@TestCaseId`, Allure annotations consistent with API tests
 5. Add `pageObject.attachScreenshot("TC-… — step")` на ключових кроках (див. Screenshots вище)
+
+## Cleanup (обов'язково)
+
+Якщо тест через API створює **локації** або **області видимості**:
+
+- тримати `StorageFixture` + `StorageRegionFixture` як поля класу (не локальні змінні в `@BeforeClass`);
+- після тесту/класу викликати `TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture)`;
+- референс: `RelocationSendRecipientUiTest`, `CrewIssuanceUITest` (`@AfterClass`).
+
+Без cleanup тести засмічують dev/staging (префікси `ui-crew-`, `crew-inv-` тощо).

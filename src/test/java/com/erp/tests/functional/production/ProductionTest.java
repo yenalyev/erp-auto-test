@@ -229,26 +229,11 @@ public class ProductionTest extends BaseFunctionalTest {
                 String.valueOf(storageId));
         assertThat(createResponse.statusCode()).isEqualTo(200);
 
-        Long resolvedItemId = testContext.get(ContextKey.PRODUCTION_OUTPUT_STORAGE_ITEM_ID);
-        if (resolvedItemId == null) {
-            resolvedItemId = ProductionStockAssertions.findStorageItemId(
-                    apiExecutor, storageId, UserRole.OWNER_1, outputResourceId);
-        }
-        final Long outputStorageItemId = resolvedItemId;
-        assertThat(outputStorageItemId).isNotNull();
-
-        Response batchesResponse = Allure.step("GET produced batches", () ->
-                apiExecutor.execute(
-                        ApiEndpointDefinition.STORAGE_INVENTORY_BATCHES_GET,
-                        UserRole.OWNER_1,
-                        null,
-                        storageId,
-                        outputStorageItemId)
+        List<StorageItemBatchResponse> batches = Allure.step("GET produced batches", () ->
+                ProductionStockAssertions.queryBatches(
+                        apiExecutor, storageId, UserRole.OWNER_1, outputResourceId, true, null)
         );
 
-        assertThat(batchesResponse.statusCode()).isEqualTo(200);
-        List<StorageItemBatchResponse> batches = batchesResponse.jsonPath()
-                .getList("", StorageItemBatchResponse.class);
         assertThat(batches).isNotNull();
         assertThat(batches).anyMatch(b -> batchNumber.equals(b.getBatchNumber()));
     }
@@ -304,7 +289,7 @@ public class ProductionTest extends BaseFunctionalTest {
                 apiExecutor, storageId, UserRole.OWNER_1, outputResourceId, batchNumber,
                 "після 1-го виробництва");
         ProductionBatchAssertions.assertProducedBatchAmount(
-                new ProductionBatchAssertions.BatchSnapshot(batchNumber, 0, outputResourceId, null),
+                new ProductionBatchAssertions.BatchSnapshot(batchNumber, 0, outputResourceId),
                 batchAfterFirst,
                 firstAmount * outputCoef,
                 "після першого запису журналу");

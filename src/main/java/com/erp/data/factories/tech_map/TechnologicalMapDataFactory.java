@@ -136,6 +136,51 @@ public class TechnologicalMapDataFactory {
     }
 
     /**
+     * Invalid request: overlapping resource appears in both input and output.
+     *
+     * @param otherInput optional second input row (for multi-input overlap scenario); may be null
+     */
+    public static TechnologicalMapRequest withInputOutputOverlap(
+            @NonNull ResourceResponse overlappingResource,
+            ResourceResponse otherInput,
+            Long storageId,
+            String type) {
+        if (storageId == null) {
+            throw new IllegalStateException("storageId is required for technological map request");
+        }
+        if (type == null || type.isBlank()) {
+            throw new IllegalStateException("type is required for technological map request");
+        }
+
+        List<ResourceUsageRequest> input = new ArrayList<>();
+        if (otherInput != null) {
+            input.add(new ResourceUsageRequest(otherInput.getId(), 2.0));
+        }
+        input.add(new ResourceUsageRequest(overlappingResource.getId(), 1.0));
+
+        List<ResourceUsageRequest> output = List.of(
+                new ResourceUsageRequest(overlappingResource.getId(), 1.0));
+
+        return TechnologicalMapRequest.builder()
+                .name("Overlap-TM-" + System.currentTimeMillis())
+                .type(type)
+                .input(input)
+                .output(output)
+                .storageIds(Set.of(storageId))
+                .build();
+    }
+
+    /**
+     * Update request derived from existing map with output resourceId set to first input resource (overlap).
+     */
+    public static TechnologicalMapRequest withIntroducedOverlap(@NonNull TechnologicalMapResponse existing) {
+        TechnologicalMapRequest request = fromExisting(existing).build();
+        Long overlapResourceId = request.getInput().getFirst().getResourceId();
+        request.getOutput().getFirst().setResourceId(overlapResourceId);
+        return request;
+    }
+
+    /**
      * Клон техкарти (як у UI: нова назва, ті самі input/output).
      */
     public static TechnologicalMapRequest cloneFrom(@NonNull TechnologicalMapResponse source) {
