@@ -44,4 +44,10 @@
         </classes>
     </test>
 
+    <test name="Plan Execution UI">
+        <classes>
+            <class name="com.erp.tests.ui.PlanExecutionUiTest"/>
+        </classes>
+    </test>
+
 </suite>
