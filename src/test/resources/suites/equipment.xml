@@ -25,6 +25,7 @@
     <test name="Equipment UI">
         <classes>
             <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
+            <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
         </classes>
     </test>

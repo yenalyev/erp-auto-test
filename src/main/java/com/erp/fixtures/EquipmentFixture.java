@@ -21,6 +21,7 @@ import com.erp.models.response.PagedEquipmentGroupResponse;
 import com.erp.models.response.PagedEquipmentResponse;
 import com.erp.models.response.PagedRelocationResponse;
 import com.erp.models.response.RelocationResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -47,12 +48,23 @@ public class EquipmentFixture extends BaseFixture {
             return;
         }
         Long storageId = ConfigProvider.getOwner1StorageId();
-        Long categoryId = resolveOrCreateCategory();
-        testContext.set(ContextKey.EQUIPMENT_CATEGORY_ID, categoryId);
+        prepareCategoryContext();
+        Long categoryId = testContext.get(ContextKey.EQUIPMENT_CATEGORY_ID);
 
         EquipmentResponse equipment = createEquipmentOnStorage(UserRole.ADMIN, storageId, categoryId);
         testContext.set(ContextKey.EQUIPMENT_ID, equipment.getId());
         log.info("Equipment fixture ready: id={}, storage={}", equipment.getId(), storageId);
+    }
+
+    /** Resolves equipment category only — no equipment create (safe for UI batch-create tests). */
+    @Step("FIXTURE: категорія обладнання")
+    public void prepareCategoryContext() {
+        if (testContext.get(ContextKey.EQUIPMENT_CATEGORY_ID) != null) {
+            return;
+        }
+        Long categoryId = resolveOrCreateCategory();
+        testContext.set(ContextKey.EQUIPMENT_CATEGORY_ID, categoryId);
+        log.info("Equipment category ready: id={}", categoryId);
     }
 
     @Step("API: створити обладнання на складі {storageId}")
@@ -264,6 +276,57 @@ public class EquipmentFixture extends BaseFixture {
 
     public Long supplierId() {
         return testContext.get(ContextKey.RELOCATION_SUPPLIER_ID);
+    }
+
+    @Step("API: ім'я SUPPLIER-локації id={supplierId}")
+    public String resolveSupplierName(Long supplierId) {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_SUPPLIER, UserRole.ADMIN);
+        List<StorageResponse> suppliers = DatabaseIntegrityValidator.extractList(
+                response, StorageResponse.class);
+        return suppliers.stream()
+                .filter(s -> supplierId.equals(s.getId()))
+                .map(StorageResponse::getName)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Supplier name not found for id=" + supplierId));
+    }
+
+    @Step("API: ім'я категорії обладнання id={categoryId}")
+    public String resolveCategoryName(Long categoryId) {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.EQUIPMENT_CATEGORY_GET_ALL, UserRole.ADMIN);
+        List<EquipmentCategoryResponse> categories = DatabaseIntegrityValidator.extractList(
+                response, EquipmentCategoryResponse.class);
+        return categories.stream()
+                .filter(c -> categoryId.equals(c.getId()))
+                .map(EquipmentCategoryResponse::getName)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Category name not found for id=" + categoryId));
+    }
+
+    /**
+     * Finds a receive relocation on {@code storageId} whose equipmentItems contain all given names.
+     */
+    @Step("API: знайти переміщення з обладнанням {names}")
+    public RelocationResponse findRelocationContainingEquipmentNames(UserRole role,
+                                                                     Long storageId,
+                                                                     List<String> names) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RELOCATION_GET_PAGE,
+                role,
+                Map.of("receiverIds", storageId, "size", 50));
+        validateSuccess(response, "Get relocations for equipment batch");
+        PagedRelocationResponse page = response.as(PagedRelocationResponse.class);
+        return page.getContent().stream()
+                .filter(r -> r.getEquipmentItems() != null && !r.getEquipmentItems().isEmpty())
+                .filter(r -> {
+                    List<String> itemNames = r.getEquipmentItems().stream()
+                            .map(EquipmentSimpleResponse::getName)
+                            .filter(n -> n != null && !n.isBlank())
+                            .toList();
+                    return itemNames.containsAll(names);
+                })
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No relocation containing equipment names " + names + " on storage " + storageId));
     }
 
     private Long resolveOrCreateCategory() {

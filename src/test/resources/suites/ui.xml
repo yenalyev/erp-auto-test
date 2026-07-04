@@ -34,6 +34,7 @@
     <test name="Equipment UI">
         <classes>
             <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
+            <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
         </classes>
     </test>
 
