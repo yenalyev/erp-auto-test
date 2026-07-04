@@ -402,4 +402,31 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: POST /relocations/send → 200; sent.recipient.id = anchor.id;
             залишки на інших (non-anchor) локаціях області без змін; на anchor — без змін до resolve (CREATED).
             """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_012 = """
+            Що перевіряємо: у «Видано» колонка «До» показує реальну назву екіпажу поза областю видимості.
+            Хто виконує:
+            — API setup (CREWS scenario, stock, send OWNER_2 → crew): ADMIN / OWNER_2;
+            — UI (Playwright, вкладка «Видано»): OWNER_2, accessMode=REGIONS, crew не в scope.
+            Тестові дані: prepareSingleCrewScenario; marker у description; recipient=CREW.
+            Очікуваний результат: recipientName = crew.name; не «_приховано_».
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_013 = """
+            Що перевіряємо: у «Отримано» колонка «Від» показує реальну назву екіпажу поза областю видимості.
+            Хто виконує:
+            — API setup (stock на crew, send crew → OWNER_2, resolve FINISHED): ADMIN / OWNER_2;
+            — UI (Playwright, вкладка «Отримано»): OWNER_2, accessMode=REGIONS, crew не в scope.
+            Тестові дані: prepareSingleCrewScenario; marker у description; sender=CREW.
+            Очікуваний результат: senderName = crew.name; не «_приховано_».
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_014 = """
+            Що перевіряємо: контраст — non-CREW outsider у «Отримано» маскується як «_приховано_».
+            Хто виконує:
+            — API setup (outsider STORAGE, send → OWNER_2, resolve FINISHED): ADMIN / OWNER_2;
+            — UI (Playwright, вкладка «Отримано»): OWNER_2, accessMode=REGIONS.
+            Тестові дані: ephemeral STORAGE поза scope; marker у description.
+            Очікуваний результат: senderName = «_приховано_»; реальне outsider.name відсутнє.
+            """ + ON_FAIL_UI;
 }

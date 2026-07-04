@@ -50,6 +50,7 @@
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
+            <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
         </classes>
     </test>
 </suite>

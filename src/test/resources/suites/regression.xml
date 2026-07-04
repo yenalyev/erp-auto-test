@@ -165,6 +165,8 @@
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
+            <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
         </classes>
     </test>

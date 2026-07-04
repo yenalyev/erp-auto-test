@@ -140,6 +140,7 @@ mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest,StorageNamesEn
 | **TC-STR-CREW-005..006** | `CrewVisibilityTest` | `hasCrews`, crew-units, crew-names | Critical |
 | **TC-STR-CREW-011..012** | `CrewVisibilityTest` | Ієрархія UNIT та рекурсивний пошук екіпажів | Critical |
 | **TC-CREW-REL-001..003** | `CrewRelocationTest` | Send→CREW AUTO_FINISHED, journal, insufficient stock | Critical |
+| **TC-UI-CREW-012..014** | `CrewJournalNameVisibilityUiTest` | UI «Видано»/«Отримано»: назва CREW завжди реальна поза REGIONS scope; non-CREW → `_приховано_` | Critical |
 | **TC-CREW-INV-001,006,007,007b,008** | `CrewInventoryTest` | STOCK report; OWNER_1 denied direct; Crew-Manager direct; OWNER_2 denied | Critical |
 | **TC-CREW-INV-002** | `CrewInventoryTest` | INCOME report — **disabled** (див. коментар у тесті) | Normal |
 

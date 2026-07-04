@@ -116,8 +116,15 @@ public class CrewIssuanceUITest extends BaseUITest {
         crewForm.submitAndWaitForJournal();
         relocationPage.openSentTab();
 
+        String crewName = flatScenario.crew().getName();
         assertThat(relocationPage.isRowWithTextVisible(resourceName)).isTrue();
-        relocationPage.attachScreenshot("TC-UI-CREW-002 — sent tab with resource");
+        assertThat(relocationPage.getDisplayedJournalRows())
+                .as("У «Видано» колонка «До» має містити назву екіпажу, не «_приховано_»")
+                .anySatisfy(row -> {
+                    assertThat(row.getRecipientName()).isEqualTo(crewName);
+                    assertThat(row.getRecipientName()).isNotEqualTo("_приховано_");
+                });
+        relocationPage.attachScreenshot("TC-UI-CREW-002 — sent tab with crew name");
     }
 
     @Test(priority = 30)
