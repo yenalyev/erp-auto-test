@@ -142,6 +142,7 @@
             <class name="com.erp.tests.ui.ProductionUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
+            <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
         </classes>
     </test>
 

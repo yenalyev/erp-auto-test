@@ -57,4 +57,10 @@
         </classes>
     </test>
 
+    <test name="Operation History UI">
+        <classes>
+            <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
+        </classes>
+    </test>
+
 </suite>

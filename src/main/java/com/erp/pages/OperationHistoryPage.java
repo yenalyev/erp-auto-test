@@ -4,6 +4,7 @@ import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
 /** Page Object for /history (operation history) */
@@ -19,7 +20,8 @@ public class OperationHistoryPage extends BasePage {
     public OperationHistoryPage open() {
         String url = ConfigProvider.getBaseUrl() + PATH;
         waitForHistoryDuring(() -> navigateTo(url, "Історія операцій (/history)"));
-        return waitForLoaded();
+        waitForLoaded();
+        return waitForSummaryCardsRendered();
     }
 
     public OperationHistoryPage waitForLoaded() {
@@ -27,14 +29,32 @@ public class OperationHistoryPage extends BasePage {
         page.getByRole(com.microsoft.playwright.options.AriaRole.HEADING,
                         new Page.GetByRoleOptions().setName("Історія операцій"))
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
-        page.getByText("Додано (Інвентаризація)")
-                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    /**
+     * Summary cards mount only after history state is committed (API response + React render).
+     * SPA also sets date filters in a {@code useEffect}, so the request may start after first paint.
+     * Roles with no card permissions never get cards — timeout is acceptable.
+     */
+    public OperationHistoryPage waitForSummaryCardsRendered() {
+        Locator anyCardTitle = page.locator("[data-slot='card-title']").first();
+        try {
+            anyCardTitle.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+        } catch (Exception e) {
+            log.warn("No summary cards rendered within timeout (ok for restricted roles): {}",
+                    e.getMessage());
+        }
         return this;
     }
 
     public boolean isLoaded() {
         return page.url().contains("/history")
-                && page.getByText("Додано (Інвентаризація)").isVisible();
+                && page.getByRole(com.microsoft.playwright.options.AriaRole.HEADING,
+                        new Page.GetByRoleOptions().setName("Історія операцій"))
+                .isVisible();
     }
 
     private void waitForHistoryDuring(Runnable action) {
@@ -43,11 +63,11 @@ public class OperationHistoryPage extends BasePage {
                     response -> response.url().contains("resource-operation-history")
                             && "GET".equals(response.request().method())
                             && response.status() == 200,
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
                     action);
         } catch (Exception e) {
             log.warn("Operation history response wait timed out: {}", e.getMessage());
-            action.run();
-            page.waitForTimeout(2000);
+            // Action already ran; a late request may still complete — waitForSummaryCardsRendered handles settle.
         }
     }
 
@@ -81,7 +101,8 @@ public class OperationHistoryPage extends BasePage {
     }
 
     public boolean isSummaryCardVisible(String cardTitle) {
-        return summaryCardTitle(cardTitle).isVisible();
+        Locator title = summaryCardTitle(cardTitle);
+        return title.count() > 0 && title.first().isVisible();
     }
 
     private Locator summaryCard(String cardTitle) {
