@@ -27,6 +27,7 @@
     <test name="Inventory UI">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
         </classes>
     </test>
 </suite>

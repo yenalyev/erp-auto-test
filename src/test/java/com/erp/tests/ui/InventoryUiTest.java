@@ -23,8 +23,13 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 @Slf4j
 @Epic("Inventory")
@@ -50,8 +55,15 @@ public class InventoryUiTest extends BaseUITest {
         resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
         relocationFixture.ensureStock(storageId, resourceId, 50.0);
 
-        StorageItemResponse item = inventoryFixture.requireItemForResource(
-                storageId, resourceId, UserRole.ADMIN);
+        StorageItemResponse item;
+        try {
+            item = inventoryFixture.requireItemForResource(storageId, resourceId, UserRole.ADMIN);
+        } catch (IllegalStateException ex) {
+            // Multi-location stock probe and storage inventory list can diverge on shared dev data.
+            log.warn("Relocation resource {} not on storage {} inventory list after ensureStock: {}",
+                    resourceId, storageId, ex.getMessage());
+            item = inventoryFixture.requireItemWithStock(storageId, UserRole.ADMIN);
+        }
         resourceId = item.getResource().getId();
         resourceName = item.getResource().getName().trim().replaceAll("\\s+", " ");
     }
@@ -546,6 +558,162 @@ public class InventoryUiTest extends BaseUITest {
             assertThat(stock.isBatchDialogVisible()).isTrue();
             stock.attachScreenshot("TC-WMS-007-005 — batch dialog");
         });
+    }
+
+    /** «<Назва>\\t<Кількість> <од. вимір.>» — handleCopyTable у InventoryPage.tsx. */
+    private static final Pattern CLIPBOARD_LINE_FORMAT =
+            Pattern.compile("^(?<name>.+)\\t(?<amount>-?\\d+(?:\\.\\d+)?) (?<unit>.+)$");
+
+    @Test(priority = 155)
+    @TestCaseId("TC-WMS-007-009")
+    @Story("Copy remainders to clipboard UI")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Owner 1 на сторінці «Залишки» (/unit-management) для конкретної локації натискає
+            «Скопіювати». Arrange: унікальний ресурс із залишком на локації.
+            Очікується:
+            1) кнопка активна, фідбек «Скопійовано»;
+            2) кожен рядок буфера у форматі «<Назва>\\t<Кількість> <од. вимір.>»
+               (handleCopyTable у InventoryPage.tsx);
+            3) кількість рядків буфера = кількість видимих рядків таблиці;
+            4) після пошуку за унікальним ресурсом кожен рядок буфера відповідає залишкам
+               локації з API (назва, кількість, од. вимір.); кількість і од. вимір. унікального
+               ресурсу збігаються з API.""")
+    public void copyRemaindersToClipboardUi() {
+        ResourceResponse uniqueResource = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                storageId, UserRole.ADMIN, "InvCopy_");
+        trackStorageResourceForCleanup(uniqueResource.getId());
+        double stockAmount = 50.0;
+        relocationFixture.ensureStock(storageId, uniqueResource.getId(), stockAmount);
+        StorageItemResponse seededItem = inventoryFixture.requireItemForResource(
+                storageId, uniqueResource.getId(), UserRole.ADMIN);
+        String seededName = seededItem.getResource().getName();
+
+        Allure.parameter("resourceName", seededName);
+        Allure.parameter("seededAmount", seededItem.getAmount());
+        Allure.parameter("seededUnit", seededItem.getResource().getUnit().getShortName());
+
+        UnitManagementPage stock = Allure.step("Owner 1 відкриває «Залишки» локації", () -> {
+            injectRoleSession(UserRole.OWNER_1, storageId);
+            page = browserContext.newPage();
+            UnitManagementPage pageObj = new UnitManagementPage(page)
+                    .openForStorage(storageId)
+                    .waitForLoaded()
+                    .assertHasStockRows();
+            pageObj.attachScreenshot("TC-WMS-007-009 — stock before copy");
+            return pageObj;
+        });
+
+        Allure.step("Скопіювати залишки сторінки — формат і кількість рядків", () -> {
+            assertThat(stock.isCopyButtonVisible())
+                    .as("Кнопка «Скопіювати» має бути видима на конкретній локації")
+                    .isTrue();
+            assertThat(stock.isCopyButtonEnabled())
+                    .as("Кнопка «Скопіювати» має бути активна, коли є рядки залишків")
+                    .isTrue();
+
+            stock.installClipboardCapture()
+                    .clickCopyRemainders()
+                    .waitForCopiedFeedback();
+
+            List<String> clipboardLines = readClipboardLines(stock);
+            assertThat(clipboardLines)
+                    .as("Буфер не повинен бути порожнім")
+                    .isNotEmpty();
+            assertThat(clipboardLines)
+                    .as("Кількість рядків буфера має збігатися з видимими рядками таблиці")
+                    .hasSize(stock.stockRowCount());
+            assertThat(clipboardLines)
+                    .as("Кожен рядок буфера: «<Назва>\\t<Кількість> <од. вимір.»")
+                    .allMatch(line -> CLIPBOARD_LINE_FORMAT.matcher(line).matches());
+
+            stock.attachScreenshot("TC-WMS-007-009 — after page copy");
+        });
+
+        Allure.step("Пошук унікального ресурсу — буфер = залишки локації з API", () -> {
+            List<StorageItemResponse> searchedItems = inventoryFixture.listItems(
+                    storageId, UserRole.OWNER_1, Map.of("searchTerm", seededName));
+            assertThat(searchedItems)
+                    .as("API searchTerm=%s має повернути залишок на локації", seededName)
+                    .isNotEmpty();
+
+            stock.searchAndWaitForResource(seededName, seededName)
+                    .installClipboardCapture()
+                    .clickCopyRemainders()
+                    .waitForCopiedFeedback();
+
+            List<String> clipboardLines = readClipboardLines(stock);
+            assertThat(clipboardLines)
+                    .as("Після пошуку буфер не повинен бути порожнім")
+                    .isNotEmpty();
+            assertThat(clipboardLines)
+                    .as("Кількість рядків буфера = видимі рядки після пошуку")
+                    .hasSize(stock.stockRowCount());
+
+            assertClipboardMatchesLocationStock(clipboardLines, searchedItems);
+
+            Matcher seededLine = clipboardLines.stream()
+                    .map(CLIPBOARD_LINE_FORMAT::matcher)
+                    .filter(Matcher::matches)
+                    .filter(m -> seededName.equals(m.group("name")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError(
+                            "Немає рядка унікального ресурсу в буфері: " + clipboardLines));
+            assertThat(Double.parseDouble(seededLine.group("amount")))
+                    .as("Кількість у буфері = залишок локації з API")
+                    .isCloseTo(seededItem.getAmount(), within(0.0001));
+            assertThat(seededLine.group("unit"))
+                    .as("Од. вимір. у буфері = API локації")
+                    .isEqualTo(seededItem.getResource().getUnit().getShortName());
+
+            stock.attachScreenshot("TC-WMS-007-009 — after search copy");
+        });
+    }
+
+    private static List<String> readClipboardLines(UnitManagementPage stock) {
+        return stock.getCapturedClipboardText().lines()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .toList();
+    }
+
+    /**
+     * Verifies each clipboard line has format {@code name\\tamount unit} and matches a location
+     * inventory row (same name, amount, unit short name).
+     */
+    private static void assertClipboardMatchesLocationStock(List<String> clipboardLines,
+                                                            List<StorageItemResponse> locationItems) {
+        Map<String, StorageItemResponse> byName = locationItems.stream()
+                .filter(item -> item.getResource() != null && item.getResource().getName() != null)
+                .collect(Collectors.toMap(
+                        item -> item.getResource().getName(),
+                        Function.identity(),
+                        (left, right) -> left));
+
+        for (String line : clipboardLines) {
+            Matcher matcher = CLIPBOARD_LINE_FORMAT.matcher(line);
+            assertThat(matcher.matches())
+                    .as("Рядок буфера має формат «<Назва>\\t<Кількість> <од. вимір.»: [%s]", line)
+                    .isTrue();
+
+            String name = matcher.group("name");
+            double amount = Double.parseDouble(matcher.group("amount"));
+            String unit = matcher.group("unit");
+
+            StorageItemResponse item = byName.get(name);
+            assertThat(item)
+                    .as("Ресурс «%s» з буфера має бути серед залишків локації", name)
+                    .isNotNull();
+            assertThat(item.getAmount())
+                    .as("Кількість «%s» у буфері має збігатися з API локації", name)
+                    .isCloseTo(amount, within(0.0001));
+            assertThat(item.getResource().getUnit())
+                    .as("Од. вимір. ресурсу «%s» має бути в API", name)
+                    .isNotNull();
+            assertThat(item.getResource().getUnit().getShortName())
+                    .as("Од. вимір. «%s» у буфері має збігатися з API локації", name)
+                    .isEqualTo(unit);
+        }
     }
 
     @Test(priority = 160)

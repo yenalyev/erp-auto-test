@@ -30,6 +30,9 @@ public class DefectFormPage extends BasePage {
     private static final String AMOUNT_PLACEHOLDER = "0.00";
     private static final String SUBMIT_BUTTON_TEXT = "Зберегти";
     private static final String COMBOBOX_ITEM_SELECTOR = "[data-slot='combobox-item']";
+    /** Shown when a produced relocation batch is fully consumed (tk-ui {@code relocationBlocked}). */
+    public static final String USED_BATCH_BLOCKED_TEXT =
+            "Партія повністю використана — створити брак для неї неможливо";
 
     public DefectFormPage(Page page) {
         super(page);
@@ -138,6 +141,34 @@ public class DefectFormPage extends BasePage {
     public boolean sourceTableContainsText(String text) {
         Locator rows = page.locator("table tbody tr").filter(new Locator.FilterOptions().setHasText(text));
         return rows.count() > 0;
+    }
+
+    /**
+     * Selects a relocation row by invoice number in the picker table
+     * ({@code RelocationTable} — column «Накладна»).
+     */
+    public DefectFormPage selectRelocationByInvoice(String invoiceNumber) {
+        Locator row = page.locator("table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(invoiceNumber))
+                .first();
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        row.click();
+        return this;
+    }
+
+    /**
+     * Waits for the client-side guard that blocks create when a produced relocation batch
+     * is no longer present on stock (see tk-ui {@code DefectFormPage} {@code relocationBlocked}).
+     */
+    public DefectFormPage waitForUsedBatchBlockedAlert() {
+        page.getByText(USED_BATCH_BLOCKED_TEXT)
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isUsedBatchBlockedAlertVisible() {
+        Locator alert = page.getByText(USED_BATCH_BLOCKED_TEXT);
+        return alert.count() > 0 && alert.first().isVisible();
     }
 
     public DefectsPage submitAndWaitForList() {

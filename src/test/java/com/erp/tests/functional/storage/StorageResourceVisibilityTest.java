@@ -354,6 +354,54 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         }
     }
 
+    @Test(priority = 86)
+    @TestCaseId("TC-STR-RES-012")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_012)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCrewInheritsParentUnitResourceVisibilityScope() {
+        ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "crew-vis-");
+        ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "crew-hid-");
+
+        RestrictedUnitSetup setup = createRestrictedUnit("res-crew-scope-");
+        regionFixture.addRegionResources(setup.region().getId(), visible.getId());
+
+        StorageResponse crew = storageFixture.createStorage(
+                StorageDataFactory.crewStorage(setup.unit().getId(), "res-crew-")
+                        .accessMode(StorageAccessMode.REGIONS)
+                        .build());
+        long crewId = crew.getId();
+        long parentId = setup.unit().getId();
+
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, parentId, visible.getName(), visible.getId(), false))
+                .as("Контроль: visible у autocomplete батьківського UNIT")
+                .isTrue();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, crewId, visible.getName(), visible.getId(), false))
+                .as("CREW наслідує область ресурсів батьківського UNIT")
+                .isTrue();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, crewId, hidden.getName(), hidden.getId(), false))
+                .as("Ресурс поза областю parent не видимий для CREW")
+                .isFalse();
+
+        inventoryFixture.ensureClosed(crewId);
+        inventoryFixture.openSession(crewId);
+        try {
+            assertThat(inventoryFixture.getResourceStock(crewId, visible.getId(), UserRole.ADMIN))
+                    .isEqualTo(0.0);
+
+            InventoryRequest request = InventoryDataFactory.seedAmounts(Map.of(visible.getId(), 3.0));
+            inventoryFixture.conductInventory(crewId, UserRole.ADMIN, request);
+
+            assertThat(inventoryFixture.getResourceStock(crewId, visible.getId(), UserRole.ADMIN))
+                    .as("Inventory на CREW дозволяє ресурс з області parent")
+                    .isCloseTo(3.0, within(0.01));
+        } finally {
+            inventoryFixture.ensureClosed(crewId);
+        }
+    }
+
     @Test(priority = 87)
     @TestCaseId("TC-STR-RES-011")
     @Description(StorageRegionsAllureDescriptions.TC_STR_RES_011)

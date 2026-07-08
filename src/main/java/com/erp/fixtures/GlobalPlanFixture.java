@@ -69,10 +69,11 @@ public class GlobalPlanFixture extends BaseFixture {
         Long l1 = ConfigProvider.getOwner1StorageId();
         Long l2 = ConfigProvider.getOwner2StorageId();
 
-        // M1: 2B + 3x -> 1A + 1C @L1
+        // Single output per PRODUCTION map (product rule / UI constraint).
+        // M1: 2B + 3x -> 1A @L1
         TechnologicalMapResponse m1 = createMap("GP-M1", Set.of(l1),
                 List.of(usage(b, 2), usage(x, 3)),
-                List.of(usage(a, 1), usage(c, 1)));
+                List.of(usage(a, 1)));
 
         // M2: 2y + 1C -> 1B @L1+L2
         TechnologicalMapResponse m2 = createMap("GP-M2", Set.of(l1, l2),

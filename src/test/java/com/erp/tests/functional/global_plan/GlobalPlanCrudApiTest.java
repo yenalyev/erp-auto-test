@@ -145,7 +145,7 @@ public class GlobalPlanCrudApiTest extends GlobalPlanApiTestBase {
             **Роль:** ADMIN
             
             **Параметри:**
-            - `output[0]`: ресурс Z з ізольованого ланцюга (для Z є лише вхід у M3, немає карти на виробництво Z).
+            - `output[0]`: ресурс Z з ізольованого ланцюга (Z лише вхід M3, без карти на виробництво Z).
             - `month`/`year` — наступний унікальний період.
             - `amount = 10.0`.
             
@@ -218,14 +218,14 @@ public class GlobalPlanCrudApiTest extends GlobalPlanApiTestBase {
             **Мета:** після генерації локальних планів GET за id повертає знімок декомпозиції та посилання на згенеровані плани.
             
             **Ендпоінти:**
-            - `POST /api/v1/global-plans/{id}/generate` — повна декомпозиція (3 блоки, ланцюг M1→M2→M3).
+            - `POST /api/v1/global-plans/{id}/generate` — повна декомпозиція (3 блоки, single-output M1→M2→M3).
             - `GET /api/v1/global-plans/{id}`
             **Роль:** ADMIN
             
             **Параметри генерації:**
             - Блок 1: A=10 на L1 через M1.
             - Блок 2: B — 12 на L1 + 8 на L2 через M2.
-            - Блок 3: C=10 на L1 через M3.
+            - Блок 3: C=20 на L1 через M3.
             
             **Перевірки:**
             - `generatedPlans` не порожній.
@@ -330,5 +330,45 @@ public class GlobalPlanCrudApiTest extends GlobalPlanApiTestBase {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.getContentType()).containsAnyOf("spreadsheet", "excel", "octet-stream");
         assertThat(response.asByteArray()).isNotEmpty();
+    }
+
+    @Test(priority = 90)
+    @TestCaseId("TC-GP-009")
+    @Story("Delete global plan returns 404 on GET")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            **Мета:** після DELETE глобальний план недоступний через GET,
+            але згенеровані location-плани залишаються (доповнення до TC-GP-007).
+            
+            **Ендпоінти:**
+            - `POST /global-plans/{id}/generate`
+            - `DELETE /global-plans/{id}`
+            - `GET /global-plans/{id}` → 404
+            - `GET /plans` (L1) — location plans лишаються
+            **Роль:** ADMIN
+            """)
+    public void testDeleteGlobalPlanReturns404OnGet() {
+        GlobalPlanResponse created = globalPlanFixture.createGlobalPlan(10.0);
+        trackGlobalPlan(created.getId());
+        var generation = globalPlanFixture.generate(created.getId(), globalPlanFixture.buildCompleteDecomposition());
+        List<Long> planIds = generation.getPlans().stream().map(gp -> gp.getPlan().getId()).toList();
+        trackGeneratedPlans(planIds);
+
+        Response deleteResponse = apiExecutor.execute(
+                ApiEndpointDefinition.GLOBAL_PLAN_DELETE,
+                UserRole.ADMIN,
+                String.valueOf(created.getId()));
+        assertThat(deleteResponse.statusCode()).isBetween(200, 299);
+        globalPlanIdsToCleanup.remove(created.getId());
+
+        Response getResponse = apiExecutor.execute(
+                ApiEndpointDefinition.GLOBAL_PLAN_GET_BY_ID,
+                UserRole.ADMIN,
+                String.valueOf(created.getId()));
+        assertThat(getResponse.statusCode()).isEqualTo(404);
+
+        GlobalPlanChainContext chain = globalPlanFixture.requireChain();
+        List<PlanResponse> l1Plans = globalPlanFixture.getLocationPlans(chain.getL1StorageId());
+        assertThat(l1Plans).anyMatch(p -> planIds.contains(p.getId()));
     }
 }

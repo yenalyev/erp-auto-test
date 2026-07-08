@@ -94,9 +94,19 @@ public class RelocationFixture extends BaseFixture {
                                                     Long resourceId,
                                                     double amount,
                                                     String batchNumber) {
+        return createExternalReceive(role, recipientId, resourceId, amount, batchNumber, false);
+    }
+
+    @Step("API: отримання SUPPLIER→storage, {amount} од., партія {batchNumber}, isProduced={isProduced}")
+    public RelocationResponse createExternalReceive(UserRole role,
+                                                    Long recipientId,
+                                                    Long resourceId,
+                                                    double amount,
+                                                    String batchNumber,
+                                                    boolean isProduced) {
         Long supplierId = testContext.get(ContextKey.RELOCATION_SUPPLIER_ID);
         RelocationInputRequest request = RelocationDataFactory.buildReceiveRequest(
-                supplierId, recipientId, resourceId, amount, batchNumber);
+                supplierId, recipientId, resourceId, amount, batchNumber, isProduced);
         Response response = apiExecutor.executeRelocationReceive(request, role);
         validateSuccess(response, "External receive");
         SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RELOCATION_POST_RECEIVE);

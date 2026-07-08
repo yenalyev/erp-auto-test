@@ -14,8 +14,11 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanDecompositionApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanGenerationApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanRequirementsApiTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAfterTechMapDeactivationTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAddOutputTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAmountApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanTechMapDeactivationGuardTest"/>
         </classes>
     </test>
@@ -24,6 +27,10 @@
         <classes>
             <class name="com.erp.tests.ui.GlobalPlansUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanCreateUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanEditAddOutputUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanRequirementsUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
         </classes>
     </test>
 </suite>

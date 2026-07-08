@@ -15,6 +15,7 @@
             <class name="com.erp.tests.ui.AccountantCabinetUITest"/>
             <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
         </classes>
     </test>
 

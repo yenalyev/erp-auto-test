@@ -6,9 +6,11 @@ import com.erp.data.factories.global_plan.GlobalPlanDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.models.common.GlobalPlanChainContext;
 import com.erp.models.request.DecompositionRequest;
+import com.erp.models.common.GlobalPlanChainExpectations;
 import com.erp.models.response.GenerationResponse;
 import com.erp.models.response.GlobalPlanResponse;
 import com.erp.models.response.PlanResponse;
+import com.erp.utils.assertions.GlobalPlanAssertions;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeMethod;
@@ -152,7 +154,7 @@ public class GlobalPlanGenerationApiTest extends GlobalPlanApiTestBase {
             - `GET /global-plans/{id}`
             **Роль:** ADMIN
             
-            **Параметри:** повна декомпозиція (3 блоки A→B→C).
+            **Параметри:** повна декомпозиція (3 блоки A→B→C, по одному виходу на карту).
             
             **Перевірки:**
             - `decomposition` не null.
@@ -193,5 +195,41 @@ public class GlobalPlanGenerationApiTest extends GlobalPlanApiTestBase {
                 globalPlan.getId());
 
         assertThat(response.statusCode()).isEqualTo(400);
+    }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-GP-055")
+    @Story("Generated plans exact output amounts")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** після generate per-location плани містять точні net-output кількості.
+            
+            **Очікування (output A=10, повна декомпозиція):**
+            - L1: A=10
+            - L2: B=8
+            """)
+    public void testGenerateCreatesExactLocationOutputAmounts() {
+        GenerationResponse generation = globalPlanFixture.generate(
+                globalPlan.getId(),
+                globalPlanFixture.buildCompleteDecomposition());
+        trackGeneratedPlans(generation.getPlans().stream().map(p -> p.getPlan().getId()).toList());
+
+        GlobalPlanChainContext chain = globalPlanFixture.requireChain();
+
+        PlanResponse l1Plan = generation.getPlans().stream()
+                .map(gp -> gp.getPlan())
+                .filter(p -> chain.getL1StorageId().equals(p.getStorage().getId()))
+                .findFirst()
+                .orElseThrow();
+        PlanResponse l2Plan = generation.getPlans().stream()
+                .map(gp -> gp.getPlan())
+                .filter(p -> chain.getL2StorageId().equals(p.getStorage().getId()))
+                .findFirst()
+                .orElseThrow();
+
+        GlobalPlanAssertions.assertPlanOutputAmount(
+                l1Plan, chain.getResourceA().getId(), GlobalPlanChainExpectations.L1_OUTPUT_A);
+        GlobalPlanAssertions.assertPlanOutputAmount(
+                l2Plan, chain.getResourceB().getId(), GlobalPlanChainExpectations.L2_OUTPUT_B);
     }
 }

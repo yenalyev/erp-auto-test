@@ -1,5 +1,6 @@
 package com.erp.pages;
 
+import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Response;
@@ -22,18 +23,29 @@ public class GlobalPlanWizardPage extends BasePage {
     private static final String TAB_3 = "3. Потрібно ресурсів";
     private static final String TAB_4 = "4. Плани на локації";
     private static final String CREATE_PLAN_BUTTON = "Створити план";
+    private static final String SAVE_CHANGES_BUTTON = "Зберегти зміни";
+    private static final String ADD_PRODUCT_BUTTON = "Додати виріб";
     private static final String DISTRIBUTE_BUTTON = "Розподілити по локаціям";
     private static final String TAB3_NEXT_BUTTON = "Далі";
     private static final String GENERATE_BUTTON = "Створити плани по локаціям";
     private static final String DONE_BUTTON = "Готово";
     private static final String DECOMPOSITION_SPINNER = "Розрахунок декомпозиції";
+    private static final String DECOMPOSITION_FAILED = "Не вдалося розрахувати декомпозицію";
     private static final String ASSIGN_DIALOG_TITLE_PREFIX = "Призначення виробництва";
     private static final String NO_TECH_MAP_BADGE = "Немає доступної техкарти";
     private static final String TECH_MAP_FIELD_LABEL = "Технологічна карта";
     private static final String RESOURCE_COMBO_PLACEHOLDER = "Оберіть зі списку...";
     private static final String AMOUNT_PLACEHOLDER = "Введіть кількість...";
+    private static final String WIZARD_LOADING_TEXT = "Завантаження...";
+    private static final String PRODUCT_OUTPUT_ROW =
+            "div.overflow-hidden.rounded-\\[6px\\].border.border-gray-200.px-4";
+    private static final String PERIOD_FIELDS_ROW = "div.flex.flex-col.md\\:flex-row.gap-2";
     private static final Pattern PLAN_ID_IN_URL = Pattern.compile("/global-plans/(\\d+)");
     private static final Pattern PLAN_ID_IN_JSON = Pattern.compile("\"id\"\\s*:\\s*(\\d+)");
+    private static final Pattern PLAN_PUT_URL = Pattern.compile(".*/api/v1/global-plans/\\d+$");
+    private static final String TAB_3_SEMI_FINISHED = "Напівфабрикати";
+    private static final String TAB_3_RAW_MATERIALS = "Сировина (не виробляється)";
+    private static final Pattern AMOUNT_IN_CELL = Pattern.compile("([\\d.,]+)");
 
     private Long lastCreatedPlanId;
 
@@ -44,12 +56,28 @@ public class GlobalPlanWizardPage extends BasePage {
 
     public record ProductionAssignment(String storageName, String mapName, String amount) {}
 
+    public enum RequirementSection {
+        SEMI_FINISHED(TAB_3_SEMI_FINISHED),
+        RAW_MATERIALS(TAB_3_RAW_MATERIALS);
+
+        private final String heading;
+
+        RequirementSection(String heading) {
+            this.heading = heading;
+        }
+
+        public String heading() {
+            return heading;
+        }
+    }
+
     public GlobalPlanWizardPage(Page page) {
         super(page);
     }
 
     public GlobalPlanWizardPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        waitForWizardLoadingFinished();
         page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(WIZARD_HEADING))
                 .waitFor(new Locator.WaitForOptions()
                         .setState(WaitForSelectorState.VISIBLE)
@@ -100,16 +128,171 @@ public class GlobalPlanWizardPage extends BasePage {
             throw new IllegalArgumentException("Month must be 1..12, got " + month);
         }
         log.info("Global plan wizard — period: {}/{}", month, year);
-        selectComboboxNearLabel("Місяць", UKRAINIAN_MONTHS[month - 1]);
-        selectComboboxNearLabel("Рік", String.valueOf(year));
+        selectPeriodField("Місяць", UKRAINIAN_MONTHS[month - 1]);
+        selectPeriodField("Рік", String.valueOf(year));
+        return this;
+    }
+
+    @Step("Відкрити глобальний план id={planId} для редагування")
+    public GlobalPlanWizardPage openById(long planId) {
+        String url = ConfigProvider.getBaseUrl() + "/global-plans/" + planId;
+        log.info("Global plan wizard — open edit id={}", planId);
+        navigateTo(url, "Global plan edit /" + planId);
+        waitForLoaded();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SAVE_CHANGES_BUTTON))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        outputProductRows().first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         return this;
     }
 
     @Step("Tab 1: обрати виріб «{resourceName}» кількість {amount}")
     public GlobalPlanWizardPage fillOutputProduct(String resourceName, String amount) {
+        fillOutputProductAtLastRow(resourceName, amount);
+        waitForCreatePlanEnabled();
+        return this;
+    }
+
+    @Step("Tab 1: змінити кількість output «{resourceName}» на {amount}")
+    public GlobalPlanWizardPage setOutputAmount(String resourceName, String amount) {
+        log.info("Global plan wizard — set output amount: {} = {}", resourceName, amount);
+        Locator row = outputProductRow(resourceName);
+        Locator amountInput = row.locator("input[type='number']")
+                .or(row.getByPlaceholder(AMOUNT_PLACEHOLDER));
+        amountInput.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        amountInput.fill("");
+        amountInput.fill(amount);
+        waitForSaveChangesEnabled();
+        return this;
+    }
+
+    @Step("Tab 1: додати виріб «{resourceName}» кількість {amount}")
+    public GlobalPlanWizardPage addOutputProduct(String resourceName, String amount) {
+        log.info("Global plan wizard — add output: {} x {}", resourceName, amount);
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ADD_PRODUCT_BUTTON))
+                .click();
+        fillOutputProductAtLastRow(resourceName, amount);
+        waitForSaveChangesEnabled();
+        return this;
+    }
+
+    @Step("Tab 1: дочекатися активної кнопки «Зберегти зміни»")
+    public GlobalPlanWizardPage waitForSaveChangesEnabled() {
+        Locator button = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SAVE_CHANGES_BUTTON));
+        long deadline = System.currentTimeMillis() + uiTimeoutMs();
+        while (System.currentTimeMillis() < deadline) {
+            if (button.isEnabled()) {
+                return this;
+            }
+            page.waitForTimeout(200);
+        }
+        throw new IllegalStateException("«Зберегти зміни» не активувалась — перевірте рядки output");
+    }
+
+    /**
+     * Saves Tab 1 edits (PUT), then waits for the auto-started Tab 2 {@code POST /decompose}
+     * triggered by {@code onSaved → setActiveTab('2') → start()}.
+     *
+     * @return HTTP status of the first decompose response after save
+     */
+    @Step("Tab 1: зберегти зміни і дочекатися POST /decompose")
+    public int submitSaveChangesAndAwaitDecomposition() {
+        log.info("Global plan wizard — saving Tab 1 changes and awaiting decompose");
+        waitForSaveChangesEnabled();
+        Response decomposeResponse = page.waitForResponse(
+                response -> response.url().contains("/decompose")
+                        && "POST".equals(response.request().method()),
+                () -> {
+                    Response putResponse = page.waitForResponse(
+                            response -> PLAN_PUT_URL.matcher(response.url()).matches()
+                                    && "PUT".equals(response.request().method()),
+                            () -> page.getByRole(AriaRole.BUTTON,
+                                            new Page.GetByRoleOptions().setName(SAVE_CHANGES_BUTTON))
+                                    .click());
+                    if (putResponse.status() < 200 || putResponse.status() >= 300) {
+                        throw new IllegalStateException(
+                                "Update global plan failed: HTTP " + putResponse.status()
+                                        + " — " + putResponse.text());
+                    }
+                });
+        return decomposeResponse.status();
+    }
+
+    public boolean isDecompositionFailedVisible() {
+        Locator failed = page.getByText(DECOMPOSITION_FAILED);
+        return failed.count() > 0 && failed.first().isVisible();
+    }
+
+    public boolean isResourceVisibleInDecomposition(String resourceName) {
+        Locator row = decompositionItemRow(resourceName);
+        if (row.count() > 0 && row.first().isVisible()) {
+            return true;
+        }
+        Locator closedLevels = page.locator("[data-state='closed']")
+                .filter(new Locator.FilterOptions().setHasText("Рівень"));
+        int levels = closedLevels.count();
+        for (int i = 0; i < levels; i++) {
+            closedLevels.nth(i).click();
+            page.waitForTimeout(200);
+            row = decompositionItemRow(resourceName);
+            if (row.count() > 0 && row.first().isVisible()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param levelNumber 1-based decomposition level («Рівень 1» = block 0 / direct outputs)
+     */
+    public boolean isResourceVisibleInDecompositionLevel(String resourceName, int levelNumber) {
+        expandDecompositionLevelIfClosed(levelNumber);
+        Locator levelSection = decompositionLevelSection(levelNumber);
+        if (levelSection.count() == 0) {
+            return false;
+        }
+        Locator row = decompositionRowInSection(levelSection, resourceName);
+        return row.count() > 0 && row.first().isVisible();
+    }
+
+    /** Text from «Потрібно: …» line for a resource row in Tab 2 decomposition. */
+    public String getDecompositionRequiredAmountText(String resourceName) {
+        expandDecompositionForResource(resourceName);
+        Locator row = decompositionItemRow(resourceName);
+        if (row.count() == 0) {
+            return "";
+        }
+        Locator required = row.locator("div.text-sm.text-gray-500").first();
+        return required.count() > 0 ? required.innerText().trim() : "";
+    }
+
+    private Locator outputProductRows() {
+        return page.locator(PRODUCT_OUTPUT_ROW);
+    }
+
+    private Locator outputProductRow(String resourceName) {
+        Locator rows = outputProductRows();
+        Locator byName = rows.filter(new Locator.FilterOptions().setHasText(resourceName));
+        if (byName.count() > 0) {
+            return byName.first();
+        }
+        if (rows.count() == 1) {
+            return rows.first();
+        }
+        throw new IllegalStateException(
+                "Output product row not found for «" + resourceName + "» (rows=" + rows.count() + ")");
+    }
+
+    private void fillOutputProductAtLastRow(String resourceName, String amount) {
         String trimmed = resourceName.trim();
-        log.info("Global plan wizard — output: {} x {}", trimmed, amount);
-        Locator combo = page.getByPlaceholder(RESOURCE_COMBO_PLACEHOLDER).first();
+        log.info("Global plan wizard — output row: {} x {}", trimmed, amount);
+        Locator row = outputProductRows().last();
+        Locator combo = row.getByPlaceholder(RESOURCE_COMBO_PLACEHOLDER);
         combo.click();
         combo.fill(trimmed);
 
@@ -121,10 +304,9 @@ public class GlobalPlanWizardPage extends BasePage {
                 .setTimeout(uiTimeoutMs()));
         option.click();
 
-        Locator amountField = page.getByPlaceholder(AMOUNT_PLACEHOLDER).first();
-        amountField.fill(amount);
-        waitForCreatePlanEnabled();
-        return this;
+        row.locator("input[type='number']")
+                .or(row.getByPlaceholder(AMOUNT_PLACEHOLDER))
+                .fill(amount);
     }
 
     @Step("Tab 1: дочекатися активної кнопки «Створити план»")
@@ -415,8 +597,48 @@ public class GlobalPlanWizardPage extends BasePage {
     }
 
     public boolean isRequirementsTabVisible() {
-        return page.getByText("Напівфабрикати").isVisible()
-                || page.getByText("Сировина (не виробляється)").isVisible();
+        return page.getByText(TAB_3_SEMI_FINISHED).isVisible()
+                || page.getByText(TAB_3_RAW_MATERIALS).isVisible();
+    }
+
+    /**
+     * Reads the «Потрібно» column value for a resource row on Tab 3.
+     *
+     * @return numeric amount as string (without unit), or empty if row not found
+     */
+    @Step("Tab 3: прочитати потребу «{resourceName}» ({section})")
+    public String getRequirementAmount(String resourceName, RequirementSection section) {
+        log.info("Global plan wizard — requirement {} in {}", resourceName, section);
+        Locator row = requirementsTableRow(section, resourceName);
+        if (row.count() == 0) {
+            return "";
+        }
+        Locator requiredCell = row.locator("td").nth(1);
+        String text = requiredCell.innerText().trim();
+        Matcher matcher = AMOUNT_IN_CELL.matcher(text);
+        return matcher.find() ? matcher.group(1).replace(',', '.') : text;
+    }
+
+    @Step("Tab 3: перевірити потребу «{resourceName}» = {expectedAmount}")
+    public GlobalPlanWizardPage verifyRequirementAmount(
+            String resourceName,
+            String expectedAmount,
+            RequirementSection section) {
+        String actual = getRequirementAmount(resourceName, section);
+        if (!actual.contains(expectedAmount)) {
+            throw new AssertionError(String.format(
+                    "Очікувалась потреба «%s» = %s у секції %s, фактично: «%s»",
+                    resourceName, expectedAmount, section.heading(), actual));
+        }
+        return this;
+    }
+
+    private Locator requirementsTableRow(RequirementSection section, String resourceName) {
+        Locator sectionRoot = page.locator("section")
+                .filter(new Locator.FilterOptions().setHas(
+                        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(section.heading()))));
+        return sectionRoot.locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(resourceName));
     }
 
     @Step("Tab 4: створити плани по локаціях")
@@ -469,10 +691,29 @@ public class GlobalPlanWizardPage extends BasePage {
     }
 
     private Locator decompositionItemRow(String resourceName) {
-        return page.locator("div.flex.flex-col.gap-2.px-4")
+        return decompositionRowInSection(page.locator("body"), resourceName);
+    }
+
+    private Locator decompositionLevelSection(int levelNumber) {
+        return page.locator("div.rounded-lg.border.border-gray-200.bg-white")
+                .filter(new Locator.FilterOptions().setHasText("Рівень " + levelNumber));
+    }
+
+    private Locator decompositionRowInSection(Locator section, String resourceName) {
+        return section.locator("div.flex.flex-col.gap-2.px-4")
                 .filter(new Locator.FilterOptions().setHas(
                         page.locator("div.font-medium.text-gray-900")
                                 .filter(new Locator.FilterOptions().setHasText(resourceName))));
+    }
+
+    private void expandDecompositionLevelIfClosed(int levelNumber) {
+        Locator closed = page.locator("[data-state='closed']")
+                .filter(new Locator.FilterOptions().setHasText("Рівень " + levelNumber))
+                .first();
+        if (closed.count() > 0 && closed.isVisible()) {
+            closed.click();
+            page.waitForTimeout(200);
+        }
     }
 
     private Locator techMapFieldInDialog(Locator dialog) {
@@ -500,14 +741,27 @@ public class GlobalPlanWizardPage extends BasePage {
     }
 
     private Locator assignmentDialogRows() {
-        return assignmentDialog().locator("div.flex.flex-col.sm\\:flex-row");
+        return assignmentDialog().locator("div.flex.flex-col.sm\\:flex-row.gap-3");
     }
 
-    private void selectComboboxNearLabel(String label, String optionText) {
-        page.locator("div.space-y-2")
-                .filter(new Locator.FilterOptions().setHas(page.getByText(label, new Page.GetByTextOptions().setExact(true))))
-                .getByRole(AriaRole.COMBOBOX)
-                .click();
+    private void waitForWizardLoadingFinished() {
+        Locator loading = page.getByText(WIZARD_LOADING_TEXT);
+        if (loading.count() > 0 && loading.first().isVisible()) {
+            loading.first().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.HIDDEN)
+                    .setTimeout(uiTimeoutMs()));
+        }
+    }
+
+    private Locator periodField(String label) {
+        return page.locator(PERIOD_FIELDS_ROW)
+                .locator("div.space-y-2")
+                .filter(new Locator.FilterOptions().setHas(
+                        page.getByText(label, new Page.GetByTextOptions().setExact(true))));
+    }
+
+    private void selectPeriodField(String label, String optionText) {
+        periodField(label).getByRole(AriaRole.COMBOBOX).click();
         page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(optionText)).click();
     }
 

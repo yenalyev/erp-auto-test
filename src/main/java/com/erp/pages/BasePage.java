@@ -3,6 +3,7 @@ package com.erp.pages;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import io.qameta.allure.Allure;
 import lombok.extern.slf4j.Slf4j;
@@ -105,14 +106,27 @@ public abstract class BasePage {
         return target;
     }
 
+    /**
+     * Waits until a combobox/autocomplete popover has finished loading options.
+     * Covers both shadcn Combobox ({@code data-slot=combobox-item}, empty «Не знайдено»)
+     * and Autocomplete/cmdk ({@code role=option}, empty «Нічого не знайдено»).
+     */
     protected void waitForComboboxOptionsSettled() {
         page.waitForCondition(() -> {
             Locator items = page.locator("[data-slot='combobox-item']");
             if (items.count() > 0) {
                 return true;
             }
+            Locator options = page.getByRole(AriaRole.OPTION);
+            if (options.count() > 0) {
+                return true;
+            }
             Locator empty = page.getByText("Не знайдено");
-            return empty.count() > 0 && empty.isVisible();
+            if (empty.count() > 0 && empty.isVisible()) {
+                return true;
+            }
+            Locator emptyAlt = page.getByText("Нічого не знайдено");
+            return emptyAlt.count() > 0 && emptyAlt.isVisible();
         }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
     }
 }

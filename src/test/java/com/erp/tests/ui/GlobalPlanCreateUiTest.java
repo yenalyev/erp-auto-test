@@ -103,12 +103,14 @@ public class GlobalPlanCreateUiTest extends BaseUITest {
     @Description("""
             **Мета:** повний happy path створення глобального плану через UI wizard (Tab 1–4).
             
-            **Підготовка (API):** ланцюг техкарт M1/M2/M3, ресурси A/B/C та унікальний місяць.
+            **Підготовка (API):** ланцюг техкарт M1/M2/M3 з одним виходом на карту
+            (M1→A, M2→B, M3→C), ресурси A/B/C/x/y/z та унікальний місяць.
             **Роль:** ADMIN (cookies через Playwright inject)
             
             **Кроки:**
             1. Tab 1 — опис, період, output A=10, «Створити план»
-            2. Tab 2 — декомпозиція, ручне призначення B (12@L1 + 8@L2), «Розподілити по локаціях»
+            2. Tab 2 — декомпозиція, ручне призначення B (12@L1 + 8@L2) і C=20@L1,
+               «Розподілити по локаціях»
             3. Tab 3 — перегляд потреб, «Далі»
             4. Tab 4 — «Створити плани по локаціях», «Готово»
             
@@ -171,9 +173,9 @@ public class GlobalPlanCreateUiTest extends BaseUITest {
             wizard.attachScreenshot(testCaseId + " — step 2 resource B assigned");
 
             if (!wizard.isProductionAssignedForResource(resourceCName)) {
-                log.info("{}: assign resource C (10@L1 via M3)", testCaseId);
+                log.info("{}: assign resource C (20@L1 via M3, full demand without by-product)", testCaseId);
                 wizard.assignProduction(resourceCName, List.of(
-                        new GlobalPlanWizardPage.ProductionAssignment(l1StorageName, mapM3Name, "10")
+                        new GlobalPlanWizardPage.ProductionAssignment(l1StorageName, mapM3Name, "20")
                 ));
                 wizard.attachScreenshot(testCaseId + " — step 2 resource C assigned");
             }

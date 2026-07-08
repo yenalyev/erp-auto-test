@@ -20,6 +20,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the lead/lag card ("Випередження" / "Відставання") must be visible only when the storage has a
  * PLAN for the current month (it compares actual output against a planned goal, so it is hidden
  * whenever no plan exists — even if the storage already has unplanned production this month), and
- * absent otherwise.
+ * absent otherwise; plus clipboard copy of produced amounts.
  *
  * <p>Covers all 4 data combinations (no plan/no production, no plan/has production, plan/production,
  * plan/no production) for two personas:
@@ -214,6 +215,60 @@ public class PlanExecutionUiTest extends BaseUITest {
         assertThat(planPage.getGoalCellText(productName)).contains("15");
         assertThat(planPage.getProducedCellText(productName)).contains("0");
         planPage.attachScreenshot("TC-UI-PLANEXEC-004 — plan, no production — card visible");
+    }
+
+    @Test(priority = 45)
+    @TestCaseId("TC-UI-PLANEXEC-009")
+    @Story("Copy produced amounts to clipboard (Owner)")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Arrange: видалити план поточного місяця (якщо є); створити ізольований продукт з
+            активною виробничою техкартою і виготовити партію за поточний місяць.
+            Act: на вкладці «Виконання» натиснути «Скопіювати».
+            Assert: кнопка активна; з’являється фідбек «Скопійовано зроблене»; буфер обміну
+            містить рядок у форматі «<Назва> - <Кількість вироблено> <од. вимір.>»
+            (наприклад, «TM-OUT-… - 5 шт»). Інші рядки таблиці (якщо є на спільному складі)
+            не заважають — перевіряємо наявність саме нашого рядка.
+
+            Відомий дефект: зараз UI копіює «<Назва> - <Кількість>» без одиниці виміру
+            (handleCopyTable у PlanExecutionPage.tsx), а API POST /statistics/execution віддає
+            resource лише як id+name (SimpleEntityResponse) — без unit. Очікувана поведінка —
+            з од. вимір.; тест червоний до фіксу в tk / tk-ui.""")
+    public void testOwnerCopyProducedToClipboard() {
+        currentStorageId = ownerStorageId;
+        fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
+        currentContext = fixture.createIsolatedProduct(ownerStorageId);
+        double producedAmount = 5.0;
+        currentProduction = fixture.createCurrentMonthProduction(
+                ownerStorageId, currentContext.getTechMap(), producedAmount);
+
+        String productName = currentContext.getProduct().getName().trim();
+        String unitShortName = currentContext.getProduct().getUnit().getShortName();
+        String amountText = BigDecimal.valueOf(producedAmount).stripTrailingZeros().toPlainString();
+        String expectedLine = productName + " - " + amountText + " " + unitShortName;
+
+        injectRoleSession(UserRole.OWNER_1, ownerStorageId);
+        PlanExecutionPage planPage = new PlanExecutionPage(page).open();
+
+        assertThat(planPage.isProductRowVisible(productName))
+                .as("Рядок продукту з виробництвом має бути видимий у таблиці")
+                .isTrue();
+        assertThat(planPage.isCopyButtonVisible())
+                .as("Кнопка «Скопіювати» має бути видима на вкладці «Виконання»")
+                .isTrue();
+        assertThat(planPage.isCopyButtonEnabled())
+                .as("Кнопка «Скопіювати» має бути активна, коли є рядки виконання")
+                .isTrue();
+
+        planPage.installClipboardCapture()
+                .clickCopyProduced()
+                .waitForCopiedFeedback();
+
+        String clipboard = planPage.getCapturedClipboardText();
+        assertThat(clipboard.lines())
+                .as("Буфер має містити рядок «%s» (назва - кількість од.вимір.)", expectedLine)
+                .anyMatch(line -> expectedLine.equals(line.trim()));
+        planPage.attachScreenshot("TC-UI-PLANEXEC-009 — copy produced to clipboard");
     }
 
     // -------------------------------------------------------------------

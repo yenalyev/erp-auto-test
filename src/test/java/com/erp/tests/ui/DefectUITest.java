@@ -2,12 +2,16 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.defect.DefectDataFactory;
+import com.erp.data.factories.non_series_production.NonSeriesProductionDataFactory;
+import com.erp.enums.NonSeriesProductionStatus;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.DefectFixture;
+import com.erp.fixtures.NonSeriesProductionFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.DefectWriteOffRequest;
 import com.erp.models.response.DefectResponse;
+import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.pages.DefectFormPage;
 import com.erp.pages.DefectsPage;
@@ -15,6 +19,7 @@ import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -26,6 +31,7 @@ import org.testng.annotations.Test;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * UI smoke coverage for the Defect ("Брак") module (tk-ui {@code DefectListPage} / {@code DefectFormPage}).
@@ -37,10 +43,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the normal user flow through the UI is safe, but the same operations sent directly to the
  * API bypass these checks entirely (tracked as backend defects, not covered here).
  *
- * <p>The third "known defect" (RELOCATION defect offered for outbound sends / in-transit
- * relocations) is guarded by the {@code RELOCATION_STATES_FOR_DEFECT} filter in
- * {@code DefectFormPage.tsx} (FINISHED / AUTO_FINISHED / RETURNED only) — verified here by
- * confirming a CREATED (in-transit) relocation never appears in the relocation picker.
+ * <p>Further "known defect" guards verified here:
+ * <ul>
+ *   <li>RELOCATION for in-transit (CREATED) — {@code RELOCATION_STATES_FOR_DEFECT} filter
+ *       (FINISHED / AUTO_FINISHED / RETURNED only)</li>
+ *   <li>RELOCATION on a produced batch fully consumed by non-series production (CPMA-498 /
+ *       TC-DEF-029) — {@code relocationBlocked} when the batch is missing from stock</li>
+ * </ul>
  */
 @Slf4j
 @Epic("Defects")
@@ -233,6 +242,84 @@ public class DefectUITest extends BaseUITest {
                 .as("Переміщення CREATED (в дорозі) не повинно потрапляти у список для вибору")
                 .isZero();
         form.attachScreenshot("TC-UI-DEF-006 — in-transit relocation absent from picker");
+    }
+
+    @Test(priority = 70)
+    @TestCaseId("TC-UI-DEF-029")
+    @Issue("CPMA-498")
+    @Story("UI blocks defect on relocation batch already used in non-series production")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            UI-аналог TC-DEF-029 / CPMA-498: не можна створити брак за отриманням (RELOCATION)
+            на вироблену партію, яку вже повністю витрачено на несерійне виробництво («В роботі»),
+            навіть коли на складі є інша produced-партія того ж ресурсу.
+
+            Arrange (API): ресурс stock=0 → receive batch1 (isProduced=true)
+            → NSP IN_PROGRESS на batch1 → receive batch2 (isProduced=true).
+
+            UI: тип «Переміщення», ресурс, відправник (SUPPLIER), вибір receipt batch1 у таблиці.
+
+            Очікування: alert «Партія повністю використана…», «Зберегти» disabled, залишок без змін.
+            Відомий дефект бекенда: POST /defects приймає брак (200) і списує FIFO з batch2 —
+            див. DefectTest.testCannotDefectRelocationBatchUsedInNonSeriesProduction.
+            У звичайному UI-флоу це неможливо: DefectFormPage.relocationBlocked блокує submit,
+            коли produced-партія переміщення відсутня на складі.""")
+    public void testUiBlocksDefectOnRelocationBatchUsedInNonSeriesProduction() {
+        ResourceResponse resource = resourceFixture.createUniqueResource("ui-def-nsp-");
+        Long resourceId = resource.getId();
+        String resourceName = resource.getName().trim();
+        long ts = System.currentTimeMillis();
+        String batch1 = "nsp-used-" + ts + "-1";
+        String batch2 = "nsp-used-" + ts + "-2";
+        double batchAmount = 10.0;
+
+        RelocationResponse receiptBatch1 = fixture.createExternalReceipt(
+                resourceId, batchAmount, batch1, true);
+
+        NonSeriesProductionFixture nspFixture = new NonSeriesProductionFixture(testContext, apiExecutor);
+        nspFixture.createAs(
+                UserRole.OWNER_1,
+                NonSeriesProductionStatus.IN_PROGRESS,
+                NonSeriesProductionDataFactory.uniqueProductName(),
+                1.0,
+                resourceId,
+                batchAmount);
+        assertThat(fixture.resourceStock(resourceId))
+                .as("після NSP batch1 має бути повністю витрачена")
+                .isCloseTo(0.0, within(0.01));
+
+        fixture.createExternalReceipt(resourceId, batchAmount, batch2, true);
+        assertThat(fixture.resourceStock(resourceId))
+                .as("на складі лише batch2")
+                .isCloseTo(batchAmount, within(0.01));
+
+        String supplierName = storageFixture.getById(UserRole.ADMIN, fixture.supplierId()).getName().trim();
+        String invoiceBatch1 = receiptBatch1.getInvoiceNumber();
+        double stockBefore = fixture.resourceStock(resourceId);
+
+        DefectFormPage form = new DefectFormPage(page).open();
+        form.selectType(DefectFormPage.TYPE_RELOCATION)
+                .selectResourceByName(resourceName)
+                .selectSenderByName(supplierName);
+        page.waitForTimeout(500);
+
+        assertThat(form.sourceTableContainsText(invoiceBatch1))
+                .as("Receipt batch1 має бути у списку переміщень (FINISHED)")
+                .isTrue();
+
+        form.selectRelocationByInvoice(invoiceBatch1)
+                .waitForUsedBatchBlockedAlert();
+
+        assertThat(form.isUsedBatchBlockedAlertVisible())
+                .as("Alert про повністю використану партію")
+                .isTrue();
+        assertThat(form.isSubmitDisabled())
+                .as("«Зберегти» має бути заблоковано — партія batch1 витрачена на NSP")
+                .isTrue();
+        assertThat(fixture.resourceStock(resourceId))
+                .as("залишок не змінюється без submit")
+                .isCloseTo(stockBefore, within(0.01));
+        form.attachScreenshot("TC-UI-DEF-029 — used NSP batch blocked");
     }
 
     // -------------------------------------------------------------------

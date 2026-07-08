@@ -3,11 +3,14 @@ package com.erp.tests.functional.defect;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.defect.DefectDataFactory;
+import com.erp.data.factories.non_series_production.NonSeriesProductionDataFactory;
 import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.enums.DefectType;
+import com.erp.enums.NonSeriesProductionStatus;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.DefectFixture;
+import com.erp.fixtures.NonSeriesProductionFixture;
 import com.erp.models.query.DefectQuery;
 import com.erp.models.request.DefectRequest;
 import com.erp.models.request.DefectWriteOffRequest;
@@ -26,11 +29,17 @@ import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -233,13 +242,20 @@ public class DefectTest extends BaseFunctionalTest {
     @Test(priority = 110)
     @TestCaseId("TC-DEF-011")
     @Story("Cancel production defect restores batch with isProduced=true")
-    @Description("AC-08: при скасуванні браку на виробництві партія відновлюється з isProduced = true")
+    @Description("AC-08: при скасуванні браку на виробництві партія відновлюється з isProduced = true "
+            + "і з тією самою датою створення партії (date), що була до браку")
     @Severity(SeverityLevel.NORMAL)
     public void testCancelProductionDefectRestoresProducedBatch() {
         Long outRes = fixture.outputResourceId();
         String batch = ProductionDataFactory.uniqueBatchNumber();
         ManufacturingItemResponse prod = fixture.createProduction(4.0, batch);
-        double produced = capturedBatchAmount(outRes, batch, "після виробництва");
+
+        StorageItemBatchResponse originalBatch = ProductionBatchAssertions.findProducedBatch(
+                        apiExecutor, storageId, UserRole.OWNER_1, outRes, batch)
+                .orElseThrow(() -> new AssertionError("Партію «" + batch + "» не знайдено після виробництва"));
+        double produced = originalBatch.getAmount() != null ? originalBatch.getAmount() : 0.0;
+        Instant originalBatchDate = originalBatch.getDate();
+        assertThat(originalBatchDate).as("дата створення партії до браку").isNotNull();
 
         DefectResponse created = fixture.createAs(UserRole.OWNER_1,
                 DefectDataFactory.buildProductionDefect(storageId, outRes, prod.getId(), produced, LocalDate.now()));
@@ -247,7 +263,7 @@ public class DefectTest extends BaseFunctionalTest {
 
         fixture.deleteAs(UserRole.OWNER_1, created.getId());
 
-        Allure.step("Партія відновлена з isProduced = true", () -> {
+        Allure.step("Партія відновлена з isProduced = true і тією самою датою створення", () -> {
             List<StorageItemBatchResponse> batches = DefectStockAssertions.producedBatches(
                     apiExecutor, storageId, UserRole.OWNER_1, outRes, "після скасування браку");
             StorageItemBatchResponse restored = batches.stream()
@@ -256,6 +272,9 @@ public class DefectTest extends BaseFunctionalTest {
                     .orElseThrow(() -> new AssertionError("Партію «" + batch + "» не відновлено"));
             assertThat(restored.getIsProduced()).isTrue();
             assertThat(restored.getAmount()).isCloseTo(produced, within(0.01));
+            assertThat(restored.getDate())
+                    .as("дата створення партії після повернення з браку має збігатися з оригінальною")
+                    .isEqualTo(originalBatchDate);
         });
     }
 
@@ -541,6 +560,70 @@ public class DefectTest extends BaseFunctionalTest {
         });
     }
 
+    @Test(priority = 290)
+    @TestCaseId("TC-DEF-029")
+    @Issue("CPMA-498")
+    @Story("Cannot defect relocation batch already used in non-series production")
+    @Description("""
+            CPMA-498: не можна створити брак за отриманням (RELOCATION) на партію isProduced=true,
+            якщо вона вже повністю витрачена на несерійне виробництво (статус «В роботі»),
+            навіть коли на складі є інша produced-партія того ж ресурсу.
+
+            Кроки: ресурс stock=0 → receive batch1 (isProduced=true) → NSP IN_PROGRESS на batch1
+            → receive batch2 (isProduced=true) → POST defect RELOCATION на receipt batch1.
+
+            Очікування: 4xx, залишок не змінюється.
+            Відомий дефект: API приймає брак (200) на вже використану партію.""")
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCannotDefectRelocationBatchUsedInNonSeriesProduction() {
+        Long resource = fixture.createFreshResource();
+        long ts = System.currentTimeMillis();
+        String batch1 = "nsp-used-" + ts + "-1";
+        String batch2 = "nsp-used-" + ts + "-2";
+        double batchAmount = 10.0;
+
+        Allure.step("Залишок ресурсу = 0 до отримання", () ->
+                assertThat(fixture.resourceStock(resource)).isCloseTo(0.0, within(0.01)));
+
+        RelocationResponse receiptBatch1 = Allure.step(
+                "Отримати партію batch1 (isProduced=true)", () ->
+                        fixture.createExternalReceipt(resource, batchAmount, batch1, true));
+
+        NonSeriesProductionFixture nspFixture = new NonSeriesProductionFixture(testContext, apiExecutor);
+        Allure.step("Створити несерійне виробництво «В роботі» з повною витратою batch1", () -> {
+            nspFixture.createAs(
+                    UserRole.OWNER_1,
+                    NonSeriesProductionStatus.IN_PROGRESS,
+                    NonSeriesProductionDataFactory.uniqueProductName(),
+                    1.0,
+                    resource,
+                    batchAmount);
+            assertThat(fixture.resourceStock(resource))
+                    .as("після NSP batch1 має бути повністю витрачена")
+                    .isCloseTo(0.0, within(0.01));
+        });
+
+        Allure.step("Отримати партію batch2 (isProduced=true)", () -> {
+            fixture.createExternalReceipt(resource, batchAmount, batch2, true);
+            assertThat(fixture.resourceStock(resource))
+                    .as("на складі лише batch2")
+                    .isCloseTo(batchAmount, within(0.01));
+        });
+
+        double stockBefore = fixture.resourceStock(resource);
+        Response resp = Allure.step("Спробувати створити брак RELOCATION на receipt batch1", () ->
+                fixture.createRaw(UserRole.OWNER_1,
+                        DefectDataFactory.buildRelocationDefect(
+                                storageId, resource, receiptBatch1.getId(), 5.0, LocalDate.now())));
+
+        Allure.step("Брак не створено — партія вже використана на несерійне виробництво (CPMA-498)", () -> {
+            assertThat(resp.statusCode())
+                    .as("body=%s", safeBody(resp))
+                    .isGreaterThanOrEqualTo(400);
+            assertThat(fixture.resourceStock(resource)).isCloseTo(stockBefore, within(0.01));
+        });
+    }
+
     // =====================================================================
     // REQ-DEF-005 — Списання браку
     // =====================================================================
@@ -615,23 +698,39 @@ public class DefectTest extends BaseFunctionalTest {
     @Test(priority = 70)
     @TestCaseId("TC-DEF-007")
     @Story("Production defect date window (Owner vs Admin)")
-    @Description("AC-01/02 (REQ-DEF-002): @Owner не може створити брак на виробництво 3-денної давнини; @Admin може")
+    @Description("AC-01/02 (REQ-DEF-002): @Owner може створити брак на виробництво в межах 2 днів "
+            + "(дата = now-2); не може на виробництво старшого за 2 дні (now-3). @Admin може і на now-3.")
     @Severity(SeverityLevel.NORMAL)
     public void testProductionDefectDateWindow() {
         Long outRes = fixture.outputResourceId();
+        LocalDate twoDaysAgo = LocalDate.now().minusDays(2);
         LocalDate threeDaysAgo = LocalDate.now().minusDays(3);
-        String batch = ProductionDataFactory.uniqueBatchNumber();
+        String batchWithin = ProductionDataFactory.uniqueBatchNumber();
+        String batchOld = ProductionDataFactory.uniqueBatchNumber();
+
+        Allure.step("@Owner: виробництво і брак на межі вікна (дата " + twoDaysAgo + ") дозволені", () -> {
+            ManufacturingItemResponse withinWindow = fixture.createProductionAs(
+                    UserRole.OWNER_1, 4.0, batchWithin, twoDaysAgo);
+            double produced = capturedBatchAmount(outRes, batchWithin, "після виробництва Owner now-2");
+            double defectAmount = round2(produced * 0.5);
+            DefectResponse ownerOk = fixture.createAs(UserRole.OWNER_1,
+                    DefectDataFactory.buildProductionDefect(
+                            storageId, outRes, withinWindow.getId(), defectAmount, twoDaysAgo));
+            assertThat(ownerOk.getType()).isEqualTo(DefectType.PRODUCTION);
+            assertThat(ownerOk.getDate()).isEqualTo(twoDaysAgo);
+            fixture.deleteAs(UserRole.OWNER_1, ownerOk.getId());
+        });
 
         Response ownerBackdatedProduction = fixture.createProductionRaw(
-                UserRole.OWNER_1, 4.0, batch + "-owner-blocked", threeDaysAgo);
+                UserRole.OWNER_1, 4.0, batchOld + "-owner-blocked", threeDaysAgo);
         Allure.step("@Owner: POST /productions, дата " + threeDaysAgo, () ->
                 assertThat(ownerBackdatedProduction.statusCode())
                         .as("Owner, виробництво 3-денної давнини")
                         .isGreaterThanOrEqualTo(400));
 
         ManufacturingItemResponse oldProduction = fixture.createProductionAs(
-                UserRole.ADMIN, 5.0, batch, threeDaysAgo);
-        double produced = capturedBatchAmount(outRes, batch, "після виробництва Admin");
+                UserRole.ADMIN, 5.0, batchOld, threeDaysAgo);
+        double produced = capturedBatchAmount(outRes, batchOld, "після виробництва Admin");
         double defectAmount = round2(produced * 0.5);
         DefectRequest defectRequest = DefectDataFactory.buildProductionDefect(
                 storageId, outRes, oldProduction.getId(), defectAmount, threeDaysAgo);
@@ -655,6 +754,37 @@ public class DefectTest extends BaseFunctionalTest {
                 fixture.deleteAs(UserRole.ADMIN, ownerDefect.as(DefectResponse.class).getId());
             }
         }
+    }
+
+    @Test(priority = 145)
+    @TestCaseId("TC-DEF-030")
+    @Story("Owner cannot delete defect older than 2 days")
+    @Description("REQ-DEF: @Owner не може видалити брак, якщо з моменту створення (created_at) минуло більше 2 днів; "
+            + "@Admin може. Arrange: backdate defect.created_at у БД (потрібен use.database=true).")
+    @Severity(SeverityLevel.NORMAL)
+    public void testOwnerCannotDeleteDefectOlderThanTwoDays() {
+        DefectResponse created = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildStorageFifoDefect(storageId, defectResourceId, 3.0));
+
+        Instant olderThanWindow = Instant.now().minus(3, ChronoUnit.DAYS);
+        backdateDefectCreatedAt(created.getId(), olderThanWindow);
+
+        Response ownerDelete = fixture.deleteRaw(UserRole.OWNER_1, created.getId());
+        Allure.step("@Owner: DELETE браку з created_at старше 2 днів відхилено", () ->
+                assertThat(ownerDelete.statusCode())
+                        .as("body=%s", safeBody(ownerDelete))
+                        .isGreaterThanOrEqualTo(400));
+
+        Response stillExists = fixture.getByIdRaw(UserRole.OWNER_1, created.getId());
+        assertThat(stillExists.statusCode())
+                .as("запис браку має лишитись після відхиленого DELETE Owner")
+                .isEqualTo(200);
+
+        Allure.step("@Admin: DELETE того ж браку дозволено", () ->
+                fixture.deleteAs(UserRole.ADMIN, created.getId()));
+
+        Response gone = fixture.getByIdRaw(UserRole.OWNER_1, created.getId());
+        assertThat(gone.statusCode()).as("після DELETE Admin брак відсутній").isNotEqualTo(200);
     }
 
     @Test(priority = 150)
@@ -839,4 +969,31 @@ public class DefectTest extends BaseFunctionalTest {
     private static double round2(double value) {
         return Math.round(value * 100.0) / 100.0;
     }
+
+    /**
+     * Backdates {@code defect.created_at} so delete-window validation can be exercised without waiting.
+     * Requires DB connectivity ({@code use.database=true} / local profile).
+     */
+    private void backdateDefectCreatedAt(Long defectId, Instant createdAt) {
+        if (getDbHelper() == null) {
+            throw new SkipException(
+                    "TC-DEF-030 потребує БД для backdate defect.created_at "
+                            + "(увімкніть use.database=true або запустіть з -Denv=local)");
+        }
+        Allure.step("DB: UPDATE defect SET created_at=" + createdAt + " WHERE id=" + defectId, () -> {
+            String sql = "UPDATE defect SET created_at = ? WHERE id = ?";
+            try (PreparedStatement ps = getDbHelper().getConnection().prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.from(createdAt));
+                ps.setLong(2, defectId);
+                int updated = ps.executeUpdate();
+                assertThat(updated)
+                        .as("має оновитись рівно один рядок defect id=%s", defectId)
+                        .isEqualTo(1);
+            } catch (SQLException e) {
+                throw new IllegalStateException(
+                        "Не вдалося backdate defect.created_at id=" + defectId + ": " + e.getMessage(), e);
+            }
+        });
+    }
 }
+

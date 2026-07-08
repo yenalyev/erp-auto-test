@@ -249,7 +249,8 @@ public class CrewIssuanceUITest extends BaseUITest {
     @Description("""
             Після API видачі (OWNER_1) — таблиця crews mode містить resource.
             UI-сесія: argument (Crew-Manager-ROLE, UNIT id=unit.storage.id) — inventory-list::{crew}::read
-            після appendGrantedCrews. OWNER_1 без Crew-Manager отримує 403 на GET /storages/{crewId}/inventory.
+            після appendGrantedCrews. OWNER_1 на закріпленому екіпажі (CREWS) також має читати
+            GET /storages/{crewId}/inventory (див. TC-CREW-INV-007); поза CREWS — 403 (TC-CREW-INV-008b).
             """)
     public void testCrewStockVisibleInInventoryCrewsMode() {
         relocationFixture.createSend(

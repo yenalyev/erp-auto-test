@@ -94,13 +94,22 @@ public final class RelocationDataFactory {
                                                              Long resourceId,
                                                              double amount,
                                                              String batchNumber) {
+        return buildReceiveRequest(supplierId, recipientId, resourceId, amount, batchNumber, false);
+    }
+
+    public static RelocationInputRequest buildReceiveRequest(Long supplierId,
+                                                             Long recipientId,
+                                                             Long resourceId,
+                                                             double amount,
+                                                             String batchNumber,
+                                                             boolean isProduced) {
         return RelocationInputRequest.builder()
                 .senderId(supplierId)
                 .recipientId(recipientId)
                 .description("erp-auto-test external receive")
                 .invoiceNumber(uniqueInvoiceNumber())
                 .date(LocalDate.now())
-                .items(List.of(usageWithBatch(resourceId, amount, batchNumber, false)))
+                .items(List.of(usageWithBatch(resourceId, amount, batchNumber, isProduced)))
                 .build();
     }
 

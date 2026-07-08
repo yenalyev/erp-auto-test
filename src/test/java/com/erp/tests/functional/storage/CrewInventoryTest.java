@@ -6,6 +6,7 @@ import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
 import com.erp.models.response.CrewResourceStockResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.utils.helpers.AllureHelper;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
@@ -19,6 +20,7 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * Залишки та надходження екіпажів через GET /storages/inventory/crews.
+ * Залишки екіпажів: звіт GET /storages/inventory/crews та direct GET /storages/{crewId}/inventory.
+ * Owner: 200 для екіпажів у CREWS локації, 403 поза областю.
  */
 @Slf4j
 @Epic("Master Data")
@@ -64,7 +67,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
                 scenario.crew().getId(),
                 resourceId,
                 ISSUE_AMOUNT);
-        invalidateCrewManagerSession();
+        refreshRoleSessions(UserRole.OWNER_1, UserRole.CREW_MANAGER);
     }
 
     @Test(priority = 10)
@@ -98,14 +101,21 @@ public class CrewInventoryTest extends CrewApiTestBase {
     @TestCaseId("TC-CREW-INV-007")
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007)
     @Severity(SeverityLevel.CRITICAL)
-    public void testOwner1DeniedCrewDirectInventory() {
-        Response response = apiExecutor.execute(
+    public void testOwner1CanReadAttachedCrewInventory() {
+        Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.STORAGE_INVENTORY_GET,
                 UserRole.OWNER_1,
+                uiInventoryParams(),
                 String.valueOf(scenario.crew().getId()));
         assertThat(response.statusCode())
-                .as("OWNER_1 без Crew-Manager — direct inventory екіпажу заборонено")
-                .isEqualTo(403);
+                .as("OWNER_1 — inventory екіпажу, закріпленого за локацією (CREWS)")
+                .isEqualTo(200);
+        AllureHelper.attachSchemaValidationInfo(ApiEndpointDefinition.STORAGE_INVENTORY_GET, response);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_GET);
+
+        double stock = relocationFixture.getResourceStock(
+                scenario.crew().getId(), resourceId, UserRole.OWNER_1);
+        assertThat(stock).isCloseTo(ISSUE_AMOUNT, within(0.01));
     }
 
     @Test(priority = 22)
@@ -113,10 +123,10 @@ public class CrewInventoryTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007B)
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewManagerCanReadCrewDirectInventory() {
-        invalidateCrewManagerSession();
-        Response response = apiExecutor.execute(
+        Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.STORAGE_INVENTORY_GET,
                 UserRole.CREW_MANAGER,
+                uiInventoryParams(),
                 String.valueOf(scenario.crew().getId()));
         assertThat(response.statusCode())
                 .as("Crew-Manager (argument) має inventory-list::{crew}::read")
@@ -133,13 +143,34 @@ public class CrewInventoryTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_008)
     @Severity(SeverityLevel.NORMAL)
     public void testOwner2DeniedCrewDirectInventory() {
-        Response response = apiExecutor.execute(
+        Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.STORAGE_INVENTORY_GET,
                 UserRole.OWNER_2,
+                uiInventoryParams(),
                 String.valueOf(scenario.crew().getId()));
         assertThat(response.statusCode())
                 .as("OWNER_2 поза областю CREWS — доступ до inventory екіпажу заборонено")
                 .isIn(403, 404);
+    }
+
+    @Test(priority = 26)
+    @TestCaseId("TC-CREW-INV-008b")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_008B)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testOwner1DeniedUnattachedCrewInventory() {
+        StorageResponse member = storageFixture.getById(UserRole.ADMIN, scenario.memberStorageId());
+        Long parentId = member.getParent() != null ? member.getParent().getId() : member.getId();
+        StorageResponse unit = storageFixture.createUnitStorage(parentId, "crew-inv-out-unit-");
+        StorageResponse unattachedCrew = storageFixture.createCrewStorage(unit.getId(), "crew-inv-out-crew-");
+
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_INVENTORY_GET,
+                UserRole.OWNER_1,
+                uiInventoryParams(),
+                String.valueOf(unattachedCrew.getId()));
+        assertThat(response.statusCode())
+                .as("OWNER_1 — inventory екіпажу поза CREWS локації заборонено")
+                .isEqualTo(403);
     }
 
     @Test(priority = 30)
@@ -147,7 +178,6 @@ public class CrewInventoryTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_006)
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewStockReportMatchesDirectInventory() {
-        invalidateCrewManagerSession();
         double directStock = relocationFixture.getResourceStock(
                 scenario.crew().getId(), resourceId, UserRole.CREW_MANAGER);
 
@@ -243,10 +273,21 @@ public class CrewInventoryTest extends CrewApiTestBase {
         }
     }
 
-    private void invalidateCrewManagerSession() {
-        authService.invalidateSession(
-                UserRole.CREW_MANAGER.getUsername(),
-                UserRole.CREW_MANAGER.getPassword());
+    private void refreshRoleSessions(UserRole... roles) {
+        for (UserRole role : roles) {
+            authService.invalidateSession(role.getUsername(), role.getPassword());
+        }
+        apiExecutor.clearSessionCache();
+    }
+
+    /** Query params as UI /unit-management?mode=crews&crew=… */
+    private Map<String, Object> uiInventoryParams() {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("searchTerm", "");
+        params.put("page", 0);
+        params.put("size", 100);
+        params.put("sort", List.of("weight,desc", "resource.name,asc"));
+        return params;
     }
 
     private Map<String, Object> crewInventoryParams(String requestType) {

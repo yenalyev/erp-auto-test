@@ -22,6 +22,8 @@ public class UnitManagementPage extends BasePage {
     private static final String CLOSE_INVENTORY_BUTTON_TEXT = "Закрити інвентаризацію";
     private static final String CONDUCT_INVENTORY_BUTTON_TEXT = "Провести інвентаризацію";
     private static final String EXPORT_TO_EXCEL_BUTTON_TEXT = "Експорт в Excel";
+    private static final String COPY_BUTTON_TEXT = "Скопіювати";
+    private static final String COPIED_FEEDBACK_TEXT = "Скопійовано";
     private static final String SEARCH_PLACEHOLDER = "Пошук...";
     private static final String ALL_LOCATIONS_TOOLTIP = "Оберіть конкретну локацію для виконання дії";
     private static final String ADMIN_CONDUCT_TOOLTIP = "Зверніться до адміністратора для проведення інвентаризації";
@@ -92,6 +94,63 @@ public class UnitManagementPage extends BasePage {
 
     public boolean isExportToExcelButtonEnabled() {
         return exportToExcelButton().isEnabled();
+    }
+
+    /** True when the «Скопіювати» button is visible (specific location, not «Всі локації»). */
+    public boolean isCopyButtonVisible() {
+        Locator button = copyButton();
+        return button.count() > 0 && button.first().isVisible();
+    }
+
+    public boolean isCopyButtonEnabled() {
+        return copyButton().isEnabled();
+    }
+
+    /**
+     * Stubs {@code navigator.clipboard.writeText} so the payload can be read back without OS
+     * clipboard permissions (reliable in headless CI). Call before {@link #clickCopyRemainders()}.
+     */
+    public UnitManagementPage installClipboardCapture() {
+        page.evaluate("""
+                () => {
+                  window.__erpClipboardText = undefined;
+                  navigator.clipboard.writeText = async (text) => {
+                    window.__erpClipboardText = text;
+                  };
+                }
+                """);
+        return this;
+    }
+
+    /** Waits until «Скопіювати» is visible (e.g. after the «Скопійовано» feedback clears). */
+    public UnitManagementPage waitForCopyButtonReady() {
+        copyButton().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage clickCopyRemainders() {
+        waitForCopyButtonReady();
+        copyButton().click();
+        return this;
+    }
+
+    public UnitManagementPage waitForCopiedFeedback() {
+        page.getByText(COPIED_FEEDBACK_TEXT)
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    /** Text captured by {@link #installClipboardCapture()}, or empty when nothing was written. */
+    public String getCapturedClipboardText() {
+        page.waitForCondition(
+                () -> Boolean.TRUE.equals(page.evaluate("() => window.__erpClipboardText !== undefined")),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        Object value = page.evaluate("() => window.__erpClipboardText");
+        return value != null ? value.toString() : "";
     }
 
     public ExportDownloadResult clickExportToExcelAndDownload() {
@@ -321,6 +380,10 @@ public class UnitManagementPage extends BasePage {
 
     private Locator exportToExcelButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(EXPORT_TO_EXCEL_BUTTON_TEXT));
+    }
+
+    private Locator copyButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(COPY_BUTTON_TEXT));
     }
 
     public record ExportDownloadResult(String suggestedFilename, long sizeBytes) {}

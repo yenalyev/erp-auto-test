@@ -76,6 +76,8 @@ RESTRICTED підрозділ = `accessMode=REGIONS`; фільтр номенк�
 | **TC-STR-RES-007** | `StorageResourceVisibilityTest` | DELETE ресурсу з області при stock>0 (guard 2.1.1) | Normal |
 | **TC-STR-RES-008** | `StorageResourceVisibilityTest` | Inventory PUT: ресурс поза областю → 400, stock не змінюється | Critical |
 | **TC-STR-RES-010** | `StorageResourceVisibilityTest` | Inventory PUT: ресурс з області → 200, stock оновлюється | Normal |
+| **TC-STR-RES-012** | `StorageResourceVisibilityTest` | CREW наслідує RESOURCES-область parent UNIT (autocomplete + inventory API) | Critical |
+| **TC-UI-STR-RES-012** | `CrewResourceVisibilityUiTest` | UI: додати ресурс з області parent на формі інвентаризації CREW | Critical |
 | **TC-STR-RES-011** | `StorageResourceVisibilityTest` | INTERNAL→INTERNAL receive: outOfScope додається до видимості + stock | Critical |
 | **TC-STR-RES-009** | `StorageResourceVisibilityTest` | SUPPLIER receive невидимого ресурсу (4.1 / auto-grant 2.2) | Normal |
 
@@ -141,7 +143,7 @@ mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest,StorageNamesEn
 | **TC-STR-CREW-011..012** | `CrewVisibilityTest` | Ієрархія UNIT та рекурсивний пошук екіпажів | Critical |
 | **TC-CREW-REL-001..003** | `CrewRelocationTest` | Send→CREW AUTO_FINISHED, journal, insufficient stock | Critical |
 | **TC-UI-CREW-012..014** | `CrewJournalNameVisibilityUiTest` | UI «Видано»/«Отримано»: назва CREW завжди реальна поза REGIONS scope; non-CREW → `_приховано_` | Critical |
-| **TC-CREW-INV-001,006,007,007b,008** | `CrewInventoryTest` | STOCK report; OWNER_1 denied direct; Crew-Manager direct; OWNER_2 denied | Critical |
+| **TC-CREW-INV-001,006,007,007b,008,008b** | `CrewInventoryTest` | STOCK report; OWNER_1 attached crew → 200; unattached → 403; Crew-Manager; OWNER_2 denied | Critical |
 | **TC-CREW-INV-002** | `CrewInventoryTest` | INCOME report — **disabled** (див. коментар у тесті) | Normal |
 
 **Запуск crew-тестів:**

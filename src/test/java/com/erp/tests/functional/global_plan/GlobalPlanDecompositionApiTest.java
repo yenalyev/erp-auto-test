@@ -73,7 +73,7 @@ public class GlobalPlanDecompositionApiTest extends GlobalPlanApiTestBase {
             
             **Параметри декомпозиції (блок 1):**
             - Ресурс A, assignment: storage L1, техкарта M1, amount = 10.
-            - M1: 2B + 3x → 1A + 1C ⇒ для 10 од. A потрібно 20 од. B.
+            - M1 (один вихід): 2B + 3x → 1A ⇒ для 10 од. A потрібно 20 од. B.
             
             **Перевірки:**
             - `complete = false`, `nextBlock` присутній.
@@ -100,23 +100,24 @@ public class GlobalPlanDecompositionApiTest extends GlobalPlanApiTestBase {
 
     @Test(priority = 30)
     @TestCaseId("TC-GP-022")
-    @Story("By-product credit for C")
+    @Story("Full C requirement without by-product")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            **Мета:** побічний продукт C з M1 зменшує чисту потребу в наступному блоці (кредит by-product).
+            **Мета:** при одному виході на PRODUCTION-техкарті (без by-product) потреба в C
+            дорівнює повному споживанню M2.
             
             **Ендпоінт:** `POST /api/v1/global-plans/{id}/decompose`
             **Роль:** ADMIN
             
             **Параметри (блоки 1–2):**
-            - Блок 1: A=10 на L1 через M1 (M1 дає 10 од. C як побічний продукт).
+            - Блок 1: A=10 на L1 через M1 (M1: 2B+3x → 1A, без побічного C).
             - Блок 2: B — 12 на L1 + 8 на L2 через M2 (разом 20 од. B).
-            - M2 споживає 1C на 1B ⇒ без кредиту потрібно було б 20C, з кредитом — 10C.
+            - M2 споживає 1C на 1B ⇒ потрібно 20C (усі через M3).
             
             **Перевірки:**
-            - `nextBlock` містить ресурс C з `requiredAmount = 10.0` (не 20).
+            - `nextBlock` містить ресурс C з `requiredAmount = 20.0`.
             """)
-    public void testByProductCreditCasks10Not20() {
+    public void testNextBlockRequiresFullC20WithoutByProduct() {
         GlobalPlanChainContext chain = globalPlanFixture.requireChain();
         DecompositionRequest request = DecompositionRequest.builder()
                 .blocks(List.of(
@@ -135,7 +136,7 @@ public class GlobalPlanDecompositionApiTest extends GlobalPlanApiTestBase {
         assertThat(response.getNextBlock()).isNotNull();
         assertThat(response.getNextBlock().getItems()).anyMatch(i ->
                 chain.getResourceC().getId().equals(i.getResource().getId())
-                        && i.getRequiredAmount() == 10.0);
+                        && i.getRequiredAmount() == 20.0);
     }
 
     @Test(priority = 40)
@@ -148,8 +149,8 @@ public class GlobalPlanDecompositionApiTest extends GlobalPlanApiTestBase {
             **Ендпоінт:** `POST /api/v1/global-plans/{id}/decompose`
             **Роль:** ADMIN
             
-            **Параметри:** `completeDecomposition` — 3 блоки:
-            - A=10 @L1/M1, B=12@L1+8@L2/M2, C=10@L1/M3.
+            **Параметри:** `completeDecomposition` — 3 блоки (single-output maps):
+            - A=10 @L1/M1, B=12@L1+8@L2/M2, C=20@L1/M3.
             
             **Перевірки:**
             - `complete = true`.
@@ -280,12 +281,12 @@ public class GlobalPlanDecompositionApiTest extends GlobalPlanApiTestBase {
     @Severity(SeverityLevel.NORMAL)
     @Description("""
             **Мета:** при повній декомпозиції локація L1 отримує чернетку плану з ненульовим output
-            (побічний продукт C, вироблений на тій самій локації, враховується в net-залишку).
+            (A, частина B та C виробляються на L1).
             
             **Ендпоінт:** `POST /api/v1/global-plans/{id}/decompose`
             **Роль:** ADMIN
             
-            **Параметри:** повна декомпозиція M1→M2→M3, global output A = 10.
+            **Параметри:** повна декомпозиція M1→M2→M3 (по одному виходу на карту), global output A = 10.
             
             **Перевірки:**
             - У `locationPlans` для L1 поле `output` не порожнє.

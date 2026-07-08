@@ -123,7 +123,16 @@ public class DefectFixture extends BaseFixture {
 
     @Step("FIXTURE: зовнішнє отримання {amount} од. ресурсу {resourceId}, партія «{batchNumber}»")
     public RelocationResponse createExternalReceipt(Long resourceId, double amount, String batchNumber) {
-        return relocationFixture.createExternalReceive(UserRole.OWNER_1, storageId, resourceId, amount, batchNumber);
+        return createExternalReceipt(resourceId, amount, batchNumber, false);
+    }
+
+    @Step("FIXTURE: отримання {amount} од. ресурсу {resourceId}, партія «{batchNumber}», isProduced={isProduced}")
+    public RelocationResponse createExternalReceipt(Long resourceId,
+                                                    double amount,
+                                                    String batchNumber,
+                                                    boolean isProduced) {
+        return relocationFixture.createExternalReceive(
+                UserRole.OWNER_1, storageId, resourceId, amount, batchNumber, isProduced);
     }
 
     /** Creates a brand-new resource with zero starting stock (для чистих FIFO-сценаріїв). */

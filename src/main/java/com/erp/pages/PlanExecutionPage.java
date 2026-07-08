@@ -29,6 +29,8 @@ public class PlanExecutionPage extends BasePage {
     private static final String LEAD_TEXT = "Випередження";
     private static final String LAG_TEXT = "Відставання";
     private static final String GOAL_PLACEHOLDER = "—";
+    private static final String COPY_BUTTON_TEXT = "Скопіювати";
+    private static final String COPIED_FEEDBACK_TEXT = "Скопійовано зроблене";
 
     public PlanExecutionPage(Page page) {
         super(page);
@@ -112,6 +114,58 @@ public class PlanExecutionPage extends BasePage {
 
     public boolean isGoalAbsent(String productName) {
         return GOAL_PLACEHOLDER.equals(getGoalCellText(productName));
+    }
+
+    /** True when the «Скопіювати» button is visible on the «Виконання» tab. */
+    public boolean isCopyButtonVisible() {
+        Locator button = copyButton();
+        return button.count() > 0 && button.first().isVisible();
+    }
+
+    public boolean isCopyButtonEnabled() {
+        return copyButton().isEnabled();
+    }
+
+    /**
+     * Stubs {@code navigator.clipboard.writeText} so the payload can be read back without OS
+     * clipboard permissions (reliable in headless CI). Call before {@link #clickCopyProduced()}.
+     */
+    public PlanExecutionPage installClipboardCapture() {
+        page.evaluate("""
+                () => {
+                  window.__erpClipboardText = undefined;
+                  navigator.clipboard.writeText = async (text) => {
+                    window.__erpClipboardText = text;
+                  };
+                }
+                """);
+        return this;
+    }
+
+    public PlanExecutionPage clickCopyProduced() {
+        copyButton().click();
+        return this;
+    }
+
+    public PlanExecutionPage waitForCopiedFeedback() {
+        page.getByText(COPIED_FEEDBACK_TEXT)
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    /** Text captured by {@link #installClipboardCapture()}, or empty when nothing was written. */
+    public String getCapturedClipboardText() {
+        page.waitForCondition(
+                () -> Boolean.TRUE.equals(page.evaluate("() => window.__erpClipboardText !== undefined")),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        Object value = page.evaluate("() => window.__erpClipboardText");
+        return value != null ? value.toString() : "";
+    }
+
+    private Locator copyButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(COPY_BUTTON_TEXT));
     }
 
     private String cellText(String productName, int columnIndex) {

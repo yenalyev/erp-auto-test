@@ -100,13 +100,19 @@ public class InventoryEditPage extends BasePage {
         return this;
     }
 
-    public InventoryEditPage save() {
+    /** PUT inventory success only — use when navigation history is not unit-management (e.g. direct /inventory/{crewId}). */
+    public InventoryEditPage saveChanges() {
         page.waitForResponse(
                 response -> response.url().contains("/inventory")
                         && !response.url().contains("/status")
                         && "PUT".equals(response.request().method())
                         && response.status() == 200,
                 () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Зберегти")).click());
+        return this;
+    }
+
+    public InventoryEditPage save() {
+        saveChanges();
         page.waitForURL("**/unit-management**", new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
         return this;
     }

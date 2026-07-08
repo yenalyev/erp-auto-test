@@ -96,6 +96,24 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: PUT /inventory → 200; stock visible оновлюється.
             """ + ON_FAIL_API;
 
+    public static final String TC_STR_RES_012 = """
+            Що перевіряємо: область видимості ресурсів CREW береться з батьківського UNIT (CPMA-602).
+            Тестові дані: parent UNIT accessMode=REGIONS + область RESOURCES (visible);
+            CREW під parent з accessMode=REGIONS; hidden поза областю.
+            Очікуваний результат: autocomplete?storageId=crewId містить visible, не містить hidden;
+            PUT /storages/{crewId}/inventory з visible → 200, stock оновлюється
+            (фікс додавання ресурсів під час інвентаризації екіпажу).
+            """ + ON_FAIL_API;
+
+    public static final String TC_UI_STR_RES_012 = """
+            Що перевіряємо: UI інвентаризація CREW — додавання ресурсу з області видимості parent UNIT.
+            Хто виконує:
+            — API setup (UNIT REGIONS + RESOURCES region, CREW, open session): ADMIN;
+            — UI (Playwright, /inventory/{crewId}, autocomplete «Оберіть ресурс», Додати, Зберегти): ADMIN.
+            Тестові дані: visible у RESOURCES parent; hidden поза областю; stock на CREW = 0 до save.
+            Очікуваний результат: visible у autocomplete, hidden відсутній; після save stock(visible)≈3.
+            """ + ON_FAIL_UI;
+
     public static final String TC_STR_RES_011 = """
             Що перевіряємо: вимога 2.2 — INTERNAL receive outOfScope ресурсу розширює видимість + stock.
             Тестові дані: inScope у області; outOfScope поза нею; send+resolve на RESTRICTED unit.
@@ -299,9 +317,13 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_007 = """
-            Що перевіряємо: OWNER_1 (Business_Unit_Owner) — GET /storages/{crewId}/inventory після видачі.
-            Тестові дані: crew з CREWS region; сесія alkatras без Crew-Manager.
-            Очікуваний результат: HTTP 403 — direct crew inventory лише для Crew-Manager (див. TC-CREW-INV-007b).
+            Що перевіряємо: OWNER_1 (Business_Unit_Owner) — GET /storages/{crewId}/inventory
+            для екіпажу, закріпленого за локацією (область CREWS).
+            Тестові дані: prepareSingleCrewScenario (member=OWNER_1, location=unit, crew під unit) + видача;
+            query як UI: searchTerm, page=0, size=100, sort=weight,desc + resource.name,asc.
+            Очікуваний результат: HTTP 200; stock≈ISSUE_AMOUNT (inventory-list::{crew}::read після appendGrantedCrews).
+            Відомий дефект: зараз 403 — Owner має лише inventory-list::{business_unit_id}::read,
+            без perm_inventory-list::{crew}::read у Business_Unit_Owner-ROLE (Keycloak).
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_007B = """
@@ -312,8 +334,15 @@ public final class StorageRegionsAllureDescriptions {
 
     public static final String TC_CREW_INV_008 = """
             Що перевіряємо: OWNER_2 поза областю CREWS — доступ до inventory екіпажу заборонено.
-            Тестові дані: crew з OWNER_1 сценарію; сесія OWNER_2.
+            Тестові дані: crew з OWNER_1 сценарію (закріплений за локацією OWNER_1); сесія OWNER_2.
             Очікуваний результат: HTTP 403 або 404.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_008B = """
+            Що перевіряємо: OWNER_1 — GET /storages/{crewId}/inventory для екіпажу, не закріпленого
+            за локацією (UNIT+CREW без області CREWS / без member OWNER_1).
+            Тестові дані: окремий unit+crew без createRegion(CREWS); сесія OWNER_1 після refresh.
+            Очікуваний результат: HTTP 403.
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_006 = """
