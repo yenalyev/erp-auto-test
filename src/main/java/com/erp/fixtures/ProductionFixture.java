@@ -2,10 +2,13 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.models.request.UpdateNotesRequest;
 import com.erp.enums.UserRole;
 import com.erp.models.query.ProductionJournalQuery;
 import com.erp.models.response.ManufacturingItemResponse;
+import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
@@ -19,6 +22,7 @@ import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,6 +117,69 @@ public class ProductionFixture extends BaseFixture {
             }
         }
         return productCategoryMap;
+    }
+
+    @Step("API: GET production id={productionId}")
+    public ManufacturingItemResponse getById(UserRole role, Long productionId, Long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_GET_BY_ID,
+                role,
+                null,
+                productionId,
+                storageId);
+        validateSuccess(response, "Get production id=" + productionId);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.PRODUCTION_GET_BY_ID);
+        return response.as(ManufacturingItemResponse.class);
+    }
+
+    @Step("API: PATCH notes для виробництва {productionId} на локації {storageId}")
+    public ManufacturingItemResponse updateNotes(UserRole role,
+                                                 Long productionId,
+                                                 Long storageId,
+                                                 String notes) {
+        UpdateNotesRequest request = UpdateNotesRequest.builder().notes(notes).build();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_PATCH_NOTES,
+                role,
+                request,
+                productionId,
+                storageId);
+        validateSuccess(response, "Patch production notes id=" + productionId);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.PRODUCTION_PATCH_NOTES);
+        return response.as(ManufacturingItemResponse.class);
+    }
+
+    @Step("API: GET tag-statistics для журналу виробництва")
+    public List<ProductionProcessTagStatisticResponse> getTagStatistics(ProductionJournalQuery query) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.PRODUCTION_TAG_STATISTICS_GET,
+                UserRole.OWNER_1,
+                query.toQueryParams());
+        validateSuccess(response, "Get production tag statistics");
+        return DatabaseIntegrityValidator.extractList(response, ProductionProcessTagStatisticResponse.class);
+    }
+
+    @Step("API: GET каталог production-process-tags для storageId={storageId}")
+    public Collection<String> getProductionProcessTags(long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.APP_CONFIG_PRODUCTION_PROCESS_TAGS_GET,
+                UserRole.OWNER_1,
+                String.valueOf(storageId));
+        validateSuccess(response, "Get production process tags catalog");
+        List<String> tags = response.jsonPath().getList("$", String.class);
+        return tags != null ? tags : List.of();
+    }
+
+    @Step("API: створити виробництво з унікальною партією")
+    public ManufacturingItemResponse createWithUniqueBatch(UserRole role,
+                                                           Long storageId,
+                                                           TechnologicalMapResponse techMap,
+                                                           double amount) {
+        return createAs(role, storageId, techMap, amount, ProductionDataFactory.uniqueBatchNumber());
+    }
+
+    public TechnologicalMapFixture getTechMapFixture() {
+        return techMapFixture;
     }
 
     @Step("API: створити виробництво — {amount} од., партія «{batchNumber}»")

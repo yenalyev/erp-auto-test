@@ -119,6 +119,26 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    APP_CONFIG_PRODUCTION_PROCESS_TAGS_GET(
+            "/api/v1/app-config/production-process-tags?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get production process tag catalog for storage",
+            null,
+            new TypeReference<List<String>>() {},
+            null
+    ),
+
+    APP_CONFIG_TECHNOLOGICAL_MAP_TAGS_GET(
+            "/api/v1/app-config/technological-map-tags?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get technological map tag catalog for storage",
+            null,
+            new TypeReference<List<String>>() {},
+            null
+    ),
+
     RESOURCE_GET_BY_ID(
             "/api/v1/resources/{id}",
             Method.GET,
@@ -349,6 +369,26 @@ public enum ApiEndpointDefinition {
             new TypeReference<StorageTechnologicalMapModeRequest>() {},
             new TypeReference<StorageTechnologicalMapModeResponse>() {},
             null
+    ),
+
+    TECH_MAP_GET_BY_ID(
+            "/api/v1/technological-maps/{id}?storageId={storageId}",
+            Method.GET,
+            "schemas/technological-maps/technological-map-response-schema.json",
+            "Get technological map by id and storage",
+            null,
+            new TypeReference<TechnologicalMapResponse>() {},
+            null
+    ),
+
+    TECH_MAP_PATCH_NOTES(
+            "/api/v1/technological-maps/{id}/notes?storageId={storageId}",
+            Method.PATCH,
+            "schemas/technological-maps/technological-map-response-schema.json",
+            "Update technological map notes for storage link",
+            new TypeReference<UpdateNotesRequest>() {},
+            new TypeReference<TechnologicalMapResponse>() {},
+            "PATCH_TECH_MAP_NOTES"
     ),
 
     // ========================================
@@ -894,6 +934,26 @@ public enum ApiEndpointDefinition {
             null,
             null,
             "DELETE_PRODUCTION"
+    ),
+
+    PRODUCTION_PATCH_NOTES(
+            "/api/v1/productions/{id}/notes?storageId={storageId}",
+            Method.PATCH,
+            "schemas/productions/manufacturing-item-response-schema.json",
+            "Update production notes",
+            new TypeReference<UpdateNotesRequest>() {},
+            new TypeReference<ManufacturingItemResponse>() {},
+            "PATCH_PRODUCTION_NOTES"
+    ),
+
+    PRODUCTION_TAG_STATISTICS_GET(
+            "/api/v1/productions/tag-statistics",
+            Method.GET,
+            null,
+            "Get production process tag statistics",
+            null,
+            new TypeReference<List<ProductionProcessTagStatisticResponse>>() {},
+            null
     ),
 
     // ========================================

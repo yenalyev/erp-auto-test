@@ -78,6 +78,7 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapDeactivationPlanGuardTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapValidationTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapHashtagApiTest"/>
         </classes>
     </test>
 
@@ -85,6 +86,7 @@
         <classes>
             <class name="com.erp.tests.functional.production.ProductionTest"/>
             <class name="com.erp.tests.functional.production.ProductionJournalFilterApiTest"/>
+            <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
         </classes>
     </test>
 
@@ -145,6 +147,7 @@
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
+            <class name="com.erp.tests.ui.ProductionHashtagUITest"/>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
         </classes>
@@ -204,6 +207,7 @@
         <classes>
             <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
+            <class name="com.erp.tests.ui.TechnologicalMapHashtagUITest"/>
         </classes>
     </test>
 

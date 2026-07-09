@@ -13,6 +13,7 @@
         <classes>
             <class name="com.erp.tests.functional.production.ProductionTest"/>
             <class name="com.erp.tests.functional.production.ProductionJournalFilterApiTest"/>
+            <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
         </classes>
     </test>
 
@@ -20,6 +21,7 @@
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
+            <class name="com.erp.tests.ui.ProductionHashtagUITest"/>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
         </classes>

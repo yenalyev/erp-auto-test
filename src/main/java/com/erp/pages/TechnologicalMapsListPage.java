@@ -25,6 +25,10 @@ public class TechnologicalMapsListPage extends BasePage {
     private static final String INGREDIENT_PLACEHOLDER = "Введіть назву сировини...";
     private static final String LOADING_TEXT = "Завантаження...";
     private static final String EMPTY_TEXT = "Немає даних";
+    private static final String NOTES_COLUMN_HEADER = "Примітки";
+    private static final String NOTES_EDIT_BUTTON_LABEL = "Редагувати примітки";
+    private static final String NOTES_DIALOG_PLACEHOLDER = "Введіть примітки...";
+    private static final String NOTES_SAVE_BUTTON = "Зберегти";
     private static final int SEARCH_DEBOUNCE_BUFFER_MS = 450;
 
     public TechnologicalMapsListPage(Page page) {
@@ -103,10 +107,16 @@ public class TechnologicalMapsListPage extends BasePage {
     }
 
     private void runSearchFilterAction(Runnable fillAction) {
-        waitForTechMapsDuring(() -> {
+        try {
+            waitForTechMapsDuring(() -> {
+                fillAction.run();
+                page.waitForTimeout(SEARCH_DEBOUNCE_BUFFER_MS);
+            });
+        } catch (com.microsoft.playwright.PlaywrightException e) {
+            log.debug("Tech maps filter did not trigger API response, applying filter anyway: {}", e.getMessage());
             fillAction.run();
             page.waitForTimeout(SEARCH_DEBOUNCE_BUFFER_MS);
-        });
+        }
         waitForTableSettled();
     }
 
@@ -121,6 +131,96 @@ public class TechnologicalMapsListPage extends BasePage {
                             && response.status() < 500;
                 },
                 action);
+    }
+
+    public int findRowIndexByTechMapName(String techMapName) {
+        Locator rows = page.locator("table tbody tr");
+        int count = rows.count();
+        for (int i = 0; i < count; i++) {
+            String name = textContent(rows.nth(i).locator("td").first());
+            if (techMapName.equals(name)) {
+                return i;
+            }
+        }
+        throw new IllegalStateException("Tech map row not found: " + techMapName);
+    }
+
+    public String getNotesTextForRow(int rowIndex) {
+        int notesColumnIndex = columnIndexByHeader(NOTES_COLUMN_HEADER);
+        Locator notesCell = page.locator("table tbody tr")
+                .nth(rowIndex)
+                .locator("td")
+                .nth(notesColumnIndex);
+        Locator taggedText = notesCell.locator("[data-slot='tagged-text']");
+        if (taggedText.count() > 0) {
+            return textContent(taggedText.first());
+        }
+        return textContent(notesCell);
+    }
+
+    public TechnologicalMapsListPage openNotesEditorForTechMapName(String techMapName) {
+        return openNotesEditorForRow(findRowIndexByTechMapName(techMapName));
+    }
+
+    public TechnologicalMapsListPage openNotesEditorForRow(int rowIndex) {
+        int notesColumnIndex = columnIndexByHeader(NOTES_COLUMN_HEADER);
+        page.locator("table tbody tr")
+                .nth(rowIndex)
+                .locator("td")
+                .nth(notesColumnIndex)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(NOTES_EDIT_BUTTON_LABEL))
+                .click();
+        page.getByRole(AriaRole.DIALOG)
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public TechnologicalMapsListPage fillNotesDialog(String text) {
+        page.getByPlaceholder(NOTES_DIALOG_PLACEHOLDER).fill(text);
+        return this;
+    }
+
+    public TechnologicalMapsListPage saveNotesDialog() {
+        page.waitForResponse(
+                response -> response.url().contains("/technological-maps/")
+                        && response.url().contains("/notes")
+                        && "PATCH".equals(response.request().method()),
+                () -> page.getByRole(AriaRole.DIALOG)
+                        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(NOTES_SAVE_BUTTON))
+                        .click());
+        page.getByRole(AriaRole.DIALOG)
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.HIDDEN)
+                        .setTimeout(uiTimeoutMs()));
+        waitForTableSettled();
+        return this;
+    }
+
+    public boolean isNotesColumnVisible() {
+        try {
+            columnIndexByHeader(NOTES_COLUMN_HEADER);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
+    private int columnIndexByHeader(String headerText) {
+        Locator headers = page.locator("table thead th");
+        int count = headers.count();
+        for (int i = 0; i < count; i++) {
+            if (headerText.equals(textContent(headers.nth(i)))) {
+                return i;
+            }
+        }
+        throw new IllegalStateException("Column header not found: " + headerText);
+    }
+
+    private static String textContent(Locator cell) {
+        String text = cell.innerText();
+        return text != null ? text.trim().replaceAll("\\s+", " ") : "";
     }
 
     private Locator productSearchInput() {

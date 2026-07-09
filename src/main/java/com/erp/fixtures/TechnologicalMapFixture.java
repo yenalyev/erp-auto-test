@@ -11,14 +11,17 @@ import com.erp.models.request.PlanRequest;
 import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.request.StorageTechnologicalMapModeRequest;
 import com.erp.models.request.TechnologicalMapRequest;
+import com.erp.models.request.UpdateNotesRequest;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageTechnologicalMapModeResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
+import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.Builder;
@@ -29,6 +32,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -299,6 +303,60 @@ public class TechnologicalMapFixture extends BaseFixture {
     public static class IsolatedTechMapContext {
         ResourceResponse product;
         TechnologicalMapResponse techMap;
+    }
+
+    @Step("API: PATCH notes для техкарти {techMapId} на локації {storageId}")
+    public TechnologicalMapResponse updateNotes(UserRole role, Long techMapId, Long storageId, String notes) {
+        UpdateNotesRequest request = UpdateNotesRequest.builder().notes(notes).build();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_PATCH_NOTES,
+                role,
+                request,
+                techMapId,
+                storageId);
+        validateSuccess(response, "Patch tech map notes id=" + techMapId);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.TECH_MAP_PATCH_NOTES);
+        return response.as(TechnologicalMapResponse.class);
+    }
+
+    @Step("API: GET tech map {techMapId} для локації {storageId}")
+    public TechnologicalMapResponse getById(UserRole role, Long techMapId, Long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_GET_BY_ID,
+                role,
+                null,
+                techMapId,
+                storageId);
+        validateSuccess(response, "Get tech map id=" + techMapId);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.TECH_MAP_GET_BY_ID);
+        return response.as(TechnologicalMapResponse.class);
+    }
+
+    @Step("Отримати notes техкарти {techMapId} для локації {storageId}")
+    public Optional<String> getStorageNotes(UserRole role, Long techMapId, Long storageId) {
+        TechnologicalMapResponse techMap = getById(role, techMapId, storageId);
+        if (techMap.getStorages() == null) {
+            return Optional.empty();
+        }
+        return techMap.getStorages().stream()
+                .filter(storage -> storageId.equals(storage.getId()))
+                .findFirst()
+                .map(SimpleEntityResponse::getNotes)
+                .filter(notes -> notes != null && !notes.isBlank());
+    }
+
+    @Step("Забезпечити запас сировини для ізольованої техкарти на складі {storageId}")
+    public void seedStockForIsolatedTechMap(ProductionFixture productionFixture,
+                                            Long storageId,
+                                            TechnologicalMapResponse techMap,
+                                            double minimum) {
+        List<Long> inputIds = techMap.getInput().stream()
+                .map(usage -> usage.getResource().getId())
+                .toList();
+        if (inputIds.size() < 2) {
+            throw new IllegalStateException("Isolated tech map must have at least 2 inputs");
+        }
+        productionFixture.ensureInputStockAtLeast(storageId, inputIds.get(0), inputIds.get(1), minimum);
     }
 
     @Step("Створити ізольовану production техкарту для локації {storageId}")

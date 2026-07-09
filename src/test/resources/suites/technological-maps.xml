@@ -14,12 +14,14 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapDeactivationPlanGuardTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapValidationTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapHashtagApiTest"/>
         </classes>
     </test>
 
     <test name="Technological Maps UI">
         <classes>
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
+            <class name="com.erp.tests.ui.TechnologicalMapHashtagUITest"/>
         </classes>
     </test>
 </suite>

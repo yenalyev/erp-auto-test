@@ -21,6 +21,7 @@ public class ProductionJournalRow {
     double amount;
     String technologicalMapName;
     String batchNumber;
+    String notes;
 
     public static ProductionJournalRow fromApi(ManufacturingItemResponse item) {
         Objects.requireNonNull(item, "production item");
@@ -32,6 +33,7 @@ public class ProductionJournalRow {
                 .technologicalMapName(item.getTechnologicalMap() != null
                         ? item.getTechnologicalMap().getName() : null)
                 .batchNumber(item.getBatchNumber())
+                .notes(item.getNotes())
                 .build();
     }
 }

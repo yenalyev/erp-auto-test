@@ -5,6 +5,7 @@ import lombok.Value;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ public class ProductionJournalQuery {
     Long categoryId;
     LocalDate startDate;
     LocalDate endDate;
+    List<String> tags;
     @Builder.Default
     int page = 0;
     @Builder.Default
@@ -61,6 +63,9 @@ public class ProductionJournalQuery {
         }
         if (endDate != null) {
             params.put("endDate", endDate.format(ISO_DATE));
+        }
+        if (tags != null && !tags.isEmpty()) {
+            params.put("tags", new ArrayList<>(tags));
         }
         return params;
     }

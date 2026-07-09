@@ -44,6 +44,11 @@ public class ProductionPage extends BasePage {
     private static final Pattern DATE_TIME_PATTERN =
             Pattern.compile("(\\d{2}\\.\\d{2}\\.\\d{4})(?:\\s+(\\d{2}:\\d{2}))?");
     private static final Pattern AMOUNT_PATTERN = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*од");
+    private static final String NOTES_COLUMN_HEADER = "Примітки";
+    private static final String NOTES_EDIT_BUTTON_LABEL = "Редагувати примітки";
+    private static final String NOTES_DIALOG_PLACEHOLDER = "Введіть примітки...";
+    private static final String NOTES_SAVE_BUTTON = "Зберегти";
+    private static final Pattern TAG_BADGE_PATTERN = Pattern.compile("(#\\S+) \\((\\d+)\\)");
 
     public ProductionPage(Page page) {
         super(page);
@@ -287,6 +292,145 @@ public class ProductionPage extends BasePage {
         return this;
     }
 
+    public int findRowIndexByBatchNumber(String batchNumber) {
+        Locator rows = productionTableWrapper().locator("tbody tr");
+        int batchColumnIndex = columnIndexByHeader("Номер партії");
+        int count = rows.count();
+        for (int i = 0; i < count; i++) {
+            String batch = textContent(rows.nth(i).locator("td").nth(batchColumnIndex));
+            if (batchNumber.equals(batch)) {
+                return i;
+            }
+        }
+        throw new IllegalStateException("Production row with batch " + batchNumber + " not found on UI");
+    }
+
+    public String getNotesTextForRow(int rowIndex) {
+        int notesColumnIndex = columnIndexByHeader(NOTES_COLUMN_HEADER);
+        Locator notesCell = productionTableWrapper().locator("tbody tr")
+                .nth(rowIndex)
+                .locator("td")
+                .nth(notesColumnIndex);
+        Locator taggedText = notesCell.locator("[data-slot='tagged-text']");
+        if (taggedText.count() > 0) {
+            return textContent(taggedText.first());
+        }
+        return textContent(notesCell);
+    }
+
+    public List<String> getHighlightedTagsForRow(int rowIndex) {
+        int notesColumnIndex = columnIndexByHeader(NOTES_COLUMN_HEADER);
+        Locator tags = productionTableWrapper().locator("tbody tr")
+                .nth(rowIndex)
+                .locator("td")
+                .nth(notesColumnIndex)
+                .locator("[data-slot='tagged-text-tag']");
+        List<String> result = new ArrayList<>();
+        int count = tags.count();
+        for (int i = 0; i < count; i++) {
+            result.add(textContent(tags.nth(i)));
+        }
+        return result;
+    }
+
+    public ProductionPage openNotesEditorForRow(int rowIndex) {
+        int notesColumnIndex = columnIndexByHeader(NOTES_COLUMN_HEADER);
+        productionTableWrapper().locator("tbody tr")
+                .nth(rowIndex)
+                .locator("td")
+                .nth(notesColumnIndex)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(NOTES_EDIT_BUTTON_LABEL))
+                .click();
+        page.getByRole(AriaRole.DIALOG)
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public ProductionPage openNotesEditorForBatch(String batchNumber) {
+        return openNotesEditorForRow(findRowIndexByBatchNumber(batchNumber));
+    }
+
+    public ProductionPage fillNotesDialog(String text) {
+        page.getByPlaceholder(NOTES_DIALOG_PLACEHOLDER).fill(text);
+        return this;
+    }
+
+    public ProductionPage saveNotesDialog() {
+        page.waitForResponse(
+                response -> response.url().contains("/productions/")
+                        && response.url().contains("/notes")
+                        && "PATCH".equals(response.request().method()),
+                () -> page.getByRole(AriaRole.DIALOG)
+                        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(NOTES_SAVE_BUTTON))
+                        .click());
+        page.getByRole(AriaRole.DIALOG)
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.HIDDEN)
+                        .setTimeout(uiTimeoutMs()));
+        waitForJournalDataSettled();
+        return this;
+    }
+
+    /** Re-applies product filter to refresh tag-statistics toolbar after notes change. */
+    public ProductionPage refreshTagStatistics(String productTerm) {
+        if (productTerm == null || productTerm.isBlank()) {
+            return this;
+        }
+        filterByProduct("");
+        return filterByProduct(productTerm);
+    }
+
+    public List<String> getVisibleTagBadges() {
+        List<String> badges = new ArrayList<>();
+        Locator buttons = page.locator("button").filter(new Locator.FilterOptions().setHasText("#"));
+        int count = buttons.count();
+        for (int i = 0; i < count; i++) {
+            String label = textContent(buttons.nth(i));
+            Matcher matcher = TAG_BADGE_PATTERN.matcher(label);
+            if (matcher.matches()) {
+                badges.add(matcher.group(1));
+            }
+        }
+        return badges;
+    }
+
+    public ProductionPage clickTagFilterBadge(String tag) {
+        Locator badge = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tag + " (")).first();
+        badge.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        page.waitForResponse(
+                response -> response.url().contains("/productions")
+                        && "GET".equals(response.request().method()),
+                badge::click);
+        waitForJournalDataSettled();
+        return this;
+    }
+
+    public boolean isTagBadgeVisible(String tag) {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tag + " (")).count() > 0;
+    }
+
+    public boolean isTagBadgeSelected(String tag) {
+        Locator badge = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tag + " (")).first();
+        if (badge.count() == 0) {
+            return false;
+        }
+        String className = badge.getAttribute("class");
+        return className != null && className.contains("ring-green-700");
+    }
+
+    public boolean rowWithBatchIsVisible(String batchNumber) {
+        try {
+            findRowIndexByBatchNumber(batchNumber);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
     private void runJournalFilterAction(Runnable action) {
         page.waitForResponse(
                 response -> response.url().contains("/productions")
@@ -325,17 +469,51 @@ public class ProductionPage extends BasePage {
 
     private ProductionJournalRow parseJournalRow(Locator row) {
         Locator cells = row.locator("td");
-        String dateCellText = textContent(cells.nth(0));
+        int dateIndex = columnIndexByHeader("Дата");
+        int productIndex = columnIndexByHeader("Продукт");
+        int amountIndex = columnIndexByHeader("Об'єм");
+        int techMapIndex = columnIndexByHeader("Тех. карта");
+        int batchIndex = columnIndexByHeader("Номер партії");
+
+        String dateCellText = textContent(cells.nth(dateIndex));
         ParsedDateTime parsedDateTime = parseDateTime(dateCellText);
+
+        String notes = null;
+        try {
+            int notesIndex = columnIndexByHeader(NOTES_COLUMN_HEADER);
+            notes = getNotesTextFromCell(cells.nth(notesIndex));
+        } catch (IllegalStateException ignored) {
+            // notes column may be absent in some layouts
+        }
 
         return ProductionJournalRow.builder()
                 .date(parsedDateTime.date())
                 .time(parsedDateTime.time())
-                .productName(textContent(cells.nth(1)))
-                .amount(parseAmount(textContent(cells.nth(2))))
-                .technologicalMapName(textContent(cells.nth(3)))
-                .batchNumber(textContent(cells.nth(4)))
+                .productName(textContent(cells.nth(productIndex)))
+                .amount(parseAmount(textContent(cells.nth(amountIndex))))
+                .technologicalMapName(textContent(cells.nth(techMapIndex)))
+                .batchNumber(textContent(cells.nth(batchIndex)))
+                .notes(notes)
                 .build();
+    }
+
+    private static String getNotesTextFromCell(Locator notesCell) {
+        Locator taggedText = notesCell.locator("[data-slot='tagged-text']");
+        if (taggedText.count() > 0) {
+            return textContent(taggedText.first());
+        }
+        return textContent(notesCell);
+    }
+
+    private int columnIndexByHeader(String headerText) {
+        Locator headers = productionTableWrapper().locator("thead th");
+        int count = headers.count();
+        for (int i = 0; i < count; i++) {
+            if (headerText.equals(textContent(headers.nth(i)))) {
+                return i;
+            }
+        }
+        throw new IllegalStateException("Column header not found: " + headerText);
     }
 
     private static String textContent(Locator cell) {

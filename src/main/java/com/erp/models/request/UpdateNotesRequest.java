@@ -1,4 +1,4 @@
-package com.erp.models.response;
+package com.erp.models.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -7,13 +7,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SimpleEntityResponse {
-    private Long id;
-    private String name;
-    /** Present on technological map storage links when notes are set. */
+public class UpdateNotesRequest {
     private String notes;
 }

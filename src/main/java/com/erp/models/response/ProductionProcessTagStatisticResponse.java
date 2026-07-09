@@ -11,9 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SimpleEntityResponse {
-    private Long id;
-    private String name;
-    /** Present on technological map storage links when notes are set. */
-    private String notes;
+public class ProductionProcessTagStatisticResponse {
+    private String tag;
+    private Long count;
 }
