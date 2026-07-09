@@ -3,6 +3,7 @@ package com.erp.tests.functional.resource;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.RequestBodyFactory;
+import com.erp.data.factories.ResourceDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.models.request.ResourceRequest;
@@ -177,6 +178,98 @@ public class ResourceTest extends BaseFunctionalTest {
                     ResourceResponse.class,
                     r -> StringUtils.equalsIgnoreCase(r.getName(), duplicateRequest.getName())
             );
+        });
+    }
+
+    @Test(priority = 40)
+    @TestCaseId("TC-RES-004")
+    @Story("Name normalization")
+    @Description("""
+            При збереженні ресурсу (POST) leading/trailing whitespace у назві обрізаються.
+            Request name з пробілами на початку/кінці → у response і GET by id зберігається trim()'нута назва.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCreateResourceTrimsNameWhitespace() {
+        Long unitId = testContext.get(ContextKey.SHARED_UNIT_ID);
+        Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        String coreName = "trim-create-" + DataUtils.getUniqueSuffix();
+        String paddedName = "  " + coreName + "  ";
+
+        ResourceRequest request = ResourceRequest.builder()
+                .name(paddedName)
+                .measurementUnitId(unitId)
+                .categoryId(categoryId)
+                .build();
+
+        Response response = Allure.step("POST create resource with padded name", () ->
+                apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, request));
+
+        Allure.step("Validate create returns trimmed name", () -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+            ResourceResponse created = response.as(ResourceResponse.class);
+            assertThat(created.getName())
+                    .as("POST response name must be trimmed")
+                    .isEqualTo(coreName)
+                    .doesNotStartWith(" ")
+                    .doesNotEndWith(" ");
+            Allure.parameter("requestName", paddedName);
+            Allure.parameter("persistedName", created.getName());
+            Allure.parameter("resourceId", created.getId());
+        });
+
+        Allure.step("Validate GET by id returns trimmed name", () -> {
+            ResourceResponse created = response.as(ResourceResponse.class);
+            ResourceResponse byId = resourceFixture.getById(UserRole.ADMIN, created.getId());
+            assertThat(byId.getName())
+                    .as("GET by id name must match trimmed value")
+                    .isEqualTo(coreName);
+        });
+    }
+
+    @Test(priority = 50)
+    @TestCaseId("TC-RES-005")
+    @Story("Name normalization")
+    @Description("""
+            При оновленні ресурсу (PUT) leading/trailing whitespace у назві обрізаються.
+            Request name з пробілами → у PUT response і GET by id зберігається trim()'нута назва.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testUpdateResourceTrimsNameWhitespace() {
+        Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        ResourceResponse existing = resourceFixture.createUniqueResource("trim-upd-");
+
+        String coreName = "trim-update-" + DataUtils.getUniqueSuffix();
+        String paddedName = "\t " + coreName + " \t";
+
+        ResourceRequest updateRequest = ResourceDataFactory.fromExisting(existing, categoryId)
+                .name(paddedName)
+                .build();
+
+        Response response = Allure.step("PUT update resource with padded name", () ->
+                apiExecutor.execute(
+                        ApiEndpointDefinition.RESOURCE_UPDATE_NAME,
+                        UserRole.ADMIN,
+                        updateRequest,
+                        String.valueOf(existing.getId())));
+
+        Allure.step("Validate update returns trimmed name", () -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+            ResourceResponse updated = response.as(ResourceResponse.class);
+            assertThat(updated.getName())
+                    .as("PUT response name must be trimmed")
+                    .isEqualTo(coreName)
+                    .doesNotStartWith(" ")
+                    .doesNotEndWith(" ");
+            Allure.parameter("requestName", paddedName);
+            Allure.parameter("persistedName", updated.getName());
+            Allure.parameter("resourceId", updated.getId());
+        });
+
+        Allure.step("Validate GET by id returns trimmed name", () -> {
+            ResourceResponse byId = resourceFixture.getById(UserRole.ADMIN, existing.getId());
+            assertThat(byId.getName())
+                    .as("GET by id name must match trimmed value")
+                    .isEqualTo(coreName);
         });
     }
 

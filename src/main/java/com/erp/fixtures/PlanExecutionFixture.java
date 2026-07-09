@@ -5,19 +5,25 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.UserRole;
 import com.erp.models.query.ProductionJournalQuery;
+import com.erp.models.request.SaveFavouriteResourcesRequest;
+import com.erp.models.response.FavouriteResourceResponse;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceUsageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.TestContext;
+import com.erp.utils.helpers.ApiResponseHelper;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -144,6 +150,54 @@ public class PlanExecutionFixture extends BaseFixture {
         if (techMap != null && techMap.getId() != null) {
             techMapFixture.deactivateTechMap(UserRole.ADMIN, techMap.getId(), storageId);
         }
+    }
+
+    /**
+     * Reads the per-user favourite resource list ({@code GET /app-config/favourite-resources}).
+     * Favourites are account-scoped, not storage-scoped — tests that mutate them must restore
+     * the previous list in teardown to avoid polluting shared owner/admin profiles.
+     */
+    @Step("API: {role} — прочитати обрані продукти")
+    public List<FavouriteResourceResponse> getFavouriteResources(UserRole role) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.APP_CONFIG_FAVOURITE_RESOURCES_GET, role);
+        return ApiResponseHelper.parseList(
+                response, FavouriteResourceResponse.class, "GET favourite resources as " + role);
+    }
+
+    /**
+     * Replaces the per-user favourite list with exactly {@code resourceIds}
+     * ({@code PUT /app-config/favourite-resources}, body {@code { resourcesId: [...] }}).
+     * Pass an empty list to clear favourites.
+     */
+    @Step("API: {role} — зберегти обрані продукти ({resourceIds})")
+    public List<FavouriteResourceResponse> saveFavouriteResources(UserRole role, List<Long> resourceIds) {
+        List<Long> ids = resourceIds == null ? List.of()
+                : resourceIds.stream().filter(Objects::nonNull).toList();
+        SaveFavouriteResourcesRequest body = SaveFavouriteResourcesRequest.builder()
+                .resourcesId(ids)
+                .build();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.APP_CONFIG_FAVOURITE_RESOURCES_PUT, role, body);
+        validateSuccess(response, "PUT favourite resources as " + role);
+        return ApiResponseHelper.parseList(
+                response, FavouriteResourceResponse.class, "PUT favourite resources as " + role);
+    }
+
+    /** Snapshot of favourite resource ids for later {@link #restoreFavouriteResources}. */
+    @Step("API: {role} — snapshot обраних продуктів")
+    public List<Long> snapshotFavouriteResourceIds(UserRole role) {
+        return getFavouriteResources(role).stream()
+                .map(FavouriteResourceResponse::getResource)
+                .filter(Objects::nonNull)
+                .map(r -> r.getId())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @Step("API: {role} — відновити обрані продукти після тесту")
+    public void restoreFavouriteResources(UserRole role, List<Long> previousIds) {
+        saveFavouriteResources(role, previousIds == null ? List.of() : previousIds);
     }
 
     private void seedInputsForTechMap(Long storageId, TechnologicalMapResponse techMap, double outputAmount) {

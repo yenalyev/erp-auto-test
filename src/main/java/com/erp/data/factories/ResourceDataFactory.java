@@ -25,12 +25,16 @@ public class ResourceDataFactory {
     }
 
     /**
-     * 🔥 Створює реквест на основі існуючої відповіді.
+     * Створює реквест на основі існуючої відповіді.
      * Це дозволяє взяти існуючий об'єкт і змінити в ньому лише одне поле.
+     *
+     * @param categoryId required by PUT /resources/{id}
      */
-    public static ResourceRequest.ResourceRequestBuilder fromExisting(@NonNull ResourceResponse existingResource) {
+    public static ResourceRequest.ResourceRequestBuilder fromExisting(@NonNull ResourceResponse existingResource,
+                                                                     @NonNull Long categoryId) {
         return ResourceRequest.builder()
                 .name(existingResource.getName())
-                .measurementUnitId(existingResource.getUnit().getId());
+                .measurementUnitId(existingResource.getUnit().getId())
+                .categoryId(categoryId);
     }
 }

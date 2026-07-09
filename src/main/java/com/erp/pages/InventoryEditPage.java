@@ -100,7 +100,7 @@ public class InventoryEditPage extends BasePage {
         return this;
     }
 
-    /** PUT inventory success only — use when navigation history is not unit-management (e.g. direct /inventory/{crewId}). */
+    /** PUT inventory success only — use when navigation history is not /inventory list (e.g. direct /inventory/{crewId}). */
     public InventoryEditPage saveChanges() {
         page.waitForResponse(
                 response -> response.url().contains("/inventory")
@@ -113,7 +113,7 @@ public class InventoryEditPage extends BasePage {
 
     public InventoryEditPage save() {
         saveChanges();
-        page.waitForURL("**/unit-management**", new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
+        page.waitForURL("**/inventory**", new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
 

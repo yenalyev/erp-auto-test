@@ -14,6 +14,7 @@
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
+            <class name="com.erp.tests.functional.resource.ResourceWithTechnologicalMapApiTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
             <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
             <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>

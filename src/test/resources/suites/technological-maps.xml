@@ -16,4 +16,10 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapValidationTest"/>
         </classes>
     </test>
+
+    <test name="Technological Maps UI">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
+        </classes>
+    </test>
 </suite>

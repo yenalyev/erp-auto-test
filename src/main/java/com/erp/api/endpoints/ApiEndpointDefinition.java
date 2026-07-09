@@ -99,6 +99,26 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    APP_CONFIG_FAVOURITE_RESOURCES_GET(
+            "/api/v1/app-config/favourite-resources",
+            Method.GET,
+            null,
+            "Get favourite resources for current user",
+            null,
+            new TypeReference<List<FavouriteResourceResponse>>() {},
+            null
+    ),
+
+    APP_CONFIG_FAVOURITE_RESOURCES_PUT(
+            "/api/v1/app-config/favourite-resources",
+            Method.PUT,
+            null,
+            "Save favourite resources for current user",
+            new TypeReference<SaveFavouriteResourcesRequest>() {},
+            new TypeReference<List<FavouriteResourceResponse>>() {},
+            null
+    ),
+
     RESOURCE_GET_BY_ID(
             "/api/v1/resources/{id}",
             Method.GET,
@@ -114,6 +134,20 @@ public enum ApiEndpointDefinition {
             Method.GET,
             null,
             "Autocomplete resources",
+            null,
+            new TypeReference<List<ResourceResponse>>() {},
+            null
+    ),
+
+    /**
+     * Catalog for «Керувати обраними» on Plan Execution: PRODUCTION tech-map outputs
+     * for {@code storageId}, filtered by resource {@code isActive} (UI: Активні / Архівні).
+     */
+    RESOURCE_WITH_TECHNOLOGICAL_MAP(
+            "/api/v1/resources/with-technological-map",
+            Method.GET,
+            null,
+            "Get production tech-map output resources for storage",
             null,
             new TypeReference<List<ResourceResponse>>() {},
             null
@@ -1320,6 +1354,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    EQUIPMENT_GET_BY_ID(
+            "/api/v1/equipment/{id}",
+            Method.GET,
+            "schemas/equipment/equipment-response-schema.json",
+            "Get equipment by id",
+            null,
+            new TypeReference<EquipmentResponse>() {},
+            null
+    ),
+
     EQUIPMENT_CATEGORY_GET_ALL(
             "/api/v1/equipment-categories",
             Method.GET,
@@ -1333,10 +1377,10 @@ public enum ApiEndpointDefinition {
     EQUIPMENT_POST_CREATE(
             "/api/v1/equipment",
             Method.POST,
-            "schemas/equipment/equipment-response-schema.json",
+            "schemas/equipment/equipment-create-list-schema.json",
             "Create equipment",
-            new TypeReference<EquipmentRequest>() {},
-            new TypeReference<EquipmentResponse>() {},
+            new TypeReference<EquipmentCreateRequest>() {},
+            new TypeReference<List<EquipmentResponse>>() {},
             null
     ),
 

@@ -149,6 +149,29 @@ public class ResourceFixture extends BaseFixture {
         return DatabaseIntegrityValidator.extractList(response, ResourceResponse.class);
     }
 
+    /**
+     * Catalog for Plan Execution «Керувати обраними»:
+     * {@code GET /resources/with-technological-map?storageId=&name=&isActive=}.
+     * UI selector «Активні» → {@code isActive=true}; «Архівні» → {@code isActive=false}.
+     */
+    @Step("API: GET /resources/with-technological-map storageId={storageId} isActive={isActive} name={name}")
+    public List<ResourceResponse> getWithTechnologicalMap(
+            UserRole role, Long storageId, Boolean isActive, String name) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("storageId", storageId);
+        if (isActive != null) {
+            params.put("isActive", isActive);
+        }
+        if (name != null && !name.isBlank()) {
+            params.put("name", name);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RESOURCE_WITH_TECHNOLOGICAL_MAP, role, params);
+        validateSuccess(response, "GET with-technological-map storageId=" + storageId
+                + " isActive=" + isActive);
+        return DatabaseIntegrityValidator.extractList(response, ResourceResponse.class);
+    }
+
     @Step("API: GET ціни ресурсів isActive={isActive}")
     public List<ResourcePriceResponse> getResourcePrices(UserRole role, Boolean isActive, String name) {
         Map<String, Object> params = new HashMap<>();

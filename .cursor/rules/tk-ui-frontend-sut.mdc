@@ -29,7 +29,7 @@ Home `/` redirects to **first permitted sidebar route** (often `/production`).
 | `/production/createDisassemble` | Disassemble create | — |
 | `/non-series-production` | Non-series list | Несерійне виробництво |
 | `/relocations` | RelocationPage | Видати/Отримати |
-| `/unit-management` | UnitManagementPage | Залишки |
+| `/inventory` | UnitManagementPage | Залишки |
 | `/plans`, `/plan-execution` | Plans | Виробничі плани / Виконання |
 | `/technological-maps` | Tech maps | Техкарти |
 | `/storage` | Storages | Локації |

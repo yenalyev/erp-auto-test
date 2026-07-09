@@ -21,6 +21,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,7 +49,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@link PlanExecutionFixture#assertNoProductionThisMonth} if the shared dev/staging storage
  * already has unrelated current-month production — see that method's Javadoc for rationale.
  *
- * <p>Jira: CPMA-604
+ * <p>Also covers favourite-products filtering (CPMA-587): «Лише обрані» / «Керувати обраними»
+ * on the execution tab.
+ *
+ * <p>Jira: CPMA-604, CPMA-587
  */
 @Slf4j
 @Issue("CPMA-604")
@@ -62,8 +66,14 @@ public class PlanExecutionUiTest extends BaseUITest {
 
     private PlanResponse currentPlan;
     private ManufacturingItemResponse currentProduction;
+    private ManufacturingItemResponse secondProduction;
     private TechnologicalMapFixture.IsolatedTechMapContext currentContext;
+    private TechnologicalMapFixture.IsolatedTechMapContext secondContext;
     private Long currentStorageId;
+
+    private UserRole favouritesRole;
+    private List<Long> previousFavouriteIds;
+    private boolean favouritesMutated;
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -86,9 +96,23 @@ public class PlanExecutionUiTest extends BaseUITest {
             fixture.cleanupProduction(currentProduction, currentStorageId);
             currentProduction = null;
         }
+        if (secondProduction != null && currentStorageId != null) {
+            fixture.cleanupProduction(secondProduction, currentStorageId);
+            secondProduction = null;
+        }
         if (currentContext != null && currentStorageId != null) {
             fixture.cleanupTechMap(currentContext.getTechMap(), currentStorageId);
             currentContext = null;
+        }
+        if (secondContext != null && currentStorageId != null) {
+            fixture.cleanupTechMap(secondContext.getTechMap(), currentStorageId);
+            secondContext = null;
+        }
+        if (favouritesMutated && favouritesRole != null) {
+            fixture.restoreFavouriteResources(favouritesRole, previousFavouriteIds);
+            favouritesMutated = false;
+            favouritesRole = null;
+            previousFavouriteIds = null;
         }
         currentStorageId = null;
     }
@@ -228,12 +252,7 @@ public class PlanExecutionUiTest extends BaseUITest {
             Assert: кнопка активна; з’являється фідбек «Скопійовано зроблене»; буфер обміну
             містить рядок у форматі «<Назва> - <Кількість вироблено> <од. вимір.>»
             (наприклад, «TM-OUT-… - 5 шт»). Інші рядки таблиці (якщо є на спільному складі)
-            не заважають — перевіряємо наявність саме нашого рядка.
-
-            Відомий дефект: зараз UI копіює «<Назва> - <Кількість>» без одиниці виміру
-            (handleCopyTable у PlanExecutionPage.tsx), а API POST /statistics/execution віддає
-            resource лише як id+name (SimpleEntityResponse) — без unit. Очікувана поведінка —
-            з од. вимір.; тест червоний до фіксу в tk / tk-ui.""")
+            не заважають — перевіряємо наявність саме нашого рядка.""")
     public void testOwnerCopyProducedToClipboard() {
         currentStorageId = ownerStorageId;
         fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
@@ -269,6 +288,275 @@ public class PlanExecutionUiTest extends BaseUITest {
                 .as("Буфер має містити рядок «%s» (назва - кількість од.вимір.)", expectedLine)
                 .anyMatch(line -> expectedLine.equals(line.trim()));
         planPage.attachScreenshot("TC-UI-PLANEXEC-009 — copy produced to clipboard");
+    }
+
+    @Test(priority = 46)
+    @TestCaseId("TC-UI-PLANEXEC-010")
+    @Story("Favourite products filter — disabled without configured favourites (Owner)")
+    @Severity(SeverityLevel.NORMAL)
+    @Issue("CPMA-587")
+    @Description("""
+            Arrange: очистити обрані продукти OWNER_1; створити ізольований продукт з виробництвом
+            за поточний місяць (щоб вкладка «Виконання» не була порожньою).
+            Assert: кнопки «Лише обрані» і «Керувати обраними (0)» видимі; «Лише обрані» disabled,
+            бо обрані не налаштовані (вимога продукту: «Тільки обрані» disabled без обраних).
+
+            Відомий дефект: tk-ui CPMA-587 зараз лишає «Лише обрані» завжди enabled і показує
+            empty state «Немає обраних ресурсів…» після кліку. Очікувана поведінка — disabled
+            до налаштування обраних; тест червоний до фіксу в tk-ui.""")
+    public void testOwnerFavouritesOnlyDisabledWhenEmpty() {
+        currentStorageId = ownerStorageId;
+        favouritesRole = UserRole.OWNER_1;
+        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole);
+        favouritesMutated = true;
+        fixture.saveFavouriteResources(favouritesRole, List.of());
+
+        fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
+        currentContext = fixture.createIsolatedProduct(ownerStorageId);
+        currentProduction = fixture.createCurrentMonthProduction(
+                ownerStorageId, currentContext.getTechMap(), 3.0);
+
+        injectRoleSession(UserRole.OWNER_1, ownerStorageId);
+        PlanExecutionPage planPage = new PlanExecutionPage(page).open();
+
+        assertThat(planPage.isFavouritesOnlyButtonVisible())
+                .as("Кнопка «Лише обрані» має бути видима на вкладці «Виконання»")
+                .isTrue();
+        assertThat(planPage.isManageFavouritesButtonVisible())
+                .as("Кнопка «Керувати обраними» має бути видима")
+                .isTrue();
+        assertThat(planPage.getManageFavouritesButtonText())
+                .as("Лічильник обраних має бути 0 після очищення")
+                .isEqualTo("Керувати обраними (0)");
+        assertThat(planPage.isFavouritesOnlyButtonEnabled())
+                .as("«Лише обрані» має бути disabled, коли обрані не налаштовані")
+                .isFalse();
+        planPage.attachScreenshot("TC-UI-PLANEXEC-010 — favourites only disabled when empty");
+    }
+
+    @Test(priority = 47)
+    @TestCaseId("TC-UI-PLANEXEC-011")
+    @Story("Configure favourites and filter execution table (Owner)")
+    @Severity(SeverityLevel.CRITICAL)
+    @Issue("CPMA-587")
+    @Description("""
+            Arrange: очистити обрані OWNER_1; створити два ізольовані продукти з виробництвом;
+            через API PUT /app-config/favourite-resources зберегти лише перший як обраний.
+            Act (UI): відкрити сторінку → «Керувати обраними» (модалка) → закрити →
+            «Лише обрані».
+            Assert: модалка «Керування обраними ресурсами» відкривається; лічильник «(1)»;
+            після фільтра в таблиці видно лише обраний продукт, другий прихований.
+
+            Примітка: вибір зірки в модалці для щойно створених продуктів на staging може
+            не працювати через бекенд-фільтр GET /resources/with-technological-map
+            (порівнює OutputResourceUsage.id з resource.id). Тому arrange обраних — через API,
+            UI покриває модалку + фільтр таблиці виконання.""")
+    public void testOwnerConfigureFavouritesAndFilter() {
+        currentStorageId = ownerStorageId;
+        favouritesRole = UserRole.OWNER_1;
+        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole);
+        favouritesMutated = true;
+        fixture.saveFavouriteResources(favouritesRole, List.of());
+
+        fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
+        currentContext = fixture.createIsolatedProduct(ownerStorageId);
+        currentProduction = fixture.createCurrentMonthProduction(
+                ownerStorageId, currentContext.getTechMap(), 4.0);
+        secondContext = fixture.createIsolatedProduct(ownerStorageId);
+        secondProduction = fixture.createCurrentMonthProduction(
+                ownerStorageId, secondContext.getTechMap(), 4.0);
+
+        String favouriteProduct = currentContext.getProduct().getName().trim();
+        String otherProduct = secondContext.getProduct().getName().trim();
+        Long favouriteId = currentContext.getProduct().getId();
+
+        fixture.saveFavouriteResources(favouritesRole, List.of(favouriteId));
+
+        injectRoleSession(UserRole.OWNER_1, ownerStorageId);
+        PlanExecutionPage planPage = new PlanExecutionPage(page).open();
+
+        assertThat(planPage.isProductRowVisible(favouriteProduct)).isTrue();
+        assertThat(planPage.isProductRowVisible(otherProduct)).isTrue();
+        assertThat(planPage.getManageFavouritesButtonText())
+                .as("Після API-збереження лічильник обраних має бути 1")
+                .isEqualTo("Керувати обраними (1)");
+
+        planPage.openManageFavouritesDialog();
+        assertThat(planPage.isManageFavouritesDialogVisible())
+                .as("Модалка «Керування обраними ресурсами» має відкритись")
+                .isTrue();
+        planPage.cancelManageFavouritesDialog();
+
+        assertThat(planPage.isFavouritesOnlyButtonEnabled())
+                .as("З налаштованими обраними «Лише обрані» має бути активною")
+                .isTrue();
+        String executionBody = planPage.clickFavouritesOnlyAndCaptureExecutionRequestBody();
+
+        assertThat(executionBody)
+                .as("POST /statistics/execution має містити resourceIds з обраним продуктом id=%s", favouriteId)
+                .contains("\"resourceIds\"")
+                .contains(String.valueOf(favouriteId));
+        assertThat(planPage.isFavouritesOnlyPressed())
+                .as("«Лише обрані» має бути в натиснутому стані")
+                .isTrue();
+        assertThat(planPage.isProductRowVisible(favouriteProduct))
+                .as("Обраний продукт має лишатись у таблиці")
+                .isTrue();
+        assertThat(planPage.isProductRowVisible(otherProduct))
+                .as("Необраний продукт має бути прихований фільтром")
+                .isFalse();
+        planPage.attachScreenshot("TC-UI-PLANEXEC-011 — favourites filter applied");
+    }
+
+    @Test(priority = 48)
+    @TestCaseId("TC-UI-PLANEXEC-012")
+    @Story("Add product to favourites via manage modal (Owner)")
+    @Severity(SeverityLevel.CRITICAL)
+    @Issue("CPMA-587")
+    @Description("""
+            Arrange: очистити обрані OWNER_1; створити два ізольовані продукти з виробництвом;
+            через API зберегти лише перший як обраний (щоб стартовий стан був непорожнім).
+            Act (UI): «Керувати обраними» → у каталозі знайти другий продукт → зірка/рядок →
+            «Зберегти».
+            Assert: лічильник «Керувати обраними (2)»; «Лише обрані» на сторінці показує обидва
+            продукти.
+
+            Відомий дефект: GET /resources/with-technological-map порівнює OutputResourceUsage.id
+            з resource.id, тому каталог модалки часто порожній для локації з техкартами — додати
+            новий продукт зіркою неможливо. Тест червоний до фіксу в tk.""")
+    public void testOwnerAddFavouriteViaManageDialog() {
+        currentStorageId = ownerStorageId;
+        favouritesRole = UserRole.OWNER_1;
+        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole);
+        favouritesMutated = true;
+        fixture.saveFavouriteResources(favouritesRole, List.of());
+
+        fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
+        currentContext = fixture.createIsolatedProduct(ownerStorageId);
+        currentProduction = fixture.createCurrentMonthProduction(
+                ownerStorageId, currentContext.getTechMap(), 4.0);
+        secondContext = fixture.createIsolatedProduct(ownerStorageId);
+        secondProduction = fixture.createCurrentMonthProduction(
+                ownerStorageId, secondContext.getTechMap(), 4.0);
+
+        String existingFavourite = currentContext.getProduct().getName().trim();
+        String productToAdd = secondContext.getProduct().getName().trim();
+        fixture.saveFavouriteResources(favouritesRole, List.of(currentContext.getProduct().getId()));
+
+        injectRoleSession(UserRole.OWNER_1, ownerStorageId);
+        PlanExecutionPage planPage = new PlanExecutionPage(page).open();
+
+        assertThat(planPage.getManageFavouritesButtonText())
+                .isEqualTo("Керувати обраними (1)");
+
+        planPage.openManageFavouritesDialog();
+        assertThat(planPage.isManageFavouritesDialogVisible()).isTrue();
+        assertThat(planPage.isManageDialogOnlyFavouritesChecked())
+                .as("За замовчуванням модалка показує каталог, не лише обрані")
+                .isFalse();
+
+        planPage.typeManageDialogNameFilter(productToAdd);
+        page.waitForTimeout(400);
+        assertThat(planPage.isProductListedInManageDialog(productToAdd))
+                .as("Другий продукт має з'явитись у каталозі модалки для додавання в обрані")
+                .isTrue();
+
+        planPage.toggleFavouriteInManageDialog(productToAdd);
+        assertThat(planPage.isProductFavouritedInManageDialog(productToAdd))
+                .as("Після кліку продукт має бути позначений як обраний")
+                .isTrue();
+        planPage.saveManageFavouritesDialog();
+
+        assertThat(planPage.getManageFavouritesButtonText())
+                .as("Після UI-додавання лічильник має стати 2")
+                .isEqualTo("Керувати обраними (2)");
+
+        planPage.clickFavouritesOnly();
+        assertThat(planPage.isProductRowVisible(existingFavourite)).isTrue();
+        assertThat(planPage.isProductRowVisible(productToAdd)).isTrue();
+        planPage.attachScreenshot("TC-UI-PLANEXEC-012 — add favourite via modal");
+    }
+
+    @Test(priority = 49)
+    @TestCaseId("TC-UI-PLANEXEC-013")
+    @Story("Edit existing favourites list via manage modal (Owner)")
+    @Severity(SeverityLevel.CRITICAL)
+    @Issue("CPMA-587")
+    @Description("""
+            Arrange: два ізольовані продукти з виробництвом; API зберігає обидва як обрані.
+            Act (UI): «Керувати обраними» → чекбокс «Лише обрані» у модалці → прибрати зірку
+            з першого → «Зберегти» → на сторінці «Лише обрані».
+            Assert: у модалці обидва видно як обрані; після збереження лічильник «(1)»;
+            фільтр сторінки показує лише залишений продукт.
+
+            Цей сценарій не залежить від каталогу with-technological-map: вже збережені
+            обрані рендеряться з props (resourceInfo) у режимі «Лише обрані» модалки.""")
+    public void testOwnerEditExistingFavouritesViaManageDialog() {
+        currentStorageId = ownerStorageId;
+        favouritesRole = UserRole.OWNER_1;
+        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole);
+        favouritesMutated = true;
+        fixture.saveFavouriteResources(favouritesRole, List.of());
+
+        fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
+        currentContext = fixture.createIsolatedProduct(ownerStorageId);
+        currentProduction = fixture.createCurrentMonthProduction(
+                ownerStorageId, currentContext.getTechMap(), 4.0);
+        secondContext = fixture.createIsolatedProduct(ownerStorageId);
+        secondProduction = fixture.createCurrentMonthProduction(
+                ownerStorageId, secondContext.getTechMap(), 4.0);
+
+        String removedProduct = currentContext.getProduct().getName().trim();
+        String keptProduct = secondContext.getProduct().getName().trim();
+        fixture.saveFavouriteResources(favouritesRole, List.of(
+                currentContext.getProduct().getId(),
+                secondContext.getProduct().getId()));
+
+        injectRoleSession(UserRole.OWNER_1, ownerStorageId);
+        PlanExecutionPage planPage = new PlanExecutionPage(page).open();
+
+        assertThat(planPage.getManageFavouritesButtonText())
+                .isEqualTo("Керувати обраними (2)");
+        assertThat(planPage.isProductRowVisible(removedProduct)).isTrue();
+        assertThat(planPage.isProductRowVisible(keptProduct)).isTrue();
+
+        planPage.openManageFavouritesDialog()
+                .setManageDialogOnlyFavourites(true);
+
+        assertThat(planPage.isProductListedInManageDialog(removedProduct))
+                .as("Існуючий обраний продукт має бути у списку «Лише обрані» модалки")
+                .isTrue();
+        assertThat(planPage.isProductListedInManageDialog(keptProduct)).isTrue();
+        assertThat(planPage.isProductFavouritedInManageDialog(removedProduct)).isTrue();
+        assertThat(planPage.isProductFavouritedInManageDialog(keptProduct)).isTrue();
+
+        planPage.toggleFavouriteInManageDialog(removedProduct);
+        assertThat(planPage.isProductFavouritedInManageDialog(removedProduct))
+                .as("Після кліку перший продукт має бути знятий з обраних")
+                .isFalse();
+        assertThat(planPage.isProductFavouritedInManageDialog(keptProduct)).isTrue();
+        planPage.saveManageFavouritesDialog();
+
+        assertThat(planPage.getManageFavouritesButtonText())
+                .as("Після редагування лічильник має стати 1")
+                .isEqualTo("Керувати обраними (1)");
+
+        planPage.openManageFavouritesDialog()
+                .setManageDialogOnlyFavourites(true);
+        assertThat(planPage.isProductListedInManageDialog(keptProduct)).isTrue();
+        assertThat(planPage.isProductListedInManageDialog(removedProduct))
+                .as("Знятий з обраних продукт не має бути у «Лише обрані» модалки")
+                .isFalse();
+        planPage.cancelManageFavouritesDialog();
+
+        planPage.clickFavouritesOnly();
+        assertThat(planPage.isProductRowVisible(keptProduct))
+                .as("Залишений обраний продукт має бути у таблиці виконання")
+                .isTrue();
+        assertThat(planPage.isProductRowVisible(removedProduct))
+                .as("Знятий з обраних продукт має бути прихований фільтром сторінки")
+                .isFalse();
+        planPage.attachScreenshot("TC-UI-PLANEXEC-013 — edit existing favourites");
     }
 
     // -------------------------------------------------------------------

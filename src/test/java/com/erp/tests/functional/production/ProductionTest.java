@@ -212,6 +212,76 @@ public class ProductionTest extends BaseFunctionalTest {
         assertThat(getProductionListSize()).isEqualTo(countBefore);
     }
 
+    @Test(priority = 35)
+    @TestCaseId("TC-PRD-009")
+    @Story("Create production validation")
+    @Description("""
+            Неможливо створити серійне виробництво, якщо сировини за техкартою більше, ніж є на складі.
+            POST /api/v1/productions/{storageId} з обсягом, що вимагає списання понад залишок → HTTP 400;
+            залишки сировини/продукції та журнал без змін.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCannotProduceMoreThanAvailableStock() {
+        double coef1 = inputCoef(0);
+        double coef2 = inputCoef(1);
+        assertThat(coef1).as("input[0] coefficient").isPositive();
+        assertThat(coef2).as("input[1] coefficient").isPositive();
+
+        double stock1 = productionFixture.getResourceStock(storageId, inputResourceId1);
+        double stock2 = productionFixture.getResourceStock(storageId, inputResourceId2);
+        assertThat(stock1).as("залишок input[0]").isGreaterThan(0.0);
+        assertThat(stock2).as("залишок input[1]").isGreaterThan(0.0);
+
+        double maxByInput1 = stock1 / coef1;
+        double maxByInput2 = stock2 / coef2;
+        double maxAffordable = Math.min(maxByInput1, maxByInput2);
+        double excessiveAmount = Math.floor(maxAffordable) + 1.0;
+
+        String batchNumber = ProductionDataFactory.uniqueBatchNumber();
+        ManufacturingListRequest request = ProductionDataFactory.buildCreateRequest(
+                techMap, excessiveAmount, java.time.LocalDate.now(), batchNumber);
+
+        long countBefore = getProductionListSize();
+        Set<Long> tracked = trackedResources();
+        ProductionStockAssertions.StockSnapshot stockBefore = ProductionStockAssertions.capture(
+                apiExecutor, storageId, UserRole.OWNER_1, tracked, "до відхиленого виробництва");
+
+        Response response = Allure.step(String.format(
+                "POST create production amount=%.0f (потрібно сировини > залишку; maxAffordable=%.2f)",
+                excessiveAmount, maxAffordable), () ->
+                apiExecutor.execute(
+                        ApiEndpointDefinition.PRODUCTION_POST_CREATE,
+                        UserRole.OWNER_1,
+                        request,
+                        String.valueOf(storageId))
+        );
+
+        Allure.step("Validate rejection", () -> {
+            assertThat(response.statusCode()).isEqualTo(400);
+            Allure.parameter("stock1", stock1);
+            Allure.parameter("stock2", stock2);
+            Allure.parameter("coef1", coef1);
+            Allure.parameter("coef2", coef2);
+            Allure.parameter("maxAffordable", maxAffordable);
+            Allure.parameter("excessiveAmount", excessiveAmount);
+            Allure.parameter("requiredInput1", excessiveAmount * coef1);
+            Allure.parameter("requiredInput2", excessiveAmount * coef2);
+        });
+
+        Allure.step("Verify stock unchanged", () -> {
+            ProductionStockAssertions.StockSnapshot stockAfter = ProductionStockAssertions.capture(
+                    apiExecutor, storageId, UserRole.OWNER_1, tracked, "після відхиленого виробництва");
+            ProductionStockAssertions.assertDelta(stockBefore, stockAfter, Map.of(
+                    inputResourceId1, 0.0,
+                    inputResourceId2, 0.0,
+                    outputResourceId, 0.0
+            ), outputResourceId);
+        });
+
+        Allure.step("Verify no new record in journal", () ->
+                assertThat(getProductionListSize()).isEqualTo(countBefore));
+    }
+
     @Test(priority = 40)
     @TestCaseId("TC-PRD-004")
     @Story("Production batches")

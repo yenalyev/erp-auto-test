@@ -58,6 +58,7 @@
     <test name="Technological Maps UI">
         <classes>
             <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
+            <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
         </classes>
     </test>
 

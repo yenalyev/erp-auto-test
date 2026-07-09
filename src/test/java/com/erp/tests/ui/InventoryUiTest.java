@@ -569,7 +569,7 @@ public class InventoryUiTest extends BaseUITest {
     @Story("Copy remainders to clipboard UI")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Owner 1 на сторінці «Залишки» (/unit-management) для конкретної локації натискає
+            Owner 1 на сторінці «Залишки» (/inventory) для конкретної локації натискає
             «Скопіювати». Arrange: унікальний ресурс із залишком на локації.
             Очікується:
             1) кнопка активна, фідбек «Скопійовано»;
@@ -721,7 +721,7 @@ public class InventoryUiTest extends BaseUITest {
     @Story("Export remainders UI")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Owner 1 на сторінці «Залишки» (/unit-management) натискає «Експорт в Excel»
+            Owner 1 на сторінці «Залишки» (/inventory) натискає «Експорт в Excel»
             для обраної локації. Очікується: завантаження файлу .xlsx.
             """)
     public void exportRemaindersUi() {

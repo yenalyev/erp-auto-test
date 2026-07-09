@@ -11,12 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Page Object for the Unit Management (Залишки) page.
- * URL: /unit-management
+ * URL: /inventory
  */
 @Slf4j
 public class UnitManagementPage extends BasePage {
 
-    private static final String PATH = "/unit-management";
+    private static final String PATH = "/inventory";
     private static final String PAGE_TITLE_TEXT = "Управління запасами";
     private static final String OPEN_INVENTORY_BUTTON_TEXT = "Відкрити інвентаризацію";
     private static final String CLOSE_INVENTORY_BUTTON_TEXT = "Закрити інвентаризацію";
@@ -55,7 +55,7 @@ public class UnitManagementPage extends BasePage {
             page.evaluate("localStorage.setItem('selectedStorageId', '" + storageId + "');");
             waitForInventoryTableDuring(() -> page.reload());
         } else {
-            waitForInventoryTableDuring(() -> navigateTo(url, "Залишки (/unit-management)"));
+            waitForInventoryTableDuring(() -> navigateTo(url, "Залишки (/inventory)"));
         }
         return waitForLoaded();
     }

@@ -8,6 +8,8 @@ import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.regex.Pattern;
+
 /**
  * Page Object for the Plan Execution page (tk-ui {@code PlanExecutionPage.tsx}).
  * URL: /plan-execution
@@ -31,6 +33,15 @@ public class PlanExecutionPage extends BasePage {
     private static final String GOAL_PLACEHOLDER = "—";
     private static final String COPY_BUTTON_TEXT = "Скопіювати";
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано зроблене";
+
+    /** tk-ui CPMA-587: filter toggle on the «Виконання» tab (product requirement: «Тільки обрані»). */
+    private static final String FAVOURITES_ONLY_BUTTON_TEXT = "Лише обрані";
+    /** tk-ui CPMA-587: opens the manage-favourites dialog (product requirement: «Налаштувати обрані»). */
+    private static final String MANAGE_FAVOURITES_BUTTON_PREFIX = "Керувати обраними";
+    private static final String MANAGE_FAVOURITES_DIALOG_TITLE = "Керування обраними ресурсами";
+    private static final String FAVOURITES_EMPTY_STATE_TEXT = "Немає обраних ресурсів за цей місяць";
+    private static final String MANAGE_FAVOURITES_SAVE_PREFIX = "Зберегти";
+    private static final String MANAGE_FAVOURITES_CANCEL_TEXT = "Скасувати";
 
     public PlanExecutionPage(Page page) {
         super(page);
@@ -65,7 +76,10 @@ public class PlanExecutionPage extends BasePage {
     /** Wait until the execution tab finishes loading (rows, empty state, or all-locations guard rendered). */
     public PlanExecutionPage waitForExecutionDataSettled() {
         page.waitForCondition(
-                () -> getProductRowCount() > 0 || isEmptyStateVisible() || isAllLocationsGuardVisible(),
+                () -> getProductRowCount() > 0
+                        || isEmptyStateVisible()
+                        || isFavouritesEmptyStateVisible()
+                        || isAllLocationsGuardVisible(),
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
@@ -162,6 +176,235 @@ public class PlanExecutionPage extends BasePage {
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         Object value = page.evaluate("() => window.__erpClipboardText");
         return value != null ? value.toString() : "";
+    }
+
+    // -------------------------------------------------------------------
+    // Favourite products filter (CPMA-587)
+    // -------------------------------------------------------------------
+
+    public boolean isFavouritesOnlyButtonVisible() {
+        Locator button = favouritesOnlyButton();
+        return button.count() > 0 && button.first().isVisible();
+    }
+
+    /**
+     * True when the «Лише обрані» toggle can be activated. Product requirement expects the control
+     * disabled while no favourites are configured; current tk-ui keeps it always enabled and shows
+     * an empty state instead — assert the expected disabled state so the regression stays red until
+     * the UI matches the requirement.
+     */
+    public boolean isFavouritesOnlyButtonEnabled() {
+        return favouritesOnlyButton().isEnabled();
+    }
+
+    public boolean isFavouritesOnlyPressed() {
+        String pressed = favouritesOnlyButton().getAttribute("aria-pressed");
+        return "true".equalsIgnoreCase(pressed);
+    }
+
+    public PlanExecutionPage clickFavouritesOnly() {
+        page.waitForResponse(
+                r -> r.url().contains("/statistics/execution") && "POST".equals(r.request().method()),
+                () -> favouritesOnlyButton().click());
+        return waitForExecutionDataSettled();
+    }
+
+    /**
+     * Toggles «Лише обрані» and returns the {@code POST /statistics/execution} request body so
+     * tests can assert that {@code resourceIds} were actually sent to the backend.
+     */
+    public String clickFavouritesOnlyAndCaptureExecutionRequestBody() {
+        var response = page.waitForResponse(
+                r -> r.url().contains("/statistics/execution") && "POST".equals(r.request().method()),
+                () -> favouritesOnlyButton().click());
+        waitForExecutionDataSettled();
+        return response.request().postData();
+    }
+
+    public boolean isManageFavouritesButtonVisible() {
+        Locator button = manageFavouritesButton();
+        return button.count() > 0 && button.first().isVisible();
+    }
+
+    public String getManageFavouritesButtonText() {
+        String text = manageFavouritesButton().innerText();
+        return text != null ? text.trim().replaceAll("\\s+", " ") : "";
+    }
+
+    public PlanExecutionPage openManageFavouritesDialog() {
+        manageFavouritesButton().click();
+        manageFavouritesDialog().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return waitForManageDialogReady();
+    }
+
+    /**
+     * Filters the manage-dialog resource table by name (placeholder «Фільтр за назвою») and waits
+     * until a matching row is visible.
+     */
+    public PlanExecutionPage filterManageDialogByName(String nameFragment) {
+        Locator input = manageFavouritesDialog().getByPlaceholder("Фільтр за назвою");
+        input.fill(nameFragment);
+        manageDialogProductRow(nameFragment).first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    /** Clears the name filter and types {@code nameFragment} without waiting for a matching row. */
+    public PlanExecutionPage typeManageDialogNameFilter(String nameFragment) {
+        manageFavouritesDialog().getByPlaceholder("Фільтр за назвою").fill(nameFragment);
+        return this;
+    }
+
+    public boolean isManageFavouritesDialogVisible() {
+        Locator dialog = manageFavouritesDialog();
+        return dialog.count() > 0 && dialog.first().isVisible();
+    }
+
+    /** Waits until the manage-dialog loading spinner is gone and content has settled. */
+    public PlanExecutionPage waitForManageDialogReady() {
+        page.waitForCondition(() -> {
+            Locator spinner = manageFavouritesDialog().locator("svg.animate-spin");
+            boolean loading = spinner.count() > 0 && spinner.first().isVisible();
+            if (loading) {
+                return false;
+            }
+            return manageFavouritesDialog().locator("tbody tr").count() > 0
+                    || manageFavouritesDialog().getByText("Немає записів").count() > 0;
+        }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    /**
+     * Toggles the in-dialog «Лише обрані» checkbox (distinct from the page-level filter button).
+     * When checked, the dialog shows rows seeded from already-saved favourites (resourceInfo),
+     * so existing favourites remain editable even if GET /resources/with-technological-map is empty.
+     */
+    public PlanExecutionPage setManageDialogOnlyFavourites(boolean onlyFavourites) {
+        boolean checked = isManageDialogOnlyFavouritesChecked();
+        if (checked != onlyFavourites) {
+            // Click the label text — more reliable than the radix checkbox button itself.
+            manageFavouritesDialog()
+                    .locator("label")
+                    .filter(new Locator.FilterOptions().setHasText("Лише обрані"))
+                    .click();
+        }
+        page.waitForCondition(
+                () -> isManageDialogOnlyFavouritesChecked() == onlyFavourites,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        if (onlyFavourites) {
+            page.waitForCondition(
+                    () -> manageFavouritesDialog().locator("tbody tr").count() > 0
+                            || manageFavouritesDialog().getByText("Немає записів").count() > 0,
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        } else {
+            waitForManageDialogReady();
+        }
+        return this;
+    }
+
+    public boolean isManageDialogOnlyFavouritesChecked() {
+        Locator checkbox = manageDialogOnlyFavouritesCheckbox();
+        String state = checkbox.getAttribute("data-state");
+        if (state != null) {
+            return "checked".equalsIgnoreCase(state);
+        }
+        return checkbox.isChecked();
+    }
+
+    /** True when the manage dialog lists a row whose name cell contains {@code productName}. */
+    public boolean isProductListedInManageDialog(String productName) {
+        return manageDialogProductRow(productName).count() > 0
+                && manageDialogProductRow(productName).first().isVisible();
+    }
+
+    public boolean isProductFavouritedInManageDialog(String productName) {
+        Locator row = manageDialogProductRow(productName).first();
+        if (row.count() == 0) {
+            return false;
+        }
+        Locator removeBtn = row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions()
+                .setName("Прибрати з обраного"));
+        return removeBtn.count() > 0 && removeBtn.first().isVisible();
+    }
+
+    public PlanExecutionPage toggleFavouriteInManageDialog(String productName) {
+        manageDialogFavouriteStar(productName).first().click();
+        return this;
+    }
+
+    public PlanExecutionPage saveManageFavouritesDialog() {
+        Locator save = manageFavouritesDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions()
+                        .setName(Pattern.compile("^" + MANAGE_FAVOURITES_SAVE_PREFIX)));
+        page.waitForResponse(
+                r -> r.url().contains("/app-config/favourite-resources") && "PUT".equals(r.request().method()),
+                save::click);
+        manageFavouritesDialog().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.HIDDEN)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public PlanExecutionPage cancelManageFavouritesDialog() {
+        manageFavouritesDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(MANAGE_FAVOURITES_CANCEL_TEXT))
+                .click();
+        manageFavouritesDialog().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.HIDDEN)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    private Locator manageDialogOnlyFavouritesCheckbox() {
+        return manageFavouritesDialog()
+                .locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Лише обрані"))
+                .locator("[role='checkbox'], button[role='checkbox'], input[type='checkbox']")
+                .first();
+    }
+
+    private Locator manageDialogFavouriteStar(String productName) {
+        return manageDialogProductRow(productName)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions()
+                        .setName(Pattern.compile("Прибрати з обраного|Додати в обране")));
+    }
+
+    public boolean isFavouritesEmptyStateVisible() {
+        Locator empty = page.getByText(FAVOURITES_EMPTY_STATE_TEXT);
+        return empty.count() > 0 && empty.first().isVisible();
+    }
+
+    /**
+     * Product rows on the «Виконання» tab, excluding the totals footer row
+     * («Виготовлено за …»). Prefer this over {@link #getProductRowCount()} when asserting
+     * favourites filtering — the footer stays rendered even for a filtered empty/partial list.
+     */
+    public int getNamedProductRowCount() {
+        return executionTableRows()
+                .filter(new Locator.FilterOptions().setHasNotText("Виготовлено за"))
+                .count();
+    }
+
+    private Locator favouritesOnlyButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(FAVOURITES_ONLY_BUTTON_TEXT));
+    }
+
+    private Locator manageFavouritesButton() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                .setName(Pattern.compile("^" + MANAGE_FAVOURITES_BUTTON_PREFIX)));
+    }
+
+    private Locator manageFavouritesDialog() {
+        return page.getByRole(AriaRole.DIALOG)
+                .filter(new Locator.FilterOptions().setHasText(MANAGE_FAVOURITES_DIALOG_TITLE));
+    }
+
+    private Locator manageDialogProductRow(String productName) {
+        return manageFavouritesDialog().locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(productName));
     }
 
     private Locator copyButton() {

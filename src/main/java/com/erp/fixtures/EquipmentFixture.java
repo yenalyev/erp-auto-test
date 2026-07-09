@@ -2,10 +2,10 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
-import com.erp.data.FakerProvider;
 import com.erp.enums.EquipmentStatus;
 import com.erp.enums.UserRole;
 import com.erp.models.request.EquipmentAssignmentRequest;
+import com.erp.models.request.EquipmentCreateRequest;
 import com.erp.models.request.EquipmentRelocationReceiveEditRequest;
 import com.erp.models.request.EquipmentRelocationSendEditRequest;
 import com.erp.models.request.EquipmentRelocationSendRequest;
@@ -70,17 +70,20 @@ public class EquipmentFixture extends BaseFixture {
     @Step("API: створити обладнання на складі {storageId}")
     public EquipmentResponse createEquipmentOnStorage(UserRole role, Long storageId, Long categoryId) {
         String suffix = String.valueOf(System.currentTimeMillis() % 1_000_000);
-        EquipmentRequest request = EquipmentRequest.builder()
-                .name("erp-test-equipment-" + suffix)
-                .inventoryNumber("INV-ERP-" + suffix)
-                .serialNumber("SN-ERP-" + suffix)
-                .description("erp-auto-test equipment")
-                .categoryId(categoryId)
+        EquipmentCreateRequest request = EquipmentCreateRequest.builder()
                 .storageId(storageId)
+                .items(List.of(EquipmentRequest.builder()
+                        .name("erp-test-equipment-" + suffix)
+                        .inventoryNumber("INV-ERP-" + suffix)
+                        .serialNumber("SN-ERP-" + suffix)
+                        .description("erp-auto-test equipment")
+                        .categoryId(categoryId)
+                        .build()))
                 .build();
         Response response = apiExecutor.executeEquipmentCreate(request, role);
         validateSuccess(response, "Create equipment");
-        return response.as(EquipmentResponse.class);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.EQUIPMENT_POST_CREATE);
+        return firstCreatedEquipment(response);
     }
 
     @Step("API: видача обладнання storage→storage")
@@ -106,12 +109,26 @@ public class EquipmentFixture extends BaseFixture {
         return response.as(RelocationResponse.class);
     }
 
-    @Step("Отримати статус обладнання id={equipmentId}")
+    @Step("Отримати статус обладнання id={equipmentId} на складі {storageId}")
     public EquipmentStatus getEquipmentStatus(UserRole role, Long storageId, Long equipmentId) {
+        // Prefer GET by id: staging storages often have >50 equipment, so page size=50 misses newly created IDs.
+        Response byId = apiExecutor.execute(ApiEndpointDefinition.EQUIPMENT_GET_BY_ID, role, null, equipmentId);
+        if (byId.statusCode() >= 200 && byId.statusCode() < 300) {
+            EquipmentResponse equipment = byId.as(EquipmentResponse.class);
+            Long actualStorageId = equipment.getStorage() != null ? equipment.getStorage().getId() : null;
+            if (!storageId.equals(actualStorageId)) {
+                throw new IllegalStateException(
+                        "Equipment " + equipmentId + " expected on storage " + storageId
+                                + " but is on " + actualStorageId);
+            }
+            return equipment.getStatus();
+        }
+
         Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.EQUIPMENT_GET_PAGE,
                 role,
-                Map.of("storageIds", storageId, "size", 50));
+                Map.of("storageIds", storageId, "size", 200));
+        validateSuccess(response, "Get equipment page for status");
         PagedEquipmentResponse page = response.as(PagedEquipmentResponse.class);
         return page.getContent().stream()
                 .filter(e -> equipmentId.equals(e.getId()))
@@ -125,20 +142,23 @@ public class EquipmentFixture extends BaseFixture {
                                                          Long supplierId,
                                                          Long categoryId) {
         String suffix = String.valueOf(System.currentTimeMillis() % 1_000_000);
-        EquipmentRequest request = EquipmentRequest.builder()
-                .name("erp-supplier-eq-" + suffix)
-                .inventoryNumber("INV-SUP-" + suffix)
-                .serialNumber("SN-SUP-" + suffix)
-                .description("erp-auto-test supplier equipment")
-                .categoryId(categoryId)
+        EquipmentCreateRequest request = EquipmentCreateRequest.builder()
                 .storageId(recipientStorageId)
                 .senderStorageId(supplierId)
                 .invoiceNumber("INV-EQ-" + suffix)
                 .isPaidByCash(false)
+                .items(List.of(EquipmentRequest.builder()
+                        .name("erp-supplier-eq-" + suffix)
+                        .inventoryNumber("INV-SUP-" + suffix)
+                        .serialNumber("SN-SUP-" + suffix)
+                        .description("erp-auto-test supplier equipment")
+                        .categoryId(categoryId)
+                        .build()))
                 .build();
         Response response = apiExecutor.executeEquipmentCreate(request, role);
         validateSuccess(response, "Create equipment from supplier");
-        return response.as(EquipmentResponse.class);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.EQUIPMENT_POST_CREATE);
+        return firstCreatedEquipment(response);
     }
 
     public RelocationResponse sendEquipmentToUnit(UserRole role,
@@ -338,5 +358,16 @@ public class EquipmentFixture extends BaseFixture {
         }
         throw new IllegalStateException(
                 "No equipment categories on env — create at least one category for equipment relocation tests");
+    }
+
+    /** POST /equipment returns HTTP 201 + {@code List<EquipmentResponse>}. */
+    private static EquipmentResponse firstCreatedEquipment(Response response) {
+        List<EquipmentResponse> created = response.jsonPath().getList(".", EquipmentResponse.class);
+        if (created == null || created.isEmpty() || created.getFirst() == null) {
+            throw new IllegalStateException(
+                    "Create equipment: expected non-empty EquipmentResponse list, body="
+                            + response.body().asString());
+        }
+        return created.getFirst();
     }
 }

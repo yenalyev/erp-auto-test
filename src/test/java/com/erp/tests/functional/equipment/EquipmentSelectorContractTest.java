@@ -7,6 +7,7 @@ import com.erp.fixtures.EquipmentFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.test_context.ContextKey;
+import com.erp.models.request.EquipmentCreateRequest;
 import com.erp.models.request.EquipmentRequest;
 import com.erp.models.response.EquipmentResponse;
 import com.erp.models.response.StorageResponse;
@@ -79,7 +80,7 @@ public class EquipmentSelectorContractTest extends StorageApiTestBase {
             Що перевіряємо: створення обладнання з EXTERNAL sender (supplier) — позитивний шлях форми.
             Тестові дані: recipient=owner1StorageId (INTERNAL), senderStorageId=supplier з fixture,
             categoryId з fixture, унікальні name/inventoryNumber/serialNumber.
-            Очікування: HTTP 201/200, equipment.storage.id = owner1StorageId.
+            Очікування: HTTP 201, equipment.storage.id = owner1StorageId.
             """)
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateEquipmentFromExternalSupplier() {
@@ -94,7 +95,8 @@ public class EquipmentSelectorContractTest extends StorageApiTestBase {
     @TestCaseId("TC-EQ-SEL-003")
     @Description("""
             Що перевіряємо: INTERNAL STORAGE не може бути senderStorageId (валідація type, не relation).
-            Тестові дані: INTERNAL child STORAGE як sender, owner1StorageId як recipient, мінімальний EquipmentRequest.
+            Тестові дані: INTERNAL child STORAGE як sender, owner1StorageId як recipient,
+            multipart EquipmentCreateRequest з одним item.
             Очікування: HTTP 400, field=senderStorageId, повідомлення про заборону джерела.
             """)
     @Severity(SeverityLevel.NORMAL)
@@ -103,13 +105,15 @@ public class EquipmentSelectorContractTest extends StorageApiTestBase {
         StorageResponse internalSender = storageFixture.createChildStorage(parent.getId(), "eq-snd-");
 
         String suffix = String.valueOf(System.currentTimeMillis() % 1_000_000);
-        EquipmentRequest request = EquipmentRequest.builder()
-                .name("erp-invalid-sender-" + suffix)
-                .inventoryNumber("INV-BAD-" + suffix)
-                .serialNumber("SN-BAD-" + suffix)
-                .categoryId(categoryId)
+        EquipmentCreateRequest request = EquipmentCreateRequest.builder()
                 .storageId(owner1StorageId)
                 .senderStorageId(internalSender.getId())
+                .items(List.of(EquipmentRequest.builder()
+                        .name("erp-invalid-sender-" + suffix)
+                        .inventoryNumber("INV-BAD-" + suffix)
+                        .serialNumber("SN-BAD-" + suffix)
+                        .categoryId(categoryId)
+                        .build()))
                 .build();
 
         Response response = apiExecutor.executeEquipmentCreate(request, UserRole.ADMIN);

@@ -40,8 +40,19 @@ public class AlertFixture extends BaseFixture {
         if (response.statusCode() != 200) {
             return null;
         }
-        StorageAlertResponse body = response.as(StorageAlertResponse.class);
-        return body != null && body.getId() != null ? body : null;
+        String body = response.getBody() != null ? response.getBody().asString() : null;
+        // Backend may return 200 with empty/null body (no Content-Type) when alert is absent.
+        if (body == null || body.isBlank() || "null".equalsIgnoreCase(body.strip())) {
+            return null;
+        }
+        try {
+            StorageAlertResponse parsed = response.as(StorageAlertResponse.class);
+            return parsed != null && parsed.getId() != null ? parsed : null;
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            log.warn("GET alert for storage {} returned unparseable body (treated as absent): {}",
+                    storageId, e.getMessage());
+            return null;
+        }
     }
 
     @Step("API: зберегти snapshot сповіщень складу {storageId}")

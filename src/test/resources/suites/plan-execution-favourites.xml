@@ -1,0 +1,38 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Єдиний сьют для «Виконання плану — обрані продукти» (CPMA-587):
+  UI favourites filter/modal + API каталогу GET /resources/with-technological-map.
+
+  Run:
+    mvn test -Denv=staging -Dsuite=plan-execution-favourites
+-->
+<suite name="Plan Execution Favourites" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Favourites catalog API">
+        <classes>
+            <class name="com.erp.tests.functional.resource.ResourceWithTechnologicalMapApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Favourites filter UI">
+        <classes>
+            <class name="com.erp.tests.ui.PlanExecutionUiTest">
+                <methods>
+                    <include name="testOwnerFavouritesOnlyDisabledWhenEmpty"/>
+                    <include name="testOwnerConfigureFavouritesAndFilter"/>
+                    <include name="testOwnerAddFavouriteViaManageDialog"/>
+                    <include name="testOwnerEditExistingFavouritesViaManageDialog"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

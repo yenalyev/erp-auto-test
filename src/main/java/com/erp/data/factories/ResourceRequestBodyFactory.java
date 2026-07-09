@@ -38,7 +38,8 @@ public class ResourceRequestBodyFactory {
                         "Fix RbacTestFixtures to save the full response object.");
             }
 
-            return ResourceDataFactory.fromExisting(existing)
+            Long categoryId = requireSharedCategoryId(context);
+            return ResourceDataFactory.fromExisting(existing, categoryId)
                     .name("Updated Resource Name via RBAC: " + existing.getName())
                     .build();
         });
@@ -70,9 +71,19 @@ public class ResourceRequestBodyFactory {
                             "sharedResourceResponse: " + existing + "\n" +
                             "sharedAvailableMeasurementUnits: " + units));
 
-            return ResourceDataFactory.fromExisting(existing)
+            Long categoryId = requireSharedCategoryId(context);
+            return ResourceDataFactory.fromExisting(existing, categoryId)
                     .measurementUnitId(alternativeUnitId)
                     .build();
         });
+    }
+
+    private static Long requireSharedCategoryId(com.erp.test_context.TestContext context) {
+        Long categoryId = context.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        if (categoryId == null) {
+            throw new IllegalStateException("Test Context Error: 'SHARED_RESOURCE_CATEGORY_ID' is null. " +
+                    "Make sure fetchSharedResourceCategory() was called.");
+        }
+        return categoryId;
     }
 }

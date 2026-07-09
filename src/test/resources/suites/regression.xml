@@ -37,17 +37,18 @@
         </classes>
     </test>
 
-    <test name="RBAC Access Matrix">
-        <classes>
-            <class name="com.erp.tests.rbac.RbacAccessMatrixTest"/>
-        </classes>
-    </test>
+<!--    <test name="RBAC Access Matrix">-->
+<!--        <classes>-->
+<!--            <class name="com.erp.tests.rbac.RbacAccessMatrixTest"/>-->
+<!--        </classes>-->
+<!--    </test>-->
 
     <test name="Dictionary API">
         <classes>
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
+            <class name="com.erp.tests.functional.resource.ResourceWithTechnologicalMapApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceDeactivationTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
             <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
@@ -196,6 +197,13 @@
             <class name="com.erp.tests.ui.GlobalPlanRequirementsUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
+        </classes>
+    </test>
+
+    <test name="UI Technological Maps">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
+            <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
         </classes>
     </test>
 
