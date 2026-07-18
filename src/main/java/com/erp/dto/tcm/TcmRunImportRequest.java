@@ -23,6 +23,10 @@ public class TcmRunImportRequest {
     private String version;
     private String suite;
     private String buildName;
+    /** erp-test-runner run id for correlating TCM launch jobs. */
+    private String remoteRunId;
+    /** LISTENER or RUNNER_FALLBACK */
+    private String importSource;
 
     @Builder.Default
     private List<TcmResultDto> results = new ArrayList<>();

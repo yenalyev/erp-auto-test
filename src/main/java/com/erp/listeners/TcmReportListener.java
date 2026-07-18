@@ -6,6 +6,7 @@ import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.TcmScopeContext;
 import com.erp.utils.helpers.TestCaseIdExtractor;
 import com.erp.utils.helpers.TcmApiClient;
+import com.erp.utils.helpers.TcmResultOutbox;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
@@ -32,7 +33,7 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
             return;
         }
         suiteName = suite.getName();
-        log.info("TCM listener initialized for suite: {}", suiteName);
+        log.info("TCM listener initialized for suite: {} (outbox={})", suiteName, TcmResultOutbox.resultsFile());
     }
 
     @Override
@@ -40,7 +41,11 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
         if (!ConfigProvider.isTcmReportingEnabled()) {
             return;
         }
-        if (bufferedResults.isEmpty()) {
+        List<TcmApiClient.BufferedResult> toSend = List.copyOf(bufferedResults);
+        if (toSend.isEmpty()) {
+            toSend = TcmResultOutbox.readAll();
+        }
+        if (toSend.isEmpty()) {
             if (TcmScopeContext.isActive()) {
                 String ids = String.join(", ", TcmScopeContext.getAllowedTestCaseIds());
                 throw new IllegalStateException(
@@ -54,9 +59,11 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
         try {
             TcmRunImportRequest request = TcmApiClient.buildRequest(
                     suiteName != null ? suiteName : suite.getName(),
-                    List.copyOf(bufferedResults)
+                    toSend
             );
-            TcmImportResponse response = TcmApiClient.submitRun(request);
+            request.setImportSource("LISTENER");
+            TcmImportResponse response = TcmApiClient.submitRunWithRetry(request, 3);
+            TcmResultOutbox.writeImportOk(response, "LISTENER");
             log.info("TCM import complete: runId={}, matched={}, skippedManual={}, unmatched={}",
                     response.getRunId(),
                     response.getMatched(),
@@ -109,12 +116,23 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
             return;
         }
 
+        LocalDateTime executedAt = LocalDateTime.now();
         bufferedResults.add(new TcmApiClient.BufferedResult(
                 testCaseId,
                 status,
                 durationMs,
                 errorMessage,
-                LocalDateTime.now()
+                executedAt
         ));
+        TcmResultOutbox.append(testCaseId, mapStatus(status), durationMs, errorMessage, executedAt);
+    }
+
+    private static String mapStatus(int testngStatus) {
+        return switch (testngStatus) {
+            case ITestResult.SUCCESS -> "PASS";
+            case ITestResult.FAILURE -> "FAIL";
+            case ITestResult.SKIP -> "SKIPPED";
+            default -> "NOT_RUN";
+        };
     }
 }

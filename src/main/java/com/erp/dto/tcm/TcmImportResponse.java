@@ -18,8 +18,14 @@ public class TcmImportResponse {
 
     private Long runId;
     private int matched;
+    private int created;
+    private int updated;
     private int skippedManual;
+    private int skippedOutOfScope;
 
     @Builder.Default
     private List<String> unmatched = new ArrayList<>();
+
+    @Builder.Default
+    private List<String> outOfScope = new ArrayList<>();
 }
