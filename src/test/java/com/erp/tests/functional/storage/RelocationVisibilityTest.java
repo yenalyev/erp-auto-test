@@ -25,6 +25,7 @@ import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -72,6 +73,13 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
         SchemaRegistry.logSchemaCoverage();
         ensureOwner2RestrictedAccess();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
+        regionFixture.purgeRegionsByNamePrefixes(UserRole.ADMIN, PREFIX);
+    }
+
+    @BeforeMethod(alwaysRun = true)
+    public void purgeOwner2VisibilityBeforeTest() {
+        regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
+        regionFixture.purgeRegionsByNamePrefixes(UserRole.ADMIN, PREFIX);
     }
 
     @AfterClass(alwaysRun = true)

@@ -5,11 +5,16 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Page Object for the authenticated app sidebar (navigation, workspace selector, user menu).
  * Selectors align with tk-ui {@code AppSidebar} / Radix sidebar ({@code data-sidebar="menu-button"}).
+ *
+ * <p>Grouped entries (production, plans, resources, …) render as a single sidebar link to the
+ * first permitted child; sibling routes are switched via in-page {@code PageTabs}
+ * ({@code role="tab"} / {@code data-slot="tabs-trigger"}).
  */
 @Slf4j
 public class AppSidebarPage extends BasePage {
@@ -22,14 +27,72 @@ public class AppSidebarPage extends BasePage {
     private static final String LOGOUT_ITEM_TEXT   = "Вийти";
     private static final int    LOGOUT_TIMEOUT_MS  = 30_000;
 
+    public static final String GROUP_PRODUCTION = "Виробництво";
+    public static final String GROUP_PLANS = "Виробничі плани";
+    public static final String GROUP_RESOURCES = "Довідники ресурсів";
+    public static final String GROUP_EQUIPMENT = "Обладнання";
+    public static final String GROUP_STORAGE = "Локації/Організми";
+
+    public static final String TAB_NON_SERIES = "Несерійне виробництво";
+    public static final String TAB_ASSEMBLY_READINESS = "Готово до комплектації";
+    public static final String TAB_SHIFTS = "Виробнича зміна";
+    public static final String TAB_DEFECTS = "Брак";
+    public static final String TAB_GLOBAL_PLANS = "Глобальні плани";
+    public static final String TAB_PLANS = "Виробничі плани";
+    public static final String TAB_PLAN_EXECUTION = "Виконання плану";
+    public static final String TAB_RESOURCES_DICT = "Словник ресурсів";
+    public static final String TAB_PRICES = "Ціни";
+    public static final String TAB_RESOURCE_CATEGORIES = "Категорії ресурсів";
+    public static final String TAB_MEASUREMENT_UNITS = "Одиниці вимірювання";
+
     public AppSidebarPage(Page page) {
         super(page);
+    }
+
+    public AppSidebarPage waitForSidebarLoaded() {
+        waitForVisible(SIDEBAR_SELECTOR, uiTimeoutMs());
+        return this;
     }
 
     /** True when the sidebar root is rendered. */
     public boolean isSidebarVisible() {
         Locator sidebar = page.locator(SIDEBAR_SELECTOR);
         return sidebar.count() > 0 && sidebar.first().isVisible();
+    }
+
+    /** Click a sidebar group (or ungrouped) link by its visible label. */
+    public AppSidebarPage openGroup(String groupLabel) {
+        Locator link = sidebarNavLink(groupLabel).first();
+        link.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        link.click();
+        return this;
+    }
+
+    /** Click an in-page {@code PageTabs} trigger by label. */
+    public AppSidebarPage openPageTab(String tabLabel) {
+        Locator tab = pageTab(tabLabel).first();
+        tab.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        tab.click();
+        return this;
+    }
+
+    /** Open a sidebar group, then switch to a PageTabs child. */
+    public AppSidebarPage navigateToGroupedPage(String groupLabel, String tabLabel) {
+        openGroup(groupLabel);
+        if (!groupLabel.equals(tabLabel)) {
+            openPageTab(tabLabel);
+        }
+        return this;
+    }
+
+    /** True when a PageTabs trigger with the given label is visible. */
+    public boolean isPageTabVisible(String tabLabel) {
+        Locator tab = pageTab(tabLabel);
+        return tab.count() > 0 && tab.first().isVisible();
     }
 
     /** True when the «Робочий простір» storage selector block is visible. */
@@ -46,41 +109,43 @@ public class AppSidebarPage extends BasePage {
     }
 
     /**
-     * Opens the workspace dropdown and returns the first concrete storage name
-     * (skips «Всі локації» when present).
+     * Opens the workspace dropdown and returns the first selectable storage name
+     * (skips «Всі локації» and hierarchy group-only nodes).
      */
     public String getFirstAvailableLocationName() {
         workspaceSelectorTrigger().click();
-        Locator firstStorage = page.locator("[data-radix-popper-content-wrapper] [role='option']")
-                .filter(new Locator.FilterOptions().setHasNotText(ALL_LOCATIONS_TEXT))
-                .first();
-        firstStorage.waitFor(new Locator.WaitForOptions().setTimeout(5_000));
-        String name = normalizeText(firstStorage.innerText());
+        String name = firstSelectableWorkspaceLabel();
         page.keyboard().press("Escape");
         return name;
     }
 
-    /** Opens workspace dropdown and returns all visible location labels. */
+    /** Opens workspace dropdown and returns all visible selectable location labels. */
     public java.util.List<String> collectWorkspaceLocationLabels() {
         workspaceSelectorTrigger().click();
-        Locator options = page.locator("[data-radix-popper-content-wrapper] [role='option']");
-        options.first().waitFor(new Locator.WaitForOptions().setTimeout(5_000));
-        int count = options.count();
-        java.util.List<String> labels = new java.util.ArrayList<>(count);
-        for (int i = 0; i < count; i++) {
-            String text = normalizeText(options.nth(i).innerText());
-            if (!text.isBlank() && !ALL_LOCATIONS_TEXT.equals(text)) {
-                labels.add(text);
-            }
-        }
+        workspaceOptionButtons().first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        expandAllWorkspaceNodes();
+        java.util.List<String> labels = collectSelectableWorkspaceLabels();
         page.keyboard().press("Escape");
         return labels;
     }
 
     public AppSidebarPage selectWorkspaceByName(String locationName) {
         workspaceSelectorTrigger().click();
-        page.locator("[data-radix-popper-content-wrapper] [role='option']")
+        Locator search = page.locator("[data-radix-popper-content-wrapper] input[placeholder='Пошук...']");
+        if (search.count() > 0) {
+            search.first().fill(locationName);
+        }
+        workspaceOptionButtons()
                 .filter(new Locator.FilterOptions().setHasText(locationName))
+                .first()
+                .click();
+        return this;
+    }
+
+    public AppSidebarPage selectAllLocations() {
+        workspaceSelectorTrigger().click();
+        workspaceOptionButtons()
+                .filter(new Locator.FilterOptions().setHasText(ALL_LOCATIONS_TEXT))
                 .first()
                 .click();
         return this;
@@ -196,9 +261,77 @@ public class AppSidebarPage extends BasePage {
                 .first();
     }
 
+    /** StorageTreeSelect options are plain {@code <button>} rows (not role=option). */
+    private Locator workspaceOptionButtons() {
+        return page.locator("[data-radix-popper-content-wrapper]")
+                .locator("button[type='button']");
+    }
+
+    private void expandAllWorkspaceNodes() {
+        for (int round = 0; round < 20; round++) {
+            Locator chevrons = page.locator("[data-radix-popper-content-wrapper] span[role='button']");
+            int before = workspaceOptionButtons().count();
+            boolean clicked = false;
+            for (int i = 0; i < chevrons.count(); i++) {
+                Locator svg = chevrons.nth(i).locator("svg");
+                String cls = svg.count() > 0 ? svg.first().getAttribute("class") : "";
+                if (cls == null || !cls.contains("rotate-90")) {
+                    chevrons.nth(i).click();
+                    clicked = true;
+                    break;
+                }
+            }
+            if (!clicked || workspaceOptionButtons().count() == before) {
+                break;
+            }
+        }
+    }
+
+    private String firstSelectableWorkspaceLabel() {
+        Locator options = workspaceOptionButtons();
+        options.first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        for (int i = 0; i < options.count(); i++) {
+            Locator option = options.nth(i);
+            String text = normalizeText(option.innerText());
+            if (text.isBlank() || ALL_LOCATIONS_TEXT.equals(text)) {
+                continue;
+            }
+            String title = option.getAttribute("title");
+            if (title != null && title.contains("групування")) {
+                continue;
+            }
+            return text;
+        }
+        throw new IllegalStateException("No selectable workspace location found in StorageTreeSelect");
+    }
+
+    private java.util.List<String> collectSelectableWorkspaceLabels() {
+        Locator options = workspaceOptionButtons();
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        for (int i = 0; i < options.count(); i++) {
+            Locator option = options.nth(i);
+            String text = normalizeText(option.innerText());
+            if (text.isBlank() || ALL_LOCATIONS_TEXT.equals(text)) {
+                continue;
+            }
+            String title = option.getAttribute("title");
+            if (title != null && title.contains("групування")) {
+                continue;
+            }
+            labels.add(text);
+        }
+        return labels;
+    }
+
     private Locator sidebarNavLink(String label) {
         return page.locator(SIDEBAR_SELECTOR)
                 .getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(label));
+    }
+
+    private Locator pageTab(String tabLabel) {
+        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(tabLabel))
+                .or(page.locator("[data-slot='tabs-trigger']")
+                        .filter(new Locator.FilterOptions().setHasText(tabLabel)));
     }
 
     private static String normalizeText(String value) {

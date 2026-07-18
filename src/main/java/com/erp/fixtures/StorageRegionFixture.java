@@ -73,6 +73,41 @@ public class StorageRegionFixture extends BaseFixture {
         regionsToCleanup.clear();
     }
 
+    @Step("FIXTURE: видалити області видимості з префіксами імен {prefixes}")
+    public void purgeRegionsByNamePrefixes(UserRole role, String... prefixes) {
+        if (prefixes == null || prefixes.length == 0) {
+            return;
+        }
+        List<StorageRegionResponse> regions = findRegions(role, null);
+        for (StorageRegionResponse region : regions) {
+            if (region == null || region.getId() == null || region.getName() == null) {
+                continue;
+            }
+            boolean matches = false;
+            for (String prefix : prefixes) {
+                if (prefix != null && region.getName().startsWith(prefix)) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) {
+                continue;
+            }
+            try {
+                Response response = apiExecutor.execute(
+                        ApiEndpointDefinition.STORAGE_REGION_DELETE, role, null, String.valueOf(region.getId()));
+                if (response.statusCode() == 200) {
+                    untrackForCleanup(region.getId());
+                    log.info("Purge: deleted region id={} name={}", region.getId(), region.getName());
+                } else {
+                    log.warn("Purge: delete region id={} returned HTTP {}", region.getId(), response.statusCode());
+                }
+            } catch (Exception e) {
+                log.warn("Purge: failed to delete region id={}: {}", region.getId(), e.getMessage());
+            }
+        }
+    }
+
     @Step("API: POST створити область видимості")
     public StorageRegionResponse createRegion(StorageRegionRequest request) {
         Response response = apiExecutor.execute(
@@ -83,7 +118,7 @@ public class StorageRegionFixture extends BaseFixture {
         return created;
     }
 
-    @Step("API: POST створити область видимості recipient={recipientId}")
+    @Step("API: POST створити область видимості recipient={recipient.id}")
     public StorageRegionResponse createRegion(
             StorageResponse recipient,
             StorageAccessMode accessMode,
@@ -306,13 +341,18 @@ public class StorageRegionFixture extends BaseFixture {
 
     @Step("API: PUT додати resources до області id={regionId}")
     public StorageRegionResponse addRegionResources(Long regionId, Long... resourceIds) {
-        Response response = apiExecutor.executeWithQueryParams(
-                ApiEndpointDefinition.STORAGE_REGION_PUT_ADD_RESOURCES,
-                UserRole.ADMIN,
-                idListParams("resources", resourceIds),
-                String.valueOf(regionId));
+        Response response = addRegionResourcesRaw(UserRole.ADMIN, regionId, resourceIds);
         validateSuccess(response, "Add resources to region " + regionId);
         return response.as(StorageRegionResponse.class);
+    }
+
+    @Step("API: PUT додати resources до області id={regionId} (raw)")
+    public Response addRegionResourcesRaw(UserRole role, Long regionId, Long... resourceIds) {
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_REGION_PUT_ADD_RESOURCES,
+                role,
+                idListParams("resources", resourceIds),
+                String.valueOf(regionId));
     }
 
     @Step("API: DELETE прибрати resources з області id={regionId}")

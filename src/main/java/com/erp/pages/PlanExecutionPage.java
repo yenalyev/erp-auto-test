@@ -64,10 +64,16 @@ public class PlanExecutionPage extends BasePage {
 
     public PlanExecutionPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(HEADING_TEXT))
-                .waitFor(new Locator.WaitForOptions()
-                        .setState(WaitForSelectorState.VISIBLE)
-                        .setTimeout(uiTimeoutMs()));
+        Locator ready = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(HEADING_TEXT))
+                .or(page.getByText(ALL_LOCATIONS_GUARD_TEXT))
+                .or(page.getByText(EMPTY_STATE_TEXT))
+                .or(page.getByRole(AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(FAVOURITES_ONLY_BUTTON_TEXT)))
+                .or(page.locator("table").first())
+                .first();
+        ready.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         waitForExecutionDataSettled();
         log.info("Plan Execution page loaded — url: {}", page.url());
         return this;
@@ -242,10 +248,17 @@ public class PlanExecutionPage extends BasePage {
     /**
      * Filters the manage-dialog resource table by name (placeholder «Фільтр за назвою») and waits
      * until a matching row is visible.
+     *
+     * <p>tk-ui debounces catalog reload by 250&nbsp;ms ({@code ManageFavoriteResourcesDialog});
+     * a fixed short sleep after {@code fill()} is flaky on staging — wait for
+     * {@code GET /resources/with-technological-map} then for the row.
      */
     public PlanExecutionPage filterManageDialogByName(String nameFragment) {
         Locator input = manageFavouritesDialog().getByPlaceholder("Фільтр за назвою");
-        input.fill(nameFragment);
+        page.waitForResponse(
+                r -> r.url().contains("/resources/with-technological-map")
+                        && "GET".equals(r.request().method()),
+                () -> input.fill(nameFragment));
         manageDialogProductRow(nameFragment).first().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));

@@ -37,6 +37,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAddOutputTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAmountApiTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
+            <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessApiTest"/>
         </classes>
     </test>
 </suite>

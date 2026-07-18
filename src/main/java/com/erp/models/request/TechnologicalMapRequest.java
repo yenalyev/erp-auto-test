@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -20,4 +21,7 @@ public class TechnologicalMapRequest {
     private List<ResourceUsageRequest> input;
     private List<ResourceUsageRequest> output;
     private Set<Long> storageIds;
+
+    @Builder.Default
+    private List<TechnologicalMapAlternativeGroupRequest> groups = new ArrayList<>();
 }

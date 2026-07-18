@@ -1,5 +1,6 @@
 package com.erp.tests.functional.storage;
 
+import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
@@ -31,5 +32,13 @@ public abstract class CrewApiTestBase extends StorageApiTestBase {
         owner1StorageId = ConfigProvider.getOwner1StorageId();
         owner2StorageId = ConfigProvider.getOwner2StorageId();
         SchemaRegistry.logSchemaCoverage();
+    }
+
+    /** Re-login so JWT picks up freshly created CREWS regions (appendGrantedCrews). */
+    protected void refreshRoleSessions(UserRole... roles) {
+        for (UserRole role : roles) {
+            authService.invalidateSession(role.getUsername(), role.getPassword());
+        }
+        apiExecutor.clearSessionCache();
     }
 }

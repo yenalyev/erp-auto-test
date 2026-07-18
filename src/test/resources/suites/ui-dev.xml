@@ -12,10 +12,13 @@
     <test name="Login / Logout UI — admin + owner1">
         <classes>
             <class name="com.erp.tests.ui.LoginLogoutUITest"/>
+            <class name="com.erp.tests.ui.WorkspaceSelectorUiTest"/>
             <class name="com.erp.tests.ui.AccountantCabinetUITest"/>
             <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
+            <class name="com.erp.tests.ui.UsersAdminAccessUiTest"/>
         </classes>
     </test>
 

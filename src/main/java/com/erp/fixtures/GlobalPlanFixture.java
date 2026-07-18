@@ -5,10 +5,13 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.global_plan.GlobalPlanDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.UserRole;
+import com.erp.models.common.GlobalPlanAltGroupContext;
+import com.erp.models.common.GlobalPlanAltGroupExpectations;
 import com.erp.models.common.GlobalPlanChainContext;
 import com.erp.models.request.DecompositionRequest;
 import com.erp.models.request.GlobalPlanRequest;
 import com.erp.models.request.ResourceUsageRequest;
+import com.erp.models.request.TechnologicalMapAlternativeGroupRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.DecompositionResponse;
 import com.erp.models.response.GenerationResponse;
@@ -105,6 +108,104 @@ public class GlobalPlanFixture extends BaseFixture {
         testContext.set(ContextKey.GLOBAL_PLAN_CHAIN, chain);
         log.info("Global plan chain ready (period base {}/{})", periodBase.getMonthValue(), periodBase.getYear());
         return chain;
+    }
+
+    @Step("FIXTURE: Підготовка техкарти з альтернативною групою для глобального плану")
+    public GlobalPlanAltGroupContext prepareAltGroupChain() {
+        GlobalPlanAltGroupContext existing = testContext.get(ContextKey.GLOBAL_PLAN_ALT_CHAIN);
+        if (existing != null) {
+            return existing;
+        }
+
+        resourceFixture.fetchSharedUnit(1);
+        resourceFixture.fetchSharedResourceCategory();
+
+        String suffix = String.valueOf(System.currentTimeMillis());
+        ResourceResponse p = resourceFixture.createUniqueResource("GP-ALT-P-" + suffix);
+        ResourceResponse d = resourceFixture.createUniqueResource("GP-ALT-D-" + suffix);
+        ResourceResponse e = resourceFixture.createUniqueResource("GP-ALT-E-" + suffix);
+        ResourceResponse f = resourceFixture.createUniqueResource("GP-ALT-F-" + suffix);
+
+        Long l1 = ConfigProvider.getOwner1StorageId();
+
+        TechnologicalMapAlternativeGroupRequest group = TechnologicalMapDataFactory.alternativeGroup(
+                "Клей",
+                TechnologicalMapDataFactory.alternativeResource(
+                        d.getId(), GlobalPlanAltGroupExpectations.DEFAULT_ALT_AMOUNT, true),
+                TechnologicalMapDataFactory.alternativeResource(
+                        e.getId(), GlobalPlanAltGroupExpectations.OTHER_ALT_AMOUNT, false));
+
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionMapWithStorages(
+                        "GP-ALT-M",
+                        List.of(usage(f, GlobalPlanAltGroupExpectations.FIXED_AMOUNT)),
+                        List.of(usage(p, 1.0)),
+                        Set.of(l1))
+                .groups(List.of(group))
+                .build();
+
+        TechnologicalMapResponse mapProduct = techMapFixture.createTechMapWithRequest(UserRole.ADMIN, request);
+
+        if (periodBase == null) {
+            periodBase = GlobalPlanDataFactory.uniquePlanPeriod(3);
+            periodOffset = 0;
+        }
+
+        GlobalPlanAltGroupContext chain = GlobalPlanAltGroupContext.builder()
+                .l1StorageId(l1)
+                .resourceP(p)
+                .resourceD(d)
+                .resourceE(e)
+                .resourceF(f)
+                .mapProduct(mapProduct)
+                .build();
+
+        testContext.set(ContextKey.GLOBAL_PLAN_ALT_CHAIN, chain);
+        log.info("Global plan alt-group chain ready: map={}, product={}", mapProduct.getId(), p.getId());
+        return chain;
+    }
+
+    public GlobalPlanAltGroupContext requireAltChain() {
+        GlobalPlanAltGroupContext chain = testContext.get(ContextKey.GLOBAL_PLAN_ALT_CHAIN);
+        if (chain == null) {
+            throw new IllegalStateException("GLOBAL_PLAN_ALT_CHAIN not prepared — call prepareAltGroupChain()");
+        }
+        return chain;
+    }
+
+    @Step("API: створити глобальний план з output P={amount} (alt-group chain)")
+    public GlobalPlanResponse createAltGroupGlobalPlan(double amount) {
+        GlobalPlanAltGroupContext chain = requireAltChain();
+        YearMonth period = nextUniquePeriod();
+        GlobalPlanRequest request = GlobalPlanDataFactory.createPlan(
+                period.getMonthValue(),
+                period.getYear(),
+                chain.getResourceP().getId(),
+                amount).build();
+
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE,
+                UserRole.ADMIN,
+                request);
+        validateSuccess(response, "Create alt-group global plan");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE);
+
+        GlobalPlanResponse created = response.as(GlobalPlanResponse.class);
+        testContext.set(ContextKey.GLOBAL_PLAN_ID, created.getId());
+        testContext.set(ContextKey.GLOBAL_PLAN, created);
+        return created;
+    }
+
+    public DecompositionRequest buildAltGroupDecomposition(double amount) {
+        return GlobalPlanDataFactory.altGroupDecomposition(requireAltChain(), amount);
+    }
+
+    public TechnologicalMapFixture getTechMapFixture() {
+        return techMapFixture;
+    }
+
+    public ResourceFixture getResourceFixture() {
+        return resourceFixture;
     }
 
     /** Allocates a calendar month not used by an existing global plan (API + shared dev env). */

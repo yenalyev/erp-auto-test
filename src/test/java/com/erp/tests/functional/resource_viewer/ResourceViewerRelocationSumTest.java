@@ -3,14 +3,14 @@ package com.erp.tests.functional.resource_viewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
+import com.erp.models.response.PagedResourceRelocationViewerResponse;
 import com.erp.models.response.ResourceRelocationSumViewerResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
-import io.restassured.common.mapper.TypeRef;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
@@ -29,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
 
     private ResourceFixture resourceFixture;
-    private Long receiverStorageId;
+    private RelocationFixture relocationFixture;
+    private Long unitReceiverId;
 
     @BeforeClass(alwaysRun = true)
     public void setupResourceViewerTests() {
@@ -37,15 +38,27 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
             baseTestClassSetup();
         }
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture.prepareContext();
-        receiverStorageId = ConfigProvider.getOwner1StorageId();
+        relocationFixture.prepareContext();
+        unitReceiverId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
     }
 
     @Test(priority = 1)
     @TestCaseId("TC-RVW-001")
     @Story("Summary sorted by resource name")
-    @Description("GET /resources-viewer/relocations/sum — сортування resourceName (ASC): цифри, латиниця, л/є/і/ї")
-    @Severity(SeverityLevel.NORMAL)
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            GET /resources-viewer/relocations → поле sums:
+            сортування resourceName (ASC): цифри, латиниця, л/є/і/ї.
+            Обрані resourceIds без руху мають amount=0 (pre-seed) — щоб у «Сумарно переміщено»
+            було видно «Спирт — 0».
+
+            Відомий дефект (tk): якщо BOM порожній (немає matching relocations),
+            controller повертає empty() з sums=[] і не викликає buildSums pre-seed.
+            Очікувана поведінка: sums містить обрані resourceIds з amount=0.
+            Тест червоний до фіксу в tk.
+            """)
     public void testRelocationsSumSortedByResourceNameAsc() {
         ResourceResponse digits = Allure.step("Створити ресурс 111_rvw_* (ADMIN, цифри)", () ->
                 resourceFixture.createUniqueResource("111_rvw_"));
@@ -64,30 +77,34 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
         ResourceResponse yi = Allure.step("Створити ресурс їжа_rvw_* (ADMIN, ї)", () ->
                 resourceFixture.createUniqueResource("їжа_rvw_"));
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("resourceIds", List.of(
+        List<Long> expectedIds = List.of(
                 digits.getId(), aaa.getId(), mmm.getId(), zzz.getId(),
-                el.getId(), ye.getId(), ii.getId(), yi.getId()));
-        params.put("receiverIds", receiverStorageId);
+                el.getId(), ye.getId(), ii.getId(), yi.getId());
 
-        Response response = Allure.step("GET relocations/sum як RESOURCE_VIEWER (wolf)", () ->
+        Map<String, Object> params = new HashMap<>();
+        params.put("resourceIds", expectedIds);
+        params.put("receiverIds", unitReceiverId);
+
+        Response response = Allure.step("GET relocations (sums) як RESOURCE_VIEWER (wolf)", () ->
                 apiExecutor.executeWithQueryParams(
-                        ApiEndpointDefinition.RESOURCE_VIEWER_RELOCATIONS_SUM,
+                        ApiEndpointDefinition.RESOURCE_VIEWER_RELOCATIONS_GET,
                         UserRole.RESOURCE_VIEWER,
                         params));
 
         assertThat(response.statusCode()).isEqualTo(200);
-        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RESOURCE_VIEWER_RELOCATIONS_SUM);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RESOURCE_VIEWER_RELOCATIONS_GET);
 
-        List<ResourceRelocationSumViewerResponse> items = response.as(
-                new TypeRef<List<ResourceRelocationSumViewerResponse>>() {});
+        PagedResourceRelocationViewerResponse page = response.as(PagedResourceRelocationViewerResponse.class);
+        List<ResourceRelocationSumViewerResponse> items =
+                page.getSums() != null ? page.getSums() : List.of();
 
-        List<Long> expectedIds = List.of(
-                digits.getId(), aaa.getId(), mmm.getId(), zzz.getId(),
-                el.getId(), ye.getId(), ii.getId(), yi.getId());
-        Allure.step("Перевірка наявності восьми тестових ресурсів", () -> {
+        Allure.step("Pre-seed: усі 8 ресурсів у sums (навіть без руху, amount=0)", () -> {
             assertThat(items).extracting(ResourceRelocationSumViewerResponse::getResourceId)
                     .containsAll(expectedIds);
+            assertThat(items.stream()
+                    .filter(s -> expectedIds.contains(s.getResourceId()))
+                    .map(ResourceRelocationSumViewerResponse::getAmount))
+                    .allSatisfy(amount -> assertThat(amount).isEqualByComparingTo(java.math.BigDecimal.ZERO));
         });
 
         List<String> names = items.stream()
@@ -95,7 +112,7 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
                 .map(ResourceRelocationSumViewerResponse::getResourceName)
                 .toList();
 
-        Allure.step("Перевірка порядку resourceName (Java natural order: цифри → латиниця → л → є/і/ї)", () -> {
+        Allure.step("Порядок resourceName (Java natural order: цифри → латиниця → л → є/і/ї)", () -> {
             assertThat(names).hasSize(8);
             assertThat(names).isSortedAccordingTo(Comparator.naturalOrder());
             assertThat(names.get(0)).startsWith("111_rvw_");

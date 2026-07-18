@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResourceRelocationViewerResponse",
+  "type": "object",
+  "properties": {
+    "relocationId": { "type": "integer" },
+    "sender": { "type": ["object", "null"] },
+    "recipient": { "type": ["object", "null"] },
+    "date": { "type": ["string", "null"] },
+    "state": { "type": ["string", "null"] },
+    "amount": { "type": ["number", "null"] },
+    "product": { "type": ["object", "null"] },
+    "unit": { "type": ["string", "null"] },
+    "isProduct": { "type": ["boolean", "null"] },
+    "ingredients": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "resourceId": { "type": "integer" },
+          "name": { "type": ["string", "null"] },
+          "usage": { "type": ["number", "null"] },
+          "totallyUsage": { "type": ["number", "null"] },
+          "unit": { "type": ["string", "null"] }
+        },
+        "required": ["resourceId"],
+        "additionalProperties": true
+      }
+    },
+    "invoiceNumber": { "type": ["string", "null"] },
+    "hasInvoice": { "type": ["boolean", "null"] }
+  },
+  "required": ["relocationId"],
+  "additionalProperties": true
+}

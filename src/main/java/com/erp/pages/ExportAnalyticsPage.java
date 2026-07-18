@@ -28,6 +28,12 @@ public class ExportAnalyticsPage extends BasePage {
         return waitForLoaded();
     }
 
+    public ExportAnalyticsPage navigateWithoutAccessCheck() {
+        navigateTo(ConfigProvider.getBaseUrl() + PATH, "Експорт даних (/export-analytics)");
+        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        return this;
+    }
+
     public ExportAnalyticsPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         AppSidebarPage sidebar = new AppSidebarPage(page);
@@ -46,7 +52,11 @@ public class ExportAnalyticsPage extends BasePage {
     }
 
     public ExportAnalyticsPage selectRemaindersExport() {
-        page.getByRole(AriaRole.COMBOBOX).click();
+        Locator trigger = page.locator("button[role='combobox']").first();
+        if (trigger.count() == 0) {
+            trigger = page.getByRole(AriaRole.COMBOBOX).first();
+        }
+        trigger.click();
         page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName("Залишки")).click();
         return this;
     }

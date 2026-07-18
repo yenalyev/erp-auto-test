@@ -1,16 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Alternative Group Response",
+  "title": "TechnologicalMapAlternativeGroupResponse",
   "type": "object",
-  "required": ["id", "name", "required", "options"],
+  "required": ["id", "name", "alternativeResources"],
   "properties": {
-    "id": { "type": "integer", "minimum": 0 },
-    "name": { "type": "string" },
-    "required": { "type": "boolean" },
-    "options": {
+    "id": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "alternativeResources": {
       "type": "array",
+      "minItems": 1,
       "items": { "$ref": "alternative-option-response-schema.json" }
     }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

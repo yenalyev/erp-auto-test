@@ -2,6 +2,7 @@ package com.erp.api.clients;
 
 import com.erp.utils.config.ConfigProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.response.Response;
 import java.util.Map;
@@ -10,7 +11,8 @@ import static io.restassured.RestAssured.given;
 public class SessionClient extends BaseClient {
 
     private static final ObjectMapper MULTIPART_MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     public SessionClient() {
         super(null); // Токен не потрібен, використовуємо сесії

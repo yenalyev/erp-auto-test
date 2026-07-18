@@ -67,6 +67,55 @@ public class EquipmentFixture extends BaseFixture {
         log.info("Equipment category ready: id={}", categoryId);
     }
 
+    public List<String> extractInventoryNumbers(EquipmentGroupResponse group) {
+        if (group.getItems() == null) {
+            return List.of();
+        }
+        return group.getItems().stream()
+                .map(EquipmentSimpleResponse::getInventoryNumber)
+                .filter(inv -> inv != null && !inv.isBlank())
+                .toList();
+    }
+
+    public EquipmentGroupResponse findGroupByName(UserRole role, Long storageId, String groupName) {
+        return getGroupedEquipment(role, storageId, null).stream()
+                .filter(g -> groupName.equals(g.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Equipment group not found: " + groupName + " on storage " + storageId));
+    }
+
+    @Step("API: створити групу обладнання «{groupName}» на складі {storageId}")
+    public List<EquipmentResponse> createEquipmentGroup(UserRole role,
+                                                        Long storageId,
+                                                        Long categoryId,
+                                                        String groupName,
+                                                        List<String> inventoryNumbers) {
+        List<EquipmentRequest> items = inventoryNumbers.stream()
+                .map(inv -> EquipmentRequest.builder()
+                        .name(groupName)
+                        .inventoryNumber(inv)
+                        .serialNumber("SN-" + inv)
+                        .description("erp-auto-test equipment group item")
+                        .categoryId(categoryId)
+                        .build())
+                .toList();
+        EquipmentCreateRequest request = EquipmentCreateRequest.builder()
+                .storageId(storageId)
+                .items(items)
+                .build();
+        Response response = apiExecutor.executeEquipmentCreate(request, role);
+        validateSuccess(response, "Create equipment group");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.EQUIPMENT_POST_CREATE);
+        List<EquipmentResponse> created = response.jsonPath().getList(".", EquipmentResponse.class);
+        if (created == null || created.size() != inventoryNumbers.size()) {
+            throw new IllegalStateException(
+                    "Create equipment group: expected " + inventoryNumbers.size()
+                            + " items, got " + (created == null ? 0 : created.size()));
+        }
+        return created;
+    }
+
     @Step("API: створити обладнання на складі {storageId}")
     public EquipmentResponse createEquipmentOnStorage(UserRole role, Long storageId, Long categoryId) {
         String suffix = String.valueOf(System.currentTimeMillis() % 1_000_000);

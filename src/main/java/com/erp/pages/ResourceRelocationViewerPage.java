@@ -56,6 +56,65 @@ public class ResourceRelocationViewerPage extends BasePage {
         return this;
     }
 
+    public ResourceRelocationViewerPage selectResource(String resourceName) {
+        resourceAutocompleteTrigger().click();
+        Locator searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER).last();
+        String searchToken = extractSearchPrefix(resourceName);
+        page.waitForResponse(
+                response -> response.url().contains("/resources/autocomplete")
+                        && response.status() == 200,
+                () -> searchInput.fill(searchToken));
+        waitForAutocompleteOptionsSettled();
+        popoverOptions()
+                .filter(new Locator.FilterOptions().setHasText(resourceName))
+                .first()
+                .click();
+        page.keyboard().press("Escape");
+        return this;
+    }
+
+    public ResourceRelocationViewerPage enableOthersReceivers() {
+        Locator checkbox = page.locator("#isOthers");
+        if (!checkbox.isChecked()) {
+            checkbox.check();
+        }
+        return this;
+    }
+
+    public ResourceRelocationViewerPage search() {
+        page.waitForResponse(
+                response -> response.url().contains("/resources-viewer/relocations")
+                        && response.status() == 200,
+                () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Шукати"))
+                        .click());
+        return this;
+    }
+
+    public boolean isSummaryCardVisible() {
+        return page.getByRole(AriaRole.HEADING,
+                new Page.GetByRoleOptions().setName("Сумарно переміщено")).isVisible();
+    }
+
+    public Double summaryAmountForResource(String resourceName) {
+        Locator row = page.locator("div.flex.items-baseline.justify-between")
+                .filter(new Locator.FilterOptions().setHasText(resourceName))
+                .first();
+        if (row.count() == 0 || !row.isVisible()) {
+            return null;
+        }
+        String text = row.locator("span.font-semibold").innerText().trim();
+        String number = text.replace('\u00a0', ' ').replace(" ", "").replace(',', '.');
+        number = number.replaceAll("[^0-9.]", "");
+        if (number.isBlank()) {
+            return null;
+        }
+        return Double.parseDouble(number);
+    }
+
+    public boolean tableContainsText(String text) {
+        return page.getByText(text, new Page.GetByTextOptions().setExact(false)).count() > 0;
+    }
+
     public ResourceRelocationViewerPage selectCategory(String categoryName) {
         categoryFilterTrigger().click();
         popoverOptions()

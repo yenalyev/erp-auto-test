@@ -52,6 +52,7 @@
             <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
         </classes>
     </test>
 </suite>

@@ -1,6 +1,7 @@
 package com.erp.pages;
 
 import com.erp.models.common.ProductionJournalRow;
+import com.erp.pages.components.DateRangePickerComponent;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -32,7 +33,6 @@ public class ProductionPage extends BasePage {
     private static final String CATEGORY_LABEL_TEXT = "Категорія";
     private static final String WORK_TYPE_LABEL_TEXT = "Тип робіт";
     private static final String PRODUCT_INPUT_SELECTOR = "input[placeholder='Пошук...']";
-    private static final String DATE_INPUT_SELECTOR = "input[type='date']";
     private static final String CLEAR_BUTTON_TEXT = "Очистити";
     private static final String EMPTY_STATE_TEXT = "Нічого не знайдено";
     private static final String LOADING_TEXT = "Завантаження...";
@@ -138,12 +138,19 @@ public class ProductionPage extends BasePage {
         return isFilterLabelVisible(WORK_TYPE_LABEL_TEXT);
     }
 
-    public boolean isDateFromVisible() {
-        return page.locator(DATE_INPUT_SELECTOR).nth(0).isVisible();
+    /** True when the «Період» DateRangePicker trigger is visible (replaces dual «З»/«По» inputs). */
+    public boolean isPeriodFilterVisible() {
+        return dateRangePicker().isVisible();
     }
 
+    /** @deprecated use {@link #isPeriodFilterVisible()} — kept for existing assertions */
+    public boolean isDateFromVisible() {
+        return isPeriodFilterVisible();
+    }
+
+    /** @deprecated use {@link #isPeriodFilterVisible()} — kept for existing assertions */
     public boolean isDateToVisible() {
-        return page.locator(DATE_INPUT_SELECTOR).nth(1).isVisible();
+        return isPeriodFilterVisible();
     }
 
     public boolean isClearButtonVisible() {
@@ -222,14 +229,14 @@ public class ProductionPage extends BasePage {
         return productFilterInput().inputValue();
     }
 
-    /** ISO date (yyyy-MM-dd) from the «З» date picker, or empty when unset. */
+    /** ISO date (yyyy-MM-dd) start of the «Період» range, or empty when unset. */
     public String getDateFromValue() {
-        return dateFromInput().inputValue();
+        return dateRangePicker().getFromIso();
     }
 
-    /** ISO date (yyyy-MM-dd) from the «По» date picker, or empty when unset. */
+    /** ISO date (yyyy-MM-dd) end of the «Період» range, or empty when unset. */
     public String getDateToValue() {
-        return dateToInput().inputValue();
+        return dateRangePicker().getToIso();
     }
 
     /** Visible label on the category dropdown trigger (selected category or placeholder). */
@@ -250,12 +257,34 @@ public class ProductionPage extends BasePage {
     }
 
     public ProductionPage filterByDateFrom(LocalDate date) {
-        runJournalFilterAction(() -> dateFromInput().fill(date.toString()));
+        runJournalFilterAction(() -> {
+            DateRangePickerComponent picker = dateRangePicker();
+            String toIso = picker.getToIso();
+            if (toIso.isBlank()) {
+                picker.setFromOnly(date);
+            } else {
+                picker.setRange(date, LocalDate.parse(toIso));
+            }
+        });
         return this;
     }
 
     public ProductionPage filterByDateTo(LocalDate date) {
-        runJournalFilterAction(() -> dateToInput().fill(date.toString()));
+        runJournalFilterAction(() -> {
+            DateRangePickerComponent picker = dateRangePicker();
+            String fromIso = picker.getFromIso();
+            if (fromIso.isBlank()) {
+                // End-only is not supported by DateRangePicker — same-day range.
+                picker.setRange(date, date);
+            } else {
+                picker.setRange(LocalDate.parse(fromIso), date);
+            }
+        });
+        return this;
+    }
+
+    public ProductionPage filterByDateRange(LocalDate from, LocalDate to) {
+        runJournalFilterAction(() -> dateRangePicker().setRange(from, to));
         return this;
     }
 
@@ -277,10 +306,11 @@ public class ProductionPage extends BasePage {
         if (filters.categoryName() != null) {
             filterByCategory(filters.categoryName());
         }
-        if (filters.startDate() != null) {
+        if (filters.startDate() != null && filters.endDate() != null) {
+            filterByDateRange(filters.startDate(), filters.endDate());
+        } else if (filters.startDate() != null) {
             filterByDateFrom(filters.startDate());
-        }
-        if (filters.endDate() != null) {
+        } else if (filters.endDate() != null) {
             filterByDateTo(filters.endDate());
         }
         return this;
@@ -447,12 +477,8 @@ public class ProductionPage extends BasePage {
         return page.locator(PRODUCT_INPUT_SELECTOR).first();
     }
 
-    private Locator dateFromInput() {
-        return page.locator(DATE_INPUT_SELECTOR).nth(0);
-    }
-
-    private Locator dateToInput() {
-        return page.locator(DATE_INPUT_SELECTOR).nth(1);
+    private DateRangePickerComponent dateRangePicker() {
+        return new DateRangePickerComponent(page, uiTimeoutMs());
     }
 
     private Locator categoryTrigger() {

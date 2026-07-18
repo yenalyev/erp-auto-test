@@ -16,13 +16,16 @@
     },
     "input": {
       "type": "array",
-      "minItems": 1,
       "items": { "$ref": "resource-usage-request-schema.json" }
     },
     "output": {
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "resource-usage-request-schema.json" }
+    },
+    "groups": {
+      "type": "array",
+      "items": { "$ref": "alternative-group-request-schema.json" }
     }
   },
   "additionalProperties": true

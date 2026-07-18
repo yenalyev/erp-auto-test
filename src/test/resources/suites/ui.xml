@@ -12,12 +12,15 @@
     <test name="Login UI">
         <classes>
             <class name="com.erp.tests.ui.LoginUITest"/>
+            <class name="com.erp.tests.ui.WorkspaceSelectorUiTest"/>
         </classes>
     </test>
 
     <test name="Resources UI">
         <classes>
             <class name="com.erp.tests.ui.ResourceAutocompleteUiTest"/>
+            <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
+            <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
         </classes>
     </test>
 
@@ -28,6 +31,7 @@
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
         </classes>
     </test>
 
@@ -35,6 +39,7 @@
         <classes>
             <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
+            <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
         </classes>
     </test>
 
@@ -55,16 +60,30 @@
         </classes>
     </test>
 
+    <test name="Assembly Readiness UI">
+        <classes>
+            <class name="com.erp.tests.ui.AssemblyReadinessUiTest"/>
+        </classes>
+    </test>
+
     <test name="Technological Maps UI">
         <classes>
             <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
+            <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
+            <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
         </classes>
     </test>
 
     <test name="Operation History UI">
         <classes>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
+        </classes>
+    </test>
+
+    <test name="User Management UI">
+        <classes>
+            <class name="com.erp.tests.ui.UsersAdminUiTest"/>
         </classes>
     </test>
 

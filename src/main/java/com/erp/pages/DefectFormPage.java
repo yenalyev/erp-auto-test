@@ -81,8 +81,18 @@ public class DefectFormPage extends BasePage {
         String term = resourceName.trim().length() > 12
                 ? resourceName.trim().substring(0, 12)
                 : resourceName.trim();
-        Locator directInput = page.getByPlaceholder(RESOURCE_PLACEHOLDER);
-        if (directInput.count() > 0) {
+
+        // STORAGE type: ComboboxInput shows «Завантаження...» then «Оберіть ресурс...»
+        Locator storageInput = page.getByPlaceholder(RESOURCE_PLACEHOLDER)
+                .or(page.getByPlaceholder("Завантаження..."));
+        if (storageInput.count() > 0) {
+            page.waitForCondition(
+                    () -> {
+                        Locator ready = page.getByPlaceholder(RESOURCE_PLACEHOLDER);
+                        return ready.count() > 0 && ready.first().isEnabled();
+                    },
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+            Locator directInput = page.getByPlaceholder(RESOURCE_PLACEHOLDER);
             directInput.click();
             directInput.fill(term);
             waitForComboboxOptionsSettled();

@@ -20,54 +20,54 @@ SPA load → GET /users/me (cookies)
 
 Home `/` redirects to **first permitted sidebar route** (often `/production`).
 
-## Key routes (~40 screens)
+## Navigation: sidebar groups + PageTabs
 
-| Route | Page | Sidebar |
-|-------|------|---------|
-| `/production` | ProductionListPage | Виробництво |
-| `/production/createProduction` | Create wizard | — |
-| `/production/createDisassemble` | Disassemble create | — |
-| `/non-series-production` | Non-series list | Несерійне виробництво |
-| `/relocations` | RelocationPage | Видати/Отримати |
-| `/inventory` | UnitManagementPage | Залишки |
-| `/plans`, `/plan-execution` | Plans | Виробничі плани / Виконання |
-| `/technological-maps` | Tech maps | Техкарти |
-| `/storage` | Storages | Локації |
-| `/resources` | Resources dictionary | Словник ресурсів |
-| `/measurement-units` | Units | Од. вимірювання |
-| `/statistic` | Statistics | Аналітика |
-| `/shifts` | Shifts | Виробнича зміна |
+Related pages are grouped under one sidebar link (first child route). Sibling screens switch via in-page **PageTabs** (`role="tab"`). See `sidebarItems.ts` groups: `productionGroup`, `plansGroup`, `resourcesGroup`, `equipmentGroup`, `storageGroup`, etc.
 
-Router source: `src/Router.tsx`, sidebar: `sidebarItems.ts`.
+| Sidebar group | Lands on | PageTabs children (examples) |
+|---------------|----------|------------------------------|
+| Виробництво | `/production` | Несерійне…, Готово до комплектації, Виробнича зміна, Брак |
+| Виробничі плани | `/global-plans` | Глобальні плани, Виробничі плани, Виконання плану |
+| Довідники ресурсів | `/resources` | Словник ресурсів, Ціни, Категорії…, Одиниці… |
+| Обладнання | `/equipment` | Категорії обладнання, Співробітники |
+
+Ungrouped direct links still exist (Залишки, Видати/Отримати, Історія операцій, Техкарти, Користувачі та ролі, …).
+
+## Key routes
+
+| Route | Page | Notes |
+|-------|------|-------|
+| `/production` | ProductionListPage | CTAs «Виготовлення» / «Розбір»; **DateRangePicker** «Період» |
+| `/production/createProduction` | Create wizard | h1 «Запис про виготовлення» |
+| `/relocations` | RelocationPage | DateRangePicker on filters |
+| `/inventory` | InventoryPage | Залишки |
+| `/global-plans`, `/plans`, `/plan-execution` | under plans group | list pages often **no h1** |
+| `/technological-maps` | Tech maps | still has h1 |
+| `/resources` | Resources | PageTabs; no old «Перегляд ресурсів та БЧ» h1 |
+| `/users` | Users admin | h1 present |
+
+Router: `src/Router.tsx`, sidebar: `sidebarItems.ts`.
 
 ## UI test constraints
 
-- **`data-testid`: none** — ask frontend team to add before UI CRUD tests
-- Selectors today: Ukrainian text, placeholders, Tailwind classes — **fragile**
-- **RBAC:** sidebar items gated by permissions; write actions blocked when "Всі локації" selected
+- **`data-testid`: none** — prefer role/text + shared helpers (`DateRangePickerComponent`, `AppSidebarPage` group/tab API)
+- Selectors: Ukrainian text, placeholders, shadcn `data-slot` — fragile; avoid Tailwind class chains
+- **RBAC:** sidebar items gated by permissions; write actions blocked when «Всі локації» selected
 - Locale: Ukrainian throughout
 
-## ProductionPage vs current UI (important)
+## Production journal (aligned)
 
-| erp-auto-test expects | tk-ui reality |
-|----------------------|---------------|
-| Title "Журнал виготовленої продукції" | **No h1 title** on `/production` |
-| Button "Додати" | **"Виготовлення"** and **"Розбір"** |
-| Filter block Tailwind selector | Filters in flex wrapper; table has `rounded-xl border` |
+| Element | Reality |
+|---------|---------|
+| Page title | No h1 |
+| Create CTAs | «Виготовлення», «Розбір» |
+| Date filter | Single **DateRangePicker** (`Період`), default preset often 30 днів; «Очистити» resets dates |
+| Table | `div.rounded-xl.border.border-gray-200.bg-white` |
 
-Login flow and redirect to `/production` — **correct**.
+Login Keycloak selectors and post-login `/production` — correct for typical production VIEW.
 
 ## erp-auto-test UI coverage
 
-| Page Object | Tests | Status |
-|-------------|-------|--------|
-| `LoginPage` | TC-UI-001/002 | ✓ aligned |
-| `ProductionPage` | TC-UI-PROD-001 | **needs selector sync** |
+Broad Playwright coverage across production, relocation, inventory, global plans, tech maps, users, defects, equipment — see `src/test/java/com/erp/tests/ui/` and suites `ui.xml` / `ui-dev.xml` / domain suites.
 
-## UI test strategy
-
-- **Keep:** login smoke, production landing smoke (after ProductionPage fix)
-- **Defer:** create/edit wizards, relocations, plans UI — until `data-testid`
-- **API covers:** dictionary CRUD (resources, storage, units), production business logic
-
-When adding UI tests: prefer `data-testid` in tk-ui first, then update Page Objects in `com.erp.pages`.
+When adding UI tests: prefer `data-testid` in tk-ui first, then Page Objects in `com.erp.pages`.

@@ -14,6 +14,7 @@
             <class name="com.erp.tests.functional.production.ProductionTest"/>
             <class name="com.erp.tests.functional.production.ProductionJournalFilterApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
+            <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
         </classes>
     </test>
 

@@ -47,8 +47,11 @@ Keycloak login (shared with `PlaywrightSessionProvider`): `#username`, `#passwor
 Prefer stable selectors:
 - `data-testid` (ask frontend team to add)
 - role/text locators over Tailwind utility classes
+- Shared helpers: `DateRangePickerComponent` (label «Період»), `AppSidebarPage.openGroup` / `openPageTab` / `navigateToGroupedPage`
 
-Current brittle patterns to avoid copying: hardcoded Ukrainian UI strings, CSS class chains like `.text-gray-900`.
+Current brittle patterns to avoid copying: hardcoded Tailwind class chains like `.text-gray-900`.
+
+Ukrainian UI strings and PageTabs labels are acceptable when they match tk-ui copy.
 
 ## Auth reuse
 
@@ -57,11 +60,13 @@ API tests get sessions via `PlaywrightSessionProvider.getSession()`. UI tests us
 ## Running UI tests
 
 ```bash
-mvn test -Denv=dev -Dsuite=ui-dev      # LoginLogoutUITest (admin + owner1)
-mvn test -Denv=dev -Dsuite=ui          # LoginUITest
-mvn test -Denv=dev -Dsuite=dev-test    # ProductionUITest (pom default)
+mvn test -Denv=dev -Dsuite=ui          # broad UI suite
+mvn test -Denv=dev -Dsuite=ui-dev      # login/logout, accountant, crew, users access
+mvn test -Denv=dev -Dsuite=production  # production journal UI
 mvn exec:java@install-chromium         # first-time browser install
 ```
+
+Default `suite=dev-test` in pom may be empty — pick an explicit suite above.
 
 ## Adding a new UI test
 

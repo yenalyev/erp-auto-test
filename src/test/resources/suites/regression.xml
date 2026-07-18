@@ -70,6 +70,10 @@
     <test name="Resource Viewer API">
         <classes>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerExportApiTest"/>
         </classes>
     </test>
 
@@ -79,6 +83,7 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapDeactivationPlanGuardTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapValidationTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapHashtagApiTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapAlternativeGroupsTest"/>
         </classes>
     </test>
 
@@ -87,6 +92,10 @@
             <class name="com.erp.tests.functional.production.ProductionTest"/>
             <class name="com.erp.tests.functional.production.ProductionJournalFilterApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
+            <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
+            <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessApiTest"/>
+            <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
+            <class name="com.erp.tests.functional.statistics.PlanStatisticsAlternativeGroupsApiTest"/>
         </classes>
     </test>
 
@@ -108,6 +117,7 @@
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentSelectorContractTest"/>
         </classes>
     </test>
@@ -132,6 +142,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAmountApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanTechMapDeactivationGuardTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanAlternativeGroupsApiTest"/>
         </classes>
     </test>
 
@@ -139,7 +150,9 @@
         <classes>
             <class name="com.erp.tests.ui.LoginUITest"/>
             <class name="com.erp.tests.ui.LoginLogoutUITest"/>
+            <class name="com.erp.tests.ui.WorkspaceSelectorUiTest"/>
             <class name="com.erp.tests.ui.AccountantCabinetUITest"/>
+            <class name="com.erp.tests.ui.UsersAdminAccessUiTest"/>
         </classes>
     </test>
 
@@ -148,6 +161,7 @@
             <class name="com.erp.tests.ui.ProductionUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
             <class name="com.erp.tests.ui.ProductionHashtagUITest"/>
+            <class name="com.erp.tests.ui.AssemblyReadinessUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
         </classes>
@@ -162,6 +176,7 @@
     <test name="UI Resources">
         <classes>
             <class name="com.erp.tests.ui.ResourceAutocompleteUiTest"/>
+            <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
         </classes>
     </test>
 
@@ -175,6 +190,7 @@
             <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
         </classes>
     </test>
 
@@ -182,6 +198,7 @@
         <classes>
             <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
+            <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
         </classes>
     </test>
 
@@ -189,6 +206,7 @@
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
         </classes>
     </test>
 
@@ -208,6 +226,14 @@
             <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapHashtagUITest"/>
+            <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
+            <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
+        </classes>
+    </test>
+
+    <test name="UI User Management">
+        <classes>
+            <class name="com.erp.tests.ui.UsersAdminUiTest"/>
         </classes>
     </test>
 

@@ -6,6 +6,7 @@ import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
+import com.erp.pages.AccessForbiddenPage;
 import com.erp.pages.ExportAnalyticsPage;
 import com.erp.pages.InventoryEditPage;
 import com.erp.pages.OperationHistoryPage;
@@ -13,6 +14,7 @@ import com.erp.pages.UnitManagementPage;
 import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.InventoryStockUiVerification;
+import com.erp.utils.helpers.PollUtils;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterMethod;
@@ -57,7 +59,8 @@ public class InventoryUiTest extends BaseUITest {
 
         StorageItemResponse item;
         try {
-            item = inventoryFixture.requireItemForResource(storageId, resourceId, UserRole.ADMIN);
+            item = inventoryFixture.requireItemForResourceWithRetry(
+                    storageId, resourceId, UserRole.ADMIN, 15_000);
         } catch (IllegalStateException ex) {
             // Multi-location stock probe and storage inventory list can diverge on shared dev data.
             log.warn("Relocation resource {} not on storage {} inventory list after ensureStock: {}",
@@ -194,9 +197,13 @@ public class InventoryUiTest extends BaseUITest {
         Allure.step("Відкрити агрегований перегляд «Всі локації»", () -> {
             injectAllLocationsSession(UserRole.ADMIN);
             page = browserContext.newPage();
-            UnitManagementPage stock = new UnitManagementPage(page).openForAllLocations();
-            assertThat(stock.isOpenInventoryButtonDisabled())
-                    .as("Кнопка сесії має бути disabled у режимі «Всі локації»")
+            UnitManagementPage stock = new UnitManagementPage(page).openForAllLocations().waitForLoaded();
+            PollUtils.waitUntilTrue(
+                    stock::isInventorySessionToggleBlocked,
+                    10_000,
+                    "Inventory session toggle blocked in all-locations mode");
+            assertThat(stock.isInventorySessionToggleBlocked())
+                    .as("Toggle сесії має бути прихований або disabled у режимі «Всі локації»")
                     .isTrue();
             stock.attachScreenshot("TC-WMS-003-004 — all locations disabled session");
         });
@@ -777,15 +784,26 @@ public class InventoryUiTest extends BaseUITest {
         Allure.step("Owner 1 не має доступу до /export-analytics", () -> {
             injectRoleSession(UserRole.OWNER_1, storageId);
             page = browserContext.newPage();
-            ExportAnalyticsPage exportPage = new ExportAnalyticsPage(page).open();
+            ExportAnalyticsPage exportPage = new ExportAnalyticsPage(page).navigateWithoutAccessCheck();
 
             assertThat(exportPage.isSidebarLinkVisible())
                     .as("Owner 1 не має бачити пункт sidebar «Експорт даних»")
                     .isFalse();
 
-            exportPage.selectRemaindersExport().clickExport();
-            exportPage.assertExportErrorToast();
-            exportPage.attachScreenshot("TC-WMS-007-008 — owner export denied");
+            AccessForbiddenPage forbidden = new AccessForbiddenPage(page);
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
+            if (forbidden.isForbiddenMessageVisible()) {
+                forbidden.attachScreenshot("TC-WMS-007-008 — owner route forbidden");
+            } else if (exportPage.isLoaded()) {
+                exportPage.selectRemaindersExport().clickExport();
+                exportPage.assertExportErrorToast();
+                exportPage.attachScreenshot("TC-WMS-007-008 — owner export denied");
+            } else if (!page.url().contains("/export-analytics")) {
+                exportPage.attachScreenshot("TC-WMS-007-008 — owner redirected away from export");
+            } else {
+                throw new AssertionError(
+                        "Owner 1: очікувався RouteGuard 403, redirect або сторінка експорту з помилкою API");
+            }
         });
     }
 

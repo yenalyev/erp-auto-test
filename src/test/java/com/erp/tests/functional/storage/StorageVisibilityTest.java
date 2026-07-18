@@ -50,6 +50,8 @@ public class StorageVisibilityTest extends StorageApiTestBase {
         owner2StorageId = ConfigProvider.getOwner2StorageId();
         ensureOwner2RestrictedAccess();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
+        regionFixture.purgeRegionsByNamePrefixes(
+                UserRole.ADMIN, "str-reg-", "crew-", "rel-vis-", "vis-");
     }
 
     @AfterClass(alwaysRun = true)
@@ -161,21 +163,19 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             log.info("TC-STR-REG-021: OWNER_1 names count={}, OWNER_2 names count={}",
                     owner1Names.size(), owner2Names.size());
 
-            assertThat(owner2Names)
+            assertThat(owner2Names.stream().map(StorageResponse::getId).toList())
                     .as("REGIONS owner без областей видимості бачить лише власний підрозділ (id=%d)",
                             owner2StorageId)
-                    .hasSize(1);
-            assertThat(owner2Names.getFirst().getId())
-                    .as("Єдиний елемент OWNER_2 /names — його business unit")
-                    .isEqualTo(owner2StorageId);
+                    .containsExactly(owner2StorageId);
 
             assertThat(owner1Names.size())
                     .as("FULL_ACCESS owner бачить ширший перелік локацій у селекторі, ніж REGIONS owner")
                     .isGreaterThan(owner2Names.size());
+        });
 
-            assertThat(owner1Names.stream().map(StorageResponse::getId))
-                    .as("OWNER_1 бачить принаймні власний storage id=%d", owner1StorageId)
-                    .contains(owner1StorageId);
+        Allure.step("STEP 5: OWNER_1 GET by id — власний storage доступний незалежно від пагінації /names", () -> {
+            StorageResponse owner1Direct = storageFixture.getById(UserRole.OWNER_1, owner1StorageId);
+            assertThat(owner1Direct.getId()).isEqualTo(owner1StorageId);
         });
     }
 
@@ -194,8 +194,8 @@ public class StorageVisibilityTest extends StorageApiTestBase {
 
         List<StorageResponse> names = storageFixture.getNames(UserRole.OWNER_2, true, null);
 
-        assertThat(names).hasSize(1);
-        assertThat(names.getFirst().getId()).isEqualTo(owner2StorageId);
+        assertThat(names.stream().map(StorageResponse::getId).toList())
+                .containsExactly(owner2StorageId);
         assertThat(names.stream().map(StorageResponse::getId)).doesNotContain(foreign.getId());
     }
 

@@ -64,7 +64,7 @@ public class CrewRegionFixture extends BaseFixture {
         StorageRegionResponse region = regionFixture.createRegion(
                 unit, StorageAccessMode.CREWS, namePrefix + "reg-");
         addCrewRegionMembers(region.getId());
-        regionFixture.addRegionLocations(region.getId(), unit.getId());
+        regionFixture.addRegionLocations(region.getId(), unit.getId(), crew.getId());
 
         CrewRegionScenario scenario = CrewRegionScenario.builder()
                 .region(region)
@@ -94,7 +94,7 @@ public class CrewRegionFixture extends BaseFixture {
         StorageRegionResponse region = regionFixture.createRegion(
                 unitA, StorageAccessMode.CREWS, namePrefix + "reg-");
         addCrewRegionMembers(region.getId());
-        regionFixture.addRegionLocations(region.getId(), unitA.getId());
+        regionFixture.addRegionLocations(region.getId(), unitA.getId(), crew.getId());
 
         return CrewRegionScenario.builder()
                 .region(region)

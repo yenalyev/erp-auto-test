@@ -2,6 +2,8 @@ package com.erp.data.factories.tech_map;
 
 import com.erp.data.FakerProvider;
 import com.erp.models.request.ResourceUsageRequest;
+import com.erp.models.request.TechnologicalMapAlternativeGroupRequest;
+import com.erp.models.request.TechnologicalMapAlternativeGroupResourceRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.ResourceUsageResponse;
@@ -73,6 +75,183 @@ public class TechnologicalMapDataFactory {
                 .input(input)
                 .output(output)
                 .storageIds(storageIds);
+    }
+
+    /**
+     * PRODUCTION map: 1 fixed input + 1 alt group (default + non-default) + 1 output.
+     *
+     * @param resources [fixedInput, defaultAlt, nonDefaultAlt, output] — need ≥ 4
+     */
+    public static TechnologicalMapRequest createProductionMapWithAlternativeGroup(
+            List<ResourceResponse> resources,
+            Long storageId) {
+        if (resources == null || resources.size() < 4) {
+            throw new IllegalStateException("Need at least 4 resources: fixed, defaultAlt, alt, output");
+        }
+        if (storageId == null) {
+            throw new IllegalStateException("storageId is required for technological map request");
+        }
+
+        ResourceResponse fixed = resources.get(0);
+        ResourceResponse defaultAlt = resources.get(1);
+        ResourceResponse otherAlt = resources.get(2);
+        ResourceResponse output = resources.get(3);
+
+        return TechnologicalMapRequest.builder()
+                .name("AltGroup-TM-" + System.currentTimeMillis())
+                .type(TYPE_PRODUCTION)
+                .input(List.of(new ResourceUsageRequest(fixed.getId(), 1.0)))
+                .output(List.of(new ResourceUsageRequest(output.getId(), 1.0)))
+                .storageIds(Set.of(storageId))
+                .groups(List.of(alternativeGroup(
+                        "Клей",
+                        alternativeResource(defaultAlt.getId(), 2.0, true),
+                        alternativeResource(otherAlt.getId(), 2.5, false))))
+                .build();
+    }
+
+    /**
+     * PRODUCTION map with only alternative groups (no fixed inputs).
+     *
+     * @param resources [defaultAlt, nonDefaultAlt, output] — need ≥ 3
+     */
+    public static TechnologicalMapRequest createProductionMapGroupsOnly(
+            List<ResourceResponse> resources,
+            Long storageId) {
+        if (resources == null || resources.size() < 3) {
+            throw new IllegalStateException("Need at least 3 resources: defaultAlt, alt, output");
+        }
+        if (storageId == null) {
+            throw new IllegalStateException("storageId is required for technological map request");
+        }
+
+        return TechnologicalMapRequest.builder()
+                .name("AltGroupOnly-TM-" + System.currentTimeMillis())
+                .type(TYPE_PRODUCTION)
+                .input(List.of())
+                .output(List.of(new ResourceUsageRequest(resources.get(2).getId(), 1.0)))
+                .storageIds(Set.of(storageId))
+                .groups(List.of(alternativeGroup(
+                        "Пальне",
+                        alternativeResource(resources.get(0).getId(), 1.5, true),
+                        alternativeResource(resources.get(1).getId(), 1.8, false))))
+                .build();
+    }
+
+    public static TechnologicalMapAlternativeGroupRequest alternativeGroup(
+            String name,
+            TechnologicalMapAlternativeGroupResourceRequest... resources) {
+        return TechnologicalMapAlternativeGroupRequest.builder()
+                .name(name)
+                .alternativeResources(List.of(resources))
+                .build();
+    }
+
+    public static TechnologicalMapAlternativeGroupResourceRequest alternativeResource(
+            Long resourceId, double amount, boolean isDefault) {
+        return TechnologicalMapAlternativeGroupResourceRequest.builder()
+                .resourceId(resourceId)
+                .amount(amount)
+                .isDefault(isDefault)
+                .build();
+    }
+
+    public static TechnologicalMapRequest withZeroDefaultsInGroup(
+            List<ResourceResponse> resources, Long storageId) {
+        TechnologicalMapRequest request = createProductionMapWithAlternativeGroup(resources, storageId);
+        request.getGroups().getFirst().getAlternativeResources()
+                .forEach(r -> r.setIsDefault(false));
+        return request;
+    }
+
+    public static TechnologicalMapRequest withTwoDefaultsInGroup(
+            List<ResourceResponse> resources, Long storageId) {
+        TechnologicalMapRequest request = createProductionMapWithAlternativeGroup(resources, storageId);
+        request.getGroups().getFirst().getAlternativeResources()
+                .forEach(r -> r.setIsDefault(true));
+        return request;
+    }
+
+    public static TechnologicalMapRequest withEmptyAlternativeResources(
+            List<ResourceResponse> resources, Long storageId) {
+        TechnologicalMapRequest request = createProductionMapWithAlternativeGroup(resources, storageId);
+        request.getGroups().getFirst().setAlternativeResources(List.of());
+        return request;
+    }
+
+    public static TechnologicalMapRequest withDuplicateResourceInGroup(
+            List<ResourceResponse> resources, Long storageId) {
+        TechnologicalMapRequest request = createProductionMapWithAlternativeGroup(resources, storageId);
+        Long duplicatedId = resources.get(1).getId();
+        request.getGroups().getFirst().setAlternativeResources(List.of(
+                alternativeResource(duplicatedId, 2.0, true),
+                alternativeResource(duplicatedId, 2.5, false)));
+        return request;
+    }
+
+    /**
+     * PRODUCTION map with two alternative groups (fixed input + 2 groups + output).
+     *
+     * @param resources [fixed, glueDefault, glueAlt, fuelDefault, fuelAlt, output] — need ≥ 6
+     */
+    public static TechnologicalMapRequest createProductionMapWithTwoGroups(
+            List<ResourceResponse> resources,
+            Long storageId) {
+        if (resources == null || resources.size() < 6) {
+            throw new IllegalStateException("Need at least 6 resources for two-group tech map");
+        }
+        if (storageId == null) {
+            throw new IllegalStateException("storageId is required for technological map request");
+        }
+
+        return TechnologicalMapRequest.builder()
+                .name("AltTwoGroups-TM-" + System.currentTimeMillis())
+                .type(TYPE_PRODUCTION)
+                .input(List.of(new ResourceUsageRequest(resources.get(0).getId(), 1.0)))
+                .output(List.of(new ResourceUsageRequest(resources.get(5).getId(), 1.0)))
+                .storageIds(Set.of(storageId))
+                .groups(List.of(
+                        alternativeGroup(
+                                "Клей",
+                                alternativeResource(resources.get(1).getId(), 2.0, true),
+                                alternativeResource(resources.get(2).getId(), 2.5, false)),
+                        alternativeGroup(
+                                "Пальне",
+                                alternativeResource(resources.get(3).getId(), 1.5, true),
+                                alternativeResource(resources.get(4).getId(), 1.8, false))))
+                .build();
+    }
+
+    public static TechnologicalMapRequest withChangedAltAmount(
+            @NonNull TechnologicalMapResponse existing,
+            int groupIndex,
+            int resourceIndex,
+            double newAmount) {
+        TechnologicalMapRequest request = fromExisting(existing).build();
+        if (request.getGroups() == null || request.getGroups().size() <= groupIndex) {
+            throw new IllegalStateException("Tech map has no group at index " + groupIndex);
+        }
+        var resources = request.getGroups().get(groupIndex).getAlternativeResources();
+        if (resources == null || resources.size() <= resourceIndex) {
+            throw new IllegalStateException("Group has no alternative resource at index " + resourceIndex);
+        }
+        resources.get(resourceIndex).setAmount(newAmount);
+        return request;
+    }
+
+    public static TechnologicalMapRequest withDuplicateGroupNames(
+            List<ResourceResponse> resources, Long storageId) {
+        if (resources == null || resources.size() < 4) {
+            throw new IllegalStateException("Need at least 4 resources");
+        }
+        TechnologicalMapRequest request = createProductionMapWithAlternativeGroup(resources, storageId);
+        request.setGroups(List.of(
+                alternativeGroup("Клей",
+                        alternativeResource(resources.get(1).getId(), 2.0, true),
+                        alternativeResource(resources.get(2).getId(), 2.5, false)),
+                alternativeGroup("клей",
+                        alternativeResource(resources.get(0).getId(), 1.0, true))));
+        return request;
     }
 
     /**
@@ -181,6 +360,23 @@ public class TechnologicalMapDataFactory {
     }
 
     /**
+     * Swap which alternative resource is the default (for update / version bump tests).
+     */
+    public static TechnologicalMapRequest withSwappedDefault(@NonNull TechnologicalMapResponse existing) {
+        TechnologicalMapRequest request = fromExisting(existing).build();
+        if (request.getGroups() == null || request.getGroups().isEmpty()) {
+            throw new IllegalStateException("Tech map has no alternative groups to swap");
+        }
+        var resources = request.getGroups().getFirst().getAlternativeResources();
+        if (resources == null || resources.size() < 2) {
+            throw new IllegalStateException("Alternative group must have at least 2 resources");
+        }
+        resources.get(0).setIsDefault(false);
+        resources.get(1).setIsDefault(true);
+        return request;
+    }
+
+    /**
      * Клон техкарти (як у UI: нова назва, ті самі input/output).
      */
     public static TechnologicalMapRequest cloneFrom(@NonNull TechnologicalMapResponse source) {
@@ -213,7 +409,8 @@ public class TechnologicalMapDataFactory {
                 .type(existing.getType())
                 .storageIds(storageIds)
                 .input(DtoMapper.mapToRequestList(existing.getInput()))
-                .output(DtoMapper.mapToRequestList(existing.getOutput()));
+                .output(DtoMapper.mapToRequestList(existing.getOutput()))
+                .groups(DtoMapper.mapGroupsToRequest(existing.getGroups()));
     }
 
     /**

@@ -2,6 +2,9 @@ package com.erp.utils.helpers;
 
 import lombok.experimental.UtilityClass;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @UtilityClass
@@ -24,6 +27,10 @@ public class HashtagTestData {
         if (tags == null || tags.length == 0) {
             return "";
         }
-        return String.join(" ", tags);
+        List<String> present = Arrays.stream(tags)
+                .filter(Objects::nonNull)
+                .filter(tag -> !tag.isBlank())
+                .toList();
+        return String.join(" ", present);
     }
 }

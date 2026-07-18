@@ -120,4 +120,30 @@ public final class GlobalPlanAssertions {
         .as("nextBlock requiredAmount for resource id=%s", resourceId)
         .isCloseTo(expectedAmount, within(TOLERANCE));
   }
+
+  public static void assertRequirementAbsent(
+      DecompositionRequirementsResponse requirements,
+      Long resourceId) {
+    assertThat(requirements).isNotNull();
+    boolean inRaw = requirements.getRawMaterials() != null && requirements.getRawMaterials().stream()
+        .anyMatch(i -> resourceId.equals(i.getResource().getId()));
+    boolean inSemi = requirements.getSemiFinished() != null && requirements.getSemiFinished().stream()
+        .anyMatch(i -> resourceId.equals(i.getResource().getId()));
+    assertThat(inRaw || inSemi)
+        .as("Resource id=%s must not appear in requirements (raw or semi)", resourceId)
+        .isFalse();
+  }
+
+  public static void assertNextBlockAbsentResource(
+      DecompositionResponse decomposition,
+      Long resourceId) {
+    if (decomposition.getNextBlock() == null || decomposition.getNextBlock().getItems() == null) {
+      return;
+    }
+    boolean present = decomposition.getNextBlock().getItems().stream()
+        .anyMatch(i -> resourceId.equals(i.getResource().getId()));
+    assertThat(present)
+        .as("Resource id=%s must not appear in nextBlock", resourceId)
+        .isFalse();
+  }
 }

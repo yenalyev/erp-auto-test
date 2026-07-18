@@ -20,6 +20,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAddOutputTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAmountApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanTechMapDeactivationGuardTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanAlternativeGroupsApiTest"/>
         </classes>
     </test>
 

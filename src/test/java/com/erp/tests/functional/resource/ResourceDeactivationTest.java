@@ -21,7 +21,6 @@ import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.TechnologicalMapResponse;
-import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.AllureHelper;
@@ -173,18 +172,55 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
     @Description("Деактивація заборонена, якщо ресурс є в залишках internal локації")
     @Severity(SeverityLevel.CRITICAL)
     public void testCannotDeactivateResourceWithStock() {
-        relocationFixture.prepareContext();
-        Long resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
+        ResourceResponse resource = resourceFixture.createUniqueResource("deact-stock-");
+        Long resourceId = resource.getId();
+        double seedAmount = 50.0;
 
-        Response response = Allure.step("Act: спроба деактивації ресурсу з залишками", () ->
-                resourceFixture.deactivate(UserRole.ADMIN, resourceId));
+        try {
+            Allure.step("Arrange: seed залишку на owner1 (ensureStock → fallback inventory)", () -> {
+                try {
+                    relocationFixture.ensureStock(owner1StorageId, resourceId, seedAmount);
+                } catch (RuntimeException receiveFailed) {
+                    log.warn("ensureStock failed, trying inventory conduct: {}", receiveFailed.getMessage());
+                    try {
+                        seedStockViaInventory(owner1StorageId, resourceId, seedAmount);
+                    } catch (RuntimeException inventoryFailed) {
+                        throw new SkipException(
+                                "Не вдалось seed залишку на dev (ensureStock та inventory): "
+                                        + receiveFailed.getMessage());
+                    }
+                }
+                double stock = relocationFixture.getResourceStock(
+                        owner1StorageId, resourceId, UserRole.OWNER_1);
+                assertThat(stock)
+                        .as("Перед деактивацією ресурс має мати залишок > 0")
+                        .isGreaterThan(0);
+            });
 
-        Allure.step("Assert: 400 + error message, ресурс лишається активним", () -> {
-            ResourceFixture.assertDeactivationRejected(response, DEACTIVATION_ERROR_FRAGMENT);
-            ResourceFixture.assertAnyErrorMessageContains(response, "складі");
-            ResourceFixture.assertResourceStillActive(
-                    resourceFixture.getById(UserRole.ADMIN, resourceId));
-        });
+            Response response = Allure.step("Act: спроба деактивації ресурсу з залишками", () ->
+                    resourceFixture.deactivate(UserRole.ADMIN, resourceId));
+
+            Allure.step("Assert: 400 + error message, ресурс лишається активним", () -> {
+                ResourceFixture.assertDeactivationRejected(response, DEACTIVATION_ERROR_FRAGMENT);
+                ResourceFixture.assertAnyErrorMessageContains(response, "складі");
+                ResourceFixture.assertResourceStillActive(
+                        resourceFixture.getById(UserRole.ADMIN, resourceId));
+            });
+        } finally {
+            Allure.step("Cleanup: прибрати залишок і деактивувати тестовий ресурс", () -> {
+                try {
+                    inventoryFixture.removeResourceFromStorage(
+                            owner1StorageId, resourceId, UserRole.ADMIN);
+                } catch (Exception e) {
+                    log.warn("Stock cleanup failed for resource {}: {}", resourceId, e.getMessage());
+                }
+                Response deactivateResponse = resourceFixture.deactivate(UserRole.ADMIN, resourceId);
+                if (deactivateResponse.statusCode() != 200) {
+                    log.warn("Test resource {} deactivation after cleanup returned HTTP {}",
+                            resourceId, deactivateResponse.statusCode());
+                }
+            });
+        }
     }
 
     @Test(priority = 21)

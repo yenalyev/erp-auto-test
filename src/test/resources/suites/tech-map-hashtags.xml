@@ -1,0 +1,25 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Tech Map Hashtags" parallel="none" verbose="1">
+    <!--
+      mvn test -Denv=staging -Dsuite=tech-map-hashtags
+    -->
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Tech Map Hashtag API">
+        <classes>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapHashtagApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Tech Map Hashtag UI">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapHashtagUITest"/>
+        </classes>
+    </test>
+</suite>

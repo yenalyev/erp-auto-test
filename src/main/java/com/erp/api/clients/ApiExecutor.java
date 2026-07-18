@@ -4,6 +4,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.models.request.EquipmentCreateRequest;
 import com.erp.models.request.EquipmentRelocationReceiveEditRequest;
+import com.erp.models.request.RelocationIncidentRequest;
 import com.erp.models.request.RelocationInputEditRequest;
 import com.erp.models.request.RelocationInputRequest;
 import com.erp.models.request.RelocationUpdateRequest;
@@ -183,6 +184,16 @@ public class ApiExecutor {
         Map<String, String> sessionCookies = getSessionForRole(role);
         return apiClient.executeMultipartPost(
                 ApiEndpointDefinition.EQUIPMENT_POST_CREATE.getPath(),
+                sessionCookies,
+                "request",
+                request);
+    }
+
+    @Step("API Request: POST /incidents/relocations as {role}")
+    public Response executeIncidentCreate(RelocationIncidentRequest request, UserRole role) {
+        Map<String, String> sessionCookies = getSessionForRole(role);
+        return apiClient.executeMultipartPost(
+                ApiEndpointDefinition.INCIDENT_POST_CREATE.getPath(),
                 sessionCookies,
                 "request",
                 request);

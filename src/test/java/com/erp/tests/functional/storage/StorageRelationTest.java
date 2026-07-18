@@ -106,7 +106,9 @@ public class StorageRelationTest extends StorageApiTestBase {
         StorageResponse externalStorage = storageFixture.createExternalChildStorage(parent.getId(), "ext-filter-");
 
         List<StorageResponse> internalPage = storageFixture.getPageContent(
-                UserRole.ADMIN, Map.of("relation", StorageRelation.INTERNAL.name()));
+                UserRole.ADMIN, Map.of(
+                        "relation", StorageRelation.INTERNAL.name(),
+                        "name", internalStorage.getName()));
 
         assertThat(internalPage.stream().map(StorageResponse::getId))
                 .contains(internalStorage.getId())
@@ -192,10 +194,14 @@ public class StorageRelationTest extends StorageApiTestBase {
 
             Allure.step("Assert list filters for type=" + type, () -> {
                 List<Long> internalIds = storageFixture.getPageContent(
-                                UserRole.ADMIN, Map.of("relation", StorageRelation.INTERNAL.name()))
+                                UserRole.ADMIN, Map.of(
+                                        "relation", StorageRelation.INTERNAL.name(),
+                                        "name", internalLoc.getName()))
                         .stream().map(StorageResponse::getId).toList();
                 List<Long> externalIds = storageFixture.getPageContent(
-                                UserRole.ADMIN, Map.of("relation", StorageRelation.EXTERNAL.name()))
+                                UserRole.ADMIN, Map.of(
+                                        "relation", StorageRelation.EXTERNAL.name(),
+                                        "name", externalLoc.getName()))
                         .stream().map(StorageResponse::getId).toList();
 
                 assertThat(internalIds)

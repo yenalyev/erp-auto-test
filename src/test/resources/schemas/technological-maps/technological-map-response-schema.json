@@ -51,7 +51,6 @@
     },
     "input": {
       "type": "array",
-      "minItems": 1,
       "items": {
         "$ref": "resource-usage-response-schema.json"
       }
@@ -61,6 +60,12 @@
       "minItems": 1,
       "items": {
         "$ref": "resource-usage-response-schema.json"
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "$ref": "alternative-group-response-schema.json"
       }
     }
   },

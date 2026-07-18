@@ -1,5 +1,6 @@
 package com.erp.test_context;
 
+import com.erp.models.common.GlobalPlanAltGroupContext;
 import com.erp.models.common.GlobalPlanChainContext;
 import com.erp.models.response.GlobalPlanResponse;
 import com.erp.models.response.PlanResponse;
@@ -7,6 +8,7 @@ import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
+import com.erp.models.response.UserModelResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -51,6 +53,7 @@ public enum ContextKey {
     GLOBAL_PLAN("globalPlan", GlobalPlanResponse.class),
     GLOBAL_PLAN_ID("globalPlanId", Long.class),
     GLOBAL_PLAN_CHAIN("globalPlanChain", GlobalPlanChainContext.class),
+    GLOBAL_PLAN_ALT_CHAIN("globalPlanAltChain", GlobalPlanAltGroupContext.class),
     SHARED_STORAGE_LIST("sharedStorageList", List.class),
     RELOCATION_ID("relocationId", Long.class),
     RELOCATION_CREATED_ID("relocationCreatedId", Long.class),
@@ -58,6 +61,10 @@ public enum ContextKey {
     RELOCATION_SUPPLIER_ID("relocationSupplierId", Long.class),
     RELOCATION_UNIT_STORAGE_ID("relocationUnitStorageId", Long.class),
     RELOCATION_RESOURCE_ID("relocationResourceId", Long.class),
+    /** CREATED relocation reserved for RBAC incident create (denied-only matrix). */
+    RELOCATION_FOR_INCIDENT_ID("relocationForIncidentId", Long.class),
+    /** LOST relocation with an existing incident (RBAC GET). */
+    RELOCATION_WITH_INCIDENT_ID("relocationWithIncidentId", Long.class),
     EQUIPMENT_ID("equipmentId", Long.class),
     EQUIPMENT_CATEGORY_ID("equipmentCategoryId", Long.class),
     DEFECT_ID("defectId", Long.class),
@@ -67,7 +74,13 @@ public enum ContextKey {
     /** Екіпаж (CREW storage) у області видимості CREWS для OWNER_1. */
     CREW_STORAGE_ID("crewStorageId", Long.class),
     /** Батьківський UNIT екіпажу (для crew-names RBAC / fixtures). */
-    CREW_PARENT_UNIT_ID("crewParentUnitId", Long.class);
+    CREW_PARENT_UNIT_ID("crewParentUnitId", Long.class),
+    /** Keycloak user id для RBAC matrix / user management tests. */
+    SHARED_USER_ID("sharedUserId", String.class),
+    /** Повна модель користувача для PUT /users/{id}. */
+    SHARED_USER("sharedUser", UserModelResponse.class),
+    /** Realm role name для GET /users/roles/{roleName}. */
+    SHARED_ROLE_NAME("sharedRoleName", String.class);
     private final String name;
     private final Class<?> type;
 }

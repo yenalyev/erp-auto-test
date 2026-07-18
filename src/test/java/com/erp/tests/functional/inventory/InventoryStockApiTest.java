@@ -38,8 +38,7 @@ public class InventoryStockApiTest extends InventoryApiTestBase {
     @Story("View stock on selected storage")
     @Severity(SeverityLevel.NORMAL)
     public void viewStockOnStorage() {
-        StorageItemResponse item = inventoryFixture.requireItemForResource(
-                owner1StorageId, anchorResourceId, UserRole.OWNER_1);
+        StorageItemResponse item = requireAnchorItem();
         assertThat(item.getResource()).isNotNull();
         assertThat(item.getAmount()).isGreaterThan(0);
         assertThat(item.getResource().getName()).isNotBlank();
@@ -50,15 +49,15 @@ public class InventoryStockApiTest extends InventoryApiTestBase {
     @Story("Filter stock by search term")
     @Severity(SeverityLevel.NORMAL)
     public void filterStockBySearchTerm() {
-        StorageItemResponse anchor = inventoryFixture.requireItemForResource(
-                owner1StorageId, anchorResourceId, UserRole.OWNER_1);
+        StorageItemResponse anchor = requireAnchorItem();
         String searchTerm = anchor.getResource().getName().trim();
+        long resourceId = anchor.getResource().getId();
 
         List<StorageItemResponse> filtered = inventoryFixture.listItems(
                 owner1StorageId, UserRole.OWNER_1, Map.of("searchTerm", searchTerm));
         assertThat(filtered).isNotEmpty();
         assertThat(filtered.stream().anyMatch(i ->
-                anchorResourceId.equals(i.getResource().getId()))).isTrue();
+                resourceId == i.getResource().getId())).isTrue();
     }
 
     @Test(priority = 40)

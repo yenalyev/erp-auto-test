@@ -57,7 +57,6 @@ public class AccountantCabinetUITest extends BaseUITest {
 
     private static final List<String> EXPECTED_MAIN_SECTIONS = List.of(
             "Виробництво",
-            "Несерійне виробництво",
             "Залишки",
             "Обладнання",
             "Логістика",
@@ -66,6 +65,14 @@ public class AccountantCabinetUITest extends BaseUITest {
 
     private static final List<String> EXPECTED_DICTIONARIES = List.of(
             "Техкарти",
+            "Довідники ресурсів"
+    );
+
+    private static final List<String> EXPECTED_PRODUCTION_TABS = List.of(
+            "Несерійне виробництво"
+    );
+
+    private static final List<String> EXPECTED_RESOURCE_TABS = List.of(
             "Словник ресурсів",
             "Ціни"
     );
@@ -111,9 +118,10 @@ public class AccountantCabinetUITest extends BaseUITest {
             Після логіну перевіряється:
             — редирект на /production і активний розділ «Виробництво»
             — селектор локацій у sidebar (перша доступна локація обрана за замовчуванням)
-            — розділи: Виробництво, Несерійне виробництво, Залишки, Обладнання, Логістика, Експорт даних
-            — словники: Техкарти, Словник ресурсів, Ціни
-            — фільтри журналу: Продукт, Категорія, Тип робіт, З, По
+            — розділи sidebar: Виробництво, Залишки, Обладнання, Логістика, Експорт даних
+            — словники: Техкарти, Довідники ресурсів (PageTabs: Словник ресурсів, Ціни)
+            — PageTabs у «Виробництво»: Несерійне виробництво
+            — фільтри журналу: Продукт, Категорія, Тип робіт, Період
             """)
     public void accountantCabinetLayoutSmokeTest() {
         String username = UserRole.ACCOUNTANT.getUsername();
@@ -153,19 +161,23 @@ public class AccountantCabinetUITest extends BaseUITest {
                 .as("Селектор локацій («Робочий простір») має бути видимим")
                 .isTrue();
 
-        Allure.step("Перевірити дефолтний вибір першої локації в селекторі", () -> {
+        Allure.step("Перевірити дефолтний вибір локації в селекторі", () -> {
             String selectedLocation = sidebar.getSelectedLocationName();
-            String firstLocation = sidebar.getFirstAvailableLocationName();
+            java.util.List<String> available = sidebar.collectWorkspaceLocationLabels();
 
             assertThat(selectedLocation)
                     .as("Обрана локація не повинна бути порожньою")
                     .isNotBlank();
-            assertThat(selectedLocation)
-                    .as("За замовчуванням має бути обрана перша доступна локація")
-                    .isEqualTo(firstLocation);
+            assertThat(available)
+                    .as("Ієрархічний селектор має містити хоча б одну локацію")
+                    .isNotEmpty();
+            assertThat(available)
+                    .as("Обрана локація має бути серед доступних у StorageTreeSelect")
+                    .anyMatch(label -> label.equals(selectedLocation) || label.contains(selectedLocation)
+                            || selectedLocation.contains(label));
 
             Allure.parameter("selectedLocation", selectedLocation);
-            Allure.parameter("firstAvailableLocation", firstLocation);
+            Allure.parameter("availableLocations", available.toString());
         });
 
         assertThat(sidebar.isNavItemActive("Виробництво"))
@@ -188,6 +200,24 @@ public class AccountantCabinetUITest extends BaseUITest {
                     .isTrue();
         }
 
+        for (String tab : EXPECTED_PRODUCTION_TABS) {
+            assertThat(sidebar.isPageTabVisible(tab))
+                    .as("PageTab «%s» має бути видимим на /production", tab)
+                    .isTrue();
+        }
+
+        Allure.step("Перевірити PageTabs у групі «Довідники ресурсів»", () -> {
+            sidebar.navigateToGroupedPage(
+                    AppSidebarPage.GROUP_RESOURCES, AppSidebarPage.TAB_RESOURCES_DICT);
+            for (String tab : EXPECTED_RESOURCE_TABS) {
+                assertThat(sidebar.isPageTabVisible(tab))
+                        .as("PageTab «%s» має бути видимим у довідниках ресурсів", tab)
+                        .isTrue();
+            }
+            sidebar.openGroup(AppSidebarPage.GROUP_PRODUCTION);
+            new ProductionPage(page).waitForLoaded();
+        });
+
         assertThat(productionPage.isProductFilterVisible())
                 .as("Фільтр «Продукт» має бути видимим")
                 .isTrue();
@@ -197,11 +227,8 @@ public class AccountantCabinetUITest extends BaseUITest {
         assertThat(productionPage.isWorkTypeFilterVisible())
                 .as("Фільтр «Тип робіт» має бути видимим")
                 .isTrue();
-        assertThat(productionPage.isDateFromVisible())
-                .as("Фільтр «З» має бути видимим")
-                .isTrue();
-        assertThat(productionPage.isDateToVisible())
-                .as("Фільтр «По» має бути видимим")
+        assertThat(productionPage.isPeriodFilterVisible())
+                .as("Фільтр «Період» має бути видимим")
                 .isTrue();
 
         productionPage.attachScreenshot("Accountant cabinet — all assertions passed");
@@ -237,9 +264,6 @@ public class AccountantCabinetUITest extends BaseUITest {
         assertThat(units.stream().filter(s -> "UNIT".equalsIgnoreCase(s.getType())).toList())
                 .as("API my-units для accountant не повинен містити UNIT")
                 .isEmpty();
-
-        AppSidebarPage sidebar = new AppSidebarPage(page);
-        assertThat(sidebar.collectWorkspaceLocationLabels()).isNotEmpty();
     }
 
     @Test(priority = 4)

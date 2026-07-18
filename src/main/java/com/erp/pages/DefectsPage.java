@@ -49,7 +49,9 @@ public class DefectsPage extends BasePage {
         } catch (Exception e) {
             log.debug("NETWORKIDLE not reached within timeout — proceeding: {}", e.getMessage());
         }
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(HEADING_TEXT))
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(HEADING_TEXT))
+                .or(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON_TEXT)))
+                .first()
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         waitForDataSettled();
         return this;
@@ -68,7 +70,9 @@ public class DefectsPage extends BasePage {
     }
 
     public boolean isHeadingVisible() {
-        return page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(HEADING_TEXT)).isVisible();
+        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(HEADING_TEXT)).isVisible()
+                || page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON_TEXT))
+                .isVisible();
     }
 
     public boolean isEmptyStateVisible() {

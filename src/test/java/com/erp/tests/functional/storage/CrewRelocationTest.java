@@ -38,6 +38,8 @@ public class CrewRelocationTest extends CrewApiTestBase {
 
     private static final String RESOURCE_PREFIX = "crew-rel-";
     private static final double ISSUE_AMOUNT = 15.0;
+    /** Owner lacks {@code inventory-list::{crew}::read} in Keycloak — crew stock via ADMIN. */
+    private static final UserRole CREW_STOCK_READER = UserRole.ADMIN;
 
     private CrewRegionScenario scenario;
     private Long resourceId;
@@ -53,11 +55,13 @@ public class CrewRelocationTest extends CrewApiTestBase {
         scenario = crewFixture.prepareSingleCrewScenario("crew-rel-");
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
+        refreshRoleSessions(UserRole.OWNER_1, UserRole.OWNER_2);
     }
 
     @BeforeMethod(alwaysRun = true)
     public void ensureSenderStock() {
         relocationFixture.ensureStock(scenario.memberStorageId(), resourceId, 100.0);
+        refreshRoleSessions(UserRole.OWNER_1);
     }
 
     @Test(priority = 10)
@@ -69,7 +73,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
                 apiExecutor, scenario.memberStorageId(), UserRole.OWNER_1,
                 Set.of(resourceId), "before send");
         ProductionStockAssertions.StockSnapshot beforeCrew = RelocationStockAssertions.capture(
-                apiExecutor, scenario.crew().getId(), UserRole.OWNER_1,
+                apiExecutor, scenario.crew().getId(), CREW_STOCK_READER,
                 Set.of(resourceId), "crew before send");
 
         RelocationResponse relocation = relocationFixture.createSend(
@@ -86,7 +90,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
                 apiExecutor, scenario.memberStorageId(), UserRole.OWNER_1,
                 Set.of(resourceId), "after send");
         ProductionStockAssertions.StockSnapshot afterCrew = RelocationStockAssertions.capture(
-                apiExecutor, scenario.crew().getId(), UserRole.OWNER_1,
+                apiExecutor, scenario.crew().getId(), CREW_STOCK_READER,
                 Set.of(resourceId), "crew after send");
 
         RelocationStockAssertions.assertDebitedFromSender(
@@ -169,7 +173,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
                 apiExecutor, scenario.memberStorageId(), UserRole.OWNER_1,
                 Set.of(resourceId, resourceId2), "before multi send");
         ProductionStockAssertions.StockSnapshot beforeCrew = RelocationStockAssertions.capture(
-                apiExecutor, scenario.crew().getId(), UserRole.OWNER_1,
+                apiExecutor, scenario.crew().getId(), CREW_STOCK_READER,
                 Set.of(resourceId, resourceId2), "crew before multi send");
 
         List<ResourceUsageRequest> items = List.of(
@@ -187,7 +191,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
                 apiExecutor, scenario.memberStorageId(), UserRole.OWNER_1,
                 Set.of(resourceId, resourceId2), "after multi send");
         ProductionStockAssertions.StockSnapshot afterCrew = RelocationStockAssertions.capture(
-                apiExecutor, scenario.crew().getId(), UserRole.OWNER_1,
+                apiExecutor, scenario.crew().getId(), CREW_STOCK_READER,
                 Set.of(resourceId, resourceId2), "crew after multi send");
 
         RelocationStockAssertions.assertDebitedFromSender(
@@ -240,17 +244,19 @@ public class CrewRelocationTest extends CrewApiTestBase {
                 "crew-prod-",
                 UnitType.PRODUCTION,
                 StorageRelation.INTERNAL);
-        relocationFixture.ensureStock(production.getId(), resourceId, 100.0);
+        regionFixture.addRegionLocations(scenario.region().getId(), production.getId());
+        relocationFixture.ensureStock(production.getId(), resourceId, 100.0, UserRole.ADMIN);
+        refreshRoleSessions(UserRole.OWNER_1);
 
         ProductionStockAssertions.StockSnapshot beforeProd = RelocationStockAssertions.capture(
-                apiExecutor, production.getId(), UserRole.OWNER_1,
+                apiExecutor, production.getId(), UserRole.ADMIN,
                 Set.of(resourceId), "production before send");
         ProductionStockAssertions.StockSnapshot beforeCrew = RelocationStockAssertions.capture(
-                apiExecutor, scenario.crew().getId(), UserRole.OWNER_1,
+                apiExecutor, scenario.crew().getId(), CREW_STOCK_READER,
                 Set.of(resourceId), "crew before production send");
 
         RelocationResponse relocation = relocationFixture.createSend(
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 production.getId(),
                 scenario.crew().getId(),
                 resourceId,
@@ -259,10 +265,10 @@ public class CrewRelocationTest extends CrewApiTestBase {
         assertThat(relocation.getState()).isEqualTo(RelocationState.AUTO_FINISHED);
 
         ProductionStockAssertions.StockSnapshot afterProd = RelocationStockAssertions.capture(
-                apiExecutor, production.getId(), UserRole.OWNER_1,
+                apiExecutor, production.getId(), UserRole.ADMIN,
                 Set.of(resourceId), "production after send");
         ProductionStockAssertions.StockSnapshot afterCrew = RelocationStockAssertions.capture(
-                apiExecutor, scenario.crew().getId(), UserRole.OWNER_1,
+                apiExecutor, scenario.crew().getId(), CREW_STOCK_READER,
                 Set.of(resourceId), "crew after production send");
 
         RelocationStockAssertions.assertDebitedFromSender(
@@ -291,7 +297,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
                 .pageSize(50)
                 .build();
 
-        List<RelocationResponse> page = relocationFixture.getJournalPage(query, UserRole.OWNER_1);
+        List<RelocationResponse> page = relocationFixture.getJournalPage(query, CREW_STOCK_READER);
         assertThat(page.stream().map(RelocationResponse::getId)).contains(relocation.getId());
     }
 
@@ -327,7 +333,7 @@ public class CrewRelocationTest extends CrewApiTestBase {
     public void testUnitToCrewRelocationHiddenFromAccountant() {
         RelocationResponse relocation = relocationFixture.createSend(
                 UserRole.OWNER_1,
-                scenario.unit().getId(),
+                scenario.memberStorageId(),
                 scenario.crew().getId(),
                 resourceId,
                 ISSUE_AMOUNT);

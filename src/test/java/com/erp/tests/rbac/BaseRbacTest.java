@@ -6,6 +6,10 @@ import com.erp.fixtures.RbacFixture;
 import com.erp.models.rbac.EndpointAccessRule;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.BaseTest;
+import com.erp.utils.config.ConfigProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -16,10 +20,19 @@ import org.testng.annotations.BeforeClass;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class BaseRbacTest extends BaseTest {
+
+    private static final Set<String> MULTIPART_JSON_ENDPOINTS = Set.of(
+            ApiEndpointDefinition.INCIDENT_POST_CREATE.name()
+    );
+
+    private static final ObjectMapper MULTIPART_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     protected RbacFixture rbacFixture;
 
@@ -111,20 +124,48 @@ public class BaseRbacTest extends BaseTest {
         log.info("📡 [RBAC] {} {} | Role: {} | Key: {}",
                 definition.getHttpMethod(), finalPath, role, rule.getContextKey());
 
-        // 3. Формуємо запит
-        RequestSpecification requestSpec = RestAssured.given()
-                .cookies(getSessionForRole(role))
-                .contentType(ContentType.JSON);
+        Response response;
+        if (MULTIPART_JSON_ENDPOINTS.contains(definition.name()) && requestBody != null) {
+            response = executeMultipartJsonRequest(definition, finalPath, role, requestBody);
+        } else {
+            RequestSpecification requestSpec = RestAssured.given()
+                    .cookies(getSessionForRole(role))
+                    .contentType(ContentType.JSON);
 
-        if (requestBody != null) {
-            requestSpec.body(requestBody);
+            if (requestBody != null) {
+                requestSpec.body(requestBody);
+            }
+
+            response = requestSpec.request(definition.getHttpMethod(), finalPath);
         }
-
-        // 4. Виконуємо запит за фінальним шляхом
-        Response response = requestSpec.request(definition.getHttpMethod(), finalPath);
 
         log.info("📥 Response: {} ({} ms)", response.getStatusCode(), response.getTime());
         return response;
+    }
+
+    private Response executeMultipartJsonRequest(ApiEndpointDefinition definition,
+                                                 String finalPath,
+                                                 UserRole role,
+                                                 Object requestBody) {
+        try {
+            String json = MULTIPART_MAPPER.writeValueAsString(requestBody);
+            return RestAssured.given()
+                    .baseUri(ConfigProvider.getBackendUrl())
+                    .accept(ContentType.JSON)
+                    .cookies(getSessionForRole(role))
+                    .multiPart(new io.restassured.builder.MultiPartSpecBuilder(json)
+                            .controlName("request")
+                            .mimeType("application/json")
+                            .charset("UTF-8")
+                            .build())
+                    .when()
+                    .request(definition.getHttpMethod(), finalPath)
+                    .then()
+                    .extract()
+                    .response();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize RBAC multipart JSON part", e);
+        }
     }
 
     /**

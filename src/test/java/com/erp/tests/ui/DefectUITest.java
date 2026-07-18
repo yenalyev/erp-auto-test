@@ -94,7 +94,7 @@ public class DefectUITest extends BaseUITest {
     public void testDefectListLoads() {
         DefectsPage defectsPage = new DefectsPage(page).open();
 
-        assertThat(defectsPage.isHeadingVisible()).as("Заголовок «Брак»").isTrue();
+        assertThat(defectsPage.isHeadingVisible()).as("Вкладка/екран «Брак»").isTrue();
         assertThat(defectsPage.isCreateButtonVisible()).as("Кнопка «Додати запис»").isTrue();
         defectsPage.attachScreenshot("TC-UI-DEF-001 — defect journal loaded");
     }

@@ -20,6 +20,7 @@ import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
+import com.erp.utils.helpers.PollUtils;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
@@ -68,12 +69,21 @@ public class RelocationFixture extends BaseFixture {
 
     @Step("API: поповнити залишок ресурсу {resourceId} на складі {storageId}")
     public void ensureStock(Long storageId, Long resourceId, double minAmount) {
-        double current = getResourceStock(storageId, resourceId, UserRole.OWNER_1);
+        ensureStock(storageId, resourceId, minAmount, UserRole.ADMIN);
+    }
+
+    @Step("API: поповнити залишок ресурсу {resourceId} на складі {storageId} (роль {role})")
+    public void ensureStock(Long storageId, Long resourceId, double minAmount, UserRole role) {
+        double current = getResourceStock(storageId, resourceId, role);
         if (current < minAmount) {
             double toSeed = minAmount - current + 50;
             RelocationStockSeeder.receiveFromSupplier(
-                    apiExecutor, UserRole.OWNER_1, storageId, Map.of(resourceId, toSeed));
+                    apiExecutor, role, storageId, Map.of(resourceId, toSeed));
         }
+        PollUtils.waitUntilTrue(
+                () -> getResourceStock(storageId, resourceId, role) >= minAmount,
+                15_000,
+                "Stock for resource " + resourceId + " on storage " + storageId);
     }
 
     @Step("API: seed batch {batchNumber} на складі {storageId}")
@@ -81,10 +91,23 @@ public class RelocationFixture extends BaseFixture {
                                  Long resourceId,
                                  double amount,
                                  String batchNumber) {
+        seedBatchOnStorage(storageId, resourceId, amount, batchNumber, UserRole.ADMIN);
+    }
+
+    @Step("API: seed batch {batchNumber} на складі {storageId} (роль {role})")
+    public void seedBatchOnStorage(Long storageId,
+                                 Long resourceId,
+                                 double amount,
+                                 String batchNumber,
+                                 UserRole role) {
         Long supplierId = testContext.get(ContextKey.RELOCATION_SUPPLIER_ID);
+        if (supplierId == null) {
+            supplierId = RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, role);
+            testContext.set(ContextKey.RELOCATION_SUPPLIER_ID, supplierId);
+        }
         RelocationInputRequest request = RelocationDataFactory.buildReceiveRequest(
                 supplierId, storageId, resourceId, amount, batchNumber);
-        Response response = apiExecutor.executeRelocationReceive(request, UserRole.OWNER_1);
+        Response response = apiExecutor.executeRelocationReceive(request, role);
         validateSuccess(response, "Seed batch via receive");
     }
 
@@ -347,6 +370,20 @@ public class RelocationFixture extends BaseFixture {
                 senderId, recipientId, resourceId, amount, batchNumber, isProduced);
         Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, role, request);
         validateSuccess(response, "Send with batch");
+        return response.as(RelocationResponse.class);
+    }
+
+    @Step("API: видача з кількома партіями (amount={amount})")
+    public RelocationResponse createSendWithBatches(UserRole role,
+                                                    Long senderId,
+                                                    Long recipientId,
+                                                    Long resourceId,
+                                                    double amount,
+                                                    List<com.erp.models.request.RelocationItemBatchRequest> batches) {
+        RelocationOutputRequest request = RelocationDataFactory.buildSendWithBatches(
+                senderId, recipientId, resourceId, amount, batches);
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, role, request);
+        validateSuccess(response, "Send with mixed batches");
         return response.as(RelocationResponse.class);
     }
 

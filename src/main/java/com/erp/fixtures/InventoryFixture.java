@@ -14,6 +14,7 @@ import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.TestContext;
+import com.erp.utils.helpers.PollUtils;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
@@ -76,16 +77,35 @@ public class InventoryFixture extends BaseFixture {
 
     @Step("API: Рядок залишку для ресурсу {resourceId} на складі {storageId}")
     public StorageItemResponse requireItemForResource(long storageId, long resourceId, UserRole role) {
-        StorageItemResponse item = listItems(storageId, role).stream()
-                .filter(i -> i.getResource() != null && resourceId == i.getResource().getId())
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "Resource " + resourceId + " not found on storage " + storageId));
-        if (item.getAmount() == null || item.getAmount() <= 0) {
-            throw new IllegalStateException(
-                    "Resource " + resourceId + " has no stock on storage " + storageId);
+        return requireItemForResourceWithRetry(storageId, resourceId, role, 0);
+    }
+
+    @Step("API: Рядок залишку для ресурсу {resourceId} на складі {storageId} (retry)")
+    public StorageItemResponse requireItemForResourceWithRetry(long storageId,
+                                                               long resourceId,
+                                                               UserRole role,
+                                                               long timeoutMs) {
+        StorageItemResponse item = findItemForResource(storageId, resourceId, role);
+        if (item != null) {
+            return item;
         }
-        return item;
+        if (timeoutMs <= 0) {
+            throw new IllegalStateException(
+                    "Resource " + resourceId + " not found on storage " + storageId);
+        }
+        return PollUtils.waitUntil(
+                () -> findItemForResource(storageId, resourceId, role),
+                Objects::nonNull,
+                timeoutMs,
+                "Resource " + resourceId + " with stock on storage " + storageId);
+    }
+
+    private StorageItemResponse findItemForResource(long storageId, long resourceId, UserRole role) {
+        return listItems(storageId, role).stream()
+                .filter(i -> i.getResource() != null && resourceId == i.getResource().getId())
+                .filter(i -> i.getAmount() != null && i.getAmount() > 0)
+                .findFirst()
+                .orElse(null);
     }
 
     @Step("API: Ресурс з довідника, якого немає на складі {storageId}")

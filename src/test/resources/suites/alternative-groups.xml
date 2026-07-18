@@ -1,0 +1,59 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Alternative Groups Coverage Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Tech Map Alt Groups API">
+        <classes>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapAlternativeGroupsTest"/>
+        </classes>
+    </test>
+
+    <test name="Production Alt Inputs API">
+        <classes>
+            <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
+        </classes>
+    </test>
+
+    <test name="Global Plan Alt Groups API">
+        <classes>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanAlternativeGroupsApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Resource Viewer Alt Groups API">
+        <classes>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Assembly Readiness Alt Groups API">
+        <classes>
+            <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Plan Statistics Alt Groups API">
+        <classes>
+            <class name="com.erp.tests.functional.statistics.PlanStatisticsAlternativeGroupsApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Production Alt Inputs UI">
+        <classes>
+            <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
+        </classes>
+    </test>
+
+    <test name="Tech Map Alt Groups UI">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
+        </classes>
+    </test>
+</suite>

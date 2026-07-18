@@ -7,12 +7,14 @@ import com.erp.data.factories.plan.PlanDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
+import com.erp.models.query.TechnologicalMapListQuery;
 import com.erp.models.request.PlanRequest;
 import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.request.StorageTechnologicalMapModeRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.request.UpdateNotesRequest;
 import com.erp.models.response.PlanResponse;
+import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageTechnologicalMapModeResponse;
@@ -30,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -319,6 +322,37 @@ public class TechnologicalMapFixture extends BaseFixture {
         return response.as(TechnologicalMapResponse.class);
     }
 
+    @Step("API: GET technological-maps з query-фільтрами")
+    public List<TechnologicalMapResponse> listByQuery(TechnologicalMapListQuery query) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.TECH_MAP_GET_ALL,
+                UserRole.OWNER_1,
+                query.toQueryParams());
+        validateSuccess(response, "List technological maps");
+        return DatabaseIntegrityValidator.extractList(response, TechnologicalMapResponse.class);
+    }
+
+    @Step("API: GET tag-statistics для tech maps")
+    public List<ProductionProcessTagStatisticResponse> getTagStatistics(TechnologicalMapListQuery query) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.TECH_MAP_TAG_STATISTICS_GET,
+                UserRole.OWNER_1,
+                query.toQueryParams());
+        validateSuccess(response, "Get technological map tag statistics");
+        return DatabaseIntegrityValidator.extractList(response, ProductionProcessTagStatisticResponse.class);
+    }
+
+    @Step("API: GET каталог technological-map-tags для storageId={storageId}")
+    public Collection<String> getTechnologicalMapTags(long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.APP_CONFIG_TECHNOLOGICAL_MAP_TAGS_GET,
+                UserRole.OWNER_1,
+                String.valueOf(storageId));
+        validateSuccess(response, "Get technological map tags catalog");
+        List<String> tags = response.jsonPath().getList("$", String.class);
+        return tags != null ? tags : List.of();
+    }
+
     @Step("API: GET tech map {techMapId} для локації {storageId}")
     public TechnologicalMapResponse getById(UserRole role, Long techMapId, Long storageId) {
         Response response = apiExecutor.execute(
@@ -400,5 +434,72 @@ public class TechnologicalMapFixture extends BaseFixture {
         return TechnologicalMapDataFactory
                 .createProductionTechMap(resources, getOwner1StorageId())
                 .build();
+    }
+
+    @Step("Створити 4 унікальні ресурси для техкарти з альтернативною групою")
+    public List<ResourceResponse> createAltGroupResources() {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        return List.of(
+                resourceFixture.createUniqueResource("ALT-FIXED-" + suffix),
+                resourceFixture.createUniqueResource("ALT-DEF-" + suffix),
+                resourceFixture.createUniqueResource("ALT-OTHER-" + suffix),
+                resourceFixture.createUniqueResource("ALT-OUT-" + suffix));
+    }
+
+    @Step("Створити 6 унікальних ресурсів для техкарти з двома альтернативними групами")
+    public List<ResourceResponse> createTwoGroupAltResources() {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        return List.of(
+                resourceFixture.createUniqueResource("ALT2-FIXED-" + suffix),
+                resourceFixture.createUniqueResource("ALT2-GLUE-DEF-" + suffix),
+                resourceFixture.createUniqueResource("ALT2-GLUE-ALT-" + suffix),
+                resourceFixture.createUniqueResource("ALT2-FUEL-DEF-" + suffix),
+                resourceFixture.createUniqueResource("ALT2-FUEL-ALT-" + suffix),
+                resourceFixture.createUniqueResource("ALT2-OUT-" + suffix));
+    }
+
+    @Step("GET versions for tech map group {groupId} at storage {storageId}")
+    public List<TechnologicalMapResponse> getVersionsByGroupId(UserRole role, String groupId, Long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_GET_VERSIONS,
+                role,
+                null,
+                groupId,
+                String.valueOf(storageId));
+        validateSuccess(response, "Get tech map versions for groupId=" + groupId);
+        return DatabaseIntegrityValidator.extractList(response, TechnologicalMapResponse.class);
+    }
+
+    @Step("Створити PRODUCTION техкарту з альтернативною групою на локації {storageId}")
+    public TechnologicalMapResponse createTechMapWithAlternativeGroup(UserRole role, Long storageId) {
+        List<ResourceResponse> resources = createAltGroupResources();
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionMapWithAlternativeGroup(resources, storageId);
+        return createTechMapWithRequest(role, request);
+    }
+
+    @Step("Перевірити відмову: у групі має бути рівно один default")
+    public void assertGroupDefaultRequiredRejection(Response response) {
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.jsonPath().getString("errors[0].field"))
+                .as("Поле помилки валідації default у групі")
+                .contains("default");
+        String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
+        assertThat(errorMessage)
+                .as("Повідомлення про обов'язковий default у групі")
+                .contains("рівно один ресурс за замовчуванням");
+    }
+
+    @Step("Перевірити відмову валідації альтернативної групи (поле містить {expectedFieldFragment})")
+    public void assertGroupValidationRejection(Response response, String expectedFieldFragment, String expectedMessageFragment) {
+        assertThat(response.statusCode()).isEqualTo(400);
+        String field = response.jsonPath().getString("errors[0].field");
+        assertThat(field)
+                .as("Поле помилки валідації групи")
+                .contains(expectedFieldFragment);
+        String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
+        assertThat(errorMessage)
+                .as("Повідомлення валідації групи")
+                .contains(expectedMessageFragment);
     }
 }

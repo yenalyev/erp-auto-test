@@ -33,7 +33,7 @@ public class ProductionJournalFilterUITest extends ProductionJournalFilterUITest
     @Story("Start date filter UI vs API")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            OWNER_1 застосовує фільтр «З» (startDate) на UI і перевіряє відповідність таблиці
+            OWNER_1 застосовує фільтр «Період» (startDate) на UI і перевіряє відповідність таблиці
             GET /productions?startDate=….
             """)
     public void filterByStartDateUiMatchesApi() {
@@ -47,8 +47,8 @@ public class ProductionJournalFilterUITest extends ProductionJournalFilterUITest
     @Story("End date filter UI vs API")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            OWNER_1 застосовує фільтр «По» (endDate) на UI і перевіряє відповідність таблиці
-            GET /productions?endDate=….
+            OWNER_1 задає кінець періоду (same-day range через DateRangePicker) і перевіряє
+            відповідність таблиці GET /productions?startDate=&endDate=.
             """)
     public void filterByEndDateUiMatchesApi() {
         ProductionJournalFilterScenario scenario = catalog.endDateFilter(productionFixture);
@@ -61,7 +61,7 @@ public class ProductionJournalFilterUITest extends ProductionJournalFilterUITest
     @Story("Date range filter UI vs API")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            OWNER_1 задає діапазон «З» + «По» на один день і перевіряє UI-таблицю
+            OWNER_1 задає діапазон «Період» на один день і перевіряє UI-таблицю
             проти GET /productions?startDate=&endDate=.
             """)
     public void filterByDateRangeUiMatchesApi() {

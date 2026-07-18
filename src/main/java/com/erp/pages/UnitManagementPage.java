@@ -360,6 +360,17 @@ public class UnitManagementPage extends BasePage {
         return btn.isVisible() && btn.isDisabled();
     }
 
+    /**
+     * In «Всі локації» mode the session toggle is either hidden (no concrete storage)
+     * or rendered disabled — both block opening a session.
+     */
+    public boolean isInventorySessionToggleBlocked() {
+        if (!isOpenInventoryButtonVisible()) {
+            return true;
+        }
+        return inventoryToggleButton(OPEN_INVENTORY_BUTTON_TEXT).isDisabled();
+    }
+
     public String conductButtonTooltip() {
         conductButton().hover();
         Locator tip = page.locator("[role='tooltip']").filter(new Locator.FilterOptions()

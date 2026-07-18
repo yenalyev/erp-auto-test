@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PagedResourceRelocationViewerResponse",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "$ref": "resource-relocation-viewer-item-schema.json"
+      }
+    },
+    "page": {
+      "type": "object",
+      "properties": {
+        "size": { "type": "integer" },
+        "number": { "type": "integer" },
+        "totalElements": { "type": "integer" },
+        "totalPages": { "type": "integer" }
+      },
+      "required": ["size", "number", "totalElements", "totalPages"]
+    },
+    "sums": {
+      "type": "array",
+      "items": {
+        "$ref": "resource-relocation-sum-item-schema.json"
+      }
+    }
+  },
+  "required": ["content", "sums"],
+  "additionalProperties": true
+}

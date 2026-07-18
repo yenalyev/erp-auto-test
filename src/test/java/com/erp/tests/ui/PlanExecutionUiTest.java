@@ -3,9 +3,11 @@ package com.erp.tests.ui;
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.PlanExecutionFixture;
+import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.PlanResponse;
+import com.erp.models.response.ResourceResponse;
 import com.erp.pages.PlanExecutionPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
@@ -421,9 +423,9 @@ public class PlanExecutionUiTest extends BaseUITest {
             Assert: лічильник «Керувати обраними (2)»; «Лише обрані» на сторінці показує обидва
             продукти.
 
-            Відомий дефект: GET /resources/with-technological-map порівнює OutputResourceUsage.id
-            з resource.id, тому каталог модалки часто порожній для локації з техкартами — додати
-            новий продукт зіркою неможливо. Тест червоний до фіксу в tk.""")
+            Arrange також перевіряє API-каталог (щоб відділити бекенд від UI-синхронізації).
+            Модалка debounce-ить пошук на 250&nbsp;ms — UI-крок чекає GET
+            /resources/with-technological-map, не фіксований sleep.""")
     public void testOwnerAddFavouriteViaManageDialog() {
         currentStorageId = ownerStorageId;
         favouritesRole = UserRole.OWNER_1;
@@ -443,6 +445,13 @@ public class PlanExecutionUiTest extends BaseUITest {
         String productToAdd = secondContext.getProduct().getName().trim();
         fixture.saveFavouriteResources(favouritesRole, List.of(currentContext.getProduct().getId()));
 
+        var resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        assertThat(resourceFixture.getWithTechnologicalMap(
+                        favouritesRole, ownerStorageId, true, productToAdd))
+                .as("API-каталог має містити другий output для модалки «Керувати обраними»")
+                .extracting(ResourceResponse::getId)
+                .contains(secondContext.getProduct().getId());
+
         injectRoleSession(UserRole.OWNER_1, ownerStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
@@ -455,8 +464,7 @@ public class PlanExecutionUiTest extends BaseUITest {
                 .as("За замовчуванням модалка показує каталог, не лише обрані")
                 .isFalse();
 
-        planPage.typeManageDialogNameFilter(productToAdd);
-        page.waitForTimeout(400);
+        planPage.filterManageDialogByName(productToAdd);
         assertThat(planPage.isProductListedInManageDialog(productToAdd))
                 .as("Другий продукт має з'явитись у каталозі модалки для додавання в обрані")
                 .isTrue();

@@ -79,6 +79,18 @@ public class OperationHistoryPage extends BasePage {
                 || content.toLowerCase().contains("інвентар");
     }
 
+    /** True when UI shows incident write-off markers (summary card and/or table label). */
+    public boolean containsIncidentOperationMarker() {
+        String content = page.locator("body").innerText();
+        return content.contains("INCIDENT_WRITE_OFF")
+                || content.contains("Надзвичайна подія: втрата")
+                || content.contains("Надзвичайні події");
+    }
+
+    public boolean isIncidentSummaryVisible() {
+        return isSummaryCardVisible("Надзвичайні події");
+    }
+
     /**
      * Reads aggregated amount from a summary card (e.g. «Вироблено») for the given resource name.
      */

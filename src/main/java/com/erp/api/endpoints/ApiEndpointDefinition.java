@@ -381,6 +381,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    TECH_MAP_GET_VERSIONS(
+            "/api/v1/technological-maps/versions/{groupId}?storageId={storageId}",
+            Method.GET,
+            "schemas/technological-maps/technological-map-response-list-schema.json",
+            "Get all versions of a technological map group",
+            null,
+            new TypeReference<List<TechnologicalMapResponse>>() {},
+            null
+    ),
+
     TECH_MAP_PATCH_NOTES(
             "/api/v1/technological-maps/{id}/notes?storageId={storageId}",
             Method.PATCH,
@@ -389,6 +399,16 @@ public enum ApiEndpointDefinition {
             new TypeReference<UpdateNotesRequest>() {},
             new TypeReference<TechnologicalMapResponse>() {},
             "PATCH_TECH_MAP_NOTES"
+    ),
+
+    TECH_MAP_TAG_STATISTICS_GET(
+            "/api/v1/technological-maps/tag-statistics",
+            Method.GET,
+            null,
+            "Get technological map tag statistics",
+            null,
+            new TypeReference<List<ProductionProcessTagStatisticResponse>>() {},
+            null
     ),
 
     // ========================================
@@ -956,6 +976,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    ASSEMBLY_READINESS_GET_BY_STORAGE(
+            "/api/v1/assembly-readiness/{storageId}",
+            Method.GET,
+            "schemas/assembly-readiness/assembly-readiness-response-list-schema.json",
+            "Get assembly readiness rows for storage (ready-to-kit finished products)",
+            null,
+            new TypeReference<List<AssemblyReadinessResponse>>() {},
+            null
+    ),
+
     // ========================================
     // DISASSEMBLE ENDPOINTS
     // ========================================
@@ -1201,23 +1231,28 @@ public enum ApiEndpointDefinition {
     // ========================================
     // RESOURCE VIEWER ENDPOINTS
     // ========================================
-    RESOURCE_VIEWER_RELOCATIONS_SUM(
-            "/api/v1/resources-viewer/relocations/sum",
-            Method.GET,
-            "schemas/resource-viewer/resource-relocation-sum-list-schema.json",
-            "Get relocated resources sum (aggregated by resource, sorted by name)",
-            null,
-            new TypeReference<List<ResourceRelocationSumViewerResponse>>() {},
-            null
-    ),
-
+    /**
+     * Journal page + aggregated {@code sums} in one response.
+     * Separate {@code /relocations/sum} was removed from the backend — clients read {@code sums}
+     * from this payload (see tk-ui ResourceRelocationViewPage).
+     */
     RESOURCE_VIEWER_RELOCATIONS_GET(
             "/api/v1/resources-viewer/relocations",
             Method.GET,
+            "schemas/resource-viewer/resource-relocation-viewer-page-schema.json",
+            "Get resource viewer relocation journal page (content + sums)",
             null,
-            "Get resource viewer relocation journal page",
+            new TypeReference<PagedResourceRelocationViewerResponse>() {},
+            null
+    ),
+
+    RESOURCE_VIEWER_EXPORT(
+            "/api/v1/resources-viewer/export",
+            Method.GET,
             null,
+            "Export resource viewer relocation journal to Excel",
             null,
+            new TypeReference<byte[]>() {},
             null
     ),
 
@@ -1363,6 +1398,39 @@ public enum ApiEndpointDefinition {
             Method.DELETE,
             null,
             "Delete AUTO_FINISHED relocation",
+            null,
+            new TypeReference<Void>() {},
+            null
+    ),
+
+    // ========================================
+    // INCIDENT ENDPOINTS (надзвичайна подія)
+    // ========================================
+    INCIDENT_POST_CREATE(
+            "/api/v1/incidents/relocations",
+            Method.POST,
+            null,
+            "Create relocation incident (full cargo loss)",
+            new TypeReference<RelocationIncidentRequest>() {},
+            new TypeReference<Void>() {},
+            null
+    ),
+
+    INCIDENT_GET_BY_RELOCATION(
+            "/api/v1/incidents/relocations/{id}",
+            Method.GET,
+            "schemas/incidents/relocation-incident-response-schema.json",
+            "Get incident by relocation id",
+            null,
+            new TypeReference<RelocationIncidentResponse>() {},
+            null
+    ),
+
+    INCIDENT_DELETE_BY_RELOCATION(
+            "/api/v1/incidents/relocations/{id}",
+            Method.DELETE,
+            null,
+            "Delete incident by relocation id",
             null,
             new TypeReference<Void>() {},
             null
@@ -1597,6 +1665,80 @@ public enum ApiEndpointDefinition {
             "Cancel (delete) a defect write-off",
             null,
             new TypeReference<Void>() {},
+            null
+    ),
+
+    // ========================================
+    // USER MANAGEMENT ENDPOINTS (Keycloak admin)
+    // ========================================
+
+    USER_GET_ME(
+            "/api/v1/users/me",
+            Method.GET,
+            "schemas/users/user-me-response-schema.json",
+            "Get current authenticated user profile",
+            null,
+            new TypeReference<UserMeResponse>() {},
+            null
+    ),
+
+    USER_GET_PAGE(
+            "/api/v1/users",
+            Method.GET,
+            "schemas/users/user-page-schema.json",
+            "Get paginated users list",
+            null,
+            new TypeReference<PagedUserResponse>() {},
+            null
+    ),
+
+    USER_GET_BY_ID(
+            "/api/v1/users/{id}",
+            Method.GET,
+            "schemas/users/user-response-schema.json",
+            "Get user by Keycloak id",
+            null,
+            new TypeReference<UserModelResponse>() {},
+            null
+    ),
+
+    USER_POST_CREATE(
+            "/api/v1/users",
+            Method.POST,
+            "schemas/users/one-time-credentials-schema.json",
+            "Create Keycloak user",
+            new TypeReference<UserRequest>() {},
+            new TypeReference<OneTimeUserCredentialsResponse>() {},
+            "CREATE"
+    ),
+
+    USER_PUT_UPDATE(
+            "/api/v1/users/{id}",
+            Method.PUT,
+            "schemas/users/user-response-schema.json",
+            "Update Keycloak user",
+            new TypeReference<UserRequest>() {},
+            new TypeReference<UserModelResponse>() {},
+            "UPDATE"
+    ),
+
+    USER_GET_ROLES(
+            "/api/v1/users/roles",
+            Method.GET,
+            "schemas/users/role-list-schema.json",
+            "Get all realm roles",
+            null,
+            new TypeReference<List<RoleModelResponse>>() {},
+            null
+    ),
+
+    USER_GET_ROLE_BY_NAME(
+            "/api/v1/users/roles/{roleName}",
+            Method.GET,
+            "schemas/users/role-response-schema.json",
+            "Get realm role details with permissions",
+            null,
+            new TypeReference<RoleModelResponse>() {},
             null
     ),
 

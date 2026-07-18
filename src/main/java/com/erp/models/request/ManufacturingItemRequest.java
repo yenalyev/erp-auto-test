@@ -26,4 +26,10 @@ public class ManufacturingItemRequest {
 
     @Builder.Default
     private List<ProcessResourceOutputRequest> outputs = new ArrayList<>();
+
+    @Builder.Default
+    private List<ResourceUsageRequest> inputs = new ArrayList<>();
+
+    @Builder.Default
+    private List<AlternativeInputRequest> alternativeInputs = new ArrayList<>();
 }

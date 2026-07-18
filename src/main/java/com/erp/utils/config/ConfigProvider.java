@@ -203,6 +203,14 @@ public class ConfigProvider {
         return parseLongProperty("tcm.project.id");
     }
 
+    public static String getTcmRemoteRunId() {
+        String raw = System.getProperty("tcm.remote.run.id");
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return raw.trim();
+    }
+
     public static long getTcmTestPlanId() {
         return config.tcmTestPlanId();
     }

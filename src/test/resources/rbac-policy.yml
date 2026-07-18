@@ -356,6 +356,27 @@ rules:
     description: "Додати запис в журнал виробництва по Бізнес Юніту який належить OWNER_1 (STORAGES): 
     має право тільки OWNER_1. ADMIN, OWNER_2, ANONYMOUS - не мають права"
 
+  - endpointName: "ASSEMBLY_READINESS_GET_BY_STORAGE"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Готово до комплектації для storage OWNER_1: ADMIN та OWNER_1 — так, ANONYMOUS — ні"
+
+  - endpointName: "ASSEMBLY_READINESS_GET_BY_STORAGE"
+    contextKey: "OWNER_2_STORAGE_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Готово до комплектації для storage OWNER_2: ADMIN — так, OWNER_1 — ні"
+
+  - endpointName: "ASSEMBLY_READINESS_GET_BY_STORAGE"
+    contextKey: "OWNER_INCORRECT_STORAGE_ID"
+    allowedRoles: [  ]
+    deniedRoles: [ ADMIN, OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Готово до комплектації для невалідного storageId — доступ заборонено"
+
   - endpointName: "NON_SERIES_PRODUCTION_GET_ALL"
     contextKey: "OWNER_1_STORAGE_ID"
     allowedRoles: [ ADMIN, OWNER_1 ]
@@ -557,6 +578,31 @@ rules:
     description: "POST /relocations/equipment/send від OWNER_1"
 
   # ========================================
+  # INCIDENT ENDPOINTS (надзвичайна подія) — BC-INC-40..42
+  # ALLOWED create/delete перевіряються у RelocationIncidentTest (мутують стан).
+  # ========================================
+
+  - endpointName: "INCIDENT_POST_CREATE"
+    allowedRoles: [ ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "BC-INC-40: POST /incidents/relocations без incident::create / доступу — 403/401"
+
+  - endpointName: "INCIDENT_GET_BY_RELOCATION"
+    contextKey: "RELOCATION_WITH_INCIDENT_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "BC-INC-41: GET /incidents/relocations/{id} — view дозволено ADMIN/OWNER_1"
+
+  - endpointName: "INCIDENT_DELETE_BY_RELOCATION"
+    contextKey: "RELOCATION_WITH_INCIDENT_ID"
+    allowedRoles: [ ]
+    deniedRoles: [ OWNER_2, ANONYMOUS ]
+    bodyType: null
+    description: "BC-INC-42: DELETE /incidents/relocations/{id} без incident::delete — 403/401"
+
+  # ========================================
   # DEFECT ENDPOINTS ("Брак") — REQ-DEF-001 AC-01
   # @Owner і @Admin мають повний доступ; інші ролі — ні
   # ========================================
@@ -578,8 +624,63 @@ rules:
   # RESOURCE VIEWER ENDPOINTS
   # ========================================
 
-  - endpointName: "RESOURCE_VIEWER_RELOCATIONS_SUM"
+  - endpointName: "RESOURCE_VIEWER_RELOCATIONS_GET"
     allowedRoles: [ ADMIN, RESOURCE_VIEWER ]
-    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ANONYMOUS ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, ANONYMOUS ]
     bodyType: null
-    description: "Сума переміщень resource-viewer: тільки ADMIN і RESOURCE_VIEWER (wolf)"
+    description: "Журнал+sums resource-viewer: тільки ADMIN і RESOURCE_VIEWER (wolf)"
+
+  - endpointName: "RESOURCE_VIEWER_EXPORT"
+    allowedRoles: [ ADMIN, RESOURCE_VIEWER ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, ANONYMOUS ]
+    bodyType: null
+    description: "Excel-експорт resource-viewer: тільки ADMIN і RESOURCE_VIEWER (wolf)"
+
+  # ========================================
+  # USER MANAGEMENT ENDPOINTS (admin-only)
+  # ========================================
+
+  - endpointName: "USER_GET_ME"
+    allowedRoles: [ ADMIN, OWNER_1, OWNER_2, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Профіль поточного користувача — будь-який автентифікований; ANONYMOUS — 401"
+
+  - endpointName: "USER_GET_PAGE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
+    bodyType: null
+    description: "Список користувачів Keycloak — лише ADMIN"
+
+  - endpointName: "USER_GET_BY_ID"
+    contextKey: "SHARED_USER_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
+    bodyType: null
+    description: "Отримати користувача за id — лише ADMIN"
+
+  - endpointName: "USER_POST_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
+    bodyType: "CREATE"
+    description: "Створити користувача Keycloak — лише ADMIN"
+
+  - endpointName: "USER_PUT_UPDATE"
+    contextKey: "SHARED_USER_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
+    bodyType: "UPDATE"
+    description: "Оновити користувача Keycloak — лише ADMIN"
+
+  - endpointName: "USER_GET_ROLES"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
+    bodyType: null
+    description: "Список realm roles — лише ADMIN"
+
+  - endpointName: "USER_GET_ROLE_BY_NAME"
+    contextKey: "SHARED_ROLE_NAME"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
+    bodyType: null
+    description: "Деталі ролі з дозволами — лише ADMIN"

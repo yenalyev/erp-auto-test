@@ -123,7 +123,11 @@ public class RbacAccessMatrixTest extends BaseRbacTest {
 
     @Step("Validate ALLOWED access details")
     private void validateAllowedAccess(EndpointAccessRule rule, Response response, UserRole role) {
-        if (rule.getHttpMethod() != Method.DELETE && response.statusCode() != 204) {
+        boolean allowsEmptyBody = rule.getHttpMethod() == Method.DELETE
+                || response.statusCode() == 204
+                || "INCIDENT_POST_CREATE".equals(rule.getEndpointName())
+                || "INCIDENT_DELETE_BY_RELOCATION".equals(rule.getEndpointName());
+        if (!allowsEmptyBody) {
             assertThat(response.body().asString()).isNotEmpty();
         }
 

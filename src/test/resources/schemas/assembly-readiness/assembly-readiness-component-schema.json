@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AssemblyComponentResponse",
+  "type": "object",
+  "required": ["resource", "unit", "requiredPerUnit", "availableStock"],
+  "properties": {
+    "resource": { "$ref": "../simple-entity-schema.json" },
+    "unit": { "type": "string" },
+    "requiredPerUnit": { "type": "number" },
+    "availableStock": { "type": "number" }
+  },
+  "additionalProperties": true
+}

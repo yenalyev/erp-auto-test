@@ -91,11 +91,8 @@ abstract class ProductionJournalFilterUITestBase extends BaseUITest {
         assertThat(productionPage.isProductFilterVisible())
                 .as("Поле фільтру «Продукт» має бути видимим")
                 .isTrue();
-        assertThat(productionPage.isDateFromVisible())
-                .as("Датапікер «З» має бути видимим")
-                .isTrue();
-        assertThat(productionPage.isDateToVisible())
-                .as("Датапікер «По» має бути видимим")
+        assertThat(productionPage.isPeriodFilterVisible())
+                .as("Фільтр «Період» має бути видимим")
                 .isTrue();
         assertThat(productionPage.isClearButtonVisible())
                 .as("Кнопка «Очистити» має бути видимою")
@@ -128,12 +125,12 @@ abstract class ProductionJournalFilterUITestBase extends BaseUITest {
         }
         if (scenario.startDate() != null) {
             assertThat(productionPage.getDateFromValue())
-                    .as("Дата «З»")
+                    .as("Дата початку періоду")
                     .isEqualTo(scenario.startDate().toString());
         }
         if (scenario.endDate() != null) {
             assertThat(productionPage.getDateToValue())
-                    .as("Дата «По»")
+                    .as("Дата кінця періоду")
                     .isEqualTo(scenario.endDate().toString());
         }
         if (scenario.categoryName() != null) {

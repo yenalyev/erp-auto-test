@@ -1,4 +1,4 @@
-package com.erp.models.request;
+package com.erp.models.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -6,15 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AlternativeGroupRequest {
-    private String name;
-    private Boolean required;
-    private List<AlternativeOptionRequest> options;
+public class TechnologicalMapAlternativeGroupResourceResponse {
+    private Long id;
+    private ResourceResponse resource;
+    private Double amount;
+    private Boolean isDefault;
 }

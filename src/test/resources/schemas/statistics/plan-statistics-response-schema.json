@@ -1,18 +1,17 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "PlanStatisticsResponse",
+  "title": "PlanSufficiencyResponse",
   "type": "object",
   "properties": {
-    "summary": { "$ref": "plan-summary-response-schema.json" },
-    "resources": {
+    "dailyPlan": {
       "type": "array",
-      "items": { "$ref": "plan-resource-summary-response-schema.json" }
+      "items": { "$ref": "../technological-maps/resource-usage-response-schema.json" }
     },
-    "dailyProduction": {
+    "dailyNeed": {
       "type": "array",
-      "items": { "$ref": "daily-plan-execution-response-schema.json" }
+      "items": { "$ref": "plan-daily-need-response-schema.json" }
     }
   },
-  "required": ["summary", "resources", "dailyProduction"],
+  "required": ["dailyPlan", "dailyNeed"],
   "additionalProperties": false
 }

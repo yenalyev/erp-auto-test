@@ -1,7 +1,9 @@
 package com.erp.tests.functional.inventory;
 
+import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
+import com.erp.models.response.StorageItemResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
@@ -77,5 +79,16 @@ abstract class InventoryApiTestBase extends BaseFunctionalTest {
             }
         }
         resourcesToCleanup.clear();
+    }
+
+    protected StorageItemResponse requireAnchorItem() {
+        try {
+            return inventoryFixture.requireItemForResourceWithRetry(
+                    owner1StorageId, anchorResourceId, UserRole.OWNER_1, 15_000);
+        } catch (IllegalStateException ex) {
+            log.warn("Anchor resource {} not on storage {} after ensureStock: {}",
+                    anchorResourceId, owner1StorageId, ex.getMessage());
+            return inventoryFixture.requireItemWithStock(owner1StorageId, UserRole.OWNER_1);
+        }
     }
 }

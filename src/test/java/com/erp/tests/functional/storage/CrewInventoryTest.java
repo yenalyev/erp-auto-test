@@ -8,6 +8,7 @@ import com.erp.models.response.CrewResourceStockResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.utils.helpers.AllureHelper;
+import com.erp.utils.helpers.PollUtils;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -68,6 +69,21 @@ public class CrewInventoryTest extends CrewApiTestBase {
                 resourceId,
                 ISSUE_AMOUNT);
         refreshRoleSessions(UserRole.OWNER_1, UserRole.CREW_MANAGER);
+        waitForCrewStockInReport(ISSUE_AMOUNT);
+    }
+
+    private void waitForCrewStockInReport(double expectedAmount) {
+        Map<String, Object> params = crewInventoryParams("STOCK");
+        PollUtils.waitUntilTrue(
+                () -> crewFixture.getCrewInventory(UserRole.OWNER_1, params).stream()
+                        .anyMatch(r -> r.getCrew() != null
+                                && Objects.equals(r.getCrew().getId(), scenario.crew().getId())
+                                && r.getResource() != null
+                                && Objects.equals(r.getResource().getId(), resourceId)
+                                && r.getAmount() != null
+                                && Math.abs(r.getAmount().doubleValue() - expectedAmount) < 0.01),
+                15_000,
+                "Crew stock report row for crew=" + scenario.crew().getId() + " resource=" + resourceId);
     }
 
     @Test(priority = 10)
@@ -102,20 +118,21 @@ public class CrewInventoryTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007)
     @Severity(SeverityLevel.CRITICAL)
     public void testOwner1CanReadAttachedCrewInventory() {
-        Response response = apiExecutor.executeWithQueryParams(
-                ApiEndpointDefinition.STORAGE_INVENTORY_GET,
-                UserRole.OWNER_1,
-                uiInventoryParams(),
-                String.valueOf(scenario.crew().getId()));
-        assertThat(response.statusCode())
-                .as("OWNER_1 — inventory екіпажу, закріпленого за локацією (CREWS)")
-                .isEqualTo(200);
-        AllureHelper.attachSchemaValidationInfo(ApiEndpointDefinition.STORAGE_INVENTORY_GET, response);
-        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_GET);
+        // Owner reads crew stock via crews report (UI mode=crews); direct GET /storages/{crew}/inventory
+        // requires Crew-Manager role (inventory-list::{crew}::read) — see TC-CREW-INV-007b.
+        Map<String, Object> params = crewInventoryParams("STOCK");
+        List<CrewResourceStockResponse> rows = crewFixture.getCrewInventory(UserRole.OWNER_1, params);
+        CrewResourceStockResponse row = rows.stream()
+                .filter(r -> r.getCrew() != null
+                        && Objects.equals(r.getCrew().getId(), scenario.crew().getId())
+                        && r.getResource() != null
+                        && Objects.equals(r.getResource().getId(), resourceId))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "OWNER_1 — не знайдено рядок crew stock report для crew="
+                                + scenario.crew().getId() + " resource=" + resourceId));
 
-        double stock = relocationFixture.getResourceStock(
-                scenario.crew().getId(), resourceId, UserRole.OWNER_1);
-        assertThat(stock).isCloseTo(ISSUE_AMOUNT, within(0.01));
+        assertThat(row.getAmount().doubleValue()).isCloseTo(ISSUE_AMOUNT, within(0.01));
     }
 
     @Test(priority = 22)
@@ -271,13 +288,6 @@ public class CrewInventoryTest extends CrewApiTestBase {
                 log.warn("Crew inventory session cleanup failed: {}", e.getMessage());
             }
         }
-    }
-
-    private void refreshRoleSessions(UserRole... roles) {
-        for (UserRole role : roles) {
-            authService.invalidateSession(role.getUsername(), role.getPassword());
-        }
-        apiExecutor.clearSessionCache();
     }
 
     /** Query params as UI /unit-management?mode=crews&crew=… */

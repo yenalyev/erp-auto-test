@@ -1,9 +1,12 @@
 package com.erp.tests.functional.resource;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
+import com.erp.models.request.ResourceUsageRequest;
+import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
@@ -15,6 +18,7 @@ import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
+import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -22,6 +26,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,6 +50,7 @@ public class ResourceWithTechnologicalMapApiTest extends BaseFunctionalTest {
 
     private TechnologicalMapFixture.IsolatedTechMapContext activeContext;
     private TechnologicalMapFixture.IsolatedTechMapContext archivedContext;
+    private TechnologicalMapResponse archivedOutputReboundTechMap;
     private final List<TechnologicalMapResponse> techMapsToCleanup = new ArrayList<>();
     private final List<Long> resourcesToCleanup = new ArrayList<>();
 
@@ -65,7 +71,8 @@ public class ResourceWithTechnologicalMapApiTest extends BaseFunctionalTest {
         archivedContext = techMapFixture.createIsolatedProductionTechMap(UserRole.ADMIN, storageId);
         techMapsToCleanup.add(archivedContext.getTechMap());
         trackResources(archivedContext);
-        resourceFixture.deactivate(UserRole.ADMIN, archivedContext.getProduct().getId());
+        archivedOutputReboundTechMap = bindArchivedOutputToNewActiveTechMap(archivedContext);
+        techMapsToCleanup.add(archivedOutputReboundTechMap);
     }
 
     @AfterClass(alwaysRun = true)
@@ -94,13 +101,10 @@ public class ResourceWithTechnologicalMapApiTest extends BaseFunctionalTest {
             техкарт обраного стору; селектор «Активні» → isActive=true.
 
             Arrange: на OWNER_1 storage створити дві ізольовані PRODUCTION техкарти; output
-            другої деактивувати (архівний виріб).
+            другої архівувати (DELETE /resources/{id}) після деактивації першої техкарти,
+            потім прив'язати архівний output до нової активної PRODUCTION техкарти стору.
             Act: GET /resources/with-technological-map?storageId=&isActive=true&name=<output>.
-            Assert: активний output присутній; архівний output і input-ресурси відсутні.
-
-            Відомий дефект: ResourceFacade.getResourcesFromTechnologicalMap порівнює
-            OutputResourceUsage.id з Resource.id замість output.resource.id — каталог порожній
-            для локацій з техкартами. Тест червоний до фіксу в tk.""")
+            Assert: активний output присутній; архівний output і input-ресурси відсутні.""")
     public void testActiveSelectorReturnsActiveProductionOutputsOnly() {
         String activeName = activeContext.getProduct().getName();
         String archivedName = archivedContext.getProduct().getName();
@@ -140,7 +144,8 @@ public class ResourceWithTechnologicalMapApiTest extends BaseFunctionalTest {
             Act: GET .../with-technological-map?storageId=&isActive=false&name=<archived-output>.
             Assert: архівний output присутній; активний output відсутній.
 
-            Той самий відомий дефект порівняння OutputResourceUsage.id — тест червоний до фіксу.""")
+            Arrange для архівного: деактивувати першу техкарту → архівувати ресурс → нова
+            активна PRODUCTION техкарта з тим самим output (допустимий стан словника).""")
     public void testArchivedSelectorReturnsInactiveProductionOutputsOnly() {
         String activeName = activeContext.getProduct().getName();
         String archivedName = archivedContext.getProduct().getName();
@@ -165,5 +170,45 @@ public class ResourceWithTechnologicalMapApiTest extends BaseFunctionalTest {
         resourcesToCleanup.add(ctx.getProduct().getId());
         ctx.getTechMap().getInput().forEach(usage ->
                 resourcesToCleanup.add(usage.getResource().getId()));
+    }
+
+    /**
+     * Archives a tech-map output and binds it to a new active PRODUCTION map on the same storage.
+     * Backend forbids {@code DELETE /resources/{id}} while the resource is still referenced by an
+     * <em>active</em> tech map ({@code ResourceValidator.validateDeactivate}), so we deactivate the
+     * first map first, archive the output, then create a rebound map — the state the «Архівні»
+     * selector in the favourites modal is meant to surface.
+     */
+    private TechnologicalMapResponse bindArchivedOutputToNewActiveTechMap(
+            TechnologicalMapFixture.IsolatedTechMapContext ctx) {
+        Response deactivateMap = techMapFixture.deactivateTechMap(
+                UserRole.ADMIN, ctx.getTechMap().getId(), storageId);
+        assertThat(deactivateMap.statusCode())
+                .as("Deactivate first tech map before archiving its output")
+                .isBetween(200, 299);
+
+        Response deactivateResource = resourceFixture.deactivate(UserRole.ADMIN, ctx.getProduct().getId());
+        assertThat(deactivateResource.statusCode())
+                .as("Archive output resource in dictionary")
+                .isBetween(200, 299);
+        assertThat(resourceFixture.getById(UserRole.ADMIN, ctx.getProduct().getId()).getActive())
+                .as("Archived output must have active=false in dictionary")
+                .isFalse();
+
+        String suffix = String.valueOf(System.currentTimeMillis());
+        ResourceResponse in1 = resourceFixture.createUniqueResource("TM-ARCH-IN1-" + suffix);
+        ResourceResponse in2 = resourceFixture.createUniqueResource("TM-ARCH-IN2-" + suffix);
+        resourcesToCleanup.add(in1.getId());
+        resourcesToCleanup.add(in2.getId());
+
+        TechnologicalMapRequest reboundRequest = TechnologicalMapDataFactory.createProductionMapWithStorages(
+                "TM-ArchivedOutput-" + suffix,
+                List.of(
+                        new ResourceUsageRequest(in1.getId(), 2.0),
+                        new ResourceUsageRequest(in2.getId(), 1.0)),
+                List.of(new ResourceUsageRequest(ctx.getProduct().getId(), 1.0)),
+                Set.of(storageId)).build();
+
+        return techMapFixture.createTechMapWithRequest(UserRole.ADMIN, reboundRequest);
     }
 }

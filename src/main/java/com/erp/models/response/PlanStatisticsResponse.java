@@ -8,14 +8,15 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-
+/**
+ * Maps backend {@code PlanSufficiencyResponse} (GET /api/v1/statistics/plan).
+ */
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PlanStatisticsResponse {
-    private PlanSummaryResponse summary;
-    private List<PlanResourceSummaryResponse> resources;
-    private List<DailyPlanExecutionResponse> dailyProduction;
+    private List<ResourceUsageResponse> dailyPlan;
+    private List<PlanDailyNeedResponse> dailyNeed;
 }

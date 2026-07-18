@@ -75,6 +75,11 @@ public class StorageDataFactory {
         return childStorage(parentId, namePrefix).accessMode(StorageAccessMode.REGIONS);
     }
 
+    /** UNIT-підрозділ з обмеженою видимістю (accessMode=REGIONS). */
+    public static StorageRequest.StorageRequestBuilder restrictedUnitStorage(@NonNull Long parentId, String namePrefix) {
+        return unitStorage(parentId, namePrefix).accessMode(StorageAccessMode.REGIONS);
+    }
+
     public static StorageRequest withAccessMode(
             @NonNull StorageResponse existing,
             @NonNull StorageAccessMode accessMode) {

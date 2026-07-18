@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Page Object for technological maps list (tk-ui {@code TechnologicalMapsListPage.tsx}).
@@ -26,10 +28,12 @@ public class TechnologicalMapsListPage extends BasePage {
     private static final String LOADING_TEXT = "Завантаження...";
     private static final String EMPTY_TEXT = "Немає даних";
     private static final String NOTES_COLUMN_HEADER = "Примітки";
+    private static final String INTERCHANGEABLE_COLUMN_HEADER = "Взаємозамінні";
     private static final String NOTES_EDIT_BUTTON_LABEL = "Редагувати примітки";
     private static final String NOTES_DIALOG_PLACEHOLDER = "Введіть примітки...";
     private static final String NOTES_SAVE_BUTTON = "Зберегти";
     private static final int SEARCH_DEBOUNCE_BUFFER_MS = 450;
+    private static final Pattern TAG_BADGE_PATTERN = Pattern.compile("(#\\S+) \\((\\d+)\\)");
 
     public TechnologicalMapsListPage(Page page) {
         super(page);
@@ -127,6 +131,7 @@ public class TechnologicalMapsListPage extends BasePage {
                     return url.contains("/technological-maps")
                             && !url.contains("/technological-maps/mode")
                             && !url.contains("/technological-maps/output-resources")
+                            && !url.contains("/tag-statistics")
                             && "GET".equals(response.request().method())
                             && response.status() < 500;
                 },
@@ -156,6 +161,21 @@ public class TechnologicalMapsListPage extends BasePage {
             return textContent(taggedText.first());
         }
         return textContent(notesCell);
+    }
+
+    public List<String> getHighlightedTagsForRow(int rowIndex) {
+        int notesColumnIndex = columnIndexByHeader(NOTES_COLUMN_HEADER);
+        Locator tags = page.locator("table tbody tr")
+                .nth(rowIndex)
+                .locator("td")
+                .nth(notesColumnIndex)
+                .locator("[data-slot='tagged-text-tag']");
+        List<String> result = new ArrayList<>();
+        int count = tags.count();
+        for (int i = 0; i < count; i++) {
+            result.add(textContent(tags.nth(i)));
+        }
+        return result;
     }
 
     public TechnologicalMapsListPage openNotesEditorForTechMapName(String techMapName) {
@@ -205,6 +225,70 @@ public class TechnologicalMapsListPage extends BasePage {
         } catch (IllegalStateException e) {
             return false;
         }
+    }
+
+    /** Re-applies product filter to refresh tag-statistics toolbar after notes change. */
+    public TechnologicalMapsListPage refreshTagStatistics(String productTerm) {
+        if (productTerm == null || productTerm.isBlank()) {
+            return this;
+        }
+        filterByProduct("");
+        return filterByProduct(productTerm);
+    }
+
+    public List<String> getVisibleTagBadges() {
+        List<String> badges = new ArrayList<>();
+        Locator buttons = page.locator("button").filter(new Locator.FilterOptions().setHasText("#"));
+        int count = buttons.count();
+        for (int i = 0; i < count; i++) {
+            String label = textContent(buttons.nth(i));
+            Matcher matcher = TAG_BADGE_PATTERN.matcher(label);
+            if (matcher.matches()) {
+                badges.add(matcher.group(1));
+            }
+        }
+        return badges;
+    }
+
+    public TechnologicalMapsListPage clickTagFilterBadge(String tag) {
+        Locator badge = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tag + " (")).first();
+        badge.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        waitForTechMapsDuring(badge::click);
+        waitForTableSettled();
+        return this;
+    }
+
+    public boolean isTagBadgeVisible(String tag) {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tag + " (")).count() > 0;
+    }
+
+    public boolean isTagBadgeSelected(String tag) {
+        Locator badge = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tag + " (")).first();
+        if (badge.count() == 0) {
+            return false;
+        }
+        String className = badge.getAttribute("class");
+        return className != null && className.contains("ring-green-700");
+    }
+
+    public boolean rowWithTechMapNameIsVisible(String techMapName) {
+        try {
+            findRowIndexByTechMapName(techMapName);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
+    public String getInterchangeableColumnTextForTechMap(String techMapName) {
+        int rowIndex = findRowIndexByTechMapName(techMapName);
+        int columnIndex = columnIndexByHeader(INTERCHANGEABLE_COLUMN_HEADER);
+        return textContent(page.locator("table tbody tr")
+                .nth(rowIndex)
+                .locator("td")
+                .nth(columnIndex));
     }
 
     private int columnIndexByHeader(String headerText) {

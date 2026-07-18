@@ -27,6 +27,10 @@ public class RelocationPage extends BasePage {
     private static final String HISTORY_RECEIVED_TAB = "Отримано";
     private static final String IN_TRANSIT_TAB = "В дорозі";
     private static final String SENT_TAB = "Видано";
+    private static final String LOST_TAB = "Втрачено";
+    private static final String CREATE_INCIDENT_BUTTON = "Створити інцидент";
+    private static final String INCIDENT_DETAILS_BUTTON = "Деталі інциденту";
+    private static final String DELETE_INCIDENT_BUTTON = "Видалити інцидент";
     private static final String CATEGORY_LABEL_TEXT = "Категорія";
     private static final String PRODUCT_LABEL_TEXT = "Продукт";
     private static final String LOADING_TEXT = "Завантаження...";
@@ -253,8 +257,55 @@ public class RelocationPage extends BasePage {
         return openActiveTab();
     }
 
+    public RelocationPage openLostTab() {
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(LOST_TAB)).click();
+        waitForJournalDataSettled();
+        return this;
+    }
+
+    public boolean isLostTabVisible() {
+        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(LOST_TAB)).isVisible();
+    }
+
     public boolean isActiveTabVisible() {
         return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(IN_TRANSIT_TAB)).isVisible();
+    }
+
+    public RelocationCreateIncidentPage clickCreateIncidentInRow(String rowText) {
+        Locator row = rowContainingText(rowText);
+        row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CREATE_INCIDENT_BUTTON)).click();
+        return new RelocationCreateIncidentPage(page).waitForLoaded();
+    }
+
+    public boolean isCreateIncidentButtonVisibleInRow(String rowText) {
+        return rowContainingText(rowText)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CREATE_INCIDENT_BUTTON))
+                .count() > 0;
+    }
+
+    public RelocationPage openIncidentDetailsInRow(String rowText) {
+        Locator row = rowContainingText(rowText);
+        row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(INCIDENT_DETAILS_BUTTON)).click();
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Інцидент"))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isIncidentDescriptionVisible(String description) {
+        return page.getByText(description).count() > 0;
+    }
+
+    public RelocationPage deleteIncidentFromDetails() {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(DELETE_INCIDENT_BUTTON)).click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Видалити")).last().click();
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Інцидент"))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.HIDDEN)
+                        .setTimeout(uiTimeoutMs()));
+        waitForJournalDataSettled();
+        return this;
     }
 
     public void clickResolveInRow(String rowText) {

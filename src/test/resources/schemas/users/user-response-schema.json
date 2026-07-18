@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UserModelResponse",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "username": { "type": "string" },
+    "firstName": { "type": "string" },
+    "lastName": { "type": "string" },
+    "rank": { "type": "string" },
+    "enabled": { "type": "boolean" },
+    "storages": { "type": "array" },
+    "permissions": { "type": "array", "items": { "type": "string" } },
+    "realmRoles": { "type": "array" },
+    "createdTimestamp": { "type": "string" }
+  },
+  "required": ["id", "username"],
+  "additionalProperties": true
+}

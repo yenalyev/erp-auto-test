@@ -9,9 +9,11 @@ import com.erp.data.factories.non_series_production.NonSeriesProductionRequestBo
 import com.erp.data.factories.global_plan.GlobalPlanRequestBodyFactory;
 import com.erp.data.factories.plan.PlanRequestBodyFactory;
 import com.erp.data.factories.production.ProductionRequestBodyFactory;
+import com.erp.data.factories.incident.IncidentRequestBodyFactory;
 import com.erp.data.factories.relocation.RelocationRequestBodyFactory;
 import com.erp.data.factories.storage.StorageRequestBodyFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapRequestBodyFactory;
+import com.erp.data.factories.user.UserRequestBodyFactory;
 import com.erp.data.strategies.RequestBodyStrategy;
 import com.erp.test_context.TestContext;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +35,13 @@ public class RequestBodyFactory {
         StorageRequestBodyFactory.registerStrategies();
         ProductionRequestBodyFactory.registerStrategies();
         RelocationRequestBodyFactory.registerStrategies();
+        IncidentRequestBodyFactory.registerStrategies();
         PlanRequestBodyFactory.registerStrategies();
         GlobalPlanRequestBodyFactory.registerStrategies();
         NonSeriesProductionRequestBodyFactory.registerStrategies();
         DefectRequestBodyFactory.registerStrategies();
         InventoryRequestBodyFactory.registerStrategies();
+        UserRequestBodyFactory.registerStrategies();
     }
 
     /**

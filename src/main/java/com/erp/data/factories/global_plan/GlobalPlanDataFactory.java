@@ -1,6 +1,7 @@
 package com.erp.data.factories.global_plan;
 
 import com.erp.data.FakerProvider;
+import com.erp.models.common.GlobalPlanAltGroupContext;
 import com.erp.models.common.GlobalPlanChainContext;
 import com.erp.models.request.DecompositionRequest;
 import com.erp.models.request.GlobalPlanRequest;
@@ -138,6 +139,21 @@ public class GlobalPlanDataFactory {
                                 GlobalPlanDataFactory.assignment(chain.getL2StorageId(), chain.getMapM2().getId(), "8"))),
                         GlobalPlanDataFactory.block(GlobalPlanDataFactory.item(chain.getResourceC().getId(),
                                 GlobalPlanDataFactory.assignment(chain.getL1StorageId(), chain.getMapM3().getId(), "20")))
+                ))
+                .build();
+    }
+
+    /**
+     * Single-block decomposition for alt-group product map (output P assigned on L1).
+     */
+    public static DecompositionRequest altGroupDecomposition(GlobalPlanAltGroupContext chain, double amount) {
+        String amountStr = amount == Math.rint(amount)
+                ? String.valueOf((long) amount)
+                : String.valueOf(amount);
+        return DecompositionRequest.builder()
+                .blocks(List.of(
+                        block(item(chain.getResourceP().getId(),
+                                assignment(chain.getL1StorageId(), chain.getMapProduct().getId(), amountStr)))
                 ))
                 .build();
     }

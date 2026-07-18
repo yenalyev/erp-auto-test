@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RelocationIncidentResponse",
+  "description": "Matches backend org.pm.tk.dto.incident.RelocationIncidentModel",
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer" },
+    "dateTime": { "type": "string" },
+    "relocationId": { "type": "integer" },
+    "description": { "type": ["string", "null"] },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "storageId": { "type": "integer" },
+          "resourceId": { "type": "integer" },
+          "operation": { "type": "string", "enum": ["WRITE_OFF", "PARTIAL_DELIVERY"] },
+          "amount": { "type": "number" }
+        },
+        "required": ["storageId", "resourceId", "operation", "amount"]
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "attachmentId": { "type": "integer" },
+          "url": { "type": "string" }
+        }
+      }
+    }
+  },
+  "required": ["id", "relocationId", "resources"]
+}

@@ -14,10 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalPlansPage extends BasePage {
 
     private static final String PATH = "/global-plans";
-    private static final String LIST_HEADING = "Глобальні плани";
-    private static final String CREATE_BUTTON_TEXT = "Створити план";
+    private static final String LIST_TAB = "Глобальні плани";
+    private static final String CREATE_BUTTON_TEXT = "Новий Глобальний план";
     private static final String DELETE_BUTTON_TITLE = "Видалити";
-    private static final String SIDEBAR_LINK_TEXT = "Глобальні плани";
 
     public GlobalPlansPage(Page page) {
         super(page);
@@ -30,18 +29,20 @@ public class GlobalPlansPage extends BasePage {
     }
 
     public GlobalPlansPage openFromSidebar() {
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(SIDEBAR_LINK_TEXT))
-                .first()
-                .click();
+        new AppSidebarPage(page)
+                .navigateToGroupedPage(AppSidebarPage.GROUP_PLANS, AppSidebarPage.TAB_GLOBAL_PLANS);
         return waitForLoaded();
     }
 
     public GlobalPlansPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(LIST_HEADING))
-                .waitFor(new Locator.WaitForOptions()
-                        .setState(WaitForSelectorState.VISIBLE)
-                        .setTimeout(uiTimeoutMs()));
+        Locator ready = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(LIST_TAB))
+                .or(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON_TEXT)))
+                .or(page.locator("table").first())
+                .first();
+        ready.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         return this;
     }
 
@@ -51,8 +52,10 @@ public class GlobalPlansPage extends BasePage {
         return new GlobalPlanWizardPage(page).waitForLoaded();
     }
 
+    /** True when the «Глобальні плани» PageTab (or create CTA) is visible — list h1 was removed. */
     public boolean isListHeadingVisible() {
-        return page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(LIST_HEADING))
+        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(LIST_TAB)).isVisible()
+                || page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON_TEXT))
                 .isVisible();
     }
 

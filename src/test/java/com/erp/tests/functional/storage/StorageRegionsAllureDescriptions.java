@@ -126,6 +126,43 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: 400 або auto-grant (2.2) — ресурс у autocomplete після receive.
             """ + ON_FAIL_API;
 
+    public static final String TC_STR_RES_013 = """
+            Що перевіряємо: UNIT type=UNIT + accessMode=REGIONS бачить лише granted у autocomplete та GET page.
+            Тестові дані: restrictedUnitStorage; область RESOURCES з granted; outsider поза областю.
+            Очікуваний результат: storage.type=UNIT; granted присутній; outsider відсутній.
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_RES_014 = """
+            Що перевіряємо: GET /resources?storageId=&categoryIds= фільтрує в межах scoped-набору UNIT.
+            Тестові дані: UNIT + RESOURCES region; granted і outsider в одній категорії.
+            Очікуваний результат: categoryIds повертає granted; outsider відсутній.
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_RES_015 = """
+            Що перевіряємо: глобальний словник (без storageId) ширший за scoped UNIT page.
+            Тестові дані: UNIT + один granted; outsider поза областю.
+            Очікуваний результат: global містить обидва; scoped лише granted; global.size > scoped.size.
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_RES_RBAC_001 = """
+            Що перевіряємо: OWNER_2 не керує ресурсами області RESOURCES.
+            Тестові дані: region accessMode=RESOURCES; resource для PUT/DELETE.
+            Очікуваний результат: PUT та DELETE .../regions/{id}/resources → HTTP 403.
+            """ + ON_FAIL_API;
+
+    public static final String TC_UI_RES_UNIT_001 = """
+            Що перевіряємо: UI /resources показує лише ресурси з області видимості UNIT workspace.
+            Хто виконує: API setup (ADMIN); UI Playwright /resources з selectedStorageId=UNIT.
+            Тестові дані: granted у RESOURCES region; hidden поза областю.
+            Очікуваний результат: granted у таблиці; hidden відсутній після пошуку за prefix.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_RES_UNIT_002 = """
+            Що перевіряємо: перемикання sidebar workspace змінює набір ресурсів на /resources.
+            Тестові дані: restricted UNIT (1 granted) vs FULL_ACCESS UNIT; extra поза областю restricted.
+            Очікуваний результат: на restricted — extra відсутній; після switch на FULL — extra видимий.
+            """ + ON_FAIL_UI;
+
     // --- Relocation visibility API ---
 
     public static final String TC_REL_VIS_001 = """

@@ -49,7 +49,7 @@ public class NonSeriesProductionListPage extends BasePage {
             log.debug("NETWORKIDLE not reached — proceeding: {}", e.getMessage());
         }
 
-        Locator pageReady = page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(TITLE_TEXT))
+        Locator pageReady = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(TITLE_TEXT))
                 .or(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(NEW_ITEM_BUTTON)))
                 .or(page.locator("table").first())
                 .first();

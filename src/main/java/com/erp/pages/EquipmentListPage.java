@@ -1,6 +1,7 @@
 package com.erp.pages;
 
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.PollUtils;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -49,10 +50,12 @@ public class EquipmentListPage extends BasePage {
 
     public EquipmentListPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(PAGE_TITLE))
-                .waitFor(new Locator.WaitForOptions()
-                        .setState(WaitForSelectorState.VISIBLE)
-                        .setTimeout(uiTimeoutMs()));
+        Locator ready = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(PAGE_TITLE))
+                .or(page.getByPlaceholder(SEARCH_PLACEHOLDER))
+                .first();
+        ready.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         page.getByPlaceholder(SEARCH_PLACEHOLDER)
                 .waitFor(new Locator.WaitForOptions()
                         .setState(WaitForSelectorState.VISIBLE)
@@ -113,6 +116,63 @@ public class EquipmentListPage extends BasePage {
                 .count() > 0;
     }
 
+    public EquipmentListPage filterBySearch(String searchTerm) {
+        runGroupedEquipmentFilterAction(() ->
+                page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(searchTerm));
+        return this;
+    }
+
+    public EquipmentListPage expandGroup(String groupName) {
+        Locator groupRow = groupRow(groupName);
+        Locator toggle = groupRow.locator("button[aria-label='Розгорнути'], button[aria-label='Згорнути']");
+        if ("Розгорнути".equals(toggle.getAttribute("aria-label"))) {
+            toggle.click();
+            expandedGroupSubTable(groupName)
+                    .waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout(uiTimeoutMs()));
+        }
+        return this;
+    }
+
+    public EquipmentListPage sortExpandedGroupByColumn(String groupName, String columnHeader) {
+        Locator header = expandedGroupSubTable(groupName)
+                .locator("thead th")
+                .filter(new Locator.FilterOptions().setHasText(columnHeader));
+        Locator sortButton = header.locator("button");
+        if (sortButton.count() > 0) {
+            sortButton.first().click();
+        } else {
+            header.first().click();
+        }
+        return this;
+    }
+
+    public List<String> readExpandedGroupInventoryNumbers(String groupName) {
+        PollUtils.waitUntilTrue(
+                () -> expandedGroupSubTable(groupName).locator("tbody tr").count() > 0,
+                uiTimeoutMs(),
+                "Expanded group rows for " + groupName);
+        List<String> numbers = new ArrayList<>();
+        Locator rows = expandedGroupSubTable(groupName).locator("tbody tr");
+        int rowCount = rows.count();
+        for (int i = 0; i < rowCount; i++) {
+            Locator inventoryCell = rows.nth(i).locator("td button.font-medium").first();
+            if (inventoryCell.count() == 0) {
+                inventoryCell = rows.nth(i).locator("td").nth(inventoryColumnIndex(groupName));
+            }
+            String text = inventoryCell.innerText().trim();
+            if (!text.isBlank()) {
+                numbers.add(text);
+            }
+        }
+        return numbers;
+    }
+
+    public boolean isGroupVisible(String groupName) {
+        return groupRow(groupName).count() > 0;
+    }
+
     public List<String> getDisplayedEquipmentNames() {
         List<String> names = new ArrayList<>();
         Locator nameButtons = tableContainer().locator("tbody button");
@@ -166,5 +226,28 @@ public class EquipmentListPage extends BasePage {
 
     private Locator tableContainer() {
         return page.locator(TABLE_CONTAINER_SELECTOR).first();
+    }
+
+    private Locator groupRow(String groupName) {
+        return tableContainer()
+                .locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(groupName))
+                .first();
+    }
+
+    private Locator expandedGroupSubTable(String groupName) {
+        return groupRow(groupName)
+                .locator("xpath=following-sibling::tr[@data-state='expanded'][1]//table");
+    }
+
+    private int inventoryColumnIndex(String groupName) {
+        Locator headers = expandedGroupSubTable(groupName).locator("thead th");
+        int count = headers.count();
+        for (int i = 0; i < count; i++) {
+            if (headers.nth(i).innerText().contains("Інв")) {
+                return i;
+            }
+        }
+        return 2;
     }
 }

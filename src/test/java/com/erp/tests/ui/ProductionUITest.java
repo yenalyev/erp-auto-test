@@ -64,7 +64,7 @@ public class ProductionUITest extends BaseUITest {
             Після логіну OWNER_1 відкриває сторінку журналу виробництва (/production).
             Перевіряється наявність:
             — кнопок «Виготовлення» та «Розбір»
-            — фільтрів: поле «Продукт», датапікери «З» і «По», кнопка «Очистити»
+            — фільтрів: поле «Продукт», «Період» (DateRangePicker), кнопка «Очистити»
             — таблиці з записами виробництва (не порожній стан «Нічого не знайдено»)
             — відповідність відображених рядків останнім записам з API (перша сторінка, сортування за датою)
             Додатково робиться скріншот сторінки.
@@ -89,12 +89,8 @@ public class ProductionUITest extends BaseUITest {
                 .as("Поле фільтру «Продукт» має бути видимим")
                 .isTrue();
 
-        assertThat(productionPage.isDateFromVisible())
-                .as("Датапікер «З» має бути видимим")
-                .isTrue();
-
-        assertThat(productionPage.isDateToVisible())
-                .as("Датапікер «По» має бути видимим")
+        assertThat(productionPage.isPeriodFilterVisible())
+                .as("Фільтр «Період» має бути видимим")
                 .isTrue();
 
         assertThat(productionPage.isClearButtonVisible())

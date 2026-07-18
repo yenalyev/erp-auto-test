@@ -19,6 +19,10 @@
         <classes>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationFilterTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerExportApiTest"/>
         </classes>
     </test>
 </suite>

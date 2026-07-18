@@ -99,14 +99,17 @@ public class ProductionJournalFilterCatalog {
     public ProductionJournalFilterScenario endDateFilter(ProductionFixture fixture) {
         ManufacturingItemResponse anchor = baseline.getFirst();
         LocalDate endDate = anchor.getDate();
+        // DateRangePicker cannot set end without start — UI applies same-day range.
         ProductionJournalQuery query = ProductionJournalQuery.uiDefaults(storageId)
                 .toBuilder()
+                .startDate(endDate)
                 .endDate(endDate)
                 .build();
         return ProductionJournalFilterScenario.builder()
                 .name("endDate")
                 .anchor(anchor)
                 .query(query)
+                .startDate(endDate)
                 .endDate(endDate)
                 .build();
     }

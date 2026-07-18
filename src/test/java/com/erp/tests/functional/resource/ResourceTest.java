@@ -17,7 +17,7 @@ import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -278,9 +278,12 @@ public class ResourceTest extends BaseFunctionalTest {
      * не мапиться автоматично на 'measurementUnitId' з Request через рефлексію.
      */
     private void verifyCreatedResource(Response response, ResourceRequest request) {
-        verifyCreatedEntity(response, request, ApiEndpointDefinition.RESOURCE_GET_ALL, ResourceResponse.class);
+        verifyEntityViaGetById(
+                response,
+                request,
+                ApiEndpointDefinition.RESOURCE_GET_BY_ID,
+                ResourceResponse.class);
 
-        // Додаткова перевірка специфічного мапінгу unitId -> unit.id
         ResourceResponse actualResponse = response.as(ResourceResponse.class);
         Allure.step("Додаткова перевірка зв'язку з Measurement Unit", () -> {
             assertThat(actualResponse.getUnit().getId())

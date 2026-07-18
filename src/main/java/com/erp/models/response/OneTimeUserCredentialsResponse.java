@@ -6,16 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AlternativeGroupResponse {
-    private Long id;
-    private String name;
-    private Boolean required;
-    private List<AlternativeOptionResponse> options;
+public class OneTimeUserCredentialsResponse {
+    private String username;
+    private String password;
 }

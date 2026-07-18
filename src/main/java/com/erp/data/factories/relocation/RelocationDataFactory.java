@@ -89,6 +89,28 @@ public final class RelocationDataFactory {
                 .build();
     }
 
+    /**
+     * Send where item amount may exceed the produced batch total (rest is supplied ready-made).
+     * Used by resource-viewer mixed explosion / scale-path coverage.
+     */
+    public static RelocationOutputRequest buildSendWithBatches(Long senderId,
+                                                               Long recipientId,
+                                                               Long resourceId,
+                                                               double amount,
+                                                               List<RelocationItemBatchRequest> batches) {
+        return RelocationOutputRequest.builder()
+                .senderId(senderId)
+                .recipientId(recipientId)
+                .description("erp-auto-test send with mixed batches")
+                .date(LocalDate.now())
+                .items(List.of(ResourceUsageRequest.builder()
+                        .resourceId(resourceId)
+                        .amount(BigDecimal.valueOf(amount))
+                        .batches(batches)
+                        .build()))
+                .build();
+    }
+
     public static RelocationInputRequest buildReceiveRequest(Long supplierId,
                                                              Long recipientId,
                                                              Long resourceId,

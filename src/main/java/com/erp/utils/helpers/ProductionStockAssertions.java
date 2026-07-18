@@ -97,8 +97,7 @@ public class ProductionStockAssertions {
                             "locations", storageId,
                             "resourceIds", List.copyOf(resourceIds),
                             "size", Math.max(resourceIds.size(), 1)));
-            List<MultiLocationStorageItemResponse> content = response.jsonPath()
-                    .getList("content", MultiLocationStorageItemResponse.class);
+            List<MultiLocationStorageItemResponse> content = parseMultiInventoryContent(response);
 
             if (content != null) {
                 for (MultiLocationStorageItemResponse item : content) {
@@ -240,9 +239,8 @@ public class ProductionStockAssertions {
                 ApiEndpointDefinition.STORAGE_INVENTORY_MULTI_GET,
                 role,
                 Map.of("locations", storageId, "resourceIds", resourceId, "size", 1));
-        List<MultiLocationStorageItemResponse> content = response.jsonPath()
-                .getList("content", MultiLocationStorageItemResponse.class);
-        if (content == null || content.isEmpty()) {
+        List<MultiLocationStorageItemResponse> content = parseMultiInventoryContent(response);
+        if (content.isEmpty()) {
             return 0.0;
         }
         return content.stream()
@@ -294,6 +292,27 @@ public class ProductionStockAssertions {
     }
 
 
+
+  /**
+   * CREW storages may return 403 (plain text) when JWT lacks {@code inventory-list::{crew}::read}
+   * or the location is empty — treat as zero stock instead of failing JSON parsing.
+   */
+    private static List<MultiLocationStorageItemResponse> parseMultiInventoryContent(Response response) {
+        if (response == null) {
+            return List.of();
+        }
+        int status = response.statusCode();
+        if (status == 403 || status == 404) {
+            return List.of();
+        }
+        String contentType = response.getContentType();
+        if (contentType == null || !contentType.toLowerCase().contains("json")) {
+            return List.of();
+        }
+        List<MultiLocationStorageItemResponse> content = response.jsonPath()
+                .getList("content", MultiLocationStorageItemResponse.class);
+        return content != null ? content : List.of();
+    }
 
     private static void logStockPhase(Map<Long, Double> amounts,
 

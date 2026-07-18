@@ -42,13 +42,13 @@ public class GlobalPlansUiTest extends BaseUITest {
     @Description("""
             **Мета:** smoke — адміністратор з валідною сесією відкриває список глобальних планів.
             
-            **Маршрут:** `/global-plans` (sidebar «Глобальні плани» / декомпозиція)
+            **Маршрут:** `/global-plans` (sidebar «Виробничі плани» → PageTab «Глобальні плани»)
             **Роль:** ADMIN (cookies через Playwright inject)
             
             **Параметри:** без попереднього API-setup; лише browser session.
             
             **Перевірки:**
-            - Заголовок сторінки «Глобальні плани» видимий.
+            - PageTab / CTA «Глобальні плани» видимий.
             - Скріншот прикріплено до Allure.
             """)
     public void adminOpensGlobalPlansList() {
@@ -56,7 +56,7 @@ public class GlobalPlansUiTest extends BaseUITest {
         listPage.attachScreenshot("TC-GP-UI-SMOKE-001 — global plans list");
 
         assertThat(listPage.isListHeadingVisible())
-                .as("Заголовок «Глобальні плани» має бути видимим")
+                .as("PageTab / екран «Глобальні плани» має бути видимим")
                 .isTrue();
     }
 
@@ -70,7 +70,7 @@ public class GlobalPlansUiTest extends BaseUITest {
             **Маршрути:** `/global-plans` → кнопка створення → wizard
             **Роль:** ADMIN
             
-            **Параметри:** нова сесія на списку, клік «створити план».
+            **Параметри:** нова сесія на списку, клік «Новий Глобальний план».
             
             **Перевірки:**
             - Заголовок wizard «Декомпозиція виробничого плану» видимий.

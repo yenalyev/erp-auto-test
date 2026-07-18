@@ -36,6 +36,15 @@ public class RbacFixture extends BaseFixture {
         prepareDefectRbacContext();
         prepareGlobalPlanRbacContext();
         new NonSeriesProductionFixture(testContext, apiExecutor).prepareContext();
+        prepareUserRbacContext();
+    }
+
+    @Step("Setup Keycloak user entity for RBAC matrix")
+    public void prepareUserRbacContext() {
+        if (testContext.get(ContextKey.SHARED_USER_ID) != null) {
+            return;
+        }
+        new UserFixture(testContext, apiExecutor).prepareRbacUserContext();
     }
 
     @Step("Setup crew storage in CREWS region for RBAC matrix")
@@ -79,31 +88,33 @@ public class RbacFixture extends BaseFixture {
 
     @Step("Setup relocation entities for RBAC matrix")
     public void prepareRelocationRbacContext() {
-        if (testContext.get(ContextKey.RELOCATION_ID) != null) {
-            return;
+        if (testContext.get(ContextKey.RELOCATION_ID) == null) {
+            RelocationFixture relocationFixture = new RelocationFixture(testContext, apiExecutor);
+            relocationFixture.prepareContext();
+
+            Long owner1 = com.erp.utils.config.ConfigProvider.getOwner1StorageId();
+            Long owner2 = com.erp.utils.config.ConfigProvider.getOwner2StorageId();
+            Long resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
+            Long unitId = testContext.get(ContextKey.RELOCATION_UNIT_STORAGE_ID);
+
+            com.erp.models.response.RelocationResponse receive = relocationFixture.createExternalReceive(
+                    UserRole.OWNER_1, owner1, resourceId, 5.0,
+                    com.erp.data.factories.relocation.RelocationDataFactory.uniqueBatchNumber());
+            testContext.set(ContextKey.RELOCATION_ID, receive.getId());
+
+            com.erp.models.response.RelocationResponse created = relocationFixture.createSend(
+                    UserRole.OWNER_1, owner1, owner2, resourceId, 2.0);
+            testContext.set(ContextKey.RELOCATION_CREATED_ID, created.getId());
+
+            com.erp.models.response.RelocationResponse unitSend = relocationFixture.createSend(
+                    UserRole.OWNER_1, owner1, unitId, resourceId, 2.0);
+            testContext.set(ContextKey.RELOCATION_AUTO_FINISHED_SEND_ID, unitSend.getId());
+
+            EquipmentFixture equipmentFixture = new EquipmentFixture(testContext, apiExecutor);
+            equipmentFixture.prepareContext();
         }
-        RelocationFixture relocationFixture = new RelocationFixture(testContext, apiExecutor);
-        relocationFixture.prepareContext();
 
-        Long owner1 = com.erp.utils.config.ConfigProvider.getOwner1StorageId();
-        Long owner2 = com.erp.utils.config.ConfigProvider.getOwner2StorageId();
-        Long resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
-        Long unitId = testContext.get(ContextKey.RELOCATION_UNIT_STORAGE_ID);
-
-        com.erp.models.response.RelocationResponse receive = relocationFixture.createExternalReceive(
-                UserRole.OWNER_1, owner1, resourceId, 5.0,
-                com.erp.data.factories.relocation.RelocationDataFactory.uniqueBatchNumber());
-        testContext.set(ContextKey.RELOCATION_ID, receive.getId());
-
-        com.erp.models.response.RelocationResponse created = relocationFixture.createSend(
-                UserRole.OWNER_1, owner1, owner2, resourceId, 2.0);
-        testContext.set(ContextKey.RELOCATION_CREATED_ID, created.getId());
-
-        com.erp.models.response.RelocationResponse unitSend = relocationFixture.createSend(
-                UserRole.OWNER_1, owner1, unitId, resourceId, 2.0);
-        testContext.set(ContextKey.RELOCATION_AUTO_FINISHED_SEND_ID, unitSend.getId());
-
-        EquipmentFixture equipmentFixture = new EquipmentFixture(testContext, apiExecutor);
-        equipmentFixture.prepareContext();
+        IncidentFixture incidentFixture = new IncidentFixture(testContext, apiExecutor);
+        incidentFixture.seedRbacIncidentContext();
     }
 }

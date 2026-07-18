@@ -34,6 +34,8 @@ public class CrewVisibilityTest extends CrewApiTestBase {
     @Step("Підготовка середовища для crew visibility тестів")
     public void setupCrewVisibilityTest() {
         storageFixture.prepareContext();
+        regionFixture.purgeRegionsByNamePrefixes(
+                UserRole.ADMIN, "crew-opt-", "crew-nomem-", "crew-hier-", "crew-rel-", "crew-inv-");
     }
 
     @Test(priority = 10)
@@ -65,9 +67,9 @@ public class CrewVisibilityTest extends CrewApiTestBase {
         regionFixture.addRegionLocations(region.getId(), unit.getId(), crew.getId());
 
         RelocationCreationOptionsResponse options =
-                crewFixture.getCreationOptions(UserRole.OWNER_1, owner1StorageId);
+                crewFixture.getCreationOptions(UserRole.OWNER_2, owner2StorageId);
         assertThat(options.getHasCrews())
-                .as("OWNER_1 не member цієї області — hasCrews має бути false")
+                .as("OWNER_2 не member цієї області — hasCrews має бути false")
                 .isFalse();
     }
 

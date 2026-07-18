@@ -250,6 +250,68 @@ public class ProductionFixture extends BaseFixture {
         topUpIfNeeded(storageId, input2, minimum);
     }
 
+    @Step("FIXTURE: Забезпечити мінімальний запас для ресурсів техкарти (fixed + alternatives) на складі {storageId}")
+    public void ensureStockForTechMapInputs(Long storageId, TechnologicalMapResponse techMap, double minimum) {
+        Map<Long, Double> amounts = new LinkedHashMap<>();
+        if (techMap.getInput() != null) {
+            for (var usage : techMap.getInput()) {
+                if (usage.getResource() != null) {
+                    amounts.put(usage.getResource().getId(), minimum);
+                }
+            }
+        }
+        if (techMap.getGroups() != null) {
+            for (var group : techMap.getGroups()) {
+                if (group.getAlternativeResources() == null) {
+                    continue;
+                }
+                for (var alt : group.getAlternativeResources()) {
+                    if (alt.getResource() != null) {
+                        amounts.put(alt.getResource().getId(), minimum);
+                    }
+                }
+            }
+        }
+        for (Map.Entry<Long, Double> entry : amounts.entrySet()) {
+            topUpIfNeeded(storageId, entry.getKey(), entry.getValue());
+        }
+    }
+
+    @Step("API: створити виробництво з явним вибором alternativeInputs")
+    public ManufacturingItemResponse createAsWithAlternatives(
+            UserRole role,
+            Long storageId,
+            TechnologicalMapResponse techMap,
+            double amount,
+            List<com.erp.models.request.AlternativeInputRequest> alternativeInputs) {
+        var request = ProductionDataFactory.buildCreateRequest(
+                techMap, amount, java.time.LocalDate.now(),
+                ProductionDataFactory.uniqueBatchNumber(), alternativeInputs);
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_POST_CREATE,
+                role,
+                request,
+                String.valueOf(storageId));
+        validateSuccess(response, "Create production with alternativeInputs");
+        List<ManufacturingItemResponse> created = response.jsonPath()
+                .getList("", ManufacturingItemResponse.class);
+        if (created == null || created.isEmpty()) {
+            throw new IllegalStateException("Empty create production response");
+        }
+        return created.getFirst();
+    }
+
+    @Step("API: спроба створити виробництво (очікується помилка валідації)")
+    public Response tryCreateAs(UserRole role,
+                                Long storageId,
+                                com.erp.models.request.ManufacturingListRequest request) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_POST_CREATE,
+                role,
+                request,
+                String.valueOf(storageId));
+    }
+
     @Step("API: Отримати залишок ресурсу {resourceId} на складі {storageId}")
     public double getResourceStock(Long storageId, Long resourceId) {
         return ProductionStockAssertions.resourceStockExact(apiExecutor, storageId, UserRole.OWNER_1, resourceId);
@@ -263,7 +325,7 @@ public class ProductionFixture extends BaseFixture {
         double toAdd = minimum - current;
         RelocationStockSeeder.receiveFromSupplier(
                 apiExecutor,
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 storageId,
                 Map.of(resourceId, toAdd));
         double after = getResourceStock(storageId, resourceId);
@@ -274,7 +336,7 @@ public class ProductionFixture extends BaseFixture {
     private void seedStockViaRelocation(Long storageId, Long input1, Long input2) {
         RelocationStockSeeder.receiveFromSupplier(
                 apiExecutor,
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 storageId,
                 Map.of(input1, INPUT_STOCK, input2, INPUT_STOCK));
         log.info("Seeded stock via relocation receive: storage={}, resources=[{}, {}], amount={}",

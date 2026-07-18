@@ -6,12 +6,12 @@ import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageAccessMode;
+import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.models.request.InventoryRequest;
-import com.erp.models.request.StorageRequest;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageRegionResourceResponse;
@@ -25,6 +25,8 @@ import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.erp.test_context.ContextKey;
 
 import java.util.List;
 import java.util.Map;
@@ -75,7 +77,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
     public void testAddAndListRegionResources() {
         ResourceResponse resourceA = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "a-");
         ResourceResponse resourceB = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "b-");
-        RestrictedUnitSetup setup = createRestrictedUnit("res-reg-crud-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-reg-crud-");
 
         StorageRegionResponse afterAdd = regionFixture.addRegionResources(
                 setup.region().getId(), resourceA.getId(), resourceB.getId());
@@ -100,7 +102,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
     @Severity(SeverityLevel.CRITICAL)
     public void testRestrictedUnitWithoutResourceRegionsSeesNoCatalog() {
         ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "hidden-");
-        RestrictedUnitSetup setup = createRestrictedUnit("res-empty-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-empty-");
 
         List<ResourceResponse> results = resourceFixture.autocompleteForStorage(
                 UserRole.ADMIN, setup.unit().getId(), RESOURCE_PREFIX, false);
@@ -119,7 +121,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         ResourceResponse granted = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "granted-");
         ResourceResponse outsider = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "outsider-");
 
-        RestrictedUnitSetup setup = createRestrictedUnit("res-member-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-member-");
         regionFixture.addRegionResources(setup.region().getId(), granted.getId());
 
         List<ResourceResponse> autocomplete = resourceFixture.autocompleteForStorage(
@@ -170,7 +172,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         ResourceResponse inRegion = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "in-reg-");
         ResourceResponse newViaRelocation = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "reloc-");
 
-        RestrictedUnitSetup setup = createRestrictedUnit("res-auto-grant-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-auto-grant-");
         regionFixture.addRegionResources(setup.region().getId(), inRegion.getId());
 
         relocationFixture.ensureStock(owner1StorageId, newViaRelocation.getId(), 50.0);
@@ -211,7 +213,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         StorageResponse parent = storageFixture.resolveParentUnit();
         StorageResponse fullAccess = storageFixture.createStorage(
                 StorageDataFactory.childStorage(parent.getId(), "res-full-").build());
-        RestrictedUnitSetup restricted = createRestrictedUnit("res-restricted-");
+        RestrictedUnitResourceSetup.Setup restricted = createRestrictedUnit("res-restricted-");
         regionFixture.addRegionResources(restricted.region().getId(), shared.getId());
 
         // Пошук за точним іменем: prefix res-vis- на dev часто дає ≥50 збігів (dirty data) і обрізається size=50.
@@ -239,7 +241,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
     @Severity(SeverityLevel.NORMAL)
     public void testRemoveResourceFromRegionBlockedWhenStockPresent() {
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "stock-guard-");
-        RestrictedUnitSetup setup = createRestrictedUnit("res-stock-guard-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-stock-guard-");
         regionFixture.addRegionResources(setup.region().getId(), resource.getId());
 
         relocationFixture.ensureStock(owner1StorageId, resource.getId(), 50.0);
@@ -279,7 +281,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "inv-vis-");
         ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "inv-hid-");
 
-        RestrictedUnitSetup setup = createRestrictedUnit("res-inv-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-inv-");
         regionFixture.addRegionResources(setup.region().getId(), visible.getId());
 
         assertThat(resourceFixture.isPresentInAutocompleteForStorage(
@@ -328,7 +330,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
     public void testInventoryAllowsResourceInsideVisibilityScope() {
         ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "inv-ok-");
 
-        RestrictedUnitSetup setup = createRestrictedUnit("res-inv-ok-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-inv-ok-");
         regionFixture.addRegionResources(setup.region().getId(), visible.getId());
 
         assertThat(resourceFixture.isPresentInAutocompleteForStorage(
@@ -362,7 +364,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "crew-vis-");
         ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "crew-hid-");
 
-        RestrictedUnitSetup setup = createRestrictedUnit("res-crew-scope-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-crew-scope-");
         regionFixture.addRegionResources(setup.region().getId(), visible.getId());
 
         StorageResponse crew = storageFixture.createStorage(
@@ -410,7 +412,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         ResourceResponse inScope = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "recv-in-");
         ResourceResponse outOfScope = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "recv-out-");
 
-        RestrictedUnitSetup setup = createRestrictedUnit("res-int-recv-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-int-recv-");
         regionFixture.addRegionResources(setup.region().getId(), inScope.getId());
 
         relocationFixture.ensureStock(owner1StorageId, inScope.getId(), 50.0);
@@ -498,7 +500,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
     @Severity(SeverityLevel.NORMAL)
     public void testSupplierReceiveForNonVisibleResource() {
         ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "supp-");
-        RestrictedUnitSetup setup = createRestrictedUnit("res-supp-");
+        RestrictedUnitResourceSetup.Setup setup = createRestrictedUnit("res-supp-");
 
         assertThat(resourceFixture.isPresentInAutocompleteForStorage(
                 UserRole.ADMIN, setup.unit().getId(), hidden.getName(), hidden.getId(), false))
@@ -523,20 +525,114 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
                 .isTrue();
     }
 
-    private RestrictedUnitSetup createRestrictedUnit(String namePrefix) {
-        StorageResponse unit = createRestrictedStorage(namePrefix + "unit-");
-        StorageRegionResponse region = regionFixture.createRegion(
-                unit, StorageAccessMode.RESOURCES, namePrefix + "reg-");
-        regionFixture.addRegionMembers(region.getId(), unit.getId());
-        return new RestrictedUnitSetup(unit, region);
+    @Test(priority = 91)
+    @TestCaseId("TC-STR-RES-013")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_013)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testUnitTypeRestrictedMemberSeesOnlyGrantedResources() {
+        ResourceResponse granted = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "unit-gr-");
+        ResourceResponse outsider = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "unit-out-");
+
+        RestrictedUnitResourceSetup.Setup setup = RestrictedUnitResourceSetup.createUnit(
+                storageFixture, regionFixture, "res-unit-type-");
+        assertThat(setup.unit().getType()).isEqualTo(UnitType.UNIT.name());
+
+        regionFixture.addRegionResources(setup.region().getId(), granted.getId());
+
+        List<ResourceResponse> autocomplete = resourceFixture.autocompleteForStorage(
+                UserRole.ADMIN, setup.unit().getId(), RESOURCE_PREFIX, false);
+        Set<Long> autocompleteIds = autocomplete.stream().map(ResourceResponse::getId).collect(Collectors.toSet());
+
+        assertThat(autocompleteIds).contains(granted.getId()).doesNotContain(outsider.getId());
+
+        List<ResourceResponse> page = resourceFixture.getPageForStorage(
+                UserRole.ADMIN, setup.unit().getId(), RESOURCE_PREFIX);
+        assertThat(page.stream().map(ResourceResponse::getId))
+                .contains(granted.getId())
+                .doesNotContain(outsider.getId());
+    }
+
+    @Test(priority = 92)
+    @TestCaseId("TC-STR-RES-014")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_014)
+    @Severity(SeverityLevel.NORMAL)
+    public void testUnitScopedPageFiltersByCategoryWithinVisibility() {
+        Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        ResourceResponse granted = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "unit-cat-gr-");
+        ResourceResponse outsider = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "unit-cat-out-");
+
+        RestrictedUnitResourceSetup.Setup setup = RestrictedUnitResourceSetup.createUnit(
+                storageFixture, regionFixture, "res-unit-cat-");
+        regionFixture.addRegionResources(setup.region().getId(), granted.getId());
+
+        List<ResourceResponse> scoped = resourceFixture.getPageForStorage(
+                UserRole.ADMIN,
+                setup.unit().getId(),
+                RESOURCE_PREFIX,
+                true,
+                List.of(categoryId));
+
+        assertThat(scoped.stream().map(ResourceResponse::getId))
+                .contains(granted.getId())
+                .doesNotContain(outsider.getId());
+    }
+
+    @Test(priority = 93)
+    @TestCaseId("TC-STR-RES-015")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_015)
+    @Severity(SeverityLevel.NORMAL)
+    public void testUnitGlobalDictionaryWiderThanScopedPage() {
+        ResourceResponse granted = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "unit-glob-gr-");
+        ResourceResponse outsider = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "unit-glob-out-");
+
+        RestrictedUnitResourceSetup.Setup setup = RestrictedUnitResourceSetup.createUnit(
+                storageFixture, regionFixture, "res-unit-glob-");
+        regionFixture.addRegionResources(setup.region().getId(), granted.getId());
+
+        List<ResourceResponse> globalPage = resourceFixture.getPage(UserRole.ADMIN, true, RESOURCE_PREFIX);
+        List<ResourceResponse> scopedPage = resourceFixture.getPageForStorage(
+                UserRole.ADMIN, setup.unit().getId(), RESOURCE_PREFIX);
+
+        assertThat(globalPage.stream().map(ResourceResponse::getId))
+                .contains(granted.getId(), outsider.getId());
+        assertThat(scopedPage.stream().map(ResourceResponse::getId))
+                .contains(granted.getId())
+                .doesNotContain(outsider.getId());
+        assertThat(globalPage.size()).isGreaterThan(scopedPage.size());
+    }
+
+    @Test(priority = 94)
+    @TestCaseId("TC-STR-RES-RBAC-001")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_RBAC_001)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testOwnerCannotManageRegionResources() {
+        ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "rbac-");
+        RestrictedUnitResourceSetup.Setup setup = RestrictedUnitResourceSetup.createUnit(
+                storageFixture, regionFixture, "res-rbac-");
+
+        Response addResponse = regionFixture.addRegionResourcesRaw(
+                UserRole.OWNER_2, setup.region().getId(), resource.getId());
+        assertThat(addResponse.statusCode())
+                .as("OWNER_2 не має права додавати ресурси до області")
+                .isEqualTo(403);
+
+        regionFixture.addRegionResources(setup.region().getId(), resource.getId());
+
+        Response removeResponse = regionFixture.removeRegionResourcesRaw(
+                UserRole.OWNER_2, setup.region().getId(), resource.getId());
+        assertThat(removeResponse.statusCode())
+                .as("OWNER_2 не має права видаляти ресурси з області")
+                .isEqualTo(403);
+    }
+
+    private RestrictedUnitResourceSetup.Setup createRestrictedUnit(String namePrefix) {
+        return RestrictedUnitResourceSetup.create(
+                storageFixture, regionFixture, UnitType.STORAGE, namePrefix);
     }
 
     private StorageResponse createRestrictedStorage(String namePrefix) {
         StorageResponse parent = storageFixture.resolveParentUnit();
-        StorageRequest request = StorageDataFactory.restrictedStorage(parent.getId(), namePrefix).build();
-        return storageFixture.createStorage(request);
-    }
-
-    private record RestrictedUnitSetup(StorageResponse unit, StorageRegionResponse region) {
+        return storageFixture.createStorage(
+                StorageDataFactory.restrictedStorage(parent.getId(), namePrefix).build());
     }
 }

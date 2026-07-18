@@ -54,6 +54,22 @@ public class ResourceFixture extends BaseFixture {
         return response.as(ResourceResponse.class);
     }
 
+    @Step("API: створити ресурс «{namePrefix}» з властивістю Постачальник={supplier}")
+    public ResourceResponse createUniqueResourceWithSupplier(String namePrefix, String supplier) {
+        Long unitId = testContext.get(com.erp.test_context.ContextKey.SHARED_UNIT_ID);
+        Long categoryId = testContext.get(com.erp.test_context.ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        ResourceRequest request = ResourceDataFactory.uniqueResource(namePrefix, unitId, categoryId)
+                .toBuilder()
+                .properties(List.of(com.erp.models.request.ResourcePropertyRequest.builder()
+                        .name("Постачальник")
+                        .value(supplier)
+                        .build()))
+                .build();
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, request);
+        validateSuccess(response, "Create resource with supplier " + namePrefix);
+        return response.as(ResourceResponse.class);
+    }
+
     @Step("API: деактивувати ресурс id={resourceId}")
     public Response deactivate(UserRole role, Long resourceId) {
         return apiExecutor.execute(ApiEndpointDefinition.RESOURCE_DEACTIVATE, role, null, String.valueOf(resourceId));
@@ -107,12 +123,28 @@ public class ResourceFixture extends BaseFixture {
 
     @Step("API: GET сторінка ресурсів storageId={storageId}")
     public List<ResourceResponse> getPageForStorage(UserRole role, Long storageId, String name) {
+        return getPageForStorage(role, storageId, name, null, null);
+    }
+
+    @Step("API: GET сторінка ресурсів storageId={storageId} isActive={isActive} categoryIds={categoryIds}")
+    public List<ResourceResponse> getPageForStorage(
+            UserRole role,
+            Long storageId,
+            String name,
+            Boolean isActive,
+            List<Long> categoryIds) {
         Map<String, Object> params = new HashMap<>();
         params.put("page", 0);
         params.put("size", 500);
         params.put("storageId", storageId);
         if (name != null && !name.isBlank()) {
             params.put("name", name);
+        }
+        if (isActive != null) {
+            params.put("isActive", isActive);
+        }
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            params.put("categoryIds", categoryIds);
         }
         Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.RESOURCE_GET_ALL, role, params);
