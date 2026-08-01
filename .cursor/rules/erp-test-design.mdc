@@ -74,6 +74,34 @@ public void cleanupArtifacts() {
 - **staging:** cleanup пропускається (лише `clearTracked*`), як у `TestArtifactCleanup`.
 - Тест, що свідомо видаляє сутність у тілі (напр. `StorageRegionTest` DELETE), — `untrackForCleanup(id)` перед ручним DELETE.
 
+## 7. Positive + isolation (no side effects)
+
+Якщо тест перевіряє, що сутність **з’явилась** або **змінилась** — у тому ж сценарії (або парному негативному кроці) перевірити, що **інші релевантні** сутності **не з’явились / не змінились**.
+
+Позитивний асерт без ізоляції вважати **неповним**.
+
+| Рівень | Коли | Як |
+|--------|------|-----|
+| Count / phantom | негативний CRUD, відхилена дія | `assertDbUnchanged` |
+| Scoped unchanged / Δ=0 | stock, relocation, orders, production | `RelocationStockAssertions.assertUnchanged`, `ProductionStockAssertions.assertDelta(..., 0.0)`, fixture `assertInventoryUnchanged` |
+| Sibling entity | create/update каталогу або lifecycle, де є сусіди у фікстурі | GET/list іншого id — поля як до мутації |
+| State unchanged | відхилена зміна статусу | стан ордера/сутності без змін |
+
+Межі:
+
+- Перевіряти **релевантних** siblings у arrange/фікстурі (той самий storage, unused alt resource, сусідній запис), не весь світ.
+- Full-inventory equality — коли дія **не повинна** чіпати склад.
+- Відомий дефект продукту — як у §5: assert очікувану ізоляцію, навіть якщо зараз червоний.
+
+```java
+// BAD — лише «створилось / змінилось»
+assertThat(created.getId()).isNotNull();
+
+// GOOD — очікувана зміна + ізоляція
+assertDelta(before, after, Map.of(touchedId, -1.0, siblingId, 0.0));
+// або assertUnchanged(otherStorageBefore, otherStorageAfter);
+```
+
 ## Референс: TC-GP-045 (пропущений баг)
 
 | Шар | Поведінка |

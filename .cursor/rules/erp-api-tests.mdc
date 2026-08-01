@@ -36,7 +36,11 @@ public void testCreateEntity() {
 }
 ```
 
-Negative tests: TestNG `@DataProvider` + `assertDbUnchanged()` before/after.
+### Positive + isolation
+
+- Negative CRUD: TestNG `@DataProvider` + `assertDbUnchanged()` before/after.
+- Happy-path create/update/lifecycle: **позитив + isolation** — див. `erp-test-design.mdc` §7 (інші релевантні сутності не з’явились / не змінились).
+- Stock-домени: існуючі `*StockAssertions` / `assertUnchanged` / `assertDelta(..., 0.0)` — не лише статус і поля мутованої сутності.
 
 ## Auth (remote dev/staging)
 
