@@ -1,6 +1,7 @@
 package com.erp.pages;
 
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.AllureScreenshots;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
@@ -90,8 +91,7 @@ public abstract class BasePage {
     public void attachScreenshot(String name) {
         try {
             byte[] screenshot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
-            Allure.addAttachment(name, "image/png", new java.io.ByteArrayInputStream(screenshot), ".png");
-            log.debug("Screenshot attached to Allure: {}", name);
+            AllureScreenshots.attachPng(name, screenshot);
         } catch (Exception e) {
             log.warn("Could not capture screenshot '{}': {}", name, e.getMessage());
         }

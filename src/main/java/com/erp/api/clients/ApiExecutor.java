@@ -4,6 +4,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.models.request.EquipmentCreateRequest;
 import com.erp.models.request.EquipmentRelocationReceiveEditRequest;
+import com.erp.models.request.ProjectProductionRequest;
 import com.erp.models.request.RelocationIncidentRequest;
 import com.erp.models.request.RelocationInputEditRequest;
 import com.erp.models.request.RelocationInputRequest;
@@ -194,6 +195,20 @@ public class ApiExecutor {
         Map<String, String> sessionCookies = getSessionForRole(role);
         return apiClient.executeMultipartPost(
                 ApiEndpointDefinition.INCIDENT_POST_CREATE.getPath(),
+                sessionCookies,
+                "request",
+                request);
+    }
+
+    /**
+     * {@code POST /api/v1/project-production} — multipart with JSON part {@code request}
+     * (backend also accepts optional {@code files} parts, not used by erp-auto-test).
+     */
+    @Step("API Request: POST /project-production as {role}")
+    public Response executeProjectProductionCreate(ProjectProductionRequest request, UserRole role) {
+        Map<String, String> sessionCookies = getSessionForRole(role);
+        return apiClient.executeMultipartPost(
+                ApiEndpointDefinition.PROJECT_PRODUCTION_POST_CREATE.getPath(),
                 sessionCookies,
                 "request",
                 request);

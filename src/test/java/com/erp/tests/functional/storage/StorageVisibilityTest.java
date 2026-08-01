@@ -6,13 +6,16 @@ import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.request.StorageRequest;
 import com.erp.models.response.StorageRegionResponse;
 import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UserMeResponse;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -21,6 +24,7 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * для підрозділів з {@code accessMode=FULL_ACCESS} vs {@code REGIONS}.
  * <p>Передумова класу: OWNER_2 storage ({@code owner2.storage.id} у config) тимчасово переводиться
  * в {@code REGIONS} у {@link #ensureOwner2RestrictedAccess()} і відновлюється в {@link #restoreOwner2AccessMode()}.
+ * OWNER_2 JWT має містити рівно один business unit ({@code owner2.storage.id}); інакше suite skip.
  * OWNER_2 використовується як «обмежений» owner; OWNER_1 — як порівняння з ширшою видимістю.
  */
 @Slf4j
@@ -42,16 +47,37 @@ public class StorageVisibilityTest extends StorageApiTestBase {
     private Long owner2StorageId;
     private String originalOwner2AccessMode;
     private boolean owner2AccessModeChanged;
+    private UserFixture userFixture;
 
     @BeforeClass(alwaysRun = true)
     @Step("Підготовка: OWNER_2 → REGIONS для visibility-тестів")
     public void setupStorageVisibilityTest() {
         SchemaRegistry.logSchemaCoverage();
         owner2StorageId = ConfigProvider.getOwner2StorageId();
+        userFixture = new UserFixture(testContext, apiExecutor);
         ensureOwner2RestrictedAccess();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
         regionFixture.purgeRegionsByNamePrefixes(
                 UserRole.ADMIN, "str-reg-", "crew-", "rel-vis-", "vis-");
+        assertOwner2SingleBusinessUnitScope();
+    }
+
+    /**
+     * /names і /my-units будуються з JWT {@code allowedStorageIds}. Зайві
+     * {@code var_business_unit_id(_ro)::*} на OWNER_2 ламають REGIONS-контракт (див. TC-STR-REG-021/033).
+     */
+    private void assertOwner2SingleBusinessUnitScope() {
+        UserMeResponse me = userFixture.getMe(UserRole.OWNER_2);
+        Set<Long> allowed = me.getAllowedStorageIds() == null
+                ? Set.of()
+                : new HashSet<>(me.getAllowedStorageIds());
+        if (allowed.equals(Set.of(owner2StorageId))) {
+            return;
+        }
+        throw new SkipException(String.format(
+                "OWNER_2 (%s) allowedStorageIds=%s; очікується лише owner2.storage.id=%d. "
+                        + "Приберіть зайві var_business_unit_id(_ro) у Keycloak / Users admin.",
+                UserRole.OWNER_2.getUsername(), allowed, owner2StorageId));
     }
 
     @AfterClass(alwaysRun = true)
@@ -121,6 +147,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             
             Передумови (@BeforeClass):
             - owner2.storage.id (config) тимчасово переведено в accessMode=REGIONS;
+            - OWNER_2 JWT містить рівно один business unit = owner2.storage.id;
             - owner1.storage.id залишається з поточним accessMode середовища (очікується FULL_ACCESS).
             
             Тестові дані: нові області/members для OWNER_2 НЕ створюються — порівняння «as-is».
@@ -471,6 +498,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
     @TestCaseId("TC-STR-REG-033")
     @Description("""
             Що перевіряємо: селектор «мої підрозділи» для REGIONS owner не розширюється областями.
+            Передумова: OWNER_2 JWT — рівно один business unit (owner2.storage.id).
             Тестові дані: OWNER_2 у REGIONS (можуть існувати області з попередніх тестів у класі).
             Очікування: GET /storages/names/my-units — рівно 1 internal unit = owner2.storage.id.
             """ + StorageRegionsAllureDescriptions.ON_FAIL_API)

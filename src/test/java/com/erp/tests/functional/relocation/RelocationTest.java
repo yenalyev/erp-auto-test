@@ -7,6 +7,7 @@ import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.enums.StorageRelation;
 import com.erp.models.request.RelocationInputEditRequest;
 import com.erp.models.request.RelocationInputRequest;
@@ -79,7 +80,8 @@ public class RelocationTest extends BaseFunctionalTest {
     }
 
     private void archiveRelationTestStorages() {
-        if ("staging".equals(System.getProperty("env", "debug"))) {
+        if (TestArtifactCleanup.shouldSkipApiCleanup()) {
+            log.warn("Staging mode — skipping storage cleanup (-Dstaging.cleanup=false)");
             storageFixture.clearTrackedStorages();
             return;
         }
@@ -492,7 +494,7 @@ public class RelocationTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 60)
-    @TestCaseId("TC-REL-060b")
+    @TestCaseId("TC-REL-060B")
     @Story("RBAC negative delete")
     public void testOwner1CannotDeleteRelocation() {
         String batchNumber = RelocationDataFactory.uniqueBatchNumber();

@@ -11,6 +11,26 @@ public enum UserRole {
     ACCOUNTANT,
     /** Dev/staging: argument — Crew-Manager-ROLE, UNIT storage ({@code unit.storage.id}). */
     CREW_MANAGER,
+    /**
+     * Project production catalog admin ({@code Project-Production-ROLE}) —
+     * staging/dev: {@code projectprod}, storage = owner1.
+     */
+    PROJECT_ADMIN,
+    /**
+     * Project production manager ({@code Project-Production-ROLE}) —
+     * staging/dev: {@code projectprodab}, storage = owner1.
+     */
+    PROJECT_MANAGER,
+    /**
+     * Mixed full + view-only locations (CPMA-644):
+     * full on owner1 + unit, RO on owner2 + optional ro2.
+     */
+    LOCATION_MIXED,
+    /**
+     * Order gathering storage owner (REQ-WMS-010).
+     * staging/dev: {@code order.gathering.*} (e.g. tyolki / storage 10); falls back to owner2.
+     */
+    ORDER_GATHERER,
     ANONYMOUS;
 
     public String getUsername() {
@@ -22,6 +42,10 @@ public enum UserRole {
             case RESOURCE_VIEWER -> ConfigProvider.getResourceViewerUsername();
             case ACCOUNTANT      -> ConfigProvider.getAccountantUsername();
             case CREW_MANAGER    -> ConfigProvider.getCrewManagerUsername();
+            case PROJECT_ADMIN   -> ConfigProvider.getProjectAdminUsername();
+            case PROJECT_MANAGER -> ConfigProvider.getProjectManagerUsername();
+            case LOCATION_MIXED  -> ConfigProvider.getLocationMixedUsername();
+            case ORDER_GATHERER  -> ConfigProvider.getOrderGatheringUsername();
             case ANONYMOUS       -> "";
         };
     }
@@ -35,6 +59,10 @@ public enum UserRole {
             case RESOURCE_VIEWER -> ConfigProvider.getResourceViewerPassword();
             case ACCOUNTANT      -> ConfigProvider.getAccountantPassword();
             case CREW_MANAGER    -> ConfigProvider.getCrewManagerPassword();
+            case PROJECT_ADMIN   -> ConfigProvider.getProjectAdminPassword();
+            case PROJECT_MANAGER -> ConfigProvider.getProjectManagerPassword();
+            case LOCATION_MIXED  -> ConfigProvider.getLocationMixedPassword();
+            case ORDER_GATHERER  -> ConfigProvider.getOrderGatheringPassword();
             case ANONYMOUS       -> "";
         };
     }
@@ -43,8 +71,10 @@ public enum UserRole {
     public String getStoreId() {
         return switch (this) {
             case ADMIN, RESOURCE_VIEWER, ACCOUNTANT -> "all";
-            case OWNER_1   -> String.valueOf(ConfigProvider.getOwner1StorageId());
+            case OWNER_1, PROJECT_ADMIN, PROJECT_MANAGER, LOCATION_MIXED
+                    -> String.valueOf(ConfigProvider.getOwner1StorageId());
             case OWNER_2       -> String.valueOf(ConfigProvider.getOwner2StorageId());
+            case ORDER_GATHERER -> String.valueOf(ConfigProvider.getOrderGatheringStorageId());
             case CREW_MANAGER  -> String.valueOf(ConfigProvider.getUnitStorageId());
             case OWNER_3       -> "";
             case ANONYMOUS -> "";

@@ -4,6 +4,7 @@ import com.erp.annotations.TestCaseId;
 import com.erp.api.clients.BotInternalApiClient;
 import com.erp.models.response.RelocationInternalResponse;
 import com.erp.models.response.StorageInternalResponse;
+import com.erp.models.response.StorageViewInternalResponse;
 import com.erp.tests.BaseTest;
 import com.erp.utils.auth.BotOAuth2Client;
 import com.erp.utils.config.ConfigProvider;
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ul>
  *   <li>whatsapp-bot — {@code GET /api/v1/internal/storages}</li>
  *   <li>delivery-bot — {@code GET /api/v1/internal/relocations}</li>
+ *   <li>delivery-bot — {@code GET /api/v1/internal/storages/structure}</li>
  * </ul>
  * Both bots authenticate via OAuth2 {@code client_credentials} (Keycloak).
  * <p>
@@ -129,6 +131,39 @@ public class BotInternalApiLatencyTest extends BaseTest {
 
         Allure.parameter("relocationsCount", relocations.size());
         log.info("TC-BOT-003 PASSED — {} relocations in {} ms", relocations.size(), timed.elapsedMs());
+    }
+
+    @Test(priority = 4, dependsOnMethods = "testBotOAuth2TokenWithinSla")
+    @TestCaseId("TC-BOT-004")
+    @Story("delivery-bot location structure")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            GET /api/v1/internal/storages/structure (delivery-bot) — HTTP 200, відповідь ≤30 с;
+            плоский масив {id, name, parentId}; Allure: request/response, параметр nodesCount""")
+    public void testDeliveryBotInternalStorageStructureWithinSla() throws Exception {
+        String dataUrl = ConfigProvider.getBotDeliveryStructureUrl();
+        BotInternalApiClient.TimedResponse timed = botInternalApiClient.get(dataUrl, accessToken);
+
+        attachGetExchange(dataUrl, timed);
+        assertResponseWithinSla(DELIVERY_BOT, dataUrl, timed);
+
+        List<StorageViewInternalResponse> nodes = JSON.readValue(
+                timed.body(), new TypeReference<>() {});
+
+        assertThat(nodes)
+                .as("Структура локацій має бути валідним JSON-масивом")
+                .isNotNull()
+                .isNotEmpty();
+
+        assertThat(nodes)
+                .as("Кожен вузол має id і name; parentId може бути null")
+                .allSatisfy(node -> {
+                    assertThat(node.getId()).as("id").isNotNull();
+                    assertThat(node.getName()).as("name").isNotBlank();
+                });
+
+        Allure.parameter("nodesCount", nodes.size());
+        log.info("TC-BOT-004 PASSED — {} structure nodes in {} ms", nodes.size(), timed.elapsedMs());
     }
 
     private void assertResponseWithinSla(String botName, String path, BotInternalApiClient.TimedResponse timed) {

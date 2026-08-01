@@ -219,9 +219,8 @@ public abstract class BaseTest {
 
     /**
      * Initializes the database connection and validates it with a ping.
-     * If the SSH tunnel or JDBC connection cannot be established, throws
-     * {@link SkipException} so that the entire suite is marked as SKIPPED
-     * rather than FAILED — preventing useless test runs against a broken DB.
+     * Soft-fail: if SSH/JDBC is unreachable, leave {@code dbHelper == null} and continue the suite.
+     * DB-seeded tests throw their own {@link SkipException}; non-DB tests still run.
      */
     private void initDatabaseOrSkip() {
         boolean sshMode = ConfigProvider.isSshEnabled();
@@ -234,26 +233,26 @@ public abstract class BaseTest {
         } catch (Exception e) {
             String hint = buildDbHint(sshMode, e);
             String msg = String.format(
-                    "Pre-flight check failed: cannot connect to the database%s.%n" +
+                    "Database pre-flight soft-fail: cannot connect to the database%s.%n" +
                     "Reason: %s%n%s%n" +
-                    "Fix the issue and re-run, or set use.database=false to skip DB checks.",
+                    "Continuing without DB — DB-seeded tests will SkipException. " +
+                    "Fix connectivity or set use.database=false / USE_DATABASE=false.",
                     sshMode ? " via SSH tunnel" : "",
                     e.getMessage(),
                     hint
             );
-            log.error(msg);
-            suiteSkipReason = msg;
-            throw new SkipException(msg);
+            log.warn(msg);
+            dbHelper = null;
+            return;
         }
 
         if (!dbHelper.ping()) {
-            String msg = "Pre-flight check failed: database is reachable but SELECT 1 returned no response. " +
-                         "Check DB credentials and permissions.";
-            log.error(msg);
+            String msg = "Database pre-flight soft-fail: reachable but SELECT 1 returned no response. "
+                    + "Continuing without DB — DB-seeded tests will SkipException.";
+            log.warn(msg);
             dbHelper.closeConnection();
             dbHelper = null;
-            suiteSkipReason = msg;
-            throw new SkipException(msg);
+            return;
         }
 
         log.info("Database pre-flight check passed — connection is healthy");

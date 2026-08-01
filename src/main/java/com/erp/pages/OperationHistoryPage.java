@@ -108,6 +108,20 @@ public class OperationHistoryPage extends BasePage {
         return parseLeadingNumber(amountText);
     }
 
+    /** Same as {@link #getSummaryCardAmountForResource} but returns 0 when the resource row is absent. */
+    public double getSummaryCardAmountForResourceOrZero(String cardTitle, String resourceName) {
+        if (!isSummaryCardVisible(cardTitle)) {
+            return 0.0;
+        }
+        Locator row = summaryCard(cardTitle).locator("li")
+                .filter(new Locator.FilterOptions().setHasText(resourceName));
+        if (row.count() == 0) {
+            return 0.0;
+        }
+        String amountText = row.first().locator("span.font-medium").innerText().trim();
+        return parseLeadingNumber(amountText);
+    }
+
     public boolean isProducedSummaryVisible() {
         return summaryCardTitle("Вироблено").isVisible();
     }

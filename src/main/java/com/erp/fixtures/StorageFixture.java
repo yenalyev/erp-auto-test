@@ -51,6 +51,7 @@ public class StorageFixture extends BaseFixture {
                 ApiEndpointDefinition.STORAGE_POST_CREATE, UserRole.ADMIN, request);
         validateSuccess(createResponse, "Create shared storage");
         StorageResponse response = createResponse.as(StorageResponse.class);
+        trackForCleanup(response.getId());
 
         List<StorageResponse> storageResponseList = List.of(response);
 
@@ -209,6 +210,11 @@ public class StorageFixture extends BaseFixture {
         return createStorage(StorageDataFactory.crewStorage(parentId, namePrefix).build());
     }
 
+    @Step("API: створити точку вильоту FLY_POINT parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createFlyPointStorage(Long parentId, String namePrefix) {
+        return createStorage(StorageDataFactory.flyPointStorage(parentId, namePrefix).build());
+    }
+
     @Step("API: створити EXTERNAL дочірню локацію parentId={parentId}, prefix={namePrefix}")
     public StorageResponse createExternalChildStorage(Long parentId, String namePrefix) {
         StorageRequest request = StorageDataFactory.externalStorage(parentId, namePrefix).build();
@@ -242,6 +248,20 @@ public class StorageFixture extends BaseFixture {
     public Response update(UserRole role, Long storageId, StorageRequest body) {
         return apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_PUT_UPDATE, role, body, String.valueOf(storageId));
+    }
+
+    /**
+     * Змінює {@code parentId} локації (напр. CREW → інша FLY_POINT).
+     * При прикріпленні CREW до FLY_POINT backend авто-переміщує залишок екіпажу на точку.
+     */
+    @Step("API: reparent локації id={storageId} → parentId={newParentId}")
+    public StorageResponse reparent(UserRole role, Long storageId, Long newParentId) {
+        StorageResponse existing = getById(role, storageId);
+        StorageRequest body = StorageDataFactory.updateFromExisting(
+                existing, builder -> builder.parentId(newParentId));
+        Response response = update(role, storageId, body);
+        validateSuccess(response, "Reparent storage " + storageId + " → parent " + newParentId);
+        return response.as(StorageResponse.class);
     }
 
     @Step("API: DELETE деактивувати локацію id={storageId}")

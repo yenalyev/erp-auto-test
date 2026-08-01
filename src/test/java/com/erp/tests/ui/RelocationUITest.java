@@ -57,7 +57,10 @@ public class RelocationUITest extends BaseUITest {
     }
 
     @Test
-    @TestCaseId("TC-UI-REL-001")
+    @TestCaseId({
+            "TC-UI-REL-001",
+            "TC-EDIT_REL-006"
+    })
     @Story("Relocation journal and external receive")
     @Severity(SeverityLevel.CRITICAL)
     public void externalReceiveJournalAndStock() {
@@ -95,7 +98,10 @@ public class RelocationUITest extends BaseUITest {
     }
 
     @Test
-    @TestCaseId("TC-UI-REL-004")
+    @TestCaseId({
+            "TC-UI-REL-004",
+            "TC-EDIT_REL-009"
+    })
     @Story("Admin edit external receive via UI")
     @Severity(SeverityLevel.CRITICAL)
     public void adminEditExternalReceiveViaUi() {
@@ -166,7 +172,10 @@ public class RelocationUITest extends BaseUITest {
     }
 
     @Test
-    @TestCaseId("TC-UI-REL-002")
+    @TestCaseId({
+            "TC-UI-REL-002",
+            "TC-EDIT_REL-005"
+    })
     @Story("Send and resolve via UI journal")
     public void sendAndResolveViaUiJournal() {
         double amount = 6.0;
@@ -293,5 +302,35 @@ public class RelocationUITest extends BaseUITest {
                 apiExecutor, storageId, UserRole.OWNER_1, resourceId, batchNumber, false, "ПІСЛЯ UI batch send");
         RelocationBatchAssertions.assertBatchDebited(
                 batchBefore, batchAfter, sendAmount, "UI batch send");
+    }
+
+    @Test(priority = 90)
+    @TestCaseId("TC-UI-REL-015")
+    @Story("Admin all-locations in-transit journal")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Staging bug: ADMIN + «Всі локації» на /relocations → GET /api/v1/relocations
+            з повним списком senderIds/receiverIds повертає 400, UI показує
+            «Не вдалося завантажити дані».
+
+            Очікування: вкладка «В дорозі» завантажується без error banner
+            (перелік in-transit для всіх локацій або порожня таблиця).
+            """)
+    public void adminAllLocationsInTransitJournalLoads() {
+        injectRoleSession(UserRole.ADMIN, storageId);
+        injectAllLocationsView();
+        page = browserContext.newPage();
+
+        RelocationPage relocationPage = new RelocationPage(page);
+        page.navigate(ConfigProvider.getBaseUrl() + RelocationPage.PATH);
+        relocationPage.waitForLoaded().waitForJournalDataSettled();
+
+        assertThat(relocationPage.isJournalLoadErrorVisible())
+                .as("ADMIN + «Всі локації»: журнал не повинен показувати «Не вдалося завантажити дані»")
+                .isFalse();
+        assertThat(relocationPage.isJournalTableVisible())
+                .as("ADMIN + «Всі локації»: таблиця «В дорозі» має бути видимою")
+                .isTrue();
+        relocationPage.attachScreenshot("TC-UI-REL-015 — admin all locations in transit");
     }
 }

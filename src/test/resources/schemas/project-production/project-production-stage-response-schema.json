@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProjectProductionStageResponse",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": { "type": "integer" },
+    "name": { "type": ["string", "null"] },
+    "description": { "type": ["string", "null"] },
+    "comment": { "type": ["string", "null"] },
+    "state": { "type": ["string", "null"], "enum": ["CREATED", "IN_PROGRESS", "DONE", null] },
+    "stageOrder": { "type": ["integer", "null"] },
+    "executionPercentage": { "type": ["integer", "null"] },
+    "projectProduction": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "projectProductionStageResourceUsages": {
+      "type": "array",
+      "items": { "$ref": "project-production-stage-resource-usage-response-schema.json" }
+    }
+  },
+  "additionalProperties": true
+}

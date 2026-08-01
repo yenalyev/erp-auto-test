@@ -1,6 +1,7 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
@@ -9,6 +10,7 @@ import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
+import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.pages.*;
 import com.erp.utils.config.ConfigProvider;
@@ -99,8 +101,9 @@ public class CrewIssuanceUITest extends BaseUITest {
     @TestCaseId("TC-UI-CREW-002")
     @Story("Happy path crew issuance")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Плоска ієрархія: підрозділ → екіпаж → ресурс → підтвердити")
+    @Description("Плоска ієрархія: підрозділ → екіпаж → ресурс → submit → «В дорозі»; finish відправником → «Видано»")
     public void testHappyPathCrewIssuance() {
+        String marker = "TC-UI-CREW-002-" + System.currentTimeMillis();
         RelocationPage relocationPage = new RelocationPage(page).open();
         RelocationCreateOutputCrewPage crewForm = relocationPage.clickIssueToCrew();
 
@@ -109,14 +112,29 @@ public class CrewIssuanceUITest extends BaseUITest {
                 .selectResourceByName(resourceName)
                 .fillQuantity(String.valueOf((int) ISSUE_AMOUNT))
                 .fillIssuer(ISSUER_NAME, ISSUER_RANK)
-                .fillDescription("TC-UI-CREW-002");
+                .fillDescription(marker);
 
         assertThat(crewForm.isSubmitDisabled()).isFalse();
         crewForm.attachScreenshot("TC-UI-CREW-002 — crew form before submit");
         crewForm.submitAndWaitForJournal();
-        relocationPage.openSentTab();
 
         String crewName = flatScenario.crew().getName();
+        relocationPage.openInTransitTab();
+        assertThat(relocationPage.isRowWithTextVisible(marker))
+                .as("Після submit видача на CREW у вкладці «В дорозі»")
+                .isTrue();
+        relocationPage.attachScreenshot("TC-UI-CREW-002 — in transit after send");
+
+        RelocationResponse inTransit = relocationFixture.findInTransitByDescription(
+                UserRole.OWNER_1, memberStorageId, marker);
+        assertThat(inTransit).isNotNull();
+        relocationFixture.resolve(
+                UserRole.OWNER_1, inTransit.getId(), memberStorageId, RelocationState.FINISHED);
+
+        page.reload();
+        relocationPage.waitForLoaded();
+        relocationPage.openSentTab();
+
         assertThat(relocationPage.isRowWithTextVisible(resourceName)).isTrue();
         assertThat(relocationPage.getDisplayedJournalRows())
                 .as("У «Видано» колонка «До» має містити назву екіпажу, не «_приховано_»")
@@ -208,7 +226,7 @@ public class CrewIssuanceUITest extends BaseUITest {
     @Severity(SeverityLevel.NORMAL)
     @Description("API setup createSend → UI /history картка «Видано» delta")
     public void testIssuedSummaryCardAfterCrewSend() {
-        relocationFixture.createSend(
+        relocationFixture.createSendAndFinishBySender(
                 UserRole.OWNER_1,
                 memberStorageId,
                 flatScenario.crew().getId(),
@@ -223,11 +241,14 @@ public class CrewIssuanceUITest extends BaseUITest {
         historyPage.attachScreenshot("TC-UI-CREW-009 — issued summary card");
     }
 
-    @Test(priority = 80)
+    @Test(priority = 80, enabled = false)
     @TestCaseId("TC-UI-CREW-010")
     @Story("Inventory crews mode without crew")
     @Severity(SeverityLevel.NORMAL)
-    @Description("mode=crews без екіпажу — «Провести інвентаризацію» disabled")
+    @Description("""
+            DEPRECATED (матриця UI-NAV-01): ?mode=crews прибрано з tk-ui.
+            Заміна: TC-UI-CREW-021 у CrewFlyPointInventoryUiTest.
+            """)
     public void testInventoryButtonsDisabledWithoutCrewSelection() {
         InventoryCrewsModePage inventoryPage = new InventoryCrewsModePage(page).openCrewsMode(memberStorageId);
 
@@ -242,18 +263,15 @@ public class CrewIssuanceUITest extends BaseUITest {
         inventoryPage.attachScreenshot("TC-UI-CREW-010 — crews mode without crew");
     }
 
-    @Test(priority = 90)
+    @Test(priority = 90, enabled = false)
     @TestCaseId("TC-UI-CREW-004")
     @Story("Crew stock view")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Після API видачі (OWNER_1) — таблиця crews mode містить resource.
-            UI-сесія: argument (Crew-Manager-ROLE, UNIT id=unit.storage.id) — inventory-list::{crew}::read
-            після appendGrantedCrews. OWNER_1 на закріпленому екіпажі (CREWS) також має читати
-            GET /storages/{crewId}/inventory (див. TC-CREW-INV-007); поза CREWS — 403 (TC-CREW-INV-008b).
+            DEPRECATED: mode=crews UI. Заміна deep-link — TC-UI-CREW-015 / CrewAnalyticsPage.
             """)
     public void testCrewStockVisibleInInventoryCrewsMode() {
-        relocationFixture.createSend(
+        relocationFixture.createSendAndFinishBySender(
                 UserRole.OWNER_1,
                 memberStorageId,
                 flatScenario.crew().getId(),
@@ -272,14 +290,12 @@ public class CrewIssuanceUITest extends BaseUITest {
         assertThat(inventoryPage.tableContainsResource(resourceName)).isTrue();
     }
 
-    @Test(priority = 100)
+    @Test(priority = 100, enabled = false)
     @TestCaseId("TC-UI-CREW-011")
     @Story("Crew inventory session")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Після вибору екіпажу — кнопка «Відкрити/Закрити інвентаризацію» видима.
-            UI-сесія: argument (Crew-Manager-ROLE) — inventory-status::{crew}::update після appendGrantedCrews.
-            OWNER_1 / ADMIN без crew-шаблону — кнопка прихована (див. TC-CREW-INV-009).
+            DEPRECATED: mode=crews session toggle. Заміна — TC-UI-FLY-INV-002 / TC-UI-CREW-015.
             """)
     public void testCrewInventorySessionButtonsAfterCrewSelected() {
         injectRoleSession(UserRole.CREW_MANAGER, unitStorageId);

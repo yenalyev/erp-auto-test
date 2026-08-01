@@ -47,6 +47,13 @@ import static org.assertj.core.api.Assertions.within;
 
 /**
  * Functional API tests for the Defect ("Брак") domain (REQ-DEF), mirroring DefectController.
+ * <p>
+ * Staging note (TCM run 24, 2026-07-27): TC-DEF-001…013 PASS then TC-DEF-014…029 SKIPPED
+ * in ~0.7s steps — typical {@code @BeforeMethod} config-failure cascade (stock/session).
+ * Allure/surefire for that run were not retained; {@link #ensureStockBeforeTest()} now wraps
+ * failures in {@link SkipException} with a clear message, and {@code TcmReportListener}
+ * records the throwable text. TC-DEF-030 needs JDBC ({@code use.database=true}) — excluded
+ * from regression; see suite {@code db-dependent}.
  */
 @Slf4j
 @Epic("Defects")
@@ -80,8 +87,18 @@ public class DefectTest extends BaseFunctionalTest {
     @BeforeMethod(alwaysRun = true)
     @Step("Поповнити запаси перед тестом (ізоляція)")
     public void ensureStockBeforeTest() {
-        fixture.getProductionFixture().ensureInputStockAtLeast(storageId, input1, input2, 500.0);
-        fixture.ensureStock(defectResourceId, 100.0);
+        // Any exception here becomes TestNG SKIP (config failure). Wrap with a clear
+        // message so TCM/Allure show the root cause instead of a silent cascade.
+        try {
+            fixture.getProductionFixture().ensureInputStockAtLeast(storageId, input1, input2, 500.0);
+            fixture.ensureStock(defectResourceId, 100.0);
+        } catch (SkipException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SkipException(
+                    "DefectTest ensureStockBeforeTest failed (stock/session/API): " + e.getMessage(),
+                    e);
+        }
     }
 
     // =====================================================================
@@ -116,6 +133,67 @@ public class DefectTest extends BaseFunctionalTest {
                         .as("Дата запису #%d має бути >= дати наступного запису", i)
                         .isAfterOrEqualTo(dates.get(i + 1));
             }
+        });
+    }
+
+    @Test(priority = 15)
+    @TestCaseId("TC-DEF-001B")
+    @Story("Filter defects by write-off status (isWriteOff)")
+    @Description("""
+            GET /defects?isWriteOff=… — фільтр «Списання» на /defects (tk-ui DefectListPage):
+            • без параметра — без додаткової фільтрації (опція «Всі»)
+            • isWriteOff=true — лише записи з Кількість = 0 (повністю списано)
+            • isWriteOff=false — лише записи з Кількість > 0 (не списано)
+            Контракт: DefectFilter.isWriteOff / DefectSpecifications.""")
+    @Severity(SeverityLevel.CRITICAL)
+    public void testFilterByWriteOffStatus() {
+        Long openResource = fixture.createFreshResource();
+        Long writtenResource = fixture.createFreshResource();
+        fixture.createExternalReceipt(openResource, 20.0, "wo-filter-open-" + System.currentTimeMillis());
+        fixture.createExternalReceipt(writtenResource, 20.0, "wo-filter-done-" + System.currentTimeMillis());
+
+        DefectResponse openDefect = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildStorageFifoDefect(storageId, openResource, 5.0));
+        DefectResponse toWriteOff = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildStorageFifoDefect(storageId, writtenResource, 5.0));
+        fixture.writeOffAs(UserRole.OWNER_1,
+                DefectDataFactory.buildWriteOffForDefect(toWriteOff, storageId, 5.0, "TC-DEF-001b full write-off"));
+
+        Allure.step("isWriteOff=true — лише повністю списані (amount=0)", () -> {
+            List<DefectResponse> written = fixture.listDefects(DefectQuery.builder()
+                    .storageId(storageId).isWriteOff(true).pageSize(500).build());
+            assertThat(written).extracting(DefectResponse::getId)
+                    .as("повністю списаний брак має бути у вибірці")
+                    .contains(toWriteOff.getId());
+            assertThat(written).extracting(DefectResponse::getId)
+                    .as("несписаний брак не має потрапляти при isWriteOff=true")
+                    .doesNotContain(openDefect.getId());
+            assertThat(written).allSatisfy(d ->
+                    assertThat(d.getAmount().doubleValue())
+                            .as("Кількість списаного браку id=%d", d.getId())
+                            .isCloseTo(0.0, within(0.01)));
+        });
+
+        Allure.step("isWriteOff=false — лише не списані (amount>0)", () -> {
+            List<DefectResponse> notWritten = fixture.listDefects(DefectQuery.builder()
+                    .storageId(storageId).isWriteOff(false).pageSize(500).build());
+            assertThat(notWritten).extracting(DefectResponse::getId)
+                    .as("несписаний брак має бути у вибірці")
+                    .contains(openDefect.getId());
+            assertThat(notWritten).extracting(DefectResponse::getId)
+                    .as("повністю списаний брак не має потрапляти при isWriteOff=false")
+                    .doesNotContain(toWriteOff.getId());
+            assertThat(notWritten).allSatisfy(d ->
+                    assertThat(d.getAmount().doubleValue())
+                            .as("Кількість несписаного браку id=%d", d.getId())
+                            .isGreaterThan(0.0));
+        });
+
+        Allure.step("без isWriteOff — обидва записи присутні", () -> {
+            List<DefectResponse> all = fixture.listDefects(DefectQuery.builder()
+                    .storageId(storageId).pageSize(500).build());
+            assertThat(all).extracting(DefectResponse::getId)
+                    .contains(openDefect.getId(), toWriteOff.getId());
         });
     }
 
@@ -502,10 +580,15 @@ public class DefectTest extends BaseFunctionalTest {
 
     @Test(priority = 250)
     @TestCaseId("TC-DEF-025")
-    @Story("Relocation defect reduces stock by global FIFO")
-    @Description("Брак за отриманням зменшує загальний залишок ресурсу на величину браку. "
-            + "Спостережувана поведінка бекенда: партії списуються за глобальним FIFO (найстаріша першою), "
-            + "а не строго з партії обраного переміщення — фіксуємо як note")
+    @Story("Relocation defect debits the selected receipt batch")
+    @Description("""
+            REQ-DEF-006 / TCM TC-DEF-025: брак за отриманням (RELOCATION) списує залишок
+            з партій саме обраного переміщення (FIFO лише серед batch numbers цього receipt),
+            а не глобальний FIFO по всьому складу.
+            
+            Arrange: older receipt 10 + newer receipt 10; defect amount 4 на newer relocation.
+            Очікування: total −4; older лишається 10; newer → 6.
+            """)
     @Severity(SeverityLevel.NORMAL)
     public void testRelocationDefectConsumesRelocationBatch() {
         Long resource = fixture.createFreshResource();
@@ -521,20 +604,19 @@ public class DefectTest extends BaseFunctionalTest {
 
         Allure.step("Загальний залишок зменшився на величину браку (4 од.)", () ->
                 DefectStockAssertions.assertStockDebited(totalBefore, fixture.resourceStock(resource), 4.0,
-                        "брак за переміщенням (FIFO)"));
+                        "брак за обраним переміщенням"));
 
         List<StorageItemBatchResponse> batches = DefectStockAssertions.nonProducedBatches(
                 apiExecutor, storageId, UserRole.OWNER_1, resource, "після браку за переміщенням");
         double older = DefectStockAssertions.batchAmount(batches, olderBatch);
         double newer = DefectStockAssertions.batchAmount(batches, newerBatch);
-        Allure.step("FIFO: спершу списується найстаріша партія", () -> {
-            assertThat(older).as("найстаріша партія").isCloseTo(6.0, within(0.01));
-            assertThat(newer).as("партія обраного переміщення (не зачеплена)").isCloseTo(10.0, within(0.01));
+        Allure.step("Списання з партії обраного отримання (не global FIFO)", () -> {
+            assertThat(older).as("партія іншого отримання не зачеплена").isCloseTo(10.0, within(0.01));
+            assertThat(newer).as("партія обраного переміщення зменшилась на 4").isCloseTo(6.0, within(0.01));
         });
         Allure.addAttachment("Поведінка бекенда (TC-DEF-025)", "text/plain",
-                "Брак типу RELOCATION зменшує склад за глобальним FIFO (найстаріша партія першою), "
-                        + "а не строго з партії, що належить обраному relocationId. "
-                        + "older=" + older + ", newer=" + newer);
+                "Брак типу RELOCATION списує лише batch numbers обраного relocationId "
+                        + "(constrained FIFO). older=" + older + ", newer=" + newer);
     }
 
     @Test(priority = 280)
@@ -932,6 +1014,92 @@ public class DefectTest extends BaseFunctionalTest {
                 DefectDataFactory.buildProductionDefect(storageId, outRes, prod.getId(), produced, LocalDate.now()));
         Allure.step("Брак на відправлену партію відхилено", () ->
                 assertThat(resp.statusCode()).as("body=%s", safeBody(resp)).isGreaterThanOrEqualTo(400));
+    }
+
+    @Test(priority = 125)
+    @TestCaseId("TC-MFG-016")
+    @Story("Cannot reduce production below defect amount")
+    @Description("""
+            REQ-MFG-003 AC-01 / CPMA-448: після браку на партію не можна зменшити обсяг виробництва
+            так, щоб залишок партії став від'ємним (новий amount < defect).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCannotReduceProductionBelowDefectAmount() {
+        Long outRes = fixture.outputResourceId();
+        String batch = ProductionDataFactory.uniqueBatchNumber();
+        double producedAmount = 10.0;
+        ManufacturingItemResponse prod = fixture.createProduction(producedAmount, batch);
+        double produced = capturedBatchAmount(outRes, batch, "після виробництва");
+        double defectAmount = round2(produced * 0.4);
+        double illegalAmount = Math.max(1.0, Math.floor(defectAmount) - 1.0);
+        assertThat(illegalAmount).as("illegal amount має бути < defect").isLessThan(defectAmount);
+
+        fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildProductionDefect(storageId, outRes, prod.getId(), defectAmount, LocalDate.now()));
+
+        double stockBefore = fixture.resourceStock(outRes);
+        double batchBefore = capturedBatchAmount(outRes, batch, "після браку");
+
+        Response updateResponse = Allure.step(
+                String.format("PUT production amount=%.0f (< defect=%.2f)", illegalAmount, defectAmount), () ->
+                        fixture.getProductionFixture().updateRaw(
+                                UserRole.OWNER_1,
+                                prod.getId(),
+                                storageId,
+                                fixture.techMap(),
+                                illegalAmount,
+                                batch));
+
+        Allure.step("Редагування відхилено", () ->
+                assertThat(updateResponse.statusCode())
+                        .as("body=%s", safeBody(updateResponse))
+                        .isBetween(400, 499));
+
+        Allure.step("Залишок ГП і партія без змін", () -> {
+            assertThat(fixture.resourceStock(outRes)).isCloseTo(stockBefore, within(0.01));
+            assertThat(capturedBatchAmount(outRes, batch, "після відхиленого PUT"))
+                    .isCloseTo(batchBefore, within(0.01));
+            assertThat(getProductionById(prod.getId()).getAmount())
+                    .isCloseTo(producedAmount, within(0.01));
+        });
+    }
+
+    @Test(priority = 126)
+    @TestCaseId("TC-MFG-017")
+    @Story("Cannot edit production into defect-consumed portion")
+    @Description("""
+            REQ-MFG-003 AC-03 / CPMA-457: не можна відредагувати виробництво на менший обсяг,
+            ніж уже списано на брак по тій самій партії.
+            """)
+    @Severity(SeverityLevel.NORMAL)
+    public void testCannotEditProductionIntoDefectConsumedPortion() {
+        Long outRes = fixture.outputResourceId();
+        String batch = ProductionDataFactory.uniqueBatchNumber();
+        double producedAmount = 8.0;
+        ManufacturingItemResponse prod = fixture.createProduction(producedAmount, batch);
+        double produced = capturedBatchAmount(outRes, batch, "після виробництва");
+        double defectAmount = round2(produced * 0.5);
+
+        fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildProductionDefect(storageId, outRes, prod.getId(), defectAmount, LocalDate.now()));
+
+        double stockBefore = fixture.resourceStock(outRes);
+        double belowDefect = Math.max(0.0, Math.floor(defectAmount) - 1.0);
+        assertThat(belowDefect).as("belowDefect має бути < defect").isLessThan(defectAmount);
+
+        Response rejected = Allure.step(
+                String.format("PUT production amount=%.0f (< defect=%.2f)", belowDefect, defectAmount), () ->
+                        fixture.getProductionFixture().updateRaw(
+                                UserRole.OWNER_1, prod.getId(), storageId, fixture.techMap(), belowDefect, batch));
+
+        Allure.step("PUT amount < defect відхилено", () ->
+                assertThat(rejected.statusCode()).as("body=%s", safeBody(rejected)).isBetween(400, 499));
+
+        Allure.step("Залишок ГП і amount виробництва без змін", () -> {
+            assertThat(fixture.resourceStock(outRes)).isCloseTo(stockBefore, within(0.01));
+            assertThat(getProductionById(prod.getId()).getAmount())
+                    .isCloseTo(producedAmount, within(0.01));
+        });
     }
 
     // =====================================================================

@@ -3,9 +3,13 @@ package com.erp.data;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceRequestBodyFactory;
 import com.erp.data.factories.defect.DefectRequestBodyFactory;
+import com.erp.data.factories.faita.FaitaRequestBodyFactory;
 import com.erp.data.factories.inventory.InventoryRequestBodyFactory;
 import com.erp.data.factories.measurement_unit.MeasurementUnitResponseBodyFactory;
 import com.erp.data.factories.non_series_production.NonSeriesProductionRequestBodyFactory;
+import com.erp.data.factories.notification.NotificationRequestBodyFactory;
+import com.erp.data.factories.order.OrderRequestBodyFactory;
+import com.erp.data.factories.project_production.ProjectProductionRequestBodyFactory;
 import com.erp.data.factories.global_plan.GlobalPlanRequestBodyFactory;
 import com.erp.data.factories.plan.PlanRequestBodyFactory;
 import com.erp.data.factories.production.ProductionRequestBodyFactory;
@@ -39,9 +43,13 @@ public class RequestBodyFactory {
         PlanRequestBodyFactory.registerStrategies();
         GlobalPlanRequestBodyFactory.registerStrategies();
         NonSeriesProductionRequestBodyFactory.registerStrategies();
+        ProjectProductionRequestBodyFactory.registerStrategies();
         DefectRequestBodyFactory.registerStrategies();
         InventoryRequestBodyFactory.registerStrategies();
         UserRequestBodyFactory.registerStrategies();
+        FaitaRequestBodyFactory.registerStrategies();
+        OrderRequestBodyFactory.registerStrategies();
+        NotificationRequestBodyFactory.registerStrategies();
     }
 
     /**

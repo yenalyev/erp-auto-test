@@ -7,6 +7,7 @@ import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.NonSeriesProductionStatus;
 import com.erp.enums.UserRole;
 import com.erp.models.request.NonSeriesProductionRequest;
+import com.erp.models.request.NonSeriesProductionResourceUsageRequest;
 import com.erp.models.query.NonSeriesProductionQuery;
 import com.erp.models.response.NonSeriesProductionResponse;
 import com.erp.models.response.NonSeriesProductionTotalResponse;
@@ -157,13 +158,62 @@ public class NonSeriesProductionFixture extends BaseFixture {
 
     @Step("API: Видалити несерійне виробництво /{id}?storageId={storageId}")
     public void deleteAs(UserRole role, Long id, Long storageId) {
-        Response response = apiExecutor.execute(
+        Response response = deleteRaw(role, id, storageId);
+        validateSuccess(response, "Delete non-series production");
+    }
+
+    @Step("API: DELETE non-series production (raw response)")
+    public Response deleteRaw(UserRole role, Long id, Long storageId) {
+        return apiExecutor.execute(
                 ApiEndpointDefinition.NON_SERIES_PRODUCTION_DELETE,
                 role,
                 null,
                 String.valueOf(id),
                 String.valueOf(storageId));
-        validateSuccess(response, "Delete non-series production");
+    }
+
+    @Step("API: Оновити несерійне виробництво /{id}")
+    public NonSeriesProductionResponse updateAs(UserRole role, Long id, NonSeriesProductionRequest request) {
+        Response response = updateRaw(role, id, request);
+        validateSuccess(response, "Update non-series production");
+        try {
+            return response.as(NonSeriesProductionResponse.class);
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "Failed to parse non-series production update response: " + response.getBody().asString(), e);
+        }
+    }
+
+    @Step("API: PUT non-series production (raw response)")
+    public Response updateRaw(UserRole role, Long id, NonSeriesProductionRequest request) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.NON_SERIES_PRODUCTION_PUT_UPDATE,
+                role,
+                request,
+                String.valueOf(id));
+    }
+
+    /** Builds a PUT body from GET/create response (keeps resource usage amounts). */
+    public static NonSeriesProductionRequest toUpdateRequest(NonSeriesProductionResponse source, Long storageId) {
+        List<NonSeriesProductionResourceUsageRequest> usages = source.getResourceUsageList() == null
+                ? List.of()
+                : source.getResourceUsageList().stream()
+                .map(usage -> NonSeriesProductionResourceUsageRequest.builder()
+                        .resourceId(usage.getResource() != null ? usage.getResource().getId() : null)
+                        .amount(usage.getAmount())
+                        .build())
+                .toList();
+        return NonSeriesProductionRequest.builder()
+                .storageId(storageId)
+                .start(source.getStart())
+                .end(source.getEnd())
+                .workerQty(source.getWorkerQty())
+                .product(source.getProduct())
+                .amount(source.getAmount())
+                .description(source.getDescription())
+                .status(source.getStatus())
+                .resourceUsageList(usages)
+                .build();
     }
 
     @Step("API: Отримати залишок ресурсу {resourceId} на складі {storageId}")

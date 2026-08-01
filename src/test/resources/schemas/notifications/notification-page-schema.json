@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NotificationJournalPage",
+  "type": "object",
+  "required": ["content"],
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "templateCode", "state", "attempt"],
+        "properties": {
+          "id": { "type": "integer" },
+          "templateCode": { "type": "string" },
+          "storage": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": { "type": ["integer", "null"] },
+              "name": { "type": ["string", "null"] }
+            },
+            "additionalProperties": true
+          },
+          "recipientNames": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "state": {
+            "type": "string",
+            "enum": ["PENDING", "SENDING", "SENT", "FAILED", "CANCELED"]
+          },
+          "attempt": { "type": "integer" },
+          "createdAt": { "type": ["string", "null"] },
+          "updatedAt": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

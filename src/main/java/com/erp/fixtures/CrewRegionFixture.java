@@ -44,15 +44,16 @@ public class CrewRegionFixture extends BaseFixture {
             StorageRegionResponse region,
             StorageResponse unit,
             StorageResponse childUnit,
+            StorageResponse flyPoint,
             StorageResponse crew,
             Long memberStorageId) {
     }
 
     /**
      * Canonical setup (як {@code StorageFacadeForCrewsIT}):
-     * UNIT → CREW; область CREWS з member=OWNER_1 та location=UNIT.
+     * UNIT → CREW (екіпаж без точки вильоту); область CREWS з member=OWNER_1 та location=UNIT.
      */
-    @Step("FIXTURE: підготувати область CREWS з одним екіпажем")
+    @Step("FIXTURE: підготувати область CREWS з одним екіпажем (unattached)")
     public CrewRegionScenario prepareSingleCrewScenario(String namePrefix) {
         Long memberId = ConfigProvider.getOwner1StorageId();
         StorageResponse member = storageFixture.getById(UserRole.ADMIN, memberId);
@@ -70,12 +71,72 @@ public class CrewRegionFixture extends BaseFixture {
                 .region(region)
                 .unit(unit)
                 .childUnit(null)
+                .flyPoint(null)
                 .crew(crew)
                 .memberStorageId(memberId)
                 .build();
         testContext.set(ContextKey.CREW_STORAGE_ID, crew.getId());
         testContext.set(ContextKey.CREW_PARENT_UNIT_ID, unit.getId());
         return scenario;
+    }
+
+    /**
+     * UNIT → FLY_POINT → CREW: екіпаж прикріплений до точки вильоту.
+     * Після FINISHED видачі на CREW залишок авто-переміщується на FLY_POINT.
+     */
+    @Step("FIXTURE: підготувати область CREWS з екіпажем на точці вильоту (attached)")
+    public CrewRegionScenario prepareAttachedCrewScenario(String namePrefix) {
+        Long memberId = ConfigProvider.getOwner1StorageId();
+        StorageResponse member = storageFixture.getById(UserRole.ADMIN, memberId);
+        Long parentId = member.getParent() != null ? member.getParent().getId() : memberId;
+
+        StorageResponse unit = storageFixture.createUnitStorage(parentId, namePrefix + "unit-");
+        StorageResponse flyPoint = storageFixture.createFlyPointStorage(unit.getId(), namePrefix + "fp-");
+        StorageResponse crew = storageFixture.createCrewStorage(flyPoint.getId(), namePrefix + "crew-");
+
+        StorageRegionResponse region = regionFixture.createRegion(
+                unit, StorageAccessMode.CREWS, namePrefix + "reg-");
+        addCrewRegionMembers(region.getId());
+        regionFixture.addRegionLocations(region.getId(), unit.getId(), flyPoint.getId(), crew.getId());
+
+        CrewRegionScenario scenario = CrewRegionScenario.builder()
+                .region(region)
+                .unit(unit)
+                .childUnit(null)
+                .flyPoint(flyPoint)
+                .crew(crew)
+                .memberStorageId(memberId)
+                .build();
+        testContext.set(ContextKey.CREW_STORAGE_ID, crew.getId());
+        testContext.set(ContextKey.CREW_PARENT_UNIT_ID, unit.getId());
+        return scenario;
+    }
+
+    /**
+     * UNIT → FLY_POINT (без екіпажу) для видачі безпосередньо на точку вильоту.
+     */
+    @Step("FIXTURE: підготувати область CREWS з точкою вильоту")
+    public CrewRegionScenario prepareFlyPointScenario(String namePrefix) {
+        Long memberId = ConfigProvider.getOwner1StorageId();
+        StorageResponse member = storageFixture.getById(UserRole.ADMIN, memberId);
+        Long parentId = member.getParent() != null ? member.getParent().getId() : memberId;
+
+        StorageResponse unit = storageFixture.createUnitStorage(parentId, namePrefix + "unit-");
+        StorageResponse flyPoint = storageFixture.createFlyPointStorage(unit.getId(), namePrefix + "fp-");
+
+        StorageRegionResponse region = regionFixture.createRegion(
+                unit, StorageAccessMode.CREWS, namePrefix + "reg-");
+        addCrewRegionMembers(region.getId());
+        regionFixture.addRegionLocations(region.getId(), unit.getId(), flyPoint.getId());
+
+        return CrewRegionScenario.builder()
+                .region(region)
+                .unit(unit)
+                .childUnit(null)
+                .flyPoint(flyPoint)
+                .crew(null)
+                .memberStorageId(memberId)
+                .build();
     }
 
     /**
@@ -100,6 +161,7 @@ public class CrewRegionFixture extends BaseFixture {
                 .region(region)
                 .unit(unitA)
                 .childUnit(unitAB)
+                .flyPoint(null)
                 .crew(crew)
                 .memberStorageId(memberId)
                 .build();

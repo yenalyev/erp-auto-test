@@ -12,6 +12,7 @@ import com.erp.models.common.RelocationJournalRow;
 import com.erp.models.query.RelocationJournalQuery;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,15 +25,18 @@ public class RelocationPage extends BasePage {
     private static final String RECEIVE_BUTTON = "Отримати";
     private static final String SEND_BUTTON = "Видати";
     private static final String ISSUE_TO_CREW_BUTTON = "Видати на екіпаж";
+    private static final String RECEIVE_FROM_CREW_BUTTON = "Отримати від екіпажа";
     private static final String HISTORY_RECEIVED_TAB = "Отримано";
     private static final String IN_TRANSIT_TAB = "В дорозі";
     private static final String SENT_TAB = "Видано";
     private static final String LOST_TAB = "Втрачено";
+    private static final String BUNDLES_TAB = "Комплекти для видачі";
     private static final String CREATE_INCIDENT_BUTTON = "Створити інцидент";
     private static final String INCIDENT_DETAILS_BUTTON = "Деталі інциденту";
     private static final String DELETE_INCIDENT_BUTTON = "Видалити інцидент";
     private static final String CATEGORY_LABEL_TEXT = "Категорія";
     private static final String PRODUCT_LABEL_TEXT = "Продукт";
+    private static final String EQUIPMENT_LABEL_TEXT = "Обладнання";
     private static final String LOADING_TEXT = "Завантаження...";
     private static final String TABLE_CONTAINER_SELECTOR = "[data-slot='table-container']";
     private static final String PAGE_SIZE_STORAGE_PREFIX = "pageSize_";
@@ -62,6 +66,16 @@ public class RelocationPage extends BasePage {
     public RelocationCreateOutputCrewPage clickIssueToCrew() {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ISSUE_TO_CREW_BUTTON)).click();
         return new RelocationCreateOutputCrewPage(page).waitForLoaded();
+    }
+
+    public boolean isReceiveFromCrewButtonVisible() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(RECEIVE_FROM_CREW_BUTTON))
+                .isVisible();
+    }
+
+    public RelocationCreateInputCrewPage clickReceiveFromCrew() {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(RECEIVE_FROM_CREW_BUTTON)).click();
+        return new RelocationCreateInputCrewPage(page).waitForLoaded();
     }
 
     public RelocationPage waitForLoaded() {
@@ -125,10 +139,6 @@ public class RelocationPage extends BasePage {
         return result;
     }
 
-    public int getSelectedPageSize() {
-        return RelocationJournalQuery.DEFAULT_UI_PAGE_SIZE;
-    }
-
     public static String pageSizeStorageKey(String tableId) {
         return PAGE_SIZE_STORAGE_PREFIX + tableId;
     }
@@ -145,17 +155,84 @@ public class RelocationPage extends BasePage {
     }
 
     public RelocationPage filterByProduct(String productSearchTerm) {
+        runJournalFilterAction(() -> selectAutocompleteFilterOption(productFilterTrigger(), productSearchTerm));
+        return this;
+    }
+
+    public RelocationPage filterByEquipment(String equipmentSearchTerm) {
+        runJournalFilterAction(() -> selectAutocompleteFilterOption(equipmentFilterTrigger(), equipmentSearchTerm));
+        return this;
+    }
+
+    public boolean isEquipmentFilterVisible() {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText(EQUIPMENT_LABEL_TEXT))
+                .count() > 0;
+    }
+
+    public boolean isProductFilterVisible() {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText(PRODUCT_LABEL_TEXT))
+                .count() > 0;
+    }
+
+    /**
+     * Change journal page size via {@code PageSizeSelect} (values: 10, 20, 50, …).
+     */
+    public RelocationPage selectPageSize(int pageSize) {
+        String size = String.valueOf(pageSize);
         runJournalFilterAction(() -> {
-            productFilterTrigger().click();
-            Locator searchInput = page.locator(
-                    "[data-slot='command-input'], [cmdk-input], input[placeholder*='Оберіть']");
-            searchInput.first().fill(productSearchTerm);
-            page.locator("[data-slot='command-item'], [cmdk-item], [role='option']")
-                    .filter(new Locator.FilterOptions().setHasText(productSearchTerm))
-                    .first()
+            Locator trigger = pageSizeSelectTrigger();
+            trigger.click();
+            page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(size).setExact(true))
                     .click();
         });
         return this;
+    }
+
+    public int getSelectedPageSize() {
+        Locator trigger = pageSizeSelectTrigger();
+        if (trigger.count() == 0 || !trigger.isVisible()) {
+            return RelocationJournalQuery.DEFAULT_UI_PAGE_SIZE;
+        }
+        String value = trigger.innerText();
+        if (value == null || value.isBlank()) {
+            return RelocationJournalQuery.DEFAULT_UI_PAGE_SIZE;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            log.warn("Cannot parse relocation page size from UI value '{}'", value);
+            return RelocationJournalQuery.DEFAULT_UI_PAGE_SIZE;
+        }
+    }
+
+    /** Row identity texts for pagination stability checks (full row text, trimmed). */
+    public List<String> getDisplayedRowIdentityTexts() {
+        Locator rows = journalTableWrapper().locator("tbody tr");
+        int count = rows.count();
+        List<String> result = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            String text = rows.nth(i).innerText();
+            if (text != null) {
+                result.add(text.trim().replaceAll("\\s+", " "));
+            }
+        }
+        return result;
+    }
+
+    private void selectAutocompleteFilterOption(Locator trigger, String searchTerm) {
+        String term = searchTerm == null ? "" : searchTerm.trim();
+        String shortTerm = term.length() > 16 ? term.substring(0, 16) : term;
+        trigger.click();
+        Locator searchInput = page.locator(
+                "[data-slot='command-input'], [cmdk-input], input[placeholder*='Оберіть'], input[placeholder*='Пошук']");
+        searchInput.first().fill(shortTerm);
+        Locator option = page.locator("[data-slot='command-item'], [cmdk-item], [role='option']")
+                .filter(new Locator.FilterOptions().setHasText(shortTerm))
+                .first();
+        option.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        option.click();
     }
 
     public RelocationPage sortByColumn(String columnHeader) {
@@ -186,9 +263,10 @@ public class RelocationPage extends BasePage {
         link.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         Download download = page.waitForDownload(link::click);
         String suggestedFilename = download.suggestedFilename();
-        long sizeBytes = download.path() != null ? download.path().toFile().length() : 0L;
-        log.info("Invoice UI download: {} ({} bytes)", suggestedFilename, sizeBytes);
-        return new InvoiceUiDownloadResult(suggestedFilename, sizeBytes);
+        Path path = download.path();
+        long sizeBytes = path != null ? path.toFile().length() : 0L;
+        log.info("Invoice UI download: {} ({} bytes, path={})", suggestedFilename, sizeBytes, path);
+        return new InvoiceUiDownloadResult(suggestedFilename, sizeBytes, path);
     }
 
     /**
@@ -263,6 +341,15 @@ public class RelocationPage extends BasePage {
         return this;
     }
 
+    public boolean isBundlesTabVisible() {
+        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(BUNDLES_TAB)).isVisible();
+    }
+
+    public RelocationBundlesTabPage openBundlesTab() {
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(BUNDLES_TAB)).click();
+        return new RelocationBundlesTabPage(page).waitForLoaded();
+    }
+
     public boolean isLostTabVisible() {
         return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(LOST_TAB)).isVisible();
     }
@@ -290,11 +377,52 @@ public class RelocationPage extends BasePage {
                 .waitFor(new Locator.WaitForOptions()
                         .setState(WaitForSelectorState.VISIBLE)
                         .setTimeout(uiTimeoutMs()));
+        // Wait until incident payload is rendered inside the dialog (not the journal tab «Втрачено»).
+        incidentDialog().getByText("Опис", new Locator.GetByTextOptions().setExact(true))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
         return this;
     }
 
     public boolean isIncidentDescriptionVisible(String description) {
-        return page.getByText(description).count() > 0;
+        return incidentDialog().getByText(description).count() > 0;
+    }
+
+    /** True when incident details dialog shows partial-delivery column/header. */
+    public boolean isPartialDeliveryDetailsVisible(String deliveryStorageName) {
+        Locator dialog = incidentDialog();
+        if (dialog.getByText("Частково доставлено до " + deliveryStorageName).count() > 0) {
+            return true;
+        }
+        return dialog.getByText("Частково доставлено до").count() > 0;
+    }
+
+    /**
+     * Amount shown next to {@code resourceName} in a journal row (Lost tab «Ресурси» cell).
+     * Expected contract: WRITE_OFF / lost qty, not the original relocation sent total.
+     */
+    public double getResourceAmountInRow(String rowMarker, String resourceName) {
+        Locator row = rowContainingText(rowMarker);
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        String text = row.innerText();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile(java.util.regex.Pattern.quote(resourceName) + "\\s*:\\s*([\\d.,]+)")
+                .matcher(text);
+        if (!matcher.find()) {
+            throw new IllegalStateException(
+                    "Resource «" + resourceName + "» amount not found in row for marker «" + rowMarker
+                            + "». Row text: " + text);
+        }
+        return Double.parseDouble(matcher.group(1).replace(',', '.'));
+    }
+
+    private Locator incidentDialog() {
+        return page.locator("[role='dialog']").filter(
+                new Locator.FilterOptions().setHas(
+                        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Інцидент"))));
     }
 
     public RelocationPage deleteIncidentFromDetails() {
@@ -325,6 +453,18 @@ public class RelocationPage extends BasePage {
 
     public Locator rowContainingText(String text) {
         return page.locator("table tbody tr").filter(new Locator.FilterOptions().setHasText(text)).first();
+    }
+
+    public boolean isEditButtonVisibleInRow(String rowText) {
+        return rowContainingText(rowText)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Редагувати"))
+                .count() > 0;
+    }
+
+    public boolean isDeleteButtonVisibleInRow(String rowText) {
+        return rowContainingText(rowText)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Видалити"))
+                .count() > 0;
     }
 
     public RelocationUpdateInputPage clickEditInRow(String rowText) {
@@ -369,6 +509,27 @@ public class RelocationPage extends BasePage {
                 .first();
     }
 
+    private Locator equipmentFilterTrigger() {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText(EQUIPMENT_LABEL_TEXT))
+                .locator("xpath=following::button[1]")
+                .first();
+    }
+
+    private Locator pageSizeSelectTrigger() {
+        // TablePagination: PageSizeSelect is the first select in the pagination footer.
+        Locator inPagination = page.locator("div.flex.items-center.gap-2")
+                .filter(new Locator.FilterOptions().setHas(
+                        page.locator("[data-slot='select-trigger']")))
+                .last()
+                .locator("[data-slot='select-trigger']")
+                .first();
+        if (inPagination.count() > 0) {
+            return inPagination;
+        }
+        return page.locator("[data-slot='select-trigger']").last();
+    }
+
     /**
      * Sent-tab columns: Дата, Від, До, Ресурси, № накладної, Статус, Примітки, [actions].
      */
@@ -395,5 +556,5 @@ public class RelocationPage extends BasePage {
         return text != null ? text.trim().replaceAll("\\s+", " ") : null;
     }
 
-    public record InvoiceUiDownloadResult(String suggestedFilename, long sizeBytes) {}
+    public record InvoiceUiDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}
 }

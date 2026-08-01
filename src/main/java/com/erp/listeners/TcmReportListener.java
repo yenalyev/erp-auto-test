@@ -97,7 +97,23 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        bufferResult(result, ITestResult.SKIP, "Test was skipped");
+        bufferResult(result, ITestResult.SKIP, skipReason(result));
+    }
+
+    /**
+     * Prefer the real SkipException / @BeforeMethod failure message so TCM
+     * actualResult is diagnosable (was hardcoded "Test was skipped").
+     */
+    private static String skipReason(ITestResult result) {
+        Throwable t = result.getThrowable();
+        if (t == null) {
+            return "Test was skipped (no throwable)";
+        }
+        String message = t.getMessage();
+        if (message != null && !message.isBlank()) {
+            return message;
+        }
+        return t.getClass().getSimpleName();
     }
 
     private void bufferResult(ITestResult result, int status, String errorMessage) {
@@ -117,14 +133,16 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
         }
 
         LocalDateTime executedAt = LocalDateTime.now();
-        bufferedResults.add(new TcmApiClient.BufferedResult(
-                testCaseId,
-                status,
-                durationMs,
-                errorMessage,
-                executedAt
-        ));
-        TcmResultOutbox.append(testCaseId, mapStatus(status), durationMs, errorMessage, executedAt);
+        for (String id : TestCaseIdExtractor.getTestCaseIds(result)) {
+            bufferedResults.add(new TcmApiClient.BufferedResult(
+                    id,
+                    status,
+                    durationMs,
+                    errorMessage,
+                    executedAt
+            ));
+            TcmResultOutbox.append(id, mapStatus(status), durationMs, errorMessage, executedAt);
+        }
     }
 
     private static String mapStatus(int testngStatus) {

@@ -62,8 +62,20 @@ public class DisassembleFixture extends BaseFixture {
         return testContext.get(ContextKey.DISASSEMBLE_TECH_MAP);
     }
 
+    public Long inputResourceId() {
+        return testContext.get(ContextKey.DISASSEMBLE_INPUT_RESOURCE_ID);
+    }
+
     public Long outputResourceId() {
         return testContext.get(ContextKey.DISASSEMBLE_OUTPUT_RESOURCE_ID);
+    }
+
+    public String inputResourceName() {
+        return techMap().getInput().getFirst().getResource().getName().trim();
+    }
+
+    public String outputResourceName() {
+        return techMap().getOutput().getFirst().getResource().getName().trim();
     }
 
     @Step("API: створити техкарту розбору для локації {storageId}")
@@ -110,7 +122,43 @@ public class DisassembleFixture extends BaseFixture {
     public double getProducedSummaryAmount(long storageId, UserRole role, long resourceId) {
         Response history = getOperationHistoryToday(storageId, role);
         validateSuccess(history, "Get operation history for produced summary");
-        return extractProducedAmountForResource(history, resourceId);
+        return extractSummaryAmountForResource(history, "totalProducedResources", resourceId);
+    }
+
+    @Step("API: сумарна «Використано» для ресурсу {resourceId} за сьогодні")
+    public double getUsedSummaryAmount(long storageId, UserRole role, long resourceId) {
+        Response history = getOperationHistoryToday(storageId, role);
+        validateSuccess(history, "Get operation history for used summary");
+        return extractSummaryAmountForResource(history, "totalUsedResources", resourceId);
+    }
+
+    @Step("API: сума розібраного input {resourceId} за сьогодні (план-execution «Розбір»)")
+    public double getTodayDisassembledAmount(long storageId, UserRole role, long resourceId) {
+        Response page = getDisassemblePageForCurrentMonth(storageId, role);
+        validateSuccess(page, "Get disassemble page for today disassembled amount");
+        return sumTodayFieldForInput(page, resourceId, "amount");
+    }
+
+    @Step("API: сума output totalAmount {resourceId} за сьогодні (план-execution «Отримано»)")
+    public double getTodayDisassembleOutputAmount(long storageId, UserRole role, long resourceId) {
+        Response page = getDisassemblePageForCurrentMonth(storageId, role);
+        validateSuccess(page, "Get disassemble page for today output amount");
+        return sumTodayOutputTotalAmount(page, resourceId);
+    }
+
+    @Step("API: GET /disassemble page за поточний місяць для складу {storageId}")
+    public Response getDisassemblePageForCurrentMonth(long storageId, UserRole role) {
+        LocalDate today = LocalDate.now();
+        Map<String, Object> params = new HashMap<>();
+        params.put("storageIds", storageId);
+        params.put("startDate", today.withDayOfMonth(1).toString());
+        params.put("endDate", today.toString());
+        params.put("page", 0);
+        params.put("size", 9999);
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.DISASSEMBLE_GET_PAGE,
+                role,
+                params);
     }
 
     @Step("API: Історія операцій за сьогодні для складу {storageId}")
@@ -126,19 +174,68 @@ public class DisassembleFixture extends BaseFixture {
                 params);
     }
 
-    private double extractProducedAmountForResource(Response history, long resourceId) {
-        List<Map<String, Object>> produced = history.jsonPath().getList("totalProducedResources");
-        if (produced == null || produced.isEmpty()) {
+    private double extractSummaryAmountForResource(Response history, String arrayPath, long resourceId) {
+        List<Map<String, Object>> rows = history.jsonPath().getList(arrayPath);
+        if (rows == null || rows.isEmpty()) {
             return 0.0;
         }
-        for (int i = 0; i < produced.size(); i++) {
-            Long id = history.jsonPath().getLong("totalProducedResources[" + i + "].resource.id");
+        for (int i = 0; i < rows.size(); i++) {
+            Long id = history.jsonPath().getLong(arrayPath + "[" + i + "].resource.id");
             if (id != null && id == resourceId) {
-                Number amount = history.jsonPath().get("totalProducedResources[" + i + "].amount");
+                Number amount = history.jsonPath().get(arrayPath + "[" + i + "].amount");
                 return amount != null ? amount.doubleValue() : 0.0;
             }
         }
         return 0.0;
+    }
+
+    private double sumTodayFieldForInput(Response page, long inputResourceId, String field) {
+        String today = LocalDate.now().toString();
+        List<Map<String, Object>> content = page.jsonPath().getList("content");
+        if (content == null || content.isEmpty()) {
+            return 0.0;
+        }
+        double sum = 0.0;
+        for (int i = 0; i < content.size(); i++) {
+            String date = page.jsonPath().getString("content[" + i + "].date");
+            Long id = page.jsonPath().getLong("content[" + i + "].itemForDisassemble.id");
+            if (today.equals(date) && id != null && id == inputResourceId) {
+                Number amount = page.jsonPath().get("content[" + i + "]." + field);
+                if (amount != null) {
+                    sum += amount.doubleValue();
+                }
+            }
+        }
+        return sum;
+    }
+
+    private double sumTodayOutputTotalAmount(Response page, long outputResourceId) {
+        String today = LocalDate.now().toString();
+        List<Map<String, Object>> content = page.jsonPath().getList("content");
+        if (content == null || content.isEmpty()) {
+            return 0.0;
+        }
+        double sum = 0.0;
+        for (int i = 0; i < content.size(); i++) {
+            String date = page.jsonPath().getString("content[" + i + "].date");
+            if (!today.equals(date)) {
+                continue;
+            }
+            List<Map<String, Object>> outputs = page.jsonPath().getList("content[" + i + "].outputs");
+            if (outputs == null) {
+                continue;
+            }
+            for (int j = 0; j < outputs.size(); j++) {
+                Long id = page.jsonPath().getLong("content[" + i + "].outputs[" + j + "].resource.id");
+                if (id != null && id == outputResourceId) {
+                    Number amount = page.jsonPath().get("content[" + i + "].outputs[" + j + "].totalAmount");
+                    if (amount != null) {
+                        sum += amount.doubleValue();
+                    }
+                }
+            }
+        }
+        return sum;
     }
 
     @Step("FIXTURE: Seed input stock for disassemble via relocation receive")

@@ -9,6 +9,7 @@ import lombok.Getter;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -24,6 +25,308 @@ import java.util.Optional;
  */
 @Getter
 public enum ApiEndpointDefinition {
+
+    // ========================================
+    // ORDER ENDPOINTS
+    // ========================================
+
+    ORDER_GET_PAGE(
+            "/api/v1/orders",
+            Method.GET,
+            "schemas/orders/order-paged-list-schema.json",
+            "Get orders page",
+            null,
+            new TypeReference<PagedOrderResponse>() {},
+            null
+    ),
+
+    ORDER_GET_BY_ID(
+            "/api/v1/orders/{id}",
+            Method.GET,
+            "schemas/orders/order-response-schema.json",
+            "Get order by id",
+            null,
+            new TypeReference<OrderResponse>() {},
+            null
+    ),
+
+    ORDER_POST_CREATE(
+            "/api/v1/orders",
+            Method.POST,
+            "schemas/orders/order-response-schema.json",
+            "Create order",
+            new TypeReference<OrderRequest>() {},
+            new TypeReference<OrderResponse>() {},
+            "CREATE_ORDER"
+    ),
+
+    ORDER_PUT_UPDATE(
+            "/api/v1/orders/{id}",
+            Method.PUT,
+            "schemas/orders/order-response-schema.json",
+            "Update order",
+            new TypeReference<OrderRequest>() {},
+            new TypeReference<OrderResponse>() {},
+            "UPDATE_ORDER"
+    ),
+
+    ORDER_PUT_CANCEL(
+            "/api/v1/orders/{id}/cancel?storageId={storageId}",
+            Method.PUT,
+            "schemas/orders/order-response-schema.json",
+            "Cancel order",
+            null,
+            new TypeReference<OrderResponse>() {},
+            null
+    ),
+
+    ORDER_PUT_TAKE_TO_WORK(
+            "/api/v1/orders/{id}/take-to-work?storageId={storageId}",
+            Method.PUT,
+            "schemas/orders/order-response-schema.json",
+            "Take order to work",
+            null,
+            new TypeReference<OrderResponse>() {},
+            null
+    ),
+
+    ORDER_PUT_MARK_DONE(
+            "/api/v1/orders/{id}/mark-done?storageId={storageId}",
+            Method.PUT,
+            "schemas/orders/order-response-schema.json",
+            "Mark order done",
+            null,
+            new TypeReference<OrderResponse>() {},
+            null
+    ),
+
+    ORDER_GET_AVAILABILITY(
+            "/api/v1/orders/{id}/availability?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get order resource availability",
+            null,
+            new TypeReference<List<OrderAvailabilityResponse>>() {},
+            null
+    ),
+
+    ORDER_GET_GATHERING_LOCATIONS(
+            "/api/v1/orders/{id}/gathering-locations?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get gathering location candidates",
+            null,
+            new TypeReference<List<SimpleEntityResponse>>() {},
+            null
+    ),
+
+    ORDER_PUT_GATHERING_STORAGE(
+            "/api/v1/orders/{id}/gathering-storage?storageId={storageId}",
+            Method.PUT,
+            "schemas/orders/order-response-schema.json",
+            "Set order gathering storage",
+            new TypeReference<GatheringStorageRequest>() {},
+            new TypeReference<OrderResponse>() {},
+            null
+    ),
+
+    ORDER_GET_BOOKINGS(
+            "/api/v1/orders/{id}/bookings",
+            Method.GET,
+            "schemas/orders/booking-response-list-schema.json",
+            "Get order bookings",
+            null,
+            new TypeReference<List<BookingResponse>>() {},
+            null
+    ),
+
+    ORDER_POST_BOOKING(
+            "/api/v1/orders/{id}/bookings?storageId={storageId}",
+            Method.POST,
+            "schemas/orders/booking-response-schema.json",
+            "Book resource for order",
+            new TypeReference<BookingRequest>() {},
+            new TypeReference<BookingResponse>() {},
+            "CREATE_ORDER_BOOKING"
+    ),
+
+    ORDER_DELETE_BOOKING(
+            "/api/v1/orders/{id}/bookings/{bookingId}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Release order booking",
+            null,
+            new TypeReference<Void>() {},
+            null
+    ),
+
+    ORDER_PUT_BOOKING_PREPARED(
+            "/api/v1/orders/{id}/bookings/{bookingId}/prepared",
+            Method.PUT,
+            "schemas/orders/booking-response-schema.json",
+            "Set booking prepared flag",
+            new TypeReference<PreparedRequest>() {},
+            new TypeReference<BookingResponse>() {},
+            null
+    ),
+
+    ORDER_PUT_BOOKINGS_PREPARED(
+            "/api/v1/orders/{id}/bookings/prepared",
+            Method.PUT,
+            "schemas/orders/booking-response-list-schema.json",
+            "Set prepared for all order bookings",
+            new TypeReference<PreparedRequest>() {},
+            new TypeReference<List<BookingResponse>>() {},
+            null
+    ),
+
+    ORDER_GET_COMMENTS(
+            "/api/v1/orders/{id}/comments",
+            Method.GET,
+            null,
+            "Get order comments",
+            null,
+            new TypeReference<List<OrderCommentResponse>>() {},
+            null
+    ),
+
+    ORDER_POST_COMMENT(
+            "/api/v1/orders/{id}/comments",
+            Method.POST,
+            null,
+            "Add order comment",
+            new TypeReference<OrderCommentRequest>() {},
+            new TypeReference<OrderCommentResponse>() {},
+            "CREATE_ORDER_COMMENT"
+    ),
+
+    // ========================================
+    // NOTIFICATION ENDPOINTS
+    // ========================================
+
+    NOTIFICATION_GET_PAGE(
+            "/api/v1/notifications",
+            Method.GET,
+            null,
+            "Get notifications page",
+            null,
+            new TypeReference<PagedNotificationResponse>() {},
+            null
+    ),
+
+    NOTIFICATION_TEMPLATE_GET_ALL(
+            "/api/v1/notifications/templates",
+            Method.GET,
+            null,
+            "Get all notification templates",
+            null,
+            new TypeReference<List<NotificationTemplateResponse>>() {},
+            null
+    ),
+
+    NOTIFICATION_RECIPIENT_GET_ALL(
+            "/api/v1/notifications/recipients",
+            Method.GET,
+            null,
+            "Get all notification recipients",
+            null,
+            new TypeReference<List<NotificationRecipientResponse>>() {},
+            null
+    ),
+
+    NOTIFICATION_RECIPIENT_GET_BY_ID(
+            "/api/v1/notifications/recipients/{id}",
+            Method.GET,
+            null,
+            "Get notification recipient by id",
+            null,
+            new TypeReference<NotificationRecipientResponse>() {},
+            null
+    ),
+
+    NOTIFICATION_RECIPIENT_CREATE(
+            "/api/v1/notifications/recipients",
+            Method.POST,
+            null,
+            "Create notification recipient",
+            new TypeReference<NotificationRecipientRequest>() {},
+            new TypeReference<NotificationRecipientResponse>() {},
+            "CREATE_NOTIFICATION_RECIPIENT"
+    ),
+
+    NOTIFICATION_RECIPIENT_UPDATE(
+            "/api/v1/notifications/recipients/{id}",
+            Method.PUT,
+            null,
+            "Update notification recipient",
+            new TypeReference<NotificationRecipientRequest>() {},
+            new TypeReference<NotificationRecipientResponse>() {},
+            "UPDATE_NOTIFICATION_RECIPIENT"
+    ),
+
+    NOTIFICATION_SUBSCRIPTION_GET_PAGE(
+            "/api/v1/notifications/subscriptions",
+            Method.GET,
+            null,
+            "Get notification subscriptions page",
+            null,
+            new TypeReference<PagedNotificationSubscriptionResponse>() {},
+            null
+    ),
+
+    NOTIFICATION_SUBSCRIPTION_SAVE(
+            "/api/v1/notifications/subscriptions",
+            Method.POST,
+            null,
+            "Save notification subscription",
+            new TypeReference<NotificationSubscriptionRequest>() {},
+            new TypeReference<NotificationSubscriptionResponse>() {},
+            "SAVE_NOTIFICATION_SUBSCRIPTION"
+    ),
+
+    NOTIFICATION_SUBSCRIPTION_DELETE(
+            "/api/v1/notifications/subscriptions",
+            Method.DELETE,
+            null,
+            "Remove notification subscription",
+            new TypeReference<RemoveNotificationSubscriptionRequest>() {},
+            new TypeReference<Void>() {},
+            "DELETE_NOTIFICATION_SUBSCRIPTION"
+    ),
+
+    // ========================================
+    // RESOURCE USER BUNDLES
+    // ========================================
+
+    RESOURCE_USER_BUNDLES_GET(
+            "/api/v1/resources/user-bundles?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get user resource bundles",
+            null,
+            new TypeReference<List<ResourceBundleResponse>>() {},
+            null
+    ),
+
+    RESOURCE_USER_BUNDLES_POST(
+            "/api/v1/resources/user-bundles",
+            Method.POST,
+            null,
+            "Save user resource bundle",
+            new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Void>() {},
+            "SAVE_RESOURCE_USER_BUNDLE"
+    ),
+
+    RESOURCE_USER_BUNDLES_DELETE(
+            "/api/v1/resources/user-bundles",
+            Method.DELETE,
+            null,
+            "Delete user resource bundle",
+            new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Void>() {},
+            "DELETE_RESOURCE_USER_BUNDLE"
+    ),
 
     // ========================================
     // RESOURCE ENDPOINTS
@@ -990,6 +1293,16 @@ public enum ApiEndpointDefinition {
     // DISASSEMBLE ENDPOINTS
     // ========================================
 
+    DISASSEMBLE_GET_PAGE(
+            "/api/v1/disassemble",
+            Method.GET,
+            null,
+            "Get disassemble journal page",
+            null,
+            null,
+            null
+    ),
+
     DISASSEMBLE_POST_CREATE(
             "/api/v1/disassemble/{storageId}",
             Method.POST,
@@ -1062,6 +1375,385 @@ public enum ApiEndpointDefinition {
             null,
             null,
             "DELETE_NON_SERIES_PRODUCTION"
+    ),
+
+    // ========================================
+    // PROJECT PRODUCTION ENDPOINTS
+    // ========================================
+
+    PROJECT_PRODUCTION_GET_PAGE(
+            "/api/v1/project-production?storageIds={storageId}&size=200",
+            Method.GET,
+            "schemas/project-production/project-production-response-list-schema.json",
+            "Get project production page filtered by storage",
+            null,
+            new TypeReference<List<ProjectProductionResponse>>() {},
+            null
+    ),
+
+    PROJECT_PRODUCTION_GET_BY_ID(
+            "/api/v1/project-production/{id}?storageId={storageId}",
+            Method.GET,
+            "schemas/project-production/project-production-response-schema.json",
+            "Get project production by id",
+            null,
+            new TypeReference<ProjectProductionResponse>() {},
+            null
+    ),
+
+    /** Multipart POST — part {@code request} (JSON). Use {@code ApiExecutor#executeProjectProductionCreate}. */
+    PROJECT_PRODUCTION_POST_CREATE(
+            "/api/v1/project-production",
+            Method.POST,
+            "schemas/project-production/project-production-response-schema.json",
+            "Create project production",
+            new TypeReference<ProjectProductionRequest>() {},
+            new TypeReference<ProjectProductionResponse>() {},
+            "CREATE_PROJECT_PRODUCTION"
+    ),
+
+    PROJECT_PRODUCTION_PUT_UPDATE(
+            "/api/v1/project-production/{id}",
+            Method.PUT,
+            "schemas/project-production/project-production-response-schema.json",
+            "Update project production",
+            new TypeReference<ProjectProductionRequest>() {},
+            new TypeReference<ProjectProductionResponse>() {},
+            "UPDATE_PROJECT_PRODUCTION"
+    ),
+
+    /** Optional body: {@code List<ResourceToRollbackRequest>} — resources to return to stock. */
+    PROJECT_PRODUCTION_DELETE(
+            "/api/v1/project-production/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete project production",
+            new TypeReference<List<ResourceToRollbackRequest>>() {},
+            null,
+            "DELETE_PROJECT_PRODUCTION"
+    ),
+
+    PROJECT_PRODUCTION_STAGE_POST_ADD(
+            "/api/v1/project-production/{productionId}/stage?storageId={storageId}",
+            Method.POST,
+            "schemas/project-production/project-production-stage-response-schema.json",
+            "Add stage to project production",
+            new TypeReference<ProjectProductionStageRequest>() {},
+            new TypeReference<ProjectProductionStageResponse>() {},
+            "ADD_PROJECT_PRODUCTION_STAGE"
+    ),
+
+    PROJECT_PRODUCTION_STAGE_PUT_UPDATE(
+            "/api/v1/project-production/{productionId}/stage/{stageId}?storageId={storageId}",
+            Method.PUT,
+            "schemas/project-production/project-production-stage-response-schema.json",
+            "Update project production stage",
+            new TypeReference<ProjectProductionStageRequest>() {},
+            new TypeReference<ProjectProductionStageResponse>() {},
+            "UPDATE_PROJECT_PRODUCTION_STAGE"
+    ),
+
+    PROJECT_PRODUCTION_STAGE_DELETE(
+            "/api/v1/project-production/{productionId}/stage/{stageId}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete project production stage",
+            null,
+            null,
+            "DELETE_PROJECT_PRODUCTION_STAGE"
+    ),
+
+    PROJECT_PRODUCTION_FINISH(
+            "/api/v1/project-production/{productionId}/finish-project?storageId={storageId}",
+            Method.PUT,
+            null,
+            "Finish project production",
+            null,
+            null,
+            "FINISH_PROJECT_PRODUCTION"
+    ),
+
+    PROJECT_PRODUCTION_CANCEL_FINISHED(
+            "/api/v1/project-production/{productionId}/cancel-finished-project?storageId={storageId}",
+            Method.PUT,
+            null,
+            "Cancel finished project production",
+            null,
+            null,
+            "CANCEL_FINISHED_PROJECT_PRODUCTION"
+    ),
+
+    PROJECT_PRODUCTION_RESOURCES_GET(
+            "/api/v1/project-production/{productionId}/resources?storageId={storageId}",
+            Method.GET,
+            "schemas/project-production/project-production-resources-response-schema.json",
+            "Get aggregated stage resources for project production",
+            null,
+            new TypeReference<ProjectProductionResourcesResponse>() {},
+            null
+    ),
+
+    PROJECT_PRODUCTION_CREATE_TEMPLATE(
+            "/api/v1/project-production/{productionId}/create-template?storageId={storageId}&name={name}",
+            Method.POST,
+            "schemas/project-production/project-production-template-response-schema.json",
+            "Create template from existing project production",
+            null,
+            new TypeReference<ProjectProductionTemplateResponse>() {},
+            "CREATE_PROJECT_PRODUCTION_TEMPLATE_FROM_PRODUCTION"
+    ),
+
+    /** Finished project production batches (serial numbers) for a given product/category name. */
+    PROJECT_PRODUCTION_PRODUCTS_GET(
+            "/api/v1/project-production/products?storageId={storageId}&category={category}",
+            Method.GET,
+            null,
+            "Get finished project production instances (batches) by category/product name",
+            null,
+            new TypeReference<List<ProjectProductInstanceResponse>>() {},
+            null
+    ),
+
+    // ========================================
+    // PROJECT PRODUCTION TEMPLATE ENDPOINTS
+    // ========================================
+
+    PROJECT_PRODUCTION_TEMPLATE_GET_PAGE(
+            "/api/v1/project-production-template?storageIds={storageId}&size=200",
+            Method.GET,
+            "schemas/project-production/project-production-template-response-list-schema.json",
+            "Get project production template page filtered by storage",
+            null,
+            new TypeReference<List<ProjectProductionTemplateResponse>>() {},
+            null
+    ),
+
+    PROJECT_PRODUCTION_TEMPLATE_GET_BY_ID(
+            "/api/v1/project-production-template/{id}?storageId={storageId}",
+            Method.GET,
+            "schemas/project-production/project-production-template-response-schema.json",
+            "Get project production template by id",
+            null,
+            new TypeReference<ProjectProductionTemplateResponse>() {},
+            null
+    ),
+
+    PROJECT_PRODUCTION_TEMPLATE_POST_CREATE(
+            "/api/v1/project-production-template",
+            Method.POST,
+            "schemas/project-production/project-production-template-response-schema.json",
+            "Create project production template",
+            new TypeReference<ProjectProductionTemplateRequest>() {},
+            new TypeReference<ProjectProductionTemplateResponse>() {},
+            "CREATE_PROJECT_PRODUCTION_TEMPLATE"
+    ),
+
+    PROJECT_PRODUCTION_TEMPLATE_PUT_UPDATE(
+            "/api/v1/project-production-template/{id}",
+            Method.PUT,
+            "schemas/project-production/project-production-template-response-schema.json",
+            "Update project production template",
+            new TypeReference<ProjectProductionTemplateRequest>() {},
+            new TypeReference<ProjectProductionTemplateResponse>() {},
+            "UPDATE_PROJECT_PRODUCTION_TEMPLATE"
+    ),
+
+    PROJECT_PRODUCTION_TEMPLATE_DELETE(
+            "/api/v1/project-production-template/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete project production template",
+            null,
+            null,
+            "DELETE_PROJECT_PRODUCTION_TEMPLATE"
+    ),
+
+    PROJECT_PRODUCTION_TEMPLATE_STAGE_POST_ADD(
+            "/api/v1/project-production-template/{templateId}/stage?storageId={storageId}",
+            Method.POST,
+            "schemas/project-production/project-production-stage-template-response-schema.json",
+            "Add stage to project production template",
+            new TypeReference<ProjectProductionStageRequest>() {},
+            new TypeReference<ProjectProductionStageTemplateResponse>() {},
+            "ADD_PROJECT_PRODUCTION_TEMPLATE_STAGE"
+    ),
+
+    PROJECT_PRODUCTION_TEMPLATE_STAGE_PUT_UPDATE(
+            "/api/v1/project-production-template/{templateId}/stage/{stageId}?storageId={storageId}",
+            Method.PUT,
+            "schemas/project-production/project-production-stage-template-response-schema.json",
+            "Update project production template stage",
+            new TypeReference<ProjectProductionStageRequest>() {},
+            new TypeReference<ProjectProductionStageTemplateResponse>() {},
+            "UPDATE_PROJECT_PRODUCTION_TEMPLATE_STAGE"
+    ),
+
+    PROJECT_PRODUCTION_TEMPLATE_STAGE_DELETE(
+            "/api/v1/project-production-template/{templateId}/stage/{stageId}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete project production template stage",
+            null,
+            null,
+            "DELETE_PROJECT_PRODUCTION_TEMPLATE_STAGE"
+    ),
+
+    PROJECT_PRODUCTION_TEMPLATE_CREATE_PRODUCTION(
+            "/api/v1/project-production-template/{id}/create-production?storageId={storageId}",
+            Method.POST,
+            "schemas/project-production/project-production-response-schema.json",
+            "Create project production from template",
+            null,
+            new TypeReference<ProjectProductionResponse>() {},
+            "CREATE_PROJECT_PRODUCTION_FROM_TEMPLATE"
+    ),
+
+    // ========================================
+    // PROJECT CATEGORY ENDPOINTS
+    // ========================================
+
+    PROJECT_CATEGORY_GET_PAGE(
+            "/api/v1/project-category",
+            Method.GET,
+            "schemas/project-production/project-category-response-list-schema.json",
+            "Get project category page",
+            null,
+            new TypeReference<List<ProjectCategoryResponse>>() {},
+            null
+    ),
+
+    PROJECT_CATEGORY_GET_ALL_ACTIVE(
+            "/api/v1/project-category/all",
+            Method.GET,
+            "schemas/project-production/project-category-response-list-schema.json",
+            "Get all active project categories",
+            null,
+            new TypeReference<List<ProjectCategoryResponse>>() {},
+            null
+    ),
+
+    PROJECT_CATEGORY_GET_BY_ID(
+            "/api/v1/project-category/{id}",
+            Method.GET,
+            "schemas/project-production/project-category-response-schema.json",
+            "Get project category by id",
+            null,
+            new TypeReference<ProjectCategoryResponse>() {},
+            null
+    ),
+
+    PROJECT_CATEGORY_POST_CREATE(
+            "/api/v1/project-category",
+            Method.POST,
+            "schemas/project-production/project-category-response-schema.json",
+            "Create project category",
+            new TypeReference<ProjectCategoryRequest>() {},
+            new TypeReference<ProjectCategoryResponse>() {},
+            "CREATE_PROJECT_CATEGORY"
+    ),
+
+    PROJECT_CATEGORY_PUT_UPDATE(
+            "/api/v1/project-category/{id}",
+            Method.PUT,
+            "schemas/project-production/project-category-response-schema.json",
+            "Update project category",
+            new TypeReference<ProjectCategoryRequest>() {},
+            new TypeReference<ProjectCategoryResponse>() {},
+            "UPDATE_PROJECT_CATEGORY"
+    ),
+
+    PROJECT_CATEGORY_DELETE(
+            "/api/v1/project-category/{id}",
+            Method.DELETE,
+            null,
+            "Delete (deactivate) project category",
+            null,
+            null,
+            "DELETE_PROJECT_CATEGORY"
+    ),
+
+    PROJECT_CATEGORY_PUT_RESTORE(
+            "/api/v1/project-category/{id}/restore",
+            Method.PUT,
+            null,
+            "Restore (reactivate) project category",
+            null,
+            null,
+            "RESTORE_PROJECT_CATEGORY"
+    ),
+
+    // ========================================
+    // PROJECT PRODUCT ENDPOINTS
+    // ========================================
+
+    PROJECT_PRODUCT_GET_PAGE(
+            "/api/v1/project-product",
+            Method.GET,
+            "schemas/project-production/project-product-response-list-schema.json",
+            "Get project product page",
+            null,
+            new TypeReference<List<ProjectProductResponse>>() {},
+            null
+    ),
+
+    PROJECT_PRODUCT_GET_ALL_BY_CATEGORY(
+            "/api/v1/project-product/all?projectCategoryId={categoryId}",
+            Method.GET,
+            "schemas/project-production/project-product-response-list-schema.json",
+            "Get project products filtered by category",
+            null,
+            new TypeReference<List<ProjectProductResponse>>() {},
+            null
+    ),
+
+    PROJECT_PRODUCT_GET_BY_ID(
+            "/api/v1/project-product/{id}",
+            Method.GET,
+            "schemas/project-production/project-product-response-schema.json",
+            "Get project product by id",
+            null,
+            new TypeReference<ProjectProductResponse>() {},
+            null
+    ),
+
+    PROJECT_PRODUCT_POST_CREATE(
+            "/api/v1/project-product",
+            Method.POST,
+            "schemas/project-production/project-product-response-schema.json",
+            "Create project product",
+            new TypeReference<ProjectProductRequest>() {},
+            new TypeReference<ProjectProductResponse>() {},
+            "CREATE_PROJECT_PRODUCT"
+    ),
+
+    PROJECT_PRODUCT_PUT_UPDATE(
+            "/api/v1/project-product/{id}",
+            Method.PUT,
+            "schemas/project-production/project-product-response-schema.json",
+            "Update project product",
+            new TypeReference<ProjectProductRequest>() {},
+            new TypeReference<ProjectProductResponse>() {},
+            "UPDATE_PROJECT_PRODUCT"
+    ),
+
+    PROJECT_PRODUCT_DELETE(
+            "/api/v1/project-product/{id}",
+            Method.DELETE,
+            null,
+            "Delete (deactivate) project product",
+            null,
+            null,
+            "DELETE_PROJECT_PRODUCT"
+    ),
+
+    PROJECT_PRODUCT_PUT_RESTORE(
+            "/api/v1/project-product/{id}/restore",
+            Method.PUT,
+            null,
+            "Restore (reactivate) project product",
+            null,
+            null,
+            "RESTORE_PROJECT_PRODUCT"
     ),
 
     // ========================================
@@ -1148,6 +1840,26 @@ public enum ApiEndpointDefinition {
             "OPEN_INVENTORY_SESSION"
     ),
 
+    STORAGE_EQUIPMENT_INVENTORY_STATUS_GET(
+            "/api/v1/storages/{id}/equipment-inventory/status",
+            Method.GET,
+            "schemas/inventory/inventory-session-status-schema.json",
+            "Get equipment inventory session status",
+            null,
+            new TypeReference<InventorySessionStatus>() {},
+            null
+    ),
+
+    STORAGE_EQUIPMENT_INVENTORY_STATUS_PUT(
+            "/api/v1/storages/{id}/equipment-inventory/status",
+            Method.PUT,
+            "schemas/inventory/inventory-session-status-schema.json",
+            "Open or close equipment inventory session",
+            new TypeReference<InventorySessionStatus>() {},
+            new TypeReference<InventorySessionStatus>() {},
+            "OPEN_EQUIPMENT_INVENTORY_SESSION"
+    ),
+
     STORAGE_INVENTORY_MULTI_GET(
             "/api/v1/storages/inventory",
             Method.GET,
@@ -1156,6 +1868,16 @@ public enum ApiEndpointDefinition {
             null,
             new TypeReference<List<MultiLocationStorageItemResponse>>() {},
             null
+    ),
+
+    STORAGE_INVENTORY_HIERARCHY_GET(
+            "/api/v1/storages/inventory",
+            Method.GET,
+            "schemas/inventory/multi-location-inventory-list-schema.json",
+            "Get hierarchy inventory page (?parentStorageId=)",
+            null,
+            new TypeReference<List<MultiLocationStorageItemResponse>>() {},
+            "HIERARCHY_INVENTORY"
     ),
 
     EXPORT_REMAINDER_GET(
@@ -1213,6 +1935,60 @@ public enum ApiEndpointDefinition {
             Method.GET,
             null,
             "Get inventory write-off short stats",
+            null,
+            null,
+            null
+    ),
+
+    // ========================================
+    // FAITA / RESOURCE RECONCILIATION ENDPOINTS
+    // ========================================
+
+    FAITA_RESOURCES_GET(
+            "/api/v1/integrations/faita/resources",
+            Method.GET,
+            null,
+            "List FAITA resources with reconciliations and implicit resources",
+            null,
+            new TypeReference<List<FaitaResourceResponse>>() {},
+            null
+    ),
+
+    FAITA_IMPLICIT_RESOURCES_PUT(
+            "/api/v1/integrations/faita/resources/{externalId}/implicit-resources",
+            Method.PUT,
+            null,
+            "Save additional (implicit) resources for a FAITA product",
+            new TypeReference<SaveImplicitResourcesRequest>() {},
+            new TypeReference<FaitaResourceResponse>() {},
+            null
+    ),
+
+    RESOURCE_RECONCILIATION_GET_PAGE(
+            "/api/v1/resources/reconciliations",
+            Method.GET,
+            null,
+            "Get resource reconciliation page (FLIGHT ↔ ERP)",
+            null,
+            new TypeReference<PagedResourceReconciliationResponse>() {},
+            null
+    ),
+
+    RESOURCE_RECONCILIATION_CREATE(
+            "/api/v1/resources/reconciliations",
+            Method.POST,
+            null,
+            "Create FLIGHT resource reconciliation",
+            new TypeReference<ResourceReconciliationRequest>() {},
+            new TypeReference<List<ResourceReconciliationResponse>>() {},
+            "CREATE"
+    ),
+
+    RESOURCE_RECONCILIATION_DELETE_BY_ID(
+            "/api/v1/resources/reconciliations/{id}",
+            Method.DELETE,
+            null,
+            "Delete resource reconciliation by id",
             null,
             null,
             null
@@ -1357,7 +2133,7 @@ public enum ApiEndpointDefinition {
             "/api/v1/relocations/receive",
             Method.POST,
             "schemas/relocations/relocation-response-schema.json",
-            "Receive resources (SUPPLIER → storage, AUTO_FINISHED)",
+            "Receive resources (SUPPLIER→storage or CREW→storage return, AUTO_FINISHED)",
             new TypeReference<RelocationInputRequest>() {},
             new TypeReference<RelocationResponse>() {},
             null
@@ -1753,6 +2529,16 @@ public enum ApiEndpointDefinition {
             "Internal storages export for whatsapp-bot inventory sync",
             null,
             new TypeReference<List<StorageInternalResponse>>() {},
+            null
+    ),
+
+    INTERNAL_STORAGE_GET_STRUCTURE(
+            "/api/v1/internal/storages/structure",
+            Method.GET,
+            "schemas/storages/storage-structure-internal-list-schema.json",
+            "Internal flat storage structure for delivery-bot location hierarchy",
+            null,
+            new TypeReference<List<StorageViewInternalResponse>>() {},
             null
     ),
 

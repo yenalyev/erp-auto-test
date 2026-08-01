@@ -404,6 +404,118 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
         }
     }
 
+    @Test(priority = 86)
+    @TestCaseId("TC-STR-RES-016")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_016)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testFlyPointAutocompleteInheritsUnitAncestorResources() {
+        ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "fp-vis-");
+        ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "fp-hid-");
+
+        RestrictedUnitResourceSetup.Setup setup = RestrictedUnitResourceSetup.createUnit(
+                storageFixture, regionFixture, "res-fp-scope-");
+        regionFixture.addRegionResources(setup.region().getId(), visible.getId());
+
+        StorageResponse flyPoint = storageFixture.createStorage(
+                StorageDataFactory.flyPointStorage(setup.unit().getId(), "res-fp-")
+                        .accessMode(StorageAccessMode.REGIONS)
+                        .build());
+        long flyPointId = flyPoint.getId();
+        long unitId = setup.unit().getId();
+
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, unitId, visible.getName(), visible.getId(), false))
+                .as("Контроль: visible у autocomplete UNIT")
+                .isTrue();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, flyPointId, visible.getName(), visible.getId(), false))
+                .as("FLY_POINT наслідує область ресурсів UNIT ancestor")
+                .isTrue();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, flyPointId, hidden.getName(), hidden.getId(), false))
+                .as("Ресурс поза областю UNIT не видимий для FLY_POINT")
+                .isFalse();
+    }
+
+    @Test(priority = 86)
+    @TestCaseId("TC-STR-RES-017")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_017)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCrewUnderFlyPointAutocompleteSkipsFlyPointToUnit() {
+        ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "nest-vis-");
+        ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "nest-hid-");
+
+        RestrictedUnitResourceSetup.Setup setup = RestrictedUnitResourceSetup.createUnit(
+                storageFixture, regionFixture, "res-nest-scope-");
+        regionFixture.addRegionResources(setup.region().getId(), visible.getId());
+
+        StorageResponse flyPoint = storageFixture.createStorage(
+                StorageDataFactory.flyPointStorage(setup.unit().getId(), "res-nest-fp-")
+                        .accessMode(StorageAccessMode.REGIONS)
+                        .build());
+        StorageResponse crew = storageFixture.createStorage(
+                StorageDataFactory.crewStorage(flyPoint.getId(), "res-nest-crew-")
+                        .accessMode(StorageAccessMode.REGIONS)
+                        .build());
+
+        long crewId = crew.getId();
+        long unitId = setup.unit().getId();
+
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, crewId, visible.getName(), visible.getId(), false))
+                .as("CREW під FLY_POINT наслідує UNIT (пропуск FP)")
+                .isTrue();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, crewId, hidden.getName(), hidden.getId(), false))
+                .as("hidden поза UNIT не видимий для nested CREW")
+                .isFalse();
+        assertThat(resourceFixture.isPresentInAutocompleteForStorage(
+                UserRole.ADMIN, unitId, visible.getName(), visible.getId(), false))
+                .isTrue();
+    }
+
+    @Test(priority = 86)
+    @TestCaseId("TC-STR-RES-018")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_RES_018)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testFlyPointInventoryPutOutOfScopeReturns400() {
+        ResourceResponse visible = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "fp-ok-");
+        ResourceResponse hidden = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "fp-bad-");
+
+        RestrictedUnitResourceSetup.Setup setup = RestrictedUnitResourceSetup.createUnit(
+                storageFixture, regionFixture, "res-fp-inv-");
+        regionFixture.addRegionResources(setup.region().getId(), visible.getId());
+
+        StorageResponse flyPoint = storageFixture.createStorage(
+                StorageDataFactory.flyPointStorage(setup.unit().getId(), "res-fp-inv-fp-")
+                        .accessMode(StorageAccessMode.REGIONS)
+                        .build());
+        long flyPointId = flyPoint.getId();
+
+        inventoryFixture.ensureClosed(flyPointId);
+        inventoryFixture.openSession(flyPointId);
+        try {
+            InventoryRequest bad = InventoryDataFactory.seedAmounts(Map.of(hidden.getId(), 2.0));
+            Response response = inventoryFixture.conductInventoryRaw(flyPointId, UserRole.ADMIN, bad);
+            AllureHelper.attachResponseDetails(response);
+            if (response.statusCode() == 400) {
+                assertThat(inventoryFixture.getResourceStock(flyPointId, hidden.getId(), UserRole.ADMIN))
+                        .isEqualTo(0.0);
+                return;
+            }
+            // Відомий дефект: як TC-STR-RES-008 — inventory PUT ще не валідує RESOURCES scope.
+            log.warn(
+                    "TC-STR-RES-018: бекенд прийняв inventory out-of-scope на FLY_POINT (status={}) — "
+                            + "очікуємо 400 після guard; UI не відтворює (autocomplete фільтрує)",
+                    response.statusCode());
+            assertThat(response.statusCode())
+                    .as("PUT inventory з out-of-scope ресурсом на FLY_POINT → 400")
+                    .isEqualTo(400);
+        } finally {
+            inventoryFixture.ensureClosed(flyPointId);
+        }
+    }
+
     @Test(priority = 87)
     @TestCaseId("TC-STR-RES-011")
     @Description(StorageRegionsAllureDescriptions.TC_STR_RES_011)

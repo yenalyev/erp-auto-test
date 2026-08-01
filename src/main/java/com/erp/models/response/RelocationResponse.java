@@ -41,4 +41,5 @@ public class RelocationResponse {
     private String receivingPersonName;
     private String receivingPersonRank;
     private Instant createdAt;
+    private Long orderId;
 }

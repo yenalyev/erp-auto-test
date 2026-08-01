@@ -239,6 +239,23 @@ public class UsersAdminPage extends BasePage {
         return waitForListLoaded();
     }
 
+    /**
+     * True when Locations ({@code MultiStorageSelector}) has selected chips.
+     * Empty state keeps placeholder «Виберіть підрозділи»; with selection the placeholder is cleared.
+     */
+    public boolean hasSelectedLocationChips() {
+        Locator placeholder = page.locator("form").getByPlaceholder("Виберіть підрозділи");
+        if (placeholder.count() == 0) {
+            return true;
+        }
+        Locator first = placeholder.first();
+        if (!first.isVisible()) {
+            return true;
+        }
+        String attr = first.getAttribute("placeholder");
+        return attr == null || attr.isBlank();
+    }
+
     public boolean isOnUsersListPath() {
         return currentUrl().contains(LIST_PATH) && !currentUrl().contains("/create");
     }

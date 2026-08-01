@@ -14,4 +14,9 @@ import lombok.NoArgsConstructor;
 public class InventorySessionStatus {
     private Boolean open;
     private boolean hasCrews;
+    private Boolean supported;
+
+    public boolean isSupported() {
+        return Boolean.TRUE.equals(supported);
+    }
 }

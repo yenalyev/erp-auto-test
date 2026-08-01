@@ -106,7 +106,7 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
         String crewName = crewScenario.crew().getName();
         String marker = "TC-UI-CREW-012-" + System.currentTimeMillis();
 
-        Allure.step("API: stock на OWNER_2 і send → crew (поза REGIONS scope)", () -> {
+        Allure.step("API: stock на OWNER_2 і send → crew → finish відправником (поза REGIONS scope)", () -> {
             RelocationStockSeeder.receiveFromSupplier(
                     apiExecutor, UserRole.OWNER_2, owner2StorageId, Map.of(resourceId, 50.0));
             RelocationResponse sent = relocationFixture.createSendWithDescription(
@@ -118,6 +118,10 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
                     marker);
             assertThat(sent.getRecipient()).isNotNull();
             assertThat(sent.getRecipient().getId()).isEqualTo(crewScenario.crew().getId());
+            assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+            RelocationResponse finished = relocationFixture.resolve(
+                    UserRole.ADMIN, sent.getId(), owner2StorageId, RelocationState.FINISHED);
+            assertThat(finished.getState()).isEqualTo(RelocationState.FINISHED);
         });
 
         injectOwner2Session(owner2StorageId);
@@ -150,9 +154,9 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
         String crewName = crewScenario.crew().getName();
         String marker = "TC-UI-CREW-013-" + System.currentTimeMillis();
 
-        Allure.step("API: stock на crew → send crew → OWNER_2 → resolve FINISHED", () -> {
+        Allure.step("API: stock на crew (send+finish) → send crew → OWNER_2 → resolve FINISHED", () -> {
             relocationFixture.ensureStock(crewScenario.memberStorageId(), resourceId, 100.0);
-            relocationFixture.createSend(
+            relocationFixture.createSendAndFinishBySender(
                     UserRole.ADMIN,
                     crewScenario.memberStorageId(),
                     crewScenario.crew().getId(),

@@ -136,6 +136,36 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String crewManagerPassword();
 
+    /** Project production admin (Project-Production-ROLE + catalog CRUD). */
+    @Key("user.project-admin.username")
+    @DefaultValue("projectprod")
+    String projectAdminUsername();
+
+    @Key("user.project-admin.password")
+    @DefaultValue("")
+    String projectAdminPassword();
+
+    /** Project production manager (Project-Production-ROLE on owner1 storage). */
+    @Key("user.project-manager.username")
+    @DefaultValue("projectprodab")
+    String projectManagerUsername();
+
+    @Key("user.project-manager.password")
+    @DefaultValue("")
+    String projectManagerPassword();
+
+    /**
+     * Mixed location permissions user (Owner full on A1/A2 + Viewer RO on B1/B2).
+     * Bound via {@code var_business_unit_id} / {@code var_business_unit_id_ro} (CPMA-644).
+     */
+    @Key("user.location-mixed.username")
+    @DefaultValue("locmixed")
+    String locationMixedUsername();
+
+    @Key("user.location-mixed.password")
+    @DefaultValue("")
+    String locationMixedPassword();
+
     // Storage IDs per owner role (resolved per environment)
     @Key("owner1.storage.id")
     @DefaultValue("1")
@@ -150,10 +180,42 @@ public interface TestConfig extends Config {
     @DefaultValue("77")
     long unitStorageId();
 
+    /**
+     * Second view-only location for LOCATION_MIXED (B2).
+     * {@code 0} = auto-pick another UNIT from admin names at ensure time.
+     */
+    @Key("location-mixed.ro2.storage.id")
+    @DefaultValue("0")
+    long locationMixedRo2StorageId();
+
     /** A storage ID that is guaranteed not to exist; PostgreSQL never assigns negative IDs. */
     @Key("incorrect.storage.id")
     @DefaultValue("-1")
     long incorrectStorageId();
+
+    /**
+     * Order gathering owner (REQ-WMS-010). Empty username → fall back to owner2.
+     * Storage id {@code 0} → fall back to {@code owner2.storage.id}.
+     */
+    @Key("order.gathering.username")
+    @DefaultValue("")
+    String orderGatheringUsername();
+
+    @Key("order.gathering.password")
+    @DefaultValue("")
+    String orderGatheringPassword();
+
+    @Key("order.gathering.storage.id")
+    @DefaultValue("0")
+    long orderGatheringStorageId();
+
+    /**
+     * Seed for {@code app_config.order_availability_root_storage}.
+     * {@code 0} = skip upsert.
+     */
+    @Key("order.availability.root.storage.id")
+    @DefaultValue("0")
+    long orderAvailabilityRootStorageId();
 
     // Google Sheets
     @Key("google.sheets.spreadsheet.id")
@@ -273,4 +335,9 @@ public interface TestConfig extends Config {
     @Key("bot.delivery.data.url")
     @DefaultValue("")
     String botDeliveryDataUrl();
+
+    /** Full URL for delivery-bot location structure ({@code GET_STRUCTURE_DATA_URL} in .env). */
+    @Key("bot.delivery.structure.url")
+    @DefaultValue("")
+    String botDeliveryStructureUrl();
 }

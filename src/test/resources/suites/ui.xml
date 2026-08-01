@@ -27,6 +27,9 @@
     <test name="Relocation UI">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
+            <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
+            <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
@@ -57,6 +60,7 @@
     <test name="Plan Execution UI">
         <classes>
             <class name="com.erp.tests.ui.PlanExecutionUiTest"/>
+            <class name="com.erp.tests.ui.PlanDisassembleUiTest"/>
         </classes>
     </test>
 
@@ -77,6 +81,7 @@
 
     <test name="Operation History UI">
         <classes>
+            <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
         </classes>
     </test>
@@ -84,6 +89,8 @@
     <test name="User Management UI">
         <classes>
             <class name="com.erp.tests.ui.UsersAdminUiTest"/>
+            <class name="com.erp.tests.ui.UsersLocationPermissionsUiTest"/>
+            <class name="com.erp.tests.ui.LocationPermissionsUiTest"/>
         </classes>
     </test>
 

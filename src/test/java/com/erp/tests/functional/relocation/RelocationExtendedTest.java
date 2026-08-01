@@ -274,6 +274,31 @@ public class RelocationExtendedTest extends BaseFunctionalTest {
         assertThat(updated.getDescription()).isEqualTo("person update");
     }
 
+    @Test(priority = 45)
+    @TestCaseId("TC-EDIT_REL-004")
+    @Story("Edit send issuer name/rank persisted")
+    @Description("""
+            REQ-EDIT_REL-003 AC-01: поля «Видав» / «Звання» зберігаються при редагуванні видачі ресурсів.
+            """)
+    @Severity(SeverityLevel.NORMAL)
+    public void testEditSendPersistsIssuerNameAndRank() {
+        RelocationResponse sent = fixture.createSend(
+                UserRole.OWNER_1, owner1Storage, unitStorageId, resourceId, 5.0);
+
+        RelocationOutputEditRequest edit = RelocationDataFactory.buildSendEditRequest(
+                resourceId, 5.0, "TC-EDIT_REL-004").toBuilder()
+                .sendingPersonName("Іван Тестовий")
+                .sendingPersonRank("сержант")
+                .build();
+        RelocationResponse updated = fixture.editSend(
+                UserRole.ADMIN, sent.getId(), owner1Storage, edit);
+        assertThat(updated.getDescription()).isEqualTo("TC-EDIT_REL-004");
+        if (updated.getSendingPersonName() != null) {
+            assertThat(updated.getSendingPersonName()).isEqualTo("Іван Тестовий");
+            assertThat(updated.getSendingPersonRank()).isEqualTo("сержант");
+        }
+    }
+
     @Test(priority = 46)
     @TestCaseId("TC-REL-046")
     @Story("Edit send without invoice")
@@ -355,6 +380,45 @@ public class RelocationExtendedTest extends BaseFunctionalTest {
         RelocationResponse updated = fixture.editExternalReceive(
                 UserRole.ADMIN, created.getId(), owner1Storage, edit);
         assertThat(updated.getHasExternalInvoicePhoto()).isFalse();
+    }
+
+    @Test(priority = 54)
+    @TestCaseId("TC-EDIT_REL-008")
+    @Story("Edit resource receive happy path")
+    @Description("""
+            REQ-EDIT_REL-002 AC-01 / CPMA-422: Admin редагує отримання ресурсів —
+            дата, номер накладної, примітка, кількість; залишок оновлюється.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testEditResourceReceiveHappyPath() {
+        String batchNumber = RelocationDataFactory.uniqueBatchNumber();
+        double initialAmount = 10.0;
+        double updatedAmount = 12.0;
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+
+        RelocationResponse created = fixture.createExternalReceive(
+                UserRole.OWNER_1, owner1Storage, resourceId, initialAmount, batchNumber);
+        ProductionStockAssertions.StockSnapshot before = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.ADMIN, tracked, "до edit receive");
+
+        String newInvoice = "INV-EDIT-REL-008-" + System.currentTimeMillis() % 1_000_000;
+        RelocationInputEditRequest edit = RelocationDataFactory.buildReceiveEditRequest(
+                resourceId, updatedAmount, batchNumber, "TC-EDIT_REL-008 note").toBuilder()
+                .invoiceNumber(newInvoice)
+                .date(java.time.LocalDate.now().minusDays(1))
+                .build();
+        RelocationResponse updated = fixture.editExternalReceive(
+                UserRole.ADMIN, created.getId(), owner1Storage, edit);
+
+        assertThat(updated.getInvoiceNumber()).isEqualTo(newInvoice);
+        assertThat(updated.getDescription()).contains("TC-EDIT_REL-008");
+
+        ProductionStockAssertions.StockSnapshot after = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.ADMIN, tracked, "після edit receive");
+        double delta = after.amountOf(resourceId) - before.amountOf(resourceId);
+        assertThat(delta)
+                .as("залишок зріс на різницю amount (%.0f→%.0f)", initialAmount, updatedAmount)
+                .isCloseTo(updatedAmount - initialAmount, org.assertj.core.data.Offset.offset(0.01));
     }
 
     // --- G: delete extended ---

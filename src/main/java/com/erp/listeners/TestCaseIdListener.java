@@ -8,6 +8,7 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Додає {@link com.erp.annotations.TestCaseId} у Allure: label і TMS-link.
@@ -22,19 +23,17 @@ public class TestCaseIdListener implements IInvokedMethodListener {
             return;
         }
         Method testMethod = method.getTestMethod().getConstructorOrMethod().getMethod();
-        if (!TestCaseIdExtractor.hasTestCaseId(testMethod)) {
+        List<String> ids = TestCaseIdExtractor.getTestCaseIds(testMethod);
+        if (ids.isEmpty()) {
             log.warn("⚠️  Test method '{}' doesn't have @TestCaseId annotation", testMethod.getName());
             return;
         }
 
-        String testCaseId = TestCaseIdExtractor.getTestCaseId(testMethod);
-        if (testCaseId == null || testCaseId.isBlank() || "NO_ID".equals(testCaseId)) {
-            return;
+        for (String testCaseId : ids) {
+            Allure.tms("TestCase", testCaseId);
+            Allure.label("testCaseId", testCaseId);
         }
-
-        Allure.tms("TestCase", testCaseId);
-        Allure.label("testCaseId", testCaseId);
-        log.info("🏷️  Test Case ID: {}", testCaseId);
+        log.info("🏷️  Test Case ID: {}", String.join(", ", ids));
     }
 
     @Override
@@ -43,17 +42,14 @@ public class TestCaseIdListener implements IInvokedMethodListener {
             return;
         }
         Method testMethod = method.getTestMethod().getConstructorOrMethod().getMethod();
-        if (!TestCaseIdExtractor.hasTestCaseId(testMethod)) {
+        List<String> ids = TestCaseIdExtractor.getTestCaseIds(testMethod);
+        if (ids.isEmpty()) {
             return;
         }
-        String testCaseId = TestCaseIdExtractor.getTestCaseId(testMethod);
-        if (testCaseId == null || testCaseId.isBlank() || "NO_ID".equals(testCaseId)) {
-            return;
-        }
-        String prefix = "[" + testCaseId + "] ";
+        String prefix = "[" + String.join(", ", ids) + "] ";
         Allure.getLifecycle().updateTestCase(tc -> {
             String currentName = tc.getName();
-            if (currentName != null && !currentName.startsWith(prefix)) {
+            if (currentName != null && !currentName.startsWith("[")) {
                 tc.setName(prefix + currentName);
             }
         });

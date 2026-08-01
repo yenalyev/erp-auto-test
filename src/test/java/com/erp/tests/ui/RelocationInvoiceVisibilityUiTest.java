@@ -19,6 +19,7 @@ import com.erp.pages.RelocationPage;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.storage.StorageRegionsAllureDescriptions;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.UiDownloadAssertions;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
@@ -292,12 +293,11 @@ public class RelocationInvoiceVisibilityUiTest extends BaseUITest {
         journal.attachScreenshot(screenshotPrefix);
 
         Allure.step("UI («" + tabLabel + "»): assert файлу накладної", () -> {
-            assertThat(uiDownload.sizeBytes())
-                    .as("Файл накладної з UI не порожній (вкладка «%s»)", tabLabel)
-                    .isGreaterThan(100);
-            assertThat(uiDownload.suggestedFilename())
-                    .as("Ім'я файлу накладної (вкладка «%s»)", tabLabel)
-                    .matches("(?i).+\\.(pdf|docx)");
+            // Playwright suggestedFilename() often returns "download" for Cyrillic <a download> blob names.
+            UiDownloadAssertions.assertNonEmptyOfficeOrPdf(
+                    uiDownload.path(),
+                    uiDownload.sizeBytes(),
+                    "Файл накладної з UI (вкладка «" + tabLabel + "»)");
         });
     }
 

@@ -243,6 +243,52 @@ public class PlanExecutionUiTest extends BaseUITest {
         planPage.attachScreenshot("TC-UI-PLANEXEC-004 — plan, no production — card visible");
     }
 
+    @Test(priority = 41)
+    @TestCaseId("TC-PLN-003")
+    @Story("Tech map only (no plan, no production) => product absent from plan-execution")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Arrange: ізольований продукт з активною виробничою техкартою без плану і без виробництва.
+            Assert: рядок цього продукту відсутній у таблиці «Виконання плану».""")
+    public void techMapOnlyNotShownOnPlanExecution() {
+        currentStorageId = ownerStorageId;
+        currentContext = fixture.createIsolatedProduct(ownerStorageId);
+        String productName = currentContext.getProduct().getName().trim();
+
+        injectRoleSession(UserRole.OWNER_1, ownerStorageId);
+        PlanExecutionPage planPage = new PlanExecutionPage(page).open();
+
+        assertThat(planPage.isProductRowVisible(productName))
+                .as("Продукт лише з техкартою (без плану і виробництва) не має бути в «Виконання плану»")
+                .isFalse();
+        planPage.attachScreenshot("TC-PLN-003 — tech map only — product absent");
+    }
+
+    @Test(priority = 42)
+    @TestCaseId("TC-PLN-004")
+    @Story("Tech map + plan, no production => product shown on plan-execution")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Arrange: ізольований продукт з техкартою і планом поточного місяця без виробництва.
+            Assert: рядок продукту видимий; ціль з плану; вироблено 0.""")
+    public void techMapWithPlanShownOnPlanExecution() {
+        currentStorageId = ownerStorageId;
+        fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
+        currentContext = fixture.createIsolatedProduct(ownerStorageId);
+        currentPlan = fixture.createCurrentMonthPlan(ownerStorageId, currentContext.getProduct().getId(), 15.0);
+        String productName = currentContext.getProduct().getName().trim();
+
+        injectRoleSession(UserRole.OWNER_1, ownerStorageId);
+        PlanExecutionPage planPage = new PlanExecutionPage(page).open();
+
+        assertThat(planPage.isProductRowVisible(productName))
+                .as("Продукт з планом (навіть без виробництва) має бути в «Виконання плану»")
+                .isTrue();
+        assertThat(planPage.getGoalCellText(productName)).contains("15");
+        assertThat(planPage.getProducedCellText(productName)).contains("0");
+        planPage.attachScreenshot("TC-PLN-004 — plan, no production — product visible");
+    }
+
     @Test(priority = 45)
     @TestCaseId("TC-UI-PLANEXEC-009")
     @Story("Copy produced amounts to clipboard (Owner)")

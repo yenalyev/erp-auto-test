@@ -114,6 +114,18 @@ def bot_cases() -> list[Case]:
                 ("GET /api/v1/internal/relocations з Authorization: Bearer", "HTTP 200; JSON-масив переміщень; час ≤30 с"),
             ],
         ),
+        c(
+            "TC-BOT-004", FEAT_INT_DEL, "AC-INT-01",
+            "delivery-bot — GET internal/storages/structure за SLA",
+            "Ручна перевірка плоского дерева локацій {id, name, parentId} для delivery-bot.",
+            priority="CRITICAL", preconditions=PRE_BOT, tags="integration,bots,delivery,structure",
+            layer="API",
+            steps=[
+                ("Отримати Bearer token (client_credentials)", "Токен отримано"),
+                ("GET /api/v1/internal/storages/structure з Authorization: Bearer",
+                 "HTTP 200; JSON-масив вузлів з id/name/parentId; час ≤30 с"),
+            ],
+        ),
     ]
 
 

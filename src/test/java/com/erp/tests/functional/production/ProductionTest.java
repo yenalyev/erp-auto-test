@@ -77,7 +77,12 @@ public class ProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 10)
-    @TestCaseId("TC-PRD-001")
+    @TestCaseId({
+            "TC-PRD-001",
+            "TC-MFG-005",
+            "TC-MFG-006",
+            "TC-MFG-008"
+    })
     @Story("Create production")
     @Description("Успішне створення виробництва, перевірка відповіді, журналу та залишків")
     @Severity(SeverityLevel.CRITICAL)
@@ -193,7 +198,11 @@ public class ProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 30, dataProvider = "invalidProductionProvider")
-    @TestCaseId("TC-PRD-003")
+    @TestCaseId({
+            "TC-PRD-003",
+            "TC-MFG-007",
+            "TC-MFG-009"
+    })
     @Story("Create production validation")
     @Description("Негативні сценарії створення виробництва")
     @Severity(SeverityLevel.NORMAL)
@@ -283,7 +292,11 @@ public class ProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 40)
-    @TestCaseId("TC-PRD-004")
+    @TestCaseId({
+            "TC-PRD-004",
+            "TC-MFG-010",
+            "TC-MFG-011"
+    })
     @Story("Production batches")
     @Description("Після створення виробництва з'являється produced batch з очікуваним номером")
     @Severity(SeverityLevel.NORMAL)
@@ -309,7 +322,11 @@ public class ProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 50)
-    @TestCaseId("TC-PRD-005")
+    @TestCaseId({
+            "TC-PRD-005",
+            "TC-MFG-012",
+            "TC-MFG-013"
+    })
     @Story("Production batches — merge")
     @Description("""
             Створено виробництво з номером партії → з'явилась produced-партія.
@@ -408,7 +425,10 @@ public class ProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 60)
-    @TestCaseId("TC-PRD-006")
+    @TestCaseId({
+            "TC-PRD-006",
+            "TC-MFG-014"
+    })
     @Story("Update production amount")
     @Description("""
             Керівник виробництва (OWNER_1) змінює обсяг існуючого запису:
@@ -509,7 +529,10 @@ public class ProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 70)
-    @TestCaseId("TC-PRD-007")
+    @TestCaseId({
+            "TC-PRD-007",
+            "TC-MFG-015"
+    })
     @Story("Delete production")
     @Description("""
             Створено виробництво з унікальним номером партії.

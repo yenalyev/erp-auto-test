@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProjectProductionResponse",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": { "type": "integer" },
+    "createdBy": { "type": ["string", "null"] },
+    "start": { "type": ["string", "null"], "format": "date" },
+    "createdAt": { "type": ["string", "null"] },
+    "deadlineTo": { "type": ["string", "null"], "format": "date" },
+    "state": { "type": ["string", "null"], "enum": ["CREATED", "IN_PROGRESS", "DONE", null] },
+    "type": { "type": ["string", "null"], "enum": ["CREATION", "MODIFICATION", null] },
+    "serialNumber": { "type": ["string", "null"] },
+    "description": { "type": ["string", "null"] },
+    "storage": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "projectCategory": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "projectProduct": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "projectProductionStages": {
+      "type": "array",
+      "items": { "$ref": "project-production-stage-response-schema.json" }
+    },
+    "specificProperties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" }
+        }
+      }
+    },
+    "equipments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

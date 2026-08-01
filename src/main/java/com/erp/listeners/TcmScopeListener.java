@@ -65,11 +65,14 @@ public class TcmScopeListener implements ISuiteListener, IMethodInterceptor {
         Set<String> allowed = TcmScopeContext.getAllowedTestCaseIds();
         return methods.stream()
                 .filter(method -> {
-                    String testCaseId = TestCaseIdExtractor.getTestCaseId(method.getMethod().getConstructorOrMethod().getMethod());
-                    if ("NO_ID".equals(testCaseId)) {
+                    var ids = TestCaseIdExtractor.getTestCaseIds(
+                            method.getMethod().getConstructorOrMethod().getMethod());
+                    if (ids.isEmpty()) {
                         return false;
                     }
-                    return allowed.contains(testCaseId.toUpperCase(Locale.ROOT));
+                    return ids.stream()
+                            .map(id -> id.toUpperCase(Locale.ROOT))
+                            .anyMatch(allowed::contains);
                 })
                 .toList();
     }

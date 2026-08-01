@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BookingResponse",
+  "description": "Matches backend org.pm.tk.dto.response.order.BookingResponse",
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer" },
+    "orderLineId": { "type": ["integer", "null"] },
+    "resourceId": { "type": ["integer", "null"] },
+    "resourceName": { "type": ["string", "null"] },
+    "sourceStorageId": { "type": ["integer", "null"] },
+    "sourceStorageName": { "type": ["string", "null"] },
+    "amount": { "type": ["number", "null"] },
+    "state": {
+      "type": "string",
+      "enum": ["ACTIVE", "FULFILLED", "RELEASED"]
+    },
+    "prepared": { "type": ["boolean", "null"] },
+    "preparedAt": { "type": ["string", "null"], "format": "date-time" },
+    "preparedBy": { "type": ["string", "null"] }
+  },
+  "required": ["id", "state"],
+  "additionalProperties": true
+}

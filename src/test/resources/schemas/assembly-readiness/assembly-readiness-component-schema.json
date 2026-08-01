@@ -7,7 +7,23 @@
     "resource": { "$ref": "../simple-entity-schema.json" },
     "unit": { "type": "string" },
     "requiredPerUnit": { "type": "number" },
-    "availableStock": { "type": "number" }
+    "availableStock": { "type": "number" },
+    "technologicalMaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "storages"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "storages": {
+            "type": "array",
+            "items": { "$ref": "../simple-entity-schema.json" }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
   },
   "additionalProperties": true
 }

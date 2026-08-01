@@ -127,6 +127,45 @@ public class RelocationVisibilityUiTest extends BaseUITest {
     }
 
     @Test
+    @TestCaseId("TC-WMS-REG-RES-016")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description(StorageRegionsAllureDescriptions.TC_WMS_REG_RES_016)
+    public void sendFormProductListShowsOnlyInScopeResources() {
+        ResourceResponse granted = resourceFixture.createUniqueResource("ui-wms-res-in-");
+        ResourceResponse hidden = resourceFixture.createUniqueResource("ui-wms-res-hid-");
+
+        StorageResponse owner2 = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
+        StorageRegionResponse region = regionFixture.createRegion(
+                owner2, StorageAccessMode.RESOURCES, "ui-wms-res-reg-");
+        regionFixture.addRegionMembers(region.getId(), owner2StorageId);
+        regionFixture.addRegionResources(region.getId(), granted.getId());
+
+        // Only granted gets stock — receive auto-grants resources into visibility scope.
+        relocationFixture.ensureStock(owner2StorageId, granted.getId(), 25.0);
+
+        injectOwner2Session(owner2StorageId);
+        RelocationCreateOutputPage sendForm = Allure.step(
+                "UI: журнал → Видати (OWNER_2 REGIONS)",
+                () -> new RelocationPage(page).open().clickSend());
+        sendForm.attachScreenshot("TC-WMS-REG-RES-016 — send form");
+
+        String grantedTerm = searchTerm(granted.getName());
+        List<String> grantedOptions = sendForm.searchAndCollectResourceOptions(grantedTerm);
+        sendForm.attachScreenshot("TC-WMS-REG-RES-016 — granted search");
+        assertThat(grantedOptions)
+                .as("in-scope ресурс у «Список продукції»")
+                .anyMatch(label -> containsIgnoreCase(label, granted.getName())
+                        || containsIgnoreCase(label, grantedTerm));
+
+        String hiddenTerm = searchTerm(hidden.getName());
+        List<String> hiddenOptions = sendForm.searchAndCollectResourceOptions(hiddenTerm);
+        sendForm.attachScreenshot("TC-WMS-REG-RES-016 — hidden search");
+        assertThat(hiddenOptions)
+                .as("hidden ресурс відсутній у autocomplete")
+                .noneMatch(label -> containsIgnoreCase(label, hidden.getName()));
+    }
+
+    @Test
     @TestCaseId("TC-UI-REL-VIS-002")
     @Severity(SeverityLevel.CRITICAL)
     @Description(StorageRegionsAllureDescriptions.TC_UI_REL_VIS_002)
@@ -387,6 +426,20 @@ public class RelocationVisibilityUiTest extends BaseUITest {
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
                 "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+    }
+
+    private static String searchTerm(String name) {
+        if (name == null) {
+            return "";
+        }
+        return name.length() > 12 ? name.substring(0, 12) : name;
+    }
+
+    private static boolean containsIgnoreCase(String haystack, String needle) {
+        if (haystack == null || needle == null) {
+            return false;
+        }
+        return haystack.toLowerCase().contains(needle.toLowerCase());
     }
 
     private void ensureOwner2RestrictedAccess() {

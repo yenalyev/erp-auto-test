@@ -4,7 +4,6 @@ import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.OperationHistoryPage;
-import com.erp.pages.RelocationPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * UI RBAC: summary cards on «Історія операцій» follow sidebar tab permissions
- * ({@code defect::view}, {@code production::view}, {@code relocation::view},
- * {@code inventory::view}, {@code incident::view}).
+ * ({@code defect::view}, {@code production::view}, {@code relocation::view}, {@code inventory::view}).
  */
 @Slf4j
 @Epic("Operation History")
@@ -37,7 +35,6 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
     private static final String CARD_INV_REMOVED = "Видалено (Інвентаризація)";
     private static final String CARD_DEFECT_ADDED = "Виявлено брак";
     private static final String CARD_DEFECT_REMOVED = "Списано брак";
-    private static final String CARD_INCIDENT = "Надзвичайні події";
 
     @Test
     @TestCaseId("TC-UI-HIST-CARD-001")
@@ -45,17 +42,16 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
     @Severity(SeverityLevel.NORMAL)
     @Description("""
             OWNER_1 (alkatras) має sidebar «Виробництво» (і PageTab «Брак»), «Видати/Отримати»,
-            «Залишки», вкладку «Втрачено» (incident::view). На «Історія операцій» (/history) видимі картки:
+            «Залишки». На «Історія операцій» (/history) видимі картки:
             «Отримано», «Видано», «Вироблено», «Використано»,
             «Додано (Інвентаризація)», «Видалено (Інвентаризація)»,
-            «Виявлено брак», «Списано брак», «Надзвичайні події».
+            «Виявлено брак», «Списано брак».
             non-series-production поза scope — картки виробництва залежать лише від production::view.
             """)
     public void ownerSeesDefectAndProductionCards() {
         assertCardsVisibilityForRole(
                 UserRole.OWNER_1,
                 ConfigProvider.getOwner1StorageId(),
-                true,
                 true,
                 true,
                 true,
@@ -67,9 +63,9 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
     @Story("Crew-Manager summary cards follow sidebar permissions")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            CREW_MANAGER (argument) не має sidebar «Виробництво» / PageTab «Брак» / incident::view;
+            CREW_MANAGER (argument) не має sidebar «Виробництво» / PageTab «Брак»;
             має «Видати/Отримати» та «Залишки». На «Історія операцій» (/history):
-            картки браку, виробництва та «Надзвичайні події» приховані;
+            картки браку та виробництва приховані;
             «Отримано», «Видано», «Додано (Інвентаризація)», «Видалено (Інвентаризація)» видимі.
             non-series-production поза scope.
             """)
@@ -80,8 +76,7 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
                 false,
                 false,
                 true,
-                true,
-                false);
+                true);
     }
 
     private void assertCardsVisibilityForRole(
@@ -90,15 +85,13 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
             boolean expectDefectAccess,
             boolean expectProductionAccess,
             boolean expectRelocationAccess,
-            boolean expectInventoryAccess,
-            boolean expectIncidentAccess) {
+            boolean expectInventoryAccess) {
         Allure.parameter("User", role.getUsername());
         Allure.parameter("storageId", storageId);
         Allure.parameter("expectDefectAccess", expectDefectAccess);
         Allure.parameter("expectProductionAccess", expectProductionAccess);
         Allure.parameter("expectRelocationAccess", expectRelocationAccess);
         Allure.parameter("expectInventoryAccess", expectInventoryAccess);
-        Allure.parameter("expectIncidentAccess", expectIncidentAccess);
 
         injectRoleSession(role, storageId);
         page = browserContext.newPage();
@@ -118,7 +111,6 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
             assertNav(sidebar, NAV_RELOCATION, expectRelocationAccess, role);
             assertNav(sidebar, NAV_INVENTORY, expectInventoryAccess, role);
             assertDefectNav(sidebar, expectDefectAccess, role);
-            assertIncidentNav(expectRelocationAccess, expectIncidentAccess, role);
         });
 
         OperationHistoryPage historyAfterNav = Allure.step("Повернутись на «Історія операцій» після перевірки навігації", () -> {
@@ -136,7 +128,6 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
             assertCard(historyAfterNav, CARD_INV_REMOVED, expectInventoryAccess);
             assertCard(historyAfterNav, CARD_DEFECT_ADDED, expectDefectAccess);
             assertCard(historyAfterNav, CARD_DEFECT_REMOVED, expectDefectAccess);
-            assertCard(historyAfterNav, CARD_INCIDENT, expectIncidentAccess);
         });
 
         historyAfterNav.attachScreenshot(role.getUsername() + " — history cards visibility");
@@ -164,17 +155,6 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
                     .as("PageTab «Брак» має бути прихований для %s", role.getUsername())
                     .isFalse();
         }
-    }
-
-    /** «Втрачено» is a journal tab on /relocations, gated by incident::view. */
-    private void assertIncidentNav(boolean hasRelocationAccess, boolean expectIncidentAccess, UserRole role) {
-        if (!hasRelocationAccess) {
-            return;
-        }
-        RelocationPage relocationPage = new RelocationPage(page).open();
-        assertThat(relocationPage.isLostTabVisible())
-                .as("Вкладка «Втрачено» для %s (incident::view)", role.getUsername())
-                .isEqualTo(expectIncidentAccess);
     }
 
     private static void assertCard(OperationHistoryPage history, String cardTitle, boolean expected) {

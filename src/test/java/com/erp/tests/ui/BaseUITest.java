@@ -2,17 +2,16 @@ package com.erp.tests.ui;
 
 import com.erp.tests.BaseTest;
 import com.erp.utils.auth.PlaywrightSessionProvider;
-import com.erp.utils.helpers.TestCaseIdExtractor;
+import com.erp.utils.helpers.AllureScreenshots;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
-import io.qameta.allure.Allure;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.ITestResult;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 
 import java.util.Map;
 
@@ -23,10 +22,12 @@ import java.util.Map;
  *  - Suite-level Browser is shared via BaseTest → PlaywrightSessionProvider (single Chromium process).
  *  - Each test class gets its own BrowserContext (isolated cookies / storage).
  *  - Each test method gets its own Page, closed in @AfterMethod.
- *  - A full-page screenshot is attached to the Allure report after every test (pass or fail).
+ *  - A full-page screenshot is attached via {@link com.erp.listeners.UiScreenshotListener}
+ *    right after the {@code @Test} body (before Allure writes the result).
  *  - Use {@link #attachScreenshot(String)} for additional step captures inside tests.
  */
 @Slf4j
+@Listeners(com.erp.listeners.UiScreenshotListener.class)
 public abstract class BaseUITest extends BaseTest {
 
     protected BrowserContext browserContext;
@@ -86,27 +87,28 @@ public abstract class BaseUITest extends BaseTest {
         int timeoutMs = com.erp.utils.config.ConfigProvider.getUiTimeoutSeconds() * 1000;
         page.setDefaultTimeout(timeoutMs);
         page.setDefaultNavigationTimeout(timeoutMs);
+        // Allure test UUID appears after onTestStart; capture on first screenshot / teardown.
+        AllureScreenshots.rememberCurrentTest();
         log.debug("New Page created with UI timeout {}ms", timeoutMs);
     }
 
     /**
-     * Close the page after each test and attach a full-page screenshot to Allure.
+     * Close the page after each test. Screenshot is taken earlier by
+     * {@link com.erp.listeners.UiScreenshotListener} while Allure storage still holds the case.
      */
     @AfterMethod(alwaysRun = true)
-    public void uiTestTeardown(ITestResult result) {
-        if (page != null) {
-            String tcId = TestCaseIdExtractor.getTestCaseId(result);
-            String step = result.isSuccess() ? "final state" : "failure";
-            String label = "NO_ID".equals(tcId)
-                    ? "Screenshot — " + result.getName() + " — " + step
-                    : tcId + " — " + step;
-            attachScreenshot(label);
-            try {
-                page.close();
-            } catch (Exception e) {
-                log.warn("Error closing Page: {}", e.getMessage());
+    public void uiTestTeardown() {
+        try {
+            if (page != null) {
+                try {
+                    page.close();
+                } catch (Exception e) {
+                    log.warn("Error closing Page: {}", e.getMessage());
+                }
+                page = null;
             }
-            page = null;
+        } finally {
+            AllureScreenshots.clear();
         }
     }
 
@@ -138,15 +140,14 @@ public abstract class BaseUITest extends BaseTest {
     /**
      * Capture the current page and attach a full-page PNG to the Allure report.
      */
-    protected void attachScreenshot(String label) {
+    public void attachScreenshot(String label) {
         if (page == null) {
             log.warn("Cannot attach screenshot '{}': page is null", label);
             return;
         }
         try {
             byte[] screenshot = page.screenshot(new Page.ScreenshotOptions().setFullPage(true));
-            Allure.addAttachment(label, "image/png", new java.io.ByteArrayInputStream(screenshot), ".png");
-            log.debug("Screenshot attached to Allure: {}", label);
+            AllureScreenshots.attachPng(label, screenshot);
         } catch (Exception e) {
             log.warn("Could not capture screenshot '{}': {}", label, e.getMessage());
         }

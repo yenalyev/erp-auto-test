@@ -127,7 +127,7 @@ public class ResourceViewerRelocationFilterTest extends StorageApiTestBase {
         ResourceResponse isolated = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "crew-");
         relocationFixture.ensureStock(crewScenario.unit().getId(), isolated.getId(), 50.0, UserRole.ADMIN);
 
-        relocationFixture.createSend(
+        relocationFixture.createSendAndFinishBySender(
                 UserRole.ADMIN,
                 crewScenario.unit().getId(),
                 crewScenario.crew().getId(),

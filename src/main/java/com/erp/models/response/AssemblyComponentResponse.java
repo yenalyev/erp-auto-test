@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder(toBuilder = true)
@@ -18,4 +20,8 @@ public class AssemblyComponentResponse {
     private String unit;
     private BigDecimal requiredPerUnit;
     private BigDecimal availableStock;
+
+    /** Active PRODUCTION maps that output this component (all storages; UI filters by role). */
+    @Builder.Default
+    private List<AssemblyComponentTechMapResponse> technologicalMaps = new ArrayList<>();
 }

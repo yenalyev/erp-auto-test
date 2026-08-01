@@ -16,12 +16,20 @@
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationPartialDeliveryIncidentTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.CrewReturnTest"/>
+            <class name="com.erp.tests.functional.storage.CrewFlyPointIncidentTest"/>
         </classes>
     </test>
 
     <test name="Relocation UI">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.CrewReturnUITest"/>
+            <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
+            <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
+            <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationIncidentUITest"/>

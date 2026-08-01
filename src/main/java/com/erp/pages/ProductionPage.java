@@ -110,6 +110,35 @@ public class ProductionPage extends BasePage {
         return isNamedActionVisible(MANUFACTURING_BUTTON_TEXT);
     }
 
+    /** True when «Виготовлення» is visible and enabled (not aria-disabled / disabled). */
+    public boolean isManufacturingButtonEnabled() {
+        Locator action = namedActionLocator(MANUFACTURING_BUTTON_TEXT);
+        if (action.count() == 0 || !action.first().isVisible()) {
+            return false;
+        }
+        Locator first = action.first();
+        if (first.isDisabled()) {
+            return false;
+        }
+        String ariaDisabled = first.getAttribute("aria-disabled");
+        return ariaDisabled == null || !"true".equalsIgnoreCase(ariaDisabled);
+    }
+
+    public ProductionPage clickManufacturing() {
+        namedActionLocator(MANUFACTURING_BUTTON_TEXT).first().click();
+        return this;
+    }
+
+    public boolean isNotesEditVisibleForRow(int rowIndex) {
+        int notesColumnIndex = columnIndexByHeader(NOTES_COLUMN_HEADER);
+        Locator button = productionTableWrapper().locator("tbody tr")
+                .nth(rowIndex)
+                .locator("td")
+                .nth(notesColumnIndex)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(NOTES_EDIT_BUTTON_LABEL));
+        return button.count() > 0 && button.first().isVisible() && button.first().isEnabled();
+    }
+
     public boolean isDisassembleButtonVisible() {
         return isNamedActionVisible(DISASSEMBLE_BUTTON_TEXT);
     }
@@ -586,5 +615,13 @@ public class ProductionPage extends BasePage {
         }
         Locator asButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
         return asButton.count() > 0 && asButton.first().isVisible();
+    }
+
+    private Locator namedActionLocator(String name) {
+        Locator asLink = page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(name));
+        if (asLink.count() > 0) {
+            return asLink;
+        }
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(name));
     }
 }

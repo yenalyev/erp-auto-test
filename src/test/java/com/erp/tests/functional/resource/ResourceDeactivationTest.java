@@ -14,6 +14,7 @@ import com.erp.fixtures.ProductionFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
+import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.models.request.InventoryRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.ManufacturingItemResponse;
@@ -92,6 +93,7 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
             ADMIN деактивує ресурс без залишків і без зв'язків.
             Після деактивації ресурс зникає зі словника (isActive=true),
             з autocomplete та з вкладки цін; доступний на сторінці «Деактивовані ресурси».
+            Примітка: TC-RES-001 — створення ресурсу (ResourceTest), не деактивація.
             """)
     @Severity(SeverityLevel.CRITICAL)
     public void testDeactivateResourceHidesFromDictionarySelectorsAndPrices() {
@@ -377,14 +379,21 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
         TechnologicalMapResponse techMap = createTmResponse.as(TechnologicalMapResponse.class);
 
         try {
-            productionFixture.ensureInputStockAtLeast(owner1StorageId, input1, input2, 100.0);
-        } catch (IllegalStateException e) {
-            throw new SkipException("Не вдалось поповнити залишки для виробництва: " + e.getMessage());
+            // Exact seed (avoid ensureStock +50 pad) — usage 10+5 for amount=1
+            RelocationStockSeeder.receiveFromSupplier(
+                    apiExecutor, UserRole.ADMIN, owner1StorageId, Map.of(input1, 10.0, input2, 5.0));
+        } catch (RuntimeException e) {
+            throw new AssertionError("Не вдалось поповнити залишки для виробництва: " + e.getMessage(), e);
         }
 
         ManufacturingItemResponse production = Allure.step("Arrange: створити запис виробництва", () ->
                 productionFixture.createAs(UserRole.OWNER_1, owner1StorageId, techMap, 1.0,
                         com.erp.data.factories.production.ProductionDataFactory.uniqueBatchNumber()));
+
+        Allure.step("Arrange: обнулити leftover input stock перед deactivate", () -> {
+            inventoryFixture.resetResourceStock(owner1StorageId, input1, 0.0, UserRole.ADMIN);
+            inventoryFixture.resetResourceStock(owner1StorageId, input2, 0.0, UserRole.ADMIN);
+        });
 
         Allure.step("Arrange: деактивувати техкарту (зняти блокування active tech map)", () -> {
             Response deactivateTm = apiExecutor.execute(
@@ -401,14 +410,13 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
                 "Arrange: деактивувати складову «" + resourceToDeactivate.getName() + "»", () ->
                         resourceFixture.deactivate(UserRole.ADMIN, resourceToDeactivate.getId()));
 
-        if (deactivateResource.statusCode() != 200) {
+        Allure.step("Assert: deactivate input після production без leftover stock", () -> {
             AllureHelper.attachResponseDetails(deactivateResource);
-            throw new SkipException(
-                    "Не вдалось деактивувати ресурс після виробництва (status="
-                            + deactivateResource.statusCode()
-                            + "). Ймовірно, залишки на internal локації блокують деактивацію. "
-                            + "Перевірте guard stock>0 на backend.");
-        }
+            assertThat(deactivateResource.statusCode())
+                    .as("deactivate resource id=%d after production (expect no leftover input stock)",
+                            resourceToDeactivate.getId())
+                    .isEqualTo(200);
+        });
 
         Response deleteResponse = Allure.step("Act: DELETE виробництво з деактивованою складовою", () ->
                 apiExecutor.execute(

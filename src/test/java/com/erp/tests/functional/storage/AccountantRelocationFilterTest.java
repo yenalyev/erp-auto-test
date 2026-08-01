@@ -1,6 +1,7 @@
 package com.erp.tests.functional.storage;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
 import com.erp.models.query.RelocationJournalQuery;
@@ -68,7 +69,7 @@ public class AccountantRelocationFilterTest extends CrewApiTestBase {
             """)
     @Severity(SeverityLevel.CRITICAL)
     public void testAccountantSeesOnlyStorageToUnitRelocations() {
-        RelocationResponse unitToCrew = relocationFixture.createSend(
+        RelocationResponse unitToCrew = relocationFixture.createSendAndFinishBySender(
                 UserRole.OWNER_1,
                 scenario.unit().getId(),
                 scenario.crew().getId(),
@@ -81,6 +82,8 @@ public class AccountantRelocationFilterTest extends CrewApiTestBase {
                 secondUnit.getId(),
                 resourceId,
                 SEND_AMOUNT);
+        unitToUnit = relocationFixture.resolve(
+                UserRole.ADMIN, unitToUnit.getId(), secondUnit.getId(), RelocationState.FINISHED);
 
         RelocationResponse storageToUnit = relocationFixture.createSend(
                 UserRole.OWNER_1,
@@ -88,6 +91,8 @@ public class AccountantRelocationFilterTest extends CrewApiTestBase {
                 owner2StorageId,
                 resourceId,
                 SEND_AMOUNT);
+        storageToUnit = relocationFixture.resolve(
+                UserRole.OWNER_2, storageToUnit.getId(), owner2StorageId, RelocationState.FINISHED);
 
         RelocationJournalQuery query = RelocationJournalQuery.sentHistoryUi(owner1StorageId)
                 .toBuilder()

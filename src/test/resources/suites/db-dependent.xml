@@ -1,0 +1,51 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  DB-seeded / JDBC-dependent cases (require use.database=true + reachable DB).
+
+  Staging regression keeps use.database=false — these methods are excluded from
+  regression.xml / defects.xml / storage-regions.xml / resource-viewer.xml so they
+  do not inflate SKIPPED counts. Run this suite when JDBC/SSH is available:
+
+    mvn test -Denv=dev -Dsuite=db-dependent
+    mvn test -Denv=staging -Dsuite=db-dependent   # needs use.database=true override
+
+  Covered:
+    TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-034
+-->
+<suite name="DB-Dependent Test Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="DB-Dependent API">
+        <classes>
+            <class name="com.erp.tests.functional.defect.DefectTest">
+                <methods>
+                    <include name="testOwnerCannotDeleteDefectOlderThanTwoDays"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest">
+                <methods>
+                    <!-- IMPL-002 dependsOn IMPL-001 arrange -->
+                    <include name="testSaveMultipleImplicitResourcesForProduct"/>
+                    <include name="testImplicitWriteOffsAppearInJournalAndDebitFlyPoint"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewWriteOffTest">
+                <methods>
+                    <include name="testCrewUsageWriteOffDebitsFlyPointNotCrew"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest">
+                <methods>
+                    <include name="testScaleDownWhenProducedQtyExceedsMovedAmount"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

@@ -16,8 +16,10 @@ import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
+import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -170,7 +172,8 @@ public class RelocationIncidentTest extends BaseFunctionalTest {
         incidentFixture.deleteIncident(UserRole.OWNER_1, sent.getId());
 
         Response getAfterDelete = apiExecutor.execute(
-                ApiEndpointDefinition.INCIDENT_GET_BY_RELOCATION, UserRole.OWNER_1, sent.getId());
+                ApiEndpointDefinition.INCIDENT_GET_BY_RELOCATION, UserRole.OWNER_1, null,
+                String.valueOf(sent.getId()));
         assertThat(getAfterDelete.statusCode()).isEqualTo(404);
 
         RelocationResponse inTransit = incidentFixture.relocation().findInTransitByDescription(
@@ -227,14 +230,106 @@ public class RelocationIncidentTest extends BaseFunctionalTest {
 
     @Test
     @TestCaseId("TC-INC-006")
-    @Story("BC-INC-40: OWNER_1 can create incident (allowed path)")
+    @Story("BC-INC-40: sender (alkatras/OWNER_1) creates incident → LOST")
     @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Staging/dev: alkatras (OWNER_1) → bar (OWNER_2). Обидва мають incident::create.
+            Відправник створює повну втрату на своєму send → HTTP 200, relocation → LOST
+            (фактично автоматичне завершення переміщення як «Втрачено», resolve недоступний).
+            """)
     public void ownerCanCreateIncident() {
         String marker = IncidentDataFactory.uniqueDescription();
         RelocationResponse sent = incidentFixture.relocation().createSendWithDescription(
                 UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, 1.0, marker);
         Response response = apiExecutor.executeIncidentCreate(
                 IncidentDataFactory.buildFullCargoLoss(sent, marker), UserRole.OWNER_1);
-        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.statusCode())
+                .as("Sender (OWNER_1/alkatras) can create incident")
+                .isEqualTo(200);
+
+        RelocationResponse lost = incidentFixture.findLostByDescription(
+                UserRole.OWNER_1, owner1Storage, marker);
+        assertThat(lost).as("After sender incident relocation is LOST").isNotNull();
+        assertThat(lost.getState()).isEqualTo(RelocationState.LOST);
+    }
+
+    @Test
+    @TestCaseId("TC-INC-012")
+    @Story("BC-INC-41: recipient (bar/OWNER_2) creates incident → LOST")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Staging/dev: alkatras (OWNER_1) відправляє на bar (OWNER_2).
+            Одержувач з incident::create і доступом до relocation (hasAccessToRelocation)
+            створює повну втрату → HTTP 200, relocation → LOST
+            (так само «автозавершення» переміщення через інцидент).
+            """)
+    public void recipientCanCreateIncidentAndTerminatesAsLost() {
+        String marker = IncidentDataFactory.uniqueDescription();
+        RelocationResponse sent = incidentFixture.relocation().createSendWithDescription(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, 1.0, marker);
+
+        Response response = apiExecutor.executeIncidentCreate(
+                IncidentDataFactory.buildFullCargoLoss(sent, marker), UserRole.OWNER_2);
+        assertThat(response.statusCode())
+                .as("Recipient (OWNER_2/bar) can create incident on incoming relocation")
+                .isEqualTo(200);
+
+        RelocationResponse lost = incidentFixture.findLostByDescription(
+                UserRole.OWNER_2, owner2Storage, marker);
+        assertThat(lost).as("After recipient incident relocation is LOST").isNotNull();
+        assertThat(lost.getState()).isEqualTo(RelocationState.LOST);
+
+        RelocationResponse stillInTransit = incidentFixture.relocation().findInTransitByDescription(
+                UserRole.OWNER_1, owner1Storage, marker);
+        assertThat(stillInTransit).as("Must not remain CREATED after incident").isNull();
+    }
+
+    @Test
+    @TestCaseId("TC-INC-011")
+    @Issue("CPMA-649")
+    @Story("BC-INC-31: WRITE_OFF amount > sent rejected")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Очікуваний контракт (як UI hasExceeding / «Перевищує кількість у переміщенні»):
+            WRITE_OFF amount > sent → HTTP 4xx, relocation лишається CREATED, stock без змін.
+
+            Відомий дефект CPMA-649: backend не валідує amount vs relocation item — зараз приймає 200.
+            UI для повної втрати блокує поле (disabled на totalAmount).
+            """)
+    public void writeOffGreaterThanSentIsRejected() {
+        String marker = IncidentDataFactory.uniqueDescription();
+        double sentAmount = 5.0;
+        double writeOffAmount = sentAmount + 1.0;
+        Set<Long> tracked = Set.of(resourceId);
+
+        ProductionStockAssertions.StockSnapshot beforeRecipient = RelocationStockAssertions.capture(
+                apiExecutor, owner2Storage, UserRole.OWNER_2, tracked, "ДО exceeding WRITE_OFF");
+
+        RelocationResponse sent = incidentFixture.relocation().createSendWithDescription(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, sentAmount, marker);
+
+        Response response = incidentFixture.createIncidentRaw(
+                UserRole.OWNER_1,
+                IncidentDataFactory.buildWriteOff(
+                        sent.getId(), owner1Storage, resourceId, writeOffAmount, marker));
+
+        assertThat(response.statusCode())
+                .as("WRITE_OFF > sent must be rejected")
+                .isGreaterThanOrEqualTo(400);
+
+        RelocationResponse stillInTransit = incidentFixture.relocation().findInTransitByDescription(
+                UserRole.OWNER_1, owner1Storage, marker);
+        assertThat(stillInTransit).as("Relocation stays CREATED after rejected WRITE_OFF").isNotNull();
+        assertThat(stillInTransit.getState()).isEqualTo(RelocationState.CREATED);
+
+        RelocationResponse lost = incidentFixture.findLostByDescription(
+                UserRole.OWNER_1, owner1Storage, marker);
+        assertThat(lost).as("Must not appear in LOST after rejected WRITE_OFF").isNull();
+
+        ProductionStockAssertions.StockSnapshot afterRecipient = RelocationStockAssertions.capture(
+                apiExecutor, owner2Storage, UserRole.OWNER_2, tracked, "ПІСЛЯ rejected WRITE_OFF");
+        RelocationStockAssertions.assertUnchanged(
+                beforeRecipient, afterRecipient, owner2Storage, resourceId,
+                "rejected WRITE_OFF must not change recipient inventory");
     }
 }

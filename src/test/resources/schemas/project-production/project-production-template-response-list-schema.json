@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProjectProductionTemplatePagedResponse",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": { "$ref": "project-production-template-response-schema.json" }
+    },
+    "page": {
+      "type": "object",
+      "properties": {
+        "size": { "type": "integer" },
+        "number": { "type": "integer" },
+        "totalElements": { "type": "integer" },
+        "totalPages": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

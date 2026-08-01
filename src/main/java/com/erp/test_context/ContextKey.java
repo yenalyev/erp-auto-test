@@ -26,6 +26,12 @@ public enum ContextKey {
     SHARED_UNIT_ID("sharedUnitId", Long.class),
     SHARED_TECH_MAP_ID("sharedTechMapId", Long.class),
     SHARED_ORDER_ID("sharedOrderId", Long.class),
+    ORDER_ID("orderId", Long.class),
+    ORDER_RESOURCE_ID("orderResourceId", Long.class),
+    ORDER_REQUESTER_STORAGE_ID("orderRequesterStorageId", Long.class),
+    ORDER_GATHERING_STORAGE_ID("orderGatheringStorageId", Long.class),
+    ORDER_BOOKING_ID("orderBookingId", Long.class),
+    NOTIFICATION_RECIPIENT_ID("notificationRecipientId", Integer.class),
     SHARED_RESOURCE("sharedResource", ResourceResponse.class),
     SHARED_MEASUREMENT_UNIT_LIST("sharedAvailableMeasurementUnits", List.class),
     SHARED_AVAILABLE_RESOURCES("sharedAvailableResources", List.class),
@@ -80,7 +86,21 @@ public enum ContextKey {
     /** Повна модель користувача для PUT /users/{id}. */
     SHARED_USER("sharedUser", UserModelResponse.class),
     /** Realm role name для GET /users/roles/{roleName}. */
-    SHARED_ROLE_NAME("sharedRoleName", String.class);
+    SHARED_ROLE_NAME("sharedRoleName", String.class),
+    /** FAITA external product id for implicit-resources PUT / RBAC. */
+    FAITA_EXTERNAL_ID("faitaExternalId", String.class),
+    /** Project category id shared across project-production tests. */
+    PROJECT_CATEGORY_ID("projectCategoryId", Long.class),
+    PROJECT_CATEGORY_NAME("projectCategoryName", String.class),
+    /** Project product id shared across project-production tests. */
+    PROJECT_PRODUCT_ID("projectProductId", Long.class),
+    PROJECT_PRODUCT_NAME("projectProductName", String.class),
+    /** Resource id seeded with stock for project-production stage resource usage. */
+    PROJECT_RESOURCE_ID("projectResourceId", Long.class),
+    PROJECT_RESOURCE_NAME("projectResourceName", String.class),
+    PROJECT_SEEDED_STOCK("projectSeededStock", Double.class),
+    /** Optional shared project production id (e.g. for RBAC scenarios). */
+    PROJECT_PRODUCTION_ID("projectProductionId", Long.class);
     private final String name;
     private final Class<?> type;
 }

@@ -14,8 +14,9 @@ public final class TestArtifactCleanup {
 
     /**
      * Області — DELETE; локації (UNIT/CREW/STORAGE тощо) — deactivate (архівація).
-     * На staging за замовчуванням лише очищує черги без виклику API.
-     * Opt-in: {@code -Dstaging.cleanup=true} виконує той самий API cleanup, що на dev.
+     * На staging cleanup увімкнений за замовчуванням (як на dev).
+     * Opt-out: {@code -Dstaging.cleanup=false} — лише очищує черги без виклику API
+     * (залишити артефакти для дебагу).
      */
     public static void cleanupRegionsAndStorages(
             StorageRegionFixture regionFixture,
@@ -23,8 +24,8 @@ public final class TestArtifactCleanup {
         if (regionFixture == null || storageFixture == null) {
             return;
         }
-        if (isStagingEnv() && !isStagingCleanupEnabled()) {
-            log.warn("Staging mode — skipping automatic storage/region cleanup");
+        if (shouldSkipApiCleanup()) {
+            log.warn("Staging mode — skipping automatic storage/region cleanup (-Dstaging.cleanup=false)");
             regionFixture.clearTrackedRegions();
             storageFixture.clearTrackedStorages();
             return;
@@ -33,11 +34,19 @@ public final class TestArtifactCleanup {
         storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
     }
 
-    static boolean isStagingEnv() {
+    /** {@code true} when env=staging and {@code -Dstaging.cleanup=false}. */
+    public static boolean shouldSkipApiCleanup() {
+        return isStagingEnv() && !isStagingCleanupEnabled();
+    }
+
+    public static boolean isStagingEnv() {
         return "staging".equals(System.getProperty("env", "debug"));
     }
 
+    /**
+     * Staging API cleanup flag. Default {@code true}; opt-out with {@code -Dstaging.cleanup=false}.
+     */
     public static boolean isStagingCleanupEnabled() {
-        return Boolean.parseBoolean(System.getProperty("staging.cleanup", "false"));
+        return Boolean.parseBoolean(System.getProperty("staging.cleanup", "true"));
     }
 }

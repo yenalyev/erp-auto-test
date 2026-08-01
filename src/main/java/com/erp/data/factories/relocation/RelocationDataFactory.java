@@ -135,6 +135,23 @@ public final class RelocationDataFactory {
                 .build();
     }
 
+    /**
+     * Повернення від екіпажу на склад локації ({@code POST /relocations/receive}, sender=CREW).
+     * Без партій — як у UI «Отримання від екіпажа» / tk Relocations DSL.
+     */
+    public static RelocationInputRequest buildCrewReceiveRequest(Long crewId,
+                                                                 Long recipientId,
+                                                                 Long resourceId,
+                                                                 double amount) {
+        return RelocationInputRequest.builder()
+                .senderId(crewId)
+                .recipientId(recipientId)
+                .description("erp-auto-test crew return")
+                .date(LocalDate.now())
+                .items(List.of(usage(resourceId, amount)))
+                .build();
+    }
+
     public static RelocationInputEditRequest buildReceiveEditRequest(Long resourceId,
                                                                      double amount,
                                                                      String batchNumber,
@@ -169,10 +186,17 @@ public final class RelocationDataFactory {
     public static RelocationOutputRequest buildSendMultiItem(Long senderId,
                                                              Long recipientId,
                                                              List<ResourceUsageRequest> items) {
+        return buildSendMultiItem(senderId, recipientId, items, "erp-auto-test multi-item send");
+    }
+
+    public static RelocationOutputRequest buildSendMultiItem(Long senderId,
+                                                             Long recipientId,
+                                                             List<ResourceUsageRequest> items,
+                                                             String description) {
         return RelocationOutputRequest.builder()
                 .senderId(senderId)
                 .recipientId(recipientId)
-                .description("erp-auto-test multi-item send")
+                .description(description)
                 .date(LocalDate.now())
                 .items(items)
                 .build();

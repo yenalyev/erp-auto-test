@@ -57,6 +57,26 @@ public class InventoryEditPage extends BasePage {
     }
 
     public List<String> searchAddResourceAutocomplete(String searchToken) {
+        openAddResourceAutocompleteSearch(searchToken);
+        return readAutocompleteOptionNames();
+    }
+
+    /**
+     * Visibility check must not scan every cmdk option via {@code nth(i).innerText()} —
+     * large autocomplete lists time out under suite load. Prefer filtered locator (same as {@link #addResource}).
+     */
+    public boolean isAddResourceOptionVisible(String resourceName) {
+        String normalizedName = resourceName.trim().replaceAll("\\s+", " ");
+        openAddResourceAutocompleteSearch(extractSearchPrefix(normalizedName));
+        if (page.getByText("Нічого не знайдено.").isVisible()) {
+            return false;
+        }
+        return autocompleteOptions()
+                .filter(new Locator.FilterOptions().setHasText(normalizedName))
+                .count() > 0;
+    }
+
+    private void openAddResourceAutocompleteSearch(String searchToken) {
         addResourceAutocompleteTrigger().click();
         Locator search = page.getByPlaceholder(SEARCH_PLACEHOLDER).last();
         page.waitForResponse(
@@ -65,13 +85,6 @@ public class InventoryEditPage extends BasePage {
                         && response.status() == 200,
                 () -> fillAutocompleteSearch(search, searchToken));
         waitForAutocompleteOptionsSettled();
-        return readAutocompleteOptionNames();
-    }
-
-    public boolean isAddResourceOptionVisible(String resourceName) {
-        String normalizedName = resourceName.trim().replaceAll("\\s+", " ");
-        return searchAddResourceAutocomplete(extractSearchPrefix(normalizedName)).stream()
-                .anyMatch(option -> option.contains(normalizedName));
     }
 
     public InventoryEditPage closeAddResourceAutocomplete() {

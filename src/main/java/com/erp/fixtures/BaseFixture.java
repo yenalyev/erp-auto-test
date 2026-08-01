@@ -278,11 +278,25 @@ public abstract class BaseFixture {
 
     protected void validateSuccess(Response response, String action) {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            String body = truncateForDiagnostic(response.body().asString(), 500);
             log.error("ERROR {} failed! Status: {}. Body: {}", action,
-                    response.statusCode(), response.body().asString());
-            throw new RuntimeException("Fixture setup critical failure: " + action);
+                    response.statusCode(), body);
+            throw new RuntimeException(String.format(
+                    "Fixture setup critical failure: %s (status=%d, body=%s)",
+                    action, response.statusCode(), body));
         }
         log.info("✅ {} successful (Status: {})", action, response.statusCode());
+    }
+
+    private static String truncateForDiagnostic(String body, int maxLen) {
+        if (body == null || body.isBlank()) {
+            return "<empty>";
+        }
+        String compact = body.replaceAll("\\s+", " ").trim();
+        if (compact.length() <= maxLen) {
+            return compact;
+        }
+        return compact.substring(0, maxLen) + "...";
     }
 
 }

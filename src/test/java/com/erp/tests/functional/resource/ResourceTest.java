@@ -30,9 +30,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Functional suite for Resource lifecycle and data integrity.
  * * <p>Key Validations:
  * <ul>
- * <li><b>Happy Path:</b> Resource creation with Measurement Unit link and schema validation.</li>
- * <li><b>Data Quality:</b> Mandatory fields (name, unitId) and string length limits.</li>
- * <li><b>Data Integrity:</b> Unique name constraints and DB state consistency.</li>
+ * <li><b>Happy Path:</b> Resource creation with Measurement Unit link and schema validation (TC-RES-001).</li>
+ * <li><b>Update:</b> PUT name update (TC-RES-002).</li>
+ * <li><b>Data Quality:</b> Mandatory name and string length limits (TC-RES-006).</li>
+ * <li><b>Data Integrity:</b> Unique name constraints and DB state consistency (TC-RES-003).</li>
  * </ul>
  */
 @Slf4j
@@ -58,7 +59,10 @@ public class ResourceTest extends BaseFunctionalTest {
     @Test(priority = 10)
     @TestCaseId("TC-RES-001")
     @Story("Create Resource")
-    @Description("Успішне створення ресурсу та перевірка зв'язку з Measurement Unit")
+    @Description("""
+            Успішне створення ресурсу (POST /resources) та перевірка зв'язку з Measurement Unit.
+            Деактивація ресурсу покрита окремо: TC-RES-010 (не цей кейс).
+            """)
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateResource() {
         // 1. Arrange: генеруємо тіло запиту через фабрику (зчитує SHARED_UNIT_ID та SHARED_RESOURCE_CATEGORY_ID з контексту)
@@ -80,33 +84,109 @@ public class ResourceTest extends BaseFunctionalTest {
         verifyCreatedResource(response, requestBody);
     }
 
+    @Test(priority = 20)
+    @TestCaseId("TC-RES-002")
+    @Story("Update Resource Name")
+    @Description("""
+            CRUD довідника ресурсів: PUT /resources/{id} оновлює назву.
+            Очікування: HTTP 200; нова назва в PUT response і GET by id.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testUpdateResourceName() {
+        Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        ResourceResponse existing = resourceFixture.createUniqueResource("upd-name-");
+        String newName = "updated-name-" + DataUtils.getUniqueSuffix();
+
+        ResourceRequest updateRequest = ResourceDataFactory.fromExisting(existing, categoryId)
+                .name(newName)
+                .build();
+
+        Response response = Allure.step("PUT оновити назву ресурсу", () ->
+                apiExecutor.execute(
+                        ApiEndpointDefinition.RESOURCE_UPDATE_NAME,
+                        UserRole.ADMIN,
+                        updateRequest,
+                        String.valueOf(existing.getId())));
+
+        Allure.step("Валідація статус-коду, схеми та нової назви в PUT response", () -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+            AllureHelper.attachSchemaValidationInfo(ApiEndpointDefinition.RESOURCE_UPDATE_NAME, response);
+            SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RESOURCE_UPDATE_NAME);
+            ResourceResponse updated = response.as(ResourceResponse.class);
+            assertThat(updated.getName())
+                    .as("PUT response name must equal new name")
+                    .isEqualTo(newName);
+            Allure.parameter("resourceId", existing.getId());
+            Allure.parameter("oldName", existing.getName());
+            Allure.parameter("newName", newName);
+        });
+
+        Allure.step("GET by id повертає оновлену назву", () -> {
+            ResourceResponse byId = resourceFixture.getById(UserRole.ADMIN, existing.getId());
+            assertThat(byId.getName())
+                    .as("GET by id name must equal new name")
+                    .isEqualTo(newName);
+        });
+    }
+
     @DataProvider(name = "invalidResourceProvider")
     public Object[][] invalidResourceData() {
         Long unitId = testContext.get(ContextKey.SHARED_UNIT_ID);
+        Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
 
+        // ResourceValidator: name blank → 400; trimmed length > 256 → 400.
+        // measurementUnitId не валідується на рівні ResourceValidator — не включаємо.
         return new Object[][] {
-                { ResourceRequest.builder().name(null).measurementUnitId(unitId).build(), 400, "Name is NULL" },
-                { ResourceRequest.builder().name("").measurementUnitId(unitId).build(), 400, "Name is EMPTY" },
-                { ResourceRequest.builder().name(DataUtils.generateWithUniqueSuffix(256))
-                        .measurementUnitId(null).build(), 400, "Unit ID is NULL" },
-                { ResourceRequest.builder().name(DataUtils.generateWithUniqueSuffix(256))
-                        .measurementUnitId(unitId).build(), 400, "Name is TOO LONG" }
+                { ResourceRequest.builder().name(null).measurementUnitId(unitId).categoryId(categoryId).build(),
+                        400, "Name is NULL" },
+                { ResourceRequest.builder().name("").measurementUnitId(unitId).categoryId(categoryId).build(),
+                        400, "Name is EMPTY" },
+                { ResourceRequest.builder().name("   ").measurementUnitId(unitId).categoryId(categoryId).build(),
+                        400, "Name is BLANK" },
+                { ResourceRequest.builder().name(DataUtils.generateWithUniqueSuffix(257))
+                        .measurementUnitId(unitId).categoryId(categoryId).build(),
+                        400, "Name is TOO LONG (257)" }
         };
     }
 
-    @Test(dataProvider = "invalidResourceProvider", priority = 20)
-    @TestCaseId("TC-RES-002")
+    @Test(dataProvider = "invalidResourceProvider", priority = 25)
+    @TestCaseId("TC-RES-006")
     @Story("Validation Rules")
-    @Description("Негативні тести валідації полів ресурсу")
+    @Description("""
+            Негативні тести валідації поля name при POST /resources:
+            null / empty / blank → 400; довжина після trim > 256 → 400.
+            База не змінюється (assertDbUnchanged).
+            """)
     public void testCreateResourceNegative(ResourceRequest requestBody, int expectedStatus, String description) {
         Allure.getLifecycle().updateTestCase(tc -> tc.setName("Negative: " + description));
 
+        long countBefore = getDbCount(
+                ApiEndpointDefinition.RESOURCE_GET_ALL,
+                UserRole.ADMIN,
+                ResourceResponse.class,
+                r -> true
+        );
+
         Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, requestBody);
 
-        assertThat(response.statusCode()).isEqualTo(expectedStatus);
+        Allure.step("Верифікація 400 та цілісності словника", () -> {
+            assertThat(response.statusCode())
+                    .as("Expected validation error for: " + description)
+                    .isEqualTo(expectedStatus);
 
-        String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
-        assertThat(errorMessage).as("Error message should be present").isNotEmpty();
+            String errorField = response.jsonPath().getString("errors[0].field");
+            String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
+            assertThat(errorField).as("Validation error field").isEqualTo("name");
+            assertThat(errorMessage).as("Error message should be present").isNotEmpty();
+
+            assertDbUnchanged(
+                    ApiEndpointDefinition.RESOURCE_GET_ALL,
+                    UserRole.ADMIN,
+                    countBefore,
+                    ResourceResponse.class,
+                    r -> true
+            );
+        });
     }
 
     // =========================================================================
@@ -115,11 +195,10 @@ public class ResourceTest extends BaseFunctionalTest {
 
     @DataProvider(name = "duplicateResourceProvider")
     public Object[][] duplicateResourceData() {
-        // 1. Дістаємо ресурси, які вже створила фікстура BaseFixture.setupSharedResourceList
-        List<ResourceResponse> existingResources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
-        ResourceResponse target = existingResources.getFirst();
+        // Ізольований ресурс — гарантуємо, що name існує і uniqueness спрацює
+        ResourceResponse target = resourceFixture.createUniqueResource("dup-");
+        Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
 
-        // 2. Дістаємо юніти, щоб створити сценарій з іншим UnitID
         List<MeasurementUnitResponse> units = testContext.get(ContextKey.SHARED_MEASUREMENT_UNIT_LIST);
         Long differentUnitId = units.stream()
                 .map(MeasurementUnitResponse::getId)
@@ -132,6 +211,7 @@ public class ResourceTest extends BaseFunctionalTest {
                         ResourceRequest.builder()
                                 .name(target.getName())
                                 .measurementUnitId(target.getUnit().getId())
+                                .categoryId(categoryId)
                                 .build(),
                         "Full Duplicate (Same Name and Same Unit)"
                 },
@@ -139,6 +219,7 @@ public class ResourceTest extends BaseFunctionalTest {
                         ResourceRequest.builder()
                                 .name(target.getName())
                                 .measurementUnitId(differentUnitId)
+                                .categoryId(categoryId)
                                 .build(),
                         "Duplicate Name with different Unit ID"
                 }
@@ -170,6 +251,11 @@ public class ResourceTest extends BaseFunctionalTest {
             assertThat(response.statusCode())
                     .as("Сервер мав повернути помилку 400 для дубліката (" + scenario + ")")
                     .isEqualTo(400);
+
+            String errorField = response.jsonPath().getString("errors[0].field");
+            String errorMessage = response.jsonPath().getString("errors[0].messages[0]");
+            assertThat(errorField).as("Validation error field").isEqualTo("name");
+            assertThat(errorMessage).as("Error message should be present").isNotEmpty();
 
             assertDbUnchanged(
                     ApiEndpointDefinition.RESOURCE_GET_ALL,

@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProjectProductionTemplateResponse",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": { "type": "integer" },
+    "createdBy": { "type": ["string", "null"] },
+    "name": { "type": ["string", "null"] },
+    "createdAt": { "type": ["string", "null"] },
+    "state": { "type": ["string", "null"], "enum": ["CREATED", "IN_PROGRESS", "DONE", null] },
+    "type": { "type": ["string", "null"], "enum": ["CREATION", "MODIFICATION", null] },
+    "description": { "type": ["string", "null"] },
+    "storage": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "projectCategory": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "projectProduct": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "projectProductionStageTemplates": {
+      "type": "array",
+      "items": { "$ref": "project-production-stage-template-response-schema.json" }
+    }
+  },
+  "additionalProperties": true
+}

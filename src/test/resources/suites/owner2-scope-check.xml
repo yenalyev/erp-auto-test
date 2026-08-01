@@ -1,0 +1,21 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Ops preflight: OWNER_2 JWT must expose exactly owner2.storage.id.
+  Failure here explains StorageVisibilityTest class-level SKIP (TC-STR-REG-020…052).
+
+    mvn test -Denv=staging -Dsuite=owner2-scope-check
+    mvn test -Denv=dev -Dsuite=owner2-scope-check
+-->
+<suite name="OWNER_2 Scope Preflight" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="OWNER_2 allowedStorageIds">
+        <classes>
+            <class name="com.erp.tests.functional.storage.Owner2ScopePreflightTest"/>
+        </classes>
+    </test>
+</suite>

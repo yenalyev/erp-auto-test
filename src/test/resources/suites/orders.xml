@@ -1,0 +1,34 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Orders Test Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Order API">
+        <classes>
+            <class name="com.erp.tests.functional.order.OrderCrudApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderLifecycleApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderListApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderCommentsApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderAvailabilityApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderBookingApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderFreeStockApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderStockRegressionApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderRbacTest"/>
+        </classes>
+    </test>
+
+    <test name="Order UI">
+        <classes>
+            <class name="com.erp.tests.ui.OrderListUiTest"/>
+            <class name="com.erp.tests.ui.OrderCreateEditUiTest"/>
+            <class name="com.erp.tests.ui.OrderDetailUiTest"/>
+            <class name="com.erp.tests.ui.OrderBookingUiTest"/>
+        </classes>
+    </test>
+</suite>

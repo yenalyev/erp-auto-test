@@ -4,8 +4,10 @@ import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.Cookie;
 import com.microsoft.playwright.options.WaitUntilState;
 import io.restassured.http.ContentType;
@@ -47,7 +49,20 @@ public class PlaywrightSessionProvider implements AutoCloseable {
      */
     public Map<String, String> getSession(String username, String password) {
         log.info("🎭 Starting browser-based OAuth2 login for user: {}", username);
+        return loginInternal(username, password, password);
+    }
 
+    /**
+     * First login after {@code POST /users}: Keycloak requires UPDATE_PASSWORD.
+     * Logs in with the one-time password and sets the permanent password from config.
+     */
+    public void bootstrapPermanentPassword(String username, String temporaryPassword, String permanentPassword) {
+        log.info("🎭 Bootstrapping permanent password for user: {}", username);
+        loginInternal(username, temporaryPassword, permanentPassword);
+        log.info("✅ Permanent password set for user: {}", username);
+    }
+
+    private Map<String, String> loginInternal(String username, String loginPassword, String passwordIfForcedChange) {
         String redirectTarget = ConfigProvider.getBaseUrl();
         String loginUrl = backendUrl + "/login?redirectUri="
                 + URLEncoder.encode(redirectTarget, StandardCharsets.UTF_8);
@@ -68,9 +83,10 @@ public class PlaywrightSessionProvider implements AutoCloseable {
 
             page.waitForSelector("#username", new Page.WaitForSelectorOptions().setTimeout(timeoutMs));
             page.fill("#username", username);
-            page.fill("#password", password);
-            // noWaitAfter: avoid hanging on "waiting for scheduled navigations" after OAuth redirect
+            page.fill("#password", loginPassword);
             page.click("#kc-login", new Page.ClickOptions().setNoWaitAfter(true));
+
+            completeForcedPasswordChangeIfPresent(page, passwordIfForcedChange, timeoutMs);
 
             Map<String, String> cookies = waitForAuthenticatedSession(context, page, username, timeoutMs);
 
@@ -78,6 +94,36 @@ public class PlaywrightSessionProvider implements AutoCloseable {
                     username, cookies.get("JSESSIONID").substring(0, Math.min(8, cookies.get("JSESSIONID").length())));
 
             return cookies;
+        }
+    }
+
+    private void completeForcedPasswordChangeIfPresent(Page page, String newPassword, int timeoutMs) {
+        long deadline = System.currentTimeMillis() + Math.min(timeoutMs, 15_000);
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                String url = page.url();
+                // Already past Keycloak login / UPDATE_PASSWORD — nothing to do
+                if (!url.contains("/realms/") && !url.contains("/login")) {
+                    return;
+                }
+                Locator newPasswordField = page.locator("#password-new");
+                if (newPasswordField.count() > 0 && newPasswordField.first().isVisible()) {
+                    log.info("🎭 Keycloak UPDATE_PASSWORD detected — setting permanent password");
+                    page.fill("#password-new", newPassword);
+                    page.fill("#password-confirm", newPassword);
+                    page.locator("#kc-form-buttons input[type='submit'], #kc-form-buttons button[type='submit'], button[type='submit']")
+                            .first()
+                            .click(new Locator.ClickOptions().setNoWaitAfter(true));
+                    page.waitForTimeout(1000);
+                    return;
+                }
+            } catch (PlaywrightException e) {
+                // Post-login redirect often destroys the execution context mid-query — retry
+                if (e.getMessage() == null || !e.getMessage().contains("Execution context was destroyed")) {
+                    throw e;
+                }
+            }
+            page.waitForTimeout(300);
         }
     }
 

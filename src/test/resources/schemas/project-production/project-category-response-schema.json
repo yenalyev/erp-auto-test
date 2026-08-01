@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProjectCategoryResponse",
+  "type": "object",
+  "required": ["id", "name"],
+  "properties": {
+    "id": { "type": "integer" },
+    "name": { "type": "string" },
+    "description": { "type": ["string", "null"] },
+    "active": { "type": ["boolean", "null"] },
+    "createdBy": { "type": ["string", "null"] },
+    "createdAt": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

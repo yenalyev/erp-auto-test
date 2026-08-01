@@ -31,6 +31,8 @@ final class DotEnvLoader {
         mappings.put("GRANT_TYPE", "bot.oauth.grant.type");
         mappings.put("GET_DATA_URL", "bot.whatsapp.data.url");
         mappings.put("GET_RELOCATIONS_DATA_URL", "bot.delivery.data.url");
+        mappings.put("GET_STRUCTURE_DATA_URL", "bot.delivery.structure.url");
+        mappings.put("USE_DATABASE", "use.database");
         return Map.copyOf(mappings);
     }
 

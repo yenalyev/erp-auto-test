@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProjectProductionStageTemplateResponse",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": { "type": "integer" },
+    "name": { "type": ["string", "null"] },
+    "description": { "type": ["string", "null"] },
+    "comment": { "type": ["string", "null"] },
+    "state": { "type": ["string", "null"], "enum": ["CREATED", "IN_PROGRESS", "DONE", null] },
+    "stageOrder": { "type": ["integer", "null"] },
+    "executionPercentage": { "type": ["integer", "null"] },
+    "projectProductionTemplate": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" }
+      }
+    },
+    "projectProductionStageResourceUsageTemplates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "resource": {
+            "type": ["object", "null"],
+            "properties": {
+              "id": { "type": "integer" },
+              "name": { "type": "string" }
+            }
+          },
+          "amountNeeded": { "type": ["number", "null"] }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

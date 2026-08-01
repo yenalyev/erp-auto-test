@@ -31,6 +31,21 @@ public class DefectsPage extends BasePage {
     private static final String WRITE_OFF_DIALOG_TITLE = "Списати брак";
     private static final String WRITE_OFF_SAVE_BUTTON = "Зберегти";
     private static final String WRITE_OFF_CANCEL_BUTTON = "Скасувати";
+    private static final String WRITE_OFF_FILTER_LABEL = "Списання";
+    private static final String RESOURCE_SEARCH_PLACEHOLDER = "Назва ресурсу...";
+
+    /**
+     * Tooltip when row actions are frozen because the defect already has write-offs
+     * ({@code DEFECT_HAS_WRITE_OFFS} in tk-ui {@code message-constants.ts}).
+     */
+    public static final String DELETE_BLOCKED_BY_WRITE_OFF = "Дія недоступна для дефекту зі списаннями";
+
+    /** Filter option: no write-off filter ({@code isWriteOff} omitted). */
+    public static final String WRITE_OFF_FILTER_ALL = "Всі";
+    /** Filter option: only fully written-off records ({@code amount = 0}). */
+    public static final String WRITE_OFF_FILTER_WRITTEN = "Списано";
+    /** Filter option: only not fully written-off records ({@code amount > 0}). Default per AC. */
+    public static final String WRITE_OFF_FILTER_NOT_WRITTEN = "Не списано";
 
     public DefectsPage(Page page) {
         super(page);
@@ -114,6 +129,45 @@ public class DefectsPage extends BasePage {
     }
 
     // -------------------------------------------------------------------
+    // Filters («Списання» / resource search)
+    // -------------------------------------------------------------------
+
+    /** Current value shown on the «Списання» select trigger. */
+    public String getWriteOffFilterValue() {
+        return writeOffFilterTrigger().innerText().trim();
+    }
+
+    /**
+     * Selects an option on the «Списання» filter (Всі / Списано / Не списано)
+     * and waits for the list to reload. No-op if the option is already selected.
+     */
+    public DefectsPage selectWriteOffFilter(String optionLabel) {
+        if (optionLabel.equals(getWriteOffFilterValue())) {
+            return this;
+        }
+        waitForDefectsReload(() -> {
+            writeOffFilterTrigger().click();
+            page.getByRole(AriaRole.OPTION,
+                            new Page.GetByRoleOptions().setName(optionLabel).setExact(true))
+                    .click();
+        });
+        waitForDataSettled();
+        return this;
+    }
+
+    /**
+     * Debounced resource search ({@code SearchInput}, ~300&nbsp;ms). Waits for list reload.
+     */
+    public DefectsPage searchByResource(String resourceName) {
+        waitForDefectsReload(() -> {
+            page.getByPlaceholder(RESOURCE_SEARCH_PLACEHOLDER).fill(resourceName);
+            page.waitForTimeout(400);
+        });
+        waitForDataSettled();
+        return this;
+    }
+
+    // -------------------------------------------------------------------
     // Row actions
     // -------------------------------------------------------------------
 
@@ -135,37 +189,44 @@ public class DefectsPage extends BasePage {
     }
 
     /**
-     * Clicks «Видалити» expecting the client-side blocking {@code alert(...)} that tk-ui shows
-     * when the defect has a non-zero {@code writeOffAmount} (see {@code DefectListPage.handleDelete}).
-     * The dialog is dismissed automatically and its message text is returned.
+     * Whether «Видалити» is disabled for the row (e.g. defect has write-offs —
+     * tk-ui {@code actionBlockedReason = DEFECT_HAS_WRITE_OFFS}).
      */
-    public String clickDeleteExpectingBlockAlert(String resourceName) {
-        StringBuilder captured = new StringBuilder();
-        page.onceDialog(dialog -> {
-            captured.append(dialog.message());
-            dialog.accept();
-        });
-        rowByResource(resourceName).first()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(DELETE_BUTTON_TEXT))
-                .click();
-        page.waitForTimeout(500);
-        return captured.toString();
+    public boolean isDeleteButtonDisabled(String resourceName) {
+        return deleteButton(resourceName).isDisabled();
+    }
+
+    /**
+     * Hover «Видалити» and return the Radix tooltip text that explains why the action is blocked.
+     */
+    public String deleteBlockedTooltip(String resourceName) {
+        Locator btn = deleteButton(resourceName);
+        // TooltipTrigger wraps the button in <span>; hover the wrapper so the tooltip opens for disabled buttons.
+        btn.locator("xpath=ancestor::span[1]").or(btn).first().hover();
+        Locator tip = page.locator("[role='tooltip']").filter(new Locator.FilterOptions()
+                .setHasText(DELETE_BLOCKED_BY_WRITE_OFF));
+        tip.first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return tip.first().innerText().trim();
     }
 
     /** Clicks «Видалити» and accepts the native confirm() dialog (normal, no write-offs). */
     public DefectsPage clickDeleteAndConfirm(String resourceName) {
         page.onceDialog(com.microsoft.playwright.Dialog::accept);
-        rowByResource(resourceName).first()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(DELETE_BUTTON_TEXT))
-                .click();
+        deleteButton(resourceName).click();
         waitForDataSettled();
         return this;
     }
 
     public boolean isDeleteButtonVisible(String resourceName) {
-        Locator btn = rowByResource(resourceName).first()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(DELETE_BUTTON_TEXT));
+        Locator btn = deleteButton(resourceName);
         return btn.count() > 0 && btn.isVisible();
+    }
+
+    private Locator deleteButton(String resourceName) {
+        return rowByResource(resourceName).first()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(DELETE_BUTTON_TEXT));
     }
 
     // -------------------------------------------------------------------
@@ -223,6 +284,22 @@ public class DefectsPage extends BasePage {
     // -------------------------------------------------------------------
     // Internals
     // -------------------------------------------------------------------
+
+    private Locator writeOffFilterTrigger() {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText(WRITE_OFF_FILTER_LABEL))
+                .locator("xpath=following::button[@role='combobox'][1]")
+                .first();
+    }
+
+    private void waitForDefectsReload(Runnable action) {
+        page.waitForResponse(
+                response -> response.url().contains("/defects")
+                        && "GET".equals(response.request().method())
+                        && !response.url().contains("/write-off")
+                        && !response.url().contains("/linked-"),
+                action);
+    }
 
     private Locator tableBody() {
         return page.locator("table tbody").first();

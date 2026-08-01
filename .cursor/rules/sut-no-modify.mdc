@@ -1,0 +1,26 @@
+---
+description: SUT repos tk and tk-ui are read-only — never edit product code from erp-auto-test
+alwaysApply: true
+---
+
+# SUT: do not modify `tk` or `tk-ui`
+
+**Hard rule:** from this project (`erp-auto-test`) never create, edit, delete, or commit files in:
+
+- Backend SUT: `C:\Users\gigam\IdeaProjects\tk`
+- Frontend SUT: `C:\Users\gigam\IdeaProjects\tk-ui`
+
+## Allowed
+
+- **Read** SUT code to understand API/UI contracts, find root causes, cite paths in plans
+- Change **only** `erp-auto-test` (tests, fixtures, page objects, config, TCM via MCP)
+
+## When the bug is in the product
+
+1. Adapt the autotest to the **actual** deployed contract, or document a known product gap in `@Description` / TCM
+2. Do **not** patch `tk` / `tk-ui` to make the test green
+3. If a product fix is needed, report it to the product team — do not implement it here
+
+## Plans and todos
+
+Any plan that requires changing `tk` or `tk-ui` must be rewritten to an erp-auto-test-only approach before execution.

@@ -5,11 +5,13 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.EquipmentStatus;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.EmployeeFixture;
 import com.erp.fixtures.EquipmentFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.models.request.EquipmentRelocationReceiveEditRequest;
 import com.erp.models.request.EquipmentRelocationSendEditRequest;
 import com.erp.models.request.EquipmentRelocationSendRequest;
+import com.erp.models.response.EmployeeResponse;
 import com.erp.models.response.EquipmentResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.test_context.ContextKey;
@@ -18,7 +20,6 @@ import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -34,6 +35,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
 
     private EquipmentFixture equipmentFixture;
     private RelocationFixture relocationFixture;
+    private EmployeeFixture employeeFixture;
     private Long owner1Storage;
     private Long owner2Storage;
     private Long unitStorageId;
@@ -46,6 +48,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
         relocationFixture.prepareContext();
         equipmentFixture = new EquipmentFixture(testContext, apiExecutor);
         equipmentFixture.prepareContext();
+        employeeFixture = new EmployeeFixture(testContext, apiExecutor);
         owner1Storage = ConfigProvider.getOwner1StorageId();
         owner2Storage = ConfigProvider.getOwner2StorageId();
         unitStorageId = testContext.get(ContextKey.RELOCATION_UNIT_STORAGE_ID);
@@ -91,7 +94,10 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
     }
 
     @Test
-    @TestCaseId("TC-REL-EQ-003")
+    @TestCaseId({
+            "TC-REL-EQ-003",
+            "TC-EQU-002"
+    })
     @Story("Resolve FINISHED moves equipment")
     public void resolveFinishedMovesEquipmentToRecipient() {
         Long equipmentId = equipmentFixture.createEquipmentOnStorage(
@@ -205,7 +211,10 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
     }
 
     @Test
-    @TestCaseId("TC-REL-EQ-009")
+    @TestCaseId({
+            "TC-REL-EQ-009",
+            "TC-EQU-004"
+    })
     @Story("Delete supplier receive removes equipment")
     public void deleteRelocationFromSupplierSenderDeletesEquipmentFromSystem() {
         EquipmentResponse equipment = equipmentFixture.createEquipmentFromSupplier(
@@ -227,11 +236,79 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
     }
 
     @Test
-    @TestCaseId("TC-REL-EQ-010")
+    @TestCaseId({
+            "TC-DEL-REL_EQ-001",
+            "TC-EDIT_REL-007",
+            "TC-REL-EQ-010"
+    })
     @Story("Delete fails when equipment assigned")
+    @Description("""
+            TC-DEL-REL_EQ-001 / TC-EDIT_REL-007 / TC-REL-EQ-010: Admin не може видалити отримання обладнання,
+            якщо воно закріплене за співробітником (HTTP 4xx).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
     public void deleteRelocationFailsWhenEquipmentIsAssigned() {
-        throw new SkipException(
-                "ASSIGNED equipment requires employee assignment API — covered in backend IT");
+        EquipmentResponse equipment = equipmentFixture.createEquipmentFromSupplier(
+                UserRole.ADMIN, owner1Storage, supplierId, categoryId);
+        Long relocationId = equipmentFixture.findEquipmentReceiveRelocationId(
+                UserRole.ADMIN, owner1Storage, equipment.getId());
+
+        EmployeeResponse employee = employeeFixture.createEmployee(
+                UserRole.ADMIN, owner1Storage, "eq-del-asgn-" + System.currentTimeMillis() % 1_000_000);
+        equipmentFixture.assignEquipment(UserRole.ADMIN, equipment.getId(), employee.getId());
+
+        Response response = equipmentFixture.deleteRelocationRaw(
+                UserRole.ADMIN, relocationId, owner1Storage);
+        assertThat(response.statusCode())
+                .as("нельзя delete assigned equipment receive; body=%s", response.asString())
+                .isBetween(400, 499);
+    }
+
+    @Test
+    @TestCaseId({
+            "TC-DEL-REL_EQ-002",
+            "TC-EDIT_REL-003"
+    })
+    @Story("Delete fails when equipment in transit to another location")
+    @Description("""
+            TC-DEL-REL_EQ-002 / TC-EDIT_REL-003: Admin не може видалити отримання,
+            якщо обладнання вже в дорозі на іншу локацію.
+            """)
+    @Severity(SeverityLevel.NORMAL)
+    public void deleteReceiveFailsWhenEquipmentAlreadyInTransitElsewhere() {
+        EquipmentResponse equipment = equipmentFixture.createEquipmentFromSupplier(
+                UserRole.ADMIN, owner1Storage, supplierId, categoryId);
+        Long initialRelocationId = equipmentFixture.findEquipmentReceiveRelocationId(
+                UserRole.ADMIN, owner1Storage, equipment.getId());
+
+        equipmentFixture.sendEquipment(UserRole.OWNER_1, owner1Storage, owner2Storage, equipment.getId());
+
+        Response response = equipmentFixture.deleteRelocationRaw(
+                UserRole.ADMIN, initialRelocationId, owner1Storage);
+        assertThat(response.statusCode()).isEqualTo(400);
+    }
+
+    @Test
+    @TestCaseId("TC-EDIT_REL-002")
+    @Story("Edit receive removeInvoiceFile")
+    @Description("TC-EDIT_REL-002 / CPMA-432: Admin може зняти фото накладної з отримання обладнання (removeInvoiceFile).")
+    @Severity(SeverityLevel.NORMAL)
+    public void editEquipmentReceiveRemovesInvoicePhoto() {
+        EquipmentResponse equipment = equipmentFixture.createEquipmentFromSupplier(
+                UserRole.ADMIN, owner1Storage, supplierId, categoryId);
+        Long relocationId = equipmentFixture.findEquipmentReceiveRelocationId(
+                UserRole.ADMIN, owner1Storage, equipment.getId());
+
+        EquipmentRelocationReceiveEditRequest request = EquipmentRelocationReceiveEditRequest.builder()
+                .fromStorageId(supplierId)
+                .equipmentIds(List.of(equipment.getId()))
+                .date(LocalDate.now())
+                .description("TC-EDIT_REL-002 remove invoice")
+                .removeInvoiceFile(true)
+                .build();
+        RelocationResponse updated = equipmentFixture.editEquipmentReceive(
+                UserRole.ADMIN, relocationId, owner1Storage, request);
+        assertThat(updated.getHasExternalInvoicePhoto()).isFalse();
     }
 
     @Test

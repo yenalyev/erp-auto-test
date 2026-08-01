@@ -97,6 +97,7 @@ RESTRICTED підрозділ = `accessMode=REGIONS`; фільтр номенк�
 | Resource auto-grant | TC-STR-RES-005, 011 | Receive розширює autocomplete | Не guard send до чужої **локації** |
 | CREWS discovery | TC-STR-CREW-005/006 | `hasCrews` in/out області | Лише CREWS, не location regions |
 | UI dropdown (позитив) | TC-UI-REL-010 | «Кому відправляю» = `/names`, dedup | Без негативу outsider |
+| UI send form items | TC-UI-REL-016..017 | Нумерація рядків; згорнути/розгорнути «Доступні партії» | `RelocationSendFormItemsUiTest` |
 | UI invoice in-region | TC-UI-REL-011..014 | Накладна при видачі в області | Журнал/негативи |
 | Загальний relocation | TC-REL-010, TC-REL-005 | Lifecycle без REGIONS setup | Owner1↔Owner2 без областей |
 
@@ -147,17 +148,44 @@ mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest,StorageNamesEn
 | **TC-STR-CREW-001..004** | `StorageCrewRegionTest` | CRUD області `accessMode=CREWS`, locations, members | Critical |
 | **TC-STR-CREW-005..006** | `CrewVisibilityTest` | `hasCrews`, crew-units, crew-names | Critical |
 | **TC-STR-CREW-011..012** | `CrewVisibilityTest` | Ієрархія UNIT та рекурсивний пошук екіпажів | Critical |
-| **TC-CREW-REL-001..003** | `CrewRelocationTest` | Send→CREW AUTO_FINISHED, journal, insufficient stock | Critical |
+| **TC-CREW-REL-001..011** | `CrewRelocationTest` | Send→CREW CREATED→FINISHED (відправник); journal; cancel; recipient cannot finish | Critical |
+| **TC-FLY-REL-001..005** | `FlyPointRelocationTest` | FLY_POINT lifecycle; attached CREW auto-forward; CREW→FLY_POINT AUTO_FINISHED; reparent one-parent; multi-CREW | Critical |
+| **TC-CREW-RET-001..004** | `CrewReturnTest` | Повернення CREW→склад (receive): unattached/attached stock; over-stock → 400 | Critical |
+| **TC-UI-CREW-RET-001..003** | `CrewReturnUITest` | UI «Отримати від екіпажа»: CTA; happy path unattached; attached→FP debit | Critical |
+| **TC-CREW-INC-001..006** | `CrewFlyPointIncidentTest` | Надзвичайна подія на CREW/FLY_POINT: LOST, без credit отримувачу | Critical |
+| **TC-FLY-WO-001** | `CrewWriteOffTest` | Complete write-off attached CREW → debit parent FLY_POINT (DB seed) | Critical |
+
+**DB-dependent (excluded from regression when `use.database=false`):**
+```bash
+mvn test -Denv=dev -Dsuite=db-dependent
+# staging: override JDBC — mvn test -Denv=staging -Dsuite=db-dependent -Duse.database=true
+```
+Covers TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-034.
+
+**OWNER_2 scope preflight** (explains TC-STR-REG-020…052 class skip):
+```bash
+mvn test -Denv=staging -Dsuite=owner2-scope-check
+```
+
+| ID | Клас | Сценарій | Severity |
+|:---|:-----|:---------|:---------|
 | **TC-UI-CREW-012..014** | `CrewJournalNameVisibilityUiTest` | UI «Видано»/«Отримано»: назва CREW завжди реальна поза REGIONS scope; non-CREW → `_приховано_` | Critical |
-| **TC-CREW-INV-001,006,007,007b,008,008b** | `CrewInventoryTest` | STOCK report; OWNER_1 attached crew → 200; unattached → 403; Crew-Manager; OWNER_2 denied | Critical |
+| **TC-CREW-INV-001,006,007,007b,008,008B** | `CrewInventoryTest` | STOCK report; OWNER_1 attached crew → 200; unattached → 403; Crew-Manager; OWNER_2 denied | Critical |
 | **TC-CREW-INV-002** | `CrewInventoryTest` | INCOME report — **disabled** (див. коментар у тесті) | Normal |
+| **TC-CREW-INV-009…015, NEG-01** | `CrewInventoryTest` | Session RBAC/conduct; closed→403; Crew-Manager open+PUT | Critical |
+| **TC-FLY-INV-*** | `FlyPointInventoryTest` | FLY_POINT session/conduct/history/multi/RBAC/NEG | Critical |
+| **TC-CREW-INV-011…013, OWN-*** | `CrewFlyPointInventoryTest` | Unattached vs sibling FP; attached proxy (AC-18); ownership | Critical |
+| **TC-UI-CREW-015…024** | `CrewFlyPointInventoryUiTest` | Analytics / FP dashboard / deep-link / RBAC UI | Critical |
+
+**Документація фічі (SSOT):** [`docs/REQ-CREW-003-crew-fly-inventory.md`](../../../../../../../../docs/REQ-CREW-003-crew-fly-inventory.md) (TCM `REQ-CREW-003`).
 
 **Запуск crew-тестів:**
 ```bash
 mvn test -Denv=dev -Dtest=StorageCrewRegionTest,CrewVisibilityTest,CrewRelocationTest,CrewInventoryTest
+mvn test -Denv=dev -Dsuite=crew-fly-inventory
 ```
 
-**Fixture:** `CrewRegionFixture` — `prepareSingleCrewScenario`, `prepareHierarchyScenario`.
+**Fixture:** `CrewRegionFixture` — `prepareSingleCrewScenario`, `prepareAttachedCrewScenario`, `prepareFlyPointScenario`, `prepareHierarchyScenario`.
 
 **Crew-Manager UI/API:** `user.unit.username=argument` (`UserRole.CREW_MANAGER`), `unit.storage.id=77` — Keycloak `Crew-Manager-ROLE` для direct crew inventory (`TC-UI-CREW-004`, `TC-CREW-INV-007b`).
 
@@ -184,7 +212,7 @@ RBAC: `STORAGE_*`, `STORAGE_REGION_*`, `STORAGE_PUT_ADD_LOCATION_LINKS` — у `
 - **Fixture:** `StorageFixture` — `createUniqueStorage`, `createExternalChildStorage`, `getById`, `getNames(relation, types)`, `getPage`, `getMyUnits`
 - **Fixture:** `StorageRegionFixture` — CRUD областей, locations/members, explicit grants, cleanup
 - **Factory:** `StorageDataFactory.childStorage()` (INTERNAL default), `restrictedStorage()` (REGIONS), `StorageRegionDataFactory`
-- **Cleanup:** `createStorage` / `createChildStorage` / `createExternalChildStorage` → `trackForCleanup` → `DELETE /storages/{id}` у `@AfterMethod` + `@AfterClass` (`StorageApiTestBase`). На `staging` cleanup пропускається.
+- **Cleanup:** `createStorage` / `createChildStorage` / `createExternalChildStorage` / `setupSharedStorage` → `trackForCleanup` → `DELETE /storages/{id}` (архівація) у `@AfterMethod` + `@AfterClass` (`StorageApiTestBase` / `TestArtifactCleanup`). На `staging` cleanup увімкнений за замовчуванням; opt-out: `-Dstaging.cleanup=false`.
 - **Верифікація:** `verifyEntityViaGetById` / `verifyUpdatedEntity` у `BaseFunctionalTest`
 - **Схеми:** paged list (`storage-paged-list-schema.json`), names array (`storage-names-list-schema.json`)
 - **Запуск:** `mvn test -Denv=dev -Dtest=StorageTest,StorageRelationTest,StorageDeactivationTest`

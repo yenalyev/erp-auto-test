@@ -46,8 +46,11 @@ public class AssemblyReadinessUiTest extends BaseUITest {
     private String owner1StorageName;
     private String owner2StorageName;
 
-    private final List<Long> techMapsToCleanup = new ArrayList<>();
+    private final List<CleanupTechMap> techMapsToCleanup = new ArrayList<>();
     private final List<Long> resourcesToCleanup = new ArrayList<>();
+
+    private record CleanupTechMap(Long techMapId, Long storageId) {
+    }
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -66,8 +69,8 @@ public class AssemblyReadinessUiTest extends BaseUITest {
 
     @AfterMethod(alwaysRun = true)
     public void cleanupUiArtifacts() {
-        for (Long techMapId : techMapsToCleanup) {
-            fixture.cleanupTechMap(UserRole.ADMIN, techMapId, owner1StorageId);
+        for (CleanupTechMap entry : techMapsToCleanup) {
+            fixture.cleanupTechMap(UserRole.ADMIN, entry.techMapId(), entry.storageId());
         }
         techMapsToCleanup.clear();
         for (Long resourceId : resourcesToCleanup) {
@@ -305,6 +308,83 @@ public class AssemblyReadinessUiTest extends BaseUITest {
         arPage.attachScreenshot("TC-UI-AR-010 — storage switch");
     }
 
+    @Test(priority = 110)
+    @TestCaseId("TC-UI-AR-011")
+    @Story("Component tech map link — happy path")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Компонент з активною PRODUCTION техкартою (ресурс у OUTPUT):
+            розгорнути рядок → «Виробляється:» + лінк на техкарту (target=_blank) →
+            відкривається /technological-maps/update/{id} у новій вкладці.""")
+    public void testComponentTechMapLinkOpensInNewTab() {
+        TechMapSetup assembly = arrangeReadyTechMap(1.0, 1.0, 5.0, 5.0);
+        TechnologicalMapResponse producer = trackTechMap(
+                fixture.createProducerTechMap(UserRole.ADMIN, owner1StorageId, assembly.getInput1()),
+                owner1StorageId);
+
+        prepareAuthenticatedPage(UserRole.OWNER_1, owner1StorageId);
+        AssemblyReadinessPage arPage = new AssemblyReadinessPage(page).openAndWaitForApi();
+        arPage.expandRow(assembly.getTechMap().getName());
+
+        String componentName = assembly.getInput1().getName();
+        String producerName = producer.getName();
+        assertThat(arPage.isComponentTechMapsLabelVisible(componentName)).isTrue();
+        assertThat(arPage.isComponentTechMapLinkVisible(componentName, producerName)).isTrue();
+        assertThat(arPage.getComponentTechMapLinkTarget(componentName, producerName)).isEqualTo("_blank");
+        assertThat(arPage.getComponentTechMapLinkHref(componentName, producerName))
+                .contains("/technological-maps/update/" + producer.getId());
+
+        Page techMapTab = page.waitForPopup(() -> arPage.clickComponentTechMapLink(componentName, producerName));
+        techMapTab.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+        assertThat(techMapTab.url()).contains("/technological-maps/update/" + producer.getId());
+        arPage.attachScreenshot("TC-UI-AR-011 — component tech map link");
+        techMapTab.close();
+    }
+
+    @Test(priority = 120)
+    @TestCaseId("TC-UI-AR-012")
+    @Story("Component tech map link — absent when no producer")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Компонент без техкарти-виробника → лінк «Виробляється:» не показується.")
+    public void testNoTechMapLinkWhenComponentHasNoProducer() {
+        TechMapSetup assembly = arrangeReadyTechMap(1.0, 1.0, 5.0, 5.0);
+
+        prepareAuthenticatedPage(UserRole.OWNER_1, owner1StorageId);
+        AssemblyReadinessPage arPage = new AssemblyReadinessPage(page).openAndWaitForApi();
+        arPage.expandRow(assembly.getTechMap().getName());
+
+        assertThat(arPage.isComponentVisible(assembly.getInput1().getName())).isTrue();
+        assertThat(arPage.isComponentTechMapsLabelVisible(assembly.getInput1().getName())).isFalse();
+        arPage.attachScreenshot("TC-UI-AR-012 — no tech map link");
+    }
+
+    @Test(priority = 130)
+    @TestCaseId("TC-UI-AR-013")
+    @Story("Component tech map link — admin vs owner storage scope")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Виробник на storage OWNER_2: ADMIN бачить лінк, OWNER_1 — ні
+            (UI visibleTechMaps: admin = усі, owner = перетин з allowedStorageIds).""")
+    public void testAdminSeesForeignStorageProducerOwnerDoesNot() {
+        TechMapSetup assembly = arrangeReadyTechMap(1.0, 1.0, 5.0, 5.0);
+        TechnologicalMapResponse foreignProducer = trackTechMap(
+                fixture.createProducerTechMap(UserRole.ADMIN, owner2StorageId, assembly.getInput1()),
+                owner2StorageId);
+
+        prepareAuthenticatedPage(UserRole.OWNER_1, owner1StorageId);
+        AssemblyReadinessPage ownerPage = new AssemblyReadinessPage(page).openAndWaitForApi();
+        ownerPage.expandRow(assembly.getTechMap().getName());
+        assertThat(ownerPage.isComponentTechMapLinkVisible(
+                assembly.getInput1().getName(), foreignProducer.getName())).isFalse();
+
+        prepareAuthenticatedPage(UserRole.ADMIN, owner1StorageId);
+        AssemblyReadinessPage adminPage = new AssemblyReadinessPage(page).openAndWaitForApi();
+        adminPage.expandRow(assembly.getTechMap().getName());
+        assertThat(adminPage.isComponentTechMapLinkVisible(
+                assembly.getInput1().getName(), foreignProducer.getName())).isTrue();
+        adminPage.attachScreenshot("TC-UI-AR-013 — admin sees foreign producer");
+    }
+
     private TechMapSetup arrangeReadyTechMap(double in1Req, double in2Req, double in1Stock, double in2Stock) {
         TechMapSetup setup = createAndTrack(
                 fixture.createProductionTechMap(UserRole.ADMIN, owner1StorageId, in1Req, in2Req));
@@ -315,15 +395,20 @@ public class AssemblyReadinessUiTest extends BaseUITest {
     }
 
     private TechMapSetup createAndTrack(TechMapSetup setup) {
-        trackTechMap(setup.getTechMap());
+        trackTechMap(setup.getTechMap(), owner1StorageId);
         trackResource(setup.getProduct().getId());
         trackResource(setup.getInput1().getId());
         trackResource(setup.getInput2().getId());
         return setup;
     }
 
-    private void trackTechMap(TechnologicalMapResponse techMap) {
-        techMapsToCleanup.add(techMap.getId());
+    private TechnologicalMapResponse trackTechMap(TechnologicalMapResponse techMap) {
+        return trackTechMap(techMap, owner1StorageId);
+    }
+
+    private TechnologicalMapResponse trackTechMap(TechnologicalMapResponse techMap, Long storageId) {
+        techMapsToCleanup.add(new CleanupTechMap(techMap.getId(), storageId));
+        return techMap;
     }
 
     private void trackResource(Long resourceId) {

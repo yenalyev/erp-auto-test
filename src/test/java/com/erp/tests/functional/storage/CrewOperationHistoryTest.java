@@ -51,7 +51,7 @@ public class CrewOperationHistoryTest extends CrewApiTestBase {
     public void testCrewSendIncreasesRemovedSummaryOnSender() {
         double beforeRemoved = extractRemovedAmount(scenario.memberStorageId(), resourceId);
 
-        relocationFixture.createSend(
+        relocationFixture.createSendAndFinishBySender(
                 UserRole.OWNER_1,
                 scenario.memberStorageId(),
                 scenario.crew().getId(),
@@ -59,7 +59,9 @@ public class CrewOperationHistoryTest extends CrewApiTestBase {
                 ISSUE_AMOUNT);
 
         double afterRemoved = extractRemovedAmount(scenario.memberStorageId(), resourceId);
-        assertThat(afterRemoved - beforeRemoved).isCloseTo(ISSUE_AMOUNT, within(0.01));
+        assertThat(afterRemoved - beforeRemoved)
+                .as("Картка «Видано» оновлюється після FINISHED (не після CREATED)")
+                .isCloseTo(ISSUE_AMOUNT, within(0.01));
     }
 
     private double extractRemovedAmount(long storageId, long resourceId) {

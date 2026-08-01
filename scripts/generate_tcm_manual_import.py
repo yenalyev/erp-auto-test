@@ -299,14 +299,34 @@ def nsp_manual_gaps() -> list[Case]:
 def dictionary_cases() -> list[Case]:
     pre = "@Admin залогінений."
     return [
+        Case("TC-RES-001", "REQ-RES-001", "AC-01", "Ресурс — створення",
+             "CRUD довідника ресурсів: POST create + зв'язок з Measurement Unit. "
+             "Деактивація — окремо TC-RES-010.",
+             preconditions=pre, tags="dictionary",
+             automation_layer="API", automation_test_id="TC-RES-001",
+             steps=[
+                 Step(1, "POST /resources з валідним body", "200; ресурс у словнику"),
+                 Step(2, "GET by id", "Поля збігаються з request; unit.id = measurementUnitId"),
+             ]),
         Case("TC-RES-002", "REQ-RES-001", "AC-01", "Ресурс — оновлення назви",
              "CRUD довідника ресурсів: PUT name.", preconditions=pre, tags="dictionary",
              automation_layer="API", automation_test_id="TC-RES-002",
-             steps=[Step(1, "Оновити назву ресурсу через UI або API", "200; нова назва в списку")]),
+             steps=[
+                 Step(1, "Створити ресурс", "Ресурс у словнику"),
+                 Step(2, "PUT /resources/{id} з новою назвою", "200; нова назва в response і GET by id"),
+             ]),
         Case("TC-RES-003", "REQ-RES-001", "AC-01", "Ресурс — дублікат назви (негатив)",
              "Створення дубліката відхиляється.", preconditions=pre, tags="dictionary,validation",
              automation_layer="API", automation_test_id="TC-RES-003",
              steps=[Step(1, "POST ресурс з існуючою назвою", "HTTP 400")]),
+        Case("TC-RES-006", "REQ-RES-001", "AC-01", "Ресурс — валідація name (негатив)",
+             "POST з null/empty/blank name або довжиною > 256 відхиляється; словник без змін.",
+             preconditions=pre, tags="dictionary,validation",
+             automation_layer="API", automation_test_id="TC-RES-006",
+             steps=[
+                 Step(1, "POST з невалідним name (null / empty / blank / len>256)", "HTTP 400; errors[0].field=name"),
+                 Step(2, "Перевірити словник", "Кількість ресурсів не змінилася"),
+             ]),
         Case("TC-STR-001", "REQ-STR", "AC-01", "Склад — створення",
              "CRUD локацій.", preconditions=pre, tags="dictionary",
              automation_layer="API", automation_test_id="TC-STR-001",

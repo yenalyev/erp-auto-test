@@ -1,36 +1,52 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.data.factories.non_series_production.NonSeriesProductionDataFactory;
 import com.erp.data.factories.production.ProductionDataFactory;
+import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.enums.NonSeriesProductionStatus;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.DisassembleFixture;
+import com.erp.fixtures.NonSeriesProductionFixture;
+import com.erp.fixtures.ResourceFixture;
+import com.erp.models.response.NonSeriesProductionResponse;
+import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.pages.OperationHistoryPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
- * UI regression for operation history after disassemble with custom output totals.
+ * UI regression for operation history after NSP create and disassemble with custom output totals.
  */
 @Slf4j
 @Epic("Operation History")
-@Feature("Disassemble in history UI")
+@Feature("NSP and disassemble in history UI")
 public class OperationHistoryUiTest extends BaseUITest {
 
     private static final String PRODUCED_CARD_TITLE = "Вироблено";
+    private static final String USED_CARD_TITLE = "Використано";
 
     private DisassembleFixture disassembleFixture;
+    private NonSeriesProductionFixture nspFixture;
+    private ResourceFixture resourceFixture;
     private long storageId;
     private TechnologicalMapResponse techMap;
     private long outputResourceId;
     private String outputResourceName;
+
+    private final List<Long> createdNspIds = new ArrayList<>();
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -38,15 +54,71 @@ public class OperationHistoryUiTest extends BaseUITest {
         super.baseTestClassSetup();
         disassembleFixture = new DisassembleFixture(testContext, apiExecutor);
         disassembleFixture.prepareContext();
+        nspFixture = new NonSeriesProductionFixture(testContext, apiExecutor);
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
 
         storageId = ConfigProvider.getOwner1StorageId();
         techMap = disassembleFixture.techMap();
         outputResourceId = disassembleFixture.outputResourceId();
-        outputResourceName = techMap.getOutput().getFirst().getResource().getName().trim();
+        outputResourceName = disassembleFixture.outputResourceName();
     }
 
-    @Test
-    @TestCaseId("TC-UI-HIST-DIS-001")
+    @AfterMethod(alwaysRun = true)
+    public void cleanupCreatedNsp() {
+        for (Long id : createdNspIds) {
+            try {
+                nspFixture.deleteAs(UserRole.OWNER_1, id, storageId);
+            } catch (Exception e) {
+                log.warn("Failed to delete NSP {}: {}", id, e.getMessage());
+            }
+        }
+        createdNspIds.clear();
+    }
+
+    @Test(priority = 10)
+    @TestCaseId("TC-OPER-HIST-001")
+    @Story("NSP qty>1: «Використано» = qty × per-unit")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Owner створює несерійне виробництво з кількістю > 1.
+            У «Історія операцій» картка «Використано» збільшується на qty × витрати на одиницю,
+            а не на витрати однієї одиниці.""")
+    public void nspQtyGreaterThanOneUsesTotalInHistory() {
+        int productAmount = 10;
+        double perUnit = 2.0;
+        assertNspUsedDelta(productAmount, perUnit, NonSeriesProductionStatus.IN_PROGRESS,
+                "TC-OPER-HIST-001 — used = qty × per-unit");
+    }
+
+    @Test(priority = 20)
+    @TestCaseId("TC-OPER-HIST-002")
+    @Story("NSP IN_PROGRESS usage appears in operation history")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Owner створює несерійне виробництво зі статусом «В процесі».
+            У «Історія операцій» відображаються витрати використаних ресурсів.""")
+    public void nspInProgressUsageShownInHistory() {
+        assertNspUsedDelta(3, 2.0, NonSeriesProductionStatus.IN_PROGRESS,
+                "TC-OPER-HIST-002 — NSP IN_PROGRESS used");
+    }
+
+    @Test(priority = 30)
+    @TestCaseId("TC-OPER-HIST-003")
+    @Story("NSP DONE usage appears in operation history")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Owner створює несерійне виробництво зі статусом «Завершено».
+            У «Історія операцій» відображаються витрати використаних ресурсів.""")
+    public void nspDoneUsageShownInHistory() {
+        assertNspUsedDelta(3, 2.0, NonSeriesProductionStatus.DONE,
+                "TC-OPER-HIST-003 — NSP DONE used");
+    }
+
+    @Test(priority = 40)
+    @TestCaseId({
+            "TC-OPER-HIST-004",
+            "TC-UI-HIST-DIS-001"
+    })
     @Story("Disassemble actual produced amount in «Вироблено» summary")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
@@ -87,7 +159,6 @@ public class OperationHistoryUiTest extends BaseUITest {
 
         Allure.step("Перевірити картку «Вироблено» на UI", () -> {
             injectRoleSession(UserRole.OWNER_1, storageId);
-            page = browserContext.newPage();
 
             OperationHistoryPage history = new OperationHistoryPage(page).open().waitForLoaded();
             assertThat(history.isLoaded()).isTrue();
@@ -107,7 +178,60 @@ public class OperationHistoryUiTest extends BaseUITest {
                             actualTotalProduced, techMapExpectedProduced)
                     .isEqualTo(actualTotalProduced);
 
-            history.attachScreenshot("TC-UI-HIST-DIS-001 — produced summary after disassemble");
+            history.attachScreenshot("TC-OPER-HIST-004 — produced summary after disassemble");
+        });
+    }
+
+    /**
+     * Uses a freshly created resource (no prior history noise) and UI↔UI baseline so the
+     * history date window matches what the page actually aggregates.
+     */
+    private void assertNspUsedDelta(int productAmount,
+                                    double perUnit,
+                                    NonSeriesProductionStatus status,
+                                    String screenshotLabel) {
+        double expectedUsed = productAmount * perUnit;
+        String product = NonSeriesProductionDataFactory.uniqueProductName();
+
+        ResourceResponse resource = Allure.step("Створити ізольований ресурс для NSP", () ->
+                resourceFixture.createUniqueResource("OH-NSP"));
+        long resourceId = resource.getId();
+        String resourceName = resource.getName().trim();
+
+        Allure.step("Засіяти залишок " + (expectedUsed + 10), () ->
+                RelocationStockSeeder.receiveFromSupplier(
+                        apiExecutor,
+                        UserRole.OWNER_1,
+                        storageId,
+                        Map.of(resourceId, expectedUsed + 10)));
+
+        injectRoleSession(UserRole.OWNER_1, storageId);
+        double baselineUsed = Allure.step("UI baseline «Використано»", () -> {
+            OperationHistoryPage history = new OperationHistoryPage(page).open().waitForLoaded();
+            return history.getSummaryCardAmountForResourceOrZero(USED_CARD_TITLE, resourceName);
+        });
+
+        NonSeriesProductionResponse created = Allure.step("Створити NSP status=" + status, () ->
+                nspFixture.createAs(
+                        UserRole.OWNER_1,
+                        status,
+                        product,
+                        productAmount,
+                        resourceId,
+                        perUnit));
+        createdNspIds.add(created.getId());
+
+        Allure.step("UI: «Використано» зросло на qty × per-unit", () -> {
+            OperationHistoryPage history = new OperationHistoryPage(page).open().waitForLoaded();
+            assertThat(history.isSummaryCardVisible(USED_CARD_TITLE)).isTrue();
+
+            double uiUsed = history.getSummaryCardAmountForResource(USED_CARD_TITLE, resourceName);
+            assertThat(uiUsed - baselineUsed)
+                    .as("«Використано» для NSP %s має зрости на %s (= %s × %s)",
+                            status, expectedUsed, productAmount, perUnit)
+                    .isCloseTo(expectedUsed, within(0.001));
+
+            history.attachScreenshot(screenshotLabel);
         });
     }
 

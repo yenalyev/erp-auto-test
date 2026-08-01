@@ -16,6 +16,8 @@ public final class InventoryRequestBodyFactory {
     public static void registerStrategies() {
         register(ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_PUT, context ->
                 InventorySessionStatus.builder().open(true).build());
+        register(ApiEndpointDefinition.STORAGE_EQUIPMENT_INVENTORY_STATUS_PUT, context ->
+                InventorySessionStatus.builder().open(true).build());
         register(ApiEndpointDefinition.STORAGE_INVENTORY_PUT, context ->
                 InventoryRequest.builder().resources(List.of()).build());
     }

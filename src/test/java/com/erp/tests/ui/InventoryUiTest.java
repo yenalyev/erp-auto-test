@@ -15,6 +15,7 @@ import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.InventoryStockUiVerification;
 import com.erp.utils.helpers.PollUtils;
+import com.erp.utils.helpers.UiDownloadAssertions;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterMethod;
@@ -729,7 +730,9 @@ public class InventoryUiTest extends BaseUITest {
     @Severity(SeverityLevel.NORMAL)
     @Description("""
             Owner 1 на сторінці «Залишки» (/inventory) натискає «Експорт в Excel»
-            для обраної локації. Очікується: завантаження файлу .xlsx.
+            для обраної локації. Очікується: завантаження непорожнього XLSX (ZIP magic).
+            Ім'я файлу через Playwright suggestedFilename не assertиться — для кириличних
+            blob-download Chromium часто повертає літерал «download».
             """)
     public void exportRemaindersUi() {
         UnitManagementPage stock = Allure.step("Owner 1 відкриває «Залишки»", () -> {
@@ -752,8 +755,12 @@ public class InventoryUiTest extends BaseUITest {
             Allure.parameter("downloadFileName", download.suggestedFilename());
             Allure.parameter("downloadSizeBytes", download.sizeBytes());
 
-            assertThat(download.suggestedFilename()).contains(".xlsx");
-            assertThat(download.sizeBytes()).isGreaterThan(100);
+            // Playwright suggestedFilename() often returns "download" for Cyrillic <a download> blob names
+            // (UI uses «залишки.xlsx»). Assert payload instead.
+            UiDownloadAssertions.assertNonEmptyXlsx(
+                    download.path(),
+                    download.sizeBytes(),
+                    "Експорт залишків Excel з UI");
             stock.attachScreenshot("TC-WMS-007-006 — export downloaded");
         });
     }

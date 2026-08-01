@@ -206,6 +206,53 @@ public class InventoryFixture extends BaseFixture {
         return body;
     }
 
+    @Step("API: Статус сесії інвентаризації обладнання на складі {storageId}")
+    public InventorySessionStatus getEquipmentStatus(long storageId, UserRole role) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_EQUIPMENT_INVENTORY_STATUS_GET,
+                role,
+                String.valueOf(storageId));
+        validateSuccess(response, "GET equipment inventory session status");
+        return response.as(InventorySessionStatus.class);
+    }
+
+    @Step("API: PUT статус сесії обладнання open={open} на складі {storageId}")
+    public Response putEquipmentStatus(long storageId, UserRole role, boolean open) {
+        InventorySessionStatus request = InventorySessionStatus.builder().open(open).build();
+        return apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_EQUIPMENT_INVENTORY_STATUS_PUT,
+                role,
+                request,
+                String.valueOf(storageId));
+    }
+
+    @Step("API: Закрити сесію інвентаризації обладнання на складі {storageId}, якщо відкрита")
+    public void ensureEquipmentClosed(long storageId) {
+        InventorySessionStatus status = getEquipmentStatus(storageId, UserRole.ADMIN);
+        if (Boolean.TRUE.equals(status.getOpen())) {
+            closeEquipmentSession(storageId);
+        }
+    }
+
+    @Step("API: Відкрити сесію інвентаризації обладнання на складі {storageId}")
+    public InventorySessionStatus openEquipmentSession(long storageId) {
+        Response response = putEquipmentStatus(storageId, UserRole.ADMIN, true);
+        validateSuccess(response, "PUT open equipment inventory session");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_EQUIPMENT_INVENTORY_STATUS_PUT);
+        InventorySessionStatus body = response.as(InventorySessionStatus.class);
+        assertThat(body.getOpen()).isTrue();
+        return body;
+    }
+
+    @Step("API: Закрити сесію інвентаризації обладнання на складі {storageId}")
+    public InventorySessionStatus closeEquipmentSession(long storageId) {
+        Response response = putEquipmentStatus(storageId, UserRole.ADMIN, false);
+        validateSuccess(response, "PUT close equipment inventory session");
+        InventorySessionStatus body = response.as(InventorySessionStatus.class);
+        assertThat(body.getOpen()).isFalse();
+        return body;
+    }
+
     @Step("API: Провести інвентаризацію на складі {storageId}")
     public StorageResponse conductInventory(long storageId, UserRole role, InventoryRequest request) {
         Response response = apiExecutor.execute(
@@ -274,6 +321,26 @@ public class InventoryFixture extends BaseFixture {
                 ApiEndpointDefinition.STORAGE_INVENTORY_MULTI_GET,
                 role,
                 Map.of("locations", locationsCsv, "size", 50));
+    }
+
+    @Step("API: Hierarchy GET inventory parentStorageId={parentStorageId}")
+    public Response getHierarchyInventory(long parentStorageId, UserRole role) {
+        return getHierarchyInventory(parentStorageId, role, Map.of());
+    }
+
+    @Step("API: Hierarchy GET inventory parentStorageId={parentStorageId} з доп. params")
+    public Response getHierarchyInventory(long parentStorageId, UserRole role, Map<String, ?> extraParams) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("parentStorageId", parentStorageId);
+        params.put("size", 50);
+        params.put("sort", "resourceId,asc");
+        if (extraParams != null) {
+            params.putAll(extraParams);
+        }
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_INVENTORY_HIERARCHY_GET,
+                role,
+                params);
     }
 
     @Step("API: Експорт залишків складу {storageId}")

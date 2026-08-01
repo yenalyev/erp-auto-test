@@ -32,6 +32,7 @@ public class AppSidebarPage extends BasePage {
     public static final String GROUP_RESOURCES = "Довідники ресурсів";
     public static final String GROUP_EQUIPMENT = "Обладнання";
     public static final String GROUP_STORAGE = "Локації/Організми";
+    public static final String GROUP_PROJECT_PRODUCTION = "Проєктне виробництво";
 
     public static final String TAB_NON_SERIES = "Несерійне виробництво";
     public static final String TAB_ASSEMBLY_READINESS = "Готово до комплектації";
@@ -44,6 +45,10 @@ public class AppSidebarPage extends BasePage {
     public static final String TAB_PRICES = "Ціни";
     public static final String TAB_RESOURCE_CATEGORIES = "Категорії ресурсів";
     public static final String TAB_MEASUREMENT_UNITS = "Одиниці вимірювання";
+    public static final String TAB_PROJECT_PRODUCTION = "Проєктне виробництво";
+    public static final String TAB_PROJECT_TEMPLATES = "Шаблони проєктного виробництва";
+    public static final String TAB_PROJECT_CATEGORIES = "Категорії";
+    public static final String TAB_PROJECT_PRODUCTS = "Продукти";
 
     public AppSidebarPage(Page page) {
         super(page);
@@ -140,6 +145,20 @@ public class AppSidebarPage extends BasePage {
                 .first()
                 .click();
         return this;
+    }
+
+    /** True if workspace tree search finds a selectable option containing {@code nameFragment}. */
+    public boolean isWorkspaceOptionVisible(String nameFragment) {
+        workspaceSelectorTrigger().click();
+        Locator search = page.locator("[data-radix-popper-content-wrapper] input[placeholder='Пошук...']");
+        if (search.count() > 0) {
+            search.first().fill(nameFragment.trim());
+        }
+        boolean found = workspaceOptionButtons()
+                .filter(new Locator.FilterOptions().setHasText(nameFragment.trim()))
+                .count() > 0;
+        page.keyboard().press("Escape");
+        return found;
     }
 
     public AppSidebarPage selectAllLocations() {

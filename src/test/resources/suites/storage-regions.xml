@@ -23,9 +23,11 @@
     <test name="Storage Regions API">
         <classes>
             <class name="com.erp.tests.functional.storage.StorageRegionTest"/>
+            <class name="com.erp.tests.functional.storage.Owner2ScopePreflightTest"/>
             <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.StorageNamesEndpointTest"/>
             <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest"/>
+            <class name="com.erp.tests.functional.storage.SystemAllResourcesRegionTest"/>
             <class name="com.erp.tests.functional.storage.RelocationVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.RelocationInvoiceVisibilityTest"/>
         </classes>
@@ -36,11 +38,17 @@
             <class name="com.erp.tests.functional.storage.StorageCrewRegionTest"/>
             <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.CrewReturnTest"/>
+            <class name="com.erp.tests.functional.storage.CrewFlyPointIncidentTest"/>
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
             <class name="com.erp.tests.functional.storage.CrewOperationHistoryTest"/>
             <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest"/>
             <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
             <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest"/>
         </classes>
     </test>
 
@@ -50,9 +58,12 @@
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
+            <class name="com.erp.tests.ui.CrewReturnUITest"/>
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
+            <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>
         </classes>
     </test>
 </suite>

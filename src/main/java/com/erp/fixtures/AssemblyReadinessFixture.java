@@ -8,9 +8,12 @@ import com.erp.enums.UserRole;
 import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.AssemblyComponentResponse;
+import com.erp.models.response.AssemblyComponentTechMapResponse;
 import com.erp.models.response.AssemblyReadinessResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
+
+import static com.erp.data.factories.tech_map.TechnologicalMapDataFactory.TYPE_DISASSEMBLE;
 import com.erp.test_context.TestContext;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import com.erp.validators.SchemaRegistry;
@@ -106,6 +109,61 @@ public class AssemblyReadinessFixture extends BaseFixture {
         List<ResourceResponse> resources = List.of(in, out);
         TechnologicalMapRequest request = TechnologicalMapDataFactory.createDisassembleTechMap(resources, storageId).build();
         return techMapFixture.createTechMapWithRequest(role, request);
+    }
+
+    /**
+     * PRODUCTION map whose OUTPUT is {@code outputResource} — appears in
+     * {@code components[].technologicalMaps} when that resource is an assembly component.
+     */
+    @Step("Створити PRODUCTION техкарту-виробника для ресурсу {outputResource.id}")
+    public TechnologicalMapResponse createProducerTechMap(UserRole role,
+                                                          Long storageId,
+                                                          ResourceResponse outputResource) {
+        String suffix = String.valueOf(System.nanoTime());
+        ResourceResponse raw1 = resourceFixture.createUniqueResource("AR-PROD-IN1-" + suffix);
+        ResourceResponse raw2 = resourceFixture.createUniqueResource("AR-PROD-IN2-" + suffix);
+        TechnologicalMapRequest request = TechnologicalMapDataFactory.createProductionMapWithStorages(
+                "AR-PRODUCER",
+                List.of(
+                        new ResourceUsageRequest(raw1.getId(), 1.0),
+                        new ResourceUsageRequest(raw2.getId(), 1.0)),
+                List.of(new ResourceUsageRequest(outputResource.getId(), 1.0)),
+                Set.of(storageId)).build();
+        return techMapFixture.createTechMapWithRequest(role, request);
+    }
+
+    /**
+     * DISASSEMBLE map whose OUTPUT is {@code outputResource}.
+     * Current backend (CPMA-633) returns only PRODUCTION producers in technologicalMaps.
+     */
+    @Step("Створити DISASSEMBLE техкарту з OUTPUT = ресурс {outputResource.id}")
+    public TechnologicalMapResponse createDisassembleProducerTechMap(UserRole role,
+                                                                     Long storageId,
+                                                                     ResourceResponse outputResource) {
+        String suffix = String.valueOf(System.nanoTime());
+        ResourceResponse disassembleInput = resourceFixture.createUniqueResource("AR-DIS-PROD-IN-" + suffix);
+        TechnologicalMapRequest request = TechnologicalMapRequest.builder()
+                .name("AR-DIS-PRODUCER-" + System.currentTimeMillis())
+                .type(TYPE_DISASSEMBLE)
+                .input(List.of(new ResourceUsageRequest(disassembleInput.getId(), 1.0)))
+                .output(List.of(new ResourceUsageRequest(outputResource.getId(), 0.5)))
+                .storageIds(Set.of(storageId))
+                .build();
+        return techMapFixture.createTechMapWithRequest(role, request);
+    }
+
+    public Optional<AssemblyComponentTechMapResponse> findComponentTechMap(
+            AssemblyComponentResponse component, Long techMapId) {
+        if (component.getTechnologicalMaps() == null) {
+            return Optional.empty();
+        }
+        return component.getTechnologicalMaps().stream()
+                .filter(m -> techMapId.equals(m.getId()))
+                .findFirst();
+    }
+
+    public boolean componentHasTechMapLink(AssemblyComponentResponse component, Long techMapId) {
+        return findComponentTechMap(component, techMapId).isPresent();
     }
 
     @Step("Засіяти stock компонентів на складі {storageId}")

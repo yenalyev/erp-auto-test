@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PagedOrderResponse",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "$ref": "order-response-schema.json"
+      }
+    },
+    "page": {
+      "type": ["object", "null"],
+      "properties": {
+        "size": { "type": ["integer", "null"] },
+        "number": { "type": ["integer", "null"] },
+        "totalElements": { "type": ["integer", "null"] },
+        "totalPages": { "type": ["integer", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "size": { "type": ["integer", "null"] },
+    "totalElements": { "type": ["integer", "null"] },
+    "totalPages": { "type": ["integer", "null"] }
+  },
+  "required": ["content"],
+  "additionalProperties": true
+}

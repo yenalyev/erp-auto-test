@@ -3,7 +3,9 @@ package com.erp.tests.functional.storage;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
+import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.StorageRequest;
@@ -15,6 +17,7 @@ import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -133,8 +136,34 @@ public class StorageTest extends StorageApiTestBase {
     @Description("Заборона створення дублікатів за назвою серед активних локацій")
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateDuplicateStorage() {
-        StorageResponse existing = testContext.get(ContextKey.DYNAMIC_STORAGE);
-        StorageRequest duplicateRequest = StorageRequest.builder().name(existing.getName()).build();
+        StorageResponse fromContext = testContext.get(ContextKey.DYNAMIC_STORAGE);
+        if (fromContext == null || fromContext.getId() == null) {
+            throw new SkipException("DYNAMIC_STORAGE відсутній у контексті — duplicate-name тест неможливий");
+        }
+        StorageResponse existing = storageFixture.getById(UserRole.ADMIN, fromContext.getId());
+        if (!Boolean.TRUE.equals(existing.getActive())) {
+            throw new SkipException("DYNAMIC_STORAGE id=" + existing.getId() + " уже не active — duplicate-name серед активних не перевірити");
+        }
+
+        // Full body clone: name-uniqueness must fail before other required-field NPEs → 500.
+        StorageRequest.StorageRequestBuilder duplicateBuilder = StorageRequest.builder()
+                .name(existing.getName())
+                .alias(existing.getAlias())
+                .identifierNumber(existing.getIdentifierNumber())
+                .nameForInvoices(existing.getNameForInvoices());
+        if (existing.getType() != null) {
+            duplicateBuilder.type(UnitType.valueOf(existing.getType()));
+        }
+        if (existing.getRelation() != null) {
+            duplicateBuilder.relation(StorageRelation.valueOf(existing.getRelation()));
+        }
+        if (existing.getAccessMode() != null) {
+            duplicateBuilder.accessMode(StorageAccessMode.valueOf(existing.getAccessMode()));
+        }
+        if (existing.getParent() != null) {
+            duplicateBuilder.parentId(existing.getParent().getId());
+        }
+        StorageRequest duplicateRequest = duplicateBuilder.build();
 
         long countBefore = getDbCount(
                 ApiEndpointDefinition.STORAGE_GET_ALL,
@@ -148,7 +177,9 @@ public class StorageTest extends StorageApiTestBase {
                 ApiEndpointDefinition.STORAGE_POST_CREATE, UserRole.ADMIN, duplicateRequest);
 
         Allure.step("Assert: дублікат відхилено", () -> {
-            assertThat(response.statusCode()).as("Очікувався статус 400 для дубліката").isEqualTo(400);
+            assertThat(response.statusCode())
+                    .as("Очікувався статус 400 для дубліката; body=%s", response.body().asString())
+                    .isEqualTo(400);
             StorageFixture.assertValidationError(response, "name", "вже існує");
         });
 

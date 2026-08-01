@@ -92,6 +92,10 @@ public class ConfigProvider {
     }
 
     public static boolean useDatabase() {
+        String override = System.getProperty("use.database");
+        if (override != null && !override.isBlank()) {
+            return Boolean.parseBoolean(override.trim());
+        }
         return config.useDatabase();
     }
 
@@ -140,12 +144,39 @@ public class ConfigProvider {
     public static String getAccountantPassword() { return config.accountantPassword(); }
     public static String getCrewManagerUsername() { return config.crewManagerUsername(); }
     public static String getCrewManagerPassword() { return config.crewManagerPassword(); }
+    public static String getProjectAdminUsername() { return config.projectAdminUsername(); }
+    public static String getProjectAdminPassword() { return config.projectAdminPassword(); }
+    public static String getProjectManagerUsername() { return config.projectManagerUsername(); }
+    public static String getProjectManagerPassword() { return config.projectManagerPassword(); }
+    public static String getLocationMixedUsername() { return config.locationMixedUsername(); }
+    public static String getLocationMixedPassword() { return config.locationMixedPassword(); }
 
     // Storage IDs per owner
     public static long getOwner1StorageId()     { return config.owner1StorageId(); }
     public static long getOwner2StorageId()     { return config.owner2StorageId(); }
     public static long getUnitStorageId()       { return config.unitStorageId(); }
     public static long getIncorrectStorageId()  { return config.incorrectStorageId(); }
+    public static long getLocationMixedRo2StorageId() { return config.locationMixedRo2StorageId(); }
+
+    /** Order gathering storage; 0 → owner2 storage. */
+    public static long getOrderGatheringStorageId() {
+        long id = config.orderGatheringStorageId();
+        return id > 0 ? id : config.owner2StorageId();
+    }
+
+    public static String getOrderGatheringUsername() {
+        String username = config.orderGatheringUsername();
+        return username == null || username.isBlank() ? config.owner2Username() : username;
+    }
+
+    public static String getOrderGatheringPassword() {
+        String password = config.orderGatheringPassword();
+        return password == null || password.isBlank() ? config.owner2Password() : password;
+    }
+
+    public static long getOrderAvailabilityRootStorageId() {
+        return config.orderAvailabilityRootStorageId();
+    }
 
     public static String getGoogleSheetsSpreadsheetId() {
         return config.googleSheetsSpreadsheetId();
@@ -304,5 +335,14 @@ public class ConfigProvider {
             return configured.strip();
         }
         return getBackendUrl() + com.erp.api.endpoints.ApiEndpointDefinition.INTERNAL_RELOCATION_GET_ALL.getPath();
+    }
+
+    public static String getBotDeliveryStructureUrl() {
+        String configured = config.botDeliveryStructureUrl();
+        if (configured != null && !configured.isBlank()) {
+            return configured.strip();
+        }
+        return getBackendUrl()
+                + com.erp.api.endpoints.ApiEndpointDefinition.INTERNAL_STORAGE_GET_STRUCTURE.getPath();
     }
 }

@@ -43,6 +43,8 @@ public class PlanExecutionPage extends BasePage {
     private static final String MANAGE_FAVOURITES_SAVE_PREFIX = "Зберегти";
     private static final String MANAGE_FAVOURITES_CANCEL_TEXT = "Скасувати";
 
+    private static final String DISASSEMBLE_HEADING = "Розбір";
+
     public PlanExecutionPage(Page page) {
         super(page);
     }
@@ -399,6 +401,77 @@ public class PlanExecutionPage extends BasePage {
         return executionTableRows()
                 .filter(new Locator.FilterOptions().setHasNotText("Виготовлено за"))
                 .count();
+    }
+
+    /** True when the «Розбір» block under the execution tab is rendered. */
+    public boolean isDisassembleSectionVisible() {
+        Locator heading = disassembleHeading();
+        return heading.count() > 0 && heading.first().isVisible();
+    }
+
+    /**
+     * Day amount for the disassembled input resource in the «Розбір» table
+     * (column «Розібрано за …»: {@code N шт ResourceName}).
+     */
+    public double getDisassembleDayInputAmount(String inputResourceName) {
+        Locator row = disassembleTableRows()
+                .filter(new Locator.FilterOptions().setHasText(inputResourceName))
+                .first();
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        String text = row.locator("td").first().innerText();
+        return parseLeadingNumber(text);
+    }
+
+    /**
+     * Day amount for an output resource in the «Розбір» table
+     * (column «Отримано за …»: {@code N unit ResourceName}).
+     */
+    public double getDisassembleDayOutputAmount(String outputResourceName) {
+        Locator row = disassembleTableRows()
+                .filter(new Locator.FilterOptions().setHasText(outputResourceName))
+                .first();
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        Locator outputLine = row.locator("li")
+                .filter(new Locator.FilterOptions().setHasText(outputResourceName))
+                .first();
+        String text = outputLine.innerText();
+        return parseLeadingNumber(text);
+    }
+
+    public PlanExecutionPage waitForDisassembleSection() {
+        disassembleHeading().first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        page.waitForCondition(
+                () -> disassembleTableRows().count() > 0,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    private Locator disassembleHeading() {
+        return page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(DISASSEMBLE_HEADING));
+    }
+
+    /**
+     * Desktop «Розбір» {@code DataTable} is the first table after the h3 heading
+     * (execution table is earlier in the DOM while the Виконання tab is active).
+     */
+    private Locator disassembleTableRows() {
+        return page.locator("h3")
+                .filter(new Locator.FilterOptions().setHasText(DISASSEMBLE_HEADING))
+                .locator("xpath=following::table[1]")
+                .locator("tbody tr");
+    }
+
+    private static double parseLeadingNumber(String text) {
+        if (text == null || text.isBlank()) {
+            throw new IllegalStateException("Cannot parse amount from empty text");
+        }
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("([\\d.,]+)").matcher(text.trim());
+        if (!matcher.find()) {
+            throw new IllegalStateException("Cannot parse amount from: " + text);
+        }
+        return Double.parseDouble(matcher.group(1).replace(',', '.'));
     }
 
     private Locator favouritesOnlyButton() {

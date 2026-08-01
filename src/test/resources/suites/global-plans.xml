@@ -16,6 +16,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanGenerationApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanRequirementsApiTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.PlanDuplicatePeriodApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAfterTechMapDeactivationTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAddOutputTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAmountApiTest"/>

@@ -326,6 +326,60 @@ public class StorageRegionTest extends StorageApiTestBase {
         assertThat(links).anyMatch(l -> Objects.equals(l.getLocationId(), viewer.getId()));
     }
 
+    @Test(priority = 101)
+    @TestCaseId("TC-STR-REG-050B")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_REG_050B)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testRevokeExplicitGrantRemovesViewerFromLinks() {
+        StorageResponse viewer = storageFixture.createUniqueStorage("reg-050b-view-");
+        StorageResponse visible = storageFixture.createUniqueStorage("reg-050b-vis-");
+
+        regionFixture.addExplicitLocations(visible.getId(), viewer.getId());
+        assertThat(regionFixture.getStorageLocationLinks(UserRole.ADMIN, visible.getId()))
+                .as("grant активний — viewer у links")
+                .anyMatch(l -> Objects.equals(l.getLocationId(), viewer.getId()));
+
+        regionFixture.removeExplicitLocations(visible.getId(), viewer.getId());
+        assertThat(regionFixture.getStorageLocationLinks(UserRole.ADMIN, visible.getId()))
+                .as("після revoke viewer відсутній у GET /storages/{visible}/locations")
+                .noneMatch(l -> Objects.equals(l.getLocationId(), viewer.getId()));
+    }
+
+    @Test(priority = 102)
+    @TestCaseId("TC-STR-REG-RBAC-001")
+    @Description(StorageRegionsAllureDescriptions.TC_STR_REG_RBAC_001)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testOwnerCannotManageStorageRegions() {
+        StorageResponse recipient = storageFixture.createUniqueStorage("reg-rbac-rec-");
+        StorageRegionRequest createRequest = StorageRegionDataFactory.createRegion(
+                recipient, StorageAccessMode.REGIONS, "reg-rbac-deny-");
+
+        Response createResponse = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_REGION_POST_CREATE, UserRole.OWNER_2, createRequest);
+        assertThat(createResponse.statusCode())
+                .as("OWNER_2 POST /storages/regions → 403; body=%s", createResponse.asString())
+                .isEqualTo(403);
+
+        StorageRegionResponse region = regionFixture.createRegion(
+                recipient, StorageAccessMode.REGIONS, "reg-rbac-admin-");
+
+        StorageRegionRequest updateRequest = StorageRegionDataFactory.updateRegion(
+                region.getName() + "-x", StorageAccessMode.REGIONS, recipient.getId());
+        Response updateResponse = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_REGION_PUT_UPDATE,
+                UserRole.OWNER_2,
+                updateRequest,
+                String.valueOf(region.getId()));
+        assertThat(updateResponse.statusCode())
+                .as("OWNER_2 PUT /storages/regions/{id} → 403; body=%s", updateResponse.asString())
+                .isEqualTo(403);
+
+        Response deleteResponse = regionFixture.deleteRegion(UserRole.OWNER_2, region.getId());
+        assertThat(deleteResponse.statusCode())
+                .as("OWNER_2 DELETE /storages/regions/{id} → 403; body=%s", deleteResponse.asString())
+                .isEqualTo(403);
+    }
+
     @Test(priority = 110)
     @TestCaseId("TC-STR-REG-054")
     @Description("""

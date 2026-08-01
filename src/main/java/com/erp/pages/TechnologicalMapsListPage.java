@@ -62,6 +62,23 @@ public class TechnologicalMapsListPage extends BasePage {
         return this;
     }
 
+    public boolean isPageTitleVisible() {
+        return page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(PAGE_TITLE)).isVisible();
+    }
+
+    public boolean isProductSearchVisible() {
+        return productSearchInput().isVisible();
+    }
+
+    public boolean isIngredientSearchVisible() {
+        return ingredientSearchInput().isVisible();
+    }
+
+    public boolean isNewTechMapButtonVisible() {
+        return page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Нова тех. карта")).isVisible()
+                || page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Нова тех. карта")).isVisible();
+    }
+
     public TechnologicalMapsListPage filterByProduct(String productTerm) {
         runSearchFilterAction(() -> productSearchInput().fill(productTerm));
         return this;

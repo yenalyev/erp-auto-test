@@ -92,6 +92,8 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         });
     }
 
+    private GlobalPlanResponse currentMonthGuardPlan;
+
     @Test(priority = 11, dataProvider = "ownerAndAdminRoles")
     @TestCaseId("TC-GP-047")
     @Severity(SeverityLevel.CRITICAL)
@@ -100,14 +102,10 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
             глобального плану на **поточний** календарний місяць.
             
             Snapshot з'являється після POST /generate, не після /decompose.
+            Arrange GP виконується один раз на клас-інстанс і перевикористовується для OWNER_1 та ADMIN.
             """)
     public void testCannotDeactivateTechMapWhenUsedInCurrentMonthGlobalPlan(UserRole role) {
-        YearMonth currentMonth = allocateCurrentMonthIfFree();
-        if (currentMonth == null) {
-            throw new SkipException("Поточний місяць вже зайнятий іншим глобальним планом на dev");
-        }
-
-        GlobalPlanResponse globalPlan = arrangeGlobalPlanWithGeneratedDecomposition(currentMonth);
+        GlobalPlanResponse globalPlan = ensureCurrentMonthGuardPlan();
 
         long activeCountBefore = techMapFixture.countActiveTechMapsByName(
                 l1StorageId, UserRole.ADMIN, chain.getMapM1().getName());
@@ -121,6 +119,22 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
                     l1StorageId, UserRole.ADMIN, chain.getMapM1().getName()))
                     .isEqualTo(activeCountBefore);
         });
+    }
+
+    /**
+     * Shared arrange for TC-GP-047: create current-month GP once so ADMIN does not skip
+     * after OWNER_1 occupied the period.
+     */
+    private GlobalPlanResponse ensureCurrentMonthGuardPlan() {
+        if (currentMonthGuardPlan != null) {
+            return currentMonthGuardPlan;
+        }
+        YearMonth currentMonth = allocateCurrentMonthIfFree();
+        if (currentMonth == null) {
+            throw new SkipException("Поточний місяць вже зайнятий іншим глобальним планом на staging/dev");
+        }
+        currentMonthGuardPlan = arrangeGlobalPlanWithGeneratedDecomposition(currentMonth);
+        return currentMonthGuardPlan;
     }
 
     @Test(priority = 12, dataProvider = "ownerAndAdminRoles")

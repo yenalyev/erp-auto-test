@@ -9,6 +9,8 @@ import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.file.Path;
+
 /**
  * Page Object for the Unit Management (Залишки) page.
  * URL: /inventory
@@ -60,6 +62,14 @@ public class UnitManagementPage extends BasePage {
         return waitForLoaded();
     }
 
+    /** Deep-link зі analytics: /inventory?storageId=… (CREW / FLY_POINT поза sidebar tree). */
+    public UnitManagementPage openWithStorageIdQuery(long storageId) {
+        String url = ConfigProvider.getBaseUrl() + PATH + "?storageId=" + storageId;
+        log.info("Opening Unit Management via storageId query: {}", url);
+        waitForInventoryTableDuring(() -> navigateTo(url, "Залишки (?storageId)"));
+        return waitForLoaded();
+    }
+
     public UnitManagementPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         page.getByText(PAGE_TITLE_TEXT)
@@ -86,6 +96,10 @@ public class UnitManagementPage extends BasePage {
 
     public boolean isConductInventoryButtonEnabled() {
         return conductButton().isEnabled();
+    }
+
+    public boolean isConductInventoryButtonVisible() {
+        return conductButton().count() > 0 && conductButton().first().isVisible();
     }
 
     public boolean isExportToExcelButtonVisible() {
@@ -156,9 +170,10 @@ public class UnitManagementPage extends BasePage {
     public ExportDownloadResult clickExportToExcelAndDownload() {
         Download download = page.waitForDownload(() -> exportToExcelButton().click());
         String suggestedFilename = download.suggestedFilename();
-        long sizeBytes = download.path() != null ? download.path().toFile().length() : 0L;
-        log.info("Unit management export download: {} ({} bytes)", suggestedFilename, sizeBytes);
-        return new ExportDownloadResult(suggestedFilename, sizeBytes);
+        Path path = download.path();
+        long sizeBytes = path != null ? path.toFile().length() : 0L;
+        log.info("Unit management export download: {} ({} bytes, path={})", suggestedFilename, sizeBytes, path);
+        return new ExportDownloadResult(suggestedFilename, sizeBytes, path);
     }
 
     public UnitManagementPage clickOpenInventory() {
@@ -258,6 +273,11 @@ public class UnitManagementPage extends BasePage {
     }
 
     public boolean isAllLocationsTableVisible() {
+        return isMultiLocationTableVisible();
+    }
+
+    /** Multi-location table (колонка «Локація») — «Всі локації» або «По всій ієрархії». */
+    public boolean isMultiLocationTableVisible() {
         Locator header = page.locator("table thead th")
                 .filter(new Locator.FilterOptions().setHasText("Локація"));
         try {
@@ -266,6 +286,51 @@ public class UnitManagementPage extends BasePage {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public boolean isSingleLocationStatusColumnVisible() {
+        Locator header = page.locator("table thead th")
+                .filter(new Locator.FilterOptions().setHasText("Статус"));
+        try {
+            header.first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+            return header.first().isVisible();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isHierarchyCheckboxVisible() {
+        return hierarchyCheckbox().count() > 0 && hierarchyCheckbox().isVisible();
+    }
+
+    public boolean isHierarchyCheckboxChecked() {
+        return hierarchyCheckbox().isChecked();
+    }
+
+    public boolean isHierarchyCheckboxEnabled() {
+        return hierarchyCheckbox().isEnabled();
+    }
+
+    public UnitManagementPage enableHierarchyView() {
+        Locator checkbox = hierarchyCheckbox();
+        checkbox.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        if (!checkbox.isChecked()) {
+            waitForInventoryTableDuring(() -> checkbox.check());
+        }
+        return this;
+    }
+
+    public UnitManagementPage disableHierarchyView() {
+        Locator checkbox = hierarchyCheckbox();
+        checkbox.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        if (checkbox.isChecked() && checkbox.isEnabled()) {
+            waitForInventoryTableDuring(() -> checkbox.uncheck());
+        }
+        return this;
+    }
+
+    private Locator hierarchyCheckbox() {
+        return page.locator("#hierarchy-view");
     }
 
     public boolean isBatchDialogVisible() {
@@ -397,7 +462,7 @@ public class UnitManagementPage extends BasePage {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(COPY_BUTTON_TEXT));
     }
 
-    public record ExportDownloadResult(String suggestedFilename, long sizeBytes) {}
+    public record ExportDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}
 
     private Locator stockTableBodyRows() {
         Locator stockTable = page.locator("table").filter(new Locator.FilterOptions()

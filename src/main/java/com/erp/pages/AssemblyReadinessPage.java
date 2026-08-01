@@ -28,6 +28,7 @@ public class AssemblyReadinessPage extends BasePage {
             "Оберіть конкретну локацію для перегляду продукції готової до укомплектування";
     private static final String EMPTY_STATE_TEXT = "Немає позицій, готових до комплектації";
     private static final String COMPONENTS_HEADER_TEXT = "Компоненти техкарти";
+    private static final String COMPONENT_TECH_MAPS_LABEL = "Виробляється:";
     private static final String MISSING_COMPONENTS_BADGE = "Бракує компонентів";
     private static final String BOTTLENECK_BADGE = "вузьке місце";
     private static final String SORT_BY_QUANTITY = "За кількістю ↓";
@@ -151,10 +152,32 @@ public class AssemblyReadinessPage extends BasePage {
     }
 
     public boolean isComponentVisible(String componentName) {
-        return page.locator("table table tbody tr")
-                .filter(new Locator.FilterOptions().setHasText(componentName))
-                .first()
-                .isVisible();
+        return componentRow(componentName).isVisible();
+    }
+
+    /** Label «Виробляється:» next to a component that has producer tech-map links. */
+    public boolean isComponentTechMapsLabelVisible(String componentName) {
+        return componentRow(componentName).getByText(COMPONENT_TECH_MAPS_LABEL).count() > 0
+                && componentRow(componentName).getByText(COMPONENT_TECH_MAPS_LABEL).first().isVisible();
+    }
+
+    public boolean isComponentTechMapLinkVisible(String componentName, String techMapName) {
+        return componentTechMapLink(componentName, techMapName).count() > 0
+                && componentTechMapLink(componentName, techMapName).first().isVisible();
+    }
+
+    public String getComponentTechMapLinkHref(String componentName, String techMapName) {
+        return componentTechMapLink(componentName, techMapName).first().getAttribute("href");
+    }
+
+    public String getComponentTechMapLinkTarget(String componentName, String techMapName) {
+        return componentTechMapLink(componentName, techMapName).first().getAttribute("target");
+    }
+
+    /** Clicks the producer link; caller should wrap with {@code page.waitForPopup(...)}. */
+    public AssemblyReadinessPage clickComponentTechMapLink(String componentName, String techMapName) {
+        componentTechMapLink(componentName, techMapName).first().click();
+        return this;
     }
 
     public int getPossibleUnitsForComponent(String componentName) {
@@ -234,6 +257,18 @@ public class AssemblyReadinessPage extends BasePage {
         return mainProductRow(techMapName)
                 .locator("xpath=following-sibling::tr[1]")
                 .locator("table");
+    }
+
+    private Locator componentRow(String componentName) {
+        return page.locator("table table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(componentName))
+                .first();
+    }
+
+    private Locator componentTechMapLink(String componentName, String techMapName) {
+        return componentRow(componentName)
+                .locator("a[href*='/technological-maps/update/']")
+                .filter(new Locator.FilterOptions().setHasText(techMapName));
     }
 
     private void openSortDropdown() {

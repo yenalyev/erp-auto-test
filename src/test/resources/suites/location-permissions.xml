@@ -1,0 +1,26 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Location Permissions Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Location Permissions API">
+        <classes>
+            <class name="com.erp.tests.functional.location_permissions.LocationPermissionMeTest"/>
+            <class name="com.erp.tests.functional.location_permissions.LocationScopedAccessTest"/>
+        </classes>
+    </test>
+
+    <test name="Location Permissions UI">
+        <classes>
+            <class name="com.erp.tests.ui.UsersLocationPermissionsUiTest"/>
+            <class name="com.erp.tests.ui.LocationPermissionsUiTest"/>
+        </classes>
+    </test>
+
+</suite>

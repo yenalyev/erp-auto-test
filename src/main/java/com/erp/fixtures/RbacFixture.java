@@ -1,14 +1,18 @@
 package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
-import com.erp.fixtures.EquipmentFixture;
-import com.erp.fixtures.RelocationFixture;
+import com.erp.models.request.ResourceReconciliationRequest;
 import com.erp.models.response.*;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import io.qameta.allure.Step;
+import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 public class RbacFixture extends BaseFixture {
@@ -36,7 +40,33 @@ public class RbacFixture extends BaseFixture {
         prepareDefectRbacContext();
         prepareGlobalPlanRbacContext();
         new NonSeriesProductionFixture(testContext, apiExecutor).prepareContext();
+        new ProjectProductionFixture(testContext, apiExecutor).prepareContext();
         prepareUserRbacContext();
+        prepareFaitaRbacContext();
+    }
+
+    @Step("Setup FAITA product reconciliation for implicit-resources RBAC")
+    public void prepareFaitaRbacContext() {
+        if (testContext.get(ContextKey.FAITA_EXTERNAL_ID) != null) {
+            return;
+        }
+        Long resourceId = testContext.get(ContextKey.SHARED_RESOURCE_ID);
+        if (resourceId == null) {
+            setupSharedResource();
+            resourceId = testContext.get(ContextKey.SHARED_RESOURCE_ID);
+        }
+        String externalId = "rbac-faita-" + UUID.randomUUID().toString().substring(0, 8);
+        ResourceReconciliationRequest body = ResourceReconciliationRequest.builder()
+                .source("FLIGHT")
+                .externalId(externalId)
+                .externalName("RBAC FAITA product")
+                .resourceIds(List.of(resourceId))
+                .build();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.RESOURCE_RECONCILIATION_CREATE, UserRole.ADMIN, body);
+        validateSuccess(response, "Create FAITA reconciliation for RBAC");
+        testContext.set(ContextKey.FAITA_EXTERNAL_ID, externalId);
+        log.info("FAITA RBAC externalId={}", externalId);
     }
 
     @Step("Setup Keycloak user entity for RBAC matrix")

@@ -10,7 +10,7 @@
     mvn test -Denv=stage -Dsuite=bots
 
   Secrets: .env.dev or .env.staging (CLIENT_ID, CLIENT_SECRET, GET_TOKEN_URL, GET_DATA_URL, …).
-  Without GET_DATA_URL / GET_RELOCATIONS_DATA_URL, URLs are built from backend.url in config/{env}.properties.
+  Without GET_DATA_URL / GET_RELOCATIONS_DATA_URL / GET_STRUCTURE_DATA_URL, URLs are built from backend.url in config/{env}.properties.
 -->
 <suite name="Bot Internal API SLA" parallel="none" verbose="1">
 

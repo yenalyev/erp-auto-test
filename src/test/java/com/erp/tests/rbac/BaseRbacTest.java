@@ -27,7 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BaseRbacTest extends BaseTest {
 
     private static final Set<String> MULTIPART_JSON_ENDPOINTS = Set.of(
-            ApiEndpointDefinition.INCIDENT_POST_CREATE.name()
+            ApiEndpointDefinition.INCIDENT_POST_CREATE.name(),
+            ApiEndpointDefinition.PROJECT_PRODUCTION_POST_CREATE.name()
     );
 
     private static final ObjectMapper MULTIPART_MAPPER = new ObjectMapper()

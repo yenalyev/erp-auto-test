@@ -68,7 +68,11 @@ public class GoogleSheetsReportListener implements ITestListener, ISuiteListener
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        saveTestResult(result, "SKIPPED", "Test was skipped");
+        String reason = result.getThrowable() != null && result.getThrowable().getMessage() != null
+                && !result.getThrowable().getMessage().isBlank()
+                ? result.getThrowable().getMessage()
+                : "Test was skipped (no throwable)";
+        saveTestResult(result, "SKIPPED", reason);
     }
 
     private void saveTestResult(ITestResult result, String status, String errorMessage) {
@@ -85,7 +89,10 @@ public class GoogleSheetsReportListener implements ITestListener, ISuiteListener
             String formattedTime = String.format("%.2fs", duration / 1000.0);
             String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-            String testId = TestCaseIdExtractor.getTestCaseId(result);
+            String testId = String.join(", ", TestCaseIdExtractor.getTestCaseIds(result));
+            if (testId.isBlank()) {
+                testId = "NO_ID";
+            }
             String requirementId = extractRequirementId(result);
             String testName = result.getMethod().getMethodName();
             String environment = System.getProperty("env", "debug");

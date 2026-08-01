@@ -412,6 +412,83 @@ rules:
     bodyType: "UPDATE_NON_SERIES_PRODUCTION"
     description: "Оновити запис несерійного виробництва OWNER_1 — тільки OWNER_1"
 
+  # ========================================
+  # PROJECT PRODUCTION ENDPOINTS
+  # Тільки non-destructive операції (GET/POST create/PUT update) — FINISH/CANCEL/DELETE/
+  # stage mutations покриваються дедикованими функціональними тестами (ProjectProductionTest),
+  # бо мутують спільний PROJECT_PRODUCTION_ID і зробили б RBAC-матрицю нестабільною при паралелі/порядку.
+  # ========================================
+
+  - endpointName: "PROJECT_PRODUCTION_GET_PAGE"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Журнал проєктного виробництва OWNER_1: ADMIN та OWNER_1 — так, ANONYMOUS — ні"
+
+  - endpointName: "PROJECT_PRODUCTION_GET_BY_ID"
+    contextKey: "PROJECT_PRODUCTION_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Проєктне виробництво за id (storageId OWNER_1): ADMIN та OWNER_1 — так, ANONYMOUS — ні"
+
+  - endpointName: "PROJECT_PRODUCTION_POST_CREATE"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
+    bodyType: "CREATE_PROJECT_PRODUCTION"
+    description: "Створити проєктне виробництво OWNER_1 (multipart) — тільки OWNER_1"
+
+  - endpointName: "PROJECT_PRODUCTION_PUT_UPDATE"
+    contextKey: "PROJECT_PRODUCTION_ID"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
+    bodyType: "UPDATE_PROJECT_PRODUCTION"
+    description: "Оновити проєктне виробництво OWNER_1 — тільки OWNER_1"
+
+  - endpointName: "PROJECT_PRODUCTION_TEMPLATE_GET_PAGE"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Список шаблонів проєктного виробництва OWNER_1: ADMIN та OWNER_1 — так, ANONYMOUS — ні"
+
+  - endpointName: "PROJECT_PRODUCTION_TEMPLATE_POST_CREATE"
+    allowedRoles: [ OWNER_1 ]
+    deniedRoles: [ ADMIN, OWNER_2, ANONYMOUS ]
+    bodyType: "CREATE_PROJECT_PRODUCTION_TEMPLATE"
+    description: "Створити шаблон проєктного виробництва OWNER_1 — тільки OWNER_1"
+
+  - endpointName: "PROJECT_CATEGORY_GET_PAGE"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Список проєктних категорій (глобальний довідник): ADMIN та OWNER_1 — так, ANONYMOUS — ні"
+
+  - endpointName: "PROJECT_CATEGORY_GET_ALL_ACTIVE"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Активні проєктні категорії: ADMIN та OWNER_1 — так, ANONYMOUS — ні"
+
+  - endpointName: "PROJECT_CATEGORY_POST_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: "CREATE_PROJECT_CATEGORY"
+    description: "Створити проєктну категорію (project-product-type::create — глобальний permission): ADMIN — так, ANONYMOUS — ні. OWNER_1 не перевіряється тут — доступ до цього глобального permission залежить від Keycloak realm (fixture має fallback ADMIN)"
+
+  - endpointName: "PROJECT_PRODUCT_GET_PAGE"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Список проєктних продуктів (глобальний довідник): ADMIN та OWNER_1 — так, ANONYMOUS — ні"
+
+  - endpointName: "PROJECT_PRODUCT_POST_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: "CREATE_PROJECT_PRODUCT"
+    description: "Створити проєктний продукт (project-product-type::create — глобальний permission): ADMIN — так, ANONYMOUS — ні. OWNER_1 не перевіряється тут — доступ до цього глобального permission залежить від Keycloak realm (fixture має fallback ADMIN)"
+
   - endpointName: "STORAGE_INVENTORY_GET"
     contextKey: "OWNER_1_STORAGE_ID"
     allowedRoles: [ ADMIN, OWNER_1 ]
@@ -439,6 +516,20 @@ rules:
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
     description: "Читання статусу сесії інвентаризації складу OWNER_1"
+
+  - endpointName: "STORAGE_EQUIPMENT_INVENTORY_STATUS_PUT"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, ANONYMOUS ]
+    bodyType: "OPEN_EQUIPMENT_INVENTORY_SESSION"
+    description: "Відкрити/закрити сесію інвентаризації обладнання — тільки ADMIN"
+
+  - endpointName: "STORAGE_EQUIPMENT_INVENTORY_STATUS_GET"
+    contextKey: "OWNER_1_STORAGE_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Читання статусу сесії інвентаризації обладнання складу OWNER_1"
 
   - endpointName: "STORAGE_INVENTORY_GET"
     contextKey: "CREW_STORAGE_ID"
@@ -684,3 +775,32 @@ rules:
     deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
     bodyType: null
     description: "Деталі ролі з дозволами — лише ADMIN"
+
+  # ========================================
+  # FAITA / RESOURCE RECONCILIATION ENDPOINTS
+  # ========================================
+
+  - endpointName: "FAITA_RESOURCES_GET"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Список FAITA ресурсів (resource-reconciliation::read) — ADMIN; OWNER_1 та ANONYMOUS — ні"
+
+  - endpointName: "FAITA_IMPLICIT_RESOURCES_PUT"
+    contextKey: "FAITA_EXTERNAL_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Збереження додаткових (implicit) ресурсів виробу (resource-reconciliation::create) — лише ADMIN"
+
+  - endpointName: "RESOURCE_RECONCILIATION_GET_PAGE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Сторінка зіставлень FLIGHT↔ERP (resource-reconciliation::read) — лише ADMIN"
+
+  - endpointName: "RESOURCE_RECONCILIATION_CREATE"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: "CREATE"
+    description: "Створення FLIGHT reconciliation (resource-reconciliation::create) — лише ADMIN"

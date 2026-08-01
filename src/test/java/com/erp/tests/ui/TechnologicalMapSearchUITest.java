@@ -101,6 +101,29 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
         };
     }
 
+    @Test(priority = 5)
+    @TestCaseId("TC-MFG-002")
+    @Story("Tech maps list page smoke")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            REQ-MFG-001-01 AC-02: сторінка /technological-maps має title, пошук, кнопку
+            «+ Нова тех. карта» та перелік активних техкарт користувача.
+            """)
+    public void techMapsListPageShowsExpectedChrome() {
+        TechnologicalMapsListPage listPage = openListAs(UserRole.OWNER_1);
+
+        Allure.step("Перевірити chrome сторінки списку техкарт", () -> {
+            assertThat(listPage.isPageTitleVisible()).as("Title «Перегляд тех. карт»").isTrue();
+            assertThat(listPage.isProductSearchVisible()).as("Пошук за продуктом").isTrue();
+            assertThat(listPage.isIngredientSearchVisible()).as("Пошук за сировиною").isTrue();
+            assertThat(listPage.isNewTechMapButtonVisible()).as("Кнопка «Нова тех. карта»").isTrue();
+            assertThat(listPage.getDisplayedTechMapNames())
+                    .as("Є хоча б одна активна техкарта (підготовлена фікстурою)")
+                    .isNotEmpty();
+            listPage.attachScreenshot("TC-MFG-002 — tech maps list chrome");
+        });
+    }
+
     @Test(dataProvider = "adminAndOwnerRoles", priority = 10)
     @TestCaseId("TC-UI-TM-SRCH-001")
     @Story("Search tech maps by product")

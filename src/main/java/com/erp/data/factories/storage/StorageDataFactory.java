@@ -70,6 +70,11 @@ public class StorageDataFactory {
         return childStorage(parentId, namePrefix, UnitType.CREW, StorageRelation.INTERNAL);
     }
 
+    /** Точка вильоту (FLY_POINT). */
+    public static StorageRequest.StorageRequestBuilder flyPointStorage(@NonNull Long parentId, String namePrefix) {
+        return childStorage(parentId, namePrefix, UnitType.FLY_POINT, StorageRelation.INTERNAL);
+    }
+
     /** Підрозділ з обмеженою видимістю (accessMode=REGIONS). */
     public static StorageRequest.StorageRequestBuilder restrictedStorage(@NonNull Long parentId, String namePrefix) {
         return childStorage(parentId, namePrefix).accessMode(StorageAccessMode.REGIONS);

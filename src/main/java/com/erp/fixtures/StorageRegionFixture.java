@@ -30,6 +30,8 @@ import java.util.Set;
 @Slf4j
 public class StorageRegionFixture extends BaseFixture {
 
+    public static final String SYSTEM_ALL_RESOURCES_REGION_NAME = "Системний регіон - ВСІ РЕСУРСИ";
+
     private final Set<Long> regionsToCleanup = new LinkedHashSet<>();
 
     public StorageRegionFixture(TestContext testContext, ApiExecutor apiExecutor) {
@@ -146,6 +148,29 @@ public class StorageRegionFixture extends BaseFixture {
                 ApiEndpointDefinition.STORAGE_REGION_GET_ALL, role, params);
         validateSuccess(response, "Find storage regions");
         return DatabaseIntegrityValidator.extractList(response, StorageRegionResponse.class);
+    }
+
+    @Step("API: знайти системний регіон ВСІ РЕСУРСИ")
+    public StorageRegionResponse findSystemAllResourcesRegion() {
+        List<StorageRegionResponse> matches = findRegions(
+                UserRole.ADMIN, SYSTEM_ALL_RESOURCES_REGION_NAME).stream()
+                .filter(region -> SYSTEM_ALL_RESOURCES_REGION_NAME.equals(region.getName()))
+                .toList();
+        if (matches.size() != 1) {
+            throw new IllegalStateException(
+                    "Expected exactly one system ALL RESOURCES region, found " + matches.size());
+        }
+        return matches.getFirst();
+    }
+
+    @Step("API: додати storage id={storageId} до системного регіону ВСІ РЕСУРСИ")
+    public StorageRegionResponse attachMemberToSystemAllResourcesRegion(Long storageId) {
+        return addRegionMembers(findSystemAllResourcesRegion().getId(), storageId);
+    }
+
+    @Step("API: прибрати storage id={storageId} із системного регіону ВСІ РЕСУРСИ")
+    public StorageRegionResponse detachMemberFromSystemAllResourcesRegion(Long storageId) {
+        return removeRegionMembers(findSystemAllResourcesRegion().getId(), storageId);
     }
 
     @Step("API: PUT оновити область видимості id={regionId}")

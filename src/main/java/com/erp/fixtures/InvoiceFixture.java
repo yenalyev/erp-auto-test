@@ -39,7 +39,8 @@ public class InvoiceFixture extends BaseFixture {
                 return;
             }
             if (attempt < maxAttempts) {
-                sleep(DEFAULT_POLL_INTERVAL_MS);
+                // Match journal poll spacing — async PDF generation can take several seconds under load.
+                sleep(2_000);
             }
         }
         throw new IllegalStateException(

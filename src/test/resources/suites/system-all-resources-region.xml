@@ -1,0 +1,28 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="System ALL RESOURCES Region" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="System ALL RESOURCES API">
+        <classes>
+            <class name="com.erp.tests.functional.storage.SystemAllResourcesRegionTest"/>
+        </classes>
+    </test>
+
+    <test name="System ALL RESOURCES UI">
+        <classes>
+            <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>
+            <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest">
+                <methods>
+                    <include name="systemRegionMemberSeesCompleteDictionaryWithoutSentinel"/>
+                    <include name="systemRegionPageSearchHidesSentinel"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

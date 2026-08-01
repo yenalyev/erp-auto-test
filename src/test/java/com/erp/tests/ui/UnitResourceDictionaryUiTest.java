@@ -23,7 +23,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,6 +44,7 @@ public class UnitResourceDictionaryUiTest extends BaseUITest {
     private StorageFixture storageFixture;
     private StorageRegionFixture regionFixture;
     private ResourceFixture resourceFixture;
+    private final Set<Long> systemRegionMembers = new LinkedHashSet<>();
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -57,6 +60,13 @@ public class UnitResourceDictionaryUiTest extends BaseUITest {
 
     @AfterMethod(alwaysRun = true)
     public void cleanupScenario() {
+        for (Long storageId : Set.copyOf(systemRegionMembers)) {
+            try {
+                regionFixture.detachMemberFromSystemAllResourcesRegion(storageId);
+            } finally {
+                systemRegionMembers.remove(storageId);
+            }
+        }
         TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
     }
 
@@ -152,6 +162,78 @@ public class UnitResourceDictionaryUiTest extends BaseUITest {
                     .as("FULL_ACCESS workspace має показувати extra у глобальному словнику")
                     .isTrue();
             listPage.attachScreenshot("TC-UI-RES-UNIT-002 — full access workspace");
+        });
+    }
+
+    @Test
+    @TestCaseId("TC-UI-RES-UNIT-003")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("UNIT-member системного регіону бачить реальні ресурси, але не технічний «Всі ресурси».")
+    public void systemRegionMemberSeesCompleteDictionaryWithoutSentinel() {
+        ResourceResponse first = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "all-a-");
+        ResourceResponse second = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "all-b-");
+        StorageResponse parent = storageFixture.resolveParentUnit();
+        StorageResponse unit = storageFixture.createStorage(
+                StorageDataFactory.restrictedUnitStorage(parent.getId(), SCENARIO_PREFIX + "all-").build());
+        regionFixture.attachMemberToSystemAllResourcesRegion(unit.getId());
+        systemRegionMembers.add(unit.getId());
+
+        injectRoleSession(UserRole.ADMIN, unit.getId());
+        ResourcesListPage listPage = new ResourcesListPage(page).open(unit.getId());
+        listPage.searchByName(RESOURCE_PREFIX);
+
+        page.waitForTimeout(1_000);
+        page.getByText(normalizeResourceName(first.getName()), new com.microsoft.playwright.Page.GetByTextOptions()
+                .setExact(true)).waitFor();
+        page.getByText(normalizeResourceName(second.getName()), new com.microsoft.playwright.Page.GetByTextOptions()
+                .setExact(true)).waitFor();
+
+        listPage.searchByName("Всі ресурси");
+        page.waitForTimeout(1_000);
+        assertThat(page.getByText("Всі ресурси", new com.microsoft.playwright.Page.GetByTextOptions()
+                .setExact(true)).count())
+                .as("Технічний resource id=0 не повинен відображатися у словнику")
+                .isZero();
+        listPage.attachScreenshot("TC-UI-RES-UNIT-003 — system region dictionary");
+    }
+
+    @Test
+    @TestCaseId("TC-UI-STR-RES-023")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            UI-аналог TC-STR-RES-023: пошук /resources з name-фільтром (без пагінації повного каталогу).
+            Member системного регіону бачить унікальний ресурс пошуком; sentinel «Всі ресурси» відсутній.
+            """)
+    public void systemRegionPageSearchHidesSentinel() {
+        ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "page-");
+        String resourceName = normalizeResourceName(resource.getName());
+        StorageResponse parent = storageFixture.resolveParentUnit();
+        StorageResponse unit = storageFixture.createStorage(
+                StorageDataFactory.restrictedUnitStorage(parent.getId(), SCENARIO_PREFIX + "page-").build());
+        regionFixture.attachMemberToSystemAllResourcesRegion(unit.getId());
+        systemRegionMembers.add(unit.getId());
+
+        injectRoleSession(UserRole.ADMIN, unit.getId());
+        ResourcesListPage listPage = new ResourcesListPage(page).open(unit.getId());
+
+        Allure.step("UI: пошу за точним іменем знаходить ресурс", () -> {
+            listPage.searchByName(resourceName);
+            page.waitForTimeout(1_000);
+            page.getByText(resourceName, new com.microsoft.playwright.Page.GetByTextOptions()
+                    .setExact(true)).waitFor();
+            assertThat(listPage.isResourceVisible(resourceName))
+                    .as("Тестовий ресурс має бути видимий після name-фільтра")
+                    .isTrue();
+        });
+
+        Allure.step("UI: sentinel «Всі ресурси» відсутній у словнику", () -> {
+            listPage.searchByName("Всі ресурси");
+            page.waitForTimeout(1_000);
+            assertThat(page.getByText("Всі ресурси", new com.microsoft.playwright.Page.GetByTextOptions()
+                    .setExact(true)).count())
+                    .as("Технічний resource id=0 не повинен відображатися у словнику")
+                    .isZero();
+            listPage.attachScreenshot("TC-UI-STR-RES-023 — page search hides sentinel");
         });
     }
 

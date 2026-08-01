@@ -24,16 +24,21 @@ public class EmployeeFixture extends BaseFixture {
 
     @Step("API: створити співробітника «{callSign}» на storage {storageId}")
     public EmployeeResponse createEmployee(UserRole role, long storageId, String callSign) {
-        EmployeeRequest request = EmployeeRequest.builder()
-                .callSign(callSign)
-                .storageIds(List.of(storageId))
-                .build();
-        Response response = apiExecutor.execute(ApiEndpointDefinition.EMPLOYEE_POST_CREATE, role, request);
+        Response response = createEmployeeRaw(role, storageId, callSign);
         validateSuccess(response, "Create employee");
         SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.EMPLOYEE_POST_CREATE);
         EmployeeResponse employee = response.as(EmployeeResponse.class);
         log.info("Employee created: id={}, callSign={}", employee.getId(), employee.getCallSign());
         return employee;
+    }
+
+    @Step("API: POST employee raw callSign={callSign} storage={storageId}")
+    public Response createEmployeeRaw(UserRole role, long storageId, String callSign) {
+        EmployeeRequest request = EmployeeRequest.builder()
+                .callSign(callSign)
+                .storageIds(List.of(storageId))
+                .build();
+        return apiExecutor.execute(ApiEndpointDefinition.EMPLOYEE_POST_CREATE, role, request);
     }
 
     @Step("API: отримати сторінку співробітників для storage {storageId}")

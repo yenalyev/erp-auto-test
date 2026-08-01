@@ -14,4 +14,5 @@ import lombok.NoArgsConstructor;
 public class StorageAmountResponse {
     private SimpleEntityResponse storage;
     private Double amount;
+    private Double bookedAmount;
 }

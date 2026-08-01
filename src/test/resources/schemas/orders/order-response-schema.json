@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OrderResponse",
+  "description": "Matches backend org.pm.tk.dto.response.order.OrderResponse",
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer" },
+    "state": {
+      "type": "string",
+      "enum": ["NEW", "IN_PROGRESS", "DONE", "CANCELLED"]
+    },
+    "storage": { "type": "object" },
+    "gatheringStorage": { "type": ["object", "null"] },
+    "activeBookings": { "type": ["integer", "null"] },
+    "preparedBookings": { "type": ["integer", "null"] },
+    "createdBy": { "type": ["string", "null"] },
+    "createdAt": { "type": ["string", "null"], "format": "date-time" },
+    "lines": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "comments": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  },
+  "required": ["id", "state"],
+  "additionalProperties": true
+}

@@ -18,6 +18,7 @@
     <test name="Equipment API">
         <classes>
             <class name="com.erp.tests.functional.equipment.EquipmentSelectorContractTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentInventoryCreateTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
         </classes>
     </test>

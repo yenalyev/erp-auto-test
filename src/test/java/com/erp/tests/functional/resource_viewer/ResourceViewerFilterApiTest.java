@@ -19,9 +19,11 @@ import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceRelocationSumViewerResponse;
 import com.erp.models.response.ResourceRelocationViewerResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -33,14 +35,18 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -96,7 +102,8 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
         relocationFixture.prepareContext();
 
         productionStorageId = ConfigProvider.getOwner1StorageId();
-        receiverUnitId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
+        // «Інші» = all except ПМ 414 / СБС trees — pick an existing UNIT in that set
+        receiverUnitId = resolveUnitVisibleInOthersFilter();
         techMapFixture.setMode(productionStorageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
 
         List<ResourceCategoryResponse> categories = apiExecutor
@@ -367,8 +374,8 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
                 .map(ResourceRelocationViewerResponse::getRelocationId)
                 .toList();
         if (!otherIds.contains(sent.getId())) {
-            throw new SkipException(
-                    "receiverUnitId=" + receiverUnitId + " не входить у фільтр «Інші» на цьому env "
+            throw new AssertionError(
+                    "receiverUnitId=" + receiverUnitId + " не входить у фільтр «Інші» "
                             + "(перевірте business_unit_filter / дерево ПМ 414·СБС)");
         }
         assertThat(amountOf(fetchSums(otherOnly), alcohol.getId()))
@@ -413,7 +420,7 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
                 .map(ResourceRelocationViewerResponse::getRelocationId)
                 .toList();
         if (!visible.contains(sent.getId())) {
-            throw new SkipException(
+            throw new AssertionError(
                     "receiverUnitId=" + receiverUnitId + " не в «Інші» — AND-кейс з ПМ 414 нерелевантний");
         }
 
@@ -491,6 +498,144 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
                 amount,
                 batchNumber,
                 true);
+    }
+
+    /**
+     * «Інші» filter = include all minus descendants of exclude roots (ПМ 414 / СБС).
+     * Prefer DB resolution; fall back to API probe via a short relocation sample.
+     */
+    private Long resolveUnitVisibleInOthersFilter() {
+        if (getDbHelper() != null) {
+            try {
+                Long fromDb = resolveUnitInOthersViaDb();
+                if (fromDb != null) {
+                    log.info("RVW filter: receiverUnitId={} from business_unit_filter «Інші» (DB)", fromDb);
+                    return fromDb;
+                }
+            } catch (SQLException e) {
+                log.warn("RVW filter: DB resolve for «Інші» failed: {}", e.getMessage());
+            }
+        }
+        return resolveUnitInOthersViaApiProbe();
+    }
+
+    private Long resolveUnitInOthersViaDb() throws SQLException {
+        String includeIds;
+        String excludeIds;
+        String usageType;
+        String sql = "SELECT include_ids, exclude_ids, usage_type FROM business_unit_filter WHERE lower(name) = lower(?)";
+        try (PreparedStatement ps = getDbHelper().getConnection().prepareStatement(sql)) {
+            ps.setString(1, FILTER_OTHER);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                includeIds = rs.getString("include_ids");
+                excludeIds = rs.getString("exclude_ids");
+                usageType = rs.getString("usage_type");
+            }
+        }
+
+        Set<Long> excluded = new HashSet<>();
+        if (excludeIds != null && !excludeIds.isBlank()) {
+            List<Long> roots = Arrays.stream(excludeIds.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Long::valueOf)
+                    .toList();
+            excluded.addAll(expandStorageDescendants(roots));
+        }
+
+        Set<Long> included = null;
+        if (includeIds != null && !includeIds.isBlank() && !"all".equalsIgnoreCase(includeIds.trim())) {
+            List<Long> roots = Arrays.stream(includeIds.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Long::valueOf)
+                    .toList();
+            included = "DIRECT".equalsIgnoreCase(usageType)
+                    ? new HashSet<>(roots)
+                    : expandStorageDescendants(roots);
+        }
+
+        final Set<Long> includeSet = included;
+        Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, UserRole.ADMIN);
+        List<StorageResponse> storages = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
+        return storages.stream()
+                .filter(s -> "UNIT".equalsIgnoreCase(s.getType()))
+                .filter(s -> Boolean.TRUE.equals(s.getActive()) || s.getActive() == null)
+                .map(StorageResponse::getId)
+                .filter(id -> !excluded.contains(id))
+                .filter(id -> includeSet == null || includeSet.contains(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Set<Long> expandStorageDescendants(List<Long> roots) throws SQLException {
+        if (roots.isEmpty()) {
+            return Set.of();
+        }
+        String placeholders = roots.stream().map(r -> "?").collect(Collectors.joining(","));
+        String sql = """
+                WITH RECURSIVE tree AS (
+                    SELECT id FROM storage WHERE id IN (%s)
+                    UNION ALL
+                    SELECT s.id FROM storage s JOIN tree t ON s.parent_id = t.id
+                )
+                SELECT id FROM tree
+                """.formatted(placeholders);
+        Set<Long> ids = new HashSet<>();
+        try (PreparedStatement ps = getDbHelper().getConnection().prepareStatement(sql)) {
+            for (int i = 0; i < roots.size(); i++) {
+                ps.setLong(i + 1, roots.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getLong(1));
+                }
+            }
+        }
+        return ids;
+    }
+
+    private Long resolveUnitInOthersViaApiProbe() {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, UserRole.ADMIN);
+        List<StorageResponse> units = DatabaseIntegrityValidator.extractList(response, StorageResponse.class)
+                .stream()
+                .filter(s -> "UNIT".equalsIgnoreCase(s.getType()))
+                .filter(s -> Boolean.TRUE.equals(s.getActive()) || s.getActive() == null)
+                .limit(12)
+                .toList();
+        if (units.isEmpty()) {
+            throw new AssertionError("No UNIT storages available to probe «Інші» filter");
+        }
+
+        ResourceResponse probe = resourceFixture.createUniqueResource("RVW-OTH-" + uniqueSuffix());
+        relocationFixture.ensureStock(productionStorageId, probe.getId(), 50.0);
+        Map<Long, Long> relocToUnit = new HashMap<>();
+        for (StorageResponse unit : units) {
+            try {
+                RelocationResponse sent = relocationFixture.createSend(
+                        UserRole.ADMIN, productionStorageId, unit.getId(), probe.getId(), 1.0);
+                relocToUnit.put(sent.getId(), unit.getId());
+            } catch (RuntimeException e) {
+                log.warn("RVW probe send to unit {} failed: {}", unit.getId(), e.getMessage());
+            }
+        }
+
+        Map<String, Object> otherOnly = new HashMap<>();
+        otherOnly.put("resourceIds", List.of(probe.getId()));
+        otherOnly.put("unitsOther", FILTER_OTHER);
+        Set<Long> visible = fetchJournal(otherOnly).stream()
+                .map(ResourceRelocationViewerResponse::getRelocationId)
+                .collect(Collectors.toSet());
+
+        return relocToUnit.entrySet().stream()
+                .filter(e -> visible.contains(e.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "No UNIT from probe sample appears in unitsOther=«Інші» on this env"));
     }
 
     private Map<String, Object> viewerParams(List<Long> resourceIds) {

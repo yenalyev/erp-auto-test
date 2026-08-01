@@ -26,6 +26,12 @@ public class DefectQuery {
     LocalDate endDate;
     @Builder.Default
     List<DefectType> types = List.of();
+    /**
+     * Maps to backend {@code DefectFilter.isWriteOff}:
+     * {@code true} → amount = 0 (fully written off), {@code false} → amount &gt; 0,
+     * {@code null} → no write-off filter.
+     */
+    Boolean isWriteOff;
     Integer pageSize;
 
     /** Params for the paged list ({@code GET /api/v1/defects}). */
@@ -68,6 +74,9 @@ public class DefectQuery {
         }
         if (types != null && !types.isEmpty()) {
             params.put("types", types.stream().map(Enum::name).toList());
+        }
+        if (isWriteOff != null) {
+            params.put("isWriteOff", isWriteOff);
         }
         return params;
     }

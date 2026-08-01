@@ -104,6 +104,28 @@ public class RelocationCreateOutputCrewPage extends BasePage {
         return this;
     }
 
+    public String getQuantityValue(int rowIndex) {
+        return page.getByPlaceholder(QUANTITY_PLACEHOLDER).nth(rowIndex).inputValue();
+    }
+
+    public boolean isBundleBadgeVisible(String bundleName) {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(bundleName)).isVisible();
+    }
+
+    public RelocationCreateOutputCrewPage clickBundleBadge(String bundleName) {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(bundleName)).click();
+        return this;
+    }
+
+    public RelocationCreateOutputCrewPage waitForToast(String text) {
+        page.getByText(text).waitFor();
+        return this;
+    }
+
+    public int productRowCount() {
+        return page.getByPlaceholder(RESOURCE_PLACEHOLDER).count();
+    }
+
     public RelocationCreateOutputCrewPage fillIssuer(String name, String rank) {
         page.getByText("Видав Ім'я та Прізвище")
                 .locator("xpath=following::input[1]")

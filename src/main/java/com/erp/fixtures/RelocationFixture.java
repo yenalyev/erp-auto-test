@@ -138,6 +138,35 @@ public class RelocationFixture extends BaseFixture {
         return relocation;
     }
 
+    /**
+     * Повернення від CREW на склад (CPMA-647): {@code POST /relocations/receive}.
+     * Для attached CREW бекенд спочатку тягне залишок з FLY_POINT на екіпаж.
+     */
+    @Step("API: повернення CREW→storage, {amount} од.")
+    public RelocationResponse createCrewReceive(UserRole role,
+                                                Long crewId,
+                                                Long recipientId,
+                                                Long resourceId,
+                                                double amount) {
+        Response response = tryCrewReceive(role, crewId, recipientId, resourceId, amount);
+        validateSuccess(response, "Crew receive (return)");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RELOCATION_POST_RECEIVE);
+        RelocationResponse relocation = response.as(RelocationResponse.class);
+        testContext.set(ContextKey.RELOCATION_ID, relocation.getId());
+        return relocation;
+    }
+
+    @Step("API: спроба повернення CREW→storage (raw Response)")
+    public Response tryCrewReceive(UserRole role,
+                                   Long crewId,
+                                   Long recipientId,
+                                   Long resourceId,
+                                   double amount) {
+        RelocationInputRequest request = RelocationDataFactory.buildCrewReceiveRequest(
+                crewId, recipientId, resourceId, amount);
+        return apiExecutor.executeRelocationReceive(request, role);
+    }
+
     @Step("API: видача storage→storage, {amount} од.")
     public RelocationResponse createSend(UserRole role,
                                          Long senderId,
@@ -155,6 +184,35 @@ public class RelocationFixture extends BaseFixture {
                                                         double amount,
                                                         String description) {
         return createSendInternal(role, senderId, recipientId, resourceId, amount, description, false);
+    }
+
+    @Step("API: send multi-item relocation {senderId} → {recipientId}")
+    public RelocationResponse createSendMultiItem(UserRole role,
+                                                  Long senderId,
+                                                  Long recipientId,
+                                                  List<com.erp.models.request.ResourceUsageRequest> items,
+                                                  String description) {
+        RelocationOutputRequest request = RelocationDataFactory.buildSendMultiItem(
+                senderId, recipientId, items, description);
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, role, request);
+        validateSuccess(response, "Send multi-item relocation");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RELOCATION_POST_SEND);
+        RelocationResponse relocation = response.as(RelocationResponse.class);
+        testContext.set(ContextKey.RELOCATION_ID, relocation.getId());
+        return relocation;
+    }
+
+    /**
+     * Видача на CREW/FLY_POINT: send → CREATED, потім підтвердження доставки відправником → FINISHED.
+     */
+    @Step("API: send + finish відправником (CREW/FLY_POINT lifecycle)")
+    public RelocationResponse createSendAndFinishBySender(UserRole role,
+                                                          Long senderId,
+                                                          Long recipientId,
+                                                          Long resourceId,
+                                                          double amount) {
+        RelocationResponse sent = createSend(role, senderId, recipientId, resourceId, amount);
+        return resolve(role, sent.getId(), senderId, RelocationState.FINISHED);
     }
 
     @Step("API: видача з асинхронною генерацією накладної")
@@ -316,8 +374,10 @@ public class RelocationFixture extends BaseFixture {
             String description,
             int maxAttempts,
             JournalLookup lookup) {
+        RelocationResponse lastSeen = null;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             RelocationResponse relocation = lookup.find(role, storageId, description);
+            lastSeen = relocation;
             if (relocation != null
                     && relocation.getInvoiceNumber() != null
                     && !relocation.getInvoiceNumber().isBlank()) {
@@ -327,8 +387,15 @@ public class RelocationFixture extends BaseFixture {
                 sleep(2_000);
             }
         }
+        if (lastSeen == null) {
+            throw new IllegalStateException(
+                    "Relocation not found in journal for marker '" + description
+                            + "' after " + maxAttempts + " attempts (storageId=" + storageId + ")");
+        }
         throw new IllegalStateException(
-                "Relocation with invoice number not found for marker '" + description + "' after " + maxAttempts + " attempts");
+                "Relocation found for marker '" + description
+                        + "' but invoiceNumber is still blank after " + maxAttempts
+                        + " attempts (relocationId=" + lastSeen.getId() + ")");
     }
 
     @FunctionalInterface

@@ -4,6 +4,8 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
+import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.request.UpdateNotesRequest;
 import com.erp.enums.UserRole;
 import com.erp.models.query.ProductionJournalQuery;
@@ -33,10 +35,12 @@ public class ProductionFixture extends BaseFixture {
     private static final double INPUT_STOCK = 100.0;
 
     private final TechnologicalMapFixture techMapFixture;
+    private final ResourceFixture resourceFixture;
 
     public ProductionFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
         this.techMapFixture = new TechnologicalMapFixture(testContext, apiExecutor);
+        this.resourceFixture = new ResourceFixture(testContext, apiExecutor);
     }
 
     @Step("FIXTURE: Підготовка середовища для тестів виробництва")
@@ -45,25 +49,32 @@ public class ProductionFixture extends BaseFixture {
             return;
         }
 
-        techMapFixture.prepareContext();
+        // Unit + category for unique resource creation (do not reuse catalog shared resources —
+        // staging often has deactivated first-page resources, and UPDATE/DELETE validate active).
+        resourceFixture.fetchSharedUnit(1);
+        resourceFixture.fetchSharedResourceCategory();
 
         Long storageId = ConfigProvider.getOwner1StorageId();
-        TechnologicalMapResponse techMap = techMapFixture.createTechMapAs(UserRole.ADMIN, storageId);
+        String suffix = String.valueOf(System.currentTimeMillis());
+        ResourceResponse input1 = resourceFixture.createUniqueResource("PRD-IN1-" + suffix);
+        ResourceResponse input2 = resourceFixture.createUniqueResource("PRD-IN2-" + suffix);
+        ResourceResponse output = resourceFixture.createUniqueResource("PRD-OUT-" + suffix);
+        List<ResourceResponse> isolatedResources = List.of(input1, input2, output);
+
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionTechMap(isolatedResources, storageId)
+                .build();
+        TechnologicalMapResponse techMap = techMapFixture.createTechMapWithRequest(UserRole.ADMIN, request);
 
         testContext.set(ContextKey.PRODUCTION_TECH_MAP, techMap);
         testContext.set(ContextKey.DYNAMIC_TECH_MAP, techMap);
         testContext.set(ContextKey.DYNAMIC_TECH_MAP_ID, techMap.getId());
+        testContext.set(ContextKey.PRODUCTION_INPUT_RESOURCE_IDS, List.of(input1.getId(), input2.getId()));
+        testContext.set(ContextKey.PRODUCTION_OUTPUT_RESOURCE_ID, output.getId());
 
-        List<ResourceResponse> resources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
-        Long input1 = resources.get(0).getId();
-        Long input2 = resources.get(1).getId();
-        Long output = resources.get(2).getId();
-        testContext.set(ContextKey.PRODUCTION_INPUT_RESOURCE_IDS, List.of(input1, input2));
-        testContext.set(ContextKey.PRODUCTION_OUTPUT_RESOURCE_ID, output);
-
-        seedStockViaRelocation(storageId, input1, input2);
+        seedStockViaRelocation(storageId, input1.getId(), input2.getId());
         log.info("Production fixture ready: techMap={}, storage={}, inputs=[{}, {}], outputResource={}",
-                techMap.getId(), storageId, input1, input2, output);
+                techMap.getId(), storageId, input1.getId(), input2.getId(), output.getId());
     }
 
     @Step("API: GET журнал виробництва (сторінка {query.page}, size={query.pageSize})")
@@ -221,16 +232,26 @@ public class ProductionFixture extends BaseFixture {
                                               TechnologicalMapResponse techMap,
                                               double amount,
                                               String batchNumber) {
+        Response response = updateRaw(role, productionId, storageId, techMap, amount, batchNumber);
+        validateSuccess(response, "Update production id=" + productionId);
+        return response.as(ManufacturingItemResponse.class);
+    }
+
+    @Step("API: PUT production (raw response) id={productionId}")
+    public Response updateRaw(UserRole role,
+                              Long productionId,
+                              Long storageId,
+                              TechnologicalMapResponse techMap,
+                              double amount,
+                              String batchNumber) {
         var request = com.erp.data.factories.production.ProductionDataFactory
                 .buildCreateRequest(techMap, amount, java.time.LocalDate.now(), batchNumber);
-        Response response = apiExecutor.execute(
+        return apiExecutor.execute(
                 ApiEndpointDefinition.PRODUCTION_PUT_UPDATE,
                 role,
                 request,
                 productionId,
                 storageId);
-        validateSuccess(response, "Update production id=" + productionId);
-        return response.as(ManufacturingItemResponse.class);
     }
 
     @Step("API: видалити виробництво id={productionId} зі складу {storageId}")

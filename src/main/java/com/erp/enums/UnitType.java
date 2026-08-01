@@ -5,5 +5,6 @@ public enum UnitType {
     UNIT,
     STORAGE,
     PRODUCTION,
-    CREW
+    CREW,
+    FLY_POINT
 }

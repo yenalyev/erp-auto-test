@@ -25,4 +25,29 @@ public class UserMeResponse {
     @Builder.Default
     private List<Long> allowedStorageIds = new ArrayList<>();
     private Boolean isAdmin;
+
+    /** True when expanded permissions include {@code entity::<storageId>::read} (or {@code ::view}). */
+    public boolean hasReadOn(long storageId) {
+        String id = String.valueOf(storageId);
+        return permissions != null && permissions.stream().anyMatch(p -> {
+            String[] parts = p.split("::");
+            return parts.length == 3
+                    && id.equals(parts[1])
+                    && ("read".equals(parts[2]) || "view".equals(parts[2]));
+        });
+    }
+
+    /**
+     * True when expanded permissions include a mutate op ({@code create}/{@code update}/{@code delete})
+     * for the given storage id.
+     */
+    public boolean hasMutateOn(long storageId) {
+        String id = String.valueOf(storageId);
+        return permissions != null && permissions.stream().anyMatch(p -> {
+            String[] parts = p.split("::");
+            return parts.length == 3
+                    && id.equals(parts[1])
+                    && ("create".equals(parts[2]) || "update".equals(parts[2]) || "delete".equals(parts[2]));
+        });
+    }
 }

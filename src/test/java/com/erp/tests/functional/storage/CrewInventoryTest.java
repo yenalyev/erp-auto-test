@@ -2,8 +2,10 @@ package com.erp.tests.functional.storage;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.inventory.InventoryDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.models.request.InventoryRequest;
 import com.erp.models.response.CrewResourceStockResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
@@ -31,7 +33,8 @@ import static org.assertj.core.api.Assertions.within;
 
 /**
  * Залишки екіпажів: звіт GET /storages/inventory/crews та direct GET /storages/{crewId}/inventory.
- * Owner: 200 для екіпажів у CREWS локації, 403 поза областю.
+ * Owner читає через crews report; direct GET без {@code inventory-list::{crew}::read} → 403 (AC-04).
+ * Crew-Manager має direct read (AC-05); OWNER поза CREWS / без membership → 403/404 (AC-06).
  */
 @Slf4j
 @Epic("Master Data")
@@ -62,7 +65,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
         resourceId = resource.getId();
 
         relocationFixture.ensureStock(scenario.memberStorageId(), resourceId, 100.0);
-        relocationFixture.createSend(
+        relocationFixture.createSendAndFinishBySender(
                 UserRole.OWNER_1,
                 scenario.memberStorageId(),
                 scenario.crew().getId(),
@@ -117,26 +120,19 @@ public class CrewInventoryTest extends CrewApiTestBase {
     @TestCaseId("TC-CREW-INV-007")
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007)
     @Severity(SeverityLevel.CRITICAL)
-    public void testOwner1CanReadAttachedCrewInventory() {
-        // Owner reads crew stock via crews report (UI mode=crews); direct GET /storages/{crew}/inventory
-        // requires Crew-Manager role (inventory-list::{crew}::read) — see TC-CREW-INV-007b.
-        Map<String, Object> params = crewInventoryParams("STOCK");
-        List<CrewResourceStockResponse> rows = crewFixture.getCrewInventory(UserRole.OWNER_1, params);
-        CrewResourceStockResponse row = rows.stream()
-                .filter(r -> r.getCrew() != null
-                        && Objects.equals(r.getCrew().getId(), scenario.crew().getId())
-                        && r.getResource() != null
-                        && Objects.equals(r.getResource().getId(), resourceId))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError(
-                        "OWNER_1 — не знайдено рядок crew stock report для crew="
-                                + scenario.crew().getId() + " resource=" + resourceId));
-
-        assertThat(row.getAmount().doubleValue()).isCloseTo(ISSUE_AMOUNT, within(0.01));
+    public void owner1DeniedDirectCrewInventoryWithoutInventoryListPerm() {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_INVENTORY_GET,
+                UserRole.OWNER_1,
+                uiInventoryParams(),
+                String.valueOf(scenario.crew().getId()));
+        assertThat(response.statusCode())
+                .as("OWNER_1 без inventory-list::{crew}::read — direct GET inventory екіпажу заборонено (AC-04)")
+                .isEqualTo(403);
     }
 
     @Test(priority = 22)
-    @TestCaseId("TC-CREW-INV-007b")
+    @TestCaseId("TC-CREW-INV-007B")
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007B)
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewManagerCanReadCrewDirectInventory() {
@@ -171,7 +167,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
     }
 
     @Test(priority = 26)
-    @TestCaseId("TC-CREW-INV-008b")
+    @TestCaseId("TC-CREW-INV-008B")
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_008B)
     @Severity(SeverityLevel.CRITICAL)
     public void testOwner1DeniedUnattachedCrewInventory() {
@@ -274,6 +270,70 @@ public class CrewInventoryTest extends CrewApiTestBase {
             inventoryFixture.setResourceAmount(crewId, UserRole.ADMIN, resourceId, targetAmount);
             double stock = relocationFixture.getResourceStock(crewId, resourceId, UserRole.ADMIN);
             assertThat(stock).isCloseTo(targetAmount, within(0.01));
+        } finally {
+            inventoryFixture.closeSession(crewId);
+        }
+    }
+
+    @Test(priority = 55)
+    @TestCaseId("TC-CREW-INV-014")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_014)
+    @Severity(SeverityLevel.CRITICAL)
+    public void putInventoryOnClosedCrewSessionReturns403() {
+        long crewId = scenario.crew().getId();
+        inventoryFixture.ensureClosed(crewId);
+        InventoryRequest request = InventoryDataFactory.mergeWithExisting(
+                inventoryFixture.listItems(crewId, UserRole.ADMIN),
+                Map.of(resourceId, ISSUE_AMOUNT + 1.0));
+        Response response = inventoryFixture.conductInventoryRaw(crewId, UserRole.ADMIN, request);
+        assertThat(response.statusCode()).isEqualTo(403);
+        assertThat(relocationFixture.getResourceStock(crewId, resourceId, UserRole.ADMIN))
+                .isCloseTo(ISSUE_AMOUNT, within(0.01));
+    }
+
+    @Test(priority = 56)
+    @TestCaseId("TC-CREW-INV-015")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_015)
+    @Severity(SeverityLevel.CRITICAL)
+    public void crewManagerCanOpenAndConductInventory() {
+        long crewId = scenario.crew().getId();
+        inventoryFixture.ensureClosed(crewId);
+        refreshRoleSessions(UserRole.CREW_MANAGER);
+
+        Response open = inventoryFixture.putStatus(crewId, UserRole.CREW_MANAGER, true);
+        assertThat(open.statusCode())
+                .as("Crew-Manager може відкрити сесію на CREW у CREWS region")
+                .isBetween(200, 299);
+        try {
+            double target = ISSUE_AMOUNT + 2.0;
+            InventoryRequest request = InventoryDataFactory.mergeWithExisting(
+                    inventoryFixture.listItems(crewId, UserRole.CREW_MANAGER),
+                    Map.of(resourceId, target));
+            Response put = inventoryFixture.conductInventoryRaw(crewId, UserRole.CREW_MANAGER, request);
+            assertThat(put.statusCode())
+                    .as("Crew-Manager PUT inventory")
+                    .isBetween(200, 299);
+            assertThat(relocationFixture.getResourceStock(crewId, resourceId, UserRole.CREW_MANAGER))
+                    .isCloseTo(target, within(0.01));
+        } finally {
+            inventoryFixture.ensureClosed(crewId);
+        }
+    }
+
+    @Test(priority = 57)
+    @TestCaseId("TC-CREW-INV-NEG-01")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_NEG_01)
+    @Severity(SeverityLevel.CRITICAL)
+    public void putNegativeAmountOnCrewReturns400() {
+        long crewId = scenario.crew().getId();
+        inventoryFixture.ensureClosed(crewId);
+        inventoryFixture.openSession(crewId);
+        try {
+            InventoryRequest bad = InventoryDataFactory.mergeWithExisting(
+                    inventoryFixture.listItems(crewId, UserRole.ADMIN),
+                    Map.of(resourceId, -2.0));
+            Response response = inventoryFixture.conductInventoryRaw(crewId, UserRole.ADMIN, bad);
+            assertThat(response.statusCode()).isEqualTo(400);
         } finally {
             inventoryFixture.closeSession(crewId);
         }

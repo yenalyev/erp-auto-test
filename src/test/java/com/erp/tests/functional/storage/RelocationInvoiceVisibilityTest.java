@@ -40,7 +40,8 @@ public class RelocationInvoiceVisibilityTest extends StorageApiTestBase {
     private static final Object OWNER2_ACCESS_LOCK = new Object();
     private static final String SCENARIO_PREFIX = "rel-inv-vis-";
     private static final double SEND_AMOUNT = 1.0;
-    private static final int INVOICE_MAX_ATTEMPTS = 5;
+    /** Async invoice generation under suite load needs a wider poll window than a quick smoke. */
+    private static final int INVOICE_MAX_ATTEMPTS = 15;
 
     private RelocationFixture relocationFixture;
     private InvoiceFixture invoiceFixture;
@@ -92,6 +93,13 @@ public class RelocationInvoiceVisibilityTest extends StorageApiTestBase {
                 .as("відправник має бути type=%s", senderType)
                 .isEqualTo(senderType);
 
+        Allure.step("API: дочекатись async-файлу накладної (/invoice/{id}/exists)", () ->
+                invoiceFixture.waitUntilExistsAttempts(
+                        UserRole.ADMIN,
+                        scenario.relocationId(),
+                        scenario.senderId(),
+                        INVOICE_MAX_ATTEMPTS));
+
         RelocationResponse inTransit = Allure.step(
                 "API: № накладної у журналі «В дорозі» (ADMIN, scope sender)",
                 () -> relocationFixture.waitForInTransitWithInvoiceNumberAttempts(
@@ -100,12 +108,7 @@ public class RelocationInvoiceVisibilityTest extends StorageApiTestBase {
                         scenario.description(),
                         INVOICE_MAX_ATTEMPTS));
 
-        Allure.step("API: файл накладної існує (/invoice/{id}/exists)", () -> {
-            invoiceFixture.waitUntilExistsAttempts(
-                    UserRole.ADMIN,
-                    scenario.relocationId(),
-                    scenario.senderId(),
-                    INVOICE_MAX_ATTEMPTS);
+        Allure.step("API: поля журналу після генерації накладної", () -> {
             assertThat(inTransit.getCanGenerateInvoice())
                     .as("canGenerateInvoice для INTERNAL %s", senderType)
                     .isTrue();

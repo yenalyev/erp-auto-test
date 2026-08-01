@@ -150,6 +150,18 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: PUT та DELETE .../regions/{id}/resources → HTTP 403.
             """ + ON_FAIL_API;
 
+    public static final String TC_STR_REG_RBAC_001 = """
+            Що перевіряємо: OWNER_2 не керує областями видимості локацій.
+            Тестові дані: recipient storage; region створена ADMIN; request POST/PUT.
+            Очікуваний результат: POST/PUT/DELETE /storages/regions → HTTP 403.
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_REG_050B = """
+            Що перевіряємо: revoke explicit grant прибирає viewer з links видимої локації.
+            Тестові дані: visible + viewer storages; PUT grant; DELETE grant.
+            Очікуваний результат: після DELETE GET .../locations не містить viewer.
+            """ + ON_FAIL_API;
+
     public static final String TC_UI_RES_UNIT_001 = """
             Що перевіряємо: UI /resources показує лише ресурси з області видимості UNIT workspace.
             Хто виконує: API setup (ADMIN); UI Playwright /resources з selectedStorageId=UNIT.
@@ -229,8 +241,9 @@ public final class StorageRegionsAllureDescriptions {
 
     public static final String TC_STR_CREW_001 = """
             Що перевіряємо: ADMIN створює область accessMode=CREWS.
-            Тестові дані: recipient — UNIT crew-reg-rec-; request accessMode=CREWS.
-            Очікуваний результат: HTTP 200; schema; accessMode=CREWS; recipientStorage.id збігається.
+            Тестові дані: recipient у request — UNIT crew-reg-rec-; accessMode=CREWS.
+            Очікуваний результат: HTTP 200; schema; accessMode=CREWS; id не null.
+            Контракт stage: для CREWS API може не повертати recipientStorage (null — ок).
             """ + ON_FAIL_API;
 
     public static final String TC_STR_CREW_002 = """
@@ -248,7 +261,8 @@ public final class StorageRegionsAllureDescriptions {
     public static final String TC_STR_CREW_004 = """
             Що перевіряємо: GET області CREWS за id.
             Тестові дані: prepareSingleCrewScenario.
-            Очікуваний результат: accessMode=CREWS; recipientStorage.id = unit.id.
+            Очікуваний результат: id збігається; accessMode=CREWS.
+            Контракт stage: для CREWS API може не повертати recipientStorage (null — ок).
             """ + ON_FAIL_API;
 
     public static final String TC_STR_CREW_005 = """
@@ -276,15 +290,15 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_REL_001 = """
-            Що перевіряємо: видача UNIT→CREW → AUTO_FINISHED; stock sender −N, crew +N.
-            Тестові дані: CrewRegionScenario; resource з stock 100; ISSUE_AMOUNT=20.
-            Очікуваний результат: state=AUTO_FINISHED; stock snapshots підтверджують дебет/кредит.
+            Що перевіряємо: видача на unattached CREW → CREATED («В дорозі»), потім FINISHED відправником.
+            Тестові дані: CrewRegionScenario UNIT→CREW; resource зі stock; ISSUE_AMOUNT=15.
+            Очікуваний результат: після send — CREATED, sender −N, crew без +N; після resolve FINISHED — crew +N.
             """ + ON_FAIL_STOCK;
 
     public static final String TC_CREW_REL_002 = """
-            Що перевіряємо: видача на CREW у журналі за productIds + senderIds.
-            Тестові дані: send UNIT→crew; journal query sentHistoryUi.
-            Очікуваний результат: relocation.id у сторінці журналу.
+            Що перевіряємо: після send — рядок у «В дорозі»; після finish — у «Видано».
+            Тестові дані: send з description-маркером; in-transit journal + sentHistoryUi.
+            Очікуваний результат: CREATED у in-transit; після FINISHED — id у sent history.
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_REL_003 = """
@@ -294,9 +308,9 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_STOCK;
 
     public static final String TC_CREW_REL_004 = """
-            Що перевіряємо: multi-resource send (2+ рядки) → AUTO_FINISHED; stock обох ресурсів оновлюється.
+            Що перевіряємо: multi-resource send → CREATED, потім FINISHED відправником; stock обох ресурсів.
             Тестові дані: CrewRegionScenario; 2 унікальних ресурси з stock.
-            Очікуваний результат: state=AUTO_FINISHED; дебет sender / кредит crew для кожного resourceId.
+            Очікуваний результат: після send — дебет sender, crew без credit; після FINISHED — credit на crew.
             """ + ON_FAIL_STOCK;
 
     public static final String TC_CREW_REL_005 = """
@@ -306,33 +320,157 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_REL_006 = """
-            Що перевіряємо: видача з PRODUCTION sender → AUTO_FINISHED.
+            Що перевіряємо: видача з PRODUCTION sender → CREATED → FINISHED відправником.
             Тестові дані: ephemeral PRODUCTION child; stock; crew recipient.
-            Очікуваний результат: state=AUTO_FINISHED; stock PRODUCTION −N, crew +N.
+            Очікуваний результат: після send — PRODUCTION −N, crew без +N; після FINISHED — crew +N.
             """ + ON_FAIL_STOCK;
 
     public static final String TC_CREW_REL_007 = """
-            Що перевіряємо: видача на CREW видима в журналі отримувача (crew storage).
-            Тестові дані: send → crew; query receivedHistoryUi(crewId).
+            Що перевіряємо: після FINISHED видача на CREW видима в журналі отримувача.
+            Тестові дані: createSendAndFinishBySender → crew; query receivedHistoryUi(crewId).
             Очікуваний результат: relocation.id у сторінці журналу отримувача.
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_REL_008 = """
-            Що перевіряємо: multi-item send — кожна позиція не перевищує stock на sender.
+            Що перевіряємо: multi-item send у межах stock → CREATED → FINISHED.
             Тестові дані: 2 ресурси з відомим stock; суми в межах залишків.
-            Очікуваний результат: HTTP 200; stock snapshots коректні для обох.
+            Очікуваний результат: HTTP 200; state CREATED після send, FINISHED після resolve відправником.
             """ + ON_FAIL_STOCK;
 
     public static final String TC_CREW_REL_009 = """
             Що перевіряємо: UNIT→CREW relocation відсутній у GET /relocations для ACCOUNTANT.
-            Тестові дані: send UNIT→crew під OWNER_1; query як ACCOUNTANT.
+            Тестові дані: send+finish UNIT→crew під OWNER_1; query як ACCOUNTANT.
             Очікуваний результат: relocation.id не в результатах (бізнес-контракт логістики).
             """ + ON_FAIL_API;
 
+    public static final String TC_CREW_REL_010 = """
+            Що перевіряємо: отримувач (CREW) не може resolve FINISHED — лише відправник.
+            Тестові дані: send → CREATED; resolveRaw зі storageId=crew.
+            Очікуваний результат: HTTP 4xx; після resolve відправником — FINISHED.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_REL_011 = """
+            Що перевіряємо: відправник може скасувати CREATED (RETURNED) і відновити stock.
+            Тестові дані: send → CREATED; resolve RETURNED відправником.
+            Очікуваний результат: state=RETURNED; stock sender і crew як до send.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_FLY_REL_001 = """
+            Що перевіряємо: send на FLY_POINT → CREATED → FINISHED відправником; баланс на точці.
+            Тестові дані: prepareFlyPointScenario; ISSUE_AMOUNT.
+            Очікуваний результат: після send FLY_POINT без +N; після FINISHED — FLY_POINT +N.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_FLY_REL_002 = """
+            Що перевіряємо: attached CREW (parent=FLY_POINT) — після FINISHED auto-forward на точку.
+            Тестові дані: prepareAttachedCrewScenario UNIT→FLY_POINT→CREW.
+            Очікуваний результат: після FINISHED crew без приросту; FLY_POINT +N.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_FLY_REL_003 = """
+            Що перевіряємо: пряме CREW→FLY_POINT одразу AUTO_FINISHED.
+            Тестові дані: unattached crew зі stock; окрема FLY_POINT під UNIT.
+            Очікуваний результат: state=AUTO_FINISHED; crew −N, FLY_POINT +N.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_FLY_REL_004 = """
+            Що перевіряємо: екіпаж лише до однієї FLY_POINT; reparent FP_A→FP_B;
+            прикріплення зі stock авто-переміщує залишок CREW→FLY_POINT.
+            Тестові дані: unattached CREW зі stock; дві FLY_POINT під UNIT; PUT parentId.
+            Очікуваний результат: після attach до FP_A — crew −N, FP_A +N, parent=FP_A;
+            після reparent на FP_B — parent=FP_B; crew names лише під FP_B.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_FLY_REL_005 = """
+            Що перевіряємо: кілька CREW під однією FLY_POINT — обидва auto-forward після FINISHED.
+            Тестові дані: prepareAttachedCrewScenario + другий CREW під тим самим flyPoint.
+            Очікуваний результат: crew1/crew2 без приросту; FLY_POINT +2N; обидва в crew-names точки.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_RET_001 = """
+            Що перевіряємо: повернення від unattached CREW на склад (POST /relocations/receive).
+            Тестові дані: prepareSingleCrewScenario; видача UNIT→CREW FINISHED; RETURN_AMOUNT < stock.
+            Очікуваний результат: AUTO_FINISHED; CREW −N; склад локації +N.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_RET_002 = """
+            Що перевіряємо: повернення від attached CREW — списання з FLY_POINT (ланцюг FP→CREW→склад).
+            Тестові дані: prepareAttachedCrewScenario; після видачі stock на FP, CREW ≈ 0.
+            Очікуваний результат: AUTO_FINISHED; FLY_POINT −N; склад +N; CREW знову ≈ 0.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_RET_003 = """
+            Що перевіряємо: не можна повернути більше ніж залишок на unattached CREW.
+            Тестові дані: stock на CREW = ISSUE_AMOUNT; receive amount = ISSUE_AMOUNT+1.
+            Очікуваний результат: HTTP 400; CREW і склад без змін.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_RET_004 = """
+            Що перевіряємо: не можна повернути більше ніж залишок на FLY_POINT (attached CREW).
+            Тестові дані: stock на FP = ISSUE_AMOUNT; receive amount = ISSUE_AMOUNT+1.
+            Очікуваний результат: HTTP 400; FLY_POINT і склад без змін.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_FLY_WO_001 = """
+            Що перевіряємо: complete write-off для attached CREW списує з parent FLY_POINT, не з CREW.
+            Тестові дані: attached CREW; stock на FLY_POINT після видачі; DB seed PENDING write-off; PUT complete.
+            Очікуваний результат: CREW stock unchanged; FLY_POINT −WRITE_OFF_AMOUNT.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_FAITA_IMPL_001 = """
+            Що перевіряємо: PUT implicit-resources зберігає кілька додаткових номенклатур на один виріб (глобально).
+            Тестові дані: FLIGHT reconciliations для виробу + 2 implicit; ADMIN session.
+            Очікуваний результат: HTTP 200; response і GET /faita/resources містять обидва implicit id;
+            за наявності БД — sync_process_config.implicit_resource_usage містить усі три externalId.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FAITA_IMPL_002 = """
+            Що перевіряємо: після usage (симуляція SyncTeamProcess) у журналі з'являються write-off виробу
+            і додаткових номенклатур з однаковим amount/sourceId; complete списує всі з FLY_POINT.
+            Тестові дані: attached CREW; stock виробу+2 implicit на FLY_POINT; DB seed 3 PENDING write-off.
+            Очікуваний результат: GET write-off page містить 3 externalId; після complete FLY_POINT −N для кожного.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_INC_001 = """
+            Що перевіряємо: надзвичайна подія на send→CREW → LOST; crew без credit; WRITE_OFF на sender.
+            Тестові дані: unattached CREW; POST /incidents/relocations.
+            Очікуваний результат: LOST; crew stock unchanged; totalIncidentResources на sender +N.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_INC_002 = """
+            Що перевіряємо: надзвичайна подія на send→FLY_POINT → LOST; точка без credit.
+            Тестові дані: prepareFlyPointScenario; incident.
+            Очікуваний результат: LOST; FLY_POINT stock unchanged.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_INC_003 = """
+            Що перевіряємо: після LOST відправник не може FINISHED.
+            Тестові дані: send→CREW → incident; resolveRaw FINISHED.
+            Очікуваний результат: HTTP 4xx.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INC_004 = """
+            Що перевіряємо: після FINISHED не можна створити incident.
+            Тестові дані: createSendAndFinishBySender; POST incident.
+            Очікуваний результат: HTTP 4xx.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INC_005 = """
+            Що перевіряємо: DELETE incident → CREATED → FINISHED відправником → credit на CREW.
+            Тестові дані: send → incident → delete → resolve FINISHED.
+            Очікуваний результат: restore до CREATED; після FINISHED crew +N.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_INC_006 = """
+            Що перевіряємо: incident на attached CREW до FINISHED — без auto-forward на FLY_POINT.
+            Тестові дані: prepareAttachedCrewScenario; incident у CREATED.
+            Очікуваний результат: FLY_POINT stock unchanged.
+            """ + ON_FAIL_STOCK;
+
     public static final String TC_CREW_HIST_001 = """
-            Що перевіряємо: після createSend → totalRemovedResources на sender збільшується на ISSUE_AMOUNT.
-            Тестові дані: member storage; resource після видачі на crew.
-            Очікуваний результат: delta removed ≈ ISSUE_AMOUNT для resourceId (картка «Видано»).
+            Що перевіряємо: після send+finish на CREW → totalRemovedResources на sender +ISSUE_AMOUNT.
+            Тестові дані: member storage; createSendAndFinishBySender.
+            Очікуваний результат: delta removed ≈ ISSUE_AMOUNT (картка «Видано» після FINISHED).
             """ + ON_FAIL_API;
 
     public static final String TC_STR_CREW_013 = """
@@ -354,13 +492,11 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_007 = """
-            Що перевіряємо: OWNER_1 (Business_Unit_Owner) — GET /storages/{crewId}/inventory
-            для екіпажу, закріпленого за локацією (область CREWS).
+            Що перевіряємо: OWNER_1 (Business_Unit_Owner) без inventory-list::{crew}::read —
+            GET /storages/{crewId}/inventory для unattached CREW у області CREWS (AC-04).
             Тестові дані: prepareSingleCrewScenario (member=OWNER_1, location=unit, crew під unit) + видача;
             query як UI: searchTerm, page=0, size=100, sort=weight,desc + resource.name,asc.
-            Очікуваний результат: HTTP 200; stock≈ISSUE_AMOUNT (inventory-list::{crew}::read після appendGrantedCrews).
-            Відомий дефект: зараз 403 — Owner має лише inventory-list::{business_unit_id}::read,
-            без perm_inventory-list::{crew}::read у Business_Unit_Owner-ROLE (Keycloak).
+            Очікуваний результат: HTTP 403 (STOCK-звіт для Owner — окремо TC-CREW-INV-001; direct read — Crew-Manager TC-007b).
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_007B = """
@@ -414,6 +550,22 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: API — 1 entry для shared id; UI — 1 label; опції ⊆ API names.
             """ + ON_FAIL_UI;
 
+    public static final String TC_UI_REL_016 = """
+            Що перевіряємо: у формі «Видача» рядки «Список продукції» пронумеровані (1., 2., …).
+            Хто виконує: OWNER_1 (UI).
+            Тестові дані: /relocation/create-output; вибір ресурсу → «Додати позицію».
+            Очікуваний результат: початково «1.»; після додавання позиції — «1.» і «2.».
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_REL_017 = """
+            Що перевіряємо: кнопка згорнути/розгорнути «Доступні партії (N)» на рядку видачі.
+            Хто виконує: OWNER_1 (UI).
+            Тестові дані: external receive isProduced=true (named batch) на складі OWNER_1;
+            вибір ресурсу у формі «Видача».
+            Очікуваний результат: за замовчуванням розгорнуто (чіп видимий); після кліку — згорнуто
+            (чіп прихований, chevron -rotate-90); повторний клік — знову розгорнуто.
+            """ + ON_FAIL_UI;
+
     public static final String TC_UI_REL_011 = """
             Що перевіряємо: відправник type=STORAGE — generateInvoice=true, № у journal API, download PDF/DOCX.
             Хто виконує: ADMIN (ephemeral child STORAGE у FULL_ACCESS region; OWNER_2 не має JWT read для child).
@@ -452,6 +604,13 @@ public final class StorageRegionsAllureDescriptions {
             Що перевіряємо: UI dropdown не показує outsider поза областями видимості.
             Тестові дані: region з in-scope location; окремий outsider storage.
             Очікуваний результат: in-scope label у dropdown; outsider відсутній.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_WMS_REG_RES_016 = """
+            Що перевіряємо: RESTRICTED OWNER_2 — autocomplete «Список продукції» на формі видачі
+            показує лише in-scope ресурси області RESOURCES.
+            Тестові дані: OWNER_2 REGIONS; RESOURCES region з granted; hidden поза областю; stock на обох.
+            Очікуваний результат: granted у options; hidden відсутній.
             """ + ON_FAIL_UI;
 
     public static final String TC_UI_REL_VIS_002 = """
@@ -494,5 +653,164 @@ public final class StorageRegionsAllureDescriptions {
             — UI (Playwright, вкладка «Отримано»): OWNER_2, accessMode=REGIONS.
             Тестові дані: ephemeral STORAGE поза scope; marker у description.
             Очікуваний результат: senderName = «_приховано_»; реальне outsider.name відсутнє.
+            """ + ON_FAIL_UI;
+
+    // --- Fly point / crew inventory (REQ-CREW-003 AC-16..21) ---
+
+    public static final String TC_FLY_INV_001 = """
+            Що перевіряємо: ADMIN відкриває/закриває inventory session на FLY_POINT.
+            Тестові дані: prepareFlyPointScenario + stock після send.
+            Очікуваний результат: open=true після open; open=false після close.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_002 = """
+            Що перевіряємо: PUT inventory змінює stock на FLY_POINT при open session.
+            Тестові дані: сесія open; target = ISSUE+5.
+            Очікуваний результат: stock(FP)=target.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_003 = """
+            Що перевіряємо: PUT inventory на FLY_POINT при closed session → 403.
+            Очікуваний результат: HTTP 403; stock без змін.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_004 = """
+            Що перевіряємо: OWNER_2 (outsider) не може open/PUT inventory на FLY_POINT OWNER_1.
+            Очікуваний результат: 403/404 на status і conduct.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_005 = """
+            Матриця FP-INV-04/05: додати новий ресурс і прибрати існуючий під час inventory на FLY_POINT.
+            Очікуваний результат: extra з’являється; після omit — stock 0.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_006 = """
+            Матриця FP-INV-03 (+history): після PUT inventory на FP історія містить ADDED_INV/REMOVED_INV.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_008 = """
+            Матриця FP-INV-08: GET /storages/inventory?locations= включає рядок з FLY_POINT.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_010 = """
+            Матриця FP-INV-10: EXTERNAL FLY_POINT — create + inventory (політика INTERNAL-only або як INV-REL).
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_NEG_01 = """
+            Матриця NEG-01: PUT inventory amount < 0 на FLY_POINT → 400.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_NEG_02 = """
+            Матриця NEG-02: PUT inventory з неіснуючим resourceId на FLY_POINT → 4xx.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_INV_NEG_04 = """
+            Матриця NEG-04: два послідовні PUT на відкриту сесію FP — last-write-wins.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_011 = """
+            Матриця CR-INV-01 / OWN-03: unattached CREW inventory змінює stock CREW, sibling FLY_POINT без змін.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_012 = """
+            Що перевіряємо: attached CREW — PUT /storages/{crewId}/inventory проксує на parent FLY_POINT.
+            Тестові дані: UNIT→FP→CREW; видача на CREW → stock на FP.
+            Очікуваний результат: після PUT на crewId stock(FP)=target; CREW не отримує target як окремий shelf.
+            Відомий дефект: StorageItemFacade.inventory мутує path id без proxy на FLY_POINT (на відміну від write-off).
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_013 = """
+            Що перевіряємо: attached PUT на crewId ≡ прямий PUT на flyPointId (ефект на FP).
+            Очікуваний результат: обидва шляхи оновлюють stock FLY_POINT до заданого target.
+            Відомий дефект: inventory proxy CREW→FLY_POINT ще не реалізовано на бекенді.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_014 = """
+            Матриця CR-INV-02: closed session → PUT inventory на CREW → 403.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_015 = """
+            Матриця CR-INV-03: Crew-Manager open + PUT inventory на CREW (CREWS region grants).
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_OWN_001 = """
+            Матриця OWN-01: після attach CREW→FP залишок на FP; GET inventory FP містить ресурс.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_OWN_002 = """
+            Матриця OWN-02: після attached FINISHED stock на FP (auto-forward); inventory FP бачить ресурс, CREW ≈ 0.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_INV_NEG_01 = """
+            Матриця NEG-01: PUT inventory amount < 0 на CREW → 400.
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_RES_016 = """
+            Матриця FP-INV-09 / CR-INV-06: autocomplete FLY_POINT = grants UNIT ancestor (RESOURCES).
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_RES_017 = """
+            Що перевіряємо: CREW під FLY_POINT autocomplete пропускає FP і бере UNIT ancestor.
+            Тестові дані: UNIT→FP→CREW; RESOURCES на UNIT.
+            Очікуваний результат: visible на crewId; hidden відсутній.
+            """ + ON_FAIL_API;
+
+    public static final String TC_STR_RES_018 = """
+            Що перевіряємо: inventory PUT out-of-scope ресурсу на FLY_POINT → 400.
+            Очікуваний результат: HTTP 400; stock hidden = 0.
+            Відомий дефект: як TC-STR-RES-008 — inventory PUT ще не валідує RESOURCES scope (UI захищає autocomplete).
+            """ + ON_FAIL_API;
+
+    public static final String TC_UI_CREW_015 = """
+            Матриця UI-CR-01/02: /crew-analytics → inventory CREW + conduct.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_016 = """
+            Матриця UI-CR-03: attached рядок → fly-point-dashboard, не inventory crew.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_017 = """
+            Матриця UI-FP-01/03: /fly-point-dashboard → inventory FP → conduct.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_018 = """
+            Матриця UI-CR (checkbox): includeFlyPointStocks на /crew-analytics.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FLY_INV_002 = """
+            Матриця UI-FP-02: Admin Open/Close інвентаризації на /inventory?storageId=fp.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FLY_INV_004 = """
+            Матриця UI-FP-04: conduct disabled при closed session на FP deep-link.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_019 = """
+            Матриця UI-CR-03: deep-link /inventory?storageId=attachedCrew — UX (порожньо / підказка / redirect).
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_020 = """
+            Матриця UI-CR-04: CREW/FLY_POINT відсутні в sidebar workspace picker.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_021 = """
+            Матриця UI-NAV-01: застарілий ?mode=crews — сторінка не падає, звичайні Залишки.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_022 = """
+            Матриця UI-RBAC-01: OWNER_2 без inventory-status — немає Open/Close на FP deep-link.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_023 = """
+            Матриця UI-RBAC-02: OWNER_2 без inventory update — немає/disabled Провести на FP deep-link.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_024 = """
+            Матриця NEG-03: «Всі локації» — open/conduct недоступні (deep-link FP все одно конкретна локація;
+            перевірка на unit workspace all-locations як WMS-003-004).
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_STR_RES_013 = """
+            Матриця FP-INV-09 UI: inventory FP autocomplete лише in-scope ancestor.
             """ + ON_FAIL_UI;
 }

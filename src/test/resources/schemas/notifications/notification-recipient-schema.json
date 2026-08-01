@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NotificationRecipient",
+  "type": "object",
+  "required": ["id", "caption", "addressInfo", "state"],
+  "properties": {
+    "id": { "type": "integer" },
+    "caption": { "type": "string", "minLength": 1 },
+    "addressInfo": { "type": "string", "minLength": 1 },
+    "state": { "type": "string", "enum": ["ACTIVE", "DISABLED"] }
+  },
+  "additionalProperties": true
+}

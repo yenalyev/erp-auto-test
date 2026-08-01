@@ -1,0 +1,48 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Full CREW / FLY_POINT inventory matrix (REQ-CREW-003 / REQ-REGION-002).
+
+  Run:
+    mvn test -Denv=dev -Dsuite=crew-fly-inventory
+-->
+<suite name="Crew Fly Point Inventory Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Crew / Fly Point Inventory API">
+        <classes>
+            <class name="com.erp.tests.functional.storage.FlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewInventoryTest">
+                <methods>
+                    <include name="owner1DeniedDirectCrewInventoryWithoutInventoryListPerm"/>
+                    <include name="testCrewInventoryConductUpdatesStock"/>
+                    <include name="putInventoryOnClosedCrewSessionReturns403"/>
+                    <include name="crewManagerCanOpenAndConductInventory"/>
+                    <include name="putNegativeAmountOnCrewReturns400"/>
+                    <include name="testCrewInventorySessionOpenRbac"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest">
+                <methods>
+                    <include name="testFlyPointAutocompleteInheritsUnitAncestorResources"/>
+                    <include name="testCrewUnderFlyPointAutocompleteSkipsFlyPointToUnit"/>
+                    <include name="testFlyPointInventoryPutOutOfScopeReturns400"/>
+                    <include name="testCrewInheritsParentUnitResourceVisibilityScope"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Crew / Fly Point Inventory UI">
+        <classes>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
+        </classes>
+    </test>
+</suite>

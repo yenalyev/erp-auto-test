@@ -110,7 +110,10 @@ public class AccountantCabinetUITest extends BaseUITest {
     }
 
     @Test
-    @TestCaseId("TC-UI-ACC-001")
+    @TestCaseId({
+            "TC-UI-ACC-001",
+            "TC-ACC-001"
+    })
     @Story("Accountant cabinet — login and layout smoke")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
@@ -239,7 +242,10 @@ public class AccountantCabinetUITest extends BaseUITest {
     }
 
     @Test(priority = 2)
-    @TestCaseId("TC-UI-ACC-002")
+    @TestCaseId({
+            "TC-UI-ACC-002",
+            "TC-ACC-002"
+    })
     @Story("Accountant cabinet — logout")
     @Severity(SeverityLevel.BLOCKER)
     @Description("""
@@ -275,7 +281,7 @@ public class AccountantCabinetUITest extends BaseUITest {
         CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("acc-ui-crew-");
         relocationFixture.ensureStock(scenario.unit().getId(), resourceId, 50.0);
 
-        relocationFixture.createSend(
+        relocationFixture.createSendAndFinishBySender(
                 UserRole.OWNER_1,
                 scenario.unit().getId(),
                 scenario.crew().getId(),

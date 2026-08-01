@@ -22,6 +22,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,7 +50,10 @@ public class NonSeriesProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 10)
-    @TestCaseId("TC-NSP-001")
+    @TestCaseId({
+            "TC-NSP-001",
+            "TC-NON-SER-MAN-003"
+    })
     @Story("Create non-series production")
     @Description("Створення 1 од. несерійного виробництва — перевірка коректного списання сировини з залишків")
     @Severity(SeverityLevel.CRITICAL)
@@ -129,7 +133,11 @@ public class NonSeriesProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 20)
-    @TestCaseId("TC-NSP-002")
+    @TestCaseId({
+            "TC-NSP-002",
+            "TC-NON-SER-MAN-001",
+            "TC-NON-SER-MAN-002"
+    })
     @Story("Stock validation")
     @Description("Неможливо створити несерійне виробництво, якщо сировини більше ніж є на складі")
     @Severity(SeverityLevel.CRITICAL)
@@ -171,7 +179,10 @@ public class NonSeriesProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 30)
-    @TestCaseId("TC-NSP-003")
+    @TestCaseId({
+            "TC-NSP-003",
+            "TC-NON-SER-MAN-006"
+    })
     @Story("Create non-series production")
     @Description("Створення 2 од. несерійного виробництва — списання сировини = usagePerUnit × 2")
     @Severity(SeverityLevel.CRITICAL)
@@ -243,7 +254,10 @@ public class NonSeriesProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 40)
-    @TestCaseId("TC-NSP-004")
+    @TestCaseId({
+            "TC-NSP-004",
+            "TC-NON-SER-MAN-007"
+    })
     @Story("Total volume calculation")
     @Description("""
             GET /non-series-production/total має повертати суму об'ємів записів,
@@ -323,11 +337,14 @@ public class NonSeriesProductionTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 50)
-    @TestCaseId("TC-NSP-005")
+    @TestCaseId("TC-NON-SER-MAN-009")
     @Story("Delete non-series production")
-    @Description("При видаленні несерійного виробництва ресурси повертаються на склад (AC-05)")
+    @Description("""
+            Видалення несерійного виробництва в статусі «В роботі» — сировина повертається на склад,
+            запис зникає з журналу (REQ-NON-SER-MAN AC-05).
+            """)
     @Severity(SeverityLevel.CRITICAL)
-    public void testDeleteRestoresStockToWarehouse() {
+    public void testDeleteInProgressRestoresStockToWarehouse() {
         double productAmount = 2.0;
         double usagePerUnit = 4.0;
         String product = NonSeriesProductionDataFactory.uniqueProductName();
@@ -382,6 +399,231 @@ public class NonSeriesProductionTest extends BaseFunctionalTest {
 
             long recordsAfter = countNonSeriesProductions();
             assertThat(recordsAfter).isEqualTo(recordsBefore);
+        });
+    }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-NON-SER-MAN-004")
+    @Story("Delete completed non-series production")
+    @Description("""
+            Owner може видалити несерійне виробництво в статусі «Завершено» протягом 2 днів
+            з моменту start; сировина повертається на склад (REQ-NON-SER-MAN AC-02).
+            """)
+    @Severity(SeverityLevel.NORMAL)
+    public void testDeleteDoneWithinTwoDaysRestoresStock() {
+        double productAmount = 1.0;
+        double usagePerUnit = 3.0;
+        String product = NonSeriesProductionDataFactory.uniqueProductName();
+        double expectedDeduction = usagePerUnit * productAmount;
+
+        fixture.ensureStockAtLeast(storageId, resourceId, expectedDeduction + 5.0);
+        double stockBefore = fixture.getResourceStock(storageId, resourceId);
+
+        NonSeriesProductionResponse created = Allure.step(
+                "Створити несерійне виробництво зі статусом «Завершено»", () ->
+                        fixture.createAs(
+                                UserRole.OWNER_1,
+                                NonSeriesProductionStatus.DONE,
+                                product,
+                                productAmount,
+                                resourceId,
+                                usagePerUnit));
+
+        assertThat(created.getStatus()).isEqualTo(NonSeriesProductionStatus.DONE);
+        assertThat(fixture.getResourceStock(storageId, resourceId))
+                .isCloseTo(stockBefore - expectedDeduction, within(0.01));
+
+        Allure.step("Видалити запис «Завершено» під Owner", () ->
+                fixture.deleteAs(UserRole.OWNER_1, created.getId(), storageId));
+
+        Allure.step("Сировина повернена, запис відсутній", () -> {
+            assertThat(fixture.getResourceStock(storageId, resourceId))
+                    .isCloseTo(stockBefore, within(0.01));
+            Response getResponse = apiExecutor.execute(
+                    ApiEndpointDefinition.NON_SERIES_PRODUCTION_GET_BY_ID,
+                    UserRole.OWNER_1,
+                    null,
+                    String.valueOf(created.getId()),
+                    String.valueOf(storageId));
+            assertThat(getResponse.statusCode()).isEqualTo(404);
+        });
+    }
+
+    @Test(priority = 70)
+    @TestCaseId("TC-NON-SER-MAN-005")
+    @Story("Complete non-series production")
+    @Description("""
+            Перехід «В роботі» → «Завершено» дозволений навіть коли залишок використаного
+            ресурсу вже 0 (без повторної валідації залишків) — REQ-NON-SER-MAN AC-07 / CPMA-517.
+            """)
+    @Severity(SeverityLevel.NORMAL)
+    public void testTransitionInProgressToDoneWithZeroStock() {
+        fixture.ensureStockAtLeast(storageId, resourceId, 5.0);
+        double stockBefore = fixture.getResourceStock(storageId, resourceId);
+        double usagePerUnit = stockBefore;
+        String product = NonSeriesProductionDataFactory.uniqueProductName();
+
+        NonSeriesProductionResponse created = Allure.step(
+                "Створити «В роботі» з витратою всього залишку ресурсу", () ->
+                        fixture.createAs(
+                                UserRole.OWNER_1,
+                                NonSeriesProductionStatus.IN_PROGRESS,
+                                product,
+                                1.0,
+                                resourceId,
+                                usagePerUnit));
+
+        Allure.step("Залишок ресурсу = 0 після створення", () -> {
+            double stockAfterCreate = fixture.getResourceStock(storageId, resourceId);
+            assertThat(stockAfterCreate).isCloseTo(0.0, within(0.01));
+            Allure.parameter("stockAfterCreate", stockAfterCreate);
+        });
+
+        NonSeriesProductionRequest updateRequest = NonSeriesProductionFixture.toUpdateRequest(created, storageId)
+                .toBuilder()
+                .status(NonSeriesProductionStatus.DONE)
+                .build();
+
+        NonSeriesProductionResponse updated = Allure.step(
+                "PUT: змінити статус на «Завершено» при нульовому залишку", () ->
+                        fixture.updateAs(UserRole.OWNER_1, created.getId(), updateRequest));
+
+        assertThat(updated.getStatus()).isEqualTo(NonSeriesProductionStatus.DONE);
+        assertThat(fixture.getResourceStock(storageId, resourceId))
+                .as("Після DONE залишок лишається 0 (rollback+produce)")
+                .isCloseTo(0.0, within(0.01));
+    }
+
+    @Test(priority = 80)
+    @TestCaseId("TC-NON-SER-MAN-010")
+    @Story("Owner 2-day window for DONE")
+    @Description("""
+            Owner не може оновлювати/видаляти «Завершено» якщо start старіший за 2 дні;
+            Admin може (REQ-NON-SER-MAN AC-02 / AC-03).
+            Запис створює Admin із застарілим start (Owner не може створити поза вікном 2 днів).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testOwnerCannotMutateDoneOlderThanTwoDaysButAdminCan() {
+        double productAmount = 1.0;
+        double usagePerUnit = 2.0;
+        fixture.ensureStockAtLeast(storageId, resourceId, usagePerUnit + 5.0);
+
+        LocalDate staleStart = LocalDate.now().minusDays(3);
+        String product = NonSeriesProductionDataFactory.uniqueProductName();
+
+        NonSeriesProductionRequest createRequest = NonSeriesProductionDataFactory.buildCreateRequest(
+                        storageId,
+                        NonSeriesProductionStatus.DONE,
+                        product,
+                        productAmount,
+                        List.of(NonSeriesProductionDataFactory.usage(resourceId, usagePerUnit)))
+                .toBuilder()
+                .start(staleStart)
+                .end(staleStart.plusDays(1))
+                .build();
+
+        NonSeriesProductionResponse created = Allure.step(
+                "Admin створює «Завершено» зі start старше 2 днів", () -> {
+                    Response response = apiExecutor.execute(
+                            ApiEndpointDefinition.NON_SERIES_PRODUCTION_POST_CREATE,
+                            UserRole.ADMIN,
+                            createRequest);
+                    assertThat(response.statusCode()).isEqualTo(200);
+                    return response.as(NonSeriesProductionResponse.class);
+                });
+
+        assertThat(created.getStatus()).isEqualTo(NonSeriesProductionStatus.DONE);
+        assertThat(created.getStart()).isEqualTo(staleStart);
+
+        NonSeriesProductionRequest updateRequest = NonSeriesProductionFixture.toUpdateRequest(created, storageId)
+                .toBuilder()
+                .description("erp-auto-test owner blocked after 2 days")
+                .build();
+
+        Allure.step("Owner PUT на застарілий DONE → 4xx", () -> {
+            Response response = fixture.updateRaw(UserRole.OWNER_1, created.getId(), updateRequest);
+            assertThat(response.statusCode()).isBetween(400, 499);
+            Allure.parameter("ownerPutStatus", response.statusCode());
+        });
+
+        Allure.step("Owner DELETE на застарілий DONE → 4xx", () -> {
+            Response response = fixture.deleteRaw(UserRole.OWNER_1, created.getId(), storageId);
+            assertThat(response.statusCode()).isBetween(400, 499);
+            Allure.parameter("ownerDeleteStatus", response.statusCode());
+        });
+
+        Allure.step("Admin DELETE на застарілий DONE → success", () -> {
+            fixture.deleteAs(UserRole.ADMIN, created.getId(), storageId);
+            Response getResponse = apiExecutor.execute(
+                    ApiEndpointDefinition.NON_SERIES_PRODUCTION_GET_BY_ID,
+                    UserRole.ADMIN,
+                    null,
+                    String.valueOf(created.getId()),
+                    String.valueOf(storageId));
+            assertThat(getResponse.statusCode()).isEqualTo(404);
+        });
+    }
+
+    @Test(priority = 90)
+    @TestCaseId("TC-NSP-005")
+    @Story("Owner edits IN_PROGRESS without time restriction")
+    @Description("""
+            Owner може редагувати несерійне виробництво в статусі «В роботі»
+            незалежно від давності start (REQ-NON-SER-MAN AC-04 / TC-NSP-005).
+            Контраст: для «Завершено» діє вікно 2 дні (див. TC-NON-SER-MAN-010).
+            Arrange: Admin створює IN_PROGRESS зі start старше 2 днів
+            (Owner не може створити поза вікном при create).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testOwnerCanEditInProgressOlderThanTwoDays() {
+        double productAmount = 1.0;
+        double usagePerUnit = 2.0;
+        fixture.ensureStockAtLeast(storageId, resourceId, usagePerUnit + 5.0);
+
+        LocalDate staleStart = LocalDate.now().minusDays(3);
+        String product = NonSeriesProductionDataFactory.uniqueProductName();
+        String updatedDescription = "erp-auto-test owner edit IN_PROGRESS after 2 days";
+
+        NonSeriesProductionRequest createRequest = NonSeriesProductionDataFactory.buildCreateRequest(
+                        storageId,
+                        NonSeriesProductionStatus.IN_PROGRESS,
+                        product,
+                        productAmount,
+                        List.of(NonSeriesProductionDataFactory.usage(resourceId, usagePerUnit)))
+                .toBuilder()
+                .start(staleStart)
+                .end(staleStart.plusDays(1))
+                .build();
+
+        NonSeriesProductionResponse created = Allure.step(
+                "Admin створює «В роботі» зі start старше 2 днів", () -> {
+                    Response response = apiExecutor.execute(
+                            ApiEndpointDefinition.NON_SERIES_PRODUCTION_POST_CREATE,
+                            UserRole.ADMIN,
+                            createRequest);
+                    assertThat(response.statusCode()).isEqualTo(200);
+                    return response.as(NonSeriesProductionResponse.class);
+                });
+
+        assertThat(created.getStatus()).isEqualTo(NonSeriesProductionStatus.IN_PROGRESS);
+        assertThat(created.getStart()).isEqualTo(staleStart);
+
+        NonSeriesProductionRequest updateRequest = NonSeriesProductionFixture.toUpdateRequest(created, storageId)
+                .toBuilder()
+                .description(updatedDescription)
+                .build();
+
+        NonSeriesProductionResponse updated = Allure.step(
+                "Owner PUT на застарілий IN_PROGRESS → 200", () ->
+                        fixture.updateAs(UserRole.OWNER_1, created.getId(), updateRequest));
+
+        assertThat(updated.getStatus()).isEqualTo(NonSeriesProductionStatus.IN_PROGRESS);
+        assertThat(updated.getDescription()).isEqualTo(updatedDescription);
+
+        Allure.step("GET by id підтверджує збережені зміни", () -> {
+            NonSeriesProductionResponse fetched = fixture.getById(created.getId(), storageId);
+            assertThat(fetched.getDescription()).isEqualTo(updatedDescription);
+            assertThat(fetched.getStatus()).isEqualTo(NonSeriesProductionStatus.IN_PROGRESS);
         });
     }
 

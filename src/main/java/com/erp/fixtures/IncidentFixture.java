@@ -38,15 +38,66 @@ public class IncidentFixture extends BaseFixture {
 
     @Step("API: створити надзвичайну подію на relocation {relocation.id}")
     public void createIncident(UserRole role, RelocationResponse relocation, String description) {
-        RelocationIncidentRequest request = IncidentDataFactory.buildFullCargoLoss(relocation, description);
-        Response response = apiExecutor.executeIncidentCreate(request, role);
+        Response response = createIncidentRaw(
+                role, IncidentDataFactory.buildFullCargoLoss(relocation, description));
         validateSuccess(response, "Create relocation incident");
+    }
+
+    @Step("API: POST incident (raw response, без assert success)")
+    public Response createIncidentRaw(UserRole role, RelocationIncidentRequest request) {
+        return apiExecutor.executeIncidentCreate(request, role);
+    }
+
+    @Step("API: створити надзвичайну подію «часткова доставка» на relocation {relocation.id}")
+    public void createPartialDeliveryIncident(UserRole role,
+                                              RelocationResponse relocation,
+                                              Long deliveryStorageId,
+                                              Long resourceId,
+                                              double deliveredAmount,
+                                              String description) {
+        RelocationIncidentRequest request = IncidentDataFactory.buildPartialDelivery(
+                relocation, deliveryStorageId, resourceId, deliveredAmount, description);
+        Response response = apiExecutor.executeIncidentCreate(request, role);
+        validateSuccess(response, "Create partial-delivery relocation incident");
+    }
+
+    @Step("API: створити надзвичайну подію «часткова доставка» (кілька ресурсів)")
+    public void createPartialDeliveryIncident(UserRole role,
+                                              RelocationResponse relocation,
+                                              Long deliveryStorageId,
+                                              Map<Long, Double> deliveredByResourceId,
+                                              String description) {
+        Response response = createPartialDeliveryIncidentRaw(
+                role, relocation, deliveryStorageId, deliveredByResourceId, description);
+        validateSuccess(response, "Create multi-item partial-delivery incident");
+    }
+
+    @Step("API: POST partial delivery (raw response, без assert success)")
+    public Response createPartialDeliveryIncidentRaw(UserRole role,
+                                                     RelocationResponse relocation,
+                                                     Long deliveryStorageId,
+                                                     Long resourceId,
+                                                     double deliveredAmount,
+                                                     String description) {
+        return createPartialDeliveryIncidentRaw(
+                role, relocation, deliveryStorageId, Map.of(resourceId, deliveredAmount), description);
+    }
+
+    @Step("API: POST partial delivery multi (raw response, без assert success)")
+    public Response createPartialDeliveryIncidentRaw(UserRole role,
+                                                     RelocationResponse relocation,
+                                                     Long deliveryStorageId,
+                                                     Map<Long, Double> deliveredByResourceId,
+                                                     String description) {
+        RelocationIncidentRequest request = IncidentDataFactory.buildPartialDelivery(
+                relocation, deliveryStorageId, deliveredByResourceId, description);
+        return apiExecutor.executeIncidentCreate(request, role);
     }
 
     @Step("API: GET інцидент для relocation {relocationId}")
     public RelocationIncidentResponse getIncident(UserRole role, Long relocationId) {
         Response response = apiExecutor.execute(
-                ApiEndpointDefinition.INCIDENT_GET_BY_RELOCATION, role, relocationId);
+                ApiEndpointDefinition.INCIDENT_GET_BY_RELOCATION, role, null, String.valueOf(relocationId));
         validateSuccess(response, "Get relocation incident");
         SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.INCIDENT_GET_BY_RELOCATION);
         return response.as(RelocationIncidentResponse.class);
@@ -55,7 +106,7 @@ public class IncidentFixture extends BaseFixture {
     @Step("API: DELETE інцидент для relocation {relocationId}")
     public void deleteIncident(UserRole role, Long relocationId) {
         Response response = apiExecutor.execute(
-                ApiEndpointDefinition.INCIDENT_DELETE_BY_RELOCATION, role, relocationId);
+                ApiEndpointDefinition.INCIDENT_DELETE_BY_RELOCATION, role, null, String.valueOf(relocationId));
         validateSuccess(response, "Delete relocation incident");
     }
 

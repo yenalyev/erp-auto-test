@@ -16,6 +16,7 @@ import com.erp.models.response.ResourceResponse;
 import com.erp.pages.DefectFormPage;
 import com.erp.pages.DefectsPage;
 import com.erp.utils.config.ConfigProvider;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -183,13 +184,14 @@ public class DefectUITest extends BaseUITest {
 
     @Test(priority = 50)
     @TestCaseId("TC-UI-DEF-005")
-    @Story("UI blocks deleting a defect with write-offs (client-side guard)")
+    @Story("UI disables delete for a defect with write-offs")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Відомий дефект бекенда: DELETE /defects/{id} видаляє запис навіть якщо є списання (200 замість 4xx) —
             див. DefectTest.testCannotDeleteDefectWithWriteOffs / testCannotDeleteWrittenOffDefect.
-            У звичайному UI-флоу видалення блокується нативним alert() у DefectListPage.handleDelete,
-            коли item.writeOffAmount > 0 — запит DELETE до API взагалі не надсилається.""")
+            У звичайному UI-флоу кнопка «Видалити» disabled + tooltip DEFECT_HAS_WRITE_OFFS
+            («Дія недоступна для дефекту зі списаннями»), коли item.writeOffAmount > 0 —
+            запит DELETE до API з клієнта не надсилається.""")
     public void testUiBlocksDeleteOfDefectWithWriteOff() {
         String resourceName = createStorageDefectViaApi(6.0);
         DefectResponse created = fixture.getById(UserRole.OWNER_1,
@@ -202,15 +204,17 @@ public class DefectUITest extends BaseUITest {
         fixture.writeOffAs(UserRole.OWNER_1, writeOff);
 
         DefectsPage defectsPage = new DefectsPage(page).open();
-        String alertMessage = defectsPage.clickDeleteExpectingBlockAlert(resourceName);
 
-        assertThat(alertMessage)
-                .as("Alert має пояснювати, чому видалення заблоковано")
-                .contains("не може бути видалений");
+        assertThat(defectsPage.isDeleteButtonDisabled(resourceName))
+                .as("«Видалити» має бути disabled для браку зі списаннями")
+                .isTrue();
+        assertThat(defectsPage.deleteBlockedTooltip(resourceName))
+                .as("Tooltip має пояснювати блокування через списання")
+                .isEqualTo(DefectsPage.DELETE_BLOCKED_BY_WRITE_OFF);
         assertThat(defectsPage.isRowWithResourceVisible(resourceName))
                 .as("Запис браку має лишитись у списку — видалення заблоковано на UI")
                 .isTrue();
-        defectsPage.attachScreenshot("TC-UI-DEF-005 — delete blocked by alert");
+        defectsPage.attachScreenshot("TC-UI-DEF-005 — delete disabled with write-off tooltip");
     }
 
     @Test(priority = 60)
@@ -322,6 +326,86 @@ public class DefectUITest extends BaseUITest {
         form.attachScreenshot("TC-UI-DEF-029 — used NSP batch blocked");
     }
 
+    @Test(priority = 80)
+    @TestCaseId("TC-UI-DEF-007")
+    @Story("Write-off status filter on /defects")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Селектор «Списання» на /defects (Всі / Списано / Не списано):
+            • «Не списано» — лише Кількість > 0
+            • «Списано» — лише Кількість = 0
+            • «Всі» — без додаткової фільтрації
+            Дані готуються через API (STORAGE-брак + повне списання).
+            Дефолт селектора — окремо в TC-UI-DEF-008.""")
+    public void testWriteOffStatusFilter() {
+        String openName = createStorageDefectViaApi(5.0);
+        String writtenName = createFullyWrittenOffDefectViaApi(5.0);
+
+        DefectsPage defectsPage = new DefectsPage(page).open();
+
+        Allure.step("«Не списано»: видимий лише несписаний запис", () -> {
+            defectsPage.selectWriteOffFilter(DefectsPage.WRITE_OFF_FILTER_NOT_WRITTEN);
+            assertThat(defectsPage.getWriteOffFilterValue())
+                    .isEqualTo(DefectsPage.WRITE_OFF_FILTER_NOT_WRITTEN);
+            assertThat(defectsPage.isRowWithResourceVisible(openName))
+                    .as("несписаний брак (%s) має бути видимий", openName)
+                    .isTrue();
+            assertThat(defectsPage.isRowWithResourceVisible(writtenName))
+                    .as("повністю списаний брак (%s) не має бути видимий", writtenName)
+                    .isFalse();
+            assertThat(defectsPage.getRemainingAmount(openName)).contains("5");
+            defectsPage.attachScreenshot("TC-UI-DEF-007 — filter Не списано");
+        });
+
+        Allure.step("«Списано»: видимий лише повністю списаний запис", () -> {
+            defectsPage.selectWriteOffFilter(DefectsPage.WRITE_OFF_FILTER_WRITTEN);
+            assertThat(defectsPage.getWriteOffFilterValue())
+                    .isEqualTo(DefectsPage.WRITE_OFF_FILTER_WRITTEN);
+            assertThat(defectsPage.isRowWithResourceVisible(writtenName))
+                    .as("списаний брак має бути видимий")
+                    .isTrue();
+            assertThat(defectsPage.isRowWithResourceVisible(openName))
+                    .as("несписаний брак не має бути видимий")
+                    .isFalse();
+            assertThat(defectsPage.getRemainingAmount(writtenName)).contains("0");
+            defectsPage.attachScreenshot("TC-UI-DEF-007 — filter Списано");
+        });
+
+        Allure.step("«Всі»: обидва записи видимі", () -> {
+            defectsPage.selectWriteOffFilter(DefectsPage.WRITE_OFF_FILTER_ALL);
+            assertThat(defectsPage.getWriteOffFilterValue())
+                    .isEqualTo(DefectsPage.WRITE_OFF_FILTER_ALL);
+            assertThat(defectsPage.isRowWithResourceVisible(openName)).isTrue();
+            assertThat(defectsPage.isRowWithResourceVisible(writtenName)).isTrue();
+            defectsPage.attachScreenshot("TC-UI-DEF-007 — filter Всі");
+        });
+    }
+
+    @Test(priority = 81)
+    @TestCaseId("TC-UI-DEF-008")
+    @Story("Write-off filter default is «Не списано»")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            AC: дефолтне значення селектора «Списання» на /defects — «Не списано»
+            (показувати лише записи з Кількість > 0).""")
+    public void testWriteOffFilterDefaultIsNotWritten() {
+        String openName = createStorageDefectViaApi(4.0);
+        String writtenName = createFullyWrittenOffDefectViaApi(4.0);
+
+        DefectsPage defectsPage = new DefectsPage(page).open();
+
+        assertThat(defectsPage.getWriteOffFilterValue())
+                .as("Дефолт селектора «Списання»")
+                .isEqualTo(DefectsPage.WRITE_OFF_FILTER_NOT_WRITTEN);
+        assertThat(defectsPage.isRowWithResourceVisible(openName))
+                .as("несписаний брак видимий за дефолтом")
+                .isTrue();
+        assertThat(defectsPage.isRowWithResourceVisible(writtenName))
+                .as("повністю списаний брак прихований за дефолтом")
+                .isFalse();
+        defectsPage.attachScreenshot("TC-UI-DEF-008 — default Не списано");
+    }
+
     // -------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------
@@ -340,6 +424,19 @@ public class DefectUITest extends BaseUITest {
         fixture.createExternalReceipt(resourceId, defectAmount + 5.0, "ui-wo-" + System.currentTimeMillis());
         fixture.createAs(UserRole.OWNER_1,
                 DefectDataFactory.buildStorageFifoDefect(storageId, resourceId, defectAmount));
+        return resource.getName().trim();
+    }
+
+    /** STORAGE defect fully written off via API (Кількість = 0). */
+    private String createFullyWrittenOffDefectViaApi(double defectAmount) {
+        ResourceResponse resource = resourceFixture.createUniqueResource("ui-def-done-");
+        Long resourceId = resource.getId();
+        fixture.createExternalReceipt(resourceId, defectAmount + 5.0, "ui-done-" + System.currentTimeMillis());
+        DefectResponse created = fixture.createAs(UserRole.OWNER_1,
+                DefectDataFactory.buildStorageFifoDefect(storageId, resourceId, defectAmount));
+        fixture.writeOffAs(UserRole.OWNER_1,
+                DefectDataFactory.buildWriteOffForDefect(
+                        created, storageId, defectAmount, "TC-UI-DEF-007 full write-off"));
         return resource.getName().trim();
     }
 

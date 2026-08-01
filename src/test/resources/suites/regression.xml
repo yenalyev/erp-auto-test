@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <!--
-  Full regression suite — API + RBAC + UI.
+  Full regression suite — API + UI.
 
   Run:
     mvn test -Denv=dev -Dsuite=regression
@@ -9,10 +9,16 @@
     - parallel="none" — tests run sequentially in document order.
     - ResourceDeactivationTest (TC-RES-015 alerts) runs before Inventory API/UI
       so alert teardown does not affect залишки tests on the same storage.
-    - StorageRegionTest → StorageVisibilityTest → RelocationVisibility* (shared owner2 storage).
-    - Includes all domain suites: smoke, functional subsets, inventory, production,
+    - StorageRegionTest → Owner2ScopePreflightTest → StorageVisibilityTest → RelocationVisibility*
+      (shared owner2 storage; preflight FAILS if OWNER_2 JWT has extra BUs).
+    - DB-seeded cases (TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-034) run when
+      use.database=true (staging default) and JDBC is reachable; otherwise they SkipException.
+      Isolated suite: mvn test -Dsuite=db-dependent -Denv=…
+    - RBAC matrix (RbacAccessMatrixTest / TC-RBAC-MATRIX-001) temporarily excluded —
+      run separately: mvn test -Dsuite=rbac
+    - Includes domain suites: smoke, functional subsets, inventory, production,
       relocations, storage-regions, global-plans, technological-maps, defects,
-      resource-viewer, rbac, ui, bots (smoke block).
+      resource-viewer, ui, bots (smoke block).
 -->
 <suite name="ERP Regression Suite" parallel="none" verbose="1">
 
@@ -37,12 +43,6 @@
         </classes>
     </test>
 
-<!--    <test name="RBAC Access Matrix">-->
-<!--        <classes>-->
-<!--            <class name="com.erp.tests.rbac.RbacAccessMatrixTest"/>-->
-<!--        </classes>-->
-<!--    </test>-->
-
     <test name="Dictionary API">
         <classes>
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
@@ -50,11 +50,14 @@
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
             <class name="com.erp.tests.functional.resource.ResourceWithTechnologicalMapApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceDeactivationTest"/>
+            <class name="com.erp.tests.functional.employee.EmployeeDictionaryApiTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
             <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
             <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>
             <class name="com.erp.tests.functional.storage.StorageDeactivationTest"/>
             <class name="com.erp.tests.functional.storage.StorageRegionTest"/>
+            <class name="com.erp.tests.functional.storage.SystemAllResourcesRegionTest"/>
+            <class name="com.erp.tests.functional.storage.Owner2ScopePreflightTest"/>
             <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.StorageNamesEndpointTest"/>
             <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest"/>
@@ -63,13 +66,26 @@
             <class name="com.erp.tests.functional.storage.StorageCrewRegionTest"/>
             <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.CrewReturnTest"/>
+            <class name="com.erp.tests.functional.storage.CrewFlyPointIncidentTest"/>
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewOperationHistoryTest"/>
+            <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest"/>
+            <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
+            <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest"/>
+            <class name="com.erp.tests.functional.location_permissions.LocationPermissionMeTest"/>
+            <class name="com.erp.tests.functional.location_permissions.LocationScopedAccessTest"/>
         </classes>
     </test>
 
     <test name="Resource Viewer API">
         <classes>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationFilterTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest"/>
@@ -94,6 +110,7 @@
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessApiTest"/>
+            <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessComponentTechMapsApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.statistics.PlanStatisticsAlternativeGroupsApiTest"/>
         </classes>
@@ -105,9 +122,29 @@
         </classes>
     </test>
 
+    <test name="Project Production API">
+        <classes>
+            <class name="com.erp.tests.functional.project_production.ProjectProductionTest"/>
+            <class name="com.erp.tests.functional.project_production.ProjectProductionTemplateTest"/>
+            <class name="com.erp.tests.functional.project_production.ProjectCatalogTest"/>
+        </classes>
+    </test>
+
+    <test name="Project Production UI">
+        <classes>
+            <class name="com.erp.tests.ui.ProjectProductionUITest"/>
+        </classes>
+    </test>
+
     <test name="Defects API">
         <classes>
             <class name="com.erp.tests.functional.defect.DefectTest"/>
+        </classes>
+    </test>
+
+    <test name="Defects UI">
+        <classes>
+            <class name="com.erp.tests.ui.DefectUITest"/>
         </classes>
     </test>
 
@@ -118,7 +155,9 @@
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationPartialDeliveryIncidentTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentSelectorContractTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentInventoryCreateTest"/>
         </classes>
     </test>
 
@@ -142,6 +181,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAmountApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanTechMapDeactivationGuardTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
+            <class name="com.erp.tests.functional.global_plan.PlanDuplicatePeriodApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanAlternativeGroupsApiTest"/>
         </classes>
     </test>
@@ -183,11 +223,15 @@
     <test name="UI Relocation">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
+            <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
+            <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
+            <class name="com.erp.tests.ui.CrewReturnUITest"/>
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
@@ -206,7 +250,9 @@
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
+            <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>
         </classes>
     </test>
 
@@ -218,6 +264,8 @@
             <class name="com.erp.tests.ui.GlobalPlanRequirementsUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
+            <class name="com.erp.tests.ui.PlanExecutionUiTest"/>
+            <class name="com.erp.tests.ui.PlanDisassembleUiTest"/>
         </classes>
     </test>
 
@@ -234,6 +282,8 @@
     <test name="UI User Management">
         <classes>
             <class name="com.erp.tests.ui.UsersAdminUiTest"/>
+            <class name="com.erp.tests.ui.UsersLocationPermissionsUiTest"/>
+            <class name="com.erp.tests.ui.LocationPermissionsUiTest"/>
         </classes>
     </test>
 

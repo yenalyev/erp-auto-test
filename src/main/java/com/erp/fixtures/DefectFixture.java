@@ -2,12 +2,13 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
-import com.erp.data.RequestBodyFactory;
+import com.erp.data.factories.ResourceDataFactory;
 import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.models.query.DefectQuery;
 import com.erp.models.request.DefectRequest;
 import com.erp.models.request.DefectWriteOffRequest;
 import com.erp.models.request.RelocationInputRequest;
+import com.erp.models.request.ResourceRequest;
 import com.erp.models.response.DefectResponse;
 import com.erp.models.response.DefectWriteOffResponse;
 import com.erp.models.response.ManufacturingItemResponse;
@@ -76,6 +77,10 @@ public class DefectFixture extends BaseFixture {
         return testContext.get(ContextKey.PRODUCTION_OUTPUT_RESOURCE_ID);
     }
 
+    public ProductionFixture getProductionFixture() {
+        return productionFixture;
+    }
+
     public TechnologicalMapResponse techMap() {
         return testContext.get(ContextKey.PRODUCTION_TECH_MAP);
     }
@@ -138,7 +143,9 @@ public class DefectFixture extends BaseFixture {
     /** Creates a brand-new resource with zero starting stock (для чистих FIFO-сценаріїв). */
     @Step("FIXTURE: створити новий ресурс без початкових залишків")
     public Long createFreshResource() {
-        Object body = RequestBodyFactory.generate(ApiEndpointDefinition.RESOURCE_CREATE, testContext);
+        Long unitId = testContext.get(ContextKey.SHARED_UNIT_ID);
+        Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        ResourceRequest body = ResourceDataFactory.uniqueResource("def-fresh-", unitId, categoryId);
         Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, body);
         validateSuccess(response, "Create fresh resource");
         ResourceResponse resource = response.as(ResourceResponse.class);
