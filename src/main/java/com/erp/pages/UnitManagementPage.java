@@ -4,12 +4,23 @@ import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Page Object for the Unit Management (Залишки) page.
@@ -27,8 +38,16 @@ public class UnitManagementPage extends BasePage {
     private static final String COPY_BUTTON_TEXT = "Скопіювати";
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано";
     private static final String SEARCH_PLACEHOLDER = "Пошук...";
+    /** Quantity column of the stock table — «Кількість» only labels the per-batch detail table. */
+    private static final String AMOUNT_HEADER = "Вільна к-сть";
     private static final String ALL_LOCATIONS_TOOLTIP = "Оберіть конкретну локацію для виконання дії";
     private static final String ADMIN_CONDUCT_TOOLTIP = "Зверніться до адміністратора для проведення інвентаризації";
+    private static final String EXPORT_API_FRAGMENT = "/export-analytics/";
+    private static final int DOWNLOAD_EVENT_GRACE_MS = 5_000;
+    private static final Pattern CONTENT_DISPOSITION_UTF8 =
+            Pattern.compile("filename\\*=UTF-8''([^;]+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern CONTENT_DISPOSITION_PLAIN =
+            Pattern.compile("filename=\"?([^\";]+)\"?", Pattern.CASE_INSENSITIVE);
 
     public UnitManagementPage(Page page) {
         super(page);
@@ -167,13 +186,64 @@ public class UnitManagementPage extends BasePage {
         return value != null ? value.toString() : "";
     }
 
+    /**
+     * Clicks «Експорт в Excel» and returns the exported file.
+     *
+     * <p>tk-ui fetches the file as a blob and triggers it through a synthetic {@code <a download>}
+     * that is removed and revoked immediately, so the Chromium download event is unreliable.
+     * The export response itself is the dependable signal; the download event is still observed
+     * (registered before the click) and preferred when it does arrive, otherwise the response
+     * payload is written to a temp file so callers can inspect the real bytes either way.
+     */
     public ExportDownloadResult clickExportToExcelAndDownload() {
-        Download download = page.waitForDownload(() -> exportToExcelButton().click());
-        String suggestedFilename = download.suggestedFilename();
-        Path path = download.path();
-        long sizeBytes = path != null ? path.toFile().length() : 0L;
-        log.info("Unit management export download: {} ({} bytes, path={})", suggestedFilename, sizeBytes, path);
-        return new ExportDownloadResult(suggestedFilename, sizeBytes, path);
+        List<Download> downloads = Collections.synchronizedList(new ArrayList<>());
+        Consumer<Download> downloadListener = downloads::add;
+        page.onDownload(downloadListener);
+        try {
+            com.microsoft.playwright.Response response = page.waitForResponse(
+                    r -> r.url().contains(EXPORT_API_FRAGMENT),
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    () -> exportToExcelButton().click());
+
+            try {
+                page.waitForCondition(() -> !downloads.isEmpty(),
+                        new Page.WaitForConditionOptions().setTimeout(DOWNLOAD_EVENT_GRACE_MS));
+            } catch (PlaywrightException e) {
+                log.debug("No browser download event for the export — using the response payload");
+            }
+
+            if (!downloads.isEmpty()) {
+                Download download = downloads.getFirst();
+                Path path = download.path();
+                long sizeBytes = path != null ? path.toFile().length() : 0L;
+                log.info("Unit management export download: {} ({} bytes, path={})",
+                        download.suggestedFilename(), sizeBytes, path);
+                return new ExportDownloadResult(download.suggestedFilename(), sizeBytes, path);
+            }
+
+            byte[] body = response.body();
+            Path path = Files.createTempFile("erp-inventory-export-", ".xlsx");
+            Files.write(path, body);
+            log.info("Unit management export captured from response: {} bytes, path={}", body.length, path);
+            return new ExportDownloadResult(exportFilename(response), body.length, path);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot persist the inventory export payload", e);
+        } finally {
+            page.offDownload(downloadListener);
+        }
+    }
+
+    private static String exportFilename(com.microsoft.playwright.Response response) {
+        String disposition = response.headerValue("content-disposition");
+        if (disposition == null) {
+            return "";
+        }
+        Matcher utf8 = CONTENT_DISPOSITION_UTF8.matcher(disposition);
+        if (utf8.find()) {
+            return URLDecoder.decode(utf8.group(1).trim(), StandardCharsets.UTF_8);
+        }
+        Matcher plain = CONTENT_DISPOSITION_PLAIN.matcher(disposition);
+        return plain.find() ? plain.group(1).trim() : "";
     }
 
     public UnitManagementPage clickOpenInventory() {
@@ -377,7 +447,7 @@ public class UnitManagementPage extends BasePage {
                 .first()
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         page.locator("table thead th")
-                .filter(new Locator.FilterOptions().setHasText("Кількість"))
+                .filter(new Locator.FilterOptions().setHasText(AMOUNT_HEADER))
                 .first()
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         return this;
@@ -387,8 +457,23 @@ public class UnitManagementPage extends BasePage {
     public String getResourceAmountText(String resourceName) {
         Locator row = resourceRow(resourceName).first();
         row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
-        Locator amountCell = row.locator("td").nth(3);
+        Locator amountCell = row.locator("td").nth(columnIndexByHeader(AMOUNT_HEADER));
         return amountCell.innerText().trim().replaceAll("\\s+", " ");
+    }
+
+    /** Resolves a body-cell index from a stock table header label, so column order can shift. */
+    private int columnIndexByHeader(String headerText) {
+        Locator headers = stockTable().locator("thead th");
+        int count = headers.count();
+        for (int i = 0; i < count; i++) {
+            String text = headers.nth(i).innerText();
+            if (text != null && headerText.equals(text.trim().replaceAll("\\s+", " "))) {
+                return i;
+            }
+        }
+        throw new IllegalStateException(
+                "Column «" + headerText + "» not found in the stock table header. Present: "
+                        + headers.allInnerTexts());
     }
 
     /** Parses numeric amount from the quantity cell. */
@@ -465,9 +550,12 @@ public class UnitManagementPage extends BasePage {
     public record ExportDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}
 
     private Locator stockTableBodyRows() {
-        Locator stockTable = page.locator("table").filter(new Locator.FilterOptions()
+        return stockTable().locator("tbody tr");
+    }
+
+    private Locator stockTable() {
+        return page.locator("table").filter(new Locator.FilterOptions()
                 .setHas(page.locator("thead th").filter(new Locator.FilterOptions().setHasText("Ресурс"))));
-        return stockTable.locator("tbody tr");
     }
 
     private Locator resourceRow(String resourceName) {

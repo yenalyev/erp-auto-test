@@ -138,6 +138,113 @@ public class TechnologicalMapDataFactory {
                 .build();
     }
 
+    /**
+     * PRODUCTION map where the same resource is both a fixed input and the default alternative
+     * (input ∩ group — rejected by backend/UI since CPMA-661).
+     *
+     * @param resources [overlapDefault, nonDefaultAlt, output] — need ≥ 3
+     */
+    public static TechnologicalMapRequest createProductionMapWithInputGroupOverlap(
+            List<ResourceResponse> resources,
+            Long storageId) {
+        if (resources == null || resources.size() < 3) {
+            throw new IllegalStateException(
+                    "Need at least 3 resources: overlapDefault, nonDefaultAlt, output");
+        }
+        if (storageId == null) {
+            throw new IllegalStateException("storageId is required for technological map request");
+        }
+
+        ResourceResponse overlap = resources.get(0);
+        ResourceResponse otherAlt = resources.get(1);
+        ResourceResponse output = resources.get(2);
+
+        return TechnologicalMapRequest.builder()
+                .name("AltOverlap-TM-" + System.currentTimeMillis())
+                .type(TYPE_PRODUCTION)
+                .input(List.of(new ResourceUsageRequest(overlap.getId(), 1.0)))
+                .output(List.of(new ResourceUsageRequest(output.getId(), 1.0)))
+                .storageIds(Set.of(storageId))
+                .groups(List.of(alternativeGroup(
+                        "Замінник",
+                        alternativeResource(overlap.getId(), 1.0, true),
+                        alternativeResource(otherAlt.getId(), 1.0, false))))
+                .build();
+    }
+
+    /**
+     * PRODUCTION map where the output resource also appears in an alternative group
+     * (output ∩ group — rejected since CPMA-661).
+     *
+     * @param resources [fixedInput, otherAlt, outputOverlap] — need ≥ 3
+     */
+    public static TechnologicalMapRequest createProductionMapWithOutputGroupOverlap(
+            List<ResourceResponse> resources,
+            Long storageId) {
+        if (resources == null || resources.size() < 3) {
+            throw new IllegalStateException(
+                    "Need at least 3 resources: fixedInput, otherAlt, outputOverlap");
+        }
+        if (storageId == null) {
+            throw new IllegalStateException("storageId is required for technological map request");
+        }
+
+        ResourceResponse fixed = resources.get(0);
+        ResourceResponse otherAlt = resources.get(1);
+        ResourceResponse output = resources.get(2);
+
+        return TechnologicalMapRequest.builder()
+                .name("AltOutOverlap-TM-" + System.currentTimeMillis())
+                .type(TYPE_PRODUCTION)
+                .input(List.of(new ResourceUsageRequest(fixed.getId(), 1.0)))
+                .output(List.of(new ResourceUsageRequest(output.getId(), 1.0)))
+                .storageIds(Set.of(storageId))
+                .groups(List.of(alternativeGroup(
+                        "Замінник",
+                        alternativeResource(output.getId(), 1.0, true),
+                        alternativeResource(otherAlt.getId(), 1.0, false))))
+                .build();
+    }
+
+    /**
+     * PRODUCTION map where the same resource appears in two alternative groups
+     * (group ∩ group — rejected since CPMA-661).
+     *
+     * @param resources [fixedInput, shared, otherInSecondGroup, output] — need ≥ 4
+     */
+    public static TechnologicalMapRequest createProductionMapWithSameResourceInTwoGroups(
+            List<ResourceResponse> resources,
+            Long storageId) {
+        if (resources == null || resources.size() < 4) {
+            throw new IllegalStateException(
+                    "Need at least 4 resources: fixedInput, shared, otherInSecondGroup, output");
+        }
+        if (storageId == null) {
+            throw new IllegalStateException("storageId is required for technological map request");
+        }
+
+        ResourceResponse fixed = resources.get(0);
+        ResourceResponse shared = resources.get(1);
+        ResourceResponse other = resources.get(2);
+        ResourceResponse output = resources.get(3);
+
+        return TechnologicalMapRequest.builder()
+                .name("AltCrossGroup-TM-" + System.currentTimeMillis())
+                .type(TYPE_PRODUCTION)
+                .input(List.of(new ResourceUsageRequest(fixed.getId(), 1.0)))
+                .output(List.of(new ResourceUsageRequest(output.getId(), 1.0)))
+                .storageIds(Set.of(storageId))
+                .groups(List.of(
+                        alternativeGroup(
+                                "Клей",
+                                alternativeResource(shared.getId(), 1.0, true)),
+                        alternativeGroup(
+                                "Пальне",
+                                alternativeResource(other.getId(), 1.0, true),
+                                alternativeResource(shared.getId(), 1.0, false))))
+                .build();
+    }
+
     public static TechnologicalMapAlternativeGroupRequest alternativeGroup(
             String name,
             TechnologicalMapAlternativeGroupResourceRequest... resources) {
@@ -239,12 +346,20 @@ public class TechnologicalMapDataFactory {
         return request;
     }
 
+    /**
+     * Two groups whose names differ only by case — the sole expected validation error.
+     *
+     * <p>The map is built groups-only: reusing the fixed input as the second group's resource
+     * would additionally trip the CPMA-661 input∩group overlap rule and that error, not the
+     * duplicate name, would surface first.
+     */
     public static TechnologicalMapRequest withDuplicateGroupNames(
             List<ResourceResponse> resources, Long storageId) {
         if (resources == null || resources.size() < 4) {
             throw new IllegalStateException("Need at least 4 resources");
         }
         TechnologicalMapRequest request = createProductionMapWithAlternativeGroup(resources, storageId);
+        request.setInput(List.of());
         request.setGroups(List.of(
                 alternativeGroup("Клей",
                         alternativeResource(resources.get(1).getId(), 2.0, true),

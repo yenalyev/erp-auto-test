@@ -102,6 +102,9 @@ public class EquipmentFixture extends BaseFixture {
                 .toList();
         EquipmentCreateRequest request = EquipmentCreateRequest.builder()
                 .storageId(storageId)
+                .senderStorageId(resolveSupplierSenderId())
+                .invoiceNumber("INV-EQ-GRP-" + System.currentTimeMillis() % 1_000_000)
+                .isPaidByCash(false)
                 .items(items)
                 .build();
         Response response = apiExecutor.executeEquipmentCreate(request, role);
@@ -114,6 +117,27 @@ public class EquipmentFixture extends BaseFixture {
                             + " items, got " + (created == null ? 0 : created.size()));
         }
         return created;
+    }
+
+    /**
+     * A sender is mandatory on create unless the target location has an open equipment inventory
+     * session ({@code EquipmentValidator}); SUPPLIER is the only always-available allowed type.
+     */
+    private Long resolveSupplierSenderId() {
+        Long cached = testContext.get(ContextKey.EQUIPMENT_SUPPLIER_ID);
+        if (cached != null) {
+            return cached;
+        }
+        Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_SUPPLIER, UserRole.ADMIN);
+        validateSuccess(response, "Get SUPPLIER storage for equipment sender");
+        List<StorageResponse> suppliers =
+                DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
+        if (suppliers == null || suppliers.isEmpty()) {
+            throw new IllegalStateException("No SUPPLIER storage available as equipment sender");
+        }
+        Long supplierId = suppliers.getFirst().getId();
+        testContext.set(ContextKey.EQUIPMENT_SUPPLIER_ID, supplierId);
+        return supplierId;
     }
 
     @Step("API: створити обладнання на складі {storageId}")

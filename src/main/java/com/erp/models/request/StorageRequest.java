@@ -23,4 +23,6 @@ public class StorageRequest {
     private String identifierNumber;
     private StorageAccessMode accessMode;
     private String nameForInvoices;
+    /** Backend field is primitive {@code boolean}; omit it and Jackson returns empty 400. */
+    private boolean orderHub;
 }

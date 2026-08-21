@@ -31,6 +31,8 @@ public class PlanExecutionPage extends BasePage {
     private static final String LEAD_TEXT = "Випередження";
     private static final String LAG_TEXT = "Відставання";
     private static final String GOAL_PLACEHOLDER = "—";
+    private static final String PRODUCED_HEADER = "Зроблено";
+    private static final String GOAL_HEADER = "Ціль";
     private static final String COPY_BUTTON_TEXT = "Скопіювати";
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано зроблене";
 
@@ -126,12 +128,12 @@ public class PlanExecutionPage extends BasePage {
 
     /** «Ціль» cell text for the given product row, or {@code GOAL_PLACEHOLDER} ("—") when no plan targets it. */
     public String getGoalCellText(String productName) {
-        return cellText(productName, 3);
+        return cellText(productName, columnIndexByHeader(GOAL_HEADER));
     }
 
     /** «Зроблено» cell text for the given product row. */
     public String getProducedCellText(String productName) {
-        return cellText(productName, 2);
+        return cellText(productName, columnIndexByHeader(PRODUCED_HEADER));
     }
 
     public boolean isGoalAbsent(String productName) {
@@ -504,6 +506,30 @@ public class PlanExecutionPage extends BasePage {
         return text != null ? text.trim().replaceAll("\\s+", " ") : "";
     }
 
+    /**
+     * Resolves a body-cell index from a summary header label («Зроблено», «Ціль», …).
+     *
+     * <p>The execution table has a two-row header: the first row holds «Продукт» (rowSpan=2),
+     * the «Динаміка по днях» group and the «Станом на поточний день» group; the second row holds
+     * one {@code th} per day of the sliding window followed by the summary columns. A body row
+     * therefore starts with the «Продукт» cell that the second header row does not repeat, so the
+     * cell index is the header's position in the second row shifted by one. Resolving this at
+     * runtime keeps the page object correct when the day-window size changes.
+     */
+    private int columnIndexByHeader(String headerText) {
+        Locator headers = executionTable().locator("thead tr").nth(1).locator("th");
+        int count = headers.count();
+        for (int i = 0; i < count; i++) {
+            String text = headers.nth(i).innerText();
+            if (text != null && headerText.equals(text.trim().replaceAll("\\s+", " "))) {
+                return i + 1;
+            }
+        }
+        throw new IllegalStateException(
+                "Column «" + headerText + "» not found in the plan execution table header. Present: "
+                        + headers.allInnerTexts());
+    }
+
     private Locator productRow(String productName) {
         return executionTableRows()
                 .filter(new Locator.FilterOptions().setHasText(productName));
@@ -522,6 +548,10 @@ public class PlanExecutionPage extends BasePage {
      * only mounts the active tab's content).
      */
     private Locator executionTableRows() {
-        return page.locator("table").first().locator("tbody tr");
+        return executionTable().locator("tbody tr");
+    }
+
+    private Locator executionTable() {
+        return page.locator("table").first();
     }
 }

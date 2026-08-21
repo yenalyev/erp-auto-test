@@ -44,7 +44,8 @@
         }
       }
     },
-    "writeOffAmount": { "type": ["number", "null"] }
+    "writeOffAmount": { "type": ["number", "null"] },
+    "attachmentUrl": { "type": ["string", "null"] }
   },
   "additionalProperties": true
 }

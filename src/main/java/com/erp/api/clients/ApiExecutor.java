@@ -2,6 +2,7 @@ package com.erp.api.clients;
 
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.models.request.DefectRequest;
 import com.erp.models.request.EquipmentCreateRequest;
 import com.erp.models.request.EquipmentRelocationReceiveEditRequest;
 import com.erp.models.request.ProjectProductionRequest;
@@ -188,6 +189,27 @@ public class ApiExecutor {
                 sessionCookies,
                 "request",
                 request);
+    }
+
+    /**
+     * {@code POST /api/v1/defects} — multipart with JSON part {@code request}
+     * (backend also accepts an optional {@code attachment} part, not used by erp-auto-test).
+     */
+    @Step("API Request: POST /defects as {role}")
+    public Response executeDefectCreate(DefectRequest request, UserRole role) {
+        Map<String, String> sessionCookies = getSessionForRole(role);
+        return apiClient.executeMultipartPost(
+                ApiEndpointDefinition.DEFECT_POST_CREATE.getPath(),
+                sessionCookies,
+                "request",
+                request);
+    }
+
+    @Step("API Request: PUT /defects/{defectId} as {role}")
+    public Response executeDefectUpdate(Long defectId, DefectRequest request, UserRole role) {
+        Map<String, String> sessionCookies = getSessionForRole(role);
+        String path = ApiEndpointDefinition.DEFECT_PUT_UPDATE.getPath(defectId);
+        return apiClient.executeMultipartPut(path, sessionCookies, "request", request);
     }
 
     @Step("API Request: POST /incidents/relocations as {role}")

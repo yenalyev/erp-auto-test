@@ -39,6 +39,7 @@ public class SessionClient extends BaseClient {
     ) {
         var requestBuilder = given()
                 .spec(requestSpec)
+                .filter(RequestDiagnostics.capturingFilter())
                 .cookies(cookies != null ? cookies : Map.of());
 
         if (queryParams != null && !queryParams.isEmpty()) {
@@ -101,6 +102,7 @@ public class SessionClient extends BaseClient {
                             .charset("UTF-8")
                             .build())
                     .filter(new io.qameta.allure.restassured.AllureRestAssured())
+                    .filter(RequestDiagnostics.capturingFilter())
                     .when()
                     .request(method, path)
                     .then()

@@ -24,6 +24,7 @@ public class StorageResponse {
     private String identifierNumber;
     private String accessMode;
     private String nameForInvoices;
+    private Boolean orderHub;
     private SimpleEntityResponse parent;
     private List<StorageItemResponse> items;
 }

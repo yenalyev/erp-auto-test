@@ -1,6 +1,7 @@
 package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
+import com.erp.api.clients.RequestDiagnostics;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.FakerProvider;
 import com.erp.data.RequestBodyFactory;
@@ -15,6 +16,7 @@ import com.erp.utils.helpers.ApiResponseHelper;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.NonNull;
@@ -279,11 +281,18 @@ public abstract class BaseFixture {
     protected void validateSuccess(Response response, String action) {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             String body = truncateForDiagnostic(response.body().asString(), 500);
-            log.error("ERROR {} failed! Status: {}. Body: {}", action,
-                    response.statusCode(), body);
+            String request = RequestDiagnostics.lastRequest();
+            if (request != null) {
+                Allure.addAttachment(action + " — request", "text/plain", request);
+            }
+            Allure.addAttachment(action + " — response headers", "text/plain",
+                    response.headers().toString());
+            String requestDiagnostic = truncateForDiagnostic(request, 2000);
+            log.error("ERROR {} failed! Status: {}. Body: {}. Request: {}", action,
+                    response.statusCode(), body, requestDiagnostic);
             throw new RuntimeException(String.format(
-                    "Fixture setup critical failure: %s (status=%d, body=%s)",
-                    action, response.statusCode(), body));
+                    "Fixture setup critical failure: %s (status=%d, body=%s, request=%s)",
+                    action, response.statusCode(), body, requestDiagnostic));
         }
         log.info("✅ {} successful (Status: {})", action, response.statusCode());
     }

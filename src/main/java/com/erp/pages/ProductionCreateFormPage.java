@@ -197,6 +197,30 @@ public class ProductionCreateFormPage extends BasePage {
         return button.isEnabled();
     }
 
+    public boolean hasStockErrorBanner() {
+        return page.getByText("Помилка залишків:").count() > 0
+                && page.getByText("Помилка залишків:").first().isVisible();
+    }
+
+    public boolean hasStockErrorContaining(String resourceNameFragment) {
+        if (!hasStockErrorBanner()) {
+            return false;
+        }
+        return page.locator("ul li")
+                .filter(new Locator.FilterOptions().setHasText(resourceNameFragment))
+                .count() > 0;
+    }
+
+    public java.util.List<String> getStockErrorTexts() {
+        if (!hasStockErrorBanner()) {
+            return java.util.List.of();
+        }
+        return page.locator("div.bg-red-50 ul li").allInnerTexts().stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+    }
+
     public ProductionCreateFormPage submit() {
         submitButton().click();
         page.waitForTimeout(1000);

@@ -3,15 +3,19 @@ package com.erp.tests.ui;
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.ProductionFixture;
+import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.pages.ProductionCreateFormPage;
+import com.erp.pages.TechnologicalMapFormPage;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -167,6 +171,120 @@ public class ProductionAlternativeInputsUITest extends BaseUITest {
 
         assertThat(form.isSubmitEnabled()).isFalse();
         form.attachScreenshot("TC-UI-PROD-ALT-003 — submit disabled");
+    }
+
+    @Test(priority = 20)
+    @TestCaseId("TC-UI-PROD-ALT-004")
+    @Story("Groups-only: switch to non-default clears stock gate when default is empty")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Control UI: tech map лише з групою (без fixed input). Default alt stock=0, other ≥ need.
+            Select non-default → Save enabled, немає «Помилка залишків» по default.
+            """)
+    public void testGroupsOnlySwitchNonDefaultEnablesSubmitWhenDefaultStockZero() {
+        TechnologicalMapResponse groupsOnly = techMapFixture.createTechMapGroupsOnly(UserRole.ADMIN, storageId);
+        InventoryFixture inventoryFixture = new InventoryFixture(testContext, apiExecutor);
+        try {
+            var group = groupsOnly.getGroups().getFirst();
+            String groupName = group.getName();
+            var defaultRes = group.getAlternativeResources().stream()
+                    .filter(r -> Boolean.TRUE.equals(r.getIsDefault()))
+                    .findFirst()
+                    .orElseThrow();
+            var otherRes = group.getAlternativeResources().stream()
+                    .filter(r -> !Boolean.TRUE.equals(r.getIsDefault()))
+                    .findFirst()
+                    .orElseThrow();
+            Long defId = defaultRes.getResource().getId();
+            Long othId = otherRes.getResource().getId();
+            String otherName = otherRes.getResource().getName().trim();
+            String defName = defaultRes.getResource().getName().trim();
+            String product = groupsOnly.getOutput().getFirst().getResource().getName().trim();
+            String mapName = groupsOnly.getName();
+
+            productionFixture.ensureStockForTechMapInputs(storageId, groupsOnly, MIN_STOCK);
+            inventoryFixture.resetResourceStock(storageId, defId, 0.0, UserRole.ADMIN);
+            productionFixture.ensureStockForTechMapInputs(storageId, groupsOnly, MIN_STOCK);
+            inventoryFixture.resetResourceStock(storageId, defId, 0.0, UserRole.ADMIN);
+            inventoryFixture.resetResourceStock(storageId, othId, MIN_STOCK, UserRole.ADMIN);
+
+            injectRoleSession(UserRole.OWNER_1, storageId);
+
+            ProductionCreateFormPage form = new ProductionCreateFormPage(page).open()
+                    .ensureShiftSelected()
+                    .selectProduct(product)
+                    .selectTechMap(mapName)
+                    .fillAmount(String.valueOf((int) PRODUCE_AMOUNT));
+
+            assertThat(form.hasStockErrorContaining(defName))
+                    .as("default selected with zero stock → stock error")
+                    .isTrue();
+            assertThat(form.isSubmitEnabled()).as("submit blocked on default deficit").isFalse();
+
+            form.selectAlternativeResource(groupName, otherName);
+            page.waitForTimeout(300);
+
+            assertThat(form.hasStockErrorContaining(defName))
+                    .as("after switch to other alt, default must not appear in stock errors")
+                    .isFalse();
+            assertThat(form.isSubmitEnabled())
+                    .as("Save enabled when chosen alt has stock")
+                    .isTrue();
+            form.attachScreenshot("TC-UI-PROD-ALT-004 — switch non-default");
+        } finally {
+            techMapFixture.deactivateTechMap(UserRole.OWNER_1, groupsOnly.getId(), storageId);
+        }
+    }
+
+    @Test(priority = 21)
+    @TestCaseId("TC-UI-PROD-ALT-005")
+    @Issue("CPMA-661")
+    @Story("UI rejects tech map with input ∩ alt-group overlap")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            CPMA-661: overlap input∩alt-group більше неможливий на рівні техкарти.
+            UI create техкарти з ресурсом у «Витрати» і в альтернативній групі →
+            помилка «вже доданий у вхідні ресурси»; запис не створюється.
+
+            Раніше кейс перевіряв production wizard на overlap-мапі (подвійний підрахунок);
+            сценарій закритий валідацією техкарти (див. також TC-UI-TM-ALT-007).
+            """)
+    public void testOverlapSwitchNonDefaultClearsPrimaryStockError() {
+        ResourceFixture resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        String suffix = String.valueOf(System.currentTimeMillis());
+        var overlap = resourceFixture.createUniqueResource("ui-prod-ov-" + suffix);
+        var otherAlt = resourceFixture.createUniqueResource("ui-prod-alt-" + suffix);
+        var output = resourceFixture.createUniqueResource("ui-prod-out-" + suffix);
+        String mapName = "ui-prod-overlap-" + suffix;
+        String overlapName = overlap.getName().trim();
+
+        injectRoleSession(UserRole.OWNER_1, storageId);
+
+        TechnologicalMapFormPage form = new TechnologicalMapFormPage(page).openCreate();
+        form.selectType(TechnologicalMapFormPage.TYPE_PRODUCTION)
+                .fillName(mapName)
+                .selectInputResource(0, overlapName)
+                .fillInputAmount(0, "1")
+                .selectOutputResource(0, output.getName().trim())
+                .clickAddAlternativeGroup()
+                .fillAlternativeGroupName(0, "Замінник")
+                .selectAlternativeGroupResource(0, 0, overlapName)
+                .fillAlternativeGroupAmount(0, 0, "1")
+                .clickAddResourceInAlternativeGroup(0)
+                .selectAlternativeGroupResource(0, 1, otherAlt.getName().trim())
+                .fillAlternativeGroupAmount(0, 1, "1")
+                .submit();
+
+        assertThat(form.isErrorVisible()).as("Повідомлення про помилку").isTrue();
+        assertThat(form.getErrorText())
+                .contains("вже доданий у вхідні ресурси")
+                .contains("ще й у групі")
+                .contains(overlapName);
+        assertThat(form.isOnCreatePage()).as("Форма лишається на create після відмови").isTrue();
+        form.attachScreenshot("TC-UI-PROD-ALT-005 — input∩group rejected");
+
+        long count = techMapFixture.countTechMapsByName(storageId, UserRole.OWNER_1, mapName);
+        assertThat(count).as("Техкарта %s не повинна бути створена", mapName).isZero();
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {

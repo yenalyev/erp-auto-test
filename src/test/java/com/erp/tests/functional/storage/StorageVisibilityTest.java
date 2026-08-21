@@ -170,9 +170,15 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             StorageResponse owner1Storage = storageFixture.getById(UserRole.ADMIN, owner1StorageId);
             StorageResponse owner2Storage = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
 
-            assertThat(owner1Storage.getAccessMode())
-                    .as("OWNER_1 storage (id=%d) має FULL_ACCESS на dev/staging", owner1StorageId)
-                    .isEqualTo(StorageAccessMode.FULL_ACCESS.name());
+            Allure.parameter("owner1AccessMode", owner1Storage.getAccessMode());
+            // The wide-visibility side is environment data, not something this test prepares:
+            // if it is not FULL_ACCESS the contrast cannot be observed at all.
+            if (!StorageAccessMode.FULL_ACCESS.name().equals(owner1Storage.getAccessMode())) {
+                throw new SkipException(String.format(
+                        "OWNER_1 storage (id=%d) має accessMode=%s, очікується FULL_ACCESS. "
+                                + "Контраст видимості FULL_ACCESS vs REGIONS на цьому середовищі не відтворити.",
+                        owner1StorageId, owner1Storage.getAccessMode()));
+            }
             assertThat(owner2Storage.getAccessMode())
                     .as("OWNER_2 storage (id=%d) підготовлено як REGIONS у @BeforeClass", owner2StorageId)
                     .isEqualTo(StorageAccessMode.REGIONS.name());

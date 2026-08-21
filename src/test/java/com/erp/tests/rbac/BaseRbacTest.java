@@ -28,7 +28,9 @@ public class BaseRbacTest extends BaseTest {
 
     private static final Set<String> MULTIPART_JSON_ENDPOINTS = Set.of(
             ApiEndpointDefinition.INCIDENT_POST_CREATE.name(),
-            ApiEndpointDefinition.PROJECT_PRODUCTION_POST_CREATE.name()
+            ApiEndpointDefinition.PROJECT_PRODUCTION_POST_CREATE.name(),
+            ApiEndpointDefinition.DEFECT_POST_CREATE.name(),
+            ApiEndpointDefinition.DEFECT_PUT_UPDATE.name()
     );
 
     private static final ObjectMapper MULTIPART_MAPPER = new ObjectMapper()

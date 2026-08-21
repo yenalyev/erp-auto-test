@@ -67,10 +67,10 @@ public class RelocationJournalUiVerification {
                     .hasSize(expectedRowCount);
 
             List<String> uiRecipients = uiRows.stream()
-                    .map(RelocationJournalRow::getRecipientName)
+                    .map(row -> normalizeName(row.getRecipientName()))
                     .collect(Collectors.toList());
             List<String> apiRecipients = apiPage.stream()
-                    .map(r -> r.getRecipient() != null ? r.getRecipient().getName() : null)
+                    .map(r -> normalizeName(r.getRecipient() != null ? r.getRecipient().getName() : null))
                     .collect(Collectors.toList());
 
             assertThat(uiRecipients)
@@ -81,6 +81,14 @@ public class RelocationJournalUiVerification {
             Allure.parameter("displayedRows", uiRows.size());
             Allure.parameter("sort", pagedQuery.toQueryParams().get("sort"));
         });
+    }
+
+    /**
+     * Storage names may carry surrounding whitespace in the API payload while the DOM renders
+     * them collapsed, so both sides are normalised before comparing the displayed order.
+     */
+    private static String normalizeName(String name) {
+        return name != null ? name.trim().replaceAll("\\s+", " ") : null;
     }
 
     public static void assertMarkersPresentInApiPage(List<RelocationResponse> apiPage,

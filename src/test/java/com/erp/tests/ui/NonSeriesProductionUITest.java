@@ -137,7 +137,10 @@ public class NonSeriesProductionUITest extends BaseUITest {
     }
 
     @Test(priority = 15)
-    @TestCaseId("TC-UI-NSP-004")
+    @TestCaseId({
+            "TC-UI-NSP-004",
+            "TC-NON-SER-MAN-008"
+    })
     @Story("Create non-series production without resources")
     @Severity(SeverityLevel.NORMAL)
     @Description("""

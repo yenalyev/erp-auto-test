@@ -33,6 +33,8 @@ public class DefectsPage extends BasePage {
     private static final String WRITE_OFF_CANCEL_BUTTON = "Скасувати";
     private static final String WRITE_OFF_FILTER_LABEL = "Списання";
     private static final String RESOURCE_SEARCH_PLACEHOLDER = "Назва ресурсу...";
+    private static final String AMOUNT_HEADER = "Брак";
+    private static final String WRITE_OFF_HEADER = "Списано";
 
     /**
      * Tooltip when row actions are frozen because the defect already has write-offs
@@ -118,14 +120,14 @@ public class DefectsPage extends BasePage {
         return row.count() > 0 && row.first().isVisible();
     }
 
-    /** Value of the «Кількість» (remaining) column for the row matching the given resource name. */
+    /** Value of the «Брак» (remaining) column for the row matching the given resource name. */
     public String getRemainingAmount(String resourceName) {
-        return cellText(rowByResource(resourceName).first(), 3);
+        return cellText(rowByResource(resourceName).first(), columnIndexByHeader(AMOUNT_HEADER));
     }
 
     /** Value of the «Списано» column for the row matching the given resource name. */
     public String getWrittenOffAmount(String resourceName) {
-        return cellText(rowByResource(resourceName).first(), 4);
+        return cellText(rowByResource(resourceName).first(), columnIndexByHeader(WRITE_OFF_HEADER));
     }
 
     // -------------------------------------------------------------------
@@ -307,6 +309,26 @@ public class DefectsPage extends BasePage {
 
     private Locator rowByResource(String resourceName) {
         return tableBody().locator("tr").filter(new Locator.FilterOptions().setHasText(resourceName));
+    }
+
+    /**
+     * Resolves a body-cell index from a column header label. Columns in tk-ui
+     * {@code DefectListPage.tsx} are toggled individually (including a leading, unlabelled
+     * attachment column), so positions shift with the user's column settings and must not be
+     * hardcoded.
+     */
+    private int columnIndexByHeader(String headerText) {
+        Locator headers = page.locator("table thead tr").first().locator("th");
+        int count = headers.count();
+        for (int i = 0; i < count; i++) {
+            String text = headers.nth(i).innerText();
+            if (text != null && headerText.equals(text.trim())) {
+                return i;
+            }
+        }
+        throw new IllegalStateException(
+                "Column «" + headerText + "» not found in the defect table header. Present: "
+                        + headers.allInnerTexts());
     }
 
     private static String cellText(Locator row, int index) {

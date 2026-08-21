@@ -42,6 +42,9 @@
     },
     "nameForInvoices": {
       "type": ["string", "null"]
+    },
+    "orderHub": {
+      "type": ["boolean", "null"]
     }
   },
   "required": [

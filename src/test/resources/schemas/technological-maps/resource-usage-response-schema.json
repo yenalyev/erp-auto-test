@@ -10,12 +10,11 @@
       "properties": {
         "id": { "type": "integer", "minimum": 1 },
         "name": { "type": "string" },
-        "active": { "type": "boolean" },
-        "category": { "type": "object" },
+        "category": { "type": ["object", "null"] },
         "imagePath": { "type": ["string", "null"] },
-        "properties": { "type": "array" },
+        "properties": { "type": ["array", "null"] },
         "unit": { "type": "object" },
-        "updatedAt": { "type": "string" }
+        "updatedAt": { "type": ["string", "null"] }
       },
       "additionalProperties": true
     },

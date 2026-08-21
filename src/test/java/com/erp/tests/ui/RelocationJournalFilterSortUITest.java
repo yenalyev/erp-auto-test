@@ -71,7 +71,10 @@ public class RelocationJournalFilterSortUITest extends BaseUITest {
     }
 
     @Test
-    @TestCaseId("TC-UI-REL-009")
+    @TestCaseId({
+            "TC-UI-REL-009",
+            "TC-WMS-007"
+    })
     @Story("Filter and sort on sent history")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""

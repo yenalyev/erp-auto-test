@@ -73,6 +73,8 @@ public enum ContextKey {
     RELOCATION_WITH_INCIDENT_ID("relocationWithIncidentId", Long.class),
     EQUIPMENT_ID("equipmentId", Long.class),
     EQUIPMENT_CATEGORY_ID("equipmentCategoryId", Long.class),
+    /** SUPPLIER location used as sender when creating equipment outside an inventory session. */
+    EQUIPMENT_SUPPLIER_ID("equipmentSupplierId", Long.class),
     DEFECT_ID("defectId", Long.class),
     DEFECT_RESOURCE_ID("defectResourceId", Long.class),
     DEFECT_PRODUCTION_PROCESS_ID("defectProductionProcessId", Long.class),

@@ -57,7 +57,7 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
             Відомий дефект (tk): якщо BOM порожній (немає matching relocations),
             controller повертає empty() з sums=[] і не викликає buildSums pre-seed.
             Очікувана поведінка: sums містить обрані resourceIds з amount=0.
-            Тест червоний до фіксу в tk.
+            Тест червоний до фіксу в tk; підтверджено ще раз у прогоні 34 (sums=[]).
             """)
     public void testRelocationsSumSortedByResourceNameAsc() {
         ResourceResponse digits = Allure.step("Створити ресурс 111_rvw_* (ADMIN, цифри)", () ->

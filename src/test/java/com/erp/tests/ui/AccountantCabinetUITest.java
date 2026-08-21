@@ -260,7 +260,13 @@ public class AccountantCabinetUITest extends BaseUITest {
     @TestCaseId("TC-UI-ACC-003")
     @Story("Accountant workspace without UNIT")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Після логіну accountant: my-units API не містить UNIT-локацій")
+    @Description("""
+            Після логіну accountant: my-units API не містить UNIT-локацій.
+
+            Відкритий product gap (прогін 34): GET /storages/my-units для accountant повертає
+            UNIT-локації, тому тест червоний. Потрібне рішення продукту, який контракт правильний:
+            або бекенд має відфільтровувати UNIT для цієї ролі, або вимога застаріла і тест треба
+            переписати. До рішення тест не адаптуємо — інакше він перестане ловити регресію.""")
     public void accountantWorkspaceExcludesUnitLocations() {
         loginAsAccountant();
 

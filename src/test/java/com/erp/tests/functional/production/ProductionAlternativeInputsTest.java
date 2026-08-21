@@ -1,10 +1,12 @@
 package com.erp.tests.functional.production;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.ProductionFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.request.AlternativeInputRequest;
@@ -338,5 +340,89 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
             assertThat(hasChosenAlt).as("chosen non-default alt in input").isTrue();
             assertThat(hasDefaultAlt).as("default alt not consumed").isFalse();
         });
+    }
+
+    @Test(priority = 40)
+    @TestCaseId("TC-PROD-ALT-010")
+    @Issue("CPMA-661")
+    @Story("Tech map with input ∩ alt-group overlap is rejected")
+    @Description("""
+            CPMA-661: неможливо створити техкарту, де той самий ресурс у fixed input
+            і в альтернативній групі → POST /technological-maps → 400
+            («вже доданий у вхідні ресурси — він не може бути ще й у групі»).
+
+            Раніше (до CPMA-661) overlap-мапа приймалась і production міг подвійно
+            списувати D; тепер сценарій блокується на рівні техкарти (див. також TC-TM-ALT-013).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testOverlapDefaultAlternativeDoesNotDoubleConsumeStock() {
+        List<ResourceResponse> resources = techMapFixture.createGroupsOnlyAltResources();
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionMapWithInputGroupOverlap(resources, storageId);
+
+        Response response = Allure.step("ADMIN: POST create tech map with input∩group overlap", () ->
+                apiExecutor.execute(
+                        ApiEndpointDefinition.TECH_MAP_CREATE,
+                        UserRole.ADMIN,
+                        request));
+
+        Allure.step("Assert create rejected — overlap no longer possible", () ->
+                techMapFixture.assertInputGroupOverlapRejection(response));
+    }
+
+    @Test(priority = 41)
+    @TestCaseId("TC-PROD-ALT-011")
+    @Story("Groups-only map: produce with non-default when default stock is zero")
+    @Description("""
+            Control: tech map без fixed input (лише група). Stock default D = 0, non-default E ≥ need.
+            POST з alternativeInputs = E → 200; stock −E; D без змін.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testGroupsOnlyProduceWithNonDefaultWhenDefaultStockZero() {
+        TechnologicalMapResponse groupsOnly = techMapFixture.createTechMapGroupsOnly(UserRole.ADMIN, storageId);
+        InventoryFixture inventoryFixture = new InventoryFixture(testContext, apiExecutor);
+        try {
+            var group = groupsOnly.getGroups().getFirst();
+            Long groupIdLocal = group.getId();
+            var defaultRes = group.getAlternativeResources().stream()
+                    .filter(r -> Boolean.TRUE.equals(r.getIsDefault()))
+                    .findFirst()
+                    .orElseThrow();
+            var otherRes = group.getAlternativeResources().stream()
+                    .filter(r -> !Boolean.TRUE.equals(r.getIsDefault()))
+                    .findFirst()
+                    .orElseThrow();
+            Long defId = defaultRes.getResource().getId();
+            Long othId = otherRes.getResource().getId();
+            double otherAmount = otherRes.getAmount();
+            Long outId = groupsOnly.getOutput().getFirst().getResource().getId();
+
+            productionFixture.ensureStockForTechMapInputs(storageId, groupsOnly, MIN_STOCK);
+            inventoryFixture.resetResourceStock(storageId, defId, 0.0, UserRole.ADMIN);
+
+            Set<Long> resourceIds = Set.of(defId, othId, outId);
+            ProductionStockAssertions.StockSnapshot before = ProductionStockAssertions.capture(
+                    apiExecutor, storageId, UserRole.OWNER_1, resourceIds, "before groups-only non-default");
+
+            List<AlternativeInputRequest> choice = ProductionDataFactory.alternativeInputsChoosing(
+                    groupsOnly, groupIdLocal, othId);
+
+            ManufacturingItemResponse created = Allure.step("OWNER_1: create with non-default when default=0", () ->
+                    productionFixture.createAsWithAlternatives(
+                            UserRole.OWNER_1, storageId, groupsOnly, PRODUCE_AMOUNT, choice));
+            assertThat(created.getId()).isNotNull();
+
+            ProductionStockAssertions.StockSnapshot after = ProductionStockAssertions.capture(
+                    apiExecutor, storageId, UserRole.OWNER_1, resourceIds, "after groups-only non-default");
+
+            Map<Long, Double> expectedDelta = Map.of(
+                    defId, 0.0,
+                    othId, -(PRODUCE_AMOUNT * otherAmount),
+                    outId, PRODUCE_AMOUNT * groupsOnly.getOutput().getFirst().getAmount()
+            );
+            ProductionStockAssertions.assertDelta(before, after, expectedDelta, outId);
+        } finally {
+            techMapFixture.deactivateTechMap(UserRole.OWNER_1, groupsOnly.getId(), storageId);
+        }
     }
 }

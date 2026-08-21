@@ -14,6 +14,7 @@ import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -285,6 +286,52 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
         TechnologicalMapFormPage form = new TechnologicalMapFormPage(page).openClone(source.getId());
         assertThat(form.isAlternativeGroupsSectionVisible()).isTrue();
         assertThat(page.getByPlaceholder("Назва групи (напр.: Пальне)").inputValue()).contains("Клей");
+    }
+
+    @Test(priority = 33)
+    @TestCaseId("TC-UI-TM-ALT-007")
+    @Issue("CPMA-661")
+    @Story("UI rejects input ∩ alternative group overlap")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            CPMA-661: /technological-maps/create — ресурс у «Витрати» і той самий
+            у альтернативній групі → після «Зберегти» помилка
+            «вже доданий у вхідні ресурси — він не може бути ще й у групі»;
+            техкарта не створюється.
+            """)
+    public void testCreateRejectsInputInAlternativeGroup() {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        ResourceResponse overlap = resourceFixture.createUniqueResource("ui-alt-ov-" + suffix);
+        ResourceResponse groupAlt = resourceFixture.createUniqueResource("ui-alt-ga-" + suffix);
+        ResourceResponse out = resourceFixture.createUniqueResource("ui-alt-po-" + suffix);
+        String mapName = "ui-alt-overlap-" + suffix;
+        String overlapName = overlap.getName().trim();
+
+        TechnologicalMapFormPage form = new TechnologicalMapFormPage(page).openCreate();
+        form.selectType(TechnologicalMapFormPage.TYPE_PRODUCTION)
+                .fillName(mapName)
+                .selectInputResource(0, overlapName)
+                .fillInputAmount(0, "1")
+                .selectOutputResource(0, out.getName().trim())
+                .clickAddAlternativeGroup()
+                .fillAlternativeGroupName(0, "Замінник")
+                .selectAlternativeGroupResource(0, 0, overlapName)
+                .fillAlternativeGroupAmount(0, 0, "1")
+                .clickAddResourceInAlternativeGroup(0)
+                .selectAlternativeGroupResource(0, 1, groupAlt.getName().trim())
+                .fillAlternativeGroupAmount(0, 1, "1")
+                .submit();
+
+        assertThat(form.isErrorVisible()).as("Повідомлення про помилку").isTrue();
+        assertThat(form.getErrorText())
+                .contains("вже доданий у вхідні ресурси")
+                .contains("ще й у групі")
+                .contains(overlapName);
+        assertThat(form.isOnCreatePage()).as("Форма лишається на create після відмови").isTrue();
+        form.attachScreenshot("TC-UI-TM-ALT-007 — input∩group rejected");
+
+        long count = techMapFixture.countTechMapsByName(storageId, UserRole.ADMIN, mapName);
+        assertThat(count).as("Техкарта %s не повинна бути створена", mapName).isZero();
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {

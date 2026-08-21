@@ -454,4 +454,69 @@ public class TechnologicalMapAlternativeGroupsTest extends BaseFunctionalTest {
             assertThat(created.getGroups().getFirst().getAlternativeResources()).isNotEmpty();
         });
     }
+
+    @Test(priority = 28)
+    @TestCaseId("TC-TM-ALT-013")
+    @Issue("CPMA-661")
+    @Story("Reject input ∩ alternative group overlap")
+    @Description("""
+            CPMA-661: POST create PRODUCTION — той самий ресурс у Витратах (input)
+            і в альтернативній групі → 400
+            («вже доданий у вхідні ресурси — він не може бути ще й у групі»).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCreateRejectsInputAlternativeGroupOverlap() {
+        List<ResourceResponse> resources = techMapFixture.createGroupsOnlyAltResources();
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionMapWithInputGroupOverlap(resources, storageId);
+
+        Response response = Allure.step("ADMIN: POST create with input∩group overlap", () ->
+                apiExecutor.execute(ApiEndpointDefinition.TECH_MAP_CREATE, UserRole.ADMIN, request));
+
+        Allure.step("Assert 400 input∩group", () ->
+                techMapFixture.assertInputGroupOverlapRejection(response));
+    }
+
+    @Test(priority = 29)
+    @TestCaseId("TC-TM-ALT-014")
+    @Issue("CPMA-661")
+    @Story("Reject output ∩ alternative group overlap")
+    @Description("""
+            CPMA-661: POST create PRODUCTION — той самий ресурс у output
+            і в альтернативній групі → 400
+            («є вихідним … — він не може бути ще й у групі»).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCreateRejectsOutputAlternativeGroupOverlap() {
+        List<ResourceResponse> resources = techMapFixture.createGroupsOnlyAltResources();
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionMapWithOutputGroupOverlap(resources, storageId);
+
+        Response response = Allure.step("ADMIN: POST create with output∩group overlap", () ->
+                apiExecutor.execute(ApiEndpointDefinition.TECH_MAP_CREATE, UserRole.ADMIN, request));
+
+        Allure.step("Assert 400 output∩group", () ->
+                techMapFixture.assertOutputGroupOverlapRejection(response));
+    }
+
+    @Test(priority = 30)
+    @TestCaseId("TC-TM-ALT-015")
+    @Issue("CPMA-661")
+    @Story("Reject same resource in two alternative groups")
+    @Description("""
+            CPMA-661: POST create PRODUCTION — той самий resourceId у двох
+            альтернативних групах → 400 («не може повторюватися у групі»).
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCreateRejectsSameResourceInTwoAlternativeGroups() {
+        List<ResourceResponse> resources = techMapFixture.createAltGroupResources();
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionMapWithSameResourceInTwoGroups(resources, storageId);
+
+        Response response = Allure.step("ADMIN: POST create with cross-group resource", () ->
+                apiExecutor.execute(ApiEndpointDefinition.TECH_MAP_CREATE, UserRole.ADMIN, request));
+
+        Allure.step("Assert 400 group∩group", () ->
+                techMapFixture.assertCrossGroupOverlapRejection(response));
+    }
 }

@@ -187,7 +187,7 @@ public class TechnologicalMapFixture extends BaseFixture {
         assertThat(errorMessage)
                 .as("Повідомлення про заборону редагування")
                 .contains("закрито")
-                .contains(String.valueOf(storageId));
+                .contains("локації");
     }
 
     @Step("Перевірити відмову: техкарта використовується в актуальному плані")
@@ -476,6 +476,44 @@ public class TechnologicalMapFixture extends BaseFixture {
         TechnologicalMapRequest request = TechnologicalMapDataFactory
                 .createProductionMapWithAlternativeGroup(resources, storageId);
         return createTechMapWithRequest(role, request);
+    }
+
+    @Step("Створити 3 унікальні ресурси для groups-only / overlap техкарти")
+    public List<ResourceResponse> createGroupsOnlyAltResources() {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        return List.of(
+                resourceFixture.createUniqueResource("ALT-GONLY-DEF-" + suffix),
+                resourceFixture.createUniqueResource("ALT-GONLY-OTHER-" + suffix),
+                resourceFixture.createUniqueResource("ALT-GONLY-OUT-" + suffix));
+    }
+
+    @Step("Створити PRODUCTION техкарту лише з альтернативною групою (без fixed input) на {storageId}")
+    public TechnologicalMapResponse createTechMapGroupsOnly(UserRole role, Long storageId) {
+        List<ResourceResponse> resources = createGroupsOnlyAltResources();
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionMapGroupsOnly(resources, storageId);
+        return createTechMapWithRequest(role, request);
+    }
+
+    @Step("Перевірити відмову CPMA-661: ресурс у input і в альтернативній групі")
+    public void assertInputGroupOverlapRejection(Response response) {
+        assertGroupValidationRejection(response, "resourceId", "вхідні ресурси");
+        assertThat(response.jsonPath().getString("errors[0].messages[0]"))
+                .as("Повідомлення input∩group")
+                .contains("ще й у групі");
+    }
+
+    @Step("Перевірити відмову CPMA-661: ресурс у output і в альтернативній групі")
+    public void assertOutputGroupOverlapRejection(Response response) {
+        assertGroupValidationRejection(response, "resourceId", "вихідним");
+        assertThat(response.jsonPath().getString("errors[0].messages[0]"))
+                .as("Повідомлення output∩group")
+                .contains("ще й у групі");
+    }
+
+    @Step("Перевірити відмову CPMA-661: той самий ресурс у двох альтернативних групах")
+    public void assertCrossGroupOverlapRejection(Response response) {
+        assertGroupValidationRejection(response, "resourceId", "повторюватися у групі");
     }
 
     @Step("Перевірити відмову: у групі має бути рівно один default")

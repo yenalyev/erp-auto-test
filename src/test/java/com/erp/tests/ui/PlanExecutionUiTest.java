@@ -351,7 +351,11 @@ public class PlanExecutionUiTest extends BaseUITest {
 
             Відомий дефект: tk-ui CPMA-587 зараз лишає «Лише обрані» завжди enabled і показує
             empty state «Немає обраних ресурсів…» після кліку. Очікувана поведінка — disabled
-            до налаштування обраних; тест червоний до фіксу в tk-ui.""")
+            до налаштування обраних; тест червоний до фіксу в tk-ui.
+
+            Додатковий баг продукту (прогін 34): тест падає ще раніше, на arrange —
+            PUT /resources/user-bundles з порожнім списком віддає 500 замість 200, тому обрані
+            неможливо очистити через API. Потрібен фікс у tk.""")
     public void testOwnerFavouritesOnlyDisabledWhenEmpty() {
         currentStorageId = ownerStorageId;
         favouritesRole = UserRole.OWNER_1;

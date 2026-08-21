@@ -134,6 +134,12 @@ public class ResourceViewerUiTest extends BaseUITest {
             сторінка /resources-viewer/relocation відкривається з h1 журналу.
             """)
     public void resourceViewerSidebarAndPageOpen() {
+        ResourceRelocationViewerPage viewer = Allure.step(
+                "Відкрити журнал через URL",
+                () -> new ResourceRelocationViewerPage(page).open());
+        assertThat(viewer.isLoaded()).isTrue();
+        viewer.attachScreenshot("TC-UI-RVW-001 — page loaded");
+
         AppSidebarPage sidebar = new AppSidebarPage(page);
         Allure.step("Перевірити sidebar wolf", () -> {
             assertThat(sidebar.isSidebarVisible()).isTrue();
@@ -141,12 +147,6 @@ public class ResourceViewerUiTest extends BaseUITest {
                     .as("Wolf має бачити «Відстеження ресурсів»")
                     .isTrue();
         });
-
-        ResourceRelocationViewerPage viewer = Allure.step(
-                "Відкрити журнал через URL",
-                () -> new ResourceRelocationViewerPage(page).open());
-        assertThat(viewer.isLoaded()).isTrue();
-        viewer.attachScreenshot("TC-UI-RVW-001 — page loaded");
     }
 
     @Test(priority = 20)

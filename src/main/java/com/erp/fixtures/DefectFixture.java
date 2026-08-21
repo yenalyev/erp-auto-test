@@ -233,16 +233,19 @@ public class DefectFixture extends BaseFixture {
     }
 
     public Response createRaw(UserRole role, DefectRequest request) {
-        return apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE, role, request);
+        return apiExecutor.executeDefectCreate(request, role);
     }
 
     @Step("API: оновити запис про брак id={defectId} роллю {role}")
     public DefectResponse updateAs(UserRole role, Long defectId, DefectRequest request) {
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.DEFECT_PUT_UPDATE, role, request, defectId);
+        Response response = updateRaw(role, defectId, request);
         validateSuccess(response, "Update defect id=" + defectId);
         SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.DEFECT_PUT_UPDATE);
         return response.as(DefectResponse.class);
+    }
+
+    public Response updateRaw(UserRole role, Long defectId, DefectRequest request) {
+        return apiExecutor.executeDefectUpdate(defectId, request, role);
     }
 
     @Step("API: видалити запис про брак id={defectId} роллю {role}")
