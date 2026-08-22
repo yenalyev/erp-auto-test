@@ -57,10 +57,15 @@ Edit ліній — лише `NEW` + `order::update`. Cancel знімає ACTIVE
 | list/get/comments | read на requester **або** gathering |
 | see bookings | manage requester **або** read gathering |
 | prepare | update на gathering (Owner збору / Admin) |
+| «Прийняти» на `/relocations` (resolve → FINISHED) | **3bat** на своєму UNIT — тоді з’являється залишок |
 
-Автотести: `OWNER_1` створює/редагує; `ADMIN` веде lifecycle (take-to-work → book → ship);
-`ORDER_GATHERER` (`tyolki` / storage **10**) — prepare на gathering.
-Staging/dev: `order.gathering.*=tyolki/10`, `order.availability.root.storage.id=10`
+Автотести: підрозділ **`3bat`** (`UNIT_ANALYST`) створює/бачить заявку на своєму UNIT;
+`ADMIN` може теж створити, бере «Нове» в роботу (точка збору → бронь → видача);
+`alkatras` (`OWNER_1`) заявки 3bat не бачить;
+`ORDER_GATHERER` (`tyolki` / storage **10**) — своя нога на зборі (prepare).
+Розклад «хто виготовляє / з яких складів» — кейси ВЗ, не цей тонкий шлях.
+Staging/dev: `order.requester.unit.name=3bat`, `order.gathering.*=tyolki/10`,
+`order.availability.root.storage.id=10`
 (upsert `app_config` у `OrderFixture.ensureAvailabilityRootConfig` або
 `scripts/seed_order_availability_root.sql`). `owner2` (`bar`/13) — лише regions/visibility.
 

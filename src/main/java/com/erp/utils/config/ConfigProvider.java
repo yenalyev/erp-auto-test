@@ -160,6 +160,18 @@ public class ConfigProvider {
     public static long getIncorrectStorageId()  { return config.incorrectStorageId(); }
     public static long getLocationMixedRo2StorageId() { return config.locationMixedRo2StorageId(); }
 
+    /**
+     * Configured requester UNIT id for orders; {@code 0} = resolve in {@code OrderFixture}.
+     */
+    public static long getOrderRequesterStorageId() {
+        return config.orderRequesterStorageId();
+    }
+
+    public static String getOrderRequesterUnitName() {
+        String name = config.orderRequesterUnitName();
+        return name == null ? "" : name.trim();
+    }
+
     /** Order gathering storage; 0 → owner2 storage. */
     public static long getOrderGatheringStorageId() {
         long id = config.orderGatheringStorageId();

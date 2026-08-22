@@ -50,4 +50,10 @@ public class UserMeResponse {
                     && ("create".equals(parts[2]) || "update".equals(parts[2]) || "delete".equals(parts[2]));
         });
     }
+
+    /** True when expanded permissions include {@code order::<storageId>::create}. */
+    public boolean hasOrderCreateOn(long storageId) {
+        String expected = "order::" + storageId + "::create";
+        return permissions != null && permissions.stream().anyMatch(expected::equals);
+    }
 }

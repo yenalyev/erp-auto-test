@@ -265,6 +265,44 @@ public class UserFixture extends BaseFixture {
         return waitForUser(UserRole.ADMIN, userId);
     }
 
+    /**
+     * Existing stand user (e.g. {@code 3bat}) gets {@link #BUSINESS_UNIT_OWNER_ROLE_NAME}
+     * and the requester UNIT without dropping other roles (unit-analytics).
+     * Does not create a new username.
+     */
+    @Step("FIXTURE: Ensure existing user «{username}» is Owner of UNIT {unitStorageId}")
+    public UserModelResponse ensureExistingUserIsUnitOwner(String username, Long unitStorageId) {
+        UserModelResponse user = findUserByUsername(username).orElseThrow(() -> new IllegalStateException(
+                "User '" + username + "' must already exist on the stand — will not create a new account"));
+        boolean hasOwner = userHasRole(user, BUSINESS_UNIT_OWNER_ROLE_NAME);
+        boolean hasUnit = userHasStorage(user, unitStorageId);
+        if (hasOwner && hasUnit) {
+            log.info("User {} already has Owner role and UNIT {}", username, unitStorageId);
+            return user;
+        }
+        RoleModelResponse ownerRole = fetchRealmRole(BUSINESS_UNIT_OWNER_ROLE_NAME);
+        List<RoleModelResponse> roles = new ArrayList<>(
+                user.getRealmRoles() != null ? user.getRealmRoles() : List.of());
+        if (!hasOwner) {
+            roles.add(ownerRole);
+        }
+        List<SimpleEntityResponse> storages = new ArrayList<>(
+                user.getStorages() != null ? user.getStorages() : List.of());
+        if (!hasUnit) {
+            storages.add(SimpleEntityResponse.builder().id(unitStorageId).name("unit").build());
+        }
+        log.info("Updating existing user {} — add Owner on UNIT {} (keep {} roles)",
+                username, unitStorageId, roles.size());
+        UserRequest update = UserDataFactory.fromExisting(user).toBuilder()
+                .enabled(true)
+                .realmRoles(roles)
+                .storages(storages)
+                .build();
+        UserModelResponse updated = updateUser(UserRole.ADMIN, user.getId(), update);
+        apiExecutor.clearSessionCache();
+        return updated;
+    }
+
     @Step("API: GET realm role «{roleName}»")
     public RoleModelResponse fetchRealmRole(String roleName) {
         Response response = apiExecutor.execute(ApiEndpointDefinition.USER_GET_ROLE_BY_NAME, UserRole.ADMIN, roleName);

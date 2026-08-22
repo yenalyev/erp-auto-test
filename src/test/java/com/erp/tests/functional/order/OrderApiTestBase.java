@@ -30,8 +30,10 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
     protected static final double DEFAULT_ORDER_QTY = 5.0;
     protected static final double DEFAULT_SEED_STOCK = 200.0;
 
-    /** Business_Unit_Owner — create/update on requester storage. */
-    protected static final UserRole REQUESTER = UserRole.OWNER_1;
+    /** Підрозділ 3bat — create/see own orders ({@code order::create} on UNIT). */
+    protected static final UserRole REQUESTER = UserRole.UNIT_ANALYST;
+    /** alkatras — other unit; must not see 3bat orders. */
+    protected static final UserRole OUTSIDER = UserRole.OWNER_1;
     /** Administrator — order::manage lifecycle (take-to-work, book, ship). */
     protected static final UserRole MANAGER = UserRole.ADMIN;
     /** Owner of gathering storage — prepare bookings (order::update on gathering). */
@@ -54,7 +56,7 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
         orderFixture.ensureAvailabilityRootConfig(getDbHelper());
         orderFixture.prepareContext();
 
-        requesterStorageId = ConfigProvider.getOwner1StorageId();
+        requesterStorageId = testContext.get(ContextKey.ORDER_REQUESTER_STORAGE_ID);
         gatheringStorageId = ConfigProvider.getOrderGatheringStorageId();
         resourceId = testContext.get(ContextKey.ORDER_RESOURCE_ID);
         sharedResources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);

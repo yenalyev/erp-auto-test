@@ -35,7 +35,7 @@ public class OrderCreateEditUiTest extends OrderUiTestBase {
         OrderListPage ordersPage = new OrderListPage(page).open();
 
         if (!ordersPage.isCreateButtonVisible()) {
-            throw new SkipException("Create order button not visible for OWNER_1 on requester storage");
+            throw new SkipException("Create order button not visible for 3bat on requester UNIT");
         }
         if (ordersPage.isCreateDisabled()) {
             throw new SkipException("Create order button disabled — cannot open create dialog");

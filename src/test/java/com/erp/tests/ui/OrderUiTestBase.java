@@ -18,8 +18,10 @@ import java.util.Map;
 @Slf4j
 abstract class OrderUiTestBase extends BaseUITest {
 
-    /** Business_Unit_Owner — create/update on requester storage. */
-    protected static final UserRole REQUESTER = UserRole.OWNER_1;
+    /** Підрозділ 3bat — create/see own orders. */
+    protected static final UserRole REQUESTER = UserRole.UNIT_ANALYST;
+    /** alkatras — other unit; must not see 3bat orders. */
+    protected static final UserRole OUTSIDER = UserRole.OWNER_1;
     /** Administrator — order::manage lifecycle (take-to-work, book, send). */
     protected static final UserRole MANAGER = UserRole.ADMIN;
     /** Owner of gathering storage — prepare bookings on gathering side. */
@@ -52,7 +54,7 @@ abstract class OrderUiTestBase extends BaseUITest {
         orderFixture.ensureAvailabilityRootConfig(getDbHelper());
         orderFixture.prepareContext();
 
-        requesterStorageId = ConfigProvider.getOwner1StorageId();
+        requesterStorageId = testContext.get(ContextKey.ORDER_REQUESTER_STORAGE_ID);
         gatheringStorageId = ConfigProvider.getOrderGatheringStorageId();
         resourceId = testContext.get(ContextKey.ORDER_RESOURCE_ID);
         List<ResourceResponse> resources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
@@ -113,7 +115,7 @@ abstract class OrderUiTestBase extends BaseUITest {
         page.setDefaultNavigationTimeout(timeoutMs);
     }
 
-    /** Owner session on requester storage — create / view own orders. */
+    /** 3bat session on requester UNIT — create / view own orders. */
     protected void loginAsOwner() {
         reopenPageWithSession(REQUESTER, requesterStorageId);
     }

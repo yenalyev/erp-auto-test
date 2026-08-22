@@ -203,6 +203,21 @@ public interface TestConfig extends Config {
     long incorrectStorageId();
 
     /**
+     * Requester location for orders (REQ-WMS-010). Must resolve to a UNIT (підрозділ).
+     * {@code 0} = resolve at fixture time (prefer {@code order.requester.unit.name}, e.g. 3bat).
+     */
+    @Key("order.requester.storage.id")
+    @DefaultValue("0")
+    long orderRequesterStorageId();
+
+    /**
+     * Name hint for resolving the requester UNIT (підрозділ), e.g. {@code 3bat} / {@code 3 бат}.
+     */
+    @Key("order.requester.unit.name")
+    @DefaultValue("3bat")
+    String orderRequesterUnitName();
+
+    /**
      * Order gathering owner (REQ-WMS-010). Empty username → fall back to owner2.
      * Storage id {@code 0} → fall back to {@code owner2.storage.id}.
      */

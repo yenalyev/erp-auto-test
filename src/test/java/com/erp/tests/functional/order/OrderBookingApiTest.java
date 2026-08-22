@@ -5,6 +5,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.order.OrderDataFactory;
 import com.erp.enums.BookingState;
 import com.erp.enums.OrderState;
+import com.erp.enums.RelocationState;
 import com.erp.models.request.BookingRequest;
 import com.erp.models.request.RelocationOutputRequest;
 import com.erp.models.response.BookingResponse;
@@ -18,10 +19,13 @@ import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -333,5 +337,166 @@ public class OrderBookingApiTest extends OrderApiTestBase {
         Response wrongRecipientResponse = apiExecutor.execute(
                 ApiEndpointDefinition.RELOCATION_POST_SEND, MANAGER, wrongRecipient);
         assertThat(wrongRecipientResponse.statusCode()).isEqualTo(400);
+    }
+
+    @Test(priority = 43)
+    @TestCaseId("TC-ORD-092")
+    @Story("Ship overship and extra resources")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Admin POST /relocations/send + orderId: A більше qty лінії + extra B. \
+            Заявка Виконано вже на send; relocation CREATED; зі збору списано. \
+            3bat PUT /relocations/{id}/resolve FINISHED («Прийняти» на /relocations) — \
+            залишок з’являється на підрозділі. Сусідній C без дельти.""")
+    public void testShipOvershipAndExtraResourceAllowed() {
+        if (sharedResources == null || sharedResources.size() < 3) {
+            throw new SkipException(
+                    "Need ≥3 resources in requester UNIT grant; have "
+                            + (sharedResources == null ? 0 : sharedResources.size()));
+        }
+        Long extraResourceId = secondResourceId();
+        Long siblingResourceId = sharedResources.get(2).getId();
+        double overshipQty = DEFAULT_ORDER_QTY + 3.0;
+        double extraQty = 2.0;
+        Set<Long> tracked = Set.of(resourceId, extraResourceId, siblingResourceId);
+
+        relocationFixture.ensureStock(gatheringStorageId, extraResourceId, DEFAULT_SEED_STOCK);
+        OrderResponse order = prepareManagedInProgress();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+
+        ProductionStockAssertions.StockSnapshot gatheringBefore = RelocationStockAssertions.capture(
+                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ДО send");
+        ProductionStockAssertions.StockSnapshot requesterBefore = RelocationStockAssertions.capture(
+                apiExecutor, requesterStorageId, MANAGER, tracked, "3bat ДО send");
+
+        Map<Long, Double> shipItems = new LinkedHashMap<>();
+        shipItems.put(resourceId, overshipQty);
+        shipItems.put(extraResourceId, extraQty);
+        RelocationOutputRequest request = OrderDataFactory.buildShipMultiItemRequest(
+                order.getId(), gatheringStorageId, requesterStorageId, shipItems);
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, MANAGER, request);
+        assertThat(response.statusCode()).isEqualTo(200);
+
+        RelocationResponse shipment = response.as(RelocationResponse.class);
+        assertThat(shipment.getOrderId()).isEqualTo(order.getId());
+        assertThat(shipment.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState()).isEqualTo(OrderState.DONE);
+        assertThat(orderFixture.getBookings(MANAGER, order.getId()))
+                .anyMatch(booking -> booking.getState() == BookingState.FULFILLED);
+
+        ProductionStockAssertions.StockSnapshot gatheringAfterSend = RelocationStockAssertions.capture(
+                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ПІСЛЯ send");
+        ProductionStockAssertions.StockSnapshot requesterAfterSend = RelocationStockAssertions.capture(
+                apiExecutor, requesterStorageId, MANAGER, tracked, "3bat ПІСЛЯ send до Прийняти");
+        RelocationStockAssertions.assertStockDelta(
+                gatheringBefore, gatheringAfterSend, gatheringStorageId,
+                Map.of(resourceId, -overshipQty, extraResourceId, -extraQty, siblingResourceId, 0.0),
+                "send: списання зі збору");
+        RelocationStockAssertions.assertStockDelta(
+                requesterBefore, requesterAfterSend, requesterStorageId,
+                Map.of(resourceId, 0.0, extraResourceId, 0.0, siblingResourceId, 0.0),
+                "send: на 3bat ще немає — чекаємо Прийняти");
+
+        RelocationResponse received = relocationFixture.resolve(
+                REQUESTER, shipment.getId(), requesterStorageId, RelocationState.FINISHED);
+        assertThat(received.getState()).isEqualTo(RelocationState.FINISHED);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState()).isEqualTo(OrderState.DONE);
+
+        ProductionStockAssertions.StockSnapshot requesterAfterReceive = RelocationStockAssertions.capture(
+                apiExecutor, requesterStorageId, MANAGER, tracked, "3bat ПІСЛЯ Прийняти");
+        RelocationStockAssertions.assertStockDelta(
+                requesterBefore, requesterAfterReceive, requesterStorageId,
+                Map.of(resourceId, overshipQty, extraResourceId, extraQty, siblingResourceId, 0.0),
+                "Прийняти: зарахування на підрозділ");
+    }
+
+    @Test(priority = 44)
+    @TestCaseId("TC-ORD-095")
+    @Story("Ship rollback")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            POST /relocations/send + orderId: items покривають замовлення, плюс зайвий ресурс без залишку \
+            на зборі. validateCreateSend не перевіряє on-hand без batches — fulfill() встигає DONE, \
+            apply() падає, @Transactional на RelocationFacade відкочує. Очікування: 400, \
+            замовлення лишається В роботі, бронь ACTIVE, залишки без змін.""")
+    public void testShipFailsAfterFulfillLeavesOrderOpen() {
+        if (sharedResources == null || sharedResources.size() < 2) {
+            throw new SkipException(
+                    "Need ≥2 resources in requester UNIT grant; have "
+                            + (sharedResources == null ? 0 : sharedResources.size()));
+        }
+        Long extraResourceId = secondResourceId();
+        Set<Long> tracked = Set.of(resourceId, extraResourceId);
+
+        inventoryFixture.removeResourceFromStorage(gatheringStorageId, extraResourceId, MANAGER);
+        OrderResponse order = prepareManagedInProgress();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+
+        ProductionStockAssertions.StockSnapshot gatheringBefore = RelocationStockAssertions.capture(
+                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ДО failed ship");
+
+        Map<Long, Double> shipItems = new LinkedHashMap<>();
+        shipItems.put(resourceId, DEFAULT_ORDER_QTY);
+        shipItems.put(extraResourceId, 1.0);
+        RelocationOutputRequest request = OrderDataFactory.buildShipMultiItemRequest(
+                order.getId(), gatheringStorageId, requesterStorageId, shipItems);
+        Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, MANAGER, request);
+        assertThat(response.statusCode()).isEqualTo(400);
+
+        OrderResponse stillOpen = orderFixture.getById(REQUESTER, order.getId());
+        assertThat(stillOpen.getState()).isEqualTo(OrderState.IN_PROGRESS);
+        assertThat(orderFixture.getBookings(MANAGER, order.getId()))
+                .anyMatch(booking -> booking.getState() == BookingState.ACTIVE);
+        assertThat(orderFixture.getBookings(MANAGER, order.getId()))
+                .noneMatch(booking -> booking.getState() == BookingState.FULFILLED);
+
+        ProductionStockAssertions.StockSnapshot gatheringAfter = RelocationStockAssertions.capture(
+                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ПІСЛЯ failed ship");
+        RelocationStockAssertions.assertUnchanged(
+                gatheringBefore, gatheringAfter, gatheringStorageId, resourceId,
+                "rollback: замовлений ресурс");
+        RelocationStockAssertions.assertUnchanged(
+                gatheringBefore, gatheringAfter, gatheringStorageId, extraResourceId,
+                "rollback: зайвий ресурс без залишку");
+    }
+
+    @Test(priority = 45)
+    @TestCaseId("TC-ORD-096")
+    @Story("Fulfill RBAC")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Створює підрозділ (3bat). alkatras заявку не бачить. 3bat без manage не відправляє. \
+            Admin бере виконання: send+orderId → Виконано.""")
+    public void testFulfillDeniedForUnitOwnerAllowedForAdmin() {
+        Set<Long> tracked = trackedResource();
+        OrderResponse order = prepareManagedInProgress();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+
+        Response outsiderGet = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_GET_BY_ID, OUTSIDER, null, order.getId());
+        assertThat(outsiderGet.statusCode()).isIn(403, 404);
+
+        ProductionStockAssertions.StockSnapshot gatheringBefore = RelocationStockAssertions.capture(
+                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ДО 3bat ship");
+
+        RelocationOutputRequest ship = OrderDataFactory.buildShipRequest(
+                order.getId(), gatheringStorageId, requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+        Response unitOwnerDenied = apiExecutor.execute(
+                ApiEndpointDefinition.RELOCATION_POST_SEND, REQUESTER, ship);
+        assertThat(unitOwnerDenied.statusCode()).isEqualTo(403);
+
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState()).isEqualTo(OrderState.IN_PROGRESS);
+        assertThat(orderFixture.getBookings(MANAGER, order.getId()))
+                .anyMatch(booking -> booking.getState() == BookingState.ACTIVE);
+        ProductionStockAssertions.StockSnapshot afterDenied = RelocationStockAssertions.capture(
+                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ПІСЛЯ 3bat 403");
+        RelocationStockAssertions.assertUnchanged(
+                gatheringBefore, afterDenied, gatheringStorageId, resourceId,
+                "підрозділ без manage не списав залишок");
+
+        RelocationResponse shipment = orderFixture.shipOrder(
+                MANAGER, order.getId(), gatheringStorageId, requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+        assertThat(shipment.getOrderId()).isEqualTo(order.getId());
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState()).isEqualTo(OrderState.DONE);
     }
 }

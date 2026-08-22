@@ -32,8 +32,8 @@ public enum UserRole {
      */
     ORDER_GATHERER,
     /**
-     * Unit analytics reader ({@code perm_unit-analytics::read/view}).
-     * staging/dev: {@code user.unit-analyst.*} (e.g. 3bat).
+     * Owner of the requester UNIT (підрозділ) + unit-analytics reader.
+     * staging/dev: {@code user.unit-analyst.*} (e.g. {@code 3bat}).
      */
     UNIT_ANALYST,
     ANONYMOUS;
@@ -83,7 +83,11 @@ public enum UserRole {
             case OWNER_2       -> String.valueOf(ConfigProvider.getOwner2StorageId());
             case ORDER_GATHERER -> String.valueOf(ConfigProvider.getOrderGatheringStorageId());
             case CREW_MANAGER  -> String.valueOf(ConfigProvider.getUnitStorageId());
-            case OWNER_3, UNIT_ANALYST, ANONYMOUS -> "";
+            case UNIT_ANALYST -> {
+                long id = ConfigProvider.getOrderRequesterStorageId();
+                yield id > 0 ? String.valueOf(id) : "";
+            }
+            case OWNER_3, ANONYMOUS -> "";
         };
     }
 }

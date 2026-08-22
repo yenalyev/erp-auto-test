@@ -19,6 +19,7 @@ import com.erp.models.response.PagedOrderResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.SimpleEntityResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -32,6 +33,7 @@ import org.testng.SkipException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -65,22 +67,49 @@ public class OrderFixture extends BaseFixture {
         }
         fetchSharedUnit(3);
         fetchSharedResourceCategory();
-        setupSharedResourceList(3);
 
-        Long requesterStorage = ConfigProvider.getOwner1StorageId();
+        Long requesterStorage = resolveRequesterUnitStorageId();
+        new UserFixture(testContext, apiExecutor).ensureExistingUserIsUnitOwner(
+                UserRole.UNIT_ANALYST.getUsername(), requesterStorage);
+        List<ResourceResponse> resources = loadRequesterVisibleResources(requesterStorage);
+        if (resources.isEmpty()) {
+            throw new IllegalStateException(
+                    "No resources in requester UNIT " + requesterStorage + " grant. "
+                            + "Cannot seed orders for 3bat.");
+        }
+        Long resourceId = resources.getFirst().getId();
+        testContext.set(ContextKey.SHARED_AVAILABLE_RESOURCES, resources);
+        testContext.set(ContextKey.SHARED_RESOURCE_ID, resourceId);
+        testContext.set(ContextKey.SHARED_RESOURCE, resources.getFirst());
+
         Long gatheringStorage = ConfigProvider.getOrderGatheringStorageId();
         testContext.set(ContextKey.ORDER_REQUESTER_STORAGE_ID, requesterStorage);
         testContext.set(ContextKey.ORDER_GATHERING_STORAGE_ID, gatheringStorage);
-        testContext.set(ContextKey.OWNER_1_STORAGE_ID, requesterStorage);
+        testContext.set(ContextKey.OWNER_1_STORAGE_ID, ConfigProvider.getOwner1StorageId());
         testContext.set(ContextKey.OWNER_2_STORAGE_ID, ConfigProvider.getOwner2StorageId());
 
-        List<ResourceResponse> resources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
-        Long resourceId = resources.getFirst().getId();
         testContext.set(ContextKey.ORDER_RESOURCE_ID, resourceId);
 
         relocationFixture.ensureStock(gatheringStorage, resourceId, DEFAULT_SEED_STOCK);
-        log.info("Order fixture ready: requester={}, gathering={} ({}), resource={}",
-                requesterStorage, gatheringStorage, ConfigProvider.getOrderGatheringUsername(), resourceId);
+        log.info("Order fixture ready: requester={}, gathering={} ({}), resource={} ({} visible)",
+                requesterStorage, gatheringStorage, ConfigProvider.getOrderGatheringUsername(),
+                resourceId, resources.size());
+    }
+
+    /** First resources the requester UNIT can pick (same grant as order line validation). */
+    private List<ResourceResponse> loadRequesterVisibleResources(Long requesterStorageId) {
+        ResourceFixture resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        try {
+            List<ResourceResponse> asRequester = resourceFixture.getPageForStorage(
+                    UserRole.UNIT_ANALYST, requesterStorageId, null, true, null);
+            if (!asRequester.isEmpty()) {
+                return new ArrayList<>(asRequester);
+            }
+        } catch (RuntimeException e) {
+            log.warn("Resource list as 3bat for UNIT {} failed: {}", requesterStorageId, e.getMessage());
+        }
+        return new ArrayList<>(resourceFixture.getPageForStorage(
+                UserRole.ADMIN, requesterStorageId, null, true, null));
     }
 
     /**
@@ -552,6 +581,101 @@ public class OrderFixture extends BaseFixture {
         if (createdOrderRegistrar != null) {
             createdOrderRegistrar.accept(orderId);
         }
+    }
+
+    /**
+     * Requester is the підрозділ UNIT (e.g. 3bat), not {@code owner1} / alkatras.
+     * Resolved from {@code order.requester.storage.id}, then 3bat {@code my-units}, then admin names.
+     */
+    @Step("Resolve requester UNIT (підрозділ) for orders")
+    Long resolveRequesterUnitStorageId() {
+        StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
+        long configured = ConfigProvider.getOrderRequesterStorageId();
+        if (configured > 0) {
+            return requireUnitStorageId(storageFixture, configured);
+        }
+        String hint = ConfigProvider.getOrderRequesterUnitName();
+        Long fromUnitUser = pickUnitId(tryMyUnits(storageFixture, UserRole.UNIT_ANALYST), hint, true);
+        if (fromUnitUser != null) {
+            return requireUnitStorageId(storageFixture, fromUnitUser);
+        }
+        Long fromNames = pickUnitId(storageFixture.getNames(UserRole.ADMIN, true, hint), hint, true);
+        if (fromNames != null) {
+            return requireUnitStorageId(storageFixture, fromNames);
+        }
+        throw new IllegalStateException(
+                "Cannot resolve requester UNIT for hint '" + hint
+                        + "'. Set order.requester.storage.id or order.requester.unit.name.");
+    }
+
+    private List<StorageResponse> tryMyUnits(StorageFixture storageFixture, UserRole role) {
+        try {
+            return storageFixture.getMyUnits(role);
+        } catch (Exception e) {
+            log.warn("GET my-units as {} failed: {}", role, e.getMessage());
+            return List.of();
+        }
+    }
+
+    private static Long pickUnitId(List<StorageResponse> units, String hint, boolean fallbackToFirst) {
+        if (units == null || units.isEmpty()) {
+            return null;
+        }
+        String normalizedHint = normalizeUnitHint(hint);
+        var matching = units.stream()
+                .filter(storage -> storage.getId() != null)
+                .filter(storage -> storage.getType() == null || "UNIT".equalsIgnoreCase(storage.getType()))
+                .filter(storage -> matchesUnitHint(storage, normalizedHint))
+                .map(StorageResponse::getId)
+                .findFirst();
+        if (matching.isPresent()) {
+            return matching.get();
+        }
+        if (!fallbackToFirst) {
+            return null;
+        }
+        return units.stream()
+                .filter(storage -> storage.getId() != null)
+                .filter(storage -> storage.getType() == null || "UNIT".equalsIgnoreCase(storage.getType()))
+                .map(StorageResponse::getId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static boolean matchesUnitHint(StorageResponse storage, String hint) {
+        if (hint.isEmpty()) {
+            return true;
+        }
+        return normalizeUnitHint(storage.getName()).contains(hint)
+                || normalizeUnitHint(storage.getAlias()).contains(hint);
+    }
+
+    private static String normalizeUnitHint(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toLowerCase()
+                .replace("батальйон", "бат")
+                .replace(" ", "")
+                .replace("-", "");
+    }
+
+    private Long requireUnitStorageId(StorageFixture storageFixture, Long storageId) {
+        StorageResponse current = storageFixture.getById(UserRole.ADMIN, storageId);
+        for (int depth = 0; depth < 8 && current != null; depth++) {
+            if ("UNIT".equalsIgnoreCase(current.getType())) {
+                log.info("Order requester UNIT id={} name={}", current.getId(), current.getName());
+                return current.getId();
+            }
+            if (current.getParent() == null || current.getParent().getId() == null) {
+                break;
+            }
+            current = storageFixture.getById(UserRole.ADMIN, current.getParent().getId());
+        }
+        throw new IllegalStateException(
+                "Order requester must be a UNIT (підрозділ); storage " + storageId
+                        + " is not a UNIT and has no UNIT parent. "
+                        + "Set order.requester.storage.id or order.requester.unit.name (e.g. 3bat).");
     }
 
     private Long requireRequesterStorageId() {
