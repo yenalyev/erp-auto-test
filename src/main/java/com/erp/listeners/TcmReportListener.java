@@ -25,6 +25,7 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
     private final List<TcmApiClient.BufferedResult> bufferedResults =
             Collections.synchronizedList(new ArrayList<>());
     private String suiteName;
+    private String remoteRunId;
 
     @Override
     public void onStart(ISuite suite) {
@@ -33,7 +34,9 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
             return;
         }
         suiteName = suite.getName();
-        log.info("TCM listener initialized for suite: {} (outbox={})", suiteName, TcmResultOutbox.resultsFile());
+        remoteRunId = TcmApiClient.resolveSuiteRemoteRunId(remoteRunId);
+        log.info("TCM listener initialized for suite: {} remoteRunId={} (outbox={})",
+                suiteName, remoteRunId, TcmResultOutbox.resultsFile());
     }
 
     @Override
@@ -62,6 +65,8 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
                     toSend
             );
             request.setImportSource("LISTENER");
+            request.setRemoteRunId(TcmApiClient.resolveSuiteRemoteRunId(remoteRunId));
+            remoteRunId = request.getRemoteRunId();
             TcmImportResponse response = TcmApiClient.submitRunWithRetry(request, 3);
             TcmResultOutbox.writeImportOk(response, "LISTENER");
             log.info("TCM import complete: runId={}, matched={}, skippedManual={}, unmatched={}",

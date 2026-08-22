@@ -21,7 +21,7 @@ public class TcmApiClient {
 
     public static final String API_TOKEN_HEADER = "X-TCM-Api-Token";
     private static final int CONNECT_TIMEOUT_MS = 5_000;
-    private static final int READ_TIMEOUT_MS = 30_000;
+    private static final int READ_TIMEOUT_MS = 300_000;
 
     private TcmApiClient() {
     }
@@ -155,6 +155,17 @@ public class TcmApiClient {
         }
 
         return builder.build();
+    }
+
+    public static String resolveSuiteRemoteRunId(String alreadyResolved) {
+        if (alreadyResolved != null && !alreadyResolved.isBlank()) {
+            return alreadyResolved;
+        }
+        String fromConfig = ConfigProvider.getTcmRemoteRunId();
+        if (fromConfig != null && !fromConfig.isBlank()) {
+            return fromConfig;
+        }
+        return "suite-" + java.util.UUID.randomUUID();
     }
 
     private static String mapStatus(int testngStatus) {
