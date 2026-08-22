@@ -150,6 +150,8 @@ public class ConfigProvider {
     public static String getProjectManagerPassword() { return config.projectManagerPassword(); }
     public static String getLocationMixedUsername() { return config.locationMixedUsername(); }
     public static String getLocationMixedPassword() { return config.locationMixedPassword(); }
+    public static String getUnitAnalystUsername() { return config.unitAnalystUsername(); }
+    public static String getUnitAnalystPassword() { return config.unitAnalystPassword(); }
 
     // Storage IDs per owner
     public static long getOwner1StorageId()     { return config.owner1StorageId(); }

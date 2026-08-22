@@ -31,6 +31,11 @@ public enum UserRole {
      * staging/dev: {@code order.gathering.*} (e.g. tyolki / storage 10); falls back to owner2.
      */
     ORDER_GATHERER,
+    /**
+     * Unit analytics reader ({@code perm_unit-analytics::read/view}).
+     * staging/dev: {@code user.unit-analyst.*} (e.g. 3bat).
+     */
+    UNIT_ANALYST,
     ANONYMOUS;
 
     public String getUsername() {
@@ -46,6 +51,7 @@ public enum UserRole {
             case PROJECT_MANAGER -> ConfigProvider.getProjectManagerUsername();
             case LOCATION_MIXED  -> ConfigProvider.getLocationMixedUsername();
             case ORDER_GATHERER  -> ConfigProvider.getOrderGatheringUsername();
+            case UNIT_ANALYST    -> ConfigProvider.getUnitAnalystUsername();
             case ANONYMOUS       -> "";
         };
     }
@@ -63,6 +69,7 @@ public enum UserRole {
             case PROJECT_MANAGER -> ConfigProvider.getProjectManagerPassword();
             case LOCATION_MIXED  -> ConfigProvider.getLocationMixedPassword();
             case ORDER_GATHERER  -> ConfigProvider.getOrderGatheringPassword();
+            case UNIT_ANALYST    -> ConfigProvider.getUnitAnalystPassword();
             case ANONYMOUS       -> "";
         };
     }
@@ -76,8 +83,7 @@ public enum UserRole {
             case OWNER_2       -> String.valueOf(ConfigProvider.getOwner2StorageId());
             case ORDER_GATHERER -> String.valueOf(ConfigProvider.getOrderGatheringStorageId());
             case CREW_MANAGER  -> String.valueOf(ConfigProvider.getUnitStorageId());
-            case OWNER_3       -> "";
-            case ANONYMOUS -> "";
+            case OWNER_3, UNIT_ANALYST, ANONYMOUS -> "";
         };
     }
 }

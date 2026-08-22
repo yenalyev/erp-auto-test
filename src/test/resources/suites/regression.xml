@@ -18,7 +18,9 @@
       run separately: mvn test -Dsuite=rbac
     - Includes domain suites: smoke, functional subsets, inventory, production,
       relocations, storage-regions, global-plans, technological-maps, defects,
-      resource-viewer, ui, bots (smoke block).
+      resource-viewer, ui, orders, bots (smoke block).
+      Hierarchy inventory (TC-WMS-007-010+) is in Inventory API/UI.
+      TC-CREW-FIGHT-* stay @Test(enabled=false) — not reported to TCM.
 -->
 <suite name="ERP Regression Suite" parallel="none" verbose="1">
 
@@ -167,6 +169,21 @@
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
             <class name="com.erp.tests.functional.inventory.StorageRelationInventoryTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Orders API">
+        <classes>
+            <class name="com.erp.tests.functional.order.OrderCrudApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderLifecycleApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderListApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderCommentsApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderAvailabilityApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderBookingApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderFreeStockApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderStockRegressionApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderRbacTest"/>
         </classes>
     </test>
 
@@ -193,6 +210,7 @@
             <class name="com.erp.tests.ui.WorkspaceSelectorUiTest"/>
             <class name="com.erp.tests.ui.AccountantCabinetUITest"/>
             <class name="com.erp.tests.ui.UsersAdminAccessUiTest"/>
+            <class name="com.erp.tests.ui.UnitAnalyticsUiTest"/>
         </classes>
     </test>
 
@@ -249,10 +267,20 @@
     <test name="UI Inventory">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>
+        </classes>
+    </test>
+
+    <test name="UI Orders">
+        <classes>
+            <class name="com.erp.tests.ui.OrderListUiTest"/>
+            <class name="com.erp.tests.ui.OrderCreateEditUiTest"/>
+            <class name="com.erp.tests.ui.OrderDetailUiTest"/>
+            <class name="com.erp.tests.ui.OrderBookingUiTest"/>
         </classes>
     </test>
 

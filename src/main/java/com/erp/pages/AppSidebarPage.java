@@ -49,6 +49,7 @@ public class AppSidebarPage extends BasePage {
     public static final String TAB_PROJECT_TEMPLATES = "Шаблони проєктного виробництва";
     public static final String TAB_PROJECT_CATEGORIES = "Категорії";
     public static final String TAB_PROJECT_PRODUCTS = "Продукти";
+    public static final String NAV_UNIT_ANALYTICS = "Аналітика Підрозділів";
 
     public AppSidebarPage(Page page) {
         super(page);

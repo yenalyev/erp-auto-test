@@ -94,4 +94,25 @@
         </classes>
     </test>
 
+    <test name="Inventory UI">
+        <classes>
+            <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
+        </classes>
+    </test>
+
+    <test name="Orders UI">
+        <classes>
+            <class name="com.erp.tests.ui.OrderListUiTest"/>
+            <class name="com.erp.tests.ui.OrderCreateEditUiTest"/>
+            <class name="com.erp.tests.ui.OrderDetailUiTest"/>
+            <class name="com.erp.tests.ui.OrderBookingUiTest"/>
+        </classes>
+    </test>
+
+    <test name="Unit Analytics UI">
+        <classes>
+            <class name="com.erp.tests.ui.UnitAnalyticsUiTest"/>
+        </classes>
+    </test>
+
 </suite>

@@ -166,6 +166,15 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String locationMixedPassword();
 
+    /** Unit analytics reader (perm unit-analytics::read). Dev/staging: 3bat. */
+    @Key("user.unit-analyst.username")
+    @DefaultValue("3bat")
+    String unitAnalystUsername();
+
+    @Key("user.unit-analyst.password")
+    @DefaultValue("")
+    String unitAnalystPassword();
+
     // Storage IDs per owner role (resolved per environment)
     @Key("owner1.storage.id")
     @DefaultValue("1")
