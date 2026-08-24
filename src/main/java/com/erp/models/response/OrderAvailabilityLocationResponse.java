@@ -18,4 +18,6 @@ public class OrderAvailabilityLocationResponse {
     private String storageName;
     private BigDecimal amount;
     private BigDecimal heldAmount;
+    /** Slice of {@code heldAmount} reserved by this order (CPMA-725). */
+    private BigDecimal heldByThisOrder;
 }

@@ -23,6 +23,7 @@ public class OrderResponse {
     private SimpleEntityResponse gatheringStorage;
     private Integer activeBookings;
     private Integer preparedBookings;
+    private Boolean hasLinkedProductionOrder;
     private String createdBy;
     private Instant createdAt;
     @Builder.Default

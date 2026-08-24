@@ -144,6 +144,7 @@ public class StorageDataFactory {
         } else {
             builder.accessMode(StorageAccessMode.FULL_ACCESS);
         }
+        builder.orderHub(Boolean.TRUE.equals(existing.getOrderHub()));
         return builder;
     }
 

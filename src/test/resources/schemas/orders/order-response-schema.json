@@ -13,6 +13,7 @@
     "gatheringStorage": { "type": ["object", "null"] },
     "activeBookings": { "type": ["integer", "null"] },
     "preparedBookings": { "type": ["integer", "null"] },
+    "hasLinkedProductionOrder": { "type": ["boolean", "null"] },
     "createdBy": { "type": ["string", "null"] },
     "createdAt": { "type": ["string", "null"], "format": "date-time" },
     "lines": {

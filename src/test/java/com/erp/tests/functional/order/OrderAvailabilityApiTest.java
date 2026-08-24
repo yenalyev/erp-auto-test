@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Epic("Orders")
-@Feature("REQ-WMS-010 Order availability")
+@Feature("REQ-ORD Order availability")
 public class OrderAvailabilityApiTest extends OrderApiTestBase {
 
     @Test(priority = 10)
@@ -40,5 +40,11 @@ public class OrderAvailabilityApiTest extends OrderApiTestBase {
                 .orElse(line.getLocations().getFirst());
         assertThat(location.getAmount()).isNotNull();
         assertThat(location.getAmount().doubleValue()).isGreaterThan(0);
+        if (location.getHeldByThisOrder() != null) {
+            assertThat(location.getHeldByThisOrder().doubleValue()).isGreaterThanOrEqualTo(0);
+        }
+        assertThat(line.getProduction())
+                .as("CPMA-725: production[] is present (empty when no open ВЗ)")
+                .isNotNull();
     }
 }

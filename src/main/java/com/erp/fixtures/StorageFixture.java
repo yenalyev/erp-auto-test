@@ -200,6 +200,15 @@ public class StorageFixture extends BaseFixture {
         return createStorage(request);
     }
 
+    /** CPMA-711: gathering candidate — STORAGE + {@code orderHub=true}. */
+    @Step("API: створити orderHub STORAGE parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createOrderHubStorage(Long parentId, String namePrefix) {
+        StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix)
+                .orderHub(true)
+                .build();
+        return createStorage(request);
+    }
+
     @Step("API: створити підрозділ UNIT parentId={parentId}, prefix={namePrefix}")
     public StorageResponse createUnitStorage(Long parentId, String namePrefix) {
         return createStorage(StorageDataFactory.unitStorage(parentId, namePrefix).build());
@@ -248,6 +257,19 @@ public class StorageFixture extends BaseFixture {
     public Response update(UserRole role, Long storageId, StorageRequest body) {
         return apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_PUT_UPDATE, role, body, String.valueOf(storageId));
+    }
+
+    /** CPMA-711: gathering candidates require {@code storage.orderHub == true}. */
+    @Step("API: ensure storage {storageId} is orderHub")
+    public StorageResponse ensureOrderHub(UserRole role, Long storageId) {
+        StorageResponse existing = getById(role, storageId);
+        if (Boolean.TRUE.equals(existing.getOrderHub())) {
+            return existing;
+        }
+        StorageRequest body = StorageDataFactory.updateFromExisting(existing, builder -> builder.orderHub(true));
+        Response response = update(role, storageId, body);
+        validateSuccess(response, "Enable orderHub on storage " + storageId);
+        return response.as(StorageResponse.class);
     }
 
     /**

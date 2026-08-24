@@ -20,7 +20,8 @@ public class OrderListPage extends BasePage {
     private static final String PAGE_TITLE = "Замовлення";
     private static final String CREATE_BUTTON = "Створити замовлення";
     private static final String EMPTY_STATE = "Замовлень не знайдено";
-    private static final String RESOURCE_SEARCH_PLACEHOLDER = "Назва ресурсу...";
+    private static final String RESOURCE_FILTER_PLACEHOLDER = "Всі ресурси";
+    private static final String RESOURCE_FILTER_SEARCH = "Пошук...";
     private static final String TAKE_TO_WORK_BUTTON = "Взяти в роботу";
     private static final String CANCEL_ORDER_BUTTON = "Скасувати";
     private static final String CONFIRM_BUTTON = "Підтвердити";
@@ -118,19 +119,22 @@ public class OrderListPage extends BasePage {
     }
 
     public OrderListPage filterByResourceSearch(String text) {
-        Locator input = page.getByPlaceholder(RESOURCE_SEARCH_PLACEHOLDER);
+        page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName(RESOURCE_FILTER_PLACEHOLDER))
+                .click();
+        Locator search = page.getByPlaceholder(RESOURCE_FILTER_SEARCH);
+        search.fill(text == null ? "" : text);
         page.waitForResponse(
                 response -> response.url().contains("/orders") && "GET".equals(response.request().method()),
-                () -> input.fill(text == null ? "" : text));
+                () -> page.locator("[data-slot='combobox-item'], [cmdk-item], [role='option']")
+                        .filter(new Locator.FilterOptions().setHasText(text == null ? "" : text))
+                        .first()
+                        .click());
         waitForJournalDataSettled();
         return this;
     }
 
     public OrderListPage clearFilters() {
-        Locator filterCard = page.locator("label")
-                .filter(new Locator.FilterOptions().setHasText("Пошук ресурсу"))
-                .locator("xpath=ancestor::div[contains(@class,'p-5')]");
-        Locator resetButton = filterCard.locator("button").last();
+        Locator resetButton = page.locator("button:has(svg.lucide-filter-x)").first();
         if (resetButton.count() == 0) {
             log.warn("Order filter reset button not found");
             return this;

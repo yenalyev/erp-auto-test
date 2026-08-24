@@ -21,4 +21,7 @@ public class OrderAvailabilityResponse {
     private BigDecimal requestedQuantity;
     @Builder.Default
     private List<OrderAvailabilityLocationResponse> locations = new ArrayList<>();
+    /** Non-final production orders supplying this resource (CPMA-725). */
+    @Builder.Default
+    private List<OrderAvailabilityProductionResponse> production = new ArrayList<>();
 }

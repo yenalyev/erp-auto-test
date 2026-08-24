@@ -90,6 +90,7 @@ public class OrderFixture extends BaseFixture {
 
         testContext.set(ContextKey.ORDER_RESOURCE_ID, resourceId);
 
+        new StorageFixture(testContext, apiExecutor).ensureOrderHub(UserRole.ADMIN, gatheringStorage);
         relocationFixture.ensureStock(gatheringStorage, resourceId, DEFAULT_SEED_STOCK);
         log.info("Order fixture ready: requester={}, gathering={} ({}), resource={} ({} visible)",
                 requesterStorage, gatheringStorage, ConfigProvider.getOrderGatheringUsername(),
@@ -148,6 +149,17 @@ public class OrderFixture extends BaseFixture {
                  ResultSet rs = check.executeQuery()) {
                 if (rs.next()) {
                     log.info("order_availability_root_storage = {}", rs.getString(1));
+                }
+            }
+            long gatheringId = ConfigProvider.getOrderGatheringStorageId();
+            if (gatheringId > 0) {
+                try (PreparedStatement hub = connection.prepareStatement(
+                        "UPDATE storage SET is_order_hub = true WHERE id = ? AND is_order_hub = false")) {
+                    hub.setLong(1, gatheringId);
+                    int hubs = hub.executeUpdate();
+                    if (hubs > 0) {
+                        log.info("Enabled is_order_hub on gathering storage {}", gatheringId);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -213,7 +225,8 @@ public class OrderFixture extends BaseFixture {
         if (candidates.isEmpty()) {
             throw new SkipException(
                     "No gathering-location candidates for order " + orderId
-                            + " — configure order_availability_root_storage with active STORAGE/PRODUCTION ≠ requester");
+                            + " — need active STORAGE/PRODUCTION with orderHub=true under "
+                            + "order_availability_root_storage, ≠ requester");
         }
         Long preferred = testContext.get(ContextKey.ORDER_GATHERING_STORAGE_ID);
         if (preferred == null) {
