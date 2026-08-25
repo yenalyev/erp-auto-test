@@ -2,6 +2,7 @@ package com.erp.fixtures;
 
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.models.request.InvoiceDataRequest;
 import com.erp.test_context.TestContext;
 import com.erp.api.clients.ApiExecutor;
 import io.qameta.allure.Step;
@@ -45,6 +46,16 @@ public class InvoiceFixture extends BaseFixture {
         }
         throw new IllegalStateException(
                 "Invoice file not ready for relocation " + relocationId + " after " + maxAttempts + " attempts");
+    }
+
+    @Step("API: POST generate invoice for relocation {relocationId}")
+    public Response generateRaw(UserRole role, long storageId, long relocationId, InvoiceDataRequest request) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.INVOICE_POST_GENERATE,
+                role,
+                request,
+                storageId,
+                relocationId);
     }
 
     @Step("API: GET /invoice/{id}/exists?senderId={senderId}")

@@ -8,6 +8,7 @@ import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.models.request.DisassembleListRequest;
 import com.erp.models.request.TechnologicalMapRequest;
+import com.erp.models.response.DisassembleItemResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
@@ -118,7 +119,49 @@ public class DisassembleFixture extends BaseFixture {
         return response;
     }
 
-    @Step("API: сумарна «Вироблено» для ресурсу {resourceId} за сьогодні")
+    @Step("API: GET disassemble {id} on storage {storageId}")
+    public DisassembleItemResponse getById(UserRole role, long id, long storageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.DISASSEMBLE_GET_BY_ID,
+                role,
+                null,
+                id,
+                storageId);
+        validateSuccess(response, "Get disassemble");
+        return response.as(DisassembleItemResponse.class);
+    }
+
+    @Step("API: PUT disassemble {id} on storage {storageId}")
+    public Response updateRaw(UserRole role,
+                              long id,
+                              long storageId,
+                              TechnologicalMapResponse techMap,
+                              double disassembleAmount,
+                              double actualTotalProduced,
+                              String batchNumber) {
+        DisassembleListRequest request = DisassembleDataFactory.buildCreateRequest(
+                techMap,
+                disassembleAmount,
+                actualTotalProduced,
+                LocalDate.now(),
+                batchNumber);
+        return apiExecutor.execute(
+                ApiEndpointDefinition.DISASSEMBLE_PUT_UPDATE,
+                role,
+                request,
+                id,
+                storageId);
+    }
+
+    @Step("API: DELETE disassemble {id}")
+    public Response deleteRaw(UserRole role, long id, long storageId) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.DISASSEMBLE_DELETE,
+                role,
+                null,
+                id,
+                storageId);
+    }
     public double getProducedSummaryAmount(long storageId, UserRole role, long resourceId) {
         Response history = getOperationHistoryToday(storageId, role);
         validateSuccess(history, "Get operation history for produced summary");
@@ -239,7 +282,7 @@ public class DisassembleFixture extends BaseFixture {
     }
 
     @Step("FIXTURE: Seed input stock for disassemble via relocation receive")
-    private void seedInputStock(Long storageId, Long inputResourceId) {
+    public void seedInputStock(Long storageId, Long inputResourceId) {
         RelocationStockSeeder.receiveFromSupplier(
                 apiExecutor,
                 UserRole.OWNER_1,

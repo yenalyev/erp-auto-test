@@ -132,7 +132,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
     }
 
     @Test(priority = 22)
-    @TestCaseId("TC-CREW-INV-007B")
+    @TestCaseId("TC-CREW-INV-007b")
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_007B)
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewManagerCanReadCrewDirectInventory() {
@@ -167,7 +167,7 @@ public class CrewInventoryTest extends CrewApiTestBase {
     }
 
     @Test(priority = 26)
-    @TestCaseId("TC-CREW-INV-008B")
+    @TestCaseId("TC-CREW-INV-008b")
     @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_008B)
     @Severity(SeverityLevel.CRITICAL)
     public void testOwner1DeniedUnattachedCrewInventory() {

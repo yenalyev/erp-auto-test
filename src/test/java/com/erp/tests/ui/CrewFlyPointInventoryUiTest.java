@@ -93,7 +93,10 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
     }
 
     @Test(priority = 10)
-    @TestCaseId("TC-UI-CREW-015")
+    @TestCaseId({
+            "TC-UI-CREW-015",
+            "TC-UI-CREW-004"
+    })
     @Description(StorageRegionsAllureDescriptions.TC_UI_CREW_015)
     @Severity(SeverityLevel.CRITICAL)
     public void crewAnalyticsOpensUnattachedCrewInventoryAndConduct() {
@@ -300,7 +303,10 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
     }
 
     @Test(priority = 60)
-    @TestCaseId("TC-UI-FLY-INV-002")
+    @TestCaseId({
+            "TC-UI-FLY-INV-002",
+            "TC-UI-CREW-011"
+    })
     @Description(StorageRegionsAllureDescriptions.TC_UI_FLY_INV_002)
     @Severity(SeverityLevel.CRITICAL)
     public void adminTogglesInventorySessionOnFlyPointDeepLink() {
@@ -394,7 +400,10 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
     }
 
     @Test(priority = 64)
-    @TestCaseId("TC-UI-CREW-021")
+    @TestCaseId({
+            "TC-UI-CREW-021",
+            "TC-UI-CREW-010"
+    })
     @Description(StorageRegionsAllureDescriptions.TC_UI_CREW_021)
     @Severity(SeverityLevel.NORMAL)
     public void obsoleteCrewsModeUrlDoesNotCrash() {

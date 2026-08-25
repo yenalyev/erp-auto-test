@@ -462,6 +462,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    RESOURCE_GET_AVAILABLE_CATEGORIES(
+            "/api/v1/resources/available-categories",
+            Method.GET,
+            null,
+            "Get resource categories available for a storage",
+            null,
+            new TypeReference<List<ResourceCategoryResponse>>() {},
+            null
+    ),
+
     /**
      * Catalog for «Керувати обраними» on Plan Execution: PRODUCTION tech-map outputs
      * for {@code storageId}, filtered by resource {@code isActive} (UI: Активні / Архівні).
@@ -506,6 +516,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    RESOURCE_PRICE_PUT_UPDATE(
+            "/api/v1/resources-price",
+            Method.PUT,
+            null,
+            "Update resource price",
+            new TypeReference<ResourcePriceUpdateRequest>() {},
+            new TypeReference<ResourcePriceResponse>() {},
+            "UPDATE_RESOURCE_PRICE"
+    ),
+
     ALERT_POST_CREATE(
             "/api/v1/alerts",
             Method.POST,
@@ -544,6 +564,16 @@ public enum ApiEndpointDefinition {
             null,
             null,
             "DELETE_ALERT"
+    ),
+
+    ALERT_GET_BY_ID(
+            "/api/v1/alerts/{id}",
+            Method.GET,
+            null,
+            "Get storage alert by id",
+            null,
+            new TypeReference<StorageAlertResponse>() {},
+            null
     ),
 
     // ========================================
@@ -1293,6 +1323,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    PRODUCTION_DAILY_REPORT_GET(
+            "/api/v1/productions/daily-report",
+            Method.GET,
+            null,
+            "Get production daily report for parent storage",
+            null,
+            null,
+            null
+    ),
+
     ASSEMBLY_READINESS_GET_BY_STORAGE(
             "/api/v1/assembly-readiness/{storageId}",
             Method.GET,
@@ -1323,8 +1363,38 @@ public enum ApiEndpointDefinition {
             null,
             "Create disassemble",
             new TypeReference<DisassembleListRequest>() {},
-            null,
+            new TypeReference<List<DisassembleItemResponse>>() {},
             "CREATE_DISASSEMBLE"
+    ),
+
+    DISASSEMBLE_GET_BY_ID(
+            "/api/v1/disassemble/{id}?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get disassemble by id",
+            null,
+            new TypeReference<DisassembleItemResponse>() {},
+            null
+    ),
+
+    DISASSEMBLE_PUT_UPDATE(
+            "/api/v1/disassemble/{id}/{storageId}",
+            Method.PUT,
+            null,
+            "Update disassemble",
+            new TypeReference<DisassembleListRequest>() {},
+            new TypeReference<DisassembleItemResponse>() {},
+            "UPDATE_DISASSEMBLE"
+    ),
+
+    DISASSEMBLE_DELETE(
+            "/api/v1/disassemble/{id}?storageId={storageId}",
+            Method.DELETE,
+            null,
+            "Delete disassemble",
+            null,
+            null,
+            "DELETE_DISASSEMBLE"
     ),
 
     // ========================================
@@ -2131,6 +2201,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    INVOICE_POST_GENERATE(
+            "/api/v1/invoice/generate/{storageId}/{relocationId}",
+            Method.POST,
+            null,
+            "Generate invoice PDF for relocation",
+            new TypeReference<InvoiceDataRequest>() {},
+            null,
+            "GENERATE_INVOICE"
+    ),
+
     /** @deprecated use {@link #RELOCATION_POST_SEND} */
     @Deprecated
     RELOCATION_POST_CREATE_BY_STORE_ID(
@@ -2292,6 +2372,46 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    EQUIPMENT_CATEGORY_GET_BY_ID(
+            "/api/v1/equipment-categories/{id}",
+            Method.GET,
+            null,
+            "Get equipment category by id",
+            null,
+            new TypeReference<EquipmentCategoryResponse>() {},
+            null
+    ),
+
+    EQUIPMENT_CATEGORY_POST_CREATE(
+            "/api/v1/equipment-categories",
+            Method.POST,
+            null,
+            "Create equipment category",
+            new TypeReference<EquipmentCategoryRequest>() {},
+            new TypeReference<EquipmentCategoryResponse>() {},
+            "CREATE_EQUIPMENT_CATEGORY"
+    ),
+
+    EQUIPMENT_CATEGORY_PUT_UPDATE(
+            "/api/v1/equipment-categories/{id}",
+            Method.PUT,
+            null,
+            "Update equipment category",
+            new TypeReference<EquipmentCategoryRequest>() {},
+            new TypeReference<EquipmentCategoryResponse>() {},
+            "UPDATE_EQUIPMENT_CATEGORY"
+    ),
+
+    EQUIPMENT_CATEGORY_DELETE(
+            "/api/v1/equipment-categories/{id}",
+            Method.DELETE,
+            null,
+            "Delete equipment category",
+            null,
+            null,
+            "DELETE_EQUIPMENT_CATEGORY"
+    ),
+
     EQUIPMENT_POST_CREATE(
             "/api/v1/equipment",
             Method.POST,
@@ -2353,6 +2473,285 @@ public enum ApiEndpointDefinition {
             new TypeReference<EmployeeRequest>() {},
             new TypeReference<EmployeeResponse>() {},
             "CREATE"
+    ),
+
+    EMPLOYEE_PUT_UPDATE(
+            "/api/v1/employees/{id}",
+            Method.PUT,
+            "schemas/employee/employee-response-schema.json",
+            "Update employee",
+            new TypeReference<EmployeeRequest>() {},
+            new TypeReference<EmployeeResponse>() {},
+            "UPDATE_EMPLOYEE"
+    ),
+
+    EMPLOYEE_DELETE(
+            "/api/v1/employees/{id}",
+            Method.DELETE,
+            null,
+            "Soft-delete employee",
+            null,
+            null,
+            "DELETE_EMPLOYEE"
+    ),
+
+    // ========================================
+    // SHIFT ENDPOINTS
+    // ========================================
+    SHIFT_GET_ALL(
+            "/api/v1/shifts/{storageId}",
+            Method.GET,
+            null,
+            "Get shifts for storage",
+            null,
+            new TypeReference<List<ShiftResponse>>() {},
+            null
+    ),
+
+    SHIFT_GET_BY_ID(
+            "/api/v1/shifts/{id}/{storageId}",
+            Method.GET,
+            null,
+            "Get shift by id",
+            null,
+            new TypeReference<ShiftResponse>() {},
+            null
+    ),
+
+    SHIFT_POST_CREATE(
+            "/api/v1/shifts/{storageId}",
+            Method.POST,
+            null,
+            "Create shift",
+            new TypeReference<ShiftRequest>() {},
+            new TypeReference<ShiftResponse>() {},
+            "CREATE_SHIFT"
+    ),
+
+    SHIFT_PUT_UPDATE(
+            "/api/v1/shifts/{id}/{storageId}",
+            Method.PUT,
+            null,
+            "Update shift",
+            new TypeReference<ShiftRequest>() {},
+            new TypeReference<ShiftResponse>() {},
+            "UPDATE_SHIFT"
+    ),
+
+    SHIFT_DELETE(
+            "/api/v1/shifts/{id}/{storageId}",
+            Method.DELETE,
+            null,
+            "Delete shift",
+            null,
+            null,
+            "DELETE_SHIFT"
+    ),
+
+    // ========================================
+    // PRODUCTION ORDER ENDPOINTS
+    // ========================================
+    PRODUCTION_ORDER_GET_PAGE(
+            "/api/v1/production-orders",
+            Method.GET,
+            null,
+            "Get production orders page",
+            null,
+            null,
+            null
+    ),
+
+    PRODUCTION_ORDER_GET_BY_ID(
+            "/api/v1/production-orders/{id}",
+            Method.GET,
+            null,
+            "Get production order by id",
+            null,
+            new TypeReference<ProductionOrderResponse>() {},
+            null
+    ),
+
+    PRODUCTION_ORDER_POST_CREATE(
+            "/api/v1/production-orders",
+            Method.POST,
+            null,
+            "Create production order",
+            new TypeReference<ProductionOrderRequest>() {},
+            new TypeReference<ProductionOrderResponse>() {},
+            "CREATE_PRODUCTION_ORDER"
+    ),
+
+    PRODUCTION_ORDER_PUT_UPDATE(
+            "/api/v1/production-orders/{id}",
+            Method.PUT,
+            null,
+            "Update production order",
+            new TypeReference<ProductionOrderRequest>() {},
+            new TypeReference<ProductionOrderResponse>() {},
+            "UPDATE_PRODUCTION_ORDER"
+    ),
+
+    PRODUCTION_ORDER_DELETE(
+            "/api/v1/production-orders/{id}",
+            Method.DELETE,
+            null,
+            "Delete production order",
+            null,
+            null,
+            "DELETE_PRODUCTION_ORDER"
+    ),
+
+    PRODUCTION_ORDER_PUT_CANCEL(
+            "/api/v1/production-orders/{id}/cancel",
+            Method.PUT,
+            null,
+            "Cancel production order",
+            null,
+            new TypeReference<ProductionOrderResponse>() {},
+            null
+    ),
+
+    PRODUCTION_ORDER_GET_HOLDS(
+            "/api/v1/production-orders/{id}/holds",
+            Method.GET,
+            null,
+            "Get production order holds",
+            null,
+            null,
+            null
+    ),
+
+    PRODUCTION_ORDER_GET_TASKS(
+            "/api/v1/production-orders/{id}/tasks",
+            Method.GET,
+            null,
+            "Get production order tasks",
+            null,
+            null,
+            null
+    ),
+
+    PRODUCTION_ORDER_GET_TARGET_LOCATIONS(
+            "/api/v1/production-orders/target-locations",
+            Method.GET,
+            null,
+            "Get production order target locations",
+            null,
+            new TypeReference<List<SimpleEntityResponse>>() {},
+            null
+    ),
+
+    PRODUCTION_ORDER_GET_LINKABLE_ORDERS(
+            "/api/v1/production-orders/linkable-orders",
+            Method.GET,
+            null,
+            "Get warehouse orders linkable to a production order",
+            null,
+            null,
+            null
+    ),
+
+    PRODUCTION_ORDER_POST_DECOMPOSE(
+            "/api/v1/production-orders/{id}/decompose",
+            Method.POST,
+            null,
+            "Decompose production order",
+            new TypeReference<DecompositionRequest>() {},
+            new TypeReference<DecompositionResponse>() {},
+            null
+    ),
+
+    PRODUCTION_ORDER_POST_GENERATE(
+            "/api/v1/production-orders/{id}/generate",
+            Method.POST,
+            null,
+            "Generate production order tasks",
+            new TypeReference<DecompositionRequest>() {},
+            null,
+            "GENERATE_PRODUCTION_ORDER"
+    ),
+
+    PRODUCTION_ORDER_GET_LINKED_ORDERS(
+            "/api/v1/production-orders/{id}/orders",
+            Method.GET,
+            null,
+            "Get warehouse orders linked to a production order",
+            null,
+            null,
+            null
+    ),
+
+    PRODUCTION_ORDER_POST_LINK_ORDER(
+            "/api/v1/production-orders/{id}/orders",
+            Method.POST,
+            null,
+            "Link warehouse order to a production order",
+            new TypeReference<ProductionOrderLinkRequest>() {},
+            null,
+            "LINK_PRODUCTION_ORDER"
+    ),
+
+    PRODUCTION_ORDER_DELETE_UNLINK_ORDER(
+            "/api/v1/production-orders/{id}/orders/{orderId}",
+            Method.DELETE,
+            null,
+            "Unlink warehouse order from a production order",
+            null,
+            null,
+            "UNLINK_PRODUCTION_ORDER"
+    ),
+
+    // ========================================
+    // ANALYTICS / AUDIT ENDPOINTS
+    // ========================================
+    PRODUCTION_ANALYTIC_SUMMARY_GET(
+            "/api/v1/production/analytic/summary",
+            Method.GET,
+            null,
+            "Get production analytics summary",
+            null,
+            null,
+            null
+    ),
+
+    ORDER_ANALYTIC_SUMMARY_GET(
+            "/api/v1/orders/analytic/summary",
+            Method.GET,
+            null,
+            "Get order analytics summary",
+            null,
+            null,
+            null
+    ),
+
+    UNIT_ANALYTICS_GET(
+            "/api/v1/unit-analytics",
+            Method.GET,
+            null,
+            "Get unit analytics",
+            null,
+            null,
+            null
+    ),
+
+    AUDIT_LOG_GET_PAGE(
+            "/api/v1/audit-log",
+            Method.GET,
+            null,
+            "Get audit log page",
+            null,
+            null,
+            null
+    ),
+
+    ANALYTICS_SESSIONS_GET(
+            "/api/v1/analytics/sessions",
+            Method.GET,
+            null,
+            "Get user session analytics",
+            null,
+            null,
+            null
     ),
 
     // ========================================

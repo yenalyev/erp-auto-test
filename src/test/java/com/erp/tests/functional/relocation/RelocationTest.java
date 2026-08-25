@@ -494,7 +494,7 @@ public class RelocationTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 60)
-    @TestCaseId("TC-REL-060B")
+    @TestCaseId("TC-REL-060b")
     @Story("RBAC negative delete")
     public void testOwner1CannotDeleteRelocation() {
         String batchNumber = RelocationDataFactory.uniqueBatchNumber();

@@ -327,7 +327,7 @@ public class StorageRegionTest extends StorageApiTestBase {
     }
 
     @Test(priority = 101)
-    @TestCaseId("TC-STR-REG-050B")
+    @TestCaseId("TC-STR-REG-050b")
     @Description(StorageRegionsAllureDescriptions.TC_STR_REG_050B)
     @Severity(SeverityLevel.CRITICAL)
     public void testRevokeExplicitGrantRemovesViewerFromLinks() {

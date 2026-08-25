@@ -74,4 +74,31 @@ public class OrderFreeStockApiTest extends OrderApiTestBase {
         String body = response.body().asString();
         assertThat(body).containsAnyOf("заброньовано", "вільного залишку", "Недостатньо");
     }
+
+    @Test(priority = 12)
+    @TestCaseId("TC-ORD-103")
+    @Story("Relocation picker uses free stock")
+    @Description("Relocation «доступно» = on-hand − bookedAmount (free).")
+    public void testFreeStockEqualsOnHandMinusBooked() {
+        pinGatheringOnHand(Math.max(TOTAL_STOCK, HOLD_QTY + 2));
+        OrderResponse order = prepareManagedInProgress(HOLD_QTY);
+        resetGatheringOnHandKeepingOrders(TOTAL_STOCK);
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, HOLD_QTY);
+
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_INVENTORY_MULTI_GET,
+                GATHERER,
+                Map.of("locations", gatheringStorageId, "resourceIds", resourceId, "size", 5));
+        assertThat(response.statusCode()).isEqualTo(200);
+        List<MultiLocationStorageItemResponse> content =
+                response.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
+        StorageAmountResponse loc = content.getFirst().getLocations().stream()
+                .filter(l -> l.getStorage() != null && gatheringStorageId.equals(l.getStorage().getId()))
+                .findFirst()
+                .orElseThrow();
+        double booked = loc.getBookedAmount() == null ? 0.0 : loc.getBookedAmount();
+        double onHand = loc.getAmount() == null ? 0.0 : loc.getAmount();
+        assertThat(booked).isGreaterThan(0.0);
+        assertThat(onHand - booked).isLessThan(onHand);
+    }
 }

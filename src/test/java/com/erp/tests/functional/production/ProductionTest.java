@@ -81,7 +81,8 @@ public class ProductionTest extends BaseFunctionalTest {
             "TC-PRD-001",
             "TC-MFG-005",
             "TC-MFG-006",
-            "TC-MFG-008"
+            "TC-MFG-008",
+            "TC-MFG-003-05"
     })
     @Story("Create production")
     @Description("Успішне створення виробництва, перевірка відповіді, журналу та залишків")
@@ -427,7 +428,8 @@ public class ProductionTest extends BaseFunctionalTest {
     @Test(priority = 60)
     @TestCaseId({
             "TC-PRD-006",
-            "TC-MFG-014"
+            "TC-MFG-014",
+            "TC-MFG-003-04"
     })
     @Story("Update production amount")
     @Description("""
@@ -531,7 +533,8 @@ public class ProductionTest extends BaseFunctionalTest {
     @Test(priority = 70)
     @TestCaseId({
             "TC-PRD-007",
-            "TC-MFG-015"
+            "TC-MFG-015",
+            "TC-MFG-003-02"
     })
     @Story("Delete production")
     @Description("""

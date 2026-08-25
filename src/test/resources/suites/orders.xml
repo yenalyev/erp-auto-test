@@ -29,6 +29,7 @@
             <class name="com.erp.tests.ui.OrderCreateEditUiTest"/>
             <class name="com.erp.tests.ui.OrderDetailUiTest"/>
             <class name="com.erp.tests.ui.OrderBookingUiTest"/>
+            <class name="com.erp.tests.ui.OrderFreeStockUiTest"/>
         </classes>
     </test>
 </suite>

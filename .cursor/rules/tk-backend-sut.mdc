@@ -22,25 +22,32 @@ Layer: Controller → Facade → Service → DAO → Entity
 
 ## API scale
 
-~**106** public `/api/v1` handlers across **24** controllers.
+~**54** controllers, **~350** public `/api/v1` handlers. Backend `*ControllerIT` covers ~30 domains (no real Keycloak).
 
-### Domains (endpoint count → priority for autotests)
+### Domains (erp-auto-test status)
 
-| Domain | Path | Endpoints | erp-auto-test | Priority |
-|--------|------|-----------|---------------|----------|
-| Resources | `/api/v1/resources` | 9 | CRUD functional ✓ | done |
-| Categories | `/api/v1/resources/categories` | 5 | GET only | medium |
-| Measurement units | `/api/v1/measurement-unit` | 3 | CRUD ✓ | done |
-| Storages | `/api/v1/storages` | 7 | CRUD ✓ | done |
-| Inventory | `/api/v1/storages/{id}/inventory` | 7 | none | tier 3 |
-| Tech maps | `/api/v1/technological-maps` | 6 | schema+RBAC | **tier 1** |
-| Production | `/api/v1/productions` | 7 | schema+RBAC | **tier 1** |
-| Disassembly | `/api/v1/disassemble` | 7 | none | tier 3 |
-| Plans | `/api/v1/plans` | 5 | schema+RBAC | **tier 1** |
-| Relocations | `/api/v1/relocations` | 8 | GET+POST only | **tier 1** |
-| Statistics | `/api/v1/statistics` | 3 | plan GET | tier 2 |
-| Shifts | `/api/v1/shifts` | 5 | none | tier 3 |
-| Orders, Alerts, Invoice, Export | various | — | none | tier 4 |
+| Domain | Path | erp-auto-test | Notes |
+|--------|------|---------------|-------|
+| Resources | `/api/v1/resources` | CRUD ✓ | done |
+| Categories | `/api/v1/resources/categories` | GET + fixture | medium |
+| Resource prices | `/api/v1/resources-price` | GET/PUT | |
+| Measurement units | `/api/v1/measurement-unit` | CRUD ✓ | done |
+| Storages / regions | `/api/v1/storages` | CRUD ✓ | done |
+| Inventory | `/api/v1/storages/.../inventory` | session/conduct/hierarchy ✓ | |
+| Tech maps | `/api/v1/technological-maps` | CRUD + alt groups ✓ | |
+| Production | `/api/v1/productions` | CRUD + stock ✓ | |
+| Disassembly | `/api/v1/disassemble` | CRUD + stock | |
+| Shifts | `/api/v1/shifts` | CRUD + RBAC | |
+| Plans / global plans | `/api/v1/plans`, `/global-plans` | CRUD + decompose ✓ | |
+| Relocations | `/api/v1/relocations` | lifecycle + incidents ✓ | |
+| Orders (заявки) | `/api/v1/orders` | CRUD + lifecycle + booking ✓ | REQ-ORD |
+| Production orders (ВЗ) | `/api/v1/production-orders` | CRUD + holds + link | REQ-PO |
+| Assembly readiness | `/api/v1/assembly-readiness` | API + UI ✓ | |
+| Defects | `/api/v1/defects` | CRUD ✓ | |
+| Equipment | `/api/v1/equipment` | create + reloc + inventory session | |
+| Notifications | `/api/v1/notifications*` | API + UI | suite in regression |
+| Alerts | `/api/v1/alerts` | CRUD | |
+| Analytics / audit / export | various | GET + RBAC smoke | |
 
 ## Critical business flows (stock-impacting)
 
@@ -49,16 +56,9 @@ Layer: Controller → Facade → Service → DAO → Entity
 3. Tech map versioning → Production / Disassembly
 4. Plans → Production
 5. Relocation lifecycle: create → send → receive → resolve
-6. Orders → auto-relocation
+6. Orders → booking → ship relocation; production-orders holds
 7. Inventory adjustments
 
-## erp-auto-test alignment gaps
+## Test strategy
 
-- **Production POST path:** backend `POST /api/v1/productions/{storageId}` — verify `ApiEndpointDefinition` matches
-- **Relocation:** backend has send/receive/resolve/export — erp has GET+POST only
-- **Missing in erp-auto-test:** shifts, disassembly, inventory, orders, alerts
-- Reference backend IT tests: `*ControllerIT.java` in tk `src/test/java` for request/response examples
-
-## Test strategy for this backend
-
-**API first** for CRUD and RBAC. Backend already has ~100 IT tests — erp-auto-test adds cross-env Keycloak RBAC + contract validation + regression suite.
+**API first** for CRUD and RBAC. Backend IT is payload reference only. erp-auto-test adds cross-env Keycloak RBAC + contract validation + regression suite.

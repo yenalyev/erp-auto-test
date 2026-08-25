@@ -5,6 +5,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.OrderState;
 import com.erp.models.response.OrderResponse;
 import com.erp.models.response.PagedOrderResponse;
+import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -111,5 +112,60 @@ public class OrderListApiTest extends OrderApiTestBase {
         assertThat(fetched.getState()).isEqualTo(OrderState.NEW);
         assertThat(fetched.getLines()).isNotEmpty();
         assertThat(fetched.getLines().getFirst().getResource().getId()).isEqualTo(resourceId);
+    }
+
+    @Test(priority = 15)
+    @TestCaseId("TC-ORD-033")
+    @Story("List filters")
+    @Description("Фільтр startDate/endDate по createdAt — сьогоднішня заявка потрапляє в вікно.")
+    public void testFilterByCreatedDateRange() {
+        OrderResponse created = orderFixture.createOrder(REQUESTER);
+        String today = java.time.LocalDate.now().toString();
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.ORDER_GET_PAGE,
+                REQUESTER,
+                Map.of(
+                        "storageIds", requesterStorageId,
+                        "startDate", today,
+                        "endDate", today,
+                        "page", 0,
+                        "size", 50));
+        assertThat(response.statusCode()).isEqualTo(200);
+        PagedOrderResponse page = response.as(PagedOrderResponse.class);
+        assertThat(page.getContent().stream().anyMatch(o -> created.getId().equals(o.getId()))).isTrue();
+    }
+
+    @Test(priority = 16)
+    @TestCaseId("TC-ORD-036")
+    @Story("List progress fields")
+    @Description("List progress activeBookings/preparedBookings видимі користувачу з правом бачити броні.")
+    public void testListProgressFieldsForManager() {
+        OrderResponse order = prepareManagedInProgress();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+        PagedOrderResponse page = orderFixture.getPage(MANAGER, requesterStorageId);
+        OrderResponse row = page.getContent().stream()
+                .filter(o -> order.getId().equals(o.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(row.getId()).isEqualTo(order.getId());
+        assertThat(row.getActiveBookings()).isGreaterThan(0);
+    }
+
+    @Test(priority = 17)
+    @TestCaseId("TC-ORD-037")
+    @Story("List visibility")
+    @Description("Чужий підрозділ не бачить заявку в списку.")
+    public void testOutsiderListDoesNotIncludeOrder() {
+        OrderResponse created = orderFixture.createOrder(REQUESTER);
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.ORDER_GET_PAGE,
+                OUTSIDER,
+                Map.of("storageIds", ConfigProvider.getOwner1StorageId(), "page", 0, "size", 50));
+        if (response.statusCode() == 403) {
+            return;
+        }
+        assertThat(response.statusCode()).isEqualTo(200);
+        PagedOrderResponse page = response.as(PagedOrderResponse.class);
+        assertThat(page.getContent().stream().noneMatch(o -> created.getId().equals(o.getId()))).isTrue();
     }
 }

@@ -35,6 +35,8 @@
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
+            <class name="com.erp.tests.ui.ResourceBundleApplyUiTest"/>
+            <class name="com.erp.tests.ui.ResourceBundleManageUiTest"/>
         </classes>
     </test>
 
@@ -106,6 +108,8 @@
             <class name="com.erp.tests.ui.OrderCreateEditUiTest"/>
             <class name="com.erp.tests.ui.OrderDetailUiTest"/>
             <class name="com.erp.tests.ui.OrderBookingUiTest"/>
+            <class name="com.erp.tests.ui.OrderFreeStockUiTest"/>
+            <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
         </classes>
     </test>
 

@@ -33,11 +33,15 @@ public class AppSidebarPage extends BasePage {
     public static final String GROUP_EQUIPMENT = "Обладнання";
     public static final String GROUP_STORAGE = "Локації/Організми";
     public static final String GROUP_PROJECT_PRODUCTION = "Проєктне виробництво";
+    public static final String GROUP_ORDERS = "Замовлення";
+    public static final String GROUP_AUDIT = "Аудит";
 
     public static final String TAB_NON_SERIES = "Несерійне виробництво";
     public static final String TAB_ASSEMBLY_READINESS = "Готово до комплектації";
     public static final String TAB_SHIFTS = "Виробнича зміна";
     public static final String TAB_DEFECTS = "Брак";
+    public static final String TAB_PRODUCTION_ANALYTICS = "Аналітика";
+    public static final String TAB_DAILY_REPORT = "Денний звіт";
     public static final String TAB_GLOBAL_PLANS = "Глобальні плани";
     public static final String TAB_PLANS = "Виробничі плани";
     public static final String TAB_PLAN_EXECUTION = "Виконання плану";
@@ -45,6 +49,14 @@ public class AppSidebarPage extends BasePage {
     public static final String TAB_PRICES = "Ціни";
     public static final String TAB_RESOURCE_CATEGORIES = "Категорії ресурсів";
     public static final String TAB_MEASUREMENT_UNITS = "Одиниці вимірювання";
+    public static final String TAB_EQUIPMENT_CATEGORIES = "Категорії обладнання";
+    public static final String TAB_EMPLOYEES = "Співробітники";
+    public static final String TAB_ORDERS = "Замовлення";
+    public static final String TAB_PRODUCTION_ORDERS = "Виробничі замовлення";
+    public static final String TAB_ORDERS_ANALYTICS = "Аналітика";
+    public static final String TAB_PRODUCTION_TASKS = "Завдання на локації";
+    public static final String TAB_AUDIT_LOG = "Журнал аудиту";
+    public static final String TAB_AUDIT_SESSIONS = "Сесії користувачів";
     public static final String TAB_PROJECT_PRODUCTION = "Проєктне виробництво";
     public static final String TAB_PROJECT_TEMPLATES = "Шаблони проєктного виробництва";
     public static final String TAB_PROJECT_CATEGORIES = "Категорії";

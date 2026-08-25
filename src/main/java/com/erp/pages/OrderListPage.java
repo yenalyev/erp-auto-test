@@ -271,6 +271,76 @@ public class OrderListPage extends BasePage {
         return this;
     }
 
+    public OrderListPage selectPageSize(int size) {
+        Locator trigger = page.locator("[data-slot='select-trigger']").filter(
+                new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^(25|100|200|500)$")));
+        if (trigger.count() == 0) {
+            trigger = page.locator("[data-slot='select-trigger']").last();
+        }
+        trigger.first().click();
+        page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(String.valueOf(size))).click();
+        waitForJournalDataSettled();
+        return this;
+    }
+
+    public boolean isPageSizeOptionVisible(int size) {
+        Locator trigger = page.locator("[data-slot='select-trigger']").last();
+        if (trigger.count() == 0 || !trigger.isVisible()) {
+            return false;
+        }
+        trigger.click();
+        boolean visible = page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(String.valueOf(size)))
+                .count() > 0;
+        page.keyboard().press("Escape");
+        return visible;
+    }
+
+    public boolean isSaveButtonVisible() {
+        return orderDialog().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Зберегти")).count() > 0
+                && orderDialog().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Зберегти")).isVisible();
+    }
+
+    public boolean isMarkDoneVisible() {
+        return orderDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Позначити виконаним"))
+                .isVisible();
+    }
+
+    public boolean isCancelOrderVisible() {
+        return orderDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CANCEL_ORDER_BUTTON))
+                .count() > 0;
+    }
+
+    public boolean isCommentComposerVisible() {
+        return orderDialog().getByPlaceholder(COMMENT_PLACEHOLDER).isVisible();
+    }
+
+    public boolean isAvailabilityHintVisible() {
+        return orderDialog().getByText("Наявність на локаціях").count() > 0
+                || orderDialog().getByText("заброньовано").count() > 0;
+    }
+
+    public boolean isGathererEmptyBookingsVisible() {
+        return orderDialog().getByText("ще немає броней").count() > 0
+                || page.getByText("ще немає броней").count() > 0;
+    }
+
+    public boolean isPreparedProgressVisible() {
+        return page.getByText(java.util.regex.Pattern.compile("Підготовлено")).count() > 0;
+    }
+
+    public boolean isBookingNeedFreeTableVisible() {
+        Locator dialog = orderDialog();
+        return dialog.getByText("Потрібно").count() > 0
+                && (dialog.getByText("Заброньовано").count() > 0 || dialog.getByText("Вільно").count() > 0);
+    }
+
+    public boolean isReleaseBookingVisible() {
+        return orderDialog().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Зняти бронь")).count() > 0
+                || orderDialog().getByText("Зняти бронь").count() > 0;
+    }
+
     private Locator createOrderButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON));
     }

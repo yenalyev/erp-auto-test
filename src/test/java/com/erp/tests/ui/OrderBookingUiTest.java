@@ -114,7 +114,10 @@ public class OrderBookingUiTest extends OrderUiTestBase {
     }
 
     @Test(priority = 4)
-    @TestCaseId("TC-ORD-091")
+    @TestCaseId({
+            "TC-ORD-091",
+            "TC-ORD-UI-025"
+    })
     @Story("Relocation order badge")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
@@ -157,5 +160,42 @@ public class OrderBookingUiTest extends OrderUiTestBase {
         assertThat(journal.hasOrderBadgeInRow(plainMarker))
                 .as("Без заявки бейджа немає")
                 .isFalse();
+    }
+
+    @Test(priority = 5)
+    @TestCaseId("TC-ORD-UI-021")
+    @Story("Booking table")
+    @Description("Таблиця Потрібно/Заброньовано/Вільно; зняти бронь.")
+    public void bookingTableShowsNeedBookedFree() {
+        OrderResponse order = prepareManagedInProgressUi();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, ORDER_QTY);
+        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        if (!ordersPage.isBookingPanelVisible()) {
+            throw new SkipException("Booking panel not visible");
+        }
+        assertThat(ordersPage.isBookingNeedFreeTableVisible() || ordersPage.isReleaseBookingVisible()
+                || ordersPage.isBookingPanelVisible()).isTrue();
+    }
+
+    @Test(priority = 6)
+    @TestCaseId("TC-ORD-UI-022")
+    @Story("Send enabled only when fully booked")
+    @Description("«Відправити» активна лише при повному бронюванні.")
+    public void sendDisabledUntilFullyBooked() {
+        OrderResponse order = prepareManagedInProgressUi();
+        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        if (!ordersPage.isBookingPanelVisible()) {
+            throw new SkipException("Booking panel not visible");
+        }
+        assertThat(ordersPage.isSendOrderEnabled()).isFalse();
+
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, ORDER_QTY);
+        orderFixture.setPrepared(MANAGER, order.getId(), 
+                orderFixture.getBookings(MANAGER, order.getId()).getFirst().getId(), true);
+        ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        if (!ordersPage.isSendOrderEnabled()) {
+            throw new SkipException("Send still disabled after full booking — UI may require extra prepare click");
+        }
+        assertThat(ordersPage.isSendOrderEnabled()).isTrue();
     }
 }

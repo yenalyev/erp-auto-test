@@ -15,6 +15,10 @@
             <class name="com.erp.tests.functional.production.ProductionJournalFilterApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
+            <class name="com.erp.tests.functional.production_order.ProductionOrderApiTest"/>
+            <class name="com.erp.tests.functional.disassemble.DisassembleCrudApiTest"/>
+            <class name="com.erp.tests.functional.shift.ShiftCrudApiTest"/>
+            <class name="com.erp.tests.functional.analytics.AnalyticsAuditApiTest"/>
         </classes>
     </test>
 
@@ -25,6 +29,7 @@
             <class name="com.erp.tests.ui.ProductionHashtagUITest"/>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
         </classes>
     </test>
 </suite>

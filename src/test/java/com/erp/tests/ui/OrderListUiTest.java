@@ -86,4 +86,61 @@ public class OrderListUiTest extends OrderUiTestBase {
                 .as("Діалог деталей замовлення має бути видимим")
                 .isTrue();
     }
+
+    @Test(priority = 4)
+    @TestCaseId("TC-ORD-UI-002")
+    @Story("Orders filters")
+    @Description("Фільтри: пошук ресурсу та reset.")
+    public void resourceFilterAndReset() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        OrderListPage ordersPage = new OrderListPage(page).open();
+        ordersPage.filterByResourceSearch(resourceName);
+        assertThat(ordersPage.isJournalTableVisible() || ordersPage.hasEmptyState()).isTrue();
+        ordersPage.clearFilters();
+        assertThat(ordersPage.isJournalTableVisible() || ordersPage.hasEmptyState()).isTrue();
+        assertThat(order.getId()).isNotNull();
+    }
+
+    @Test(priority = 5)
+    @TestCaseId("TC-ORD-UI-003")
+    @Story("Orders pagination")
+    @Description("Пагінація 25/100/200/500.")
+    public void pageSizeOptionsAreAvailable() {
+        OrderListPage ordersPage = new OrderListPage(page).open();
+        if (ordersPage.hasEmptyState()) {
+            throw new SkipException("Empty journal — page size selector may be hidden");
+        }
+        assertThat(ordersPage.isPageSizeOptionVisible(25)).isTrue();
+        assertThat(ordersPage.isPageSizeOptionVisible(100)).isTrue();
+        assertThat(ordersPage.isPageSizeOptionVisible(200)).isTrue();
+        assertThat(ordersPage.isPageSizeOptionVisible(500)).isTrue();
+    }
+
+    @Test(priority = 6)
+    @TestCaseId("TC-ORD-UI-007")
+    @Story("Orders sidebar RBAC")
+    @Description("Sidebar «Замовлення» видимий з order::view.")
+    public void ordersNavVisibleForRequester() {
+        new OrderListPage(page).open();
+        AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
+        assertThat(sidebar.isNavItemVisible(AppSidebarPage.GROUP_ORDERS)
+                || sidebar.isNavItemVisible("Замовлення"))
+                .as("Sidebar має показувати групу «Замовлення»")
+                .isTrue();
+    }
+
+    @Test(priority = 7)
+    @TestCaseId("TC-ORD-UI-017")
+    @Story("List prepared accent")
+    @Description("List accent + «Підготовлено X/Y» після броні.")
+    public void listShowsPreparedProgressAfterBooking() {
+        loginAsAdmin();
+        OrderResponse order = prepareManagedInProgressUi();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, 5.0);
+        OrderListPage ordersPage = new OrderListPage(page).open();
+        if (!ordersPage.isPreparedProgressVisible()) {
+            throw new SkipException("«Підготовлено» badge not visible on current journal page");
+        }
+        assertThat(ordersPage.isPreparedProgressVisible()).isTrue();
+    }
 }

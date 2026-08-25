@@ -66,7 +66,10 @@ public class EquipmentInventoryCreateTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 10)
-    @TestCaseId("TC-EQU-004")
+    @TestCaseId({
+            "TC-EQU-001",
+            "TC-EQU-004"
+    })
     @Story("Owner can create equipment without supplier when inventory open")
     @Description("""
             Preconditions: Admin відкриває сесію інвентаризації обладнання на локації Owner 1.
@@ -139,5 +142,36 @@ public class EquipmentInventoryCreateTest extends BaseFunctionalTest {
         assertThat(response.asString())
                 .as("validation should mention senderStorageId")
                 .containsIgnoringCase("senderStorageId");
+    }
+
+    @Test(priority = 30)
+    @TestCaseId("TC-EQU-002")
+    @Story("Owner cannot open/close equipment inventory session")
+    @Description("Owner/Audit без admin: PUT .../equipment-inventory/status → 403.")
+    @Severity(SeverityLevel.CRITICAL)
+    public void ownerCannotOpenOrCloseEquipmentInventorySession() {
+        Response openDenied = inventoryFixture.putEquipmentStatus(storageId, UserRole.OWNER_1, true);
+        assertThat(openDenied.statusCode())
+                .as("Owner open equipment inventory; body=%s", openDenied.asString())
+                .isEqualTo(403);
+
+        Response closeDenied = inventoryFixture.putEquipmentStatus(storageId, UserRole.OWNER_1, false);
+        assertThat(closeDenied.statusCode())
+                .as("Owner close equipment inventory; body=%s", closeDenied.asString())
+                .isEqualTo(403);
+    }
+
+    @Test(priority = 40)
+    @TestCaseId("TC-EQU-005")
+    @Story("Admin open/close equipment inventory session")
+    @Description("Admin PUT .../equipment-inventory/status open=true then false.")
+    @Severity(SeverityLevel.CRITICAL)
+    public void adminCanOpenAndCloseEquipmentInventorySession() {
+        inventoryFixture.ensureEquipmentClosed(storageId);
+        inventoryFixture.openEquipmentSession(storageId);
+        assertThat(inventoryFixture.getEquipmentStatus(storageId, UserRole.ADMIN).getOpen()).isTrue();
+
+        inventoryFixture.closeEquipmentSession(storageId);
+        assertThat(inventoryFixture.getEquipmentStatus(storageId, UserRole.ADMIN).getOpen()).isFalse();
     }
 }

@@ -35,8 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Write-off після використання екіпажем: списання з parent FLY_POINT.
- * Fight sync (TC-CREW-FIGHT-*) — integration-only: {@code enabled=false}, не regression;
- * E2E делеговано tk SyncTeamProcessIT / стенд з Fight.
+ * Fight sync (TC-CREW-FIGHT-*) — skip when GET /write-off/short-stats ≠ 200.
  * TC-FLY-WO-001 сіє PENDING через БД ({@code use.database=true}) і complete через API.
  */
 @Slf4j
@@ -94,7 +93,7 @@ public class CrewWriteOffTest extends CrewApiTestBase {
         assertThat(owner1.statusCode()).isIn(200, 403);
     }
 
-    @Test(priority = 10, enabled = false)
+    @Test(priority = 10)
     @TestCaseId("TC-CREW-FIGHT-001")
     @Description("Після Fight sync — write-off у GET /write-off для відомого crew (потребує Fight на dev)")
     @Severity(SeverityLevel.NORMAL)
@@ -108,17 +107,19 @@ public class CrewWriteOffTest extends CrewApiTestBase {
                 UserRole.OWNER_1,
                 Map.of("storageId", scenario.crew().getId()));
         assertThat(page.statusCode()).isEqualTo(200);
+        assertThat(page.jsonPath().getList("content")).isNotNull();
     }
 
-    @Test(priority = 20, enabled = false)
+    @Test(priority = 20)
     @TestCaseId("TC-CREW-FIGHT-002")
     @Description("Complete reconciliation зменшує crew stock (потребує Fight seed на dev)")
     @Severity(SeverityLevel.NORMAL)
     public void testWriteOffCompleteReducesCrewStock() {
         if (!fightIntegrationEnabled) {
-            throw new SkipException("Fight sync disabled on dev");
+            throw new SkipException("Fight sync disabled on this env — GET write-off/short-stats ≠ 200");
         }
-        // E2E reconciliation delegated to tk SyncTeamProcessIT
+        throw new SkipException(
+                "Complete reconciliation E2E requires Fight seed; covered by tk SyncTeamProcessIT");
     }
 
     @Test(priority = 30)

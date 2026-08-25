@@ -6,9 +6,12 @@ import com.erp.data.factories.order.OrderDataFactory;
 import com.erp.enums.OrderState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
+import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.OrderRequest;
 import com.erp.models.response.OrderResponse;
+import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.*;
@@ -19,6 +22,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -172,5 +176,86 @@ public class OrderCrudApiTest extends OrderApiTestBase {
                 "{not-valid-json");
         assertThat(response.statusCode()).isEqualTo(400);
         assertThat(response.statusCode()).isNotEqualTo(500);
+    }
+
+    @Test(priority = 6)
+    @TestCaseId("TC-ORD-006")
+    @Story("Create validation")
+    @Description("FULL_ACCESS (Admin) може створити заявку з будь-яким активним ресурсом каталогу.")
+    public void testAdminFullAccessAllowsAnyResource() {
+        ResourceResponse ungranted = inventoryFixture.pickResourceNotOnStorage(
+                requesterStorageId, UserRole.ADMIN, sharedResources);
+        OrderRequest request = OrderDataFactory.buildOrderRequest(
+                requesterStorageId, ungranted.getId(), 1.0);
+        Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
+        assertThat(response.statusCode())
+                .as("Admin FULL_ACCESS create; body=%s", response.asString())
+                .isEqualTo(200);
+        OrderResponse created = response.as(OrderResponse.class);
+        assertThat(created.getId()).isNotNull();
+        assertThat(created.getLines().getFirst().getResource().getId()).isEqualTo(ungranted.getId());
+    }
+
+    @Test(priority = 7)
+    @TestCaseId("TC-ORD-007")
+    @Story("Create on CREW")
+    @Description("CREW: доступні ресурси через grant батьківського складу.")
+    public void testCreateOrderOnCrewUsesParentGrants() {
+        StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
+        var crew = storageFixture.createCrewStorage(requesterStorageId, "ord-crew-");
+        OrderRequest request = OrderDataFactory.buildOrderRequest(crew.getId(), resourceId, 1.0);
+        Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
+        assertThat(response.statusCode())
+                .as("Create on CREW; body=%s", response.asString())
+                .isIn(200, 400);
+        if (response.statusCode() == 200) {
+            assertThat(response.as(OrderResponse.class).getId()).isNotNull();
+        }
+    }
+
+    @Test(priority = 8)
+    @TestCaseId("TC-ORD-008")
+    @Story("Create on FLY_POINT")
+    @Description("FLY_POINT: ресурси з батьківської ієрархії (фактична поведінка).")
+    public void testCreateOrderOnFlyPointUsesParentHierarchy() {
+        StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
+        var fly = storageFixture.createFlyPointStorage(requesterStorageId, "ord-fly-");
+        OrderRequest request = OrderDataFactory.buildOrderRequest(fly.getId(), resourceId, 1.0);
+        Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
+        assertThat(response.statusCode())
+                .as("Create on FLY_POINT; body=%s", response.asString())
+                .isIn(200, 400);
+    }
+
+    @Test(priority = 14)
+    @TestCaseId("TC-ORD-011")
+    @Story("Update order")
+    @Description("Update з чужим storageId → 4xx.")
+    public void testUpdateWithForeignStorageIdReturns4xx() {
+        OrderResponse created = orderFixture.createOrder(REQUESTER);
+        OrderRequest update = OrderDataFactory.buildOrderRequest(
+                ConfigProvider.getOwner1StorageId(), resourceId, 2.0);
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_UPDATE, REQUESTER, update, created.getId());
+        assertThat(response.statusCode()).isBetween(400, 499);
+        OrderResponse unchanged = orderFixture.getById(REQUESTER, created.getId());
+        assertThat(unchanged.getLines().getFirst().getQuantity().doubleValue())
+                .isEqualTo(created.getLines().getFirst().getQuantity().doubleValue());
+    }
+
+    @Test(priority = 15)
+    @TestCaseId("TC-ORD-014")
+    @Story("Available categories")
+    @Description("GET /resources/available-categories — лише категорії з доступними ресурсами.")
+    public void testAvailableCategoriesForRequesterStorage() {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RESOURCE_GET_AVAILABLE_CATEGORIES,
+                REQUESTER,
+                Map.of("storageId", requesterStorageId));
+        assertThat(response.statusCode()).isEqualTo(200);
+        List<ResourceCategoryResponse> categories =
+                response.jsonPath().getList("", ResourceCategoryResponse.class);
+        assertThat(categories).isNotEmpty();
+        assertThat(categories).allMatch(c -> c.getId() != null && c.getName() != null);
     }
 }

@@ -14,13 +14,11 @@
     - DB-seeded cases (TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-034) run when
       use.database=true (staging default) and JDBC is reachable; otherwise they SkipException.
       Isolated suite: mvn test -Dsuite=db-dependent -Denv=…
-    - RBAC matrix (RbacAccessMatrixTest / TC-RBAC-MATRIX-001) temporarily excluded —
-      run separately: mvn test -Dsuite=rbac
     - Includes domain suites: smoke, functional subsets, inventory, production,
       relocations, storage-regions, global-plans, technological-maps, defects,
-      resource-viewer, ui, orders, bots (smoke block).
+      resource-viewer, ui, orders, bots, notifications, RBAC matrix.
       Hierarchy inventory (TC-WMS-007-010+) is in Inventory API/UI.
-      TC-CREW-FIGHT-* stay @Test(enabled=false) — not reported to TCM.
+      TC-CREW-FIGHT-* skip when Fight write-off probe fails (GET short-stats ≠ 200).
 -->
 <suite name="ERP Regression Suite" parallel="none" verbose="1">
 
@@ -53,6 +51,7 @@
             <class name="com.erp.tests.functional.resource.ResourceWithTechnologicalMapApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceDeactivationTest"/>
             <class name="com.erp.tests.functional.employee.EmployeeDictionaryApiTest"/>
+            <class name="com.erp.tests.functional.resource.ResourcePriceApiTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
             <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
             <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>
@@ -111,6 +110,10 @@
             <class name="com.erp.tests.functional.production.ProductionJournalFilterApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
+            <class name="com.erp.tests.functional.production_order.ProductionOrderApiTest"/>
+            <class name="com.erp.tests.functional.disassemble.DisassembleCrudApiTest"/>
+            <class name="com.erp.tests.functional.shift.ShiftCrudApiTest"/>
+            <class name="com.erp.tests.functional.analytics.AnalyticsAuditApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessComponentTechMapsApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
@@ -158,8 +161,12 @@
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationPartialDeliveryIncidentTest"/>
+            <class name="com.erp.tests.functional.relocation.ResourceBundleTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentSelectorContractTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentInventoryCreateTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentCategoryCrudApiTest"/>
+            <class name="com.erp.tests.functional.alert.AlertCrudApiTest"/>
+            <class name="com.erp.tests.functional.invoice.InvoiceGenerateApiTest"/>
         </classes>
     </test>
 
@@ -222,6 +229,7 @@
             <class name="com.erp.tests.ui.AssemblyReadinessUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
         </classes>
     </test>
 
@@ -253,6 +261,8 @@
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
+            <class name="com.erp.tests.ui.ResourceBundleApplyUiTest"/>
+            <class name="com.erp.tests.ui.ResourceBundleManageUiTest"/>
         </classes>
     </test>
 
@@ -281,6 +291,7 @@
             <class name="com.erp.tests.ui.OrderCreateEditUiTest"/>
             <class name="com.erp.tests.ui.OrderDetailUiTest"/>
             <class name="com.erp.tests.ui.OrderBookingUiTest"/>
+            <class name="com.erp.tests.ui.OrderFreeStockUiTest"/>
         </classes>
     </test>
 
@@ -304,6 +315,28 @@
             <class name="com.erp.tests.ui.TechnologicalMapHashtagUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
+        </classes>
+    </test>
+
+    <test name="Notifications API">
+        <classes>
+            <class name="com.erp.tests.functional.notification.NotificationRecipientTest"/>
+            <class name="com.erp.tests.functional.notification.NotificationTemplateTest"/>
+            <class name="com.erp.tests.functional.notification.NotificationSubscriptionTest"/>
+            <class name="com.erp.tests.functional.notification.NotificationJournalTest"/>
+            <class name="com.erp.tests.functional.notification.NotificationEscapingTest"/>
+        </classes>
+    </test>
+
+    <test name="Notifications UI">
+        <classes>
+            <class name="com.erp.tests.ui.NotificationsUITest"/>
+        </classes>
+    </test>
+
+    <test name="RBAC Matrix">
+        <classes>
+            <class name="com.erp.tests.rbac.RbacAccessMatrixTest"/>
         </classes>
     </test>
 

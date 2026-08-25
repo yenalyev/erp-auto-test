@@ -1,6 +1,7 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.models.response.OrderResponse;
 import com.erp.pages.OrderListPage;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -48,5 +49,26 @@ public class OrderCreateEditUiTest extends OrderUiTestBase {
         assertThat(ordersPage.isCreateValidationVisible())
                 .as("Порожній submit має показати «Додайте хоча б один ресурс»")
                 .isTrue();
+    }
+
+    @Test(priority = 2)
+    @TestCaseId("TC-ORD-UI-006")
+    @Story("Edit NEW order")
+    @Description("Редагувати NEW (update): Зберегти видима; після take-to-work edit зникає.")
+    public void saveVisibleOnNewThenHiddenAfterTakeToWork() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        if (!ordersPage.isSaveButtonVisible()) {
+            throw new SkipException("«Зберегти» not visible for NEW order — check order::update for requester");
+        }
+        assertThat(ordersPage.isSaveButtonVisible()).isTrue();
+
+        loginAsAdmin();
+        orderFixture.takeToWork(MANAGER, order.getId(), requesterStorageId);
+        loginAsOwner();
+        ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        assertThat(ordersPage.isSaveButtonVisible())
+                .as("Після take-to-work редагування має зникнути")
+                .isFalse();
     }
 }

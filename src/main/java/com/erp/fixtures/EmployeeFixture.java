@@ -41,6 +41,19 @@ public class EmployeeFixture extends BaseFixture {
         return apiExecutor.execute(ApiEndpointDefinition.EMPLOYEE_POST_CREATE, role, request);
     }
 
+    @Step("API: DELETE employee {employeeId}")
+    public Response deleteRaw(UserRole role, long employeeId) {
+        return apiExecutor.execute(ApiEndpointDefinition.EMPLOYEE_DELETE, role, null, employeeId);
+    }
+
+    @Step("API: PUT employee {employeeId}")
+    public EmployeeResponse update(UserRole role, long employeeId, EmployeeRequest request) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.EMPLOYEE_PUT_UPDATE, role, request, employeeId);
+        validateSuccess(response, "Update employee");
+        return response.as(EmployeeResponse.class);
+    }
+
     @Step("API: отримати сторінку співробітників для storage {storageId}")
     public List<EmployeeResponse> getEmployees(UserRole role, long storageId) {
         Response response = apiExecutor.executeWithQueryParams(

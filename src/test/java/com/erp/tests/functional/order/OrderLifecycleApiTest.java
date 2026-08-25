@@ -127,4 +127,15 @@ public class OrderLifecycleApiTest extends OrderApiTestBase {
         OrderResponse inProgress = orderFixture.takeToWork(MANAGER, order.getId(), requesterStorageId);
         assertThat(inProgress.getState()).isEqualTo(OrderState.IN_PROGRESS);
     }
+
+    @Test(priority = 14)
+    @TestCaseId("TC-ORD-025")
+    @Story("Owner cancel without manage")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("cancel дозволений з order::update (без manage) — REQUESTER скасовує NEW.")
+    public void testCancelAllowedWithUpdateWithoutManage() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        OrderResponse cancelled = orderFixture.cancel(REQUESTER, order.getId(), requesterStorageId);
+        assertThat(cancelled.getState()).isEqualTo(OrderState.CANCELLED);
+    }
 }

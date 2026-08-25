@@ -17,6 +17,8 @@
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationPartialDeliveryIncidentTest"/>
+            <class name="com.erp.tests.functional.relocation.ResourceBundleTest"/>
+            <class name="com.erp.tests.functional.invoice.InvoiceGenerateApiTest"/>
             <class name="com.erp.tests.functional.storage.FlyPointRelocationTest"/>
             <class name="com.erp.tests.functional.storage.CrewReturnTest"/>
             <class name="com.erp.tests.functional.storage.CrewFlyPointIncidentTest"/>
@@ -33,6 +35,8 @@
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
+            <class name="com.erp.tests.ui.ResourceBundleApplyUiTest"/>
+            <class name="com.erp.tests.ui.ResourceBundleManageUiTest"/>
         </classes>
     </test>
 </suite>

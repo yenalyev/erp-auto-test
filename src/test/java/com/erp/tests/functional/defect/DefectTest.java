@@ -137,7 +137,7 @@ public class DefectTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 15)
-    @TestCaseId("TC-DEF-001B")
+    @TestCaseId("TC-DEF-001b")
     @Story("Filter defects by write-off status (isWriteOff)")
     @Description("""
             GET /defects?isWriteOff=… — фільтр «Списання» на /defects (tk-ui DefectListPage):

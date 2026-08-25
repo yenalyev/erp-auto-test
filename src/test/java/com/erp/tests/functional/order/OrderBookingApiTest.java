@@ -10,7 +10,9 @@ import com.erp.models.request.BookingRequest;
 import com.erp.models.request.RelocationOutputRequest;
 import com.erp.models.response.BookingResponse;
 import com.erp.fixtures.StorageFixture;
+import com.erp.models.response.OrderAvailabilityResponse;
 import com.erp.models.response.OrderResponse;
+import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.utils.config.ConfigProvider;
@@ -105,6 +107,53 @@ public class OrderBookingApiTest extends OrderApiTestBase {
         assertThat(withGathering.getGatheringStorage()).isNotNull();
         assertThat(withGathering.getGatheringStorage().getId()).isEqualTo(gatheringId);
         gatheringStorageId = gatheringId;
+    }
+
+    @Test(priority = 10)
+    @TestCaseId("TC-ORD-061")
+    @Story("Gathering candidates")
+    @Description("Candidates: активні STORAGE/PRODUCTION, без requester.")
+    public void testGatheringCandidatesExcludeRequester() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        order = orderFixture.takeToWork(MANAGER, order.getId(), requesterStorageId);
+        List<SimpleEntityResponse> candidates = orderFixture.getGatheringLocations(
+                MANAGER, order.getId(), requesterStorageId);
+        assertThat(candidates).isNotEmpty();
+        assertThat(candidates.stream().map(SimpleEntityResponse::getId))
+                .doesNotContain(requesterStorageId);
+    }
+
+    @Test(priority = 11)
+    @TestCaseId("TC-ORD-062")
+    @Story("Gathering coverage")
+    @Description("Coverage availability math: locations мають amount для лінії заявки.")
+    public void testGatheringCoverageAvailabilityMath() {
+        OrderResponse order = prepareManagedInProgress();
+        List<OrderAvailabilityResponse> availability = orderFixture.getAvailability(
+                MANAGER, order.getId(), requesterStorageId);
+        OrderAvailabilityResponse line = availability.stream()
+                .filter(a -> resourceId.equals(a.getResourceId()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(line.getLocations()).isNotEmpty();
+        assertThat(line.getLocations())
+                .anyMatch(loc -> loc.getAmount() != null && loc.getAmount().doubleValue() > 0);
+    }
+
+    @Test(priority = 12)
+    @TestCaseId("TC-ORD-065")
+    @Story("Gathering validation")
+    @Description("sameAsRequester / non-capable gathering → 400.")
+    public void testSetGatheringSameAsRequesterReturns400() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        order = orderFixture.takeToWork(MANAGER, order.getId(), requesterStorageId);
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_GATHERING_STORAGE,
+                MANAGER,
+                OrderDataFactory.buildGatheringStorageRequest(requesterStorageId),
+                order.getId(),
+                requesterStorageId);
+        assertThat(response.statusCode()).isEqualTo(400);
     }
 
     @Test(priority = 11)
@@ -281,6 +330,37 @@ public class OrderBookingApiTest extends OrderApiTestBase {
 
         assertThat(prepared).isNotEmpty();
         assertThat(prepared).allMatch(BookingResponse::isPrepared);
+    }
+
+    @Test(priority = 32)
+    @TestCaseId("TC-ORD-082")
+    @Story("Prepared flag")
+    @Description("Prepare на RELEASED броні → 400.")
+    public void testPrepareReleasedBookingReturns400() {
+        OrderResponse order = prepareManagedInProgress();
+        BookingResponse booking = orderFixture.book(
+                MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+        orderFixture.releaseBooking(MANAGER, order.getId(), booking.getId(), requesterStorageId);
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_BOOKING_PREPARED,
+                MANAGER,
+                OrderDataFactory.buildPreparedRequest(true),
+                order.getId(),
+                booking.getId());
+        assertThat(response.statusCode()).isEqualTo(400);
+    }
+
+    @Test(priority = 33)
+    @TestCaseId("TC-ORD-083")
+    @Story("Prepared RBAC")
+    @Description("Prepare дозволений з update на gathering (без manage на requester).")
+    public void testGathererCanPrepareWithoutManage() {
+        OrderResponse order = prepareManagedInProgress();
+        BookingResponse booking = orderFixture.book(
+                MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+        BookingResponse prepared = orderFixture.setPrepared(
+                GATHERER, order.getId(), booking.getId(), true);
+        assertThat(prepared.isPrepared()).isTrue();
     }
 
     @Test(priority = 32)
