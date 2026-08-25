@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("Orders")
-@Feature("REQ-WMS-010 Orders UI")
+@Feature("REQ-ORD Orders UI")
 public class OrderListUiTest extends OrderUiTestBase {
 
     @BeforeMethod(alwaysRun = true)

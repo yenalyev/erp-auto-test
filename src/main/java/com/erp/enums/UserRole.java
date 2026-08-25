@@ -27,7 +27,7 @@ public enum UserRole {
      */
     LOCATION_MIXED,
     /**
-     * Order gathering storage owner (REQ-WMS-010).
+     * Order gathering storage owner (REQ-ORD).
      * staging/dev: {@code order.gathering.*} (e.g. tyolki / storage 10); falls back to owner2.
      */
     ORDER_GATHERER,

@@ -26,14 +26,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * REQ-WMS-010 AC-10: write-offs that would reduce on-hand below active order holds are rejected.
+ * REQ-ORD AC-10: write-offs that would reduce on-hand below active order holds are rejected.
  * <p>
  * Arrange: onHand=10, ACTIVE booking=8 → free=2; attempt operations consuming &gt;2 → HTTP 400
  * with message containing «вільного залишку» or «заброньовано».
  */
 @Slf4j
 @Epic("Orders")
-@Feature("REQ-WMS-010 Free stock regression")
+@Feature("REQ-ORD Free stock regression")
 public class OrderStockRegressionApiTest extends OrderApiTestBase {
 
     private static final double TOTAL_STOCK = 10.0;

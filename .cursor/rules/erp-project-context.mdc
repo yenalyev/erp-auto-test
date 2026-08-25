@@ -9,6 +9,8 @@ Java 21 TestNG framework for ERP REST API testing (RBAC, contract validation, DB
 
 **Strategy: extend this codebase, do NOT rewrite from scratch.** Infrastructure (~97 main classes) outweighs test count (12 test classes). Refactor known debt incrementally.
 
+**Coverage: 100% ACTIVE TCM cases automated** (`erp-full-automation.mdc`). Do not leave cases as `manual` / `automation=false` as an end state — implement the test or delete the case after approval.
+
 ## Stack
 
 TestNG 7.10 · RestAssured 5.5 · Allure 2.29 · Playwright 1.50 · Owner config · AssertJ · Testcontainers · PostgreSQL + SSH tunnel

@@ -25,7 +25,7 @@ public class RelocationRequest {
     private List<ResourceUsageRequest> items = new ArrayList<>();
     private Long senderId;
     private Long recipientId;
-    /** When shipping against an order booking (REQ-WMS-010 fulfill). */
+    /** When shipping against an order booking (REQ-ORD fulfill). */
     private Long orderId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;

@@ -7,6 +7,7 @@ alwaysApply: false
 # Test Scenario Design
 
 Перед написанням тесту на user flow пройти чекліст. Деталі API-шаблонів — у `erp-api-tests.mdc`.
+Кожен ACTIVE TCM-кейс має автотест — не паркувати як manual (`erp-full-automation.mdc`).
 
 ## 1. Trace client payload
 

@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Epic("Orders")
-@Feature("REQ-WMS-010 Order lifecycle")
+@Feature("REQ-ORD Order lifecycle")
 public class OrderLifecycleApiTest extends OrderApiTestBase {
 
     @Test(priority = 10)

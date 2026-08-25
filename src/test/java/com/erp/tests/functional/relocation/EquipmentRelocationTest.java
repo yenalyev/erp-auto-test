@@ -94,10 +94,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
     }
 
     @Test
-    @TestCaseId({
-            "TC-REL-EQ-003",
-            "TC-EQU-002"
-    })
+    @TestCaseId("TC-REL-EQ-003")
     @Story("Resolve FINISHED moves equipment")
     public void resolveFinishedMovesEquipmentToRecipient() {
         Long equipmentId = equipmentFixture.createEquipmentOnStorage(
@@ -211,10 +208,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
     }
 
     @Test
-    @TestCaseId({
-            "TC-REL-EQ-009",
-            "TC-EQU-004"
-    })
+    @TestCaseId("TC-REL-EQ-009")
     @Story("Delete supplier receive removes equipment")
     public void deleteRelocationFromSupplierSenderDeletesEquipmentFromSystem() {
         EquipmentResponse equipment = equipmentFixture.createEquipmentFromSupplier(

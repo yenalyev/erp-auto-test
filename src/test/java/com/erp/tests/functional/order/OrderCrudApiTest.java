@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Epic("Orders")
-@Feature("REQ-WMS-010 Order CRUD")
+@Feature("REQ-ORD Order CRUD")
 public class OrderCrudApiTest extends OrderApiTestBase {
 
     private InventoryFixture inventoryFixture;

@@ -66,6 +66,44 @@ public class EquipmentInventoryCreateTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 10)
+    @TestCaseId("TC-EQU-004")
+    @Story("Owner can create equipment without supplier when inventory open")
+    @Description("""
+            Preconditions: Admin відкриває сесію інвентаризації обладнання на локації Owner 1.
+            Client payload: POST /api/v1/equipment multipart без senderStorageId
+            (storageId + items[name, serialNumber, categoryId]).
+            Очікування: HTTP 2xx, обладнання створене
+            (REQ-EQU-001 AC-03 / TC-EQU-004).
+            """)
+    @Severity(SeverityLevel.NORMAL)
+    public void ownerCanCreateWithoutSupplierWhenEquipmentInventoryOpen() {
+        Allure.step("Admin відкриває сесію інвентаризації обладнання", () ->
+                inventoryFixture.openEquipmentSession(storageId));
+
+        String suffix = String.valueOf(System.currentTimeMillis() % 1_000_000);
+        EquipmentCreateRequest request = EquipmentCreateRequest.builder()
+                .storageId(storageId)
+                .items(List.of(EquipmentRequest.builder()
+                        .name("erp-invopen-" + suffix)
+                        .serialNumber("SN-INVOPEN-" + suffix)
+                        .categoryId(categoryId)
+                        .build()))
+                .build();
+
+        Response response = Allure.step(
+                "Owner POST обладнання без постачальника при відкритій сесії", () ->
+                        apiExecutor.executeEquipmentCreate(request, UserRole.OWNER_1));
+
+        assertThat(response.statusCode())
+                .as("create without supplier allowed when equipment inventory open; body=%s",
+                        response.asString())
+                .isBetween(200, 299);
+        assertThat(response.jsonPath().getList(".").size())
+                .as("response should contain created equipment")
+                .isGreaterThanOrEqualTo(1);
+    }
+
+    @Test(priority = 20)
     @TestCaseId("TC-EQU-003")
     @Story("Owner cannot create equipment without supplier when inventory closed")
     @Description("""

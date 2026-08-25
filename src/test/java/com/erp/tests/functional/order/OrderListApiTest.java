@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Epic("Orders")
-@Feature("REQ-WMS-010 Order list")
+@Feature("REQ-ORD Order list")
 public class OrderListApiTest extends OrderApiTestBase {
 
     @Test(priority = 10)

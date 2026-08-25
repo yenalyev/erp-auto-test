@@ -1,10 +1,15 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.order.OrderDataFactory;
+import com.erp.models.request.RelocationOutputRequest;
 import com.erp.models.response.BookingResponse;
 import com.erp.models.response.OrderResponse;
+import com.erp.models.response.RelocationResponse;
 import com.erp.pages.OrderListPage;
 import com.erp.pages.RelocationCreateOutputPage;
+import com.erp.pages.RelocationPage;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -18,7 +23,7 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("Orders")
-@Feature("REQ-WMS-010 Orders UI")
+@Feature("REQ-ORD Orders UI")
 public class OrderBookingUiTest extends OrderUiTestBase {
 
     private static final double ORDER_QTY = 5.0;
@@ -106,5 +111,51 @@ public class OrderBookingUiTest extends OrderUiTestBase {
                 .isTrue();
 
         outputPage.assertFixedSenderRecipient(gatheringStorageName, requesterStorageName);
+    }
+
+    @Test(priority = 4)
+    @TestCaseId("TC-ORD-091")
+    @Story("Relocation order badge")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            API: Admin send+orderId і окрема видача без заявки. \
+            UI /relocations «В дорозі»: hover бейджа → «Створено на основі замовлення №N»; \
+            рядок без заявки — без бейджа.""")
+    public void journalShowsOrderBadgeOnlyOnOrderShipment() {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        String orderMarker = "ord-091-" + suffix;
+        String plainMarker = "plain-091-" + suffix;
+
+        OrderResponse order = prepareManagedInProgressUi();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, ORDER_QTY);
+
+        RelocationOutputRequest ship = OrderDataFactory.buildShipRequest(
+                        order.getId(), gatheringStorageId, requesterStorageId, resourceId, ORDER_QTY)
+                .toBuilder()
+                .description(orderMarker)
+                .build();
+        RelocationResponse shipment = apiExecutor.execute(
+                        ApiEndpointDefinition.RELOCATION_POST_SEND, MANAGER, ship)
+                .as(RelocationResponse.class);
+        assertThat(shipment.getOrderId()).isEqualTo(order.getId());
+
+        relocationFixture.createSendWithDescription(
+                MANAGER, gatheringStorageId, requesterStorageId, resourceId, 1.0, plainMarker);
+
+        reopenPageWithSession(MANAGER, gatheringStorageId);
+        RelocationPage journal = new RelocationPage(page).open().openInTransitTab();
+        assertThat(journal.isRowWithTextVisible(orderMarker))
+                .as("Рядок видачі за заявкою в «В дорозі»")
+                .isTrue();
+        assertThat(journal.hoverOrderBadgeTooltip(orderMarker))
+                .as("Підказка бейджа")
+                .isEqualTo("Створено на основі замовлення №" + order.getId());
+
+        assertThat(journal.isRowWithTextVisible(plainMarker))
+                .as("Рядок видачі без заявки в «В дорозі»")
+                .isTrue();
+        assertThat(journal.hasOrderBadgeInRow(plainMarker))
+                .as("Без заявки бейджа немає")
+                .isFalse();
     }
 }

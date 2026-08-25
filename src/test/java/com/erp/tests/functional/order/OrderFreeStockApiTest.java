@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Epic("Orders")
-@Feature("REQ-WMS-010 Free stock and holds")
+@Feature("REQ-ORD Free stock and holds")
 public class OrderFreeStockApiTest extends OrderApiTestBase {
 
     private static final double HOLD_QTY = 8.0;

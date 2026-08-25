@@ -455,6 +455,36 @@ public class RelocationPage extends BasePage {
         return page.locator("table tbody tr").filter(new Locator.FilterOptions().setHasText(text)).first();
     }
 
+    public boolean hasOrderBadgeInRow(String rowText) {
+        return orderBadgeInRow(rowText).count() > 0;
+    }
+
+    public String hoverOrderBadgeTooltip(String rowText) {
+        Locator row = journalRowContaining(rowText);
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        orderBadgeInRow(rowText).first().hover();
+        Locator tooltip = page.locator("[role='tooltip']")
+                .filter(new Locator.FilterOptions().setHasText("Створено на основі замовлення"));
+        tooltip.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(5_000));
+        return tooltip.innerText().trim();
+    }
+
+    private Locator journalRowContaining(String rowText) {
+        return journalTableWrapper().locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(rowText))
+                .first();
+    }
+
+    private Locator orderBadgeInRow(String rowText) {
+        return journalRowContaining(rowText)
+                .locator("[data-slot='tooltip-trigger']")
+                .filter(new Locator.FilterOptions().setHas(page.locator("svg.lucide-clipboard-list")));
+    }
+
     public boolean isEditButtonVisibleInRow(String rowText) {
         return rowContainingText(rowText)
                 .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Редагувати"))

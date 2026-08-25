@@ -3,11 +3,15 @@
     <listeners>
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
-    <test name="Order fulfill 092 095 096">
+    <test name="Order fulfill 092 093 095 096">
         <classes>
             <class name="com.erp.tests.functional.order.OrderBookingApiTest">
                 <methods>
+                    <include name="testHappyPathBookingAndShip"/>
+                    <include name="testShipSetsRelocationOrderId"/>
                     <include name="testShipOvershipAndExtraResourceAllowed"/>
+                    <include name="testShipUndersendReturns400"/>
+                    <include name="testShipWrongSenderOrRecipientReturns400"/>
                     <include name="testShipFailsAfterFulfillLeavesOrderOpen"/>
                     <include name="testFulfillDeniedForUnitOwnerAllowedForAdmin"/>
                 </methods>
