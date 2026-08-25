@@ -67,23 +67,38 @@ public class InventoryEditPage extends BasePage {
      */
     public boolean isAddResourceOptionVisible(String resourceName) {
         String normalizedName = resourceName.trim().replaceAll("\\s+", " ");
-        openAddResourceAutocompleteSearch(extractSearchPrefix(normalizedName));
-        if (page.getByText("Нічого не знайдено.").isVisible()) {
-            return false;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            openAddResourceAutocompleteSearch(extractSearchPrefix(normalizedName));
+            if (page.getByText("Нічого не знайдено.").isVisible()) {
+                closeAddResourceAutocomplete();
+                continue;
+            }
+            boolean found = autocompleteOptions()
+                    .filter(new Locator.FilterOptions().setHasText(normalizedName))
+                    .count() > 0;
+            if (found) {
+                return true;
+            }
+            closeAddResourceAutocomplete();
+            page.waitForTimeout(500);
         }
-        return autocompleteOptions()
-                .filter(new Locator.FilterOptions().setHasText(normalizedName))
-                .count() > 0;
+        return false;
     }
 
     private void openAddResourceAutocompleteSearch(String searchToken) {
         addResourceAutocompleteTrigger().click();
         Locator search = page.getByPlaceholder(SEARCH_PLACEHOLDER).last();
-        page.waitForResponse(
-                response -> response.url().contains("/resources/autocomplete")
-                        && "GET".equals(response.request().method())
-                        && response.status() == 200,
-                () -> fillAutocompleteSearch(search, searchToken));
+        search.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        try {
+            page.waitForResponse(
+                    response -> response.url().contains("/resources/autocomplete")
+                            && "GET".equals(response.request().method())
+                            && response.status() == 200,
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    () -> fillAutocompleteSearch(search, searchToken));
+        } catch (RuntimeException e) {
+            fillAutocompleteSearch(search, searchToken);
+        }
         waitForAutocompleteOptionsSettled();
     }
 
@@ -94,15 +109,7 @@ public class InventoryEditPage extends BasePage {
 
     public InventoryEditPage addResource(String resourceName, String amount) {
         String normalizedName = resourceName.trim().replaceAll("\\s+", " ");
-        addResourceAutocompleteTrigger().click();
-        String searchTerm = extractSearchPrefix(normalizedName);
-        Locator search = page.getByPlaceholder(SEARCH_PLACEHOLDER).last();
-        page.waitForResponse(
-                response -> response.url().contains("/resources/autocomplete")
-                        && "GET".equals(response.request().method())
-                        && response.status() == 200,
-                () -> fillAutocompleteSearch(search, searchTerm));
-        waitForAutocompleteOptionsSettled();
+        openAddResourceAutocompleteSearch(extractSearchPrefix(normalizedName));
         Locator option = autocompleteOptions()
                 .filter(new Locator.FilterOptions().setHasText(normalizedName))
                 .first();

@@ -690,6 +690,9 @@ public final class StorageRegionsAllureDescriptions {
 
     public static final String TC_FLY_INV_008 = """
             Матриця FP-INV-08: GET /storages/inventory?locations= включає рядок з FLY_POINT.
+
+            Відомий дефект продукту (G2 / REQ-CREW-003): multi-location inventory не повертає
+            resource на FLY_POINT. Тест червоний до фіксу в tk — очікування навмисно не послаблюємо.
             """ + ON_FAIL_API;
 
     public static final String TC_FLY_INV_010 = """

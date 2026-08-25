@@ -1,0 +1,92 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Verify autotest fixes for TCM «Регресія (30)» clusters (run 37).
+  Skips known product reds: TC-FLY-INV-008, TC-RES-016.
+
+  Run:
+    mvn test -Denv=dev -Dsuite=reg30-verify
+-->
+<suite name="Регресія (30) autotest-fix verify" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="names-pagination">
+        <classes>
+            <class name="com.erp.tests.functional.storage.StorageRelationTest">
+                <methods>
+                    <include name="testGetNamesExternalRelationContract"/>
+                    <include name="testRelationBehaviorIndependentOfUnitType"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.RelocationSendRecipientUiTest">
+                <methods>
+                    <include name="sendFormRecipientListMatchesVisibilityRegions"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.RelocationVisibilityUiTest">
+                <methods>
+                    <include name="sendFormExcludesOutsiderOutsideVisibilityRegions"/>
+                    <include name="sendFormShowsRegionAliasInRegionsMode"/>
+                    <include name="sendToRegionsAliasDeliversToRecipientStorageAnchor"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="incident-heading">
+        <classes>
+            <class name="com.erp.tests.ui.RelocationIncidentUITest">
+                <methods>
+                    <include name="createViewAndDeleteIncidentViaUi"/>
+                    <include name="createPartialDeliveryIncidentViaUi"/>
+                    <include name="partialDeliveryExceedingSentDisablesSave"/>
+                    <include name="partialDeliveryNegativeAmountDisablesSave"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="defects-journal">
+        <classes>
+            <class name="com.erp.tests.ui.DefectUITest">
+                <methods>
+                    <include name="testWriteOffWithinLimitSucceeds"/>
+                    <include name="testUiBlocksOverLimitWriteOff"/>
+                    <include name="testUiBlocksDeleteOfDefectWithWriteOff"/>
+                    <include name="testUiBlocksDefectOnRelocationBatchUsedInNonSeriesProduction"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="remaining-ui">
+        <classes>
+            <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest">
+                <methods>
+                    <include name="ownerSeesDefectAndProductionCards"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.LocationPermissionsUiTest">
+                <methods>
+                    <include name="workspaceShowsAllAndSwitchUpdatesCta"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest">
+                <methods>
+                    <include name="flyPointDashboardOpensInventoryAndConduct"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.InventoryUiTest">
+                <methods>
+                    <include name="addNewResourceUi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

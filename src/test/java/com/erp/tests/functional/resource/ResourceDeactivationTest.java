@@ -362,10 +362,10 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
             Якщо складова техкарти запису виробництва деактивована —
             DELETE та PUT виробництва повертають 400 з повідомленням про деактивований ресурс.
 
-            Відомий баг продукту (прогін 34): DELETE віддає 500 «Something went wrong» замість 400
-            з errors[]. Деактивований ресурс не проходить бізнес-валідацію, але виняток не
-            перехоплюється як ValidationException. Тест червоний до фіксу в tk — очікування
-            навмисно не послаблюємо.
+            Відомий дефект продукту (прогін 37): deactivate input після production без leftover
+            stock очікує HTTP 200, бекенд віддає 400 (ресурс ще «у використанні» / валідація
+            залишків). Окремо DELETE після успішного deactivate може віддати 500 замість 400
+            з errors[]. Тест червоний до фіксу в tk — очікування навмисно не послаблюємо.
             """)
     @Severity(SeverityLevel.CRITICAL)
     public void testCannotModifyProductionWhenTechMapResourceDeactivated() {

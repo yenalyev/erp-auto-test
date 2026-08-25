@@ -3,6 +3,7 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
@@ -30,6 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class StorageFixture extends BaseFixture {
 
     private final Set<Long> storagesToCleanup = new LinkedHashSet<>();
+
+    /**
+     * Matches tk {@code StorageController} {@code ALL_DATA_PAGE_SIZE} so /names is not truncated.
+     * A fixture {@code size=500} dropped newly created test storages on populated envs (sort=name).
+     */
+    private static final int NAMES_PAGE_SIZE = 999_999_999;
 
     public StorageFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
@@ -259,6 +266,18 @@ public class StorageFixture extends BaseFixture {
                 ApiEndpointDefinition.STORAGE_PUT_UPDATE, role, body, String.valueOf(storageId));
     }
 
+    @Step("API: PUT accessMode={mode} на локацію id={storageId}")
+    public StorageResponse setAccessMode(UserRole role, Long storageId, StorageAccessMode mode) {
+        StorageResponse existing = getById(role, storageId);
+        if (mode.name().equals(existing.getAccessMode())) {
+            return existing;
+        }
+        StorageRequest body = StorageDataFactory.withAccessMode(existing, mode);
+        Response response = update(role, storageId, body);
+        validateSuccess(response, "Set accessMode " + mode + " on storage " + storageId);
+        return response.as(StorageResponse.class);
+    }
+
     /** CPMA-711: gathering candidates require {@code storage.orderHub == true}. */
     @Step("API: ensure storage {storageId} is orderHub")
     public StorageResponse ensureOrderHub(UserRole role, Long storageId) {
@@ -302,7 +321,7 @@ public class StorageFixture extends BaseFixture {
     public Response getNamesRaw(UserRole role, Boolean isActive) {
         Map<String, Object> params = new HashMap<>();
         params.put("page", 0);
-        params.put("size", 500);
+        params.put("size", NAMES_PAGE_SIZE);
         if (isActive != null) {
             params.put("isActive", isActive);
         }
@@ -313,6 +332,27 @@ public class StorageFixture extends BaseFixture {
     @Step("API: GET /storages/names isActive={isActive}")
     public List<StorageResponse> getNames(UserRole role, Boolean isActive, String nameFilter) {
         return getNames(role, isActive, null, null, nameFilter, null);
+    }
+
+    /**
+     * Same contract as tk-ui send form: {@code GET /storages/{contextStorageId}/names}.
+     * Unscoped {@code /storages/names} ignores REGIONS when the JWT looks like full-access.
+     */
+    @Step("API: GET /storages/{contextStorageId}/names isActive={isActive}")
+    public List<StorageResponse> getNamesInStorageContext(UserRole role, Long contextStorageId, Boolean isActive) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("page", 0);
+        params.put("size", NAMES_PAGE_SIZE);
+        if (isActive != null) {
+            params.put("isActive", isActive);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_GET_NAMES_FOR_STORAGE,
+                role,
+                params,
+                String.valueOf(contextStorageId));
+        validateSuccess(response, "Get storage names in context of " + contextStorageId);
+        return DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
     }
 
     @Step("API: GET /storages/names isActive={isActive} id={storageId}")
@@ -329,7 +369,7 @@ public class StorageFixture extends BaseFixture {
                                          Long storageId) {
         Map<String, Object> params = new HashMap<>();
         params.put("page", 0);
-        params.put("size", 500);
+        params.put("size", NAMES_PAGE_SIZE);
         if (isActive != null) {
             params.put("isActive", isActive);
         }

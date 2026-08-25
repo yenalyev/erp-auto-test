@@ -1,7 +1,6 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
-import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
@@ -10,7 +9,6 @@ import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
-import com.erp.models.request.StorageRequest;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageRegionLocationResponse;
@@ -18,6 +16,7 @@ import com.erp.models.response.StorageRegionResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
+import com.erp.pages.AppSidebarPage;
 import com.erp.pages.RelocationCreateOutputPage;
 import com.erp.pages.RelocationPage;
 import com.erp.test_context.ContextKey;
@@ -60,6 +59,7 @@ public class RelocationVisibilityUiTest extends BaseUITest {
     private ResourceFixture resourceFixture;
 
     private Long owner2StorageId;
+    private String owner2StorageName;
     private Long resourceId;
     private String originalOwner2AccessMode;
     private boolean owner2AccessModeChanged;
@@ -75,8 +75,11 @@ public class RelocationVisibilityUiTest extends BaseUITest {
         relocationFixture.prepareContext();
         resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
         owner2StorageId = ConfigProvider.getOwner2StorageId();
+        owner2StorageName = storageFixture.getById(UserRole.ADMIN, owner2StorageId).getName();
         ensureOwner2RestrictedAccess();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
+        regionFixture.purgeRegionsByNamePrefixes(
+                UserRole.ADMIN, SCENARIO_PREFIX, ALIAS_SEND_PREFIX, "ui-rel-vis-", "vis-", "rel-vis-");
     }
 
     @AfterClass(alwaysRun = true)
@@ -95,9 +98,9 @@ public class RelocationVisibilityUiTest extends BaseUITest {
     @Description(StorageRegionsAllureDescriptions.TC_UI_REL_VIS_001)
     public void sendFormExcludesOutsiderOutsideVisibilityRegions() {
         InScopeOutsiderScenario scenario = prepareInScopeWithOutsiderScenario();
-        injectOwner2Session(owner2StorageId);
 
-        List<StorageResponse> apiNames = storageFixture.getNames(UserRole.OWNER_2, true, null);
+        List<StorageResponse> apiNames = storageFixture.getNamesInStorageContext(
+                UserRole.OWNER_2, owner2StorageId, true);
         Set<String> expectedNames = expectedSendFormRecipientNames(apiNames, owner2StorageId);
 
         assertThat(expectedNames)
@@ -105,24 +108,24 @@ public class RelocationVisibilityUiTest extends BaseUITest {
                 .doesNotContain(scenario.outsider().getName());
 
         RelocationCreateOutputPage sendForm = Allure.step(
-                "UI: журнал → Видати",
-                () -> new RelocationPage(page).open().clickSend());
+                "UI: журнал → workspace OWNER_2 → Видати",
+                this::openSendFormAsOwner2);
         sendForm.attachScreenshot("TC-UI-REL-VIS-001 — send form");
 
-        List<String> visibleOptions = Allure.step(
-                "UI: опції dropdown",
-                () -> sendForm.openRecipientDropdown().collectRecipientOptionLabels());
-        sendForm.attachScreenshot("TC-UI-REL-VIS-001 — dropdown open");
-
-        Allure.step("Assert: outsider відсутній, in-scope присутній", () -> {
-            assertThat(visibleOptions)
-                    .as("UI не показує outsider поза областями")
-                    .doesNotContain(scenario.outsider().getName());
-            assertThat(visibleOptions)
+        Allure.step("Assert: outsider відсутній, in-scope присутній (пошук у dropdown)", () -> {
+            List<String> inScopeOptions = sendForm.searchAndCollectRecipientOptions(
+                    scenario.inScopeRecipient().getName());
+            assertThat(inScopeOptions)
                     .as("UI показує in-scope отримувача")
                     .contains(scenario.inScopeRecipient().getName());
-            assertThat(visibleOptions)
+            assertThat(inScopeOptions)
                     .allMatch(expectedNames::contains);
+
+            List<String> outsiderOptions = sendForm.searchAndCollectRecipientOptions(
+                    scenario.outsider().getName());
+            assertThat(outsiderOptions)
+                    .as("UI не показує outsider поза областями")
+                    .doesNotContain(scenario.outsider().getName());
         });
     }
 
@@ -171,9 +174,9 @@ public class RelocationVisibilityUiTest extends BaseUITest {
     @Description(StorageRegionsAllureDescriptions.TC_UI_REL_VIS_002)
     public void sendFormShowsRegionAliasInRegionsMode() {
         RegionsAliasScenario scenario = prepareRegionsAliasScenario();
-        injectOwner2Session(owner2StorageId);
 
-        List<StorageResponse> apiNames = storageFixture.getNames(UserRole.OWNER_2, true, null);
+        List<StorageResponse> apiNames = storageFixture.getNamesInStorageContext(
+                UserRole.OWNER_2, owner2StorageId, true);
         assertThat(apiNames.stream().map(StorageResponse::getName))
                 .contains(scenario.region().getName())
                 .doesNotContain(scenario.recipientAnchor().getName());
@@ -183,16 +186,16 @@ public class RelocationVisibilityUiTest extends BaseUITest {
                 .contains(scenario.region().getName())
                 .doesNotContain(scenario.recipientAnchor().getName());
 
-        RelocationCreateOutputPage sendForm = new RelocationPage(page).open().clickSend();
+        RelocationCreateOutputPage sendForm = openSendFormAsOwner2();
         sendForm.attachScreenshot("TC-UI-REL-VIS-002 — send form");
 
-        List<String> visibleOptions = sendForm.openRecipientDropdown().collectRecipientOptionLabels();
-        sendForm.attachScreenshot("TC-UI-REL-VIS-002 — dropdown open");
+        List<String> aliasOptions = sendForm.searchAndCollectRecipientOptions(scenario.region().getName());
+        sendForm.attachScreenshot("TC-UI-REL-VIS-002 — dropdown search alias");
 
-        assertThat(visibleOptions)
+        assertThat(aliasOptions)
                 .as("REGIONS: у dropdown ім'я області")
                 .contains(scenario.region().getName());
-        assertThat(visibleOptions)
+        assertThat(aliasOptions)
                 .as("REGIONS: реальне ім'я anchor не показується")
                 .doesNotContain(scenario.recipientAnchor().getName());
     }
@@ -236,7 +239,7 @@ public class RelocationVisibilityUiTest extends BaseUITest {
                 .as("id аліасу в /names ≠ sender location")
                 .isNotEqualTo(scenario.senderInRegion().getId());
 
-        RelocationCreateOutputPage sendForm = new RelocationPage(page).open().clickSend();
+        RelocationCreateOutputPage sendForm = openSendFormAsOwner2();
         sendForm.attachScreenshot("TC-UI-REL-VIS-003 — send form");
 
         sendForm.selectRecipientByLabel(scenario.region().getName());
@@ -265,7 +268,7 @@ public class RelocationVisibilityUiTest extends BaseUITest {
 
     private StorageResponse findRegionsAliasNameEntry(
             UserRole viewer, StorageRegionResponse region, StorageResponse anchorFromApi) {
-        List<StorageResponse> names = storageFixture.getNames(viewer, true, null);
+        List<StorageResponse> names = storageFixture.getNamesInStorageContext(viewer, owner2StorageId, true);
         StorageResponse aliasEntry = names.stream()
                 .filter(s -> region.getName().equals(s.getName()))
                 .findFirst()
@@ -417,6 +420,14 @@ public class RelocationVisibilityUiTest extends BaseUITest {
         return new HashSet<>(uniqueById.values());
     }
 
+    private RelocationCreateOutputPage openSendFormAsOwner2() {
+        injectOwner2Session(owner2StorageId);
+        RelocationPage journal = new RelocationPage(page).open();
+        new AppSidebarPage(page).waitForSidebarLoaded()
+                .selectWorkspaceByName(owner2StorageName);
+        return journal.clickSend();
+    }
+
     private void injectOwner2Session(long selectedStorageId) {
         Map<String, String> cookies = getPlaywrightSessionProvider()
                 .getSession(UserRole.OWNER_2.getUsername(), UserRole.OWNER_2.getPassword());
@@ -447,9 +458,7 @@ public class RelocationVisibilityUiTest extends BaseUITest {
             StorageResponse owner2Storage = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
             originalOwner2AccessMode = owner2Storage.getAccessMode();
             if (!StorageAccessMode.REGIONS.name().equals(originalOwner2AccessMode)) {
-                StorageRequest update = StorageDataFactory.withAccessMode(
-                        owner2Storage, StorageAccessMode.REGIONS);
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, update);
+                storageFixture.setAccessMode(UserRole.ADMIN, owner2StorageId, StorageAccessMode.REGIONS);
                 owner2AccessModeChanged = true;
             }
         }
@@ -461,10 +470,10 @@ public class RelocationVisibilityUiTest extends BaseUITest {
         }
         synchronized (OWNER2_ACCESS_LOCK) {
             try {
-                StorageResponse current = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-                StorageRequest restore = StorageDataFactory.withAccessMode(
-                        current, StorageAccessMode.valueOf(originalOwner2AccessMode));
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, restore);
+                storageFixture.setAccessMode(
+                        UserRole.ADMIN,
+                        owner2StorageId,
+                        StorageAccessMode.valueOf(originalOwner2AccessMode));
             } catch (Exception e) {
                 log.warn("Failed to restore OWNER_2 storage accessMode: {}", e.getMessage());
             }

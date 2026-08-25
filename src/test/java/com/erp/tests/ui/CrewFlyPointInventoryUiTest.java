@@ -210,6 +210,7 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
         assertThat(page.url()).contains("/inventory?storageId=" + flyPointId);
 
         UnitManagementPage stock = new UnitManagementPage(page).waitForLoaded()
+                .waitForSessionOpenState(true)
                 .waitForConductButtonEnabled();
         stock.clickConductInventory();
 

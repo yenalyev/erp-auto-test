@@ -121,6 +121,7 @@ public class DefectUITest extends BaseUITest {
         form.attachScreenshot("TC-UI-DEF-002 — form filled");
 
         DefectsPage afterSubmit = form.submitAndWaitForList();
+        afterSubmit.revealResource(resourceName);
 
         assertThat(afterSubmit.isRowWithResourceVisible(resourceName))
                 .as("Новий запис браку має з'явитись у списку")
@@ -312,6 +313,7 @@ public class DefectUITest extends BaseUITest {
                 .isTrue();
 
         form.selectRelocationByInvoice(invoiceBatch1)
+                .fillAmount(String.valueOf((int) batchAmount))
                 .waitForUsedBatchBlockedAlert();
 
         assertThat(form.isUsedBatchBlockedAlertVisible())

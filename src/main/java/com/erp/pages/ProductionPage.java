@@ -124,6 +124,14 @@ public class ProductionPage extends BasePage {
         return ariaDisabled == null || !"true".equalsIgnoreCase(ariaDisabled);
     }
 
+    /** Wait until «Виготовлення» matches {@code enabled} after a workspace switch. */
+    public ProductionPage waitForManufacturingButtonEnabled(boolean enabled) {
+        page.waitForCondition(
+                () -> isManufacturingButtonEnabled() == enabled,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     public ProductionPage clickManufacturing() {
         namedActionLocator(MANUFACTURING_BUTTON_TEXT).first().click();
         return this;

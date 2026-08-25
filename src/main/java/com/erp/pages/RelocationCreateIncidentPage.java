@@ -8,7 +8,7 @@ import com.microsoft.playwright.options.WaitForSelectorState;
 
 public class RelocationCreateIncidentPage extends BasePage {
 
-    private static final String HEADING = "Надзвичайна подія підчас переміщення";
+    private static final String HEADING = "Надзвичайна подія під час переміщення";
     private static final String DESCRIPTION_PLACEHOLDER = "Добавте короткий опис події";
     private static final String SAVE_BUTTON = "Зберегти";
     private static final String PARTIAL_DELIVERY_LABEL = "Часткова доставка";

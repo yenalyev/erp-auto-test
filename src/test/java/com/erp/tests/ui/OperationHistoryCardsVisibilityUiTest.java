@@ -146,6 +146,7 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
                     .as("Sidebar «Виробництво» для %s (потрібен для PageTab «Брак»)", role.getUsername())
                     .isTrue();
             sidebar.openGroup(NAV_PRODUCTION);
+            sidebar.waitForPageTab(NAV_DEFECT);
             assertThat(sidebar.isPageTabVisible(NAV_DEFECT))
                     .as("PageTab «Брак» для %s", role.getUsername())
                     .isTrue();

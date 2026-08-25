@@ -1,5 +1,6 @@
 package com.erp.pages;
 
+import com.erp.pages.components.DateRangePickerComponent;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -24,10 +25,6 @@ public class DefectsPage extends BasePage {
     private static final String CREATE_BUTTON_TEXT = "Додати запис";
     private static final String LOADING_TEXT = "Завантаження...";
     private static final String EMPTY_STATE_TEXT = "Записів не знайдено";
-    private static final String WRITE_OFF_BUTTON_TEXT = "Списати";
-    private static final String HISTORY_BUTTON_TEXT = "Списання";
-    private static final String DELETE_BUTTON_TEXT = "Видалити";
-    private static final String EDIT_BUTTON_TEXT = "Редагувати";
     private static final String WRITE_OFF_DIALOG_TITLE = "Списати брак";
     private static final String WRITE_OFF_SAVE_BUTTON = "Зберегти";
     private static final String WRITE_OFF_CANCEL_BUTTON = "Скасувати";
@@ -70,6 +67,35 @@ public class DefectsPage extends BasePage {
                 .or(page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON_TEXT)))
                 .first()
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        waitForDataSettled();
+        return this;
+    }
+
+    /**
+     * Clears persisted «Період» (localStorage preset can hide today's API-created rows)
+     * and filters the journal by resource name so the row is on the first page.
+     */
+    public DefectsPage revealResource(String resourceName) {
+        clearPeriodFilter();
+        searchByResource(resourceName);
+        Locator row = rowByResource(resourceName).first();
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public DefectsPage clearPeriodFilter() {
+        DateRangePickerComponent picker = new DateRangePickerComponent(page, uiTimeoutMs());
+        if (!picker.isVisible() || picker.getDisplayedRange().isEmpty()) {
+            return this;
+        }
+        try {
+            waitForDefectsReload(picker::clear);
+        } catch (RuntimeException e) {
+            log.debug("Period clear did not trigger /defects reload: {}", e.getMessage());
+            picker.clear();
+        }
         waitForDataSettled();
         return this;
     }
@@ -174,9 +200,8 @@ public class DefectsPage extends BasePage {
     // -------------------------------------------------------------------
 
     public DefectsPage openWriteOffDialog(String resourceName) {
-        rowByResource(resourceName).first()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(WRITE_OFF_BUTTON_TEXT))
-                .click();
+        revealResource(resourceName);
+        writeOffButton(resourceName).click();
         writeOffDialog().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
@@ -184,9 +209,8 @@ public class DefectsPage extends BasePage {
     }
 
     public DefectsPage openHistoryDialog(String resourceName) {
-        rowByResource(resourceName).first()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(HISTORY_BUTTON_TEXT))
-                .click();
+        revealResource(resourceName);
+        rowActionButton(resourceName, "lucide-history").click();
         return this;
     }
 
@@ -195,6 +219,7 @@ public class DefectsPage extends BasePage {
      * tk-ui {@code actionBlockedReason = DEFECT_HAS_WRITE_OFFS}).
      */
     public boolean isDeleteButtonDisabled(String resourceName) {
+        revealResource(resourceName);
         return deleteButton(resourceName).isDisabled();
     }
 
@@ -227,8 +252,22 @@ public class DefectsPage extends BasePage {
     }
 
     private Locator deleteButton(String resourceName) {
+        return rowActionButton(resourceName, "lucide-trash-2");
+    }
+
+    /**
+     * tk-ui row actions are icon-only (tooltip text is not the accessible name).
+     * Lucide classes: scissors = write-off, trash-2 = delete, history, pencil.
+     */
+    private Locator writeOffButton(String resourceName) {
+        return rowActionButton(resourceName, "lucide-scissors");
+    }
+
+    private Locator rowActionButton(String resourceName, String lucideClass) {
         return rowByResource(resourceName).first()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(DELETE_BUTTON_TEXT));
+                .locator("button")
+                .filter(new Locator.FilterOptions().setHas(page.locator("svg." + lucideClass)))
+                .first();
     }
 
     // -------------------------------------------------------------------

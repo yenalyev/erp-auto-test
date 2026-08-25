@@ -33,6 +33,9 @@ public class DefectFormPage extends BasePage {
     /** Shown when a produced relocation batch is fully consumed (tk-ui {@code relocationBlocked}). */
     public static final String USED_BATCH_BLOCKED_TEXT =
             "Партія повністю використана — створити брак для неї неможливо";
+    /** Relocation-type guard when remaining batch stock cannot cover the entered amount. */
+    public static final String RELOCATION_STOCK_INSUFFICIENT_TEXT =
+            "Наявних партій цього переміщення недостатньо";
 
     public DefectFormPage(Page page) {
         super(page);
@@ -122,7 +125,12 @@ public class DefectFormPage extends BasePage {
     }
 
     public DefectFormPage fillAmount(String amount) {
-        page.getByPlaceholder(AMOUNT_PLACEHOLDER).fill(amount);
+        Locator placeholder = page.getByPlaceholder(AMOUNT_PLACEHOLDER);
+        if (placeholder.count() > 0 && placeholder.first().isVisible()) {
+            placeholder.fill(amount);
+        } else {
+            page.locator("table tbody input[type='number']").first().fill(amount);
+        }
         page.waitForTimeout(300);
         return this;
     }
@@ -168,17 +176,22 @@ public class DefectFormPage extends BasePage {
 
     /**
      * Waits for the client-side guard that blocks create when a produced relocation batch
-     * is no longer present on stock (see tk-ui {@code DefectFormPage} {@code relocationBlocked}).
+     * is no longer present on stock (see tk-ui {@code DefectFormPage} {@code productionBlocked}
+     * / {@code relocationStockInsufficient}).
      */
     public DefectFormPage waitForUsedBatchBlockedAlert() {
-        page.getByText(USED_BATCH_BLOCKED_TEXT)
-                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        usedBatchBlockedAlert().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
 
     public boolean isUsedBatchBlockedAlertVisible() {
-        Locator alert = page.getByText(USED_BATCH_BLOCKED_TEXT);
+        Locator alert = usedBatchBlockedAlert();
         return alert.count() > 0 && alert.first().isVisible();
+    }
+
+    private Locator usedBatchBlockedAlert() {
+        return page.getByText(USED_BATCH_BLOCKED_TEXT)
+                .or(page.getByText(RELOCATION_STOCK_INSUFFICIENT_TEXT));
     }
 
     public DefectsPage submitAndWaitForList() {

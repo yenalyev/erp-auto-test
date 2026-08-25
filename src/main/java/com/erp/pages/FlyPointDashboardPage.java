@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FlyPointDashboardPage extends BasePage {
 
     private static final String PATH = "/fly-point-dashboard";
-    private static final String STOCKS_TAB = "Залишки на точках взлету";
+    private static final String STOCKS_TAB = "Залишки";
     private static final String RESOURCE_FILTER_PLACEHOLDER = "Пошук по назві...";
 
     public FlyPointDashboardPage(Page page) {
@@ -25,21 +25,23 @@ public class FlyPointDashboardPage extends BasePage {
 
     public FlyPointDashboardPage open() {
         String url = ConfigProvider.getBaseUrl() + PATH;
-        waitForFlyPointStocksDuring(() -> navigateTo(url, "Точки взлету"));
+        navigateTo(url, "Точки взлету");
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         return waitForLoaded();
     }
 
     public FlyPointDashboardPage openWithFlyPointId(long flyPointId) {
         String url = ConfigProvider.getBaseUrl() + PATH + "?flyPointId=" + flyPointId;
-        waitForFlyPointStocksDuring(() -> navigateTo(url, "Точки взлету (flyPointId)"));
+        navigateTo(url, "Точки взлету (flyPointId)");
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         return waitForLoaded();
     }
 
     public FlyPointDashboardPage waitForLoaded() {
-        page.getByText(STOCKS_TAB).first()
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(STOCKS_TAB))
+                .first()
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        waitForLoadingHidden();
         return this;
     }
 
@@ -50,12 +52,13 @@ public class FlyPointDashboardPage extends BasePage {
     }
 
     public FlyPointDashboardPage filterByResourceName(String resourceName) {
-        Locator input = page.getByPlaceholder(RESOURCE_FILTER_PLACEHOLDER).first();
+        Locator input = page.locator("input[placeholder='" + RESOURCE_FILTER_PLACEHOLDER + "']:visible")
+                .first();
         input.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
-        waitForFlyPointStocksDuring(() -> {
-            input.fill("");
-            input.fill(resourceName.trim());
-        });
+        input.fill("");
+        input.fill(resourceName.trim());
+        page.waitForTimeout(400);
+        waitForLoadingHidden();
         return this;
     }
 
@@ -76,15 +79,6 @@ public class FlyPointDashboardPage extends BasePage {
 
     private Locator flyPointInventoryLink(long flyPointId) {
         return page.locator("a[href*='/inventory?storageId=" + flyPointId + "']").first();
-    }
-
-    private void waitForFlyPointStocksDuring(Runnable action) {
-        page.waitForResponse(
-                response -> response.url().contains("/fly-points/stocks")
-                        && "GET".equals(response.request().method())
-                        && response.status() == 200,
-                action);
-        waitForLoadingHidden();
     }
 
     private void waitForLoadingHidden() {

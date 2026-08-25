@@ -258,9 +258,24 @@ public class StorageRegionFixture extends BaseFixture {
         return response.as(StorageRegionResponse.class);
     }
 
+    /**
+     * Matches tk {@code StorageController} {@code ALL_DATA_PAGE_SIZE} so region memberships
+     * on a busy viewer are not truncated (same contract as {@link StorageFixture} /names).
+     */
+    private static final int LOCATION_LINKS_PAGE_SIZE = 999_999_999;
+
+    /**
+     * After region purge, OWNER_2 /names extras should be a handful of explicit grants.
+     * A full catalog here means leftover region visibility — do not N+1 GET /locations.
+     */
+    private static final int EXPLICIT_GRANT_FULL_SCAN_CAP = 50;
+
+    private static final List<String> VISIBILITY_TEST_NAME_HINTS = List.of(
+            "vis-", "ui-rel-", "typ-", "rel-vis-");
+
     @Step("API: GET explicit/regional links для storage id={storageId}")
     public List<StorageLocationLinkResponse> getStorageLocationLinks(UserRole role, Long storageId) {
-        Map<String, Object> params = Map.of("page", 0, "size", 500);
+        Map<String, Object> params = Map.of("page", 0, "size", LOCATION_LINKS_PAGE_SIZE);
         Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.STORAGE_GET_LOCATION_LINKS,
                 role,
@@ -319,26 +334,72 @@ public class StorageRegionFixture extends BaseFixture {
     }
 
     private void purgeExplicitGrantsForViewer(UserRole role, Long viewerStorageId, StorageFixture storageFixture) {
-        List<StorageResponse> visibleNames = storageFixture.getNames(UserRole.OWNER_2, true, null);
-        for (StorageResponse visible : visibleNames) {
-            if (Objects.equals(visible.getId(), viewerStorageId)) {
-                continue;
-            }
+        Set<Long> candidateIds = collectExplicitGrantCandidates(viewerStorageId, storageFixture);
+        log.info("Purge: probing {} storages for explicit grants to viewer {}",
+                candidateIds.size(), viewerStorageId);
+        for (Long visibleId : candidateIds) {
             try {
-                List<StorageLocationLinkResponse> viewers =
-                        getStorageLocationLinks(role, visible.getId());
+                List<StorageLocationLinkResponse> viewers = getStorageLocationLinks(role, visibleId);
                 boolean viewerLinked = viewers.stream()
                         .anyMatch(link -> Objects.equals(link.getLocationId(), viewerStorageId));
                 if (viewerLinked) {
-                    removeExplicitLocations(visible.getId(), viewerStorageId);
+                    removeExplicitLocations(visibleId, viewerStorageId);
                     log.info("Purge: revoked explicit grant visible={} viewer={}",
-                            visible.getId(), viewerStorageId);
+                            visibleId, viewerStorageId);
                 }
             } catch (Exception e) {
                 log.warn("Purge: failed to revoke grant visible={} viewer={}: {}",
-                        visible.getId(), viewerStorageId, e.getMessage());
+                        visibleId, viewerStorageId, e.getMessage());
             }
         }
+    }
+
+    /**
+     * Incoming explicit grants are not listed on GET /storages/{viewer}/locations.
+     * Do not walk OWNER_2 /names: after the /names page-size fix that is the full catalog
+     * whenever the viewer is still in a large region (N+1 GET /locations per storage).
+     */
+    private Set<Long> collectExplicitGrantCandidates(Long viewerStorageId, StorageFixture storageFixture) {
+        Set<Long> candidateIds = new LinkedHashSet<>();
+        List<StorageResponse> visibleNames = storageFixture.getNames(UserRole.OWNER_2, true, null);
+        List<StorageResponse> extras = visibleNames.stream()
+                .filter(storage -> storage.getId() != null && !Objects.equals(storage.getId(), viewerStorageId))
+                .toList();
+
+        if (extras.size() <= EXPLICIT_GRANT_FULL_SCAN_CAP) {
+            extras.stream().map(StorageResponse::getId).forEach(candidateIds::add);
+            return candidateIds;
+        }
+
+        log.warn("Purge: OWNER_2 still sees {} storages after region purge — "
+                        + "skipping full GET /locations scan, probing test-name leftovers only",
+                extras.size());
+        extras.stream()
+                .filter(StorageRegionFixture::looksLikeVisibilityTestStorage)
+                .map(StorageResponse::getId)
+                .forEach(candidateIds::add);
+        if (candidateIds.size() > EXPLICIT_GRANT_FULL_SCAN_CAP) {
+            log.warn("Purge: capping explicit-grant candidates from {} to {}",
+                    candidateIds.size(), EXPLICIT_GRANT_FULL_SCAN_CAP);
+            Set<Long> capped = new LinkedHashSet<>();
+            for (Long id : candidateIds) {
+                capped.add(id);
+                if (capped.size() >= EXPLICIT_GRANT_FULL_SCAN_CAP) {
+                    break;
+                }
+            }
+            return capped;
+        }
+        return candidateIds;
+    }
+
+    private static boolean looksLikeVisibilityTestStorage(StorageResponse storage) {
+        String name = storage.getName();
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        String n = name.toLowerCase();
+        return VISIBILITY_TEST_NAME_HINTS.stream().anyMatch(n::contains);
     }
 
     private void logRemainingViewerVisibility(Long viewerStorageId, StorageFixture storageFixture) {

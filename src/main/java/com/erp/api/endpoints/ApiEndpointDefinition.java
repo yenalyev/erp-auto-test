@@ -758,6 +758,20 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    /**
+     * tk-ui send form uses {@code GET /storages/{selectedStorageId}/names} so REGIONS
+     * scoping follows the selected workspace, not JWT isAdmin / unscoped /names.
+     */
+    STORAGE_GET_NAMES_FOR_STORAGE(
+            "/api/v1/storages/{storageId}/names",
+            Method.GET,
+            "schemas/storages/storage-names-list-schema.json",
+            "Get storage names in selected-storage visibility context",
+            null,
+            new TypeReference<List<StorageResponse>>() {},
+            null
+    ),
+
     STORAGE_GET_MY_UNITS(
             "/api/v1/storages/names/my-units",
             Method.GET,

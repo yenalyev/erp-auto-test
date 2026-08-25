@@ -129,12 +129,15 @@ public class StorageRelationTest extends StorageApiTestBase {
         StorageResponse internalStorage = storageFixture.createChildStorage(parent.getId(), "int-names-");
         StorageResponse externalStorage = storageFixture.createExternalChildStorage(parent.getId(), "ext-names-");
 
-        List<StorageResponse> externalNames = storageFixture.getNames(
-                UserRole.ADMIN, true, StorageRelation.EXTERNAL, null, null, null);
+        List<Long> externalById = storageFixture.getNames(
+                        UserRole.ADMIN, true, StorageRelation.EXTERNAL, null, null, externalStorage.getId())
+                .stream().map(StorageResponse::getId).toList();
+        List<Long> internalInExternal = storageFixture.getNames(
+                        UserRole.ADMIN, true, StorageRelation.EXTERNAL, null, null, internalStorage.getId())
+                .stream().map(StorageResponse::getId).toList();
 
-        List<Long> externalIds = externalNames.stream().map(StorageResponse::getId).toList();
-        assertThat(externalIds).contains(externalStorage.getId());
-        assertThat(externalIds).doesNotContain(internalStorage.getId());
+        assertThat(externalById).contains(externalStorage.getId());
+        assertThat(internalInExternal).doesNotContain(internalStorage.getId());
     }
 
     @Test(priority = 50)
@@ -216,12 +219,17 @@ public class StorageRelationTest extends StorageApiTestBase {
 
             Allure.step("Assert /names filter for type=" + type, () -> {
                 List<Long> externalNameIds = storageFixture.getNames(
-                                UserRole.ADMIN, true, StorageRelation.EXTERNAL, null, null, null)
+                                UserRole.ADMIN, true, StorageRelation.EXTERNAL, null, null, externalLoc.getId())
+                        .stream().map(StorageResponse::getId).toList();
+                List<Long> internalInExternalNames = storageFixture.getNames(
+                                UserRole.ADMIN, true, StorageRelation.EXTERNAL, null, null, internalLoc.getId())
                         .stream().map(StorageResponse::getId).toList();
 
                 assertThat(externalNameIds)
                         .as("EXTERNAL names for type=%s", type)
-                        .contains(externalLoc.getId())
+                        .contains(externalLoc.getId());
+                assertThat(internalInExternalNames)
+                        .as("INTERNAL must be absent from EXTERNAL names for type=%s", type)
                         .doesNotContain(internalLoc.getId());
             });
         }

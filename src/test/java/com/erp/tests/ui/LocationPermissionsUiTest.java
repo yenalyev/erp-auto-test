@@ -144,14 +144,17 @@ public class LocationPermissionsUiTest extends BaseUITest {
 
         sidebar.selectWorkspaceByName(fullA1Name);
         production.waitForJournalDataSettled();
+        production.waitForManufacturingButtonEnabled(true);
         assertThat(production.isManufacturingButtonEnabled()).isTrue();
 
         sidebar.selectWorkspaceByName(roB1Name);
         production.waitForJournalDataSettled();
+        production.waitForManufacturingButtonEnabled(false);
         assertThat(production.isManufacturingButtonEnabled()).isFalse();
 
         sidebar.selectWorkspaceByName(fullA2Name);
         production.waitForJournalDataSettled();
+        production.waitForManufacturingButtonEnabled(true);
         assertThat(production.isManufacturingButtonEnabled()).isTrue();
         production.attachScreenshot("TC-LOC-UI-003 — switch full↔RO");
     }

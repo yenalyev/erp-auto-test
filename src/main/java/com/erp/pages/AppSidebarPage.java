@@ -78,11 +78,8 @@ public class AppSidebarPage extends BasePage {
 
     /** Click an in-page {@code PageTabs} trigger by label. */
     public AppSidebarPage openPageTab(String tabLabel) {
-        Locator tab = pageTab(tabLabel).first();
-        tab.waitFor(new Locator.WaitForOptions()
-                .setState(WaitForSelectorState.VISIBLE)
-                .setTimeout(uiTimeoutMs()));
-        tab.click();
+        waitForPageTab(tabLabel);
+        pageTab(tabLabel).first().click();
         return this;
     }
 
@@ -92,6 +89,14 @@ public class AppSidebarPage extends BasePage {
         if (!groupLabel.equals(tabLabel)) {
             openPageTab(tabLabel);
         }
+        return this;
+    }
+
+    /** Waits until a PageTabs trigger with the given label is visible. */
+    public AppSidebarPage waitForPageTab(String tabLabel) {
+        pageTab(tabLabel).first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         return this;
     }
 
@@ -137,27 +142,44 @@ public class AppSidebarPage extends BasePage {
 
     public AppSidebarPage selectWorkspaceByName(String locationName) {
         workspaceSelectorTrigger().click();
+        workspaceOptionButtons().first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        expandAllWorkspaceNodes();
         Locator search = page.locator("[data-radix-popper-content-wrapper] input[placeholder='Пошук...']");
         if (search.count() > 0) {
             search.first().fill(locationName);
+            page.waitForTimeout(400);
         }
-        workspaceOptionButtons()
+        Locator option = workspaceOptionButtons()
                 .filter(new Locator.FilterOptions().setHasText(locationName))
-                .first()
-                .click();
+                .first();
+        option.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        option.click();
         return this;
     }
 
     /** True if workspace tree search finds a selectable option containing {@code nameFragment}. */
     public boolean isWorkspaceOptionVisible(String nameFragment) {
         workspaceSelectorTrigger().click();
+        workspaceOptionButtons().first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        expandAllWorkspaceNodes();
         Locator search = page.locator("[data-radix-popper-content-wrapper] input[placeholder='Пошук...']");
         if (search.count() > 0) {
             search.first().fill(nameFragment.trim());
+            page.waitForTimeout(400);
         }
-        boolean found = workspaceOptionButtons()
-                .filter(new Locator.FilterOptions().setHasText(nameFragment.trim()))
-                .count() > 0;
+        Locator match = workspaceOptionButtons()
+                .filter(new Locator.FilterOptions().setHasText(nameFragment.trim()));
+        boolean found = false;
+        try {
+            match.first().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(Math.min(5_000, uiTimeoutMs())));
+            found = match.count() > 0;
+        } catch (RuntimeException ignored) {
+            found = match.count() > 0;
+        }
         page.keyboard().press("Escape");
         return found;
     }
