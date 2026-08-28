@@ -7,10 +7,12 @@ import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
+import com.erp.fixtures.IsolatedRestrictedOwnerScope;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.request.RelocationOutputRequest;
-import com.erp.models.request.StorageRequest;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageRegionResponse;
@@ -43,22 +45,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Story("Relocation Visibility Regions")
 public class RelocationVisibilityTest extends StorageApiTestBase {
 
-    private static final Object OWNER2_ACCESS_LOCK = new Object();
     private static final String PREFIX = "rel-vis-";
     private static final double SEND_AMOUNT = 5.0;
     private static final String RESOURCE_PREFIX = "rel-vis-res-";
 
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
+    private IsolatedRestrictedOwnerScope isolatedOwnerScope;
 
     private Long owner1StorageId;
     private Long owner2StorageId;
     private Long resourceId;
-    private String originalOwner2AccessMode;
-    private boolean owner2AccessModeChanged;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupStorageApiBase")
-    @Step("Підготовка: OWNER_2 REGIONS + relocation/resource fixtures")
+    @Step("Підготовка: isolated REGIONS UNIT + relocation/resource fixtures")
     public void setupRelocationVisibilityTests() {
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
@@ -67,11 +67,16 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
         resourceFixture.fetchSharedResourceCategory();
 
         owner1StorageId = ConfigProvider.getOwner1StorageId();
-        owner2StorageId = ConfigProvider.getOwner2StorageId();
+        isolatedOwnerScope = new IsolatedRestrictedOwnerScope(
+                storageFixture,
+                new UserFixture(testContext, apiExecutor),
+                new InventoryFixture(testContext, apiExecutor),
+                apiExecutor,
+                getPlaywrightSessionProvider());
+        owner2StorageId = isolatedOwnerScope.acquire();
         resourceId = testContext.get(com.erp.test_context.ContextKey.RELOCATION_RESOURCE_ID);
 
         SchemaRegistry.logSchemaCoverage();
-        ensureOwner2RestrictedAccess();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
         regionFixture.purgeRegionsByNamePrefixes(UserRole.ADMIN, PREFIX);
     }
@@ -83,8 +88,10 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @AfterClass(alwaysRun = true)
-    public void restoreOwner2AccessMode() {
-        restoreOwner2AccessIfChanged();
+    public void restoreOwner2AndIsolatedUnit() {
+        if (isolatedOwnerScope != null) {
+            isolatedOwnerScope.release();
+        }
     }
 
     @Test(priority = 10)
@@ -440,37 +447,6 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     private void seedStockOnStorage(long storageId, long resId) {
         RelocationStockSeeder.receiveFromSupplier(
                 apiExecutor, UserRole.ADMIN, storageId, Map.of(resId, 50.0));
-    }
-
-    private void ensureOwner2RestrictedAccess() {
-        synchronized (OWNER2_ACCESS_LOCK) {
-            StorageResponse owner2Storage = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-            originalOwner2AccessMode = owner2Storage.getAccessMode();
-            if (!StorageAccessMode.REGIONS.name().equals(originalOwner2AccessMode)) {
-                StorageRequest update = StorageDataFactory.withAccessMode(
-                        owner2Storage, StorageAccessMode.REGIONS);
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, update);
-                owner2AccessModeChanged = true;
-                log.info("OWNER_2 storage {} set to REGIONS for relocation visibility tests", owner2StorageId);
-            }
-        }
-    }
-
-    private void restoreOwner2AccessIfChanged() {
-        if (!owner2AccessModeChanged || originalOwner2AccessMode == null) {
-            return;
-        }
-        synchronized (OWNER2_ACCESS_LOCK) {
-            try {
-                StorageResponse current = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-                StorageRequest restore = StorageDataFactory.withAccessMode(
-                        current, StorageAccessMode.valueOf(originalOwner2AccessMode));
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, restore);
-                log.info("OWNER_2 storage {} accessMode restored to {}", owner2StorageId, originalOwner2AccessMode);
-            } catch (Exception e) {
-                log.warn("Failed to restore OWNER_2 storage accessMode: {}", e.getMessage());
-            }
-        }
     }
 
     private record RegionsAliasSendScenario(

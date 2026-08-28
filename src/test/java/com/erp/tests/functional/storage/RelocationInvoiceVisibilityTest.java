@@ -2,20 +2,20 @@ package com.erp.tests.functional.storage;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
-import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.InvoiceFixture;
+import com.erp.fixtures.IsolatedRestrictedOwnerScope;
 import com.erp.fixtures.RelocationFixture;
-import com.erp.models.request.StorageRequest;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.StorageRegionResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
-import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
@@ -37,7 +37,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Story("Invoice in visibility regions")
 public class RelocationInvoiceVisibilityTest extends StorageApiTestBase {
 
-    private static final Object OWNER2_ACCESS_LOCK = new Object();
     private static final String SCENARIO_PREFIX = "rel-inv-vis-";
     private static final double SEND_AMOUNT = 1.0;
     /** Async invoice generation under suite load needs a wider poll window than a quick smoke. */
@@ -45,25 +44,31 @@ public class RelocationInvoiceVisibilityTest extends StorageApiTestBase {
 
     private RelocationFixture relocationFixture;
     private InvoiceFixture invoiceFixture;
+    private IsolatedRestrictedOwnerScope isolatedOwnerScope;
 
     private Long owner2StorageId;
-    private String originalOwner2AccessMode;
-    private boolean owner2AccessModeChanged;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupStorageApiBase")
-    @Step("Підготовка: OWNER_2 REGIONS + relocation/invoice fixtures")
+    @Step("Підготовка: isolated REGIONS UNIT + relocation/invoice fixtures")
     public void setupRelocationInvoiceVisibilityTests() {
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         invoiceFixture = new InvoiceFixture(testContext, apiExecutor);
         relocationFixture.prepareContext();
-        owner2StorageId = ConfigProvider.getOwner2StorageId();
-        ensureOwner2RestrictedAccess();
+        isolatedOwnerScope = new IsolatedRestrictedOwnerScope(
+                storageFixture,
+                new UserFixture(testContext, apiExecutor),
+                new InventoryFixture(testContext, apiExecutor),
+                apiExecutor,
+                getPlaywrightSessionProvider());
+        owner2StorageId = isolatedOwnerScope.acquire();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
     }
 
     @AfterClass(alwaysRun = true)
-    public void restoreOwner2AccessMode() {
-        restoreOwner2AccessIfChanged();
+    public void restoreOwner2AndIsolatedUnit() {
+        if (isolatedOwnerScope != null) {
+            isolatedOwnerScope.release();
+        }
     }
 
     @Test(priority = 10)
@@ -195,37 +200,6 @@ public class RelocationInvoiceVisibilityTest extends StorageApiTestBase {
                     owner2StorageId, prefix, UnitType.PRODUCTION, StorageRelation.INTERNAL);
             default -> throw new IllegalArgumentException("Unsupported child sender type: " + senderType);
         };
-    }
-
-    private void ensureOwner2RestrictedAccess() {
-        synchronized (OWNER2_ACCESS_LOCK) {
-            StorageResponse owner2Storage = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-            originalOwner2AccessMode = owner2Storage.getAccessMode();
-            if (!StorageAccessMode.REGIONS.name().equals(originalOwner2AccessMode)) {
-                StorageRequest update = StorageDataFactory.withAccessMode(
-                        owner2Storage, StorageAccessMode.REGIONS);
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, update);
-                owner2AccessModeChanged = true;
-                log.info("OWNER_2 storage {} set to REGIONS for invoice visibility API tests", owner2StorageId);
-            }
-        }
-    }
-
-    private void restoreOwner2AccessIfChanged() {
-        if (!owner2AccessModeChanged || originalOwner2AccessMode == null) {
-            return;
-        }
-        synchronized (OWNER2_ACCESS_LOCK) {
-            try {
-                StorageResponse current = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-                StorageRequest restore = StorageDataFactory.withAccessMode(
-                        current, StorageAccessMode.valueOf(originalOwner2AccessMode));
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, restore);
-                log.info("OWNER_2 storage {} accessMode restored to {}", owner2StorageId, originalOwner2AccessMode);
-            } catch (Exception e) {
-                log.warn("Failed to restore OWNER_2 storage accessMode: {}", e.getMessage());
-            }
-        }
     }
 
     private record ChildSenderScenario(

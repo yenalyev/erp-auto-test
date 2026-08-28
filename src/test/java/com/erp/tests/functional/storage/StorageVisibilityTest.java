@@ -6,16 +6,15 @@ import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
+import com.erp.fixtures.IsolatedRestrictedOwnerScope;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.request.StorageRequest;
 import com.erp.models.response.StorageRegionResponse;
 import com.erp.models.response.StorageResponse;
-import com.erp.models.response.UserMeResponse;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -24,17 +23,16 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Видимість локацій у селекторах ({@code GET /storages/names}, {@code /names/my-units})
  * для підрозділів з {@code accessMode=FULL_ACCESS} vs {@code REGIONS}.
- * <p>Передумова класу: OWNER_2 storage ({@code owner2.storage.id} у config) тимчасово переводиться
- * в {@code REGIONS} у {@link #ensureOwner2RestrictedAccess()} і відновлюється в {@link #restoreOwner2AccessMode()}.
- * OWNER_2 JWT має містити рівно один business unit ({@code owner2.storage.id}); інакше suite skip.
- * OWNER_2 використовується як «обмежений» owner; OWNER_1 — як порівняння з ширшою видимістю.
+ * <p>Передумова класу: {@link IsolatedRestrictedOwnerScope} створює два leaf UNIT і двох
+ * Keycloak-юзерів — REGIONS (сесія {@code OWNER_2}) і FULL_ACCESS (сесія {@code OWNER_1}).
+ * Shared {@code bar}/{@code alkatras} не змінюються. Після класу юзери деактивуються,
+ * залишок знімається інвентаризацією, UNIT архівуються.
  */
 @Slf4j
 @Epic("Master Data")
@@ -42,77 +40,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Story("Storage Visibility Scope")
 public class StorageVisibilityTest extends StorageApiTestBase {
 
-    private static final Object OWNER2_ACCESS_LOCK = new Object();
-
+    private Long owner1StorageId;
     private Long owner2StorageId;
-    private String originalOwner2AccessMode;
-    private boolean owner2AccessModeChanged;
-    private UserFixture userFixture;
+    private IsolatedRestrictedOwnerScope isolatedOwnerScope;
 
     @BeforeClass(alwaysRun = true)
-    @Step("Підготовка: OWNER_2 → REGIONS для visibility-тестів")
+    @Step("Підготовка: isolated REGIONS + FULL_ACCESS UNIT і Keycloak owners")
     public void setupStorageVisibilityTest() {
         SchemaRegistry.logSchemaCoverage();
-        owner2StorageId = ConfigProvider.getOwner2StorageId();
-        userFixture = new UserFixture(testContext, apiExecutor);
-        ensureOwner2RestrictedAccess();
+        isolatedOwnerScope = new IsolatedRestrictedOwnerScope(
+                storageFixture,
+                new UserFixture(testContext, apiExecutor),
+                new InventoryFixture(testContext, apiExecutor),
+                apiExecutor,
+                getPlaywrightSessionProvider());
+        owner2StorageId = isolatedOwnerScope.acquire();
+        owner1StorageId = isolatedOwnerScope.acquireFullAccessOwner();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
         regionFixture.purgeRegionsByNamePrefixes(
                 UserRole.ADMIN, "str-reg-", "crew-", "rel-vis-", "vis-");
-        assertOwner2SingleBusinessUnitScope();
-    }
-
-    /**
-     * /names і /my-units будуються з JWT {@code allowedStorageIds}. Зайві
-     * {@code var_business_unit_id(_ro)::*} на OWNER_2 ламають REGIONS-контракт (див. TC-STR-REG-021/033).
-     */
-    private void assertOwner2SingleBusinessUnitScope() {
-        UserMeResponse me = userFixture.getMe(UserRole.OWNER_2);
-        Set<Long> allowed = me.getAllowedStorageIds() == null
-                ? Set.of()
-                : new HashSet<>(me.getAllowedStorageIds());
-        if (allowed.equals(Set.of(owner2StorageId))) {
-            return;
-        }
-        throw new SkipException(String.format(
-                "OWNER_2 (%s) allowedStorageIds=%s; очікується лише owner2.storage.id=%d. "
-                        + "Приберіть зайві var_business_unit_id(_ro) у Keycloak / Users admin.",
-                UserRole.OWNER_2.getUsername(), allowed, owner2StorageId));
     }
 
     @AfterClass(alwaysRun = true)
-    public void restoreOwner2AccessMode() {
-        restoreOwner2AccessIfChanged();
-    }
-
-    private void ensureOwner2RestrictedAccess() {
-        synchronized (OWNER2_ACCESS_LOCK) {
-            StorageResponse owner2Storage = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-            originalOwner2AccessMode = owner2Storage.getAccessMode();
-            if (!StorageAccessMode.REGIONS.name().equals(originalOwner2AccessMode)) {
-                StorageRequest update = StorageDataFactory.withAccessMode(
-                        owner2Storage, StorageAccessMode.REGIONS);
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, update);
-                owner2AccessModeChanged = true;
-                log.info("OWNER_2 storage {} temporarily set to REGIONS for visibility tests", owner2StorageId);
-            }
-        }
-    }
-
-    private void restoreOwner2AccessIfChanged() {
-        if (!owner2AccessModeChanged || originalOwner2AccessMode == null) {
-            return;
-        }
-        synchronized (OWNER2_ACCESS_LOCK) {
-            try {
-                StorageResponse current = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-                StorageRequest restore = StorageDataFactory.withAccessMode(
-                        current, StorageAccessMode.valueOf(originalOwner2AccessMode));
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, restore);
-                log.info("OWNER_2 storage {} accessMode restored to {}", owner2StorageId, originalOwner2AccessMode);
-            } catch (Exception e) {
-                log.warn("Failed to restore OWNER_2 storage accessMode: {}", e.getMessage());
-            }
+    public void restoreOwner2AndIsolatedUnit() {
+        if (isolatedOwnerScope != null) {
+            isolatedOwnerScope.release();
         }
     }
 
@@ -142,50 +94,45 @@ public class StorageVisibilityTest extends StorageApiTestBase {
             Бізнес-вимога (п.1): підрозділ з FULL_ACCESS бачить усю організаційну структуру в селекторах;
             підрозділ з REGIONS (RESTRICTED) — лише власний id, доки не відкриють області видимості.
             
-            Що перевіряємо: контраст видимості двох реальних owner-сесій на одному ендпоінті
-            GET /api/v1/storages/names?isActive=true (той самий, що живить dropdown локацій у UI).
+            Що перевіряємо: контраст видимості двох ephemeral owner-сесій на
+            GET /api/v1/storages/names?isActive=true.
             
             Передумови (@BeforeClass):
-            - owner2.storage.id (config) тимчасово переведено в accessMode=REGIONS;
-            - OWNER_2 JWT містить рівно один business unit = owner2.storage.id;
-            - owner1.storage.id залишається з поточним accessMode середовища (очікується FULL_ACCESS).
+            - OWNER_2 — новий Keycloak-юзер на leaf UNIT з accessMode=REGIONS;
+            - OWNER_1 — новий Keycloak-юзер на leaf UNIT з accessMode=FULL_ACCESS;
+            - stand {@code bar}/{@code alkatras} не використовуються.
             
             Тестові дані: нові області/members для OWNER_2 НЕ створюються — порівняння «as-is».
-            Ролі: OWNER_1 (alkatras, storage id=1) vs OWNER_2 (bar, storage id=13).
             
             Кроки перевірки:
-            1) ADMIN GET підтверджує accessMode обох owner-storages;
+            1) ADMIN GET підтверджує accessMode обох isolated UNIT;
             2) OWNER_1 і OWNER_2 окремо викликають /storages/names?isActive=true;
             3) OWNER_2 має рівно 1 локацію — власний підрозділ;
-            4) OWNER_1 має суворо більше записів, ніж OWNER_2 (ширша видимість).
+            4) OWNER_1 має суворо більше записів, ніж OWNER_2 (ширша видимість FULL_ACCESS).
             
             Очікування: owner2Names.size()==1 і owner1Names.size() > owner2Names.size().
-            Не перевіряємо: точний склад списку OWNER_1 (залежить від даних dev/staging).
+            Не перевіряємо: точний склад списку OWNER_1 (залежить від оргдерева стенда).
             """ + StorageRegionsAllureDescriptions.ON_FAIL_API)
     @Severity(SeverityLevel.NORMAL)
     public void testFullAccessOwnerSeesMoreThanRestrictedOwner() {
-        Long owner1StorageId = ConfigProvider.getOwner1StorageId();
-
-        Allure.step("STEP 1: ADMIN — accessMode owner-storages", () -> {
+        Allure.step("STEP 1: ADMIN — accessMode isolated owner-storages", () -> {
             StorageResponse owner1Storage = storageFixture.getById(UserRole.ADMIN, owner1StorageId);
             StorageResponse owner2Storage = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
 
             Allure.parameter("owner1AccessMode", owner1Storage.getAccessMode());
-            // The wide-visibility side is environment data, not something this test prepares:
-            // if it is not FULL_ACCESS the contrast cannot be observed at all.
-            if (!StorageAccessMode.FULL_ACCESS.name().equals(owner1Storage.getAccessMode())) {
-                throw new SkipException(String.format(
-                        "OWNER_1 storage (id=%d) має accessMode=%s, очікується FULL_ACCESS. "
-                                + "Контраст видимості FULL_ACCESS vs REGIONS на цьому середовищі не відтворити.",
-                        owner1StorageId, owner1Storage.getAccessMode()));
-            }
+            Allure.parameter("owner1StorageId", owner1StorageId);
+            Allure.parameter("owner2StorageId", owner2StorageId);
+
+            assertThat(owner1Storage.getAccessMode())
+                    .as("isolated OWNER_1 UNIT (id=%d) створено як FULL_ACCESS", owner1StorageId)
+                    .isEqualTo(StorageAccessMode.FULL_ACCESS.name());
             assertThat(owner2Storage.getAccessMode())
-                    .as("OWNER_2 storage (id=%d) підготовлено як REGIONS у @BeforeClass", owner2StorageId)
+                    .as("isolated OWNER_2 UNIT (id=%d) створено як REGIONS", owner2StorageId)
                     .isEqualTo(StorageAccessMode.REGIONS.name());
         });
 
         List<StorageResponse> owner1Names = Allure.step(
-                "STEP 2: OWNER_1 — GET /storages/names?isActive=true", () ->
+                "STEP 2: OWNER_1 (FULL_ACCESS) — GET /storages/names?isActive=true", () ->
                         storageFixture.getNames(UserRole.OWNER_1, true, null));
 
         List<StorageResponse> owner2Names = Allure.step(
@@ -193,7 +140,7 @@ public class StorageVisibilityTest extends StorageApiTestBase {
                         storageFixture.getNames(UserRole.OWNER_2, true, null));
 
         Allure.step("STEP 4: Порівняння розміру списків видимості", () -> {
-            log.info("TC-STR-REG-021: OWNER_1 names count={}, OWNER_2 names count={}",
+            log.info("TC-STR-REG-021: isolated FULL_ACCESS names count={}, REGIONS names count={}",
                     owner1Names.size(), owner2Names.size());
 
             assertThat(owner2Names.stream().map(StorageResponse::getId).toList())

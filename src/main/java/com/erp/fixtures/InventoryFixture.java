@@ -296,6 +296,28 @@ public class InventoryFixture extends BaseFixture {
         }
     }
 
+    /**
+     * Zero every positive stock line so {@code DELETE} deactivate can archive the location.
+     * No-op when the location has no leftover inventory.
+     */
+    @Step("API: Обнулити залишки на складі {storageId} інвентаризацією")
+    public void clearStock(long storageId) {
+        List<StorageItemResponse> items = listItems(storageId, UserRole.ADMIN, Map.of("size", 1000, "page", 0));
+        boolean hasStock = items.stream()
+                .anyMatch(i -> i.getAmount() != null && i.getAmount() > 0);
+        if (!hasStock) {
+            return;
+        }
+        ensureClosed(storageId);
+        openSession(storageId);
+        try {
+            conductInventory(storageId, UserRole.ADMIN, InventoryDataFactory.zeroAll(items));
+        } finally {
+            closeSession(storageId);
+        }
+        log.info("Cleared leftover inventory on storage id={}", storageId);
+    }
+
     @Step("API: Прибрати ресурс {resourceId} зі складу {storageId}")
     public void removeResourceFromStorage(long storageId, long resourceId, UserRole role) {
         boolean onStorage = listItems(storageId, role).stream()

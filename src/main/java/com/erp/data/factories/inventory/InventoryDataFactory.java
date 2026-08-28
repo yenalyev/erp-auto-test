@@ -39,6 +39,20 @@ public class InventoryDataFactory {
         return InventoryRequest.builder().resources(resources).build();
     }
 
+    /** PUT payload that sets every listed resource amount to 0 so the location can be archived. */
+    public static InventoryRequest zeroAll(List<StorageItemResponse> existingItems) {
+        Map<Long, Double> zeros = new LinkedHashMap<>();
+        if (existingItems != null) {
+            for (StorageItemResponse item : existingItems) {
+                if (item.getResource() != null && item.getResource().getId() != null
+                        && item.getAmount() != null && item.getAmount() > 0) {
+                    zeros.put(item.getResource().getId(), 0.0);
+                }
+            }
+        }
+        return seedAmounts(zeros);
+    }
+
     public static InventoryRequest copyExcept(List<StorageItemResponse> existingItems, Long excludeResourceId) {
         Map<Long, Double> amounts = new LinkedHashMap<>();
         if (existingItems != null) {

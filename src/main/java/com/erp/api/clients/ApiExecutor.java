@@ -113,15 +113,29 @@ public class ApiExecutor {
 
         return roleSessionCache.computeIfAbsent(role, r -> {
             log.info("🔐 Authenticating and caching session for: {}", role);
-            return authService.getSessionForUser(role.getUsername(), role.getPassword());
+            return authService.getSessionForUser(r.getUsername(), r.getPassword());
         });
     }
 
     /**
-     * Метод для примусового очищення кешу (наприклад, після тестів зміни пароля)
+     * Point a {@link UserRole} at another Keycloak user for this executor instance
+     * (ephemeral restricted owner). Does not change the real role credentials.
+     */
+    public void setSessionForRole(UserRole role, String username, String password) {
+        log.info("🔐 Binding role {} to Keycloak user {}", role, username);
+        roleSessionCache.put(role, authService.getSessionForUser(username, password));
+    }
+
+    public void evictSessionForRole(UserRole role) {
+        roleSessionCache.remove(role);
+    }
+
+    /**
+     * Drop role cookies and AuthService session cache so the next call re-logins.
      */
     public void clearSessionCache() {
         roleSessionCache.clear();
+        authService.clearSessionCache();
         log.debug("🧹 Session cache cleared");
     }
 

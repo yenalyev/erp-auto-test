@@ -9,6 +9,7 @@ import com.erp.models.response.OneTimeUserCredentialsResponse;
 import com.erp.models.response.PagedUserResponse;
 import com.erp.models.response.RoleModelResponse;
 import com.erp.models.response.SimpleEntityResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.UserMeResponse;
 import com.erp.models.response.UserModelResponse;
 import com.erp.test_context.ContextKey;
@@ -263,6 +264,50 @@ public class UserFixture extends BaseFixture {
 
         String userId = findUserIdByUsername(username);
         return waitForUser(UserRole.ADMIN, userId);
+    }
+
+    /**
+     * ADMIN {@code POST /users} → Keycloak user with Owner role and a single storage.
+     * Bootstraps a permanent password via Playwright UPDATE_PASSWORD.
+     */
+    @Step("FIXTURE: створити restricted owner «{storage.name}»")
+    public RestrictedOwnerUser createRestrictedOwner(
+            PlaywrightSessionProvider playwright,
+            StorageResponse storage) {
+        if (playwright == null) {
+            throw new IllegalStateException(
+                    "PlaywrightSessionProvider is required to bootstrap the isolated owner password");
+        }
+        long suffix = System.nanoTime();
+        String username = "visiso" + suffix;
+        String permanentPassword = "VisIso1!" + suffix;
+        RoleModelResponse ownerRole = fetchRealmRole(BUSINESS_UNIT_OWNER_ROLE_NAME);
+        UserRequest request = UserRequest.builder()
+                .username(username)
+                .firstName("Vis")
+                .lastName("Iso")
+                .rank("")
+                .enabled(true)
+                .storages(List.of(SimpleEntityResponse.builder()
+                        .id(storage.getId())
+                        .name(storage.getName())
+                        .build()))
+                .permissions(List.of())
+                .realmRoles(List.of(ownerRole))
+                .build();
+
+        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
+        validateSuccess(response, "Create isolated restricted owner");
+        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
+        String userId = findUserIdByUsername(username);
+        trackForCleanup(userId);
+        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
+        waitForUser(UserRole.ADMIN, userId);
+        log.info("Created isolated restricted owner username={} storageId={}", username, storage.getId());
+        return new RestrictedOwnerUser(userId, username, permanentPassword);
+    }
+
+    public record RestrictedOwnerUser(String userId, String username, String password) {
     }
 
     /**
