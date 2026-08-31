@@ -5,8 +5,10 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.models.request.ResourceRequest;
+import com.erp.models.request.UpdateNotesRequest;
 import com.erp.models.response.ResourcePriceResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.validators.SchemaRegistry;
 import com.erp.test_context.TestContext;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
@@ -67,6 +69,19 @@ public class ResourceFixture extends BaseFixture {
                 .build();
         Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, request);
         validateSuccess(response, "Create resource with supplier " + namePrefix);
+        return response.as(ResourceResponse.class);
+    }
+
+    @Step("API: PATCH notes ресурсу id={resourceId}")
+    public ResourceResponse updateNotes(UserRole role, Long resourceId, String notes) {
+        UpdateNotesRequest request = UpdateNotesRequest.builder().notes(notes).build();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.RESOURCE_UPDATE_NOTES,
+                role,
+                request,
+                String.valueOf(resourceId));
+        validateSuccess(response, "Patch resource notes id=" + resourceId);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RESOURCE_UPDATE_NOTES);
         return response.as(ResourceResponse.class);
     }
 

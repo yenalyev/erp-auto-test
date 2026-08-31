@@ -122,9 +122,124 @@ public class EquipmentListPage extends BasePage {
         return this;
     }
 
+    /** Adds a status to the «Статус» faceted filter (default list excludes IN_TRANSIT). */
+    public EquipmentListPage includeStatus(String statusLabel) {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Статус")).click();
+        Locator option = page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(statusLabel));
+        option.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        runGroupedEquipmentFilterAction(option::click);
+        page.keyboard().press("Escape");
+        return this;
+    }
+
+    /**
+     * Search by group/unit name, expand the group, click the inventory-number (or name)
+     * button, and wait for the unit history dialog.
+     */
+    public EquipmentDetailDialog openUnitDialog(String groupName) {
+        return openUnitDialog(groupName, null);
+    }
+
+    public EquipmentListPage selectGroupByName(String groupName) {
+        filterBySearch(groupName);
+        Locator row = groupRow(groupName);
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        Locator checkbox = row.getByLabel("Вибрати");
+        checkbox.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        if (!checkbox.isChecked()) {
+            checkbox.click();
+        }
+        return this;
+    }
+
+    public SendEquipmentDialog clickSendSelected() {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                        .setName(Pattern.compile("Передати вибране")))
+                .click();
+        return new SendEquipmentDialog(page).waitForOpen();
+    }
+
+    public EquipmentListPage sendSelectedTo(String recipientStorageName) {
+        return clickSendSelected()
+                .selectRecipient(recipientStorageName)
+                .confirmSend();
+    }
+
+    public EquipmentDetailDialog openUnitDialog(String groupName, String inventoryNumber) {
+        filterBySearch(groupName);
+        page.getByText(groupName, new Page.GetByTextOptions().setExact(true))
+                .first()
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        if (hasExpandToggle(groupName)) {
+            expandGroup(groupName);
+        }
+        waitForUnitHistoryDuring(() -> clickUnitOpener(groupName, inventoryNumber));
+        return new EquipmentDetailDialog(page).waitForOpen();
+    }
+
+    private boolean hasExpandToggle(String groupName) {
+        return expandToggle(groupName).count() > 0;
+    }
+
+    private Locator expandToggle(String groupName) {
+        return groupRow(groupName).locator("button[aria-label='Розгорнути'], button[aria-label='Згорнути']");
+    }
+
+    private void clickUnitOpener(String groupName, String inventoryNumber) {
+        if (inventoryNumber != null && !inventoryNumber.isBlank()) {
+            Locator invButton = page.getByRole(AriaRole.BUTTON,
+                    new Page.GetByRoleOptions().setName(inventoryNumber).setExact(true));
+            if (invButton.count() > 0) {
+                invButton.first().click();
+                return;
+            }
+        }
+        Locator expanded = isGroupVisible(groupName) ? expandedGroupSubTable(groupName) : tableContainer();
+        Locator invCell = expanded.locator("td button.font-medium").first();
+        if (invCell.count() > 0) {
+            invCell.click();
+            return;
+        }
+        Locator nameButton = tableContainer()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(groupName).setExact(true));
+        if (nameButton.count() > 0) {
+            nameButton.first().click();
+            return;
+        }
+        Locator nameText = tableContainer()
+                .getByText(groupName, new Locator.GetByTextOptions().setExact(true));
+        if (nameText.count() > 0) {
+            nameText.first().click();
+            return;
+        }
+        groupRow(groupName).click();
+    }
+
+    private void waitForUnitHistoryDuring(Runnable action) {
+        try {
+            page.waitForResponse(
+                    response -> response.url().matches(".*/equipment/\\d+/history.*")
+                            && "GET".equals(response.request().method()),
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    action);
+        } catch (Exception e) {
+            log.warn("Equipment unit history response wait timed out: {}", e.getMessage());
+        }
+    }
+
     public EquipmentListPage expandGroup(String groupName) {
-        Locator groupRow = groupRow(groupName);
-        Locator toggle = groupRow.locator("button[aria-label='Розгорнути'], button[aria-label='Згорнути']");
+        Locator toggle = expandToggle(groupName);
+        if (toggle.count() == 0) {
+            return this;
+        }
         if ("Розгорнути".equals(toggle.getAttribute("aria-label"))) {
             toggle.click();
             expandedGroupSubTable(groupName)

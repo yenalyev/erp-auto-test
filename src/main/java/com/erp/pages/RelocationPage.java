@@ -46,10 +46,23 @@ public class RelocationPage extends BasePage {
     }
 
     public RelocationPage open() {
-        page.waitForResponse(
-                response -> response.url().contains("/creation-options") && response.ok(),
-                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
-                () -> navigateTo(ConfigProvider.getBaseUrl() + PATH, "Журнал переміщень"));
+        try {
+            return navigateToJournal();
+        } catch (TimeoutError e) {
+            // The SPA sometimes renders an empty shell here (no sidebar, no tabs) when a navigation
+            // races the session bootstrap. Reloading once recovers it and keeps the scenario meaningful
+            // instead of reporting a framework timeout for a product-behaviour test.
+            log.warn("Relocation journal did not render, reloading once: {}", e.getMessage());
+            attachScreenshot("Relocation journal blank — reloading");
+            return navigateToJournal();
+        }
+    }
+
+    private RelocationPage navigateToJournal() {
+        waitForResponseTolerant(
+                response -> response.url().contains("/creation-options"),
+                () -> navigateTo(ConfigProvider.getBaseUrl() + PATH, "Журнал переміщень"),
+                "GET /relocations/creation-options");
         return waitForLoaded();
     }
 
@@ -486,9 +499,44 @@ public class RelocationPage extends BasePage {
     }
 
     public boolean isEditButtonVisibleInRow(String rowText) {
+        return editButtonInRow(rowText).count() > 0;
+    }
+
+    public boolean isEditButtonDisabledInRow(String rowText) {
+        Locator btn = editButtonInRow(rowText);
+        return btn.count() > 0 && btn.isDisabled();
+    }
+
+    public String hoverDisabledEditTooltip(String rowText) {
+        Locator btn = editButtonInRow(rowText);
+        btn.locator("xpath=ancestor::span[1]").hover();
+        Locator tooltip = page.locator("[role='tooltip']")
+                .filter(new Locator.FilterOptions().setHasText("Оберіть конкретну локацію"));
+        tooltip.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(5_000));
+        return tooltip.innerText().trim();
+    }
+
+    public boolean isAcceptButtonVisibleInRow(String rowText) {
         return rowContainingText(rowText)
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Редагувати"))
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Прийняти"))
                 .count() > 0;
+    }
+
+    public boolean isCancelButtonVisibleInRow(String rowText) {
+        return rowContainingText(rowText)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Скасувати"))
+                .count() > 0;
+    }
+
+    private Locator editButtonInRow(String rowText) {
+        Locator row = rowContainingText(rowText);
+        Locator named = row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Редагувати"));
+        if (named.count() > 0) {
+            return named.first();
+        }
+        return row.locator("button[title='Редагувати']");
     }
 
     public boolean isDeleteButtonVisibleInRow(String rowText) {
@@ -503,6 +551,100 @@ public class RelocationPage extends BasePage {
         return new RelocationUpdateInputPage(page).waitForLoaded();
     }
 
+    public RelocationUpdateOutputPage clickEditSendInRow(String rowText) {
+        Locator row = rowContainingText(rowText);
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        editButtonInRow(rowText).click();
+        return new RelocationUpdateOutputPage(page).waitForLoaded();
+    }
+
+    /**
+     * Recipient accepts an in-transit send («Прийняти» → «Підтвердити прийом?»).
+     */
+    public RelocationPage acceptInTransitAsRecipient(String rowText) {
+        Locator row = rowContainingText(rowText);
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Прийняти")).click();
+
+        Locator dialog = cancelDialog();
+        dialog.getByRole(AriaRole.HEADING,
+                        new Locator.GetByRoleOptions().setName("Підтвердити прийом?"))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        var response = page.waitForResponse(
+                r -> r.url().contains("/resolve") && "PUT".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                () -> dialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Підтвердити"))
+                        .click());
+        if (response.status() < 200 || response.status() >= 300) {
+            attachScreenshot("PUT resolve FINISHED failed — status " + response.status());
+            throw new IllegalStateException(
+                    "PUT /relocations/{id}/resolve failed with status " + response.status());
+        }
+        waitForJournalDataSettled();
+        return this;
+    }
+
+    /**
+     * Sender cancels an in-transit send. Dialog confirm is «Повернено» and resolves RETURNED
+     * (UI sends the current relocation; no stale API version).
+     */
+    public RelocationPage cancelInTransitAsSender(String rowText, String reason) {
+        Locator row = rowContainingText(rowText);
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Скасувати")).click();
+
+        Locator dialog = cancelDialog();
+        Locator reasonField = dialog.getByPlaceholder("Напишіть чому...");
+        reasonField.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        reasonField.fill(reason);
+        var response = page.waitForResponse(
+                r -> r.url().contains("/resolve") && "PUT".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                () -> dialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Повернено"))
+                        .click());
+        if (response.status() < 200 || response.status() >= 300) {
+            attachScreenshot("PUT resolve RETURNED failed — status " + response.status());
+            throw new IllegalStateException(
+                    "PUT /relocations/{id}/resolve failed with status " + response.status());
+        }
+        waitForJournalDataSettled();
+        return this;
+    }
+
+    public RelocationPage deleteRowAndConfirm(String rowText) {
+        Locator row = rowContainingText(rowText);
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        clickDeleteInRow(rowText);
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Видалити переміщення?"))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        var response = page.waitForResponse(
+                r -> r.url().contains("/relocations/")
+                        && "DELETE".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                this::confirmDeleteDialog);
+        if (response.status() < 200 || response.status() >= 300) {
+            attachScreenshot("DELETE relocation failed — status " + response.status());
+            throw new IllegalStateException(
+                    "DELETE /relocations/{id} failed with status " + response.status());
+        }
+        waitForJournalDataSettled();
+        return this;
+    }
+
     public void clickDeleteInRow(String rowText) {
         Locator row = rowContainingText(rowText);
         row.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Видалити")).click();
@@ -510,6 +652,22 @@ public class RelocationPage extends BasePage {
 
     public void confirmDeleteDialog() {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Видалити")).last().click();
+    }
+
+    private Locator cancelDialog() {
+        Locator alert = page.getByRole(AriaRole.ALERTDIALOG);
+        try {
+            alert.last().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            return alert.last();
+        } catch (TimeoutError e) {
+            Locator dialog = page.getByRole(AriaRole.DIALOG).last();
+            dialog.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            return dialog;
+        }
     }
 
     private void runJournalFilterAction(Runnable action) {

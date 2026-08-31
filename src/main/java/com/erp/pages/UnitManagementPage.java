@@ -333,6 +333,51 @@ public class UnitManagementPage extends BasePage {
         return resourceRow(resourceName).count() > 0;
     }
 
+    public UnitManagementPage waitForTagBadge(String tag) {
+        page.waitForCondition(
+                () -> isTagBadgeVisible(tag),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage clickTagFilterBadge(String tag) {
+        Locator badge = tagFilterBadge(tag);
+        badge.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        try {
+            page.waitForResponse(
+                    response -> response.url().contains("/inventory")
+                            && !response.url().contains("/status")
+                            && !response.url().contains("/batches")
+                            && !response.url().contains("/tag-statistics")
+                            && "GET".equals(response.request().method())
+                            && response.status() == 200,
+                    badge::click);
+        } catch (Exception e) {
+            log.warn("Inventory tag filter response wait timed out: {}", e.getMessage());
+            page.waitForTimeout(2000);
+        }
+        return this;
+    }
+
+    public boolean isTagBadgeVisible(String tag) {
+        return tagFilterBadge(tag).count() > 0;
+    }
+
+    public boolean isTagBadgeSelected(String tag) {
+        Locator badge = tagFilterBadge(tag);
+        if (badge.count() == 0) {
+            return false;
+        }
+        String className = badge.getAttribute("class");
+        return className != null && className.contains("ring-green-700");
+    }
+
+    private Locator tagFilterBadge(String tag) {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tag + " (")).first();
+    }
+
     public UnitManagementPage clickResourceAmountLink(String resourceName) {
         Locator row = resourceRow(resourceName).first();
         row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
@@ -570,6 +615,7 @@ public class UnitManagementPage extends BasePage {
                     response -> response.url().contains("/inventory")
                             && !response.url().contains("/status")
                             && !response.url().contains("/batches")
+                            && !response.url().contains("/tag-statistics")
                             && "GET".equals(response.request().method())
                             && response.status() == 200,
                     action);

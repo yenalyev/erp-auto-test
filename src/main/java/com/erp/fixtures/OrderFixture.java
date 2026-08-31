@@ -601,7 +601,7 @@ public class OrderFixture extends BaseFixture {
      * Resolved from {@code order.requester.storage.id}, then 3bat {@code my-units}, then admin names.
      */
     @Step("Resolve requester UNIT (підрозділ) for orders")
-    Long resolveRequesterUnitStorageId() {
+    public Long resolveRequesterUnitStorageId() {
         StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
         long configured = ConfigProvider.getOrderRequesterStorageId();
         if (configured > 0) {

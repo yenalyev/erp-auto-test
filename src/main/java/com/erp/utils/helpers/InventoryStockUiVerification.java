@@ -65,6 +65,20 @@ public class InventoryStockUiVerification {
         });
     }
 
+    public static void assertResourceNotVisible(UnitManagementPage stockPage,
+                                                String resourceName,
+                                                String stepLabel) {
+        Allure.step(stepLabel, () -> {
+            Allure.parameter("resourceName", resourceName);
+            if (stockPage.isResourceVisibleInTable(resourceName)) {
+                stockPage.attachScreenshot(stepLabel + " — resource still in table");
+            }
+            assertThat(stockPage.isResourceVisibleInTable(resourceName))
+                    .as("Ресурс «%s» не повинен бути видимий у таблиці", resourceName)
+                    .isFalse();
+        });
+    }
+
     public static void assertResourceNotVisibleOrZero(UnitManagementPage stockPage,
                                                       String resourceName,
                                                       String stepLabel) {

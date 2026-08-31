@@ -89,6 +89,7 @@ public class NotificationFixture extends BaseFixture {
         NotificationRecipientResponse current = getRecipientById(role, id);
         NotificationRecipientRequest disable = NotificationRecipientRequest.builder()
                 .id(id)
+                .type(current.getType() != null ? current.getType() : NotificationDataFactory.TYPE_WHATSAPP)
                 .caption(current.getCaption())
                 .addressInfo(current.getAddressInfo())
                 .state(NotificationDataFactory.STATE_DISABLED)

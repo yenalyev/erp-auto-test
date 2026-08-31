@@ -199,7 +199,7 @@ public class AuthenticationTest extends BaseTest {
                 .response();
 
         assertThat(response.statusCode())
-                .as("API should return 200 OK for a valid session")
+                .as("API should return 200 OK for a valid session; body=%s", response.asString())
                 .isIn(200, 404);
 
         log.info("✅ Valid session accepted — status={}", response.statusCode());

@@ -136,8 +136,8 @@ public class TcmApiClient {
                 .buildName("Maven")
                 .results(results);
 
-        Long featureId = TcmScopeContext.getFeatureId();
-        Long acId = TcmScopeContext.getAcId();
+        Long featureId = firstPositive(TcmScopeContext.getFeatureId(), ConfigProvider.getTcmFeatureId());
+        Long acId = firstPositive(TcmScopeContext.getAcId(), ConfigProvider.getTcmAcId());
         Long projectId = ConfigProvider.getTcmProjectId();
         if (featureId != null) {
             builder.featureId(featureId);
@@ -166,6 +166,16 @@ public class TcmApiClient {
             return fromConfig;
         }
         return "suite-" + java.util.UUID.randomUUID();
+    }
+
+    private static Long firstPositive(Long primary, Long fallback) {
+        if (primary != null && primary > 0) {
+            return primary;
+        }
+        if (fallback != null && fallback > 0) {
+            return fallback;
+        }
+        return null;
     }
 
     private static String mapStatus(int testngStatus) {

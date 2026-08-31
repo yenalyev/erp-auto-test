@@ -1,0 +1,26 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Focused recheck after skip-fix: RES-016 + RVW-016/017 (+ DB sample optional via full skipped-rerun) -->
+<suite name="Skip-fix verify" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="RES-016">
+        <classes>
+            <class name="com.erp.tests.functional.resource.ResourceDeactivationTest">
+                <methods>
+                    <include name="testCannotModifyProductionWhenTechMapResourceDeactivated"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+    <test name="RVW-016-017">
+        <classes>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest">
+                <methods>
+                    <include name="testReceiverUnitGroupFilters"/>
+                    <include name="testReceiverIdsAndUnit414PmIntersection"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

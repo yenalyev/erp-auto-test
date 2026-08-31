@@ -840,6 +840,93 @@ public class InventoryUiTest extends BaseUITest {
         });
     }
 
+    @Test(priority = 180)
+    @TestCaseId("TC-WMS-007-018")
+    @Story("Inventory tag chips OR filter UI")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Owner 1 на «Залишках» (/inventory) обирає два інфочіпи тегів ресурсів.
+            Таблиця показує union (OR): ресурси A і B, без C. Зняття чіпа A лишає лише B.
+            Cross-check: GET /storages/inventory?parentStorageId=&tags=A,B.
+            """)
+    public void tagChipsTwoSelectedUseOrLogicUi() {
+        InventoryFixture.TagOrFilterSeed seed =
+                inventoryFixture.seedTagOrFilterResources(storageId, relocationFixture);
+        trackStorageResourceForCleanup(seed.resourceA().getId());
+        trackStorageResourceForCleanup(seed.resourceB().getId());
+        trackStorageResourceForCleanup(seed.resourceC().getId());
+
+        String nameA = seed.resourceA().getName().trim().replaceAll("\\s+", " ");
+        String nameB = seed.resourceB().getName().trim().replaceAll("\\s+", " ");
+        String nameC = seed.resourceC().getName().trim().replaceAll("\\s+", " ");
+        Allure.parameter("tagA", seed.tagA());
+        Allure.parameter("tagB", seed.tagB());
+        Allure.parameter("resourceA", nameA);
+        Allure.parameter("resourceB", nameB);
+        Allure.parameter("resourceC", nameC);
+
+        UnitManagementPage stock = Allure.step("Відкрити «Залишки» і дочекатися інфочіпів", () -> {
+            injectRoleSession(UserRole.OWNER_1, storageId);
+            page = browserContext.newPage();
+            UnitManagementPage pageObj = new UnitManagementPage(page).openForStorage(storageId).waitForLoaded();
+            pageObj.waitForTagBadge(seed.tagA()).waitForTagBadge(seed.tagB());
+            pageObj.attachScreenshot("TC-WMS-007-018 — chips visible");
+            return pageObj;
+        });
+
+        Allure.step("Обрати обидва інфочіпи — таблиця OR (A і B, без C)", () -> {
+            stock.clickTagFilterBadge(seed.tagA());
+            assertThat(stock.isTagBadgeSelected(seed.tagA()))
+                    .as("Чіп %s має бути обраним", seed.tagA())
+                    .isTrue();
+            stock.clickTagFilterBadge(seed.tagB());
+            assertThat(stock.isTagBadgeSelected(seed.tagB()))
+                    .as("Чіп %s має бути обраним", seed.tagB())
+                    .isTrue();
+            stock.attachScreenshot("TC-WMS-007-018 — two chips selected");
+            InventoryStockUiVerification.assertResourceVisible(
+                    stock, nameA, "Після двох чіпів ресурс A має бути видимий");
+            InventoryStockUiVerification.assertResourceVisible(
+                    stock, nameB, "Після двох чіпів ресурс B має бути видимий");
+            InventoryStockUiVerification.assertResourceNotVisible(
+                    stock, nameC, "Після двох чіпів ресурс C не повинен відображатися");
+        });
+
+        Allure.step("Зняти чіп A — лишається лише B", () -> {
+            stock.clickTagFilterBadge(seed.tagA());
+            assertThat(stock.isTagBadgeSelected(seed.tagA()))
+                    .as("Чіп %s має бути знятий", seed.tagA())
+                    .isFalse();
+            assertThat(stock.isTagBadgeSelected(seed.tagB()))
+                    .as("Чіп %s лишається обраним", seed.tagB())
+                    .isTrue();
+            stock.attachScreenshot("TC-WMS-007-018 — chip A deselected");
+            InventoryStockUiVerification.assertResourceVisible(
+                    stock, nameB, "Після зняття чіпа A ресурс B має лишитися");
+            InventoryStockUiVerification.assertResourceNotVisible(
+                    stock, nameA, "Після зняття чіпа A ресурс A не повинен відображатися");
+            InventoryStockUiVerification.assertResourceNotVisible(
+                    stock, nameC, "Ресурс C і далі відсутній");
+        });
+
+        Allure.step("Cross-check API hierarchy GET tags=A,B", () -> {
+            var union = inventoryFixture.listHierarchyByTags(
+                    storageId, UserRole.OWNER_1, List.of(seed.tagA(), seed.tagB()));
+            assertThat(union.stream().anyMatch(row -> row.getResource() != null
+                    && seed.resourceA().getId().equals(row.getResource().getId())))
+                    .as("API union містить A")
+                    .isTrue();
+            assertThat(union.stream().anyMatch(row -> row.getResource() != null
+                    && seed.resourceB().getId().equals(row.getResource().getId())))
+                    .as("API union містить B")
+                    .isTrue();
+            assertThat(union.stream().anyMatch(row -> row.getResource() != null
+                    && seed.resourceC().getId().equals(row.getResource().getId())))
+                    .as("API union не містить C")
+                    .isFalse();
+        });
+    }
+
     private void injectRoleSession(UserRole role, long selectedStorageId) {
         Map<String, String> cookies = getPlaywrightSessionProvider()
                 .getSession(role.getUsername(), role.getPassword());

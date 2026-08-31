@@ -14,6 +14,8 @@ public final class NotificationDataFactory {
     public static final String ESC_STORAGE_PREFIX = "autotest-notif-esc-";
     public static final String STATE_ACTIVE = "ACTIVE";
     public static final String STATE_DISABLED = "DISABLED";
+    public static final String TYPE_WHATSAPP = "WHATSAPP";
+    public static final String TYPE_WEB_PUSH = "WEB_PUSH";
     public static final String TEMPLATE_STOCK_RED = "stock_red";
     public static final String TEMPLATE_STOCK_YELLOW = "stock_yellow";
     public static final String TEMPLATE_TECH_MAP = "tech_map_mode_changed";
@@ -40,16 +42,13 @@ public final class NotificationDataFactory {
     }
 
     public static NotificationRecipientRequest newActiveRecipient() {
-        return NotificationRecipientRequest.builder()
-                .caption(uniqueCaption())
-                .addressInfo(randomPhone())
-                .state(STATE_ACTIVE)
-                .build();
+        return recipient(uniqueCaption(), randomPhone(), STATE_ACTIVE);
     }
 
     public static NotificationRecipientRequest recipient(
             String caption, String addressInfo, String state) {
         return NotificationRecipientRequest.builder()
+                .type(TYPE_WHATSAPP)
                 .caption(caption)
                 .addressInfo(addressInfo)
                 .state(state)

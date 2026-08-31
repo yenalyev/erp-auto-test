@@ -201,6 +201,39 @@ public class StorageFixture extends BaseFixture {
         storagesToCleanup.clear();
     }
 
+    @Step("FIXTURE: деактивувати активні автотест-локації (маркер uniqueName)")
+    public int deactivateAutotestStorages(UserRole role) {
+        List<StorageResponse> names = getNames(role, true, null);
+        int deactivated = 0;
+        int failed = 0;
+        for (StorageResponse storage : names) {
+            if (storage == null || storage.getId() == null
+                    || !StorageDataFactory.isAutotestUniqueName(storage.getName())) {
+                continue;
+            }
+            try {
+                Response response = deactivate(role, storage.getId());
+                if (response.statusCode() == 200) {
+                    untrackForCleanup(storage.getId());
+                    deactivated++;
+                    log.debug("Sweep: deactivated storage id={} name={}", storage.getId(), storage.getName());
+                } else {
+                    failed++;
+                    log.debug("Sweep: deactivate storage id={} name={} returned HTTP {} (often non-zero stock)",
+                            storage.getId(), storage.getName(), response.statusCode());
+                }
+            } catch (Exception e) {
+                failed++;
+                log.warn("Sweep: failed to deactivate storage id={}: {}", storage.getId(), e.getMessage());
+            }
+        }
+        if (deactivated > 0 || failed > 0) {
+            log.info("Sweep: deactivated {} autotest storages, {} left active (typically stock > 0)",
+                    deactivated, failed);
+        }
+        return deactivated;
+    }
+
     @Step("API: створити дочірню локацію parentId={parentId}, prefix={namePrefix}")
     public StorageResponse createChildStorage(Long parentId, String namePrefix) {
         StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix).build();

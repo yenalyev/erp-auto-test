@@ -12,6 +12,7 @@
     <test name="Relocation API">
         <classes>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>

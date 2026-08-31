@@ -42,4 +42,6 @@ public class RelocationResponse {
     private String receivingPersonRank;
     private Instant createdAt;
     private Long orderId;
+    /** Optimistic-lock token; send it back on PUT send/receive. */
+    private Long version;
 }

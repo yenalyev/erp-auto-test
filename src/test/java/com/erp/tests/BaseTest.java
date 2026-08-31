@@ -4,6 +4,7 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.clients.SessionClient;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.services.CleanupService;
 import com.erp.test_context.GlobalTestContext;
 import com.erp.test_context.TestContext;
@@ -126,12 +127,16 @@ public abstract class BaseTest {
         // Налаштовуємо RestAssured
         configureRestAssured();
 
+        sweepOrphanAutotestArtifactsQuietly("before suite", false);
+
         log.info("✅ Test suite setup completed");
     }
 
     @AfterSuite(alwaysRun = true)
     public void globalTeardown() {
         log.info("🧹 Starting test suite cleanup...");
+
+        sweepOrphanAutotestArtifactsQuietly("after suite", true);
 
         // Зупиняємо Testcontainers
         if (isTestcontainersMode) {
@@ -150,6 +155,28 @@ public abstract class BaseTest {
         }
 
         log.info("✅ Test suite cleanup completed");
+    }
+
+    /**
+     * Orphan autotest regions (and after-suite storages) from previous JVM crashes.
+     * Before suite: regions only — mass storage deactivate before tests skipped StorageRegionTest
+     * / SystemAllResourcesRegionTest (@BeforeClass) in run 76.
+     * Must run while Playwright session is still open.
+     */
+    private void sweepOrphanAutotestArtifactsQuietly(String phase, boolean includeStorages) {
+        if (sessionClient == null || authService == null) {
+            log.warn("Skipping artifact sweep {} — auth is not ready", phase);
+            return;
+        }
+        try {
+            log.info("🧹 Artifact sweep {} (storages={})...", phase, includeStorages);
+            ApiExecutor executor = apiExecutor != null
+                    ? apiExecutor
+                    : new ApiExecutor(sessionClient, authService);
+            TestArtifactCleanup.sweepOrphanAutotestArtifacts(executor, includeStorages);
+        } catch (Exception e) {
+            log.warn("Artifact sweep {} failed (suite continues): {}", phase, e.getMessage());
+        }
     }
 
 

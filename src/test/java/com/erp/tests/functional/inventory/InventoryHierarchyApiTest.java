@@ -12,7 +12,6 @@ import com.erp.models.response.StorageAmountResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.InventorySessionStatus;
-import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.storage.StorageApiTestBase;
 import com.erp.validators.SchemaRegistry;
 import com.erp.utils.helpers.XlsxContentAssertions;
@@ -47,8 +46,6 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
     private InventoryFixture inventoryFixture;
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
-    private Long parentResourceId;
-    private Long childOnlyResourceId;
 
     @BeforeClass(alwaysRun = true)
     public void setupHierarchyInventory() {
@@ -57,10 +54,6 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         relocationFixture.prepareContext();
         inventoryFixture.prepareContext();
-
-        parentResourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
-        ResourceResponse childOnly = resourceFixture.createUniqueResource("hier-child-res-");
-        childOnlyResourceId = childOnly.getId();
         SchemaRegistry.logSchemaCoverage();
     }
 
@@ -77,7 +70,7 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
     public void hierarchyIncludesParentAndChildStock() {
         StorageResponse parent = storageFixture.createUniqueStorage("hier-p-");
         StorageResponse child = storageFixture.createChildStorage(parent.getId(), "hier-c-");
-        seedParentAndChild(parent.getId(), child.getId());
+        HierarchySeed seed = seedParentAndChild(parent.getId(), child.getId());
 
         Response multi = inventoryFixture.getMultiLocationInventory(
                 UserRole.ADMIN, parent.getId() + "," + child.getId());
@@ -95,10 +88,10 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
                 response.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
         assertThat(content).isNotEmpty();
 
-        MultiLocationStorageItemResponse childRow = requireResourceRow(content, childOnlyResourceId);
+        MultiLocationStorageItemResponse childRow = requireResourceRow(content, seed.childResourceId());
         assertLocationAmount(childRow, child.getId(), CHILD_STOCK);
 
-        MultiLocationStorageItemResponse parentRow = requireResourceRow(content, parentResourceId);
+        MultiLocationStorageItemResponse parentRow = requireResourceRow(content, seed.parentResourceId());
         assertLocationAmount(parentRow, parent.getId(), PARENT_STOCK);
     }
 
@@ -113,11 +106,11 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
     public void singleStorageGetExcludesChildOnlyStock() {
         StorageResponse parent = storageFixture.createUniqueStorage("hier-s-");
         StorageResponse child = storageFixture.createChildStorage(parent.getId(), "hier-sc-");
-        seedParentAndChild(parent.getId(), child.getId());
+        HierarchySeed seed = seedParentAndChild(parent.getId(), child.getId());
 
         List<StorageItemResponse> single = inventoryFixture.listItems(parent.getId(), UserRole.ADMIN);
         assertThat(single.stream().anyMatch(i ->
-                i.getResource() != null && Objects.equals(childOnlyResourceId, i.getResource().getId())))
+                i.getResource() != null && Objects.equals(seed.childResourceId(), i.getResource().getId())))
                 .as("Single-storage GET must not include child-only resource")
                 .isFalse();
 
@@ -125,7 +118,7 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
         assertThat(hierarchy.statusCode()).isEqualTo(200);
         List<MultiLocationStorageItemResponse> content =
                 hierarchy.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
-        MultiLocationStorageItemResponse childRow = requireResourceRow(content, childOnlyResourceId);
+        MultiLocationStorageItemResponse childRow = requireResourceRow(content, seed.childResourceId());
         assertLocationAmount(childRow, child.getId(), CHILD_STOCK);
     }
 
@@ -140,9 +133,9 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
     public void hierarchySearchTermAndRbac() {
         StorageResponse parent = storageFixture.createUniqueStorage("hier-f-");
         StorageResponse child = storageFixture.createChildStorage(parent.getId(), "hier-fc-");
-        seedParentAndChild(parent.getId(), child.getId());
+        HierarchySeed seed = seedParentAndChild(parent.getId(), child.getId());
 
-        ResourceResponse childResource = resourceFixture.getById(UserRole.ADMIN, childOnlyResourceId);
+        ResourceResponse childResource = resourceFixture.getById(UserRole.ADMIN, seed.childResourceId());
         String searchTerm = childResource.getName().trim();
 
         Response filtered = inventoryFixture.getHierarchyInventory(
@@ -153,7 +146,7 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
         assertThat(content).isNotEmpty();
         assertThat(content).allMatch(row ->
                 row.getResource() != null
-                        && Objects.equals(childOnlyResourceId, row.getResource().getId()));
+                        && Objects.equals(seed.childResourceId(), row.getResource().getId()));
 
         Response denied = inventoryFixture.getHierarchyInventory(parent.getId(), UserRole.OWNER_2);
         assertThat(denied.statusCode())
@@ -181,13 +174,14 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
                 storageFixture.resolveParentUnit().getId(), "hier-u-");
         StorageResponse mid = storageFixture.createChildStorage(unit.getId(), "hier-m-");
         StorageResponse leaf = storageFixture.createChildStorage(mid.getId(), "hier-l-");
-        relocationFixture.ensureStock(leaf.getId(), childOnlyResourceId, LEAF_STOCK);
+        ResourceResponse leafRes = resourceFixture.createUniqueResource("hier-leaf-res-");
+        relocationFixture.ensureStock(leaf.getId(), leafRes.getId(), LEAF_STOCK);
 
         Response response = inventoryFixture.getHierarchyInventory(unit.getId(), UserRole.ADMIN);
         assertThat(response.statusCode()).isEqualTo(200);
         List<MultiLocationStorageItemResponse> content =
                 response.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
-        MultiLocationStorageItemResponse row = requireResourceRow(content, childOnlyResourceId);
+        MultiLocationStorageItemResponse row = requireResourceRow(content, leafRes.getId());
         assertLocationAmount(row, leaf.getId(), LEAF_STOCK);
     }
 
@@ -204,10 +198,10 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
     public void exportRemaindersIsSingleStorageNotSubtree() {
         StorageResponse parent = storageFixture.createUniqueStorage("hier-exp-p-");
         StorageResponse child = storageFixture.createChildStorage(parent.getId(), "hier-exp-c-");
-        seedParentAndChild(parent.getId(), child.getId());
+        HierarchySeed seed = seedParentAndChild(parent.getId(), child.getId());
 
-        ResourceResponse parentRes = resourceFixture.getById(UserRole.ADMIN, parentResourceId);
-        ResourceResponse childRes = resourceFixture.getById(UserRole.ADMIN, childOnlyResourceId);
+        ResourceResponse parentRes = resourceFixture.getById(UserRole.ADMIN, seed.parentResourceId());
+        ResourceResponse childRes = resourceFixture.getById(UserRole.ADMIN, seed.childResourceId());
 
         Response response = inventoryFixture.exportRemainders(parent.getId(), UserRole.ADMIN);
         assertThat(response.statusCode()).isEqualTo(200);
@@ -241,9 +235,14 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
                 .isFalse();
     }
 
-    private void seedParentAndChild(long parentId, long childId) {
-        relocationFixture.ensureStock(parentId, parentResourceId, PARENT_STOCK);
-        relocationFixture.ensureStock(childId, childOnlyResourceId, CHILD_STOCK);
+    private record HierarchySeed(long parentResourceId, long childResourceId) {}
+
+    private HierarchySeed seedParentAndChild(long parentId, long childId) {
+        ResourceResponse parentRes = resourceFixture.createUniqueResource("hier-p-res-");
+        ResourceResponse childRes = resourceFixture.createUniqueResource("hier-c-res-");
+        relocationFixture.ensureStock(parentId, parentRes.getId(), PARENT_STOCK);
+        relocationFixture.ensureStock(childId, childRes.getId(), CHILD_STOCK);
+        return new HierarchySeed(parentRes.getId(), childRes.getId());
     }
 
     private static MultiLocationStorageItemResponse requireResourceRow(

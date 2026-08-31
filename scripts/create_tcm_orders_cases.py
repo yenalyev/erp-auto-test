@@ -103,6 +103,8 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-10", "TC-ORD-REG-004", "Defect/брак нижче броні → 400", "CRITICAL", "CRITICAL", "REGRESSION"),
     ("AC-10", "TC-ORD-REG-005", "Production input нижче броні → 400", "CRITICAL", "CRITICAL", "REGRESSION"),
     ("AC-10", "TC-ORD-REG-006", "Після RELEASED/FULFILLED списання знову OK", "HIGH", "MAJOR", "REGRESSION"),
+    ("AC-10", "TC-ORD-REG-007", "Редагування видачі в частині заброньованого залишку → 400", "HIGH", "MAJOR", "REGRESSION"),
+    ("AC-10", "TC-ORD-UI-026", "UI — «Редагування видачі»: заброньовано недоступно", "HIGH", "MAJOR", "UI"),
     # AC-11
     ("AC-11", "TC-ORD-RBAC-001", "create: 200 з create / 403 без", "CRITICAL", "CRITICAL", "SECURITY"),
     ("AC-11", "TC-ORD-RBAC-002", "update lines: лише update+NEW", "HIGH", "MAJOR", "SECURITY"),

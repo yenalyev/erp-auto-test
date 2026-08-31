@@ -2,6 +2,9 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.StorageAccessMode;
+import com.erp.enums.StorageRelation;
+import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.UserMeResponse;
@@ -11,8 +14,10 @@ import io.qameta.allure.Step;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -40,6 +45,7 @@ public class IsolatedRestrictedOwnerScope {
 
     private final List<Long> isolatedStorageIds = new ArrayList<>();
     private final List<UserRole> boundRoles = new ArrayList<>();
+    private final Map<UserRole, UserFixture.RestrictedOwnerUser> boundOwners = new EnumMap<>(UserRole.class);
 
     public IsolatedRestrictedOwnerScope(
             StorageFixture storageFixture,
@@ -66,6 +72,26 @@ public class IsolatedRestrictedOwnerScope {
         }
     }
 
+    @Step("FIXTURE: isolated REGIONS STORAGE/PRODUCTION + Keycloak restricted owner")
+    public Long acquireLocation(UnitType type) {
+        if (type != UnitType.STORAGE && type != UnitType.PRODUCTION) {
+            throw new IllegalArgumentException(
+                    "Isolated owner home must be STORAGE or PRODUCTION, got " + type);
+        }
+        synchronized (LOCK) {
+            return acquireOwner(
+                    UserRole.OWNER_2,
+                    storageFixture.createStorage(
+                            StorageDataFactory.childStorage(
+                                            storageFixture.resolveParentUnit().getId(),
+                                            REGIONS_NAME_PREFIX,
+                                            type,
+                                            StorageRelation.INTERNAL)
+                                    .accessMode(StorageAccessMode.REGIONS)
+                                    .build()));
+        }
+    }
+
     @Step("FIXTURE: isolated FULL_ACCESS UNIT + Keycloak owner")
     public Long acquireFullAccessOwner() {
         synchronized (LOCK) {
@@ -89,6 +115,7 @@ public class IsolatedRestrictedOwnerScope {
                 }
             }
             boundRoles.clear();
+            boundOwners.clear();
             try {
                 userFixture.deactivateTrackedUsers();
             } catch (Exception e) {
@@ -102,6 +129,19 @@ public class IsolatedRestrictedOwnerScope {
         }
     }
 
+    /**
+     * Credentials of the ephemeral Keycloak owner bound to {@code role} by {@link #acquire()}
+     * / {@link #acquireFullAccessOwner()}. For UI cookie inject — {@link UserRole#getUsername()}
+     * still points at the shared stand user.
+     */
+    public UserFixture.RestrictedOwnerUser boundOwner(UserRole role) {
+        UserFixture.RestrictedOwnerUser owner = boundOwners.get(role);
+        if (owner == null) {
+            throw new IllegalStateException("No isolated owner bound to " + role + " — call acquire() first");
+        }
+        return owner;
+    }
+
     private Long acquireOwner(UserRole role, StorageResponse unit) {
         storageFixture.untrackForCleanup(unit.getId());
         isolatedStorageIds.add(unit.getId());
@@ -109,9 +149,10 @@ public class IsolatedRestrictedOwnerScope {
         UserFixture.RestrictedOwnerUser owner = userFixture.createRestrictedOwner(playwright, unit);
         apiExecutor.setSessionForRole(role, owner.username(), owner.password());
         boundRoles.add(role);
+        boundOwners.put(role, owner);
         waitUntilAllowedStorageIds(role, Set.of(unit.getId()));
-        log.info("Isolated owner {} role={} bound to UNIT id={} name={} accessMode={}",
-                owner.username(), role, unit.getId(), unit.getName(), unit.getAccessMode());
+        log.info("Isolated owner {} role={} bound to {} id={} name={} accessMode={}",
+                owner.username(), role, unit.getType(), unit.getId(), unit.getName(), unit.getAccessMode());
         return unit.getId();
     }
 

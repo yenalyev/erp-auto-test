@@ -101,6 +101,7 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapValidationTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapHashtagApiTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapAlternativeGroupsTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapHierarchyApiTest"/>
         </classes>
     </test>
 
@@ -156,6 +157,7 @@
     <test name="Relocation API">
         <classes>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
@@ -174,6 +176,7 @@
         <classes>
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryCommentApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
             <class name="com.erp.tests.functional.inventory.StorageRelationInventoryTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest"/>
@@ -229,6 +232,7 @@
             <class name="com.erp.tests.ui.AssemblyReadinessUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.EquipmentHistoryOnOperationsUiTest"/>
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
         </classes>
     </test>
@@ -271,12 +275,14 @@
             <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
             <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
+            <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest"/>
         </classes>
     </test>
 
     <test name="UI Inventory">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
@@ -315,6 +321,7 @@
             <class name="com.erp.tests.ui.TechnologicalMapHashtagUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
+            <class name="com.erp.tests.ui.TechnologicalMapHierarchyUITest"/>
         </classes>
     </test>
 

@@ -463,4 +463,111 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
                 UserRole.ADMIN, relocation.getId(), owner1Storage, request);
         assertThat(updated.getDescription()).isEqualTo("person fields");
     }
+
+    @Test
+    @TestCaseId("TC-EQ-IT-001")
+    @Story("Swap in-transit equipment unit")
+    @Description("""
+            REQ-EDIT_REL-007 AC-05: Owner-відправник замінює одиницю в дорозі. Знята знову AVAILABLE,
+            додана — IN_TRANSIT на складі відправника.
+            """)
+    public void swapInTransitEquipmentUnit() {
+        Long firstId = equipmentFixture.createEquipmentOnStorage(
+                UserRole.ADMIN, owner1Storage, categoryId).getId();
+        Long secondId = equipmentFixture.createEquipmentOnStorage(
+                UserRole.ADMIN, owner1Storage, categoryId).getId();
+
+        RelocationResponse relocation = equipmentFixture.sendEquipment(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, firstId);
+        assertThat(relocation.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(equipmentFixture.getEquipmentStatus(
+                UserRole.OWNER_1, owner1Storage, firstId)).isEqualTo(EquipmentStatus.IN_TRANSIT);
+
+        EquipmentRelocationSendEditRequest swap = EquipmentRelocationSendEditRequest.builder()
+                .toStorageId(owner2Storage)
+                .equipmentIds(List.of(secondId))
+                .date(LocalDate.now())
+                .description("swap in transit")
+                .build();
+        RelocationResponse updated = equipmentFixture.editEquipmentSend(
+                UserRole.OWNER_1, relocation.getId(), owner1Storage, swap);
+        assertThat(updated.getState()).isEqualTo(RelocationState.CREATED);
+
+        assertThat(equipmentFixture.getEquipmentStatus(
+                UserRole.ADMIN, owner1Storage, firstId)).isEqualTo(EquipmentStatus.AVAILABLE);
+        assertThat(equipmentFixture.getEquipmentStatus(
+                UserRole.ADMIN, owner1Storage, secondId)).isEqualTo(EquipmentStatus.IN_TRANSIT);
+    }
+
+    @Test
+    @TestCaseId("TC-EQ-IT-002")
+    @Story("Recipient cannot edit in-transit equipment")
+    @Description("""
+            REQ-EDIT_REL-007 AC-05: Owner отримувача не може PUT equipment send на CREATED.
+            """)
+    public void recipientCannotEditInTransitEquipment() {
+        Long equipmentId = equipmentFixture.createEquipmentOnStorage(
+                UserRole.ADMIN, owner1Storage, categoryId).getId();
+        RelocationResponse relocation = equipmentFixture.sendEquipment(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, equipmentId);
+
+        EquipmentRelocationSendEditRequest request = EquipmentRelocationSendEditRequest.builder()
+                .toStorageId(owner2Storage)
+                .equipmentIds(List.of(equipmentId))
+                .date(LocalDate.now())
+                .description("recipient edit")
+                .build();
+        Response response = equipmentFixture.editEquipmentSendRaw(
+                UserRole.OWNER_2, relocation.getId(), owner2Storage, request);
+        assertThat(response.statusCode()).isIn(403, 401);
+    }
+
+    @Test
+    @TestCaseId("TC-EQ-IT-003")
+    @Story("CREATED equipment cannot be edited via receive")
+    @Description("""
+            REQ-EDIT_REL-007 AC-05: receive-endpoint для CREATED обладнання заборонений.
+            """)
+    public void inTransitEquipmentCannotBeEditedViaReceive() {
+        Long equipmentId = equipmentFixture.createEquipmentOnStorage(
+                UserRole.ADMIN, owner1Storage, categoryId).getId();
+        RelocationResponse relocation = equipmentFixture.sendEquipment(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, equipmentId);
+
+        EquipmentRelocationReceiveEditRequest request = EquipmentRelocationReceiveEditRequest.builder()
+                .equipmentIds(List.of(equipmentId))
+                .date(LocalDate.now())
+                .description("receive on created")
+                .build();
+        Response response = equipmentFixture.editEquipmentReceiveRaw(
+                UserRole.ADMIN, relocation.getId(), owner1Storage, request);
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(equipmentFixture.getEquipmentStatus(
+                UserRole.OWNER_1, owner1Storage, equipmentId)).isEqualTo(EquipmentStatus.IN_TRANSIT);
+    }
+
+    @Test
+    @TestCaseId("TC-EQ-IT-004")
+    @Story("Cannot redirect in-transit equipment to UNIT")
+    @Description("""
+            REQ-EDIT_REL-007 AC-05: CREATED обладнання не можна перенаправити на UNIT.
+            """)
+    public void cannotRedirectInTransitEquipmentToUnit() {
+        Long equipmentId = equipmentFixture.createEquipmentOnStorage(
+                UserRole.ADMIN, owner1Storage, categoryId).getId();
+        RelocationResponse relocation = equipmentFixture.sendEquipment(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, equipmentId);
+
+        EquipmentRelocationSendEditRequest request = EquipmentRelocationSendEditRequest.builder()
+                .toStorageId(unitStorageId)
+                .equipmentIds(List.of(equipmentId))
+                .date(LocalDate.now())
+                .description("redirect to unit")
+                .build();
+        Response response = equipmentFixture.editEquipmentSendRaw(
+                UserRole.ADMIN, relocation.getId(), owner1Storage, request);
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(equipmentFixture.getEquipmentStatus(
+                UserRole.OWNER_1, owner1Storage, equipmentId)).isEqualTo(EquipmentStatus.IN_TRANSIT);
+    }
 }

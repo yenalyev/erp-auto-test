@@ -11,7 +11,6 @@ import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.pages.UnitManagementPage;
-import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.UiDownloadAssertions;
 import com.erp.utils.helpers.XlsxContentAssertions;
@@ -43,8 +42,6 @@ public class InventoryHierarchyUiTest extends BaseUITest {
     private ResourceFixture resourceFixture;
     private StorageFixture storageFixture;
     private StorageRegionFixture regionFixture;
-    private Long resourceId;
-    private Long childOnlyResourceId;
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -56,8 +53,7 @@ public class InventoryHierarchyUiTest extends BaseUITest {
         storageFixture = new StorageFixture(testContext, apiExecutor);
         regionFixture = new StorageRegionFixture(testContext, apiExecutor);
         relocationFixture.prepareContext();
-        resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
-        childOnlyResourceId = resourceFixture.createUniqueResource("ui-hier-exp-res-").getId();
+        resourceFixture.prepareContext();
     }
 
     @AfterMethod(alwaysRun = true)
@@ -82,8 +78,9 @@ public class InventoryHierarchyUiTest extends BaseUITest {
     public void hierarchyCheckboxTogglesMultiTable() {
         StorageResponse parent = storageFixture.createUniqueStorage("ui-hier-p-");
         StorageResponse child = storageFixture.createChildStorage(parent.getId(), "ui-hier-c-");
-        relocationFixture.ensureStock(parent.getId(), resourceId, 8.0);
-        relocationFixture.ensureStock(child.getId(), resourceId, 4.0);
+        long stockResourceId = resourceFixture.createUniqueResource("ui-hier-res-").getId();
+        relocationFixture.ensureStock(parent.getId(), stockResourceId, 8.0);
+        relocationFixture.ensureStock(child.getId(), stockResourceId, 4.0);
 
         injectRoleSession(UserRole.ADMIN, parent.getId());
         page = browserContext.newPage();
@@ -162,10 +159,11 @@ public class InventoryHierarchyUiTest extends BaseUITest {
     public void exportExcelWithAndWithoutHierarchyCheckbox() {
         StorageResponse parent = storageFixture.createUniqueStorage("ui-exp-p-");
         StorageResponse child = storageFixture.createChildStorage(parent.getId(), "ui-exp-c-");
-        relocationFixture.ensureStock(parent.getId(), resourceId, 9.0);
-        relocationFixture.ensureStock(child.getId(), childOnlyResourceId, 6.0);
+        long parentResId = resourceFixture.createUniqueResource("ui-exp-p-res-").getId();
+        ResourceResponse childRes = resourceFixture.createUniqueResource("ui-exp-c-res-");
+        relocationFixture.ensureStock(parent.getId(), parentResId, 9.0);
+        relocationFixture.ensureStock(child.getId(), childRes.getId(), 6.0);
 
-        ResourceResponse childRes = resourceFixture.getById(UserRole.ADMIN, childOnlyResourceId);
         String childName = childRes.getName();
 
         injectRoleSession(UserRole.ADMIN, parent.getId());

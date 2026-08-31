@@ -289,7 +289,9 @@ public class FlyPointInventoryTest extends CrewApiTestBase {
         try {
             InventoryRequest bad = InventoryDataFactory.seedAmounts(Map.of(9_999_999_999L, 1.0));
             Response response = inventoryFixture.conductInventoryRaw(flyPointId, UserRole.ADMIN, bad);
-            assertThat(response.statusCode()).isBetween(400, 499);
+            assertThat(response.statusCode())
+                    .as("unknown resource PUT body=%s", response.asString())
+                    .isBetween(400, 499);
         } finally {
             inventoryFixture.closeSession(flyPointId);
         }

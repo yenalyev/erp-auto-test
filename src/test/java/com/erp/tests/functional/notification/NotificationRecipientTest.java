@@ -106,6 +106,9 @@ public class NotificationRecipientTest extends BaseFunctionalTest {
                 sharedRecipient.getId(),
                 NotificationRecipientRequest.builder()
                         .id(sharedRecipient.getId())
+                        .type(before.getType() != null
+                                ? before.getType()
+                                : NotificationDataFactory.TYPE_WHATSAPP)
                         .caption(before.getCaption())
                         .addressInfo(masked)
                         .state(NotificationDataFactory.STATE_ACTIVE)
@@ -128,6 +131,9 @@ public class NotificationRecipientTest extends BaseFunctionalTest {
                 sharedRecipient.getId(),
                 NotificationRecipientRequest.builder()
                         .id(sharedRecipient.getId())
+                        .type(before.getType() != null
+                                ? before.getType()
+                                : NotificationDataFactory.TYPE_WHATSAPP)
                         .caption(before.getCaption())
                         .addressInfo(newPhone)
                         .state(NotificationDataFactory.STATE_ACTIVE)
@@ -157,6 +163,7 @@ public class NotificationRecipientTest extends BaseFunctionalTest {
     @Severity(SeverityLevel.NORMAL)
     public void createWithBlankFieldsReturns400() {
         NotificationRecipientRequest blank = NotificationRecipientRequest.builder()
+                .type(NotificationDataFactory.TYPE_WHATSAPP)
                 .caption(" ")
                 .addressInfo(" ")
                 .state(NotificationDataFactory.STATE_ACTIVE)

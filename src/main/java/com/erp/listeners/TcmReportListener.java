@@ -49,11 +49,14 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
             toSend = TcmResultOutbox.readAll();
         }
         if (toSend.isEmpty()) {
-            if (TcmScopeContext.isActive()) {
+            boolean scoped = TcmScopeContext.isActive()
+                    || ConfigProvider.getTcmFeatureId() != null
+                    || ConfigProvider.getTcmAcId() != null;
+            if (scoped) {
                 String ids = String.join(", ", TcmScopeContext.getAllowedTestCaseIds());
                 throw new IllegalStateException(
-                        "Жоден тест не виконано для TCM scope. Automation ID не входить до цього Maven suite. "
-                                + "Очікувані ID: " + ids);
+                        "Жоден тест не виконано для TCM scope. "
+                                + "Очікувані automation ID: " + (ids.isBlank() ? "(порожньо)" : ids));
             }
             log.info("No test results to send to TCM");
             return;

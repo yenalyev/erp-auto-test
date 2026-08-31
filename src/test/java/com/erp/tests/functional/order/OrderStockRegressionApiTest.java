@@ -4,16 +4,20 @@ import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.defect.DefectDataFactory;
 import com.erp.data.factories.relocation.RelocationDataFactory;
+import com.erp.enums.RelocationState;
 import com.erp.fixtures.DefectFixture;
 import com.erp.models.request.DefectRequest;
 import com.erp.models.request.InventoryRequest;
 import com.erp.models.request.RelocationInputEditRequest;
+import com.erp.models.request.RelocationOutputEditRequest;
 import com.erp.models.request.RelocationOutputRequest;
 import com.erp.models.response.BookingResponse;
 import com.erp.models.response.OrderResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.ProductionStockAssertions;
+import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +25,9 @@ import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +46,8 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
     private static final double HOLD_QTY = 8.0;
     /** Exceeds free stock (2) after hold. */
     private static final double WRITE_OFF_QTY = 5.0;
+    /** Within free stock after hold — enough to create a send that later cannot grow into the hold. */
+    private static final double FREE_SEND_QTY = 2.0;
     /** Target on-hand below booked amount for inventory adjust. */
     private static final double ADJUST_BELOW_HOLD = 5.0;
 
@@ -196,6 +204,58 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
         assertThat(body).doesNotContain("вільного залишку");
     }
 
+    @Test(priority = 7)
+    @TestCaseId("TC-ORD-REG-007")
+    @Story("Send edit blocked by hold")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            REQ-ORD AC-10: після ACTIVE hold видача в межах вільного залишку створюється,
+            але PUT /relocations/{id}/send зі збільшенням у заброньовану частину → 400.
+            Кількість видачі і залишок відправника без змін; у отримувача до прийняття 0.
+            """)
+    public void testEditSendIntoBookedStockReturns400() {
+        seedExactGatheringStock(TOTAL_STOCK);
+        prepareInProgressWithActiveHold();
+
+        Long recipientId = elsewhereRecipientId();
+        String marker = "TC-ORD-REG-007-" + System.currentTimeMillis();
+        RelocationResponse sent = relocationFixture.createSendWithDescription(
+                GATHERER, gatheringStorageId, recipientId, resourceId, FREE_SEND_QTY, marker);
+        assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+
+        Set<Long> tracked = trackedResource();
+        ProductionStockAssertions.StockSnapshot senderBefore = RelocationStockAssertions.capture(
+                apiExecutor, gatheringStorageId, GATHERER, tracked, "ДО edit into booked");
+        ProductionStockAssertions.StockSnapshot recipientBefore = RelocationStockAssertions.capture(
+                apiExecutor, recipientId, MANAGER, tracked, "ДО edit into booked recipient");
+
+        RelocationOutputEditRequest edit = RelocationDataFactory.buildSendEditRequest(
+                resourceId, WRITE_OFF_QTY, marker);
+        if (sent.getVersion() != null) {
+            edit = edit.toBuilder().version(sent.getVersion()).build();
+        }
+        Response response = relocationFixture.editSendRaw(
+                MANAGER, sent.getId(), gatheringStorageId, edit);
+        assertBookedStockBlocked(response);
+
+        RelocationResponse still = relocationFixture.findInTransitByDescription(
+                MANAGER, gatheringStorageId, marker);
+        assertThat(still).as("CREATED send %s still on «В дорозі»", marker).isNotNull();
+        assertThat(still.getItems().getFirst().getAmount())
+                .as("rejected edit must not change send qty")
+                .isEqualByComparingTo(BigDecimal.valueOf(FREE_SEND_QTY));
+        RelocationStockAssertions.assertUnchanged(
+                senderBefore,
+                RelocationStockAssertions.capture(
+                        apiExecutor, gatheringStorageId, GATHERER, tracked, "ПІСЛЯ rejected edit"),
+                gatheringStorageId, resourceId, "sender stock after rejected booked edit");
+        RelocationStockAssertions.assertUnchanged(
+                recipientBefore,
+                RelocationStockAssertions.capture(
+                        apiExecutor, recipientId, MANAGER, tracked, "ПІСЛЯ rejected edit recipient"),
+                recipientId, resourceId, "recipient stock after rejected booked edit");
+    }
+
     private record BookedStockContext(OrderResponse order, BookingResponse booking) {}
 
     private BookedStockContext prepareInProgressWithActiveHold() {
@@ -214,5 +274,13 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
         assertThat(response.statusCode()).as("body=%s", response.body().asString()).isEqualTo(400);
         String body = response.body().asString();
         assertThat(body).containsAnyOf("заброньовано", "вільного залишку", "Недостатньо");
+    }
+
+    private Long elsewhereRecipientId() {
+        Long owner1 = ConfigProvider.getOwner1StorageId();
+        if (owner1 != null && !owner1.equals(gatheringStorageId)) {
+            return owner1;
+        }
+        return ConfigProvider.getOwner2StorageId();
     }
 }

@@ -19,6 +19,7 @@
         <classes>
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryCommentApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
             <class name="com.erp.tests.functional.inventory.StorageRelationInventoryTest"/>
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
@@ -31,6 +32,7 @@
     <test name="Inventory UI">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>

@@ -81,12 +81,17 @@ public class DisassembleFixture extends BaseFixture {
 
     @Step("API: створити техкарту розбору для локації {storageId}")
     public TechnologicalMapResponse createDisassembleTechMapAs(UserRole role, Long storageId) {
+        return createDisassembleTechMapAs(
+                role, storageId, testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES));
+    }
+
+    @Step("API: створити техкарту розбору на {storageId} з явними input/output")
+    public TechnologicalMapResponse createDisassembleTechMapAs(
+            UserRole role, Long storageId, java.util.List<ResourceResponse> resources) {
         techMapFixture.setMode(storageId, com.erp.enums.StorageTechnologicalMapMode.EDIT_ALLOWED);
 
         TechnologicalMapRequest request = TechnologicalMapDataFactory
-                .createDisassembleTechMap(
-                        testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES),
-                        storageId)
+                .createDisassembleTechMap(resources, storageId)
                 .build();
 
         Response response = apiExecutor.execute(

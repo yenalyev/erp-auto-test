@@ -43,7 +43,15 @@ public class UnitAnalyticsPage extends BasePage {
     }
 
     public UnitAnalyticsPage open() {
-        navigateTo(ConfigProvider.getBaseUrl() + PATH, "Аналітика підрозділів (/unit-analytics)");
+        try {
+            page.waitForResponse(
+                    response -> response.url().contains("unit-analytics")
+                            && "GET".equals(response.request().method()),
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    () -> navigateTo(ConfigProvider.getBaseUrl() + PATH, "Аналітика підрозділів (/unit-analytics)"));
+        } catch (Exception e) {
+            log.warn("unit-analytics response wait on open: {}", e.getMessage());
+        }
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         return waitForLoaded();
     }
@@ -214,7 +222,15 @@ public class UnitAnalyticsPage extends BasePage {
         tab(name).waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        tab(name).click();
+        try {
+            page.waitForResponse(
+                    response -> response.url().contains("unit-analytics")
+                            && "GET".equals(response.request().method()),
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    () -> tab(name).click());
+        } catch (Exception e) {
+            log.warn("unit-analytics response wait on tab «{}»: {}", name, e.getMessage());
+        }
     }
 
     private Locator tab(String name) {

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Verify download filename assert fix (TC-UI-REL-012/014, TC-WMS-007-006).
+  mvn test -Denv=staging -Dsuite=download-assert-fix
+-->
+<suite name="Download Assert Fix Verify (staging)" parallel="none" verbose="1">
+    <test name="Invoice + remainders export downloads">
+        <classes>
+            <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest">
+                <methods>
+                    <include name="recipientCanDownloadInvoiceFromReceivedTab"/>
+                    <include name="senderUnitCanDownloadInvoiceInTransitAndSentTabs"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.InventoryUiTest">
+                <methods>
+                    <include name="exportRemaindersUi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

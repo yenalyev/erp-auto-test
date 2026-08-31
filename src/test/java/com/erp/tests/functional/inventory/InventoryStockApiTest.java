@@ -3,6 +3,9 @@ package com.erp.tests.functional.inventory;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
+import com.erp.models.response.MultiLocationStorageItemResponse;
+import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
@@ -13,6 +16,9 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -100,5 +106,96 @@ public class InventoryStockApiTest extends InventoryApiTestBase {
         assertThat(history.statusCode()).isEqualTo(200);
         String body = history.getBody().asString();
         assertThat(body).containsAnyOf("ADDED_INV", "REMOVED_INV");
+    }
+
+    @Test(priority = 70)
+    @TestCaseId("TC-WMS-007-018")
+    @Story("Inventory tag chips filter with OR")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            GET /storages/inventory?parentStorageId=&tags=tagA,tagB (як UI інфочіпи на /inventory)
+            повертає union (OR): ресурси з tagA або tagB. Ресурс без цих тегів відсутній.
+            Один тег звужує список лише до відповідного ресурсу (не AND між чіпами).
+            """)
+    public void tagFilterTwoTagsUsesOrNotAnd() {
+        InventoryFixture.TagOrFilterSeed seed =
+                inventoryFixture.seedTagOrFilterResources(owner1StorageId, relocationFixture);
+        trackStorageResourceForCleanup(seed.resourceA().getId());
+        trackStorageResourceForCleanup(seed.resourceB().getId());
+        trackStorageResourceForCleanup(seed.resourceC().getId());
+
+        Allure.parameter("tagA", seed.tagA());
+        Allure.parameter("tagB", seed.tagB());
+        Allure.parameter("resourceA", seed.resourceA().getName());
+        Allure.parameter("resourceB", seed.resourceB().getName());
+        Allure.parameter("resourceC", seed.resourceC().getName());
+
+        Allure.step("tag-statistics містить обидва унікальні теги", () -> {
+            List<ProductionProcessTagStatisticResponse> stats =
+                    inventoryFixture.getTagStatistics(owner1StorageId, UserRole.OWNER_1);
+            Set<String> tags = stats.stream()
+                    .map(ProductionProcessTagStatisticResponse::getTag)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            assertThat(tags)
+                    .as("GET /storages/inventory/tag-statistics")
+                    .contains(seed.tagA(), seed.tagB());
+        });
+
+        Allure.step("Два теги — union OR: A і B є, C немає", () -> {
+            List<MultiLocationStorageItemResponse> union = inventoryFixture.listHierarchyByTags(
+                    owner1StorageId, UserRole.OWNER_1, List.of(seed.tagA(), seed.tagB()));
+            assertContainsResource(union, seed.resourceA().getId(), "union tags A+B");
+            assertContainsResource(union, seed.resourceB().getId(), "union tags A+B");
+            assertDoesNotContainResource(union, seed.resourceC().getId(), "union tags A+B");
+
+            List<StorageItemResponse> single = inventoryFixture.listItems(
+                    owner1StorageId, UserRole.OWNER_1, Map.of("tags", List.of(seed.tagA(), seed.tagB())));
+            assertThat(single.stream().anyMatch(i -> resourceIdEquals(i, seed.resourceA().getId())))
+                    .as("single-storage GET tags A+B містить A")
+                    .isTrue();
+            assertThat(single.stream().anyMatch(i -> resourceIdEquals(i, seed.resourceB().getId())))
+                    .as("single-storage GET tags A+B містить B")
+                    .isTrue();
+            assertThat(single.stream().anyMatch(i -> resourceIdEquals(i, seed.resourceC().getId())))
+                    .as("single-storage GET tags A+B не містить C")
+                    .isFalse();
+        });
+
+        Allure.step("Один тег A — лише ресурс A", () -> {
+            List<MultiLocationStorageItemResponse> onlyA = inventoryFixture.listHierarchyByTags(
+                    owner1StorageId, UserRole.OWNER_1, List.of(seed.tagA()));
+            assertContainsResource(onlyA, seed.resourceA().getId(), "tags=A");
+            assertDoesNotContainResource(onlyA, seed.resourceB().getId(), "tags=A");
+            assertDoesNotContainResource(onlyA, seed.resourceC().getId(), "tags=A");
+        });
+
+        Allure.step("Один тег B — лише ресурс B", () -> {
+            List<MultiLocationStorageItemResponse> onlyB = inventoryFixture.listHierarchyByTags(
+                    owner1StorageId, UserRole.OWNER_1, List.of(seed.tagB()));
+            assertContainsResource(onlyB, seed.resourceB().getId(), "tags=B");
+            assertDoesNotContainResource(onlyB, seed.resourceA().getId(), "tags=B");
+            assertDoesNotContainResource(onlyB, seed.resourceC().getId(), "tags=B");
+        });
+    }
+
+    private static boolean resourceIdEquals(StorageItemResponse item, Long resourceId) {
+        return item.getResource() != null && Objects.equals(resourceId, item.getResource().getId());
+    }
+
+    private static void assertContainsResource(
+            List<MultiLocationStorageItemResponse> rows, Long resourceId, String filterLabel) {
+        assertThat(rows.stream().anyMatch(row -> row.getResource() != null
+                && Objects.equals(resourceId, row.getResource().getId())))
+                .as("%s має містити resourceId=%s", filterLabel, resourceId)
+                .isTrue();
+    }
+
+    private static void assertDoesNotContainResource(
+            List<MultiLocationStorageItemResponse> rows, Long resourceId, String filterLabel) {
+        assertThat(rows.stream().anyMatch(row -> row.getResource() != null
+                && Objects.equals(resourceId, row.getResource().getId())))
+                .as("%s не повинен містити resourceId=%s", filterLabel, resourceId)
+                .isFalse();
     }
 }

@@ -8,12 +8,14 @@ import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.ProductionFixture;
+import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.request.AlternativeInputRequest;
 import com.erp.models.request.ManufacturingListRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapAlternativeGroupResourceResponse;
 import com.erp.models.response.TechnologicalMapAlternativeGroupResponse;
 import com.erp.models.response.TechnologicalMapResponse;
@@ -48,6 +50,7 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
 
     private ProductionFixture productionFixture;
     private TechnologicalMapFixture techMapFixture;
+    private StorageFixture storageFixture;
     private Long storageId;
     private TechnologicalMapResponse techMap;
     private Long fixedInputId;
@@ -65,6 +68,7 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
         productionFixture = new ProductionFixture(testContext, apiExecutor);
         techMapFixture = productionFixture.getTechMapFixture();
         techMapFixture.prepareContext();
+        storageFixture = new StorageFixture(testContext, apiExecutor);
         storageId = ConfigProvider.getOwner1StorageId();
 
         techMapFixture.setMode(storageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
@@ -102,6 +106,9 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
         if (techMap != null && techMapFixture != null && storageId != null) {
             techMapFixture.deactivateTechMap(UserRole.OWNER_1, techMap.getId(), storageId);
             techMapFixture.setMode(storageId, StorageTechnologicalMapMode.READ_ONLY);
+        }
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
         }
     }
 
@@ -379,7 +386,10 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
             """)
     @Severity(SeverityLevel.CRITICAL)
     public void testGroupsOnlyProduceWithNonDefaultWhenDefaultStockZero() {
-        TechnologicalMapResponse groupsOnly = techMapFixture.createTechMapGroupsOnly(UserRole.ADMIN, storageId);
+        StorageResponse isolated = storageFixture.createUniqueStorage("prod-alt-011-");
+        long isolatedId = isolated.getId();
+        techMapFixture.setMode(isolatedId, StorageTechnologicalMapMode.EDIT_ALLOWED);
+        TechnologicalMapResponse groupsOnly = techMapFixture.createTechMapGroupsOnly(UserRole.ADMIN, isolatedId);
         InventoryFixture inventoryFixture = new InventoryFixture(testContext, apiExecutor);
         try {
             var group = groupsOnly.getGroups().getFirst();
@@ -397,23 +407,29 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
             double otherAmount = otherRes.getAmount();
             Long outId = groupsOnly.getOutput().getFirst().getResource().getId();
 
-            productionFixture.ensureStockForTechMapInputs(storageId, groupsOnly, MIN_STOCK);
-            inventoryFixture.resetResourceStock(storageId, defId, 0.0, UserRole.ADMIN);
+            productionFixture.ensureStockForTechMapInputs(isolatedId, groupsOnly, MIN_STOCK);
+            inventoryFixture.resetResourceStock(isolatedId, defId, 0.0, UserRole.ADMIN);
+            assertThat(productionFixture.getResourceStock(isolatedId, defId))
+                    .as("Default alternative stock must be 0 after reset")
+                    .isEqualTo(0.0);
+            assertThat(productionFixture.getResourceStock(isolatedId, othId))
+                    .as("Non-default alternative must still have seeded stock")
+                    .isGreaterThanOrEqualTo(PRODUCE_AMOUNT * otherAmount);
 
             Set<Long> resourceIds = Set.of(defId, othId, outId);
             ProductionStockAssertions.StockSnapshot before = ProductionStockAssertions.capture(
-                    apiExecutor, storageId, UserRole.OWNER_1, resourceIds, "before groups-only non-default");
+                    apiExecutor, isolatedId, UserRole.OWNER_1, resourceIds, "before groups-only non-default");
 
             List<AlternativeInputRequest> choice = ProductionDataFactory.alternativeInputsChoosing(
                     groupsOnly, groupIdLocal, othId);
 
             ManufacturingItemResponse created = Allure.step("OWNER_1: create with non-default when default=0", () ->
                     productionFixture.createAsWithAlternatives(
-                            UserRole.OWNER_1, storageId, groupsOnly, PRODUCE_AMOUNT, choice));
+                            UserRole.OWNER_1, isolatedId, groupsOnly, PRODUCE_AMOUNT, choice));
             assertThat(created.getId()).isNotNull();
 
             ProductionStockAssertions.StockSnapshot after = ProductionStockAssertions.capture(
-                    apiExecutor, storageId, UserRole.OWNER_1, resourceIds, "after groups-only non-default");
+                    apiExecutor, isolatedId, UserRole.OWNER_1, resourceIds, "after groups-only non-default");
 
             Map<Long, Double> expectedDelta = Map.of(
                     defId, 0.0,
@@ -422,7 +438,7 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
             );
             ProductionStockAssertions.assertDelta(before, after, expectedDelta, outId);
         } finally {
-            techMapFixture.deactivateTechMap(UserRole.OWNER_1, groupsOnly.getId(), storageId);
+            techMapFixture.deactivateTechMap(UserRole.OWNER_1, groupsOnly.getId(), isolatedId);
         }
     }
 }

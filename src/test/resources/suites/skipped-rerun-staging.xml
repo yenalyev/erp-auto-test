@@ -1,0 +1,115 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Rerun of 36 TCM SKIPPED cases from staging regression run 24 (2026-07-27).
+
+    mvn test -Denv=staging -Dsuite=skipped-rerun-staging
+-->
+<suite name="Previously Skipped Rerun (staging)" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <!-- 12: StorageVisibilityTest class-level skip on Jul 27; OWNER_2 scope OK now -->
+    <test name="STR-REG visibility">
+        <classes>
+            <class name="com.erp.tests.functional.storage.Owner2ScopePreflightTest"/>
+            <class name="com.erp.tests.functional.storage.StorageVisibilityTest"/>
+        </classes>
+    </test>
+
+    <!-- TC-STR-003 -->
+    <test name="STR-003 duplicate name">
+        <classes>
+            <class name="com.erp.tests.functional.storage.StorageTest">
+                <methods>
+                    <include name="testCreateDuplicateStorage"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- TC-DEF-014…030 (030 may skip without DB) -->
+    <test name="DEF-014..030">
+        <classes>
+            <class name="com.erp.tests.functional.defect.DefectTest">
+                <methods>
+                    <include name="testDeleteDefectRestoresStock"/>
+                    <include name="testOwnerCannotDeleteDefectOlderThanTwoDays"/>
+                    <include name="testCannotDeleteDefectWithWriteOffs"/>
+                    <include name="testSendsNotOfferedForDefect"/>
+                    <include name="testInTransitNotOfferedForDefect"/>
+                    <include name="testCreateDefectOnFinishedReceipt"/>
+                    <include name="testDefectOnMultiResourceReceiptIsolatesResource"/>
+                    <include name="testFullyWriteOffDefect"/>
+                    <include name="testCannotWriteOffMoreThanCreatedSingle"/>
+                    <include name="testCannotWriteOffMoreThanCreatedStepwise"/>
+                    <include name="testDefectOnlyOnRemainingRelocationPart"/>
+                    <include name="testReturnFromUnitDefectConsumesReturnedBatch"/>
+                    <include name="testRelocationDefectConsumesRelocationBatch"/>
+                    <include name="testCannotDeleteWrittenOffDefect"/>
+                    <include name="testCannotCreateProductionDefectOnShippedBatch"/>
+                    <include name="testCannotDefectRelocationWithUsedBatch"/>
+                    <include name="testCannotDefectRelocationBatchUsedInNonSeriesProduction"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- TC-RES-016 -->
+    <test name="RES-016">
+        <classes>
+            <class name="com.erp.tests.functional.resource.ResourceDeactivationTest">
+                <methods>
+                    <include name="testCannotModifyProductionWhenTechMapResourceDeactivated"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- TC-GP-047 (dataProvider × roles) -->
+    <test name="GP-047">
+        <classes>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanTechMapDeactivationGuardTest">
+                <methods>
+                    <include name="testCannotDeactivateTechMapWhenUsedInCurrentMonthGlobalPlan"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- TC-RVW-API-016/017 + BOM-034 -->
+    <test name="RVW filters + BOM-034">
+        <classes>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest">
+                <methods>
+                    <include name="testReceiverUnitGroupFilters"/>
+                    <include name="testReceiverIdsAndUnit414PmIntersection"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest">
+                <methods>
+                    <include name="testScaleDownWhenProducedQtyExceedsMovedAmount"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- DB-gated: FAITA-IMPL-002 needs IMPL-001 arrange; FLY-WO-001 -->
+    <test name="DB-gated FAITA + FLY-WO">
+        <classes>
+            <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest">
+                <methods>
+                    <include name="testSaveMultipleImplicitResourcesForProduct"/>
+                    <include name="testImplicitWriteOffsAppearInJournalAndDebitFlyPoint"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewWriteOffTest">
+                <methods>
+                    <include name="testCrewUsageWriteOffDebitsFlyPointNotCrew"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

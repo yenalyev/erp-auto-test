@@ -5,6 +5,7 @@ import com.erp.data.RbacAccessMatrix;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.RbacFixture;
 import com.erp.models.rbac.EndpointAccessRule;
+import com.erp.test_context.ContextKey;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.http.Method;
@@ -52,9 +53,10 @@ public class RbacAccessMatrixTest extends BaseRbacTest {
             this.rbacFixture = new RbacFixture(testContext, apiExecutor);
         }
 
-        // Якщо контекст порожній - наповнюємо його
-        if (testContext.getSharedUnitId() == null) {
-            log.info("Context is empty in DataProvider, preparing environment...");
+        // DataProvider часто випереджає @BeforeClass. Shared unit уже може бути з BaseTest,
+        // але GLOBAL_PLAN (тіло PUT) з'являється лише після prepareFullRbacContext.
+        if (testContext.get(ContextKey.GLOBAL_PLAN) == null) {
+            log.info("GLOBAL_PLAN missing in DataProvider, preparing full RBAC context...");
             rbacFixture.prepareFullRbacContext();
         }
 

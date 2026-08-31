@@ -2,6 +2,7 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.data.factories.storage.StorageRegionDataFactory;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
@@ -26,11 +27,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 @Slf4j
 public class StorageRegionFixture extends BaseFixture {
 
     public static final String SYSTEM_ALL_RESOURCES_REGION_NAME = "Системний регіон - ВСІ РЕСУРСИ";
+
+    /** Default GET /storages/regions page; do not use ALL_DATA_PAGE_SIZE here — ILIKE '%%' + huge size OOMs/timeouts. */
+    private static final int REGION_LIST_PAGE_SIZE = 500;
 
     private final Set<Long> regionsToCleanup = new LinkedHashSet<>();
 
@@ -80,34 +85,64 @@ public class StorageRegionFixture extends BaseFixture {
         if (prefixes == null || prefixes.length == 0) {
             return;
         }
-        List<StorageRegionResponse> regions = findRegions(role, null);
-        for (StorageRegionResponse region : regions) {
-            if (region == null || region.getId() == null || region.getName() == null) {
+        int deleted = 0;
+        for (String prefix : prefixes) {
+            if (prefix == null || prefix.isBlank()) {
                 continue;
             }
-            boolean matches = false;
-            for (String prefix : prefixes) {
-                if (prefix != null && region.getName().startsWith(prefix)) {
-                    matches = true;
-                    break;
+            deleted += purgeRegionsMatching(
+                    role,
+                    region -> region.getName() != null && region.getName().startsWith(prefix),
+                    prefix);
+        }
+        if (deleted > 0) {
+            log.info("Purge: deleted {} regions by name prefix", deleted);
+        }
+    }
+
+    @Step("FIXTURE: видалити автотест-області видимості (маркер uniqueName)")
+    public int purgeAutotestNamedRegions(UserRole role) {
+        return purgeRegionsMatching(
+                role,
+                region -> StorageDataFactory.isAutotestUniqueName(region.getName()),
+                StorageDataFactory.UNIQUE_NAME_INFIX);
+    }
+
+    /**
+     * {@code nameHint} is sent as GET {@code name=} (backend ILIKE contains). Repeat until a page
+     * has no matches so deletes are not truncated at {@link #REGION_LIST_PAGE_SIZE}.
+     */
+    private int purgeRegionsMatching(
+            UserRole role,
+            Predicate<StorageRegionResponse> match,
+            String nameHint) {
+        int deleted = 0;
+        for (int round = 0; round < 40; round++) {
+            int deletedThisRound = 0;
+            for (StorageRegionResponse region : findRegions(role, nameHint)) {
+                if (region == null || region.getId() == null || !match.test(region)) {
+                    continue;
+                }
+                try {
+                    Response response = apiExecutor.execute(
+                            ApiEndpointDefinition.STORAGE_REGION_DELETE, role, null, String.valueOf(region.getId()));
+                    if (response.statusCode() == 200) {
+                        untrackForCleanup(region.getId());
+                        deletedThisRound++;
+                        log.debug("Purge: deleted region id={} name={}", region.getId(), region.getName());
+                    } else {
+                        log.warn("Purge: delete region id={} returned HTTP {}", region.getId(), response.statusCode());
+                    }
+                } catch (Exception e) {
+                    log.warn("Purge: failed to delete region id={}: {}", region.getId(), e.getMessage());
                 }
             }
-            if (!matches) {
-                continue;
-            }
-            try {
-                Response response = apiExecutor.execute(
-                        ApiEndpointDefinition.STORAGE_REGION_DELETE, role, null, String.valueOf(region.getId()));
-                if (response.statusCode() == 200) {
-                    untrackForCleanup(region.getId());
-                    log.info("Purge: deleted region id={} name={}", region.getId(), region.getName());
-                } else {
-                    log.warn("Purge: delete region id={} returned HTTP {}", region.getId(), response.statusCode());
-                }
-            } catch (Exception e) {
-                log.warn("Purge: failed to delete region id={}: {}", region.getId(), e.getMessage());
+            deleted += deletedThisRound;
+            if (deletedThisRound == 0) {
+                break;
             }
         }
+        return deleted;
     }
 
     @Step("API: POST створити область видимості")
@@ -140,7 +175,7 @@ public class StorageRegionFixture extends BaseFixture {
     public List<StorageRegionResponse> findRegions(UserRole role, String nameFilter) {
         Map<String, Object> params = new HashMap<>();
         params.put("page", 0);
-        params.put("size", 500);
+        params.put("size", REGION_LIST_PAGE_SIZE);
         if (nameFilter != null && !nameFilter.isBlank()) {
             params.put("name", nameFilter);
         }
@@ -270,9 +305,6 @@ public class StorageRegionFixture extends BaseFixture {
      */
     private static final int EXPLICIT_GRANT_FULL_SCAN_CAP = 50;
 
-    private static final List<String> VISIBILITY_TEST_NAME_HINTS = List.of(
-            "vis-", "ui-rel-", "typ-", "rel-vis-");
-
     @Step("API: GET explicit/regional links для storage id={storageId}")
     public List<StorageLocationLinkResponse> getStorageLocationLinks(UserRole role, Long storageId) {
         Map<String, Object> params = Map.of("page", 0, "size", LOCATION_LINKS_PAGE_SIZE);
@@ -394,12 +426,7 @@ public class StorageRegionFixture extends BaseFixture {
     }
 
     private static boolean looksLikeVisibilityTestStorage(StorageResponse storage) {
-        String name = storage.getName();
-        if (name == null || name.isBlank()) {
-            return false;
-        }
-        String n = name.toLowerCase();
-        return VISIBILITY_TEST_NAME_HINTS.stream().anyMatch(n::contains);
+        return StorageDataFactory.isAutotestUniqueName(storage.getName());
     }
 
     private void logRemainingViewerVisibility(Long viewerStorageId, StorageFixture storageFixture) {

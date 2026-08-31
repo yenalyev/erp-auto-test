@@ -4,6 +4,8 @@ import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.AllureScreenshots;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Response;
+import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import io.qameta.allure.Allure;
@@ -11,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 /**
  * Base class for all Page Objects.
@@ -58,6 +62,37 @@ public abstract class BasePage {
         log.info("Attaching current URL link [{}]: {}", label, url);
         Allure.link(label, url);
         Allure.parameter(label, url);
+    }
+
+    /**
+     * Runs {@code action} and waits for a matching backend response, but does not fail the test
+     * when that response never arrives. Use it for "page is warming up" requests where the
+     * subsequent {@code waitForLoaded()} assertion is the real gate — a request served from the
+     * react-query cache, denied by RBAC, or answered with an error must not turn into a
+     * {@link TimeoutError} far away from the actual assertion.
+     */
+    protected void waitForResponseTolerant(Predicate<Response> predicate, Runnable action, String label) {
+        try {
+            page.waitForResponse(predicate,
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    action);
+        } catch (TimeoutError e) {
+            log.warn("Response wait timed out [{}]: {}", label, e.getMessage());
+        }
+    }
+
+    /**
+     * Waits for a UI condition without turning a miss into a framework error: the caller's own
+     * assertion must report the final state, otherwise a product bug surfaces as a {@link TimeoutError}
+     * with no screenshot of what the page actually showed.
+     */
+    protected void waitForConditionTolerant(BooleanSupplier condition, String label) {
+        try {
+            page.waitForCondition(condition,
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        } catch (TimeoutError e) {
+            log.warn("Condition wait timed out [{}]: {}", label, e.getMessage());
+        }
     }
 
     /** Wait for a CSS selector to be visible. */
@@ -128,5 +163,38 @@ public abstract class BasePage {
             Locator emptyAlt = page.getByText("Нічого не знайдено");
             return emptyAlt.count() > 0 && emptyAlt.isVisible();
         }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+    }
+
+    /**
+     * Closes an open combobox/cmdk overlay so it cannot intercept clicks on dialog buttons.
+     * Uses Tab (blur) rather than Escape — Escape closes the parent Radix dialog.
+     */
+    protected void dismissComboboxOverlay() {
+        if (!comboboxOverlayVisible()) {
+            return;
+        }
+        page.keyboard().press("Tab");
+        try {
+            page.waitForCondition(() -> !comboboxOverlayVisible(),
+                    new Page.WaitForConditionOptions().setTimeout(5_000));
+        } catch (Exception e) {
+            log.debug("Combobox overlay still present after Tab: {}", e.getMessage());
+        }
+    }
+
+    private boolean comboboxOverlayVisible() {
+        return isAnyVisible(page.locator("[data-slot='combobox-item']"))
+                || isAnyVisible(page.locator("[cmdk-item]"))
+                || isAnyVisible(page.getByRole(AriaRole.OPTION));
+    }
+
+    private static boolean isAnyVisible(Locator locator) {
+        int count = locator.count();
+        for (int i = 0; i < count; i++) {
+            if (locator.nth(i).isVisible()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

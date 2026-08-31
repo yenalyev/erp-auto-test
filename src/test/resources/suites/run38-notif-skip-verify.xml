@@ -1,0 +1,17 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Re-run NOTIF classes that SKIPPED on run #38 after type=WHATSAPP fixture fix.
+  mvn test -Denv=dev -Dsuite=run38-notif-skip-verify
+-->
+<suite name="Run38 NOTIF Skip Verify" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+    </listeners>
+    <test name="Notification recipients and subscriptions">
+        <classes>
+            <class name="com.erp.tests.functional.notification.NotificationRecipientTest"/>
+            <class name="com.erp.tests.functional.notification.NotificationSubscriptionTest"/>
+        </classes>
+    </test>
+</suite>

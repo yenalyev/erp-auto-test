@@ -11,6 +11,15 @@ import java.util.Map;
 
 public class InventoryDataFactory {
 
+    public static final int COMMENT_MAX_LENGTH = 1000;
+
+    public static InventoryRequest withComment(InventoryRequest request, String comment) {
+        if (request == null) {
+            return InventoryRequest.builder().comment(comment).build();
+        }
+        return request.toBuilder().comment(comment).build();
+    }
+
     public static InventoryRequest mergeWithExisting(List<StorageItemResponse> existingItems,
                                                      Map<Long, Double> targetAmountsByResourceId) {
         Map<Long, Double> merged = new LinkedHashMap<>();
@@ -30,6 +39,12 @@ public class InventoryDataFactory {
                 resources.add(new ResourceUsageRequest(resourceId, amount)));
 
         return InventoryRequest.builder().resources(resources).build();
+    }
+
+    public static InventoryRequest mergeWithExisting(List<StorageItemResponse> existingItems,
+                                                     Map<Long, Double> targetAmountsByResourceId,
+                                                     String comment) {
+        return withComment(mergeWithExisting(existingItems, targetAmountsByResourceId), comment);
     }
 
     public static InventoryRequest seedAmounts(Map<Long, Double> amountsByResourceId) {
@@ -64,5 +79,12 @@ public class InventoryDataFactory {
             }
         }
         return seedAmounts(amounts);
+    }
+
+    public static String commentOfExactLength(int length) {
+        if (length <= 0) {
+            return "";
+        }
+        return "x".repeat(length);
     }
 }

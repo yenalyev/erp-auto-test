@@ -1,6 +1,6 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <!--
-  Equipment domain suite — CRUD, relocations, assignee filter.
+  Equipment domain suite — CRUD, relocations, assignee filter, operation history.
 
   Run:
     mvn test -Denv=dev -Dsuite=equipment
@@ -30,6 +30,8 @@
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
             <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
+            <class name="com.erp.tests.ui.EquipmentHistoryOnOperationsUiTest"/>
+            <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest"/>
         </classes>
     </test>
 </suite>

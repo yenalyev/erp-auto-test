@@ -7,6 +7,8 @@ import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
+
 /** Page Object for /history (operation history) */
 @Slf4j
 public class OperationHistoryPage extends BasePage {
@@ -17,9 +19,17 @@ public class OperationHistoryPage extends BasePage {
         super(page);
     }
 
+    public static final String EQUIPMENT_SENT_CARD = "Відправлено (Обладнання)";
+    public static final String EQUIPMENT_RECEIVED_CARD = "Отримано (Обладнання)";
+    public static final String EQUIPMENT_OP_SENT = "Відправлено";
+
     public OperationHistoryPage open() {
-        String url = ConfigProvider.getBaseUrl() + PATH;
-        waitForHistoryDuring(() -> navigateTo(url, "Історія операцій (/history)"));
+        LocalDate today = LocalDate.now();
+        String url = ConfigProvider.getBaseUrl() + PATH
+                + "?startDate=" + today
+                + "&endDate=" + today.plusDays(1);
+        waitForHistoryDuring(() -> waitForEquipmentHistoryDuring(
+                () -> navigateTo(url, "Історія операцій (/history)")));
         waitForLoaded();
         return waitForSummaryCardsRendered();
     }
@@ -33,18 +43,21 @@ public class OperationHistoryPage extends BasePage {
     }
 
     /**
-     * Summary cards mount only after history state is committed (API response + React render).
-     * SPA also sets date filters in a {@code useEffect}, so the request may start after first paint.
-     * Roles with no card permissions never get cards — timeout is acceptable.
+     * Resource summary cards mount only after {@code resource-operation-history} is committed.
+     * CPMA-729 also renders equipment cards independently — waiting for any
+     * {@code [data-slot=card-title]} races and can return before «Видано»/«Вироблено» exist.
+     * Roles with no resource-card permissions never get those cards — timeout is acceptable.
      */
     public OperationHistoryPage waitForSummaryCardsRendered() {
-        Locator anyCardTitle = page.locator("[data-slot='card-title']").first();
+        Locator resourceCardTitle = page.locator("[data-slot='card-title']")
+                .filter(new Locator.FilterOptions().setHasNotText("Обладнання"))
+                .first();
         try {
-            anyCardTitle.waitFor(new Locator.WaitForOptions()
+            resourceCardTitle.waitFor(new Locator.WaitForOptions()
                     .setState(WaitForSelectorState.VISIBLE)
                     .setTimeout(uiTimeoutMs()));
         } catch (Exception e) {
-            log.warn("No summary cards rendered within timeout (ok for restricted roles): {}",
+            log.warn("No resource summary cards rendered within timeout (ok for restricted roles): {}",
                     e.getMessage());
         }
         return this;
@@ -58,25 +71,104 @@ public class OperationHistoryPage extends BasePage {
     }
 
     private void waitForHistoryDuring(Runnable action) {
+        // Action already ran; a late request may still complete — waitForSummaryCardsRendered handles settle.
+        waitForResponseTolerant(
+                response -> response.url().contains("resource-operation-history")
+                        && "GET".equals(response.request().method())
+                        && response.status() == 200,
+                action,
+                "GET resource-operation-history");
+    }
+
+    private void waitForEquipmentHistoryDuring(Runnable action) {
+        waitForResponseTolerant(
+                response -> response.url().contains("/equipment/history")
+                        && "GET".equals(response.request().method())
+                        && response.status() == 200,
+                action,
+                "GET /equipment/history");
+    }
+
+    /**
+     * Equipment summary cards («Відправлено/Отримано (Обладнання)») — do not use
+     * {@link #isSummaryCardVisible} which excludes titles containing «Обладнання».
+     */
+    public boolean isEquipmentSummaryCardVisible(String cardTitle) {
+        Locator title = equipmentSummaryCardTitle(cardTitle);
         try {
-            page.waitForResponse(
-                    response -> response.url().contains("resource-operation-history")
-                            && "GET".equals(response.request().method())
-                            && response.status() == 200,
-                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
-                    action);
+            title.first().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            return true;
         } catch (Exception e) {
-            log.warn("Operation history response wait timed out: {}", e.getMessage());
-            // Action already ran; a late request may still complete — waitForSummaryCardsRendered handles settle.
+            return title.count() > 0 && title.first().isVisible();
         }
+    }
+
+    public boolean equipmentHistoryContains(String text) {
+        Locator match = page.locator("[data-slot='table'], [data-slot='card']")
+                .filter(new Locator.FilterOptions().setHasText("Обладнання"))
+                .filter(new Locator.FilterOptions().setHasText(text));
+        if (match.count() > 0) {
+            return true;
+        }
+        return page.getByText(text, new Page.GetByTextOptions().setExact(true)).count() > 0
+                || page.locator("body").innerText().contains(text);
+    }
+
+    /**
+     * True when the equipment operations table has a row that identifies the unit
+     * and shows the given operation badge (e.g. «Відправлено»).
+     */
+    public boolean equipmentTableHasOperation(String equipmentText, String operationLabel) {
+        Locator rows = page.locator("[data-slot='table'] tbody tr");
+        int count = rows.count();
+        for (int i = 0; i < count; i++) {
+            String rowText = rows.nth(i).innerText();
+            if (rowText.contains(equipmentText) && rowText.contains(operationLabel)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Locator equipmentSummaryCardTitle(String cardTitle) {
+        return page.locator("[data-slot='card-title']")
+                .filter(new Locator.FilterOptions().setHasText(cardTitle));
     }
 
     public boolean containsInventoryOperationMarker() {
         String content = page.locator("body").innerText();
         return content.contains("ADDED_INV") || content.contains("REMOVED_INV")
+                || content.contains("Додано(Інв.)")
+                || content.contains("Видалено(Інв.)")
                 || content.contains("Додано (Інвентаризація)")
                 || content.contains("Видалено (Інвентаризація)")
                 || content.toLowerCase().contains("інвентар");
+    }
+
+    public boolean tableContainsComment(String comment) {
+        if (comment == null || comment.isBlank()) {
+            return false;
+        }
+        Locator rows = page.locator("table tbody tr");
+        int count = rows.count();
+        for (int i = 0; i < count; i++) {
+            String rowText = rows.nth(i).innerText();
+            if (rowText.contains(comment)) {
+                return true;
+            }
+        }
+        return page.locator("body").innerText().contains(comment);
+    }
+
+    public boolean tableContainsCommentForResource(String resourceName, String comment) {
+        Locator rows = page.locator("table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(resourceName.trim()));
+        if (rows.count() == 0) {
+            return false;
+        }
+        return rows.filter(new Locator.FilterOptions().setHasText(comment)).count() > 0;
     }
 
     /** True when UI shows incident write-off markers (summary card and/or table label). */
@@ -128,7 +220,14 @@ public class OperationHistoryPage extends BasePage {
 
     public boolean isSummaryCardVisible(String cardTitle) {
         Locator title = summaryCardTitle(cardTitle);
-        return title.count() > 0 && title.first().isVisible();
+        try {
+            title.first().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            return true;
+        } catch (Exception e) {
+            return title.count() > 0 && title.first().isVisible();
+        }
     }
 
     private Locator summaryCard(String cardTitle) {
@@ -138,6 +237,7 @@ public class OperationHistoryPage extends BasePage {
 
     private Locator summaryCardTitle(String cardTitle) {
         return page.locator("[data-slot='card-title']")
+                .filter(new Locator.FilterOptions().setHasNotText("Обладнання"))
                 .filter(new Locator.FilterOptions().setHasText(cardTitle));
     }
 

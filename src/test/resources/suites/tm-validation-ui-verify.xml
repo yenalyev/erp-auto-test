@@ -1,0 +1,23 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Focused verify for TC-UI-TM-031…034 after autocomplete search-term fix.
+
+  Run:
+    mvn test -Denv=staging -Dsuite=tm-validation-ui-verify
+-->
+<suite name="TM Validation UI Verify" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TechnologicalMapValidationUITest">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
+        </classes>
+    </test>
+</suite>

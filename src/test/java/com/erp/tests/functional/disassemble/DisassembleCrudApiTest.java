@@ -3,10 +3,13 @@ package com.erp.tests.functional.disassemble;
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.DisassembleFixture;
+import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
 import com.erp.models.response.DisassembleItemResponse;
+import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -16,6 +19,7 @@ import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -31,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class DisassembleCrudApiTest extends BaseFunctionalTest {
 
     private DisassembleFixture fixture;
+    private StorageFixture storageFixture;
+    private ResourceFixture resourceFixture;
     private long storageId;
     private TechnologicalMapResponse techMap;
     private long inputResourceId;
@@ -39,11 +45,26 @@ public class DisassembleCrudApiTest extends BaseFunctionalTest {
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setupDisassembleTests() {
         fixture = new DisassembleFixture(testContext, apiExecutor);
-        fixture.prepareContext();
-        storageId = ConfigProvider.getOwner1StorageId();
-        techMap = fixture.techMap();
-        inputResourceId = fixture.inputResourceId();
-        outputResourceId = fixture.outputResourceId();
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        resourceFixture.prepareContext();
+
+        StorageResponse isolated = storageFixture.createUniqueStorage("dis-crud-");
+        ResourceResponse input = resourceFixture.createUniqueResource("dis-in-");
+        ResourceResponse output = resourceFixture.createUniqueResource("dis-out-");
+        storageId = isolated.getId();
+        techMap = fixture.createDisassembleTechMapAs(
+                UserRole.ADMIN, storageId, List.of(input, output));
+        inputResourceId = input.getId();
+        outputResourceId = output.getId();
+        fixture.seedInputStock(storageId, inputResourceId);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupIsolatedStorage() {
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
     @BeforeMethod(alwaysRun = true)

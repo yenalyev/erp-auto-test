@@ -15,6 +15,12 @@ public class StorageDataFactory {
 
     public static final int TEXT_FIELD_MAX_LENGTH = 255;
 
+    /**
+     * Infix inserted by {@link #uniqueName(String)} so suite sweep can tell autotest
+     * storages/regions from production names ({@code {prefix}-loc_{millis}_T{thread}}).
+     */
+    public static final String UNIQUE_NAME_INFIX = "-loc";
+
     public static String exactLengthString(int length) {
         return "x".repeat(Math.max(0, length));
     }
@@ -39,7 +45,19 @@ public class StorageDataFactory {
     }
 
     public static String uniqueName(String prefix) {
-        return DataUtils.makeUnique(prefix + "-loc");
+        return DataUtils.makeUnique(prefix + UNIQUE_NAME_INFIX);
+    }
+
+    /**
+     * Names produced by {@link #uniqueName(String)} or {@link DataUtils#getUniqueSuffix()}.
+     * Used by suite orphan sweep — must not match real org locations.
+     */
+    public static boolean isAutotestUniqueName(String name) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        return name.contains(UNIQUE_NAME_INFIX + "_")
+                || DataUtils.UNIQUE_SUFFIX_PATTERN.matcher(name).find();
     }
 
     public static StorageRequest.StorageRequestBuilder randomStorage() {

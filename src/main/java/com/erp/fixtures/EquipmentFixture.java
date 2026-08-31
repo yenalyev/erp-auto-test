@@ -140,11 +140,37 @@ public class EquipmentFixture extends BaseFixture {
         return supplierId;
     }
 
+    /**
+     * Create without {@code senderStorageId}. Caller must open the equipment-inventory
+     * session on {@code storageId} first, otherwise the API returns 400.
+     */
+    @Step("API: створити обладнання без постачальника на складі {storageId}")
+    public EquipmentResponse createEquipmentWithoutSupplier(UserRole role, Long storageId, Long categoryId) {
+        String suffix = String.valueOf(System.currentTimeMillis() % 1_000_000);
+        EquipmentCreateRequest request = EquipmentCreateRequest.builder()
+                .storageId(storageId)
+                .items(List.of(EquipmentRequest.builder()
+                        .name("erp-invopen-" + suffix)
+                        .inventoryNumber("INV-INVOPEN-" + suffix)
+                        .serialNumber("SN-INVOPEN-" + suffix)
+                        .description("erp-auto-test inventory equipment")
+                        .categoryId(categoryId)
+                        .build()))
+                .build();
+        Response response = apiExecutor.executeEquipmentCreate(request, role);
+        validateSuccess(response, "Create equipment without supplier");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.EQUIPMENT_POST_CREATE);
+        return firstCreatedEquipment(response);
+    }
+
     @Step("API: створити обладнання на складі {storageId}")
     public EquipmentResponse createEquipmentOnStorage(UserRole role, Long storageId, Long categoryId) {
         String suffix = String.valueOf(System.currentTimeMillis() % 1_000_000);
         EquipmentCreateRequest request = EquipmentCreateRequest.builder()
                 .storageId(storageId)
+                .senderStorageId(resolveSupplierSenderId())
+                .invoiceNumber("INV-EQ-" + suffix)
+                .isPaidByCash(false)
                 .items(List.of(EquipmentRequest.builder()
                         .name("erp-test-equipment-" + suffix)
                         .inventoryNumber("INV-ERP-" + suffix)
@@ -319,6 +345,15 @@ public class EquipmentFixture extends BaseFixture {
                 .toList();
     }
 
+    @Step("API: видалення отримання/переміщення обладнання id={relocationId}")
+    public void deleteRelocation(UserRole role, Long relocationId, Long storageId) {
+        Response response = deleteRelocationRaw(role, relocationId, storageId);
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new RuntimeException("Delete equipment relocation failed: " + response.statusCode()
+                    + " " + response.getBody().asString());
+        }
+    }
+
     public Response deleteRelocationRaw(UserRole role, Long relocationId, Long storageId) {
         return apiExecutor.executeRelocationDelete(relocationId, storageId, role);
     }
@@ -350,21 +385,35 @@ public class EquipmentFixture extends BaseFixture {
                                                    Long relocationId,
                                                    Long storageId,
                                                    EquipmentRelocationReceiveEditRequest request) {
-        Response response = apiExecutor.executeEquipmentRelocationUpdateReceive(
-                relocationId, storageId, request, role);
+        Response response = editEquipmentReceiveRaw(role, relocationId, storageId, request);
         validateSuccess(response, "Edit equipment receive");
         return response.as(RelocationResponse.class);
+    }
+
+    public Response editEquipmentReceiveRaw(UserRole role,
+                                            Long relocationId,
+                                            Long storageId,
+                                            EquipmentRelocationReceiveEditRequest request) {
+        return apiExecutor.executeEquipmentRelocationUpdateReceive(
+                relocationId, storageId, request, role);
     }
 
     public RelocationResponse editEquipmentSend(UserRole role,
                                                 Long relocationId,
                                                 Long storageId,
                                                 EquipmentRelocationSendEditRequest request) {
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.EQUIPMENT_RELOCATION_PUT_UPDATE_SEND,
-                role, request, relocationId, storageId);
+        Response response = editEquipmentSendRaw(role, relocationId, storageId, request);
         validateSuccess(response, "Edit equipment send");
         return response.as(RelocationResponse.class);
+    }
+
+    public Response editEquipmentSendRaw(UserRole role,
+                                         Long relocationId,
+                                         Long storageId,
+                                         EquipmentRelocationSendEditRequest request) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.EQUIPMENT_RELOCATION_PUT_UPDATE_SEND,
+                role, request, relocationId, storageId);
     }
 
     public Long supplierId() {

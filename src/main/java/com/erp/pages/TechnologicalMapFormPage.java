@@ -191,9 +191,17 @@ public class TechnologicalMapFormPage extends BasePage {
     }
 
     public TechnologicalMapFormPage submit() {
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT_BUTTON_TEXT))
-                .click();
-        page.waitForTimeout(500);
+        try {
+            page.waitForResponse(
+                    response -> response.url().contains("technological-map")
+                            && ("POST".equals(response.request().method())
+                            || "PUT".equals(response.request().method())),
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT_BUTTON_TEXT))
+                            .click());
+        } catch (Exception e) {
+            log.warn("Tech map submit response wait: {}", e.getMessage());
+        }
         return this;
     }
 

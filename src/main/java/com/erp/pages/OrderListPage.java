@@ -119,16 +119,21 @@ public class OrderListPage extends BasePage {
     }
 
     public OrderListPage filterByResourceSearch(String text) {
+        String needle = text == null ? "" : text;
         page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName(RESOURCE_FILTER_PLACEHOLDER))
                 .click();
         Locator search = page.getByPlaceholder(RESOURCE_FILTER_SEARCH);
-        search.fill(text == null ? "" : text);
+        search.fill(needle);
+        Locator option = page.locator("[data-slot='combobox-item'], [cmdk-item], [role='option']")
+                .filter(new Locator.FilterOptions().setHasText(needle))
+                .first();
+        option.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         page.waitForResponse(
                 response -> response.url().contains("/orders") && "GET".equals(response.request().method()),
-                () -> page.locator("[data-slot='combobox-item'], [cmdk-item], [role='option']")
-                        .filter(new Locator.FilterOptions().setHasText(text == null ? "" : text))
-                        .first()
-                        .click());
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                option::click);
         waitForJournalDataSettled();
         return this;
     }

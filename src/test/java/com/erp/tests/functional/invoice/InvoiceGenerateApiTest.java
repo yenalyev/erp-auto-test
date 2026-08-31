@@ -69,7 +69,8 @@ public class InvoiceGenerateApiTest extends BaseFunctionalTest {
                 .build();
         Response generated = invoiceFixture.generateRaw(UserRole.ADMIN, senderId, sent.getId(), request);
         assertThat(generated.statusCode())
-                .as("generate invoice; existed=%s body=%s", existed, generated.asString())
+                .as("generate invoice; existed=%s status=%s body=%s",
+                        existed, generated.statusCode(), generated.asString())
                 .isIn(200, 201, 204, 400);
         if (generated.statusCode() < 300) {
             assertThat(invoiceFixture.invoiceExists(UserRole.ADMIN, sent.getId(), senderId)

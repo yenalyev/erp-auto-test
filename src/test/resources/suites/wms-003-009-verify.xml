@@ -1,0 +1,39 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Focused verify for TC-WMS-003-009 after InventoryEditPage autocomplete hardening
+  (unique-suffix search + search=-specific waitForResponse + OPTION wait / retry).
+
+  Run:
+    mvn test -Denv=staging -Dsuite=wms-003-009-verify
+-->
+<suite name="WMS-003-009 Inventory Autocomplete Verify" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TC-WMS-003-009-010">
+        <classes>
+            <class name="com.erp.tests.ui.InventoryUiTest">
+                <methods>
+                    <include name="addNewResourceUi"/>
+                    <include name="removeResourceUi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="TC-UI-STR-RES-012">
+        <classes>
+            <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest">
+                <methods>
+                    <include name="crewInventoryFormAddsResourceFromParentVisibilityScope"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

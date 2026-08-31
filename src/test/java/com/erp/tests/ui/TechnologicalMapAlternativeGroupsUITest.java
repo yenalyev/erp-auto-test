@@ -146,7 +146,8 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
         form.submit();
         page.waitForURL(
                 url -> !url.contains("/technological-maps/create"),
-                new com.microsoft.playwright.Page.WaitForURLOptions().setTimeout(30_000));
+                new com.microsoft.playwright.Page.WaitForURLOptions()
+                        .setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000L));
 
         TechnologicalMapResponse created = techMapFixture.getTechMapsByName(
                         storageId, UserRole.ADMIN, mapName)
@@ -205,7 +206,8 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
         form.submit();
         page.waitForURL(
                 url -> !url.contains("/technological-maps/create"),
-                new com.microsoft.playwright.Page.WaitForURLOptions().setTimeout(30_000));
+                new com.microsoft.playwright.Page.WaitForURLOptions()
+                        .setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000L));
 
         TechnologicalMapResponse created = techMapFixture.getTechMapsByName(
                         storageId, UserRole.ADMIN, mapName)
@@ -235,7 +237,8 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
         form.setAlternativeGroupDefault(0, 1).submit();
         page.waitForURL(
                 url -> !url.contains("/technological-maps/update/"),
-                new com.microsoft.playwright.Page.WaitForURLOptions().setTimeout(30_000));
+                new com.microsoft.playwright.Page.WaitForURLOptions()
+                        .setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000L));
 
         TechnologicalMapResponse updated = techMapFixture.getActiveTechMapsByName(storageId, UserRole.ADMIN, source.getName())
                 .stream()

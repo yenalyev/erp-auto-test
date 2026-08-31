@@ -17,4 +17,7 @@ import java.util.List;
 public class InventoryRequest {
     @Builder.Default
     private List<ResourceUsageRequest> resources = new ArrayList<>();
+
+    /** Optional free-text note copied onto inventory history rows (ADDED_INV / REMOVED_INV). */
+    private String comment;
 }

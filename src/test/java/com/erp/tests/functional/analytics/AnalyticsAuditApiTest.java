@@ -76,7 +76,9 @@ public class AnalyticsAuditApiTest extends BaseFunctionalTest {
                 ApiEndpointDefinition.PRODUCTION_DAILY_REPORT_GET,
                 UserRole.ADMIN,
                 Map.of("parentStorageId", storageId));
-        assertThat(ok.statusCode()).isIn(200, 400);
+        assertThat(ok.statusCode())
+                .as("daily report status body=%s", ok.asString())
+                .isIn(200, 400);
     }
 
     @Test(priority = 40)

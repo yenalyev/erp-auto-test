@@ -382,6 +382,16 @@ public enum ApiEndpointDefinition {
             "UPDATE_UNIT"
     ),
 
+    RESOURCE_UPDATE_NOTES(
+            "/api/v1/resources/{id}/notes",
+            Method.PATCH,
+            "schemas/resource-response-schema.json",
+            "Update resource notes (extracts #tags into resource.tags)",
+            new TypeReference<UpdateNotesRequest>() {},
+            new TypeReference<ResourceResponse>() {},
+            "PATCH_RESOURCE_NOTES"
+    ),
+
     RESOURCE_CATEGORY_GET_ALL(
             "/api/v1/resources/categories",
             Method.GET,
@@ -1964,6 +1974,16 @@ public enum ApiEndpointDefinition {
             "HIERARCHY_INVENTORY"
     ),
 
+    STORAGE_INVENTORY_TAG_STATISTICS_GET(
+            "/api/v1/storages/inventory/tag-statistics",
+            Method.GET,
+            null,
+            "Get inventory resource tag statistics",
+            null,
+            new TypeReference<List<ProductionProcessTagStatisticResponse>>() {},
+            null
+    ),
+
     EXPORT_REMAINDER_GET(
             "/api/v1/export-analytics/export-remainder",
             Method.GET,
@@ -2247,7 +2267,7 @@ public enum ApiEndpointDefinition {
             "/api/v1/relocations/{id}/send?storageId={storageId}",
             Method.PUT,
             "schemas/relocations/relocation-response-schema.json",
-            "Edit outbound relocation (AUTO_FINISHED)",
+            "Edit outbound relocation (CREATED in-transit or AUTO_FINISHED)",
             new TypeReference<RelocationOutputEditRequest>() {},
             new TypeReference<RelocationResponse>() {},
             null
@@ -2449,6 +2469,26 @@ public enum ApiEndpointDefinition {
             "Assign equipment to employee",
             new TypeReference<EquipmentAssignmentRequest>() {},
             new TypeReference<EquipmentResponse>() {},
+            null
+    ),
+
+    EQUIPMENT_GET_HISTORY(
+            "/api/v1/equipment/history",
+            Method.GET,
+            null,
+            "Get equipment operation history for a storage and period",
+            null,
+            null,
+            null
+    ),
+
+    EQUIPMENT_GET_UNIT_HISTORY(
+            "/api/v1/equipment/{id}/history",
+            Method.GET,
+            null,
+            "Get operation and assignment history for one equipment unit",
+            null,
+            null,
             null
     ),
 

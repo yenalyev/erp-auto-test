@@ -40,6 +40,7 @@
             <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
             <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanCrudApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanDecompositionApiTest"/>

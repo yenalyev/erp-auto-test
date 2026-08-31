@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Verify TC-UI-UA-001 — /unit-analytics turnover tabs for 3bat.
+  mvn test -Denv=dev -Dsuite=unit-analytics-verify
+-->
+<suite name="Unit Analytics Verify" parallel="none" verbose="1">
+    <test name="Unit analytics turnover tabs">
+        <classes>
+            <class name="com.erp.tests.ui.UnitAnalyticsUiTest"/>
+        </classes>
+    </test>
+</suite>

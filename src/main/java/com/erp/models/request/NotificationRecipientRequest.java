@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationRecipientRequest {
     private Integer id;
+    /** WHATSAPP | WEB_PUSH */
+    private String type;
     private String caption;
     private String addressInfo;
     /** ACTIVE | DISABLED */

@@ -45,6 +45,7 @@
             <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
             <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
+            <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest"/>
         </classes>
     </test>
 
@@ -78,6 +79,7 @@
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
+            <class name="com.erp.tests.ui.TechnologicalMapHierarchyUITest"/>
         </classes>
     </test>
 
@@ -85,6 +87,7 @@
         <classes>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
+            <class name="com.erp.tests.ui.EquipmentHistoryOnOperationsUiTest"/>
         </classes>
     </test>
 

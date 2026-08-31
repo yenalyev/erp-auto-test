@@ -5,13 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.Random;
-import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @UtilityClass
 public class DataUtils {
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private final Random random = new Random();
+    /** Matches {@link #getUniqueSuffix()} at the end of a generated name. */
+    public static final Pattern UNIQUE_SUFFIX_PATTERN = Pattern.compile("_\\d{10,}_T\\d+$");
+
     /**
      * Генерує унікальний суфікс: таймстемп + ID потоку.
      * Формат: "_1712345678_T12"

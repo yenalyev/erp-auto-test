@@ -1,0 +1,25 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Нові кейси REQ-EDIT_REL-007: типи відправників + UNIT→CREW/FLY.
+  mvn test -Denv=dev -Dsuite=edit-rel-007-new
+-->
+<suite name="REQ-EDIT_REL-007 new cases" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+    </listeners>
+    <test name="Sender types and crew/fly in-transit edit">
+        <classes>
+            <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest">
+                <methods>
+                    <include name="ownerStorageSenderEditsOwnInTransit"/>
+                    <include name="ownerProductionSenderEditsOwnInTransit"/>
+                    <include name="ownerUnitSenderEditsOwnInTransit"/>
+                    <include name="ownerUnitSenderEditsInTransitToCrew"/>
+                    <include name="ownerUnitSenderEditsInTransitToFlyPoint"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

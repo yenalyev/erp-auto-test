@@ -5,43 +5,51 @@ import lombok.experimental.UtilityClass;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * Suite-wide TCM scope. Must not be ThreadLocal: TestNG {@code parallel="classes"}
+ * runs {@link org.testng.IMethodInterceptor} and tests on worker threads.
+ */
 @UtilityClass
 public class TcmScopeContext {
 
-    private static final ThreadLocal<State> STATE = new ThreadLocal<>();
+    private static volatile State state;
 
     public static void set(Long featureId, Long acId, Long testPlanId, Set<String> allowedTestCaseIds) {
-        STATE.set(new State(featureId, acId, testPlanId,
-                allowedTestCaseIds != null ? Set.copyOf(allowedTestCaseIds) : Set.of()));
+        state = new State(featureId, acId, testPlanId,
+                allowedTestCaseIds != null ? Set.copyOf(allowedTestCaseIds) : Set.of());
     }
 
+    public static boolean isLoaded() {
+        return state != null;
+    }
+
+    /** Scope was loaded from TCM (including empty ID set — run nothing). */
     public static boolean isActive() {
-        State state = STATE.get();
-        return state != null && !state.allowedTestCaseIds.isEmpty();
+        return state != null;
     }
 
     public static Long getFeatureId() {
-        State state = STATE.get();
-        return state != null ? state.featureId : null;
+        State current = state;
+        return current != null ? current.featureId : null;
     }
 
     public static Long getAcId() {
-        State state = STATE.get();
-        return state != null ? state.acId : null;
+        State current = state;
+        return current != null ? current.acId : null;
     }
 
     public static Long getTestPlanId() {
-        State state = STATE.get();
-        return state != null ? state.testPlanId : null;
+        State current = state;
+        return current != null ? current.testPlanId : null;
     }
 
     public static Set<String> getAllowedTestCaseIds() {
-        State state = STATE.get();
-        return state != null ? state.allowedTestCaseIds : Collections.emptySet();
+        State current = state;
+        return current != null ? current.allowedTestCaseIds : Collections.emptySet();
     }
 
     public static void clear() {
-        STATE.remove();
+        state = null;
     }
 
     private record State(

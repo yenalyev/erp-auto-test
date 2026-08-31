@@ -4,10 +4,12 @@ import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.PlanExecutionFixture;
 import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.pages.PlanExecutionPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
@@ -45,11 +47,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Each scenario arranges its own uniquely-named product with a freshly created PRODUCTION tech
  * map ({@link PlanExecutionFixture#createIsolatedProduct}), so a test's own row is never affected
- * by other products' history. The "no plan / no production" scenarios are the exception: since the
- * lead/lag card depends on the whole storage's product list (not just our own product), they run
- * first (lowest priority in each persona group) and fail fast via
- * {@link PlanExecutionFixture#assertNoProductionThisMonth} if the shared dev/staging storage
- * already has unrelated current-month production — see that method's Javadoc for rationale.
+ * by other products' history. The "no plan / no production" scenarios use a freshly created
+ * child storage (not shared OWNER_1/OWNER_2 warehouses), so leftover production on dev cannot
+ * make the empty-state assertion flaky.
  *
  * <p>Also covers favourite-products filtering (CPMA-587): «Лише обрані» / «Керувати обраними»
  * on the execution tab.
@@ -63,6 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PlanExecutionUiTest extends BaseUITest {
 
     private PlanExecutionFixture fixture;
+    private StorageFixture storageFixture;
     private Long ownerStorageId;
     private Long adminViewStorageId;
 
@@ -83,6 +84,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         super.baseTestClassSetup();
         fixture = new PlanExecutionFixture(testContext, apiExecutor);
         fixture.prepareContext();
+        storageFixture = new StorageFixture(testContext, apiExecutor);
 
         ownerStorageId = ConfigProvider.getOwner1StorageId();
         adminViewStorageId = ConfigProvider.getOwner2StorageId();
@@ -117,6 +119,7 @@ public class PlanExecutionUiTest extends BaseUITest {
             previousFavouriteIds = null;
         }
         currentStorageId = null;
+        storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
     }
 
     // -------------------------------------------------------------------
@@ -128,21 +131,17 @@ public class PlanExecutionUiTest extends BaseUITest {
     @Story("No plan and no production => lead/lag card hidden (Owner)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Передумова (fail-fast): сховище OWNER_1 не повинно мати виробництва за поточний місяць —
-            якщо на ньому вже є стороннє виробництво (від інших тестів/демо-активності), тест явно
-            падає з діагностичним повідомленням замість хибного результату (див.
-            PlanExecutionFixture#assertNoProductionThisMonth).
-            Arrange: видалити план поточного місяця (якщо є); створити ізольовану виробничу
-            техкарту без плану і без виробництва.
+            Arrange: свіжий дочірній склад OWNER_1 без плану і виробництва (не shared warehouse).
             Assert: картка «Випередження»/«Відставання» відсутня, показано порожній стан
             «Дані про виконання плану за цей місяць відсутні».""")
     public void testOwnerNoPlanNoProduction() {
-        currentStorageId = ownerStorageId;
-        fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
-        fixture.assertNoProductionThisMonth(ownerStorageId);
-        currentContext = fixture.createIsolatedProduct(ownerStorageId);
+        StorageResponse isolated = storageFixture.createChildStorage(ownerStorageId, "planexec-empty-owner-");
+        currentStorageId = isolated.getId();
+        fixture.ensureNoPlanForCurrentMonth(currentStorageId);
+        fixture.assertNoProductionThisMonth(currentStorageId);
+        currentContext = fixture.createIsolatedProduct(currentStorageId);
 
-        injectRoleSession(UserRole.OWNER_1, ownerStorageId);
+        injectRoleSession(UserRole.OWNER_1, currentStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
         assertThat(planPage.isLeadLagCardVisible())
@@ -626,17 +625,18 @@ public class PlanExecutionUiTest extends BaseUITest {
     @Story("No plan and no production => lead/lag card hidden (Admin)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Той самий сценарій, що й TC-UI-PLANEXEC-001, але під логіном ADMIN, який переглядає
-            сховище OWNER_2 (окреме від сховища овнер-групи, щоб уникнути колізій даних).
-            Передумова (fail-fast): сховище OWNER_2 не повинно мати виробництва за поточний місяць.
+            Той самий сценарій, що й TC-UI-PLANEXEC-001, але під логіном ADMIN на свіжому
+            дочірньому складі OWNER_2 (не shared warehouse).
             Assert: картка відсутня, показано порожній стан.""")
     public void testAdminNoPlanNoProduction() {
-        currentStorageId = adminViewStorageId;
-        fixture.ensureNoPlanForCurrentMonth(adminViewStorageId);
-        fixture.assertNoProductionThisMonth(adminViewStorageId);
-        currentContext = fixture.createIsolatedProduct(adminViewStorageId);
+        StorageResponse isolated = storageFixture.createChildStorage(
+                adminViewStorageId, "planexec-empty-admin-");
+        currentStorageId = isolated.getId();
+        fixture.ensureNoPlanForCurrentMonth(currentStorageId);
+        fixture.assertNoProductionThisMonth(currentStorageId);
+        currentContext = fixture.createIsolatedProduct(currentStorageId);
 
-        injectRoleSession(UserRole.ADMIN, adminViewStorageId);
+        injectRoleSession(UserRole.ADMIN, currentStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
         assertThat(planPage.isLeadLagCardVisible())

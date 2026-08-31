@@ -31,4 +31,5 @@ public class RelocationOutputEditRequest {
     private String sendingPersonRank;
     private String receivingPersonName;
     private String receivingPersonRank;
+    private Long version;
 }

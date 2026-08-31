@@ -5,6 +5,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -35,12 +36,37 @@ public class InventoryEditPage extends BasePage {
     public InventoryEditPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         page.getByText(TITLE_PREFIX).waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        // h1 renders while Skeleton is still showing; Card (comment + rows) appears after GET stock.
+        commentField().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         return this;
     }
 
     public InventoryEditPage updateAmountForResource(String resourceName, String amount) {
         resourceRow(resourceName).locator("input[type='number']").fill(amount);
         return this;
+    }
+
+    public InventoryEditPage fillComment(String comment) {
+        commentField().fill(comment);
+        return this;
+    }
+
+    public boolean isCommentFieldVisible() {
+        return commentField().isVisible();
+    }
+
+    public String getCommentFieldValue() {
+        return commentField().inputValue();
+    }
+
+    public boolean commentCounterShows(int current, int max) {
+        return page.getByText(current + "/" + max).isVisible();
+    }
+
+    public boolean isSaveEnabled() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Зберегти")).isEnabled();
     }
 
     public InventoryEditPage removeResource(String resourceName) {
@@ -195,6 +221,10 @@ public class InventoryEditPage extends BasePage {
             return resourceName.substring(0, underscore);
         }
         return resourceName.length() > 8 ? resourceName.substring(0, 8) : resourceName;
+    }
+
+    private Locator commentField() {
+        return page.locator("#inventory-comment");
     }
 
     private Locator resourceRow(String resourceName) {

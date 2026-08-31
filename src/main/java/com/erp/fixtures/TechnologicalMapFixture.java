@@ -324,12 +324,22 @@ public class TechnologicalMapFixture extends BaseFixture {
 
     @Step("API: GET technological-maps з query-фільтрами")
     public List<TechnologicalMapResponse> listByQuery(TechnologicalMapListQuery query) {
-        Response response = apiExecutor.executeWithQueryParams(
-                ApiEndpointDefinition.TECH_MAP_GET_ALL,
-                UserRole.OWNER_1,
-                query.toQueryParams());
-        validateSuccess(response, "List technological maps");
+        return listByQuery(UserRole.OWNER_1, query);
+    }
+
+    @Step("{role}: GET technological-maps з query-фільтрами")
+    public List<TechnologicalMapResponse> listByQuery(UserRole role, TechnologicalMapListQuery query) {
+        Response response = listRaw(role, query);
+        validateSuccess(response, "List technological maps as " + role);
         return DatabaseIntegrityValidator.extractList(response, TechnologicalMapResponse.class);
+    }
+
+    @Step("{role}: GET technological-maps raw")
+    public Response listRaw(UserRole role, TechnologicalMapListQuery query) {
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.TECH_MAP_GET_ALL,
+                role,
+                query.toQueryParams());
     }
 
     @Step("API: GET tag-statistics для tech maps")
@@ -395,13 +405,18 @@ public class TechnologicalMapFixture extends BaseFixture {
 
     @Step("Створити ізольовану production техкарту для локації {storageId}")
     public IsolatedTechMapContext createIsolatedProductionTechMap(UserRole role, Long storageId) {
+        return createIsolatedProductionTechMap(role, storageId, "TM-PlanGuard");
+    }
+
+    @Step("Створити ізольовану production техкарту {namePrefix} для локації {storageId}")
+    public IsolatedTechMapContext createIsolatedProductionTechMap(UserRole role, Long storageId, String namePrefix) {
         String suffix = String.valueOf(System.currentTimeMillis());
         ResourceResponse in1 = resourceFixture.createUniqueResource("TM-IN1-" + suffix);
         ResourceResponse in2 = resourceFixture.createUniqueResource("TM-IN2-" + suffix);
         ResourceResponse product = resourceFixture.createUniqueResource("TM-OUT-" + suffix);
 
         TechnologicalMapRequest request = TechnologicalMapDataFactory.createProductionMapWithStorages(
-                "TM-PlanGuard",
+                namePrefix,
                 List.of(
                         new ResourceUsageRequest(in1.getId(), 2.0),
                         new ResourceUsageRequest(in2.getId(), 1.0)),

@@ -1,0 +1,28 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Focused verify for TC-DEF-025 after aligning asserts with TCM/backend
+  (debit from selected relocation batch, not global FIFO).
+
+  Run:
+    mvn test -Denv=staging -Dsuite=def-025-verify
+-->
+<suite name="DEF-025 Verify" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TC-DEF-025">
+        <classes>
+            <class name="com.erp.tests.functional.defect.DefectTest">
+                <methods>
+                    <include name="testRelocationDefectConsumesRelocationBatch"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

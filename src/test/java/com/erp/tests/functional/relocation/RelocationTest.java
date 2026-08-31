@@ -465,20 +465,196 @@ public class RelocationTest extends BaseFunctionalTest {
                 before, after, owner1Storage, resourceId, initial - edited, "revert delta on send edit");
     }
 
-    @Test(priority = 41)
-    @TestCaseId("TC-REL-041")
-    @Story("Edit wrong state")
-    public void testEditSendWrongStateReturns400() {
+    @Test(priority = 70)
+    @TestCaseId("TC-REL-070")
+    @Story("Edit in-transit send reduce amount")
+    @Description("""
+            REQ-EDIT_REL-007 AC-02: Owner-відправник зменшує кількість видачі в дорозі.
+            Різниця повертається на склад відправника; у отримувача залишок 0.
+            """)
+    public void testEditInTransitReduceAmount() {
+        double initial = 8.0;
+        double edited = 3.0;
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+
+        RelocationResponse sent = fixture.createSend(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, initial);
+        assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+
+        ProductionStockAssertions.StockSnapshot senderBefore = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ДО edit in-transit");
+        ProductionStockAssertions.StockSnapshot recipientBefore = RelocationStockAssertions.capture(
+                apiExecutor, owner2Storage, UserRole.ADMIN, tracked, "ДО edit in-transit recipient");
+
+        RelocationOutputEditRequest edit = RelocationDataFactory.buildSendEditRequest(
+                resourceId, edited, "reduced in transit");
+        RelocationResponse updated = fixture.editSend(UserRole.OWNER_1, sent.getId(), owner1Storage, edit);
+        assertThat(updated.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(updated.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(edited));
+
+        ProductionStockAssertions.StockSnapshot senderAfter = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ПІСЛЯ edit in-transit");
+        RelocationStockAssertions.assertCreditedToRecipient(
+                senderBefore, senderAfter, owner1Storage, resourceId, initial - edited,
+                "delta returns to sender");
+        RelocationStockAssertions.assertUnchanged(
+                recipientBefore,
+                RelocationStockAssertions.capture(
+                        apiExecutor, owner2Storage, UserRole.ADMIN, tracked, "ПІСЛЯ edit in-transit recipient"),
+                owner2Storage, resourceId, "recipient still has nothing in transit");
+    }
+
+    @Test(priority = 71)
+    @TestCaseId("TC-REL-071")
+    @Story("Edit in-transit send increase amount")
+    @Description("""
+            REQ-EDIT_REL-007 AC-02: Owner-відправник збільшує кількість видачі в дорозі.
+            Додаткові одиниці списуються зі складу відправника; отримувач до прийняття без зміни.
+            """)
+    public void testEditInTransitIncreaseAmount() {
+        double initial = 8.0;
+        double edited = 10.0;
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+
+        RelocationResponse sent = fixture.createSend(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, initial);
+        assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+
+        ProductionStockAssertions.StockSnapshot senderBefore = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ДО increase in-transit");
+
+        RelocationResponse updated = fixture.editSend(
+                UserRole.OWNER_1, sent.getId(), owner1Storage,
+                RelocationDataFactory.buildSendEditRequest(resourceId, edited, "increased in transit"));
+        assertThat(updated.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(updated.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(edited));
+
+        RelocationStockAssertions.assertDebitedFromSender(
+                senderBefore,
+                RelocationStockAssertions.capture(
+                        apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ПІСЛЯ increase in-transit"),
+                owner1Storage, resourceId, edited - initial, "extra units taken from sender");
+    }
+
+    @Test(priority = 72)
+    @TestCaseId("TC-REL-072")
+    @Story("Edit send after recipient accepted")
+    @Description("""
+            REQ-EDIT_REL-007 AC-01: після FINISHED PUT send більше не приймається.
+            Замінює застарілий TC-REL-041 (там заборона була на CREATED).
+            """)
+    public void testEditSendAfterFinishedReturns400() {
         RelocationResponse sent = fixture.createSend(
                 UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, 5.0);
         assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+        fixture.resolve(UserRole.OWNER_2, sent.getId(), owner2Storage, RelocationState.FINISHED);
 
         RelocationOutputEditRequest edit = RelocationDataFactory.buildSendEditRequest(
-                resourceId, 3.0, "should fail");
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.RELOCATION_PUT_UPDATE_SEND,
-                UserRole.ADMIN, edit, sent.getId(), owner1Storage);
+                resourceId, 3.0, "after accept");
+        Response response = fixture.editSendRaw(UserRole.ADMIN, sent.getId(), owner1Storage, edit);
         assertThat(response.statusCode()).isEqualTo(400);
+    }
+
+    @Test(priority = 73)
+    @TestCaseId("TC-REL-073")
+    @Story("Owner sender can edit in-transit; recipient Owner cannot")
+    @Description("""
+            REQ-EDIT_REL-007 AC-01: Owner-відправник зберігає правку зі свого складу.
+            Owner-отримувач — 403. Admin може з локації отримувача.
+            """)
+    public void testRecipientCannotEditInTransitButAdminCan() {
+        RelocationResponse sent = fixture.createSend(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, 8.0);
+
+        RelocationOutputEditRequest ownerEdit = RelocationDataFactory.buildSendEditRequest(
+                resourceId, 3.0, "edited by owner sender");
+        RelocationResponse byOwner = fixture.editSend(
+                UserRole.OWNER_1, sent.getId(), owner1Storage, ownerEdit);
+        assertThat(byOwner.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(byOwner.getDescription()).isEqualTo("edited by owner sender");
+        assertThat(byOwner.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(3.0));
+
+        RelocationOutputEditRequest recipientEdit = RelocationDataFactory.buildSendEditRequest(
+                resourceId, 1.0, "updated by recipient");
+        Response recipientResponse = fixture.editSendRaw(
+                UserRole.OWNER_2, sent.getId(), owner2Storage, recipientEdit);
+        assertThat(recipientResponse.statusCode()).isIn(403, 401);
+
+        RelocationResponse byAdmin = fixture.editSend(
+                UserRole.ADMIN, sent.getId(), owner2Storage, recipientEdit);
+        assertThat(byAdmin.getDescription()).isEqualTo("updated by recipient");
+        assertThat(byAdmin.getState()).isEqualTo(RelocationState.CREATED);
+    }
+
+    @Test(priority = 74)
+    @TestCaseId("TC-REL-074")
+    @Story("Stale version rejected with 409")
+    @Description("""
+            REQ-EDIT_REL-007 AC-04: PUT send зі застарілим version на CREATED дає 409.
+            Актуальний version проходить.
+            """)
+    public void testEditInTransitStaleVersionReturns409() {
+        RelocationResponse sent = fixture.createSend(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, 10.0);
+        assertThat(sent.getVersion())
+                .as("create send must return optimistic-lock version")
+                .isNotNull();
+
+        RelocationOutputEditRequest stale = RelocationDataFactory.buildSendEditRequest(
+                resourceId, 4.0, "stale version").toBuilder()
+                .version(sent.getVersion() + 1)
+                .build();
+        Response staleResponse = fixture.editSendRaw(
+                UserRole.ADMIN, sent.getId(), owner1Storage, stale);
+        assertThat(staleResponse.statusCode()).isEqualTo(409);
+
+        RelocationOutputEditRequest current = stale.toBuilder()
+                .version(sent.getVersion())
+                .build();
+        RelocationResponse updated = fixture.editSend(
+                UserRole.ADMIN, sent.getId(), owner1Storage, current);
+        assertThat(updated.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(4.0));
+        assertThat(updated.getState()).isEqualTo(RelocationState.CREATED);
+    }
+
+    @Test(priority = 82)
+    @TestCaseId("TC-REL-082")
+    @Story("Recipient accepts edited in-transit quantity")
+    @Description("""
+            REQ-EDIT_REL-007 AC-02: після правки 8→3 отримувач приймає вже 3 од.
+            """)
+    public void testRecipientAcceptsEditedInTransitQuantity() {
+        double initial = 8.0;
+        double edited = 3.0;
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+
+        ProductionStockAssertions.StockSnapshot senderBeforeSend = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ДО send");
+        ProductionStockAssertions.StockSnapshot recipientBeforeSend = RelocationStockAssertions.capture(
+                apiExecutor, owner2Storage, UserRole.ADMIN, tracked, "ДО send recipient");
+
+        RelocationResponse sent = fixture.createSend(
+                UserRole.OWNER_1, owner1Storage, owner2Storage, resourceId, initial);
+        fixture.editSend(UserRole.OWNER_1, sent.getId(), owner1Storage,
+                RelocationDataFactory.buildSendEditRequest(resourceId, edited, "then accept"));
+        RelocationResponse finished = fixture.resolve(
+                UserRole.OWNER_2, sent.getId(), owner2Storage, RelocationState.FINISHED);
+        assertThat(finished.getState()).isEqualTo(RelocationState.FINISHED);
+
+        RelocationStockAssertions.assertDebitedFromSender(
+                senderBeforeSend,
+                RelocationStockAssertions.capture(
+                        apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ПІСЛЯ accept"),
+                owner1Storage, resourceId, edited, "net debit is edited amount");
+        RelocationStockAssertions.assertCreditedToRecipient(
+                recipientBeforeSend,
+                RelocationStockAssertions.capture(
+                        apiExecutor, owner2Storage, UserRole.ADMIN, tracked, "ПІСЛЯ accept recipient"),
+                owner2Storage, resourceId, edited, "recipient credited edited amount");
     }
 
     // --- G: Delete ---

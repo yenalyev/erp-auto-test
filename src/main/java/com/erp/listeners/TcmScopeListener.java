@@ -22,34 +22,7 @@ public class TcmScopeListener implements ISuiteListener, IMethodInterceptor {
 
     @Override
     public void onStart(ISuite suite) {
-        if (!ConfigProvider.isTcmReportingEnabled()) {
-            return;
-        }
-
-        Long featureId = ConfigProvider.getTcmFeatureId();
-        Long acId = ConfigProvider.getTcmAcId();
-        if (featureId == null && acId == null) {
-            return;
-        }
-
-        try {
-            TcmSuiteDto suiteDto = featureId != null
-                    ? TcmApiClient.fetchFeatureSuite(featureId)
-                    : TcmApiClient.fetchAcSuite(acId);
-            Set<String> allowedIds = suiteDto.getAutomationTestIds().stream()
-                    .map(id -> id.toUpperCase(Locale.ROOT))
-                    .collect(Collectors.toSet());
-            TcmScopeContext.set(featureId, acId, suiteDto.getTestPlanId(), allowedIds);
-            log.info("TCM scope loaded: type={}, id={}, automationIds={}",
-                    suiteDto.getScopeType(),
-                    suiteDto.getScopeId(),
-                    allowedIds.size());
-            if (allowedIds.isEmpty()) {
-                log.warn("TCM scope has no automation test IDs — all @TestCaseId tests will be skipped");
-            }
-        } catch (Exception e) {
-            log.error("Failed to load TCM scope: {}", e.getMessage(), e);
-        }
+        loadScopeIfNeeded();
     }
 
     @Override
@@ -59,6 +32,7 @@ public class TcmScopeListener implements ISuiteListener, IMethodInterceptor {
 
     @Override
     public List<IMethodInstance> intercept(List<IMethodInstance> methods, ITestContext context) {
+        loadScopeIfNeeded();
         if (!TcmScopeContext.isActive()) {
             return methods;
         }
@@ -75,5 +49,44 @@ public class TcmScopeListener implements ISuiteListener, IMethodInterceptor {
                             .anyMatch(allowed::contains);
                 })
                 .toList();
+    }
+
+    private void loadScopeIfNeeded() {
+        if (!ConfigProvider.isTcmReportingEnabled()) {
+            return;
+        }
+        Long featureId = ConfigProvider.getTcmFeatureId();
+        Long acId = ConfigProvider.getTcmAcId();
+        if (featureId == null && acId == null) {
+            return;
+        }
+        if (TcmScopeContext.isLoaded()) {
+            return;
+        }
+        synchronized (TcmScopeListener.class) {
+            if (TcmScopeContext.isLoaded()) {
+                return;
+            }
+            try {
+                TcmSuiteDto suiteDto = featureId != null
+                        ? TcmApiClient.fetchFeatureSuite(featureId)
+                        : TcmApiClient.fetchAcSuite(acId);
+                Set<String> allowedIds = suiteDto.getAutomationTestIds().stream()
+                        .map(id -> id.toUpperCase(Locale.ROOT))
+                        .collect(Collectors.toSet());
+                TcmScopeContext.set(featureId, acId, suiteDto.getTestPlanId(), allowedIds);
+                log.info("TCM scope loaded: type={}, id={}, automationIds={}",
+                        suiteDto.getScopeType(),
+                        suiteDto.getScopeId(),
+                        allowedIds.size());
+                if (allowedIds.isEmpty()) {
+                    log.warn("TCM scope has no automation test IDs — all @TestCaseId tests will be skipped");
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException(
+                        "Failed to load TCM scope for featureId=" + featureId + " acId=" + acId + ": " + e.getMessage(),
+                        e);
+            }
+        }
     }
 }

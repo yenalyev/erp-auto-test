@@ -10,10 +10,16 @@ import com.erp.test_context.ContextKey;
 import com.erp.enums.UserRole;
 import com.erp.models.request.InventoryRequest;
 import com.erp.models.response.InventorySessionStatus;
+import com.erp.models.response.MultiLocationStorageItemResponse;
+import com.erp.models.response.ProductionProcessTagStatisticResponse;
+import com.erp.models.response.ResourceHistoryGroupResponse;
+import com.erp.models.response.ResourceHistoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.TestContext;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
+import com.erp.utils.helpers.HashtagTestData;
 import com.erp.utils.helpers.PollUtils;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
@@ -35,9 +41,49 @@ public class InventoryFixture extends BaseFixture {
         super(testContext, apiExecutor);
     }
 
+    public record TagOrFilterSeed(
+            ResourceResponse resourceA,
+            ResourceResponse resourceB,
+            ResourceResponse resourceC,
+            String tagA,
+            String tagB) {}
+
     @Step("FIXTURE: Підготовка контексту інвентаризації")
     public void prepareContext() {
         // stock seeding delegated to RelocationFixture when needed
+    }
+
+    /**
+     * Three unique catalog resources with stock: A tagged tagA, B tagged tagB, C untagged.
+     * Tags are unique so inventory info-chips do not collide with shared staging data.
+     */
+    @Step("FIXTURE: три ресурси з унікальними тегами для OR-фільтра на складі {storageId}")
+    public TagOrFilterSeed seedTagOrFilterResources(long storageId, RelocationFixture relocationFixture) {
+        ResourceFixture resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        String tagA = HashtagTestData.uniqueTag("ora");
+        String tagB = HashtagTestData.uniqueTag("orb");
+
+        ResourceResponse resourceA = resourceFixture.createUniqueResource("inv-ora-");
+        resourceFixture.updateNotes(UserRole.ADMIN, resourceA.getId(), HashtagTestData.notesWithTags(tagA));
+        relocationFixture.ensureStock(storageId, resourceA.getId(), 5.0);
+
+        ResourceResponse resourceB = resourceFixture.createUniqueResource("inv-orb-");
+        resourceFixture.updateNotes(UserRole.ADMIN, resourceB.getId(), HashtagTestData.notesWithTags(tagB));
+        relocationFixture.ensureStock(storageId, resourceB.getId(), 5.0);
+
+        ResourceResponse resourceC = resourceFixture.createUniqueResource("inv-orc-");
+        relocationFixture.ensureStock(storageId, resourceC.getId(), 5.0);
+
+        PollUtils.waitUntil(
+                () -> getTagStatistics(storageId, UserRole.ADMIN),
+                stats -> stats.stream().map(ProductionProcessTagStatisticResponse::getTag)
+                        .anyMatch(tagA::equals)
+                        && stats.stream().map(ProductionProcessTagStatisticResponse::getTag)
+                        .anyMatch(tagB::equals),
+                15_000,
+                "inventory tag-statistics contains " + tagA + " and " + tagB);
+
+        return new TagOrFilterSeed(resourceA, resourceB, resourceC, tagA, tagB);
     }
 
     @Step("API: Список залишків на складі {storageId}")
@@ -365,6 +411,32 @@ public class InventoryFixture extends BaseFixture {
                 params);
     }
 
+    @Step("API: Hierarchy GET inventory parentStorageId={parentStorageId} tags={tags}")
+    public List<MultiLocationStorageItemResponse> listHierarchyByTags(
+            long parentStorageId, UserRole role, List<String> tags) {
+        Map<String, Object> extra = new HashMap<>();
+        extra.put("size", 200);
+        extra.put("sort", "resource.name,asc");
+        if (tags != null && !tags.isEmpty()) {
+            extra.put("tags", tags);
+        }
+        Response response = getHierarchyInventory(parentStorageId, role, extra);
+        validateSuccess(response, "GET hierarchy inventory tags=" + tags);
+        List<MultiLocationStorageItemResponse> content =
+                response.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
+        return content == null ? List.of() : content.stream().filter(Objects::nonNull).toList();
+    }
+
+    @Step("API: GET tag-statistics залишків parentStorageId={parentStorageId}")
+    public List<ProductionProcessTagStatisticResponse> getTagStatistics(long parentStorageId, UserRole role) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_INVENTORY_TAG_STATISTICS_GET,
+                role,
+                Map.of("parentStorageId", parentStorageId));
+        validateSuccess(response, "GET inventory tag-statistics");
+        return DatabaseIntegrityValidator.extractList(response, ProductionProcessTagStatisticResponse.class);
+    }
+
     @Step("API: Експорт залишків складу {storageId}")
     public Response exportRemainders(long storageId, UserRole role) {
         return apiExecutor.executeWithQueryParams(
@@ -384,6 +456,36 @@ public class InventoryFixture extends BaseFixture {
                 ApiEndpointDefinition.RESOURCE_OPERATION_HISTORY_GET,
                 role,
                 params);
+    }
+
+    @Step("API: розпарсити resource-operation-history")
+    public ResourceHistoryGroupResponse parseOperationHistory(Response response) {
+        validateSuccess(response, "GET resource operation history");
+        return response.as(ResourceHistoryGroupResponse.class);
+    }
+
+    @Step("API: comment інвентаризації в історії для resourceId={resourceId}")
+    public String findInventoryHistoryComment(long storageId, long resourceId, UserRole role) {
+        Response historyResponse = getOperationHistoryToday(storageId, role);
+        if (historyResponse.statusCode() == 403) {
+            throw new org.testng.SkipException("Current role lacks resource-operation-history read permission");
+        }
+        ResourceHistoryGroupResponse history = parseOperationHistory(historyResponse);
+        if (history.getOperationHistoryList() == null) {
+            return null;
+        }
+        // Stream.reduce cannot yield null (Optional.of NPE) — omit/blank comment is a valid last row.
+        return history.getOperationHistoryList().stream()
+                .filter(entry -> entry.getResource() != null
+                        && Objects.equals(resourceId, entry.getResource().getId())
+                        && isInventoryOperation(entry.getResourceOperationType()))
+                .reduce((first, second) -> second)
+                .map(ResourceHistoryResponse::getComment)
+                .orElse(null);
+    }
+
+    private static boolean isInventoryOperation(String operationType) {
+        return "ADDED_INV".equals(operationType) || "REMOVED_INV".equals(operationType);
     }
 
     @Step("API: Партії ресурсу (isProduced=false)")

@@ -1,7 +1,9 @@
 package com.erp.tests.ui;
 
+import com.erp.enums.UserRole;
 import com.erp.tests.BaseTest;
 import com.erp.utils.auth.PlaywrightSessionProvider;
+import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.AllureScreenshots;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
@@ -129,6 +131,24 @@ public abstract class BaseUITest extends BaseTest {
             ));
         }
         log.debug("Injected {} cookie(s) into BrowserContext", cookies.size());
+    }
+
+    /**
+     * Session cookies for {@code role} from the shared {@link com.erp.utils.auth.AuthService}
+     * cache — the same one {@code ApiExecutor} uses, so a test that mixes API arrange with UI
+     * assertions acts as one user. Calling {@code PlaywrightSessionProvider.getSession} directly
+     * instead forces a fresh headless Keycloak login on every role switch, which costs ~10s each
+     * and fails the test outright whenever the Keycloak form is slow to render.
+     */
+    protected Map<String, String> cachedSessionCookies(UserRole role) {
+        return authService.getSessionForUser(role.getUsername(), role.getPassword());
+    }
+
+    /** Cookie domain of the frontend under test, for {@link #injectSessionCookies}. */
+    protected String sessionCookieDomain() {
+        return ConfigProvider.getBaseUrl()
+                .replaceFirst("https?://", "")
+                .split("/")[0];
     }
 
     /** Global plans and cross-location flows need tech maps from all permitted storages. */

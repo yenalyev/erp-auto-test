@@ -57,9 +57,12 @@ alwaysApply: false
 | Області видимості | `StorageRegionFixture#createRegion` | `DELETE` через `trackForCleanup` |
 | Ресурси (ізольовані) | `ResourceFixture#createUniqueResource` | deactivate / delete за патерном класу |
 
-**API-тести локацій/областей:** extends [`StorageApiTestBase`](src/test/java/com/erp/tests/functional/storage/StorageApiTestBase.java) — `@AfterMethod` + `@AfterClass` викликають [`TestArtifactCleanup`](src/main/java/com/erp/fixtures/TestArtifactCleanup.java).
+**Два шари cleanup:**
 
-**UI / інші тести з fixtures:** явний `@AfterMethod` або `@AfterClass`:
+1. **Tracked (після методу/класу)** — лише id, створені в цьому JVM. API-тести локацій/областей: extends [`StorageApiTestBase`](src/test/java/com/erp/tests/functional/storage/StorageApiTestBase.java). UI / інші: явний `@AfterMethod`/`@AfterClass` → [`TestArtifactCleanup.cleanupRegionsAndStorages`](src/main/java/com/erp/fixtures/TestArtifactCleanup.java).
+2. **Orphan sweep** — сиріти з минулих прогонів за маркером [`StorageDataFactory.isAutotestUniqueName`](src/main/java/com/erp/data/factories/storage/StorageDataFactory.java) (`{prefix}-loc_{millis}_T{thread}`). [`BaseTest`](src/test/java/com/erp/tests/BaseTest.java): `@BeforeSuite` — лише DELETE областей (без mass deactivate локацій); `@AfterSuite` — області + best-effort deactivate. Системний регіон «ВСІ РЕСУРСИ» не чіпає. Opt-out: `-Dsuite.artifact.sweep=false`.
+
+**UI / інші тести з fixtures:**
 
 ```java
 @AfterMethod(alwaysRun = true) // або @AfterClass для setup у @BeforeClass
@@ -72,8 +75,9 @@ public void cleanupArtifacts() {
 
 - `createStorage` / `createRegion` автоматично додають id у cleanup-чергу — **не** викликати cleanup вручну для кожного id.
 - `@BeforeClass` setup → `@AfterClass` cleanup; per-method arrange → `@AfterMethod`.
-- **staging:** cleanup пропускається (лише `clearTracked*`), як у `TestArtifactCleanup`.
+- **staging:** cleanup пропускається при `-Dstaging.cleanup=false` (лише `clearTracked*`).
 - Тест, що свідомо видаляє сутність у тілі (напр. `StorageRegionTest` DELETE), — `untrackForCleanup(id)` перед ручним DELETE.
+- Suite sweep не замінює tracked cleanup: між тестами одного прогону все одно має відпрацювати `@AfterMethod`.
 
 ## 7. Positive + isolation (no side effects)
 

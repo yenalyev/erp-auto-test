@@ -1,0 +1,157 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Rerun of FAIL cases from TCM (2026-07-23).
+  Method-level includes only — not full classes.
+  RBAC matrix excluded (RbacAccessMatrixTest).
+
+  Run:
+    mvn test -Denv=dev -Dsuite=failed-mu-rerun
+    mvn test -Denv=staging -Dsuite=failed-mu-rerun
+--><suite name="Failed TC Rerun" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Failed API / functional">
+        <classes>
+            <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest">
+                <methods>
+                    <include name="testAccountantMyUnitsExcludesUnitType"/>
+                    <include name="testResourceViewerMyUnitsExcludesUnitType"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest">
+                <methods>
+                    <include name="testAccountantSeesOnlyStorageToUnitRelocations"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewRelocationTest">
+                <methods>
+                    <include name="testSendToCrewFromProductionSender"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.defect.DefectTest">
+                <methods>
+                    <include name="testCannotDeleteDefectWithWriteOffs"/>
+                    <include name="testSendsNotOfferedForDefect"/>
+                    <include name="testInTransitNotOfferedForDefect"/>
+                    <include name="testCannotDeleteWrittenOffDefect"/>
+                    <include name="testCannotDefectRelocationBatchUsedInNonSeriesProduction"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.production.ProductionTest">
+                <methods>
+                    <include name="testUpdateProductionAmountAdjustsBatchAndStock"/>
+                    <include name="testDeleteProductionRestoresInputsAndRemovesBatch"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest">
+                <methods>
+                    <include name="testCreateMeasurementUnitNegative"/>
+                    <include name="testCreateDuplicateMeasurementUnit"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource.ResourceTest">
+                <methods>
+                    <include name="testCreateResourceNegative"/>
+                    <include name="testCreateDuplicateResource"/>
+                </methods>
+            </class>
+            <!-- RBAC excluded: RbacAccessMatrixTest / testRbacAccessMatrix -->
+            <class name="com.erp.tests.functional.storage.RelocationVisibilityTest">
+                <methods>
+                    <include name="testSendOutsideVisibilityRegionRejected"/>
+                    <include name="testRevokeExplicitGrantBlocksSubsequentSend"/>
+                    <include name="testSendWithResourceOutsideVisibilityScopeRejected"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.StorageTest">
+                <methods>
+                    <include name="testCreateDuplicateStorage"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.StorageCrewRegionTest">
+                <methods>
+                    <include name="testCreateCrewRegion"/>
+                    <include name="testGetCrewRegionById"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest">
+                <methods>
+                    <include name="testInventoryRejectsResourceOutsideVisibilityScope"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Failed UI">
+        <classes>
+            <class name="com.erp.tests.ui.AccountantCabinetUITest">
+                <methods>
+                    <include name="accountantWorkspaceExcludesUnitLocations"/>
+                    <include name="accountantLogisticsHidesUnitToCrew"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest">
+                <methods>
+                    <include name="receivedTabHidesNonCrewOutsiderName"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.DefectUITest">
+                <methods>
+                    <include name="testInTransitRelocationNeverOfferedInPicker"/>
+                    <include name="testWriteOffFilterDefaultIsNotWritten"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.EquipmentCreateUITest">
+                <methods>
+                    <include name="createSeveralEquipmentInOneRelocation"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.EquipmentGroupSortUITest">
+                <methods>
+                    <include name="expandedGroupShowsItemsSortedByInventoryNumber"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest">
+                <methods>
+                    <include name="ownerSeesDefectAndProductionCards"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.PlanExecutionUiTest">
+                <methods>
+                    <include name="testOwnerNoPlanNoProduction"/>
+                    <include name="testAdminNoPlanNoProduction"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest">
+                <methods>
+                    <include name="sentHistoryProductFilterAndRecipientSort"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest">
+                <methods>
+                    <include name="recipientCanDownloadInvoiceFromReceivedTab"/>
+                    <include name="senderUnitCanDownloadInvoiceInTransitAndSentTabs"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.ResourceViewerUiTest">
+                <methods>
+                    <include name="resourceViewerSidebarAndPageOpen"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.InventoryUiTest">
+                <methods>
+                    <include name="addNewResourceUi"/>
+                    <include name="exportRemaindersUi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

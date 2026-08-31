@@ -1,0 +1,82 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Focused rerun of former TCM NOT_RUN cases (links + suite coverage fix).
+
+  Run:
+    mvn test -Denv=staging -Dsuite=notrun-rerun-staging -Dtcm.enabled=true
+
+  Excludes TC-CREW-FIGHT-* (enabled=false, Fight integration-only).
+-->
+<suite name="NOT_RUN Rerun Staging" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Link-fix API">
+        <classes>
+            <class name="com.erp.tests.functional.defect.DefectTest">
+                <methods>
+                    <include name="testFilterByWriteOffStatus"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewInventoryTest">
+                <methods>
+                    <include name="testCrewManagerCanReadCrewDirectInventory"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.relocation.RelocationTest">
+                <methods>
+                    <include name="testOwner1CannotDeleteRelocation"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.StorageRegionTest">
+                <methods>
+                    <include name="testRevokeExplicitGrantRemovesViewerFromLinks"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.inventory.InventorySessionApiTest">
+                <methods>
+                    <include name="adminOpensInventorySession"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="System ALL RESOURCES">
+        <classes>
+            <class name="com.erp.tests.functional.storage.SystemAllResourcesRegionTest"/>
+            <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>
+        </classes>
+    </test>
+
+    <test name="Location Permissions">
+        <classes>
+            <class name="com.erp.tests.functional.location_permissions.LocationPermissionMeTest"/>
+            <class name="com.erp.tests.functional.location_permissions.LocationScopedAccessTest"/>
+            <class name="com.erp.tests.ui.UsersLocationPermissionsUiTest"/>
+            <class name="com.erp.tests.ui.LocationPermissionsUiTest"/>
+        </classes>
+    </test>
+
+    <test name="Accountant + Inventory UI">
+        <classes>
+            <class name="com.erp.tests.ui.AccountantCabinetUITest">
+                <methods>
+                    <include name="accountantCabinetLayoutSmokeTest"/>
+                    <include name="accountantLogoutTest"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.InventoryUiTest">
+                <methods>
+                    <include name="adminOpensInventorySessionUi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>
