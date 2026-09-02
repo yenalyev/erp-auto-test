@@ -171,6 +171,59 @@ public class OperationHistoryPage extends BasePage {
         return rows.filter(new Locator.FilterOptions().setHasText(comment)).count() > 0;
     }
 
+    /**
+     * True when the resource operations table has a data row with the resource name
+     * and the given operation badge (e.g. «Використано»).
+     */
+    public boolean tableHasResourceOperation(String resourceName, String operationLabel) {
+        Locator rows = resourceOperationRows()
+                .filter(new Locator.FilterOptions().setHasText(resourceName.trim()))
+                .filter(new Locator.FilterOptions().setHasText(operationLabel));
+        return rows.count() > 0;
+    }
+
+    public boolean isResourceTableEmptyStateVisible() {
+        Locator empty = page.getByText("Немає даних за вибраний період");
+        if (empty.count() == 0) {
+            empty = page.getByText("Немає записів за вибраний період");
+        }
+        return empty.count() > 0 && empty.first().isVisible();
+    }
+
+    /**
+     * Checks the summary-card checkbox that filters the resource table by operation type.
+     * Waits until either the resource row is visible or the empty state appears.
+     */
+    public OperationHistoryPage filterBySummaryCard(String cardTitle, String resourceName) {
+        Locator checkbox = summaryCard(cardTitle)
+                .locator("[role='checkbox'], button[role='checkbox'], input[type='checkbox']")
+                .first();
+        checkbox.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        if (!isChecked(checkbox)) {
+            checkbox.click();
+        }
+        page.waitForCondition(
+                () -> isResourceTableEmptyStateVisible()
+                        || tableHasResourceOperation(resourceName, cardTitle),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    private static boolean isChecked(Locator checkbox) {
+        String state = checkbox.getAttribute("data-state");
+        if (state != null) {
+            return "checked".equals(state);
+        }
+        return checkbox.isChecked();
+    }
+
+    private Locator resourceOperationRows() {
+        return page.locator("[data-slot='table'] tbody tr")
+                .filter(new Locator.FilterOptions().setHasNotText("Обладнання"));
+    }
+
     /** True when UI shows incident write-off markers (summary card and/or table label). */
     public boolean containsIncidentOperationMarker() {
         String content = page.locator("body").innerText();

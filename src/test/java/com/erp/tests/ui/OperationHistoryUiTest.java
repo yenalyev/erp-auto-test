@@ -182,6 +182,87 @@ public class OperationHistoryUiTest extends BaseUITest {
         });
     }
 
+    @Test(priority = 50)
+    @TestCaseId("TC-UI-HIST-NSP-001")
+    @Story("NSP used resource appears in history table, not only in «Використано» card")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Після створення несерійного виробництва Owner 1 відкриває «Історія операцій» (/history).
+            Очікувана поведінка (REQ-OPER-HIST AC-15): ресурс є в картці «Використано»
+            і в таблиці рядком з badge «Використано»; після чекбокса картки таблиця не порожня.
+
+            Відомий дефект: GET resource-operation-history заповнює totalUsedResources (картка),
+            але operationHistoryList фільтрує NSP за operationSource — рядок USED відсутній,
+            після фільтра картки показується «Немає даних за вибраний період».
+            """)
+    public void nspUsedResourceAppearsInHistoryTable() {
+        int productAmount = 2;
+        double perUnit = 1.0;
+        double expectedUsed = productAmount * perUnit;
+        String product = NonSeriesProductionDataFactory.uniqueProductName();
+
+        ResourceResponse resource = Allure.step("Створити ізольований ресурс для NSP", () ->
+                resourceFixture.createUniqueResource("OH-NSP-TBL"));
+        long resourceId = resource.getId();
+        String resourceName = resource.getName().trim();
+
+        Allure.parameter("resourceName", resourceName);
+        Allure.parameter("productAmount", productAmount);
+        Allure.parameter("perUnit", perUnit);
+        Allure.parameter("expectedUsed", expectedUsed);
+
+        Allure.step("Засіяти залишок " + (expectedUsed + 10), () ->
+                RelocationStockSeeder.receiveFromSupplier(
+                        apiExecutor,
+                        UserRole.OWNER_1,
+                        storageId,
+                        Map.of(resourceId, expectedUsed + 10)));
+
+        NonSeriesProductionResponse created = Allure.step("Створити NSP IN_PROGRESS", () ->
+                nspFixture.createAs(
+                        UserRole.OWNER_1,
+                        NonSeriesProductionStatus.IN_PROGRESS,
+                        product,
+                        productAmount,
+                        resourceId,
+                        perUnit));
+        createdNspIds.add(created.getId());
+
+        injectRoleSession(UserRole.OWNER_1, storageId);
+
+        Allure.step("UI: картка «Використано» і рядок у таблиці", () -> {
+            OperationHistoryPage history = new OperationHistoryPage(page).open().waitForLoaded();
+            assertThat(history.isLoaded()).isTrue();
+            assertThat(history.isSummaryCardVisible(USED_CARD_TITLE))
+                    .as("Картка «Використано» має бути видимою")
+                    .isTrue();
+
+            double uiUsed = history.getSummaryCardAmountForResource(USED_CARD_TITLE, resourceName);
+            assertThat(uiUsed)
+                    .as("Картка «Використано» має містити ресурс %s з кількістю %s",
+                            resourceName, expectedUsed)
+                    .isCloseTo(expectedUsed, within(0.001));
+
+            history.attachScreenshot("TC-UI-HIST-NSP-001 — card filled, table before filter");
+
+            assertThat(history.tableHasResourceOperation(resourceName, USED_CARD_TITLE))
+                    .as("Таблиця має містити рядок «%s» з операцією «Використано» (не лише картка)",
+                            resourceName)
+                    .isTrue();
+
+            history.filterBySummaryCard(USED_CARD_TITLE, resourceName);
+            history.attachScreenshot("TC-UI-HIST-NSP-001 — after Використано filter");
+
+            assertThat(history.isResourceTableEmptyStateVisible())
+                    .as("Після фільтра картки «Використано» таблиця не має бути порожньою")
+                    .isFalse();
+            assertThat(history.tableHasResourceOperation(resourceName, USED_CARD_TITLE))
+                    .as("Після фільтра картки рядок «%s / Використано» лишається в таблиці",
+                            resourceName)
+                    .isTrue();
+        });
+    }
+
     /**
      * Uses a freshly created resource (no prior history noise) and UI↔UI baseline so the
      * history date window matches what the page actually aggregates.
