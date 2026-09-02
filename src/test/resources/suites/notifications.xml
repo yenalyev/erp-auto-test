@@ -30,6 +30,7 @@
     <test name="Notifications UI">
         <classes>
             <class name="com.erp.tests.ui.NotificationsUITest"/>
+            <class name="com.erp.tests.ui.NotificationRelocationGoUiTest"/>
         </classes>
     </test>
 </suite>

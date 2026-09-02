@@ -38,5 +38,15 @@ public final class NotificationRequestBodyFactory {
             return NotificationDataFactory.removeSubscription(
                     recipientId, NotificationDataFactory.TEMPLATE_STOCK_RED);
         });
+
+        register(ApiEndpointDefinition.NOTIFICATION_MY_SUBSCRIBE, context ->
+                NotificationDataFactory.subscription(
+                        null,
+                        NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING,
+                        java.util.List.of()));
+
+        register(ApiEndpointDefinition.NOTIFICATION_MY_UNSUBSCRIBE, context ->
+                NotificationDataFactory.removeSubscription(
+                        null, NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING));
     }
 }

@@ -19,6 +19,7 @@ public final class NotificationDataFactory {
     public static final String TEMPLATE_STOCK_RED = "stock_red";
     public static final String TEMPLATE_STOCK_YELLOW = "stock_yellow";
     public static final String TEMPLATE_TECH_MAP = "tech_map_mode_changed";
+    public static final String TEMPLATE_RELOCATION_INCOMING = "relocation_incoming";
 
     /** Special chars that may affect WhatsApp / templates (not JSON-critical). */
     public static String storageNameWithMarkupChars() {

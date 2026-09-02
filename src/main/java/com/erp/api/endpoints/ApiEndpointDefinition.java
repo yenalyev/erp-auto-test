@@ -294,6 +294,46 @@ public enum ApiEndpointDefinition {
             "DELETE_NOTIFICATION_SUBSCRIPTION"
     ),
 
+    NOTIFICATION_BROWSER_GET(
+            "/api/v1/notifications/browser-notifications",
+            Method.GET,
+            null,
+            "Get pending browser push notifications",
+            null,
+            new TypeReference<List<PushNotificationResponse>>() {},
+            null
+    ),
+
+    NOTIFICATION_MY_GET(
+            "/api/v1/notifications/my",
+            Method.GET,
+            null,
+            "Get current user notification configuration",
+            null,
+            new TypeReference<UserNotificationConfigResponse>() {},
+            null
+    ),
+
+    NOTIFICATION_MY_SUBSCRIBE(
+            "/api/v1/notifications/my",
+            Method.POST,
+            null,
+            "Subscribe current user to a notification template",
+            new TypeReference<NotificationSubscriptionRequest>() {},
+            new TypeReference<Void>() {},
+            "SUBSCRIBE_MY_NOTIFICATION"
+    ),
+
+    NOTIFICATION_MY_UNSUBSCRIBE(
+            "/api/v1/notifications/my",
+            Method.DELETE,
+            null,
+            "Unsubscribe current user from a notification template",
+            new TypeReference<RemoveNotificationSubscriptionRequest>() {},
+            new TypeReference<Void>() {},
+            "UNSUBSCRIBE_MY_NOTIFICATION"
+    ),
+
     // ========================================
     // RESOURCE USER BUNDLES
     // ========================================

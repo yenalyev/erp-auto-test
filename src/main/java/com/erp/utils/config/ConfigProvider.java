@@ -142,6 +142,8 @@ public class ConfigProvider {
     public static String getResourceViewerPassword() { return config.resourceViewerPassword(); }
     public static String getAccountantUsername() { return config.accountantUsername(); }
     public static String getAccountantPassword() { return config.accountantPassword(); }
+    public static String getLogistUsername() { return config.logistUsername(); }
+    public static String getLogistPassword() { return config.logistPassword(); }
     public static String getCrewManagerUsername() { return config.crewManagerUsername(); }
     public static String getCrewManagerPassword() { return config.crewManagerPassword(); }
     public static String getProjectAdminUsername() { return config.projectAdminUsername(); }

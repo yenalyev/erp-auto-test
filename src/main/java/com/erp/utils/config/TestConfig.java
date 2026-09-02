@@ -127,6 +127,15 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String accountantPassword();
 
+    /** Logistics user (Logist-ROLE). Dev/staging: {@code logist}. */
+    @Key("user.logist.username")
+    @DefaultValue("logist")
+    String logistUsername();
+
+    @Key("user.logist.password")
+    @DefaultValue("")
+    String logistPassword();
+
     /** Crew-Manager test user (dev: argument, Keycloak Crew-Manager-ROLE). */
     @Key("user.unit.username")
     @DefaultValue("argument")

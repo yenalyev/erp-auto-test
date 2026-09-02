@@ -71,6 +71,55 @@ public class RelocationPage extends BasePage {
         return waitForLoaded();
     }
 
+    /** Visible value of the first logistics «Відправник» combobox (placeholder «Всі локації...»). */
+    public String getLogisticsSenderFilterValue() {
+        Locator senderInput = logisticsSenderInput();
+        senderInput.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        String value = normalizeFilterText(senderInput.inputValue());
+        if (!value.isEmpty() && !"Всі локації...".equals(value)) {
+            return value;
+        }
+        String attr = normalizeFilterText(senderInput.getAttribute("value"));
+        if (!attr.isEmpty() && !"Всі локації...".equals(attr)) {
+            return attr;
+        }
+        return value;
+    }
+
+    /** True when the sender combobox dropdown lists a storage whose name contains {@code name}. */
+    public boolean logisticsSenderOptionsContain(String name) {
+        logisticsSenderInput().click();
+        waitForComboboxOptionsSettled();
+        Locator item = page.locator("[data-slot='combobox-item']")
+                .filter(new Locator.FilterOptions().setHasText(name));
+        boolean found = item.count() > 0;
+        page.keyboard().press("Escape");
+        return found;
+    }
+
+    private static String normalizeFilterText(String raw) {
+        return raw == null ? "" : raw.trim().replaceAll("\\s+", " ");
+    }
+
+    public boolean isRelocationRowHighlighted() {
+        Locator highlighted = page.locator(".highlight-row");
+        return highlighted.count() > 0 && highlighted.first().isVisible();
+    }
+
+    private Locator logisticsSenderInput() {
+        Locator labeled = page.locator("[data-slot='combobox-label']")
+                .filter(new Locator.FilterOptions().setHasText("Відправник"))
+                .locator("xpath=ancestor::div[contains(@class,'flex-col')][1]")
+                .locator("input")
+                .first();
+        if (labeled.count() > 0) {
+            return labeled;
+        }
+        return page.locator("input[placeholder='Всі локації...']").first();
+    }
+
     public boolean isIssueToCrewButtonVisible() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ISSUE_TO_CREW_BUTTON))
                 .isVisible();

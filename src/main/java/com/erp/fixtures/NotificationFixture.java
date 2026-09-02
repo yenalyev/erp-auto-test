@@ -13,6 +13,8 @@ import com.erp.models.response.NotificationSubscriptionResponse;
 import com.erp.models.response.NotificationTemplateResponse;
 import com.erp.models.response.PagedNotificationResponse;
 import com.erp.models.response.PagedNotificationSubscriptionResponse;
+import com.erp.models.response.PushNotificationResponse;
+import com.erp.models.response.UserNotificationConfigResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -178,6 +180,126 @@ public class NotificationFixture extends BaseFixture {
                 Objects::nonNull,
                 timeoutMs,
                 "stock_red notification for storageId=" + storageId);
+    }
+
+    @Step("API: знайти WEB_PUSH recipient caption={caption}")
+    public NotificationRecipientResponse findWebPushByCaption(UserRole role, String caption) {
+        if (caption == null) {
+            return null;
+        }
+        return getAllRecipients(role).stream()
+                .filter(r -> NotificationDataFactory.TYPE_WEB_PUSH.equals(r.getType()))
+                .filter(r -> caption.equalsIgnoreCase(r.getCaption()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Step("API: підписати {role} на relocation_incoming для складу {storageId}")
+    public void subscribeToRelocationIncoming(UserRole role, Long storageId) {
+        NotificationSubscriptionRequest request = NotificationDataFactory.subscription(
+                null,
+                NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING,
+                storageId != null ? List.of(storageId) : List.of());
+        // WEB_PUSH recipient is created asynchronously on first login — retry 404 briefly.
+        com.erp.utils.helpers.PollUtils.waitUntilTrue(
+                () -> {
+                    Response response = apiExecutor.execute(
+                            ApiEndpointDefinition.NOTIFICATION_MY_SUBSCRIBE, role, request);
+                    if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                        return true;
+                    }
+                    log.info("Subscribe {} to relocation_incoming returned {}", role, response.statusCode());
+                    return false;
+                },
+                20_000,
+                "Subscribe " + role + " to relocation_incoming");
+    }
+
+    @Step("API: зняти підписку {role} з relocation_incoming")
+    public void unsubscribeFromRelocationIncoming(UserRole role) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.NOTIFICATION_MY_UNSUBSCRIBE,
+                role,
+                NotificationDataFactory.removeSubscription(
+                        null, NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING));
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            return;
+        }
+        log.warn("Unsubscribe {} from relocation_incoming returned {}", role, response.statusCode());
+    }
+
+    @Step("API: GET /notifications/my as {role}")
+    public UserNotificationConfigResponse getMyConfiguration(UserRole role) {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.NOTIFICATION_MY_GET, role);
+        validateSuccess(response, "GET my notification configuration");
+        return response.as(UserNotificationConfigResponse.class);
+    }
+
+    @Step("API: GET browser-notifications as {role}")
+    public List<PushNotificationResponse> listBrowserNotifications(UserRole role) {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.NOTIFICATION_BROWSER_GET, role);
+        validateSuccess(response, "GET browser notifications");
+        List<PushNotificationResponse> list = ApiResponseHelper.parseList(
+                response, PushNotificationResponse.class, "GET browser notifications");
+        return list != null ? list : List.of();
+    }
+
+    @Step("API: знайти browser-notification relocation_id={relocationId}")
+    public PushNotificationResponse findBrowserNotificationForRelocation(UserRole role, Long relocationId) {
+        if (relocationId == null) {
+            return null;
+        }
+        String expected = String.valueOf(relocationId);
+        return listBrowserNotifications(role).stream()
+                .filter(n -> n.getParams() != null && expected.equals(n.getParams().get("relocation_id")))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Step("Await: browser-notification relocation_id={relocationId}")
+    public PushNotificationResponse awaitBrowserNotification(UserRole role, Long relocationId, long timeoutMs) {
+        return com.erp.utils.helpers.PollUtils.waitUntil(
+                () -> findBrowserNotificationForRelocation(role, relocationId),
+                Objects::nonNull,
+                timeoutMs,
+                "browser notification for relocationId=" + relocationId);
+    }
+
+    @Step("API: знайти relocation_incoming у журналі для складу id={storageId}")
+    public NotificationLogResponse findRelocationIncomingForStorage(UserRole role, Long storageId) {
+        return listNotifications(role).stream()
+                .filter(n -> NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING.equals(n.getTemplateCode()))
+                .filter(n -> n.getStorage() != null && Objects.equals(storageId, n.getStorage().getId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Step("Await: relocation_incoming у журналі для складу id={storageId}")
+    public NotificationLogResponse awaitRelocationIncomingForStorage(
+            UserRole role, Long storageId, long timeoutMs) {
+        return com.erp.utils.helpers.PollUtils.waitUntil(
+                () -> findRelocationIncomingForStorage(role, storageId),
+                Objects::nonNull,
+                timeoutMs,
+                "relocation_incoming notification for storageId=" + storageId);
+    }
+
+    @Step("FIXTURE: синтетичний push payload для relocation {relocationId}")
+    public PushNotificationResponse syntheticRelocationIncoming(
+            Long relocationId, Long senderId, Long recipientId, String senderName, String recipientName) {
+        java.util.Map<String, String> params = new java.util.LinkedHashMap<>();
+        params.put("template_code", NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING);
+        params.put("sender_id", String.valueOf(senderId));
+        params.put("recipient_id", String.valueOf(recipientId));
+        params.put("storage_name", recipientName);
+        params.put("relocation_id", String.valueOf(relocationId));
+        return PushNotificationResponse.builder()
+                .id(relocationId != null ? relocationId.intValue() : 0)
+                .title("ℹ️ Переміщення до " + recipientName)
+                .description("Відправник: " + senderName)
+                .params(params)
+                .createdAt(java.time.Instant.now().toString())
+                .build();
     }
 
     public void trackRecipient(Integer id) {

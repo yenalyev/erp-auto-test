@@ -9,6 +9,11 @@ public enum UserRole {
     OWNER_3,
     RESOURCE_VIEWER,
     ACCOUNTANT,
+    /**
+     * Logistics cabinet ({@code Logist-ROLE}: {@code perm_logistic::view}, no {@code relocation::view}).
+     * staging/dev: {@code logist}.
+     */
+    LOGIST,
     /** Dev/staging: argument — Crew-Manager-ROLE, UNIT storage ({@code unit.storage.id}). */
     CREW_MANAGER,
     /**
@@ -46,6 +51,7 @@ public enum UserRole {
             case OWNER_3         -> ConfigProvider.getOwner3Username();
             case RESOURCE_VIEWER -> ConfigProvider.getResourceViewerUsername();
             case ACCOUNTANT      -> ConfigProvider.getAccountantUsername();
+            case LOGIST          -> ConfigProvider.getLogistUsername();
             case CREW_MANAGER    -> ConfigProvider.getCrewManagerUsername();
             case PROJECT_ADMIN   -> ConfigProvider.getProjectAdminUsername();
             case PROJECT_MANAGER -> ConfigProvider.getProjectManagerUsername();
@@ -64,6 +70,7 @@ public enum UserRole {
             case OWNER_3         -> ConfigProvider.getOwner3Password();
             case RESOURCE_VIEWER -> ConfigProvider.getResourceViewerPassword();
             case ACCOUNTANT      -> ConfigProvider.getAccountantPassword();
+            case LOGIST          -> ConfigProvider.getLogistPassword();
             case CREW_MANAGER    -> ConfigProvider.getCrewManagerPassword();
             case PROJECT_ADMIN   -> ConfigProvider.getProjectAdminPassword();
             case PROJECT_MANAGER -> ConfigProvider.getProjectManagerPassword();
@@ -77,7 +84,7 @@ public enum UserRole {
     /** Returns the primary storage ID that belongs to this role, as a String path param. */
     public String getStoreId() {
         return switch (this) {
-            case ADMIN, RESOURCE_VIEWER, ACCOUNTANT -> "all";
+            case ADMIN, RESOURCE_VIEWER, ACCOUNTANT, LOGIST -> "all";
             case OWNER_1, PROJECT_ADMIN, PROJECT_MANAGER, LOCATION_MIXED
                     -> String.valueOf(ConfigProvider.getOwner1StorageId());
             case OWNER_2       -> String.valueOf(ConfigProvider.getOwner2StorageId());
