@@ -19,6 +19,7 @@
         <classes>
             <class name="com.erp.tests.functional.storage.FlyPointInventoryTest"/>
             <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointDashboardApiTest"/>
             <class name="com.erp.tests.functional.storage.CrewInventoryTest">
                 <methods>
                     <include name="owner1DeniedDirectCrewInventoryWithoutInventoryListPerm"/>
@@ -43,6 +44,7 @@
     <test name="Crew / Fly Point Inventory UI">
         <classes>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
+            <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
         </classes>
     </test>
 </suite>

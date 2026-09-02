@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UnitFlyPointResourceStockList",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["unitId", "unitName"],
+    "properties": {
+      "unitId": { "type": ["integer", "null"] },
+      "unitName": { "type": ["string", "null"] },
+      "flyPointStocks": {
+        "type": ["array", "null"],
+        "items": {
+          "type": "object",
+          "properties": {
+            "flyPointId": { "type": ["integer", "null"] },
+            "flyPointName": { "type": ["string", "null"] },
+            "resourceCategoryStocks": {
+              "type": ["array", "null"],
+              "items": {
+                "type": "object",
+                "properties": {
+                  "categoryId": { "type": ["integer", "null"] },
+                  "categoryName": { "type": ["string", "null"] },
+                  "resourceStocks": {
+                    "type": ["array", "null"],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "resourceId": { "type": ["integer", "null"] },
+                        "resourceName": { "type": ["string", "null"] },
+                        "amount": { "type": ["number", "null"] },
+                        "updatedAt": { "type": ["string", "null"] }
+                      },
+                      "additionalProperties": true
+                    }
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+    "additionalProperties": true
+  }
+}

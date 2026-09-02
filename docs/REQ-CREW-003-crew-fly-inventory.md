@@ -519,6 +519,25 @@ sequenceDiagram
 
 ---
 
+### AC-26 — Дашборд точок взлету: спінер не блокує Залишки
+
+**TCM:** `/fly-point-dashboard` (Екіпажі → Точки взлету): після `GET /fly-points/stocks` спінер сторінки не блокує вкладку Залишки; `GET /fly-points/short-stats` не тримає оверлей «Завантаження...».
+
+| TC | Шар | Сценарій |
+|----|-----|----------|
+| TC-UI-FLY-LOAD-001 | UI | Sidebar → Залишки: обидва GET завершились, спінер hidden, таблиця usable |
+| TC-UI-FLY-LOAD-002 | UI | short-stats pending: таблиця видима, спінер не перекриває (відомий дефект tk-ui) |
+| TC-UI-FLY-LOAD-003 | UI | abort short-stats не лишає вічний спінер |
+| TC-UI-FLY-LOAD-004 | UI | Перемикання підвкладок не лишає спінер |
+| TC-FLY-DASH-001 | API | `GET /fly-points/stocks` після видачі на FLY_POINT |
+| TC-FLY-DASH-002 | API | `GET /fly-points/short-stats` 200 протягом UI timeout |
+
+**Автотести:** `FlyPointDashboardLoadingUiTest`, `FlyPointDashboardApiTest`.
+
+**Відомий дефект:** `FlyPointDashboardPage.tsx` — `loading` від short-stats рендериться над `StocksTab`, який уже намалював таблицю.
+
+---
+
 ## 6. Known gaps (зведення)
 
 | ID | Gap | Severity | Де зафіксовано |
@@ -643,17 +662,28 @@ flowchart LR
 | TC-UI-CREW-023 | `outsiderHasNoConductOnFlyPointDeepLink` | AC-24 |
 | TC-UI-CREW-024 | `allLocationsBlocksInventorySessionToggle` | AC-24 / G5 |
 
+### 8.5b. UI / API — loading дашборду точок взлету (`FlyPointDashboardLoadingUiTest`, `FlyPointDashboardApiTest`)
+
+| TestCaseId | Метод | AC |
+|------------|-------|-----|
+| TC-UI-FLY-LOAD-001 | `sidebarFlyPointStocksFinishesLoadingAndShowsTable` | AC-26 |
+| TC-UI-FLY-LOAD-002 | `stocksTableVisibleWhileShortStatsPending` | AC-26 |
+| TC-UI-FLY-LOAD-003 | `abortShortStatsDoesNotLeaveInfiniteSpinner` | AC-26 |
+| TC-UI-FLY-LOAD-004 | `switchingDashboardSubTabsDoesNotLeaveSpinner` | AC-26 |
+| TC-FLY-DASH-001 | `flyPointStocksContainsIssuedResource` | AC-26 |
+| TC-FLY-DASH-002 | `flyPointShortStatsReturnsWithinTimeout` | AC-26 |
+
 Legacy (deprecated): `CrewIssuanceUITest` — TC-UI-CREW-004/010/011.
 
 ### 8.6. Fixtures і схеми
 
 | Компонент | Призначення |
 |-----------|-------------|
-| `CrewRegionFixture` | `prepareSingleCrewScenario`, `prepareAttachedCrewScenario`, `prepareFlyPointScenario`, `getCrewInventory` |
+| `CrewRegionFixture` | `prepareSingleCrewScenario`, `prepareAttachedCrewScenario`, `prepareFlyPointScenario`, `getCrewInventory`, `getFlyPointStocks`, `getFlyPointShortStats` |
 | `InventoryFixture` | open/close, `setResourceAmount`, multi-location, history, export |
 | `RelocationFixture` | `ensureStock`, `createSendAndFinishBySender`, `getResourceStock` |
 | `CrewApiTestBase` | Auth refresh, cleanup через `StorageApiTestBase` |
-| Schemas | `schemas/inventory/*`, `crew-resource-stock-paged-list-schema.json` |
+| Schemas | `schemas/inventory/*`, `crew-resource-stock-paged-list-schema.json`, `schemas/fly-points/*` |
 
 ---
 
@@ -670,8 +700,8 @@ mvn test -Denv=staging -Dsuite=crew-fly-inventory
 
 Склад suite:
 
-- **API:** увесь `FlyPointInventoryTest`, увесь `CrewFlyPointInventoryTest`, subset методів `CrewInventoryTest` (007, 010, 014, 015, NEG-01, 009), subset `StorageResourceVisibilityTest` (FP/CREW scope).
-- **UI:** увесь `CrewFlyPointInventoryUiTest`.
+- **API:** увесь `FlyPointInventoryTest`, увесь `CrewFlyPointInventoryTest`, `FlyPointDashboardApiTest`, subset методів `CrewInventoryTest` (007, 010, 014, 015, NEG-01, 009), subset `StorageResourceVisibilityTest` (FP/CREW scope).
+- **UI:** увесь `CrewFlyPointInventoryUiTest`, `FlyPointDashboardLoadingUiTest`.
 
 Повні звіти STOCK/INCOME / усі RBAC CREW-INV — також у `inventory.xml`, `functional.xml`, `storage-regions.xml`, `regression.xml`.
 
@@ -723,3 +753,4 @@ mvn test -Denv=dev -Dsuite=crew-fly-inventory-ui
 | 2026-07-25 | Розширення: повні секції AC, бізнес-потоки, повні таблиці TC, gaps G1–G5 |
 | 2026-07-25 | Повний текст перенесено в TCM feature documentation (REQ-CREW-003); репо — дзеркало |
 | 2026-07-27 | AC-04: TC-CREW-INV-007 вирівняно під TCM (OWNER_1 direct GET → 403); метод `owner1DeniedDirectCrewInventoryWithoutInventoryListPerm` |
+| 2026-09-02 | AC-26: лоадінг `/fly-point-dashboard` (спінер vs таблиця Залишків); TC-UI-FLY-LOAD-* / TC-FLY-DASH-* |

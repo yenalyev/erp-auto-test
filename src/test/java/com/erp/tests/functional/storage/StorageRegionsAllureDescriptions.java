@@ -816,4 +816,39 @@ public final class StorageRegionsAllureDescriptions {
     public static final String TC_UI_STR_RES_013 = """
             Матриця FP-INV-09 UI: inventory FP autocomplete лише in-scope ancestor.
             """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FLY_LOAD_001 = """
+            Що перевіряємо: ADMIN — sidebar «Екіпажі» → «Точки взлету» → «Залишки».
+            Після GET /fly-points/stocks і /fly-points/short-stats спінер «Завантаження...» зникає;
+            таблиця і фільтри usable; тестовий ресурс видно.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FLY_LOAD_002 = """
+            Що перевіряємо: таблиця Залишків видима до завершення GET /fly-points/short-stats;
+            спінер сторінки не перекриває фільтри/таблицю (спінер short-stats лише в картках статистики).
+            Клієнт: FlyPointDashboardPage loading прив’язаний до short-stats і рендериться над StocksTab.
+            Відомий дефект: батьківський «Завантаження...» лишається, поки short-stats pending, хоча /stocks уже 200.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FLY_LOAD_003 = """
+            Що перевіряємо: abort GET /fly-points/short-stats не лишає вічний спінер;
+            таблиця Залишків після /stocks лишається usable.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FLY_LOAD_004 = """
+            Що перевіряємо: після load Залишків перемикання Надходження / Використання / Зведені обороти
+            і назад на Залишки не залишає спінер сторінки.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_FLY_DASH_001 = """
+            Що перевіряємо: GET /api/v1/fly-points/stocks?parentId={unit} після видачі на FLY_POINT.
+            Клієнт: tk-ui StocksTab → flyPointsApi.listUnitStocks.
+            Очікуваний результат: HTTP 200; вкладена модель містить flyPoint + resource + amount.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FLY_DASH_002 = """
+            Що перевіряємо: GET /api/v1/fly-points/short-stats?parentId={unit}&days=7 завершується 200
+            протягом UI timeout (масив може бути порожній).
+            Клієнт: FlyPointDashboardPage loadData → flyPointsApi.getShortStats.
+            """ + ON_FAIL_API;
 }

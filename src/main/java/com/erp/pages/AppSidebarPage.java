@@ -35,6 +35,7 @@ public class AppSidebarPage extends BasePage {
     public static final String GROUP_PROJECT_PRODUCTION = "Проєктне виробництво";
     public static final String GROUP_ORDERS = "Замовлення";
     public static final String GROUP_AUDIT = "Аудит";
+    public static final String GROUP_CREW = "Екіпажі";
 
     public static final String TAB_NON_SERIES = "Несерійне виробництво";
     public static final String TAB_ASSEMBLY_READINESS = "Готово до комплектації";
@@ -62,6 +63,7 @@ public class AppSidebarPage extends BasePage {
     public static final String TAB_PROJECT_CATEGORIES = "Категорії";
     public static final String TAB_PROJECT_PRODUCTS = "Продукти";
     public static final String NAV_UNIT_ANALYTICS = "Аналітика Підрозділів";
+    public static final String TAB_FLY_POINTS = "Точки взлету";
 
     public AppSidebarPage(Page page) {
         super(page);

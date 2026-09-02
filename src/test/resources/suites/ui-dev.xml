@@ -19,6 +19,7 @@
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
+            <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.UsersAdminAccessUiTest"/>
             <class name="com.erp.tests.ui.UnitAnalyticsUiTest"/>

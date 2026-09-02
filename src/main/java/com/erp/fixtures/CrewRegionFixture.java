@@ -5,6 +5,8 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
 import com.erp.models.response.CrewResourceStockResponse;
+import com.erp.models.response.UnitFlyPointResourceStockResponse;
+import com.erp.models.response.UnitShortStatsResponse;
 import com.erp.models.response.RelocationCreationOptionsResponse;
 import com.erp.models.response.StorageHierarchyResponse;
 import com.erp.models.response.StorageRegionResponse;
@@ -78,6 +80,43 @@ public class CrewRegionFixture extends BaseFixture {
         testContext.set(ContextKey.CREW_STORAGE_ID, crew.getId());
         testContext.set(ContextKey.CREW_PARENT_UNIT_ID, unit.getId());
         return scenario;
+    }
+
+    @Step("API: GET /fly-points/stocks parentId={parentId}")
+    public Response getFlyPointStocksRaw(UserRole role, Long parentId, String resourceName) {
+        Map<String, Object> params = new HashMap<>();
+        if (parentId != null) {
+            params.put("parentId", parentId);
+        }
+        if (resourceName != null && !resourceName.isBlank()) {
+            params.put("resourceName", resourceName);
+        }
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.FLY_POINT_GET_STOCKS, role, params);
+    }
+
+    public List<UnitFlyPointResourceStockResponse> getFlyPointStocks(
+            UserRole role, Long parentId, String resourceName) {
+        Response response = getFlyPointStocksRaw(role, parentId, resourceName);
+        validateSuccess(response, "Get fly-point stocks for parent " + parentId);
+        return DatabaseIntegrityValidator.extractList(response, UnitFlyPointResourceStockResponse.class);
+    }
+
+    @Step("API: GET /fly-points/short-stats parentId={parentId} days={days}")
+    public Response getFlyPointShortStatsRaw(UserRole role, Long parentId, int days) {
+        Map<String, Object> params = new HashMap<>();
+        if (parentId != null) {
+            params.put("parentId", parentId);
+        }
+        params.put("days", days);
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.FLY_POINT_GET_SHORT_STATS, role, params);
+    }
+
+    public List<UnitShortStatsResponse> getFlyPointShortStats(UserRole role, Long parentId, int days) {
+        Response response = getFlyPointShortStatsRaw(role, parentId, days);
+        validateSuccess(response, "Get fly-point short-stats for parent " + parentId);
+        return DatabaseIntegrityValidator.extractList(response, UnitShortStatsResponse.class);
     }
 
     /**

@@ -73,6 +73,7 @@
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
             <class name="com.erp.tests.functional.storage.FlyPointInventoryTest"/>
             <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointDashboardApiTest"/>
             <class name="com.erp.tests.functional.storage.CrewOperationHistoryTest"/>
             <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest"/>
             <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
@@ -286,6 +287,7 @@
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
+            <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>
         </classes>

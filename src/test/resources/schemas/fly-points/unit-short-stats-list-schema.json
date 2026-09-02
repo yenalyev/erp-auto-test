@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UnitShortStatsList",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "unitId": { "type": ["integer", "null"] },
+      "unitName": { "type": ["string", "null"] },
+      "flyPointsCount": { "type": ["integer", "null"] },
+      "crewsCount": { "type": ["integer", "null"] },
+      "ammunitionIncome": { "type": ["number", "null"] },
+      "ammunitionOutcome": { "type": ["number", "null"] },
+      "writeOffCompleted": { "type": ["number", "null"] },
+      "writeOffFailed": { "type": ["number", "null"] },
+      "writeOffSkipped": { "type": ["number", "null"] },
+      "writeOffPending": { "type": ["number", "null"] }
+    },
+    "additionalProperties": true
+  }
+}

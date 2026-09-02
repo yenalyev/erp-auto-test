@@ -10,6 +10,7 @@
     <test name="Crew / Fly Point Inventory UI">
         <classes>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
+            <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
         </classes>
     </test>
 </suite>

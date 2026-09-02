@@ -852,6 +852,26 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    FLY_POINT_GET_STOCKS(
+            "/api/v1/fly-points/stocks",
+            Method.GET,
+            "schemas/fly-points/unit-fly-point-resource-stock-list-schema.json",
+            "Get fly-point dashboard resource stocks by parent unit",
+            null,
+            new TypeReference<List<UnitFlyPointResourceStockResponse>>() {},
+            null
+    ),
+
+    FLY_POINT_GET_SHORT_STATS(
+            "/api/v1/fly-points/short-stats",
+            Method.GET,
+            "schemas/fly-points/unit-short-stats-list-schema.json",
+            "Get fly-point dashboard ammunition short stats by parent unit",
+            null,
+            new TypeReference<List<UnitShortStatsResponse>>() {},
+            null
+    ),
+
     STORAGE_POST_CREATE(
             "/api/v1/storages",
             Method.POST,
