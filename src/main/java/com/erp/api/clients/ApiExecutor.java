@@ -11,6 +11,7 @@ import com.erp.models.request.RelocationInputEditRequest;
 import com.erp.models.request.RelocationInputRequest;
 import com.erp.models.request.RelocationUpdateRequest;
 import com.erp.utils.auth.AuthService;
+import com.erp.utils.auth.SessionUnauthorizedRetry;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,9 +28,14 @@ public class ApiExecutor {
 
     // Кеш сесій (Thread-safe)
     private final Map<UserRole, Map<String, String>> roleSessionCache = new ConcurrentHashMap<>();
+    /** {@link #setSessionForRole} bindings — 401 retry must re-login the same Keycloak user. */
+    private final Map<UserRole, RoleCredentials> roleCredentials = new ConcurrentHashMap<>();
 
     private final SessionClient apiClient;
     private final AuthService authService;
+
+    private record RoleCredentials(String username, String password) {
+    }
 
     /**
      * ✅ Головний публічний метод виконання запиту
@@ -40,20 +47,18 @@ public class ApiExecutor {
             Object requestBody,
             Object... pathParams
     ) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
-
         String path = (pathParams != null && pathParams.length > 0)
                 ? endpoint.getPath(pathParams)
                 : endpoint.getPath();
 
         log.debug("Executing {} {} (Role: {})", endpoint.getHttpMethod(), path, role);
 
-        return apiClient.executeWithCookies(
+        return executeWithSessionRetry(role, cookies -> apiClient.executeWithCookies(
                 endpoint.getHttpMethod(),
                 path,
                 requestBody,
-                sessionCookies
-        );
+                cookies
+        ));
     }
 
     // --- Зручні перевантаження (Overloads) ---
@@ -85,8 +90,6 @@ public class ApiExecutor {
             Map<String, ?> queryParams,
             Object... pathParams
     ) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
-
         String path = (pathParams != null && pathParams.length > 0)
                 ? endpoint.getPath(pathParams)
                 : endpoint.getPath();
@@ -94,13 +97,13 @@ public class ApiExecutor {
         log.debug("Executing {} {} with query {} (Role: {})",
                 endpoint.getHttpMethod(), path, queryParams, role);
 
-        return apiClient.executeWithCookies(
+        return executeWithSessionRetry(role, cookies -> apiClient.executeWithCookies(
                 endpoint.getHttpMethod(),
                 path,
                 null,
-                sessionCookies,
+                cookies,
                 queryParams != null ? queryParams : Map.of()
-        );
+        ));
     }
 
     /**
@@ -112,8 +115,9 @@ public class ApiExecutor {
         }
 
         return roleSessionCache.computeIfAbsent(role, r -> {
-            log.info("🔐 Authenticating and caching session for: {}", role);
-            return authService.getSessionForUser(r.getUsername(), r.getPassword());
+            RoleCredentials creds = credentialsFor(r);
+            log.info("🔐 Authenticating and caching session for: {} ({})", r, creds.username());
+            return authService.getSessionForUser(creds.username(), creds.password());
         });
     }
 
@@ -123,15 +127,19 @@ public class ApiExecutor {
      */
     public void setSessionForRole(UserRole role, String username, String password) {
         log.info("🔐 Binding role {} to Keycloak user {}", role, username);
+        roleCredentials.put(role, new RoleCredentials(username, password));
         roleSessionCache.put(role, authService.getSessionForUser(username, password));
     }
 
     public void evictSessionForRole(UserRole role) {
+        RoleCredentials creds = credentialsFor(role);
         roleSessionCache.remove(role);
+        authService.invalidateSession(creds.username(), creds.password());
     }
 
     /**
      * Drop role cookies and AuthService session cache so the next call re-logins.
+     * Role bindings from {@link #setSessionForRole} are kept.
      */
     public void clearSessionCache() {
         roleSessionCache.clear();
@@ -139,15 +147,28 @@ public class ApiExecutor {
         log.debug("🧹 Session cache cleared");
     }
 
+    private Response executeWithSessionRetry(UserRole role, Function<Map<String, String>, Response> call) {
+        Response response = call.apply(getSessionForRole(role));
+        if (!SessionUnauthorizedRetry.shouldRelogin(role, response.statusCode())) {
+            return response;
+        }
+        log.warn("⚠️ {} returned 401 — re-login and retry once", role);
+        evictSessionForRole(role);
+        return call.apply(getSessionForRole(role));
+    }
+
+    private RoleCredentials credentialsFor(UserRole role) {
+        return roleCredentials.getOrDefault(role, new RoleCredentials(role.getUsername(), role.getPassword()));
+    }
+
     @Step("API Request: POST /relocations/receive as {role}")
     public Response executeRelocationReceive(RelocationInputRequest request, UserRole role) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
-        return apiClient.executeMultipartPost(
+        return executeWithSessionRetry(role, cookies -> apiClient.executeMultipartPost(
                 ApiEndpointDefinition.RELOCATION_POST_RECEIVE.getPath(),
-                sessionCookies,
+                cookies,
                 "request",
                 request
-        );
+        ));
     }
 
     @Step("API Request: PUT /relocations/{id}/receive as {role}")
@@ -155,10 +176,10 @@ public class ApiExecutor {
                                                    Long storageId,
                                                    RelocationInputEditRequest request,
                                                    UserRole role) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
         String path = ApiEndpointDefinition.RELOCATION_PUT_UPDATE_RECEIVE.getPath(
                 relocationId, storageId);
-        return apiClient.executeMultipartPut(path, sessionCookies, "request", request);
+        return executeWithSessionRetry(role,
+                cookies -> apiClient.executeMultipartPut(path, cookies, "request", request));
     }
 
     @Step("API Request: PUT /relocations/{id}/resolve as {role}")
@@ -189,20 +210,19 @@ public class ApiExecutor {
                                                             Long storageId,
                                                             EquipmentRelocationReceiveEditRequest request,
                                                             UserRole role) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
         String path = ApiEndpointDefinition.EQUIPMENT_RELOCATION_PUT_UPDATE_RECEIVE.getPath(
                 relocationId, storageId);
-        return apiClient.executeMultipartPut(path, sessionCookies, "request", request);
+        return executeWithSessionRetry(role,
+                cookies -> apiClient.executeMultipartPut(path, cookies, "request", request));
     }
 
     @Step("API Request: POST /equipment as {role}")
     public Response executeEquipmentCreate(EquipmentCreateRequest request, UserRole role) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
-        return apiClient.executeMultipartPost(
+        return executeWithSessionRetry(role, cookies -> apiClient.executeMultipartPost(
                 ApiEndpointDefinition.EQUIPMENT_POST_CREATE.getPath(),
-                sessionCookies,
+                cookies,
                 "request",
-                request);
+                request));
     }
 
     /**
@@ -211,29 +231,27 @@ public class ApiExecutor {
      */
     @Step("API Request: POST /defects as {role}")
     public Response executeDefectCreate(DefectRequest request, UserRole role) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
-        return apiClient.executeMultipartPost(
+        return executeWithSessionRetry(role, cookies -> apiClient.executeMultipartPost(
                 ApiEndpointDefinition.DEFECT_POST_CREATE.getPath(),
-                sessionCookies,
+                cookies,
                 "request",
-                request);
+                request));
     }
 
     @Step("API Request: PUT /defects/{defectId} as {role}")
     public Response executeDefectUpdate(Long defectId, DefectRequest request, UserRole role) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
         String path = ApiEndpointDefinition.DEFECT_PUT_UPDATE.getPath(defectId);
-        return apiClient.executeMultipartPut(path, sessionCookies, "request", request);
+        return executeWithSessionRetry(role,
+                cookies -> apiClient.executeMultipartPut(path, cookies, "request", request));
     }
 
     @Step("API Request: POST /incidents/relocations as {role}")
     public Response executeIncidentCreate(RelocationIncidentRequest request, UserRole role) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
-        return apiClient.executeMultipartPost(
+        return executeWithSessionRetry(role, cookies -> apiClient.executeMultipartPost(
                 ApiEndpointDefinition.INCIDENT_POST_CREATE.getPath(),
-                sessionCookies,
+                cookies,
                 "request",
-                request);
+                request));
     }
 
     /**
@@ -242,11 +260,10 @@ public class ApiExecutor {
      */
     @Step("API Request: POST /project-production as {role}")
     public Response executeProjectProductionCreate(ProjectProductionRequest request, UserRole role) {
-        Map<String, String> sessionCookies = getSessionForRole(role);
-        return apiClient.executeMultipartPost(
+        return executeWithSessionRetry(role, cookies -> apiClient.executeMultipartPost(
                 ApiEndpointDefinition.PROJECT_PRODUCTION_POST_CREATE.getPath(),
-                sessionCookies,
+                cookies,
                 "request",
-                request);
+                request));
     }
 }

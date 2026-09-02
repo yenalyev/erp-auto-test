@@ -6,6 +6,7 @@ import com.erp.enums.UserRole;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -14,6 +15,11 @@ import java.util.*;
 
 @Slf4j
 public class AuthService {
+
+    /** Local TTL only — staging may drop the HttpSession earlier (pod recycle / no stickiness). */
+    private static final long SESSION_CACHE_TTL_MS = 900_000;
+    /** Skip /users/me probe right after Playwright login. */
+    private static final long SESSION_LIVENESS_GRACE_MS = 30_000;
 
     private final String baseUrl;
     private final String keycloakUrl;
@@ -88,17 +94,14 @@ public class AuthService {
     public Map<String, String> getSessionForUser(String username, String password, String targetRoute) {
         String cacheKey = username + ":" + password;
 
-        // Перевіряємо кеш
-        if (sessionCache.containsKey(cacheKey)) {
-            SessionInfo sessionInfo = sessionCache.get(cacheKey);
-            // Перевіряємо чи сесія ще валідна (використовуємо TTL 15 хвилин)
-            if (System.currentTimeMillis() - sessionInfo.timestamp < 900000) { // 15 хвилин
-                log.debug("✅ Using cached session for user: {}", username);
+        SessionInfo sessionInfo = sessionCache.get(cacheKey);
+        if (sessionInfo != null) {
+            long ageMs = System.currentTimeMillis() - sessionInfo.timestamp;
+            if (ageMs < SESSION_CACHE_TTL_MS && isCachedSessionReusable(username, sessionInfo, ageMs)) {
                 return new HashMap<>(sessionInfo.cookies);
-            } else {
-                log.debug("🔄 Cached session expired for user: {}", username);
-                sessionCache.remove(cacheKey);
             }
+            log.debug("🔄 Cached session discarded for user: {} (age={}ms)", username, ageMs);
+            sessionCache.remove(cacheKey);
         }
 
         // Виконуємо новий логін через браузерний flow
@@ -109,6 +112,36 @@ public class AuthService {
         sessionCache.put(cacheKey, new SessionInfo(sessionCookies, System.currentTimeMillis()));
 
         return sessionCookies;
+    }
+
+    private boolean isCachedSessionReusable(String username, SessionInfo sessionInfo, long ageMs) {
+        if (ageMs < SESSION_LIVENESS_GRACE_MS) {
+            log.debug("✅ Using cached session for user: {} (age={}ms, grace)", username, ageMs);
+            return true;
+        }
+        if (isServerSessionAlive(sessionInfo.cookies)) {
+            log.debug("✅ Using cached session for user: {} (age={}ms, /users/me 200)", username, ageMs);
+            return true;
+        }
+        log.warn("⚠️ Cached JSESSIONID for {} rejected by GET /api/v1/users/me — will re-login", username);
+        return false;
+    }
+
+    private boolean isServerSessionAlive(Map<String, String> cookies) {
+        try {
+            int status = RestAssured.given()
+                    .baseUri(baseUrl)
+                    .cookies(cookies)
+                    .accept(ContentType.JSON)
+                    .redirects().follow(false)
+                    .when()
+                    .get("/api/v1/users/me")
+                    .statusCode();
+            return status == 200;
+        } catch (Exception e) {
+            log.warn("Session liveness check failed: {}", e.getMessage());
+            return false;
+        }
     }
 
     @Step("Full browser login flow for user: {username}")
@@ -408,8 +441,7 @@ public class AuthService {
         }
 
         SessionInfo sessionInfo = sessionCache.get(cacheKey);
-        // Перевіряємо TTL (15 хвилин)
-        boolean isValid = System.currentTimeMillis() - sessionInfo.timestamp < 900000;
+        boolean isValid = System.currentTimeMillis() - sessionInfo.timestamp < SESSION_CACHE_TTL_MS;
 
         if (!isValid) {
             log.debug("⏰ Cached session expired for user: {}", username);
@@ -481,7 +513,7 @@ public class AuthService {
 
             if (jsessionId.equals(cachedJSessionId)) {
                 // Знайшли відповідну сесію, перевіряємо TTL
-                boolean isValid = System.currentTimeMillis() - sessionInfo.timestamp < 900000;
+                boolean isValid = System.currentTimeMillis() - sessionInfo.timestamp < SESSION_CACHE_TTL_MS;
 
                 if (!isValid) {
                     log.debug("⏰ Session expired for JSESSIONID: {}", jsessionId.substring(0, 8) + "...");
@@ -526,7 +558,7 @@ public class AuthService {
             sessionCache.forEach((key, sessionInfo) -> {
                 String username = key.split(":")[0];
                 long ageMinutes = (System.currentTimeMillis() - sessionInfo.timestamp) / 60000;
-                boolean expired = System.currentTimeMillis() - sessionInfo.timestamp >= 900000;
+                boolean expired = System.currentTimeMillis() - sessionInfo.timestamp >= SESSION_CACHE_TTL_MS;
                 String jsessionId = sessionInfo.cookies.get("JSESSIONID");
                 String shortJSessionId = jsessionId != null ? jsessionId.substring(0, 8) + "..." : "N/A";
                 log.info("   - {}: age={}min, expired={}, JSESSIONID={}",

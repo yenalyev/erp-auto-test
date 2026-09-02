@@ -6,6 +6,7 @@ import com.erp.fixtures.RbacFixture;
 import com.erp.models.rbac.EndpointAccessRule;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.BaseTest;
+import com.erp.utils.auth.SessionUnauthorizedRetry;
 import com.erp.utils.config.ConfigProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -127,23 +128,41 @@ public class BaseRbacTest extends BaseTest {
         log.info("📡 [RBAC] {} {} | Role: {} | Key: {}",
                 definition.getHttpMethod(), finalPath, role, rule.getContextKey());
 
-        Response response;
-        if (MULTIPART_JSON_ENDPOINTS.contains(definition.name()) && requestBody != null) {
-            response = executeMultipartJsonRequest(definition, finalPath, role, requestBody);
-        } else {
-            RequestSpecification requestSpec = RestAssured.given()
-                    .cookies(getSessionForRole(role))
-                    .contentType(ContentType.JSON);
-
-            if (requestBody != null) {
-                requestSpec.body(requestBody);
-            }
-
-            response = requestSpec.request(definition.getHttpMethod(), finalPath);
+        Response response = executeRbacRequest(definition, finalPath, role, requestBody);
+        if (SessionUnauthorizedRetry.shouldRelogin(role, response.statusCode())) {
+            log.warn("⚠️ RBAC {} returned 401 — re-login and retry once", role);
+            evictRoleSession(role);
+            response = executeRbacRequest(definition, finalPath, role, requestBody);
         }
 
         log.info("📥 Response: {} ({} ms)", response.getStatusCode(), response.getTime());
         return response;
+    }
+
+    private Response executeRbacRequest(ApiEndpointDefinition definition,
+                                        String finalPath,
+                                        UserRole role,
+                                        Object requestBody) {
+        if (MULTIPART_JSON_ENDPOINTS.contains(definition.name()) && requestBody != null) {
+            return executeMultipartJsonRequest(definition, finalPath, role, requestBody);
+        }
+        RequestSpecification requestSpec = RestAssured.given()
+                .cookies(getSessionForRole(role))
+                .contentType(ContentType.JSON);
+        if (requestBody != null) {
+            requestSpec.body(requestBody);
+        }
+        return requestSpec.request(definition.getHttpMethod(), finalPath);
+    }
+
+    private void evictRoleSession(UserRole role) {
+        roleSessionCache.remove(role);
+        if (role != UserRole.ANONYMOUS) {
+            authService.invalidateSession(role.getUsername(), role.getPassword());
+        }
+        if (apiExecutor != null) {
+            apiExecutor.evictSessionForRole(role);
+        }
     }
 
     private Response executeMultipartJsonRequest(ApiEndpointDefinition definition,
