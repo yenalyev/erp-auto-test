@@ -105,19 +105,53 @@ public class ProductionFixture extends BaseFixture {
         return DatabaseIntegrityValidator.extractList(response, ResourceCategoryResponse.class);
     }
 
-    @Step("API: Map productId → categoryId з довідника ресурсів")
-    public Map<Long, Long> getProductCategoryMap() {
-        Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_GET_ALL, UserRole.OWNER_1);
-        validateSuccess(response, "Get resources for category map");
+    @Step("API: Map productId → categoryId для ресурсів журналу")
+    public Map<Long, Long> getProductCategoryMapForIds(Collection<Long> resourceIds) {
+        Map<Long, Long> productCategoryMap = new LinkedHashMap<>();
+        if (resourceIds == null) {
+            return productCategoryMap;
+        }
+        for (Long resourceId : resourceIds) {
+            if (resourceId == null || productCategoryMap.containsKey(resourceId)) {
+                continue;
+            }
+            ResourceResponse resource = resourceFixture.getById(UserRole.OWNER_1, resourceId);
+            if (resource.getCategory() != null && resource.getCategory().getId() != null) {
+                productCategoryMap.put(resourceId, resource.getCategory().getId());
+            }
+        }
+        return productCategoryMap;
+    }
 
+    @Step("API: Map productId → categoryId з довідника ресурсів storageId={storageId}")
+    public Map<Long, Long> getProductCategoryMap(long storageId) {
+        Map<Long, Long> productCategoryMap = new LinkedHashMap<>();
+        int page = 0;
+        int pageSize = 500;
+        int totalPages;
+        do {
+            Map<String, Object> params = new LinkedHashMap<>();
+            params.put("storageId", storageId);
+            params.put("page", page);
+            params.put("size", pageSize);
+            Response response = apiExecutor.executeWithQueryParams(
+                    ApiEndpointDefinition.RESOURCE_GET_ALL, UserRole.OWNER_1, params);
+            validateSuccess(response, "Get resources for category map page=" + page);
+            mergeResourceCategoryPage(response, productCategoryMap);
+            Integer pages = response.jsonPath().getInt("page.totalPages");
+            totalPages = pages == null || pages < 1 ? 1 : pages;
+            page++;
+        } while (page < totalPages);
+        return productCategoryMap;
+    }
+
+    private static void mergeResourceCategoryPage(Response response, Map<Long, Long> productCategoryMap) {
         boolean paged = response.getBody().asString().stripLeading().startsWith("{");
         String listPath = paged ? "content" : "$";
         List<Object> resources = response.jsonPath().getList(listPath);
         if (resources == null || resources.isEmpty()) {
-            return Map.of();
+            return;
         }
-
-        Map<Long, Long> productCategoryMap = new LinkedHashMap<>();
         String itemPrefix = paged ? "content[%d]" : "[%d]";
         for (int i = 0; i < resources.size(); i++) {
             String prefix = String.format(itemPrefix, i);
@@ -127,7 +161,6 @@ public class ProductionFixture extends BaseFixture {
                 productCategoryMap.put(resourceId, categoryId);
             }
         }
-        return productCategoryMap;
     }
 
     @Step("API: GET production id={productionId}")

@@ -221,6 +221,11 @@ public class CrewFlyPointIncidentTest extends CrewApiTestBase {
                 ISSUE_AMOUNT,
                 marker);
         incidentFixture.createIncident(INCIDENT_ACTOR, sent, marker);
+        RelocationResponse lost = incidentFixture.findLostByDescription(
+                UserRole.OWNER_1, scenario.memberStorageId(), marker);
+        assertThat(lost).as("після інциденту видача «Втрачено»").isNotNull();
+        assertThat(lost.getState()).isEqualTo(RelocationState.LOST);
+
         incidentFixture.deleteIncident(INCIDENT_ACTOR, sent.getId());
 
         RelocationResponse restored = relocationFixture.findInTransitByDescription(
@@ -261,6 +266,11 @@ public class CrewFlyPointIncidentTest extends CrewApiTestBase {
                 ISSUE_AMOUNT,
                 marker);
         incidentFixture.createIncident(INCIDENT_ACTOR, sent, marker);
+
+        RelocationResponse lost = incidentFixture.findLostByDescription(
+                UserRole.OWNER_1, scenario.memberStorageId(), marker);
+        assertThat(lost).as("видачу на прикріплений CREW закрито як «Втрачено»").isNotNull();
+        assertThat(lost.getState()).isEqualTo(RelocationState.LOST);
 
         ProductionStockAssertions.StockSnapshot afterFp = RelocationStockAssertions.capture(
                 apiExecutor, flyPointId, STOCK_READER, Set.of(resourceId), "fp after incident");

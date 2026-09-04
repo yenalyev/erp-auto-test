@@ -30,8 +30,8 @@ abstract class ProductionJournalFilterApiTestBase extends BaseFunctionalTest {
         productionFixture = new ProductionFixture(testContext, apiExecutor);
         storageId = ConfigProvider.getOwner1StorageId();
         catalog = ProductionJournalFilterCatalog.load(productionFixture, storageId);
-        log.info("Production journal filter catalog ready — storageId={}, baselineSize={}",
-                storageId, catalog.baseline().size());
+        log.info("Production journal filter catalog ready — storageId={}, baselineSize={}, unfilteredTotal={}",
+                storageId, catalog.baseline().size(), catalog.unfilteredTotal());
     }
 
     protected void verifyApiFilter(ProductionJournalFilterScenario scenario) {
@@ -48,11 +48,16 @@ abstract class ProductionJournalFilterApiTestBase extends BaseFunctionalTest {
                 .as("Перша сторінка API для фільтра «%s» не повинна бути порожньою", scenario.name())
                 .isNotEmpty();
 
+        catalog.ensureProductCategories(productionFixture, filtered);
         ProductionJournalApiAssertions.assertAnchorPresent(filtered, scenario.anchor(), scenario.name());
         ProductionJournalApiAssertions.assertAllMatchQuery(
                 filtered, scenario, catalog.productCategoryMap());
-        ProductionJournalApiAssertions.assertFilteredSubsetOfBaseline(
-                filtered, catalog.baseline(), scenario.name());
+        if (catalog.baselineCoversJournal()) {
+            ProductionJournalApiAssertions.assertFilteredSubsetOfBaseline(
+                    filtered, catalog.baseline(), scenario.name());
+        } else {
+            Allure.parameter("subsetCheck", "skipped — unfiltered journal exceeds baseline page");
+        }
 
         Allure.parameter("totalElements", totalElements);
         Allure.parameter("firstPageSize", filtered.size());

@@ -10,10 +10,12 @@ import org.testng.SkipException;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Builds production journal filter scenarios from live API data (no hardcoded filter values).
@@ -25,33 +27,47 @@ public class ProductionJournalFilterCatalog {
 
     private final long storageId;
     private final List<ManufacturingItemResponse> baseline;
+    private final long unfilteredTotal;
     private final Map<Long, Long> productCategoryMap;
     private final Map<Long, ResourceCategoryResponse> categoriesById;
 
     private ProductionJournalFilterCatalog(long storageId,
                                            List<ManufacturingItemResponse> baseline,
+                                           long unfilteredTotal,
                                            Map<Long, Long> productCategoryMap,
                                            Map<Long, ResourceCategoryResponse> categoriesById) {
         this.storageId = storageId;
         this.baseline = baseline;
+        this.unfilteredTotal = unfilteredTotal;
         this.productCategoryMap = productCategoryMap;
         this.categoriesById = categoriesById;
     }
 
     public static ProductionJournalFilterCatalog load(ProductionFixture fixture, long storageId) {
-        List<ManufacturingItemResponse> baseline = fixture.getJournalPage(
-                ProductionJournalQuery.uiDefaults(storageId).toBuilder().pageSize(BASELINE_PAGE_SIZE).build());
+        ProductionJournalQuery baselineQuery = ProductionJournalQuery.uiDefaults(storageId)
+                .toBuilder()
+                .pageSize(BASELINE_PAGE_SIZE)
+                .build();
+        List<ManufacturingItemResponse> baseline = fixture.getJournalPage(baselineQuery);
         if (baseline.isEmpty()) {
             throw new SkipException("Журнал виробництва порожній — неможливо побудувати сценарії фільтрів");
         }
-        Map<Long, Long> productCategoryMap = fixture.getProductCategoryMap();
+        long unfilteredTotal = fixture.getJournalTotalElements(ProductionJournalQuery.uiDefaults(storageId));
+        Set<Long> productIds = new LinkedHashSet<>();
+        for (ManufacturingItemResponse item : baseline) {
+            if (item.getProduct() != null && item.getProduct().getId() != null) {
+                productIds.add(item.getProduct().getId());
+            }
+        }
+        Map<Long, Long> productCategoryMap = fixture.getProductCategoryMapForIds(productIds);
         Map<Long, ResourceCategoryResponse> categoriesById = new HashMap<>();
         for (ResourceCategoryResponse category : fixture.getResourceCategories()) {
             categoriesById.put(category.getId(), category);
         }
-        log.info("Production journal filter catalog: {} baseline records, {} product categories mapped",
-                baseline.size(), productCategoryMap.size());
-        return new ProductionJournalFilterCatalog(storageId, baseline, productCategoryMap, categoriesById);
+        log.info("Production journal filter catalog: {} baseline records, unfilteredTotal={}, {} product categories mapped",
+                baseline.size(), unfilteredTotal, productCategoryMap.size());
+        return new ProductionJournalFilterCatalog(
+                storageId, baseline, unfilteredTotal, productCategoryMap, categoriesById);
     }
 
     public long storageId() {
@@ -64,6 +80,28 @@ public class ProductionJournalFilterCatalog {
 
     public Map<Long, Long> productCategoryMap() {
         return productCategoryMap;
+    }
+
+    /** True when the first unfiltered page contains the whole journal (subset checks are valid). */
+    public boolean baselineCoversJournal() {
+        return baseline.size() >= unfilteredTotal;
+    }
+
+    public long unfilteredTotal() {
+        return unfilteredTotal;
+    }
+
+    public void ensureProductCategories(ProductionFixture fixture, List<ManufacturingItemResponse> items) {
+        Set<Long> missing = new LinkedHashSet<>();
+        for (ManufacturingItemResponse item : items) {
+            Long productId = item.getProduct() != null ? item.getProduct().getId() : null;
+            if (productId != null && !productCategoryMap.containsKey(productId)) {
+                missing.add(productId);
+            }
+        }
+        if (!missing.isEmpty()) {
+            productCategoryMap.putAll(fixture.getProductCategoryMapForIds(missing));
+        }
     }
 
     public ProductionJournalFilterScenario productFilter(ProductionFixture fixture) {
@@ -132,6 +170,9 @@ public class ProductionJournalFilterCatalog {
     }
 
     public Optional<ProductionJournalFilterScenario> categoryFilter(ProductionFixture fixture) {
+        Map<Long, Long> hitsByCategory = new HashMap<>();
+        ProductionJournalFilterScenario rarest = null;
+        long rarestHits = Long.MAX_VALUE;
         for (ManufacturingItemResponse anchor : baseline) {
             Long productId = anchor.getProduct() != null ? anchor.getProduct().getId() : null;
             if (productId == null) {
@@ -145,22 +186,33 @@ public class ProductionJournalFilterCatalog {
             if (category == null) {
                 continue;
             }
+            long hits = hitsByCategory.computeIfAbsent(categoryId, id -> {
+                ProductionJournalQuery probe = ProductionJournalQuery.uiDefaults(storageId)
+                        .toBuilder()
+                        .categoryId(id)
+                        .build();
+                return fixture.getJournalTotalElements(probe);
+            });
+            if (hits == 0 || hits >= rarestHits) {
+                continue;
+            }
+            rarestHits = hits;
             ProductionJournalQuery query = ProductionJournalQuery.uiDefaults(storageId)
                     .toBuilder()
                     .categoryId(categoryId)
                     .build();
-            if (fixture.getJournalTotalElements(query) == 0) {
-                continue;
-            }
-            return Optional.of(ProductionJournalFilterScenario.builder()
+            rarest = ProductionJournalFilterScenario.builder()
                     .name("category")
                     .anchor(anchor)
                     .query(query)
                     .categoryId(categoryId)
                     .categoryName(category.getName())
-                    .build());
+                    .build();
+            if (hits == 1) {
+                break;
+            }
         }
-        return Optional.empty();
+        return Optional.ofNullable(rarest);
     }
 
     public ProductionJournalFilterScenario productAndDateRangeFilter(ProductionFixture fixture) {

@@ -3,25 +3,35 @@ package com.erp.tests.functional.order;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.defect.DefectDataFactory;
+import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.data.factories.relocation.RelocationDataFactory;
+import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.RelocationState;
 import com.erp.fixtures.DefectFixture;
+import com.erp.fixtures.ProductionFixture;
+import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.request.DefectRequest;
 import com.erp.models.request.InventoryRequest;
 import com.erp.models.request.RelocationInputEditRequest;
 import com.erp.models.request.RelocationOutputEditRequest;
 import com.erp.models.request.RelocationOutputRequest;
+import com.erp.models.request.ResourceUsageRequest;
+import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.BookingResponse;
 import com.erp.models.response.OrderResponse;
 import com.erp.models.response.RelocationResponse;
+import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
+import com.erp.models.response.TechnologicalMapResponse;
+import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -52,10 +62,21 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
     private static final double ADJUST_BELOW_HOLD = 5.0;
 
     private DefectFixture defectFixture;
+    private ProductionFixture productionFixture;
+    private TechnologicalMapFixture techMapFixture;
+    private ResourceFixture resourceFixture;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupOrderApiTests")
     public void setupStockRegressionFixtures() {
         defectFixture = new DefectFixture(testContext, apiExecutor);
+        productionFixture = new ProductionFixture(testContext, apiExecutor);
+        techMapFixture = new TechnologicalMapFixture(testContext, apiExecutor);
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        if (testContext.get(ContextKey.RELOCATION_SUPPLIER_ID) == null) {
+            testContext.set(
+                    ContextKey.RELOCATION_SUPPLIER_ID,
+                    RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, MANAGER));
+        }
     }
 
     @Test(priority = 1)
@@ -112,24 +133,16 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
             кількості так, що on-hand опуститься нижче hold → 400.
             """)
     public void testReceiveEditBelowHoldReturns400() {
-        inventoryFixture.removeResourceFromStorage(gatheringStorageId, resourceId, GATHERER);
-        double stockAfterRemove = inventoryFixture.getResourceStock(
+        pinGatheringOnHand(0);
+        double stockAfterPin = inventoryFixture.getResourceStock(
                 gatheringStorageId, resourceId, GATHERER);
-        if (stockAfterRemove > 0.01) {
-            throw new SkipException(
-                    "Cannot isolate receive record: gathering still has stock " + stockAfterRemove
-                            + " after removeResourceFromStorage");
-        }
+        assertThat(stockAfterPin)
+                .as("gathering must be empty so the receive under test is the only on-hand")
+                .isLessThan(0.01);
 
         String batchNumber = RelocationDataFactory.uniqueBatchNumber();
-        RelocationResponse receive;
-        try {
-            receive = relocationFixture.createExternalReceive(
-                    GATHERER, gatheringStorageId, resourceId, TOTAL_STOCK, batchNumber);
-        } catch (RuntimeException e) {
-            throw new SkipException(
-                    "External receive fixture failed (staging product/env): " + e.getMessage(), e);
-        }
+        RelocationResponse receive = relocationFixture.createExternalReceive(
+                GATHERER, gatheringStorageId, resourceId, TOTAL_STOCK, batchNumber);
         prepareInProgressWithActiveHold();
 
         RelocationInputEditRequest edit = RelocationDataFactory.buildReceiveEditRequest(
@@ -165,12 +178,26 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Після ACTIVE hold: виробництво, що споживає input з gathering нижче hold → 400.
-            Пропуск: ProductionFixture/tech map inputs не прив'язані до ORDER_RESOURCE_ID на gathering.
+            Техкарта на gathering: 1 од. продукції списує WRITE_OFF_QTY ресурсу заявки.
             """)
     public void testProductionInputBelowHoldReturns400() {
-        throw new SkipException(
-                "Production input regression requires tech map whose inputs match ORDER_RESOURCE_ID "
-                        + "on gathering storage — not available in current OrderFixture/ProductionFixture setup");
+        seedExactGatheringStock(TOTAL_STOCK);
+
+        ResourceResponse output = resourceFixture.createUniqueResource("ord-reg5-out-");
+        TechnologicalMapRequest tmRequest = TechnologicalMapDataFactory.createProductionMapWithStorages(
+                "ord-reg5",
+                List.of(new ResourceUsageRequest(resourceId, WRITE_OFF_QTY)),
+                List.of(new ResourceUsageRequest(output.getId(), 1.0)),
+                Set.of(gatheringStorageId)).build();
+        TechnologicalMapResponse techMap = techMapFixture.createTechMapWithRequest(MANAGER, tmRequest);
+
+        prepareInProgressWithActiveHold();
+
+        Response response = productionFixture.tryCreateAs(
+                MANAGER,
+                gatheringStorageId,
+                ProductionDataFactory.buildCreateRequest(techMap, 1.0));
+        assertBookedStockBlocked(response);
     }
 
     @Test(priority = 6)

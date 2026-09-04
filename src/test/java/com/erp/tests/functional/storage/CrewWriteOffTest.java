@@ -35,8 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Write-off після використання екіпажем: списання з parent FLY_POINT.
- * Fight sync (TC-CREW-FIGHT-*) — skip when GET /write-off/short-stats ≠ 200.
- * TC-FLY-WO-001 сіє PENDING через БД ({@code use.database=true}) і complete через API.
+ * Fight sync (TC-CREW-FIGHT-001) — skip when GET /write-off/short-stats ≠ 200.
+ * TC-CREW-FIGHT-002 і TC-FLY-WO-001 сіють PENDING через БД ({@code use.database=true}) і complete через API.
  */
 @Slf4j
 @Epic("Inventory")
@@ -99,27 +99,61 @@ public class CrewWriteOffTest extends CrewApiTestBase {
     @Severity(SeverityLevel.NORMAL)
     public void testWriteOffAppearsAfterFightSync() {
         if (!fightIntegrationEnabled) {
-            throw new SkipException("Fight sync disabled on dev");
+            throw new SkipException("Fight sync disabled — GET write-off/short-stats as ADMIN ≠ 200");
         }
         CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("fight-wo-");
+        // OWNER_1 often has no inventory-write-off on staging (403); ADMIN is the Fight reader.
         Response page = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.INVENTORY_WRITE_OFF_GET_PAGE,
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 Map.of("storageId", scenario.crew().getId()));
+        if (page.statusCode() == 403) {
+            throw new SkipException(
+                    "GET /write-off page 403 as ADMIN — Fight write-off permission missing on this env");
+        }
         assertThat(page.statusCode()).isEqualTo(200);
         assertThat(page.jsonPath().getList("content")).isNotNull();
     }
 
     @Test(priority = 20)
     @TestCaseId("TC-CREW-FIGHT-002")
-    @Description("Complete reconciliation зменшує crew stock (потребує Fight seed на dev)")
+    @Description("Complete write-off (DB seed PENDING + PUT complete) зменшує stock вільного CREW")
     @Severity(SeverityLevel.NORMAL)
     public void testWriteOffCompleteReducesCrewStock() {
-        if (!fightIntegrationEnabled) {
-            throw new SkipException("Fight sync disabled on this env — GET write-off/short-stats ≠ 200");
+        if (getDbHelper() == null) {
+            throw new SkipException(
+                    "TC-CREW-FIGHT-002 потребує БД для seed storage_item_write_off "
+                            + "(увімкніть use.database=true)");
         }
-        throw new SkipException(
-                "Complete reconciliation E2E requires Fight seed; covered by tk SyncTeamProcessIT");
+
+        CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("fight-wo-c-");
+        refreshRoleSessions(UserRole.OWNER_1, UserRole.ADMIN);
+
+        Long crewId = scenario.crew().getId();
+        relocationFixture.createSendAndFinishBySender(
+                UserRole.OWNER_1,
+                scenario.memberStorageId(),
+                crewId,
+                resourceId,
+                ISSUE_AMOUNT);
+
+        ProductionStockAssertions.StockSnapshot beforeCrew = RelocationStockAssertions.capture(
+                apiExecutor, crewId, STOCK_READER, Set.of(resourceId), "crew before complete");
+
+        long writeOffId = seedPendingCrewWriteOff(crewId, resourceId, resourceName, WRITE_OFF_AMOUNT);
+        Response complete = apiExecutor.execute(
+                ApiEndpointDefinition.INVENTORY_WRITE_OFF_PUT_COMPLETE,
+                UserRole.ADMIN,
+                Map.of("writeOffIdentifiers", List.of(writeOffId)));
+        assertThat(complete.statusCode())
+                .as("PUT /write-off/complete id=%s", writeOffId)
+                .isEqualTo(200);
+
+        ProductionStockAssertions.StockSnapshot afterCrew = RelocationStockAssertions.capture(
+                apiExecutor, crewId, STOCK_READER, Set.of(resourceId), "crew after complete");
+        RelocationStockAssertions.assertDebitedFromSender(
+                beforeCrew, afterCrew, crewId, resourceId, WRITE_OFF_AMOUNT,
+                "complete write-off на вільному CREW списує з екіпажу");
     }
 
     @Test(priority = 30)

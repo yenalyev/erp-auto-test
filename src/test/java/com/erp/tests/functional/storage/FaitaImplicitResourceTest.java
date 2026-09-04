@@ -234,6 +234,7 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
                 productResource.getId(),
                 implicitResource1.getId(),
                 implicitResource2.getId());
+        refreshRoleSessions(STOCK_READER);
         ProductionStockAssertions.StockSnapshot beforeFp = RelocationStockAssertions.capture(
                 apiExecutor, flyPointId, STOCK_READER, resourceIds, "fp before implicit write-offs");
 
@@ -281,6 +282,7 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
                 .as("PUT /write-off/complete має прийняти product + 2 implicit write-offs")
                 .isEqualTo(200);
 
+        refreshRoleSessions(STOCK_READER);
         ProductionStockAssertions.StockSnapshot afterFp = RelocationStockAssertions.capture(
                 apiExecutor, flyPointId, STOCK_READER, resourceIds, "fp after implicit write-offs");
 

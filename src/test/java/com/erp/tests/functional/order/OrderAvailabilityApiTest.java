@@ -5,7 +5,6 @@ import com.erp.models.response.OrderAvailabilityLocationResponse;
 import com.erp.models.response.OrderAvailabilityResponse;
 import com.erp.models.response.OrderResponse;
 import com.erp.api.endpoints.ApiEndpointDefinition;
-import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -69,18 +68,27 @@ public class OrderAvailabilityApiTest extends OrderApiTestBase {
     @Test(priority = 12)
     @TestCaseId("TC-ORD-052")
     @Story("Availability without root config")
-    @Description("Без конфига — усі локації з stock цих ресурсів. На стенді root зазвичай заданий — skip.")
+    @Description("""
+            Без order_availability_root_storage — availability по всіх локаціях зі stock.
+            На стенді root заданий: тест тимчасово DELETE рядок у БД і відновлює його в finally.
+            """)
     public void testAvailabilityWithoutRootConfig() {
-        long rootId = ConfigProvider.getOrderAvailabilityRootStorageId();
-        if (rootId > 0) {
+        if (getDbHelper() == null) {
             throw new SkipException(
-                    "order_availability_root_storage=" + rootId
-                            + " is configured on this env — TC-ORD-052 applies only without root config");
+                    "TC-ORD-052 потребує БД, щоб тимчасово зняти order_availability_root_storage");
         }
         OrderResponse order = prepareManagedInProgress();
-        List<OrderAvailabilityResponse> availability = orderFixture.getAvailability(
-                MANAGER, order.getId(), requesterStorageId);
-        assertThat(availability).isNotEmpty();
+        try {
+            orderFixture.clearAvailabilityRootConfig(getDbHelper());
+            List<OrderAvailabilityResponse> availability = orderFixture.getAvailability(
+                    MANAGER, order.getId(), requesterStorageId);
+            assertThat(availability)
+                    .as("без root config availability не порожня (усі локації зі stock)")
+                    .isNotEmpty();
+            assertThat(availability.getFirst().getLocations()).isNotEmpty();
+        } finally {
+            orderFixture.ensureAvailabilityRootConfig(getDbHelper());
+        }
     }
 
     @Test(priority = 13)

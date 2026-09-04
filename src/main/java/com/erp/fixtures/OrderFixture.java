@@ -168,6 +168,21 @@ public class OrderFixture extends BaseFixture {
         }
     }
 
+    @Step("DB: прибрати order_availability_root_storage (TC-ORD-052)")
+    public void clearAvailabilityRootConfig(DatabaseHelper dbHelper) {
+        if (dbHelper == null) {
+            throw new SkipException("TC-ORD-052 потребує БД, щоб тимчасово зняти order_availability_root_storage");
+        }
+        try (PreparedStatement delete = dbHelper.getConnection().prepareStatement(
+                "DELETE FROM app_config WHERE name = 'order_availability_root_storage' AND username IS NULL")) {
+            int removed = delete.executeUpdate();
+            log.info("Cleared order_availability_root_storage rows={}", removed);
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "Failed to clear order_availability_root_storage: " + e.getMessage(), e);
+        }
+    }
+
     @Step("API: POST create order")
     public OrderResponse createOrder(UserRole role, OrderRequest request) {
         Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, role, request);
