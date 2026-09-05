@@ -19,7 +19,9 @@
         <classes>
             <class name="com.erp.tests.functional.storage.FlyPointInventoryTest"/>
             <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewAnalyticsStocksTest"/>
             <class name="com.erp.tests.functional.storage.FlyPointDashboardApiTest"/>
+            <class name="com.erp.tests.functional.storage.CrewBattalionStocksRbacTest"/>
             <class name="com.erp.tests.functional.storage.CrewInventoryTest">
                 <methods>
                     <include name="owner1DeniedDirectCrewInventoryWithoutInventoryListPerm"/>
@@ -45,6 +47,7 @@
         <classes>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
+            <class name="com.erp.tests.ui.CrewBattalionStocksUiTest"/>
         </classes>
     </test>
 </suite>

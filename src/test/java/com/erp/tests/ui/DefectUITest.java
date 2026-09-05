@@ -385,27 +385,43 @@ public class DefectUITest extends BaseUITest {
 
     @Test(priority = 81)
     @TestCaseId("TC-UI-DEF-008")
-    @Story("Write-off filter default is «Не списано»")
+    @Story("Write-off filter default is «Всі»")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            AC: дефолтне значення селектора «Списання» на /defects — «Не списано»
-            (показувати лише записи з Кількість > 0).""")
-    public void testWriteOffFilterDefaultIsNotWritten() {
+            AC: дефолтне значення селектора «Списання» на /defects — «Всі»
+            (без фільтрації за списанням; видимі і несписані, і списані записи).
+            tk-ui DefectListPage: useState('all'). «Не списано» покриває TC-UI-DEF-007.""")
+    public void testWriteOffFilterDefaultIsAll() {
         String openName = createStorageDefectViaApi(4.0);
         String writtenName = createFullyWrittenOffDefectViaApi(4.0);
 
         DefectsPage defectsPage = new DefectsPage(page).open();
 
         assertThat(defectsPage.getWriteOffFilterValue())
-                .as("Дефолт селектора «Списання»")
-                .isEqualTo(DefectsPage.WRITE_OFF_FILTER_NOT_WRITTEN);
+                .as("Дефолт селектора «Списання» до будь-якої зміни фільтрів")
+                .isEqualTo(DefectsPage.WRITE_OFF_FILTER_ALL);
+
+        defectsPage.clearPeriodFilter();
+        assertThat(defectsPage.getWriteOffFilterValue())
+                .as("Очищення «Період» не змінює селектор «Списання»")
+                .isEqualTo(DefectsPage.WRITE_OFF_FILTER_ALL);
+
+        defectsPage.revealResource(openName);
+        assertThat(defectsPage.getWriteOffFilterValue())
+                .as("Пошук ресурсу не змінює дефолт «Всі»")
+                .isEqualTo(DefectsPage.WRITE_OFF_FILTER_ALL);
         assertThat(defectsPage.isRowWithResourceVisible(openName))
-                .as("несписаний брак видимий за дефолтом")
+                .as("несписаний брак видимий за дефолтом «Всі»")
                 .isTrue();
+
+        defectsPage.revealResource(writtenName);
+        assertThat(defectsPage.getWriteOffFilterValue())
+                .as("Після пошуку списаного запису селектор лишається «Всі»")
+                .isEqualTo(DefectsPage.WRITE_OFF_FILTER_ALL);
         assertThat(defectsPage.isRowWithResourceVisible(writtenName))
-                .as("повністю списаний брак прихований за дефолтом")
-                .isFalse();
-        defectsPage.attachScreenshot("TC-UI-DEF-008 — default Не списано");
+                .as("повністю списаний брак видимий за дефолтом «Всі»")
+                .isTrue();
+        defectsPage.attachScreenshot("TC-UI-DEF-008 — default Всі");
     }
 
     // -------------------------------------------------------------------

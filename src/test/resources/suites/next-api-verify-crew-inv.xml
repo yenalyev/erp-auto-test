@@ -1,0 +1,27 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="CrewInventoryRemain" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="P2-SKIP-API-CrewInventory">
+        <classes>
+            <class name="com.erp.tests.functional.storage.CrewInventoryTest">
+                <methods>
+                    <include name="testCrewResourceStockReport"/>
+                    <include name="testCrewResourceIncomeReport"/>
+                    <include name="testCrewStockReportMatchesDirectInventory"/>
+                    <include name="owner1DeniedDirectCrewInventoryWithoutInventoryListPerm"/>
+                    <include name="testCrewManagerCanReadCrewDirectInventory"/>
+                    <include name="testOwner2DeniedCrewDirectInventory"/>
+                    <include name="testOwner1DeniedUnattachedCrewInventory"/>
+                    <include name="testCrewInventorySessionOpenRbac"/>
+                    <include name="testCrewInventoryConductUpdatesStock"/>
+                    <include name="putInventoryOnClosedCrewSessionReturns403"/>
+                    <include name="crewManagerCanOpenAndConductInventory"/>
+                    <include name="putNegativeAmountOnCrewReturns400"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

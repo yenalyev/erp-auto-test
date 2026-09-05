@@ -137,10 +137,18 @@ public class LocationPermissionsUiTest extends BaseUITest {
         ProductionPage production = new ProductionPage(page).open();
         AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
 
-        assertThat(sidebar.isWorkspaceOptionVisible(fullA1Name)).isTrue();
-        assertThat(sidebar.isWorkspaceOptionVisible(fullA2Name)).isTrue();
-        assertThat(sidebar.isWorkspaceOptionVisible(roB1Name)).isTrue();
-        assertThat(sidebar.isWorkspaceOptionVisible(roB2Name)).isTrue();
+        assertThat(sidebar.isWorkspaceOptionVisible(fullA1Name))
+                .as("workspace contains full A1 «%s»", fullA1Name)
+                .isTrue();
+        assertThat(sidebar.isWorkspaceOptionVisible(fullA2Name))
+                .as("workspace contains full A2 «%s»", fullA2Name)
+                .isTrue();
+        assertThat(sidebar.isWorkspaceOptionVisible(roB1Name))
+                .as("workspace contains RO B1 «%s»", roB1Name)
+                .isTrue();
+        assertThat(sidebar.isWorkspaceOptionVisible(roB2Name))
+                .as("workspace contains RO B2 «%s» (id=%s)", roB2Name, ids.roB2())
+                .isTrue();
 
         sidebar.selectWorkspaceByName(fullA1Name);
         production.waitForJournalDataSettled();

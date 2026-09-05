@@ -1,0 +1,20 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="NspHist" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="NspHist">
+        <classes>
+            <class name="com.erp.tests.ui.OperationHistoryUiTest">
+                <methods>
+                    <include name="nspQtyGreaterThanOneUsesTotalInHistory"/>
+                    <include name="nspInProgressUsageShownInHistory"/>
+                    <include name="nspDoneUsageShownInHistory"/>
+                    <include name="disassembleActualProducedAmountShownInHistory"/>
+                    <include name="nspUsedResourceAppearsInHistoryTable"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

@@ -42,10 +42,9 @@ public class TechnologicalMapHierarchyFixture {
         this.storageFixture = storageFixture;
         this.regionFixture = regionFixture;
         this.techMapFixture = new TechnologicalMapFixture(testContext, apiExecutor);
-        InventoryFixture inventoryFixture = new InventoryFixture(testContext, apiExecutor);
         UserFixture userFixture = new UserFixture(testContext, apiExecutor);
         this.isolatedScope = new IsolatedRestrictedOwnerScope(
-                storageFixture, userFixture, inventoryFixture, apiExecutor, playwright);
+                storageFixture, userFixture, apiExecutor, playwright);
     }
 
     public TechnologicalMapFixture techMaps() {

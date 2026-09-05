@@ -64,4 +64,38 @@ public final class XlsxContentAssertions {
             throw new AssertionError("Cannot write temp xlsx: " + e.getMessage(), e);
         }
     }
+
+    /** Common Excel cell string forms for whole or one-decimal amounts (12 → 12 / 12.0 / 12,0). */
+    public static boolean zipContainsAmount(byte[] xlsxBytes, double amount) {
+        if (zipContainsText(xlsxBytes, formatAmount(amount))) {
+            return true;
+        }
+        if (amount == Math.rint(amount)) {
+            long whole = (long) amount;
+            return zipContainsText(xlsxBytes, Long.toString(whole))
+                    || zipContainsText(xlsxBytes, whole + ".0")
+                    || zipContainsText(xlsxBytes, whole + ",0");
+        }
+        return false;
+    }
+
+    public static boolean zipContainsAmount(Path xlsxPath, double amount) {
+        if (zipContainsText(xlsxPath, formatAmount(amount))) {
+            return true;
+        }
+        if (amount == Math.rint(amount)) {
+            long whole = (long) amount;
+            return zipContainsText(xlsxPath, Long.toString(whole))
+                    || zipContainsText(xlsxPath, whole + ".0")
+                    || zipContainsText(xlsxPath, whole + ",0");
+        }
+        return false;
+    }
+
+    private static String formatAmount(double amount) {
+        if (amount == Math.rint(amount)) {
+            return Long.toString((long) amount);
+        }
+        return Double.toString(amount);
+    }
 }

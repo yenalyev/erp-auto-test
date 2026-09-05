@@ -70,7 +70,6 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
         isolatedOwnerScope = new IsolatedRestrictedOwnerScope(
                 storageFixture,
                 new UserFixture(testContext, apiExecutor),
-                new InventoryFixture(testContext, apiExecutor),
                 apiExecutor,
                 getPlaywrightSessionProvider());
         owner2StorageId = isolatedOwnerScope.acquire();

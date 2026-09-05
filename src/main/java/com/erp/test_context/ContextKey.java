@@ -53,6 +53,8 @@ public enum ContextKey {
     NON_SERIES_RESOURCE_NAME("nonSeriesResourceName", String.class),
     NON_SERIES_SEEDED_STOCK("nonSeriesSeededStock", Double.class),
     DYNAMIC_STORAGE("dynamicStorage",StorageResponse .class ),
+    /** Visibility region id for STORAGE_REGION_* RBAC path variables. */
+    STORAGE_REGION_ID("storageRegionId", Long.class),
     DYNAMIC_PLAN("dynamicPlan",PlanResponse .class ),
     DYNAMIC_PLAN_LIST("dynamicPlanList",List.class ),
     DYNAMIC_PLAN_ID("dynamicPlanId", Long.class),

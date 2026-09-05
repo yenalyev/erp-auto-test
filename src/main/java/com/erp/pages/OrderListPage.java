@@ -120,8 +120,13 @@ public class OrderListPage extends BasePage {
 
     public OrderListPage filterByResourceSearch(String text) {
         String needle = text == null ? "" : text;
-        page.getByRole(AriaRole.COMBOBOX, new Page.GetByRoleOptions().setName(RESOURCE_FILTER_PLACEHOLDER))
-                .click();
+        Locator resourceFilter = page.locator("button[role='combobox']")
+                .filter(new Locator.FilterOptions().setHasText(RESOURCE_FILTER_PLACEHOLDER))
+                .first();
+        resourceFilter.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        resourceFilter.click();
         Locator search = page.getByPlaceholder(RESOURCE_FILTER_SEARCH);
         search.fill(needle);
         Locator option = page.locator("[data-slot='combobox-item'], [cmdk-item], [role='option']")

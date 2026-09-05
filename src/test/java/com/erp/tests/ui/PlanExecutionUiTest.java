@@ -92,34 +92,38 @@ public class PlanExecutionUiTest extends BaseUITest {
 
     @AfterMethod(alwaysRun = true)
     public void cleanupArtifacts() {
-        if (currentPlan != null) {
-            fixture.cleanupPlan(currentPlan);
-            currentPlan = null;
-        }
-        if (currentProduction != null && currentStorageId != null) {
-            fixture.cleanupProduction(currentProduction, currentStorageId);
-            currentProduction = null;
-        }
-        if (secondProduction != null && currentStorageId != null) {
-            fixture.cleanupProduction(secondProduction, currentStorageId);
-            secondProduction = null;
-        }
-        if (currentContext != null && currentStorageId != null) {
-            fixture.cleanupTechMap(currentContext.getTechMap(), currentStorageId);
-            currentContext = null;
-        }
-        if (secondContext != null && currentStorageId != null) {
-            fixture.cleanupTechMap(secondContext.getTechMap(), currentStorageId);
-            secondContext = null;
-        }
-        if (favouritesMutated && favouritesRole != null) {
-            fixture.restoreFavouriteResources(favouritesRole, previousFavouriteIds);
-            favouritesMutated = false;
-            favouritesRole = null;
-            previousFavouriteIds = null;
+        if (fixture != null) {
+            if (currentPlan != null) {
+                fixture.cleanupPlan(currentPlan);
+                currentPlan = null;
+            }
+            if (currentProduction != null && currentStorageId != null) {
+                fixture.cleanupProduction(currentProduction, currentStorageId);
+                currentProduction = null;
+            }
+            if (secondProduction != null && currentStorageId != null) {
+                fixture.cleanupProduction(secondProduction, currentStorageId);
+                secondProduction = null;
+            }
+            if (currentContext != null && currentStorageId != null) {
+                fixture.cleanupTechMap(currentContext.getTechMap(), currentStorageId);
+                currentContext = null;
+            }
+            if (secondContext != null && currentStorageId != null) {
+                fixture.cleanupTechMap(secondContext.getTechMap(), currentStorageId);
+                secondContext = null;
+            }
+            if (favouritesMutated && favouritesRole != null) {
+                fixture.restoreFavouriteResources(favouritesRole, previousFavouriteIds);
+                favouritesMutated = false;
+                favouritesRole = null;
+                previousFavouriteIds = null;
+            }
         }
         currentStorageId = null;
-        storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
     // -------------------------------------------------------------------
@@ -286,6 +290,55 @@ public class PlanExecutionUiTest extends BaseUITest {
         assertThat(planPage.getGoalCellText(productName)).contains("15");
         assertThat(planPage.getProducedCellText(productName)).contains("0");
         planPage.attachScreenshot("TC-PLN-004 — plan, no production — product visible");
+    }
+
+    @Test(priority = 43)
+    @TestCaseId("TC-PLN-005")
+    @Story("Total produced summary counts only pieces, not kg")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Arrange: ізольований дочірній склад; два продукти з активними виробничими техкартами —
+            один у шт (7 од.), другий у кг (25 од.); план не потрібен.
+            Assert: обидва рядки видимі з коректними «Зроблено»; картка «Загалом зроблено, шт»
+            показує лише суму штучних виробів (7), без кілограмів.""")
+    public void totalProducedSummaryCountsOnlyPiecesNotKg() {
+        StorageResponse isolated = storageFixture.createChildStorage(ownerStorageId, "planexec-units-");
+        currentStorageId = isolated.getId();
+        fixture.ensureNoPlanForCurrentMonth(currentStorageId);
+
+        Long pcsUnitId = fixture.resolveMeasurementUnitId("шт", "pcs", "pieces");
+        Long kgUnitId = fixture.resolveMeasurementUnitId("кг", "kg", "kilograms");
+
+        double pcsAmount = 7.0;
+        double kgAmount = 25.0;
+
+        currentContext = fixture.createIsolatedProduct(currentStorageId, pcsUnitId);
+        secondContext = fixture.createIsolatedProduct(currentStorageId, kgUnitId);
+        currentProduction = fixture.createCurrentMonthProduction(
+                currentStorageId, currentContext.getTechMap(), pcsAmount);
+        secondProduction = fixture.createCurrentMonthProduction(
+                currentStorageId, secondContext.getTechMap(), kgAmount);
+
+        String pcsProductName = currentContext.getProduct().getName().trim();
+        String kgProductName = secondContext.getProduct().getName().trim();
+        String expectedPcsTotal = BigDecimal.valueOf(pcsAmount).stripTrailingZeros().toPlainString();
+
+        injectRoleSession(UserRole.OWNER_1, currentStorageId);
+        PlanExecutionPage planPage = new PlanExecutionPage(page).open();
+
+        assertThat(planPage.isProductRowVisible(pcsProductName))
+                .as("Рядок продукту в шт має бути видимий")
+                .isTrue();
+        assertThat(planPage.isProductRowVisible(kgProductName))
+                .as("Рядок продукту в кг має бути видимий")
+                .isTrue();
+        assertThat(planPage.getProducedCellText(pcsProductName)).contains(expectedPcsTotal);
+        assertThat(planPage.getProducedCellText(kgProductName))
+                .contains(BigDecimal.valueOf(kgAmount).stripTrailingZeros().toPlainString());
+        assertThat(planPage.getTotalProducedPiecesSummary())
+                .as("«Загалом зроблено, шт» має рахувати лише штучні вироби, без кг")
+                .isEqualTo(expectedPcsTotal);
+        planPage.attachScreenshot("TC-PLN-005 — total produced pcs excludes kg");
     }
 
     @Test(priority = 45)

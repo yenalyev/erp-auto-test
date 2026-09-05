@@ -32,6 +32,7 @@ public class DefectsPage extends BasePage {
     private static final String RESOURCE_SEARCH_PLACEHOLDER = "Назва ресурсу...";
     private static final String AMOUNT_HEADER = "Брак";
     private static final String WRITE_OFF_HEADER = "Списано";
+    private static final String LOCATION_HEADER = "Локація";
 
     /**
      * Tooltip when row actions are frozen because the defect already has write-offs
@@ -43,7 +44,7 @@ public class DefectsPage extends BasePage {
     public static final String WRITE_OFF_FILTER_ALL = "Всі";
     /** Filter option: only fully written-off records ({@code amount = 0}). */
     public static final String WRITE_OFF_FILTER_WRITTEN = "Списано";
-    /** Filter option: only not fully written-off records ({@code amount > 0}). Default per AC. */
+    /** Filter option: only not fully written-off records ({@code amount > 0}). */
     public static final String WRITE_OFF_FILTER_NOT_WRITTEN = "Не списано";
 
     public DefectsPage(Page page) {
@@ -154,6 +155,11 @@ public class DefectsPage extends BasePage {
     /** Value of the «Списано» column for the row matching the given resource name. */
     public String getWrittenOffAmount(String resourceName) {
         return cellText(rowByResource(resourceName).first(), columnIndexByHeader(WRITE_OFF_HEADER));
+    }
+
+    /** Location name shown in the «Локація» column for the matching resource row. */
+    public String getLocationNameForResource(String resourceName) {
+        return cellText(rowByResource(resourceName).first(), columnIndexByHeader(LOCATION_HEADER));
     }
 
     // -------------------------------------------------------------------

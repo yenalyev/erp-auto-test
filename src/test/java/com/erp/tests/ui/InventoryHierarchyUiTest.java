@@ -71,16 +71,17 @@ public class InventoryHierarchyUiTest extends BaseUITest {
     @Story("Hierarchy checkbox toggles multi-location table")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            INTERNAL parent: checkbox «По всій ієрархії» visible unchecked → single table («Статус»).
-            Enable → multi table («Локація»), write actions disabled.
-            «Всі локації» → checkbox hidden.
+            INTERNAL parent: tk-ui завжди вантажить залишки через getPageByHierarchy
+            (колонка «Локація», чекбокса «По всій ієрархії» більше немає).
+            Провести інвентаризацію disabled, поки сесія закрита.
+            «Всі локації» → multi table без кнопки відкриття сесії на конкретний склад.
             """)
     public void hierarchyCheckboxTogglesMultiTable() {
         StorageResponse parent = storageFixture.createUniqueStorage("ui-hier-p-");
         StorageResponse child = storageFixture.createChildStorage(parent.getId(), "ui-hier-c-");
         long stockResourceId = resourceFixture.createUniqueResource("ui-hier-res-").getId();
-        relocationFixture.ensureStock(parent.getId(), stockResourceId, 8.0);
-        relocationFixture.ensureStock(child.getId(), stockResourceId, 4.0);
+        relocationFixture.seedExactStock(parent.getId(), stockResourceId, 8.0);
+        relocationFixture.seedExactStock(child.getId(), stockResourceId, 4.0);
 
         injectRoleSession(UserRole.ADMIN, parent.getId());
         page = browserContext.newPage();
@@ -88,28 +89,22 @@ public class InventoryHierarchyUiTest extends BaseUITest {
                 .openForStorage(parent.getId())
                 .waitForLoaded();
 
-        assertThat(stock.isHierarchyCheckboxVisible()).isTrue();
-        assertThat(stock.isHierarchyCheckboxChecked()).isFalse();
-        assertThat(stock.isSingleLocationStatusColumnVisible()).isTrue();
-        stock.attachScreenshot("TC-WMS-007-013 — single before hierarchy");
-
-        stock.enableHierarchyView();
-        assertThat(stock.isHierarchyCheckboxChecked()).isTrue();
-        assertThat(stock.isMultiLocationTableVisible()).isTrue();
-        assertThat(stock.isConductInventoryButtonEnabled())
-                .as("Conduct must be disabled in hierarchy view")
+        assertThat(stock.isHierarchyCheckboxVisible())
+                .as("Чекбокс «По всій ієрархії» прибрано з /inventory")
                 .isFalse();
-        stock.attachScreenshot("TC-WMS-007-013 — hierarchy multi table");
-
-        stock.disableHierarchyView();
-        assertThat(stock.isHierarchyCheckboxChecked()).isFalse();
-        assertThat(stock.isSingleLocationStatusColumnVisible()).isTrue();
+        assertThat(stock.isMultiLocationTableVisible())
+                .as("Обрана parent-локація: таблиця ієрархії (колонка «Локація»)")
+                .isTrue();
+        assertThat(stock.isConductInventoryButtonEnabled())
+                .as("Conduct disabled while inventory session is closed")
+                .isFalse();
+        stock.attachScreenshot("TC-WMS-007-013 — hierarchy table on parent");
 
         injectAllLocationsSession(UserRole.ADMIN);
         page = browserContext.newPage();
         UnitManagementPage allLocs = new UnitManagementPage(page).openForAllLocations().waitForLoaded();
         assertThat(allLocs.isHierarchyCheckboxVisible())
-                .as("Hierarchy checkbox must be hidden for «Всі локації»")
+                .as("Hierarchy checkbox must stay hidden for «Всі локації»")
                 .isFalse();
         assertThat(allLocs.isMultiLocationTableVisible()).isTrue();
         allLocs.attachScreenshot("TC-WMS-007-013 — all locations no checkbox");
@@ -120,8 +115,8 @@ public class InventoryHierarchyUiTest extends BaseUITest {
     @Story("EXTERNAL forces hierarchy and blocks conduct")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            EXTERNAL: checkbox «По всій ієрархії» checked+disabled; multi table;
-            conduct blocked (supported=false).
+            EXTERNAL: tk-ui завжди ієрархічна таблиця (колонка «Локація»);
+            чекбокса немає; conduct blocked (supported=false).
             """)
     public void externalForcesHierarchyAndBlocksConduct() {
         StorageResponse external = storageFixture.createExternalChildStorage(
@@ -136,33 +131,31 @@ public class InventoryHierarchyUiTest extends BaseUITest {
                 .openForStorage(external.getId())
                 .waitForLoaded();
 
-        assertThat(stock.isHierarchyCheckboxVisible()).isTrue();
-        assertThat(stock.isHierarchyCheckboxChecked()).isTrue();
-        assertThat(stock.isHierarchyCheckboxEnabled()).isFalse();
+        assertThat(stock.isHierarchyCheckboxVisible())
+                .as("Чекбокс «По всій ієрархії» прибрано з /inventory")
+                .isFalse();
         assertThat(stock.isMultiLocationTableVisible()).isTrue();
         assertThat(stock.isConductInventoryButtonEnabled())
                 .as("Conduct must be disabled when supported=false")
                 .isFalse();
-        stock.attachScreenshot("TC-WMS-007-015 — EXTERNAL forced hierarchy");
+        stock.attachScreenshot("TC-WMS-007-015 — EXTERNAL hierarchy table");
     }
 
     @Test(priority = 30)
     @TestCaseId("TC-WMS-007-017")
-    @Story("Excel export with and without hierarchy checkbox")
+    @Story("Excel export from hierarchy inventory page")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Без «По всій ієрархії»: Експорт в Excel качає непорожній XLSX.
-            З увімкненим чекбоксом: кнопка лишається enabled (на відміну від conduct);
-            файл також качається, але контент = лише selected storage
-            (GET export-remainder?storageId=parent) — child-only resource у файлі відсутній.
+            /inventory завжди ієрархія: «Експорт в Excel» качає непорожній XLSX
+            (exportRemaindersHierarchy з parentStorageId).
             """)
     public void exportExcelWithAndWithoutHierarchyCheckbox() {
         StorageResponse parent = storageFixture.createUniqueStorage("ui-exp-p-");
         StorageResponse child = storageFixture.createChildStorage(parent.getId(), "ui-exp-c-");
         long parentResId = resourceFixture.createUniqueResource("ui-exp-p-res-").getId();
         ResourceResponse childRes = resourceFixture.createUniqueResource("ui-exp-c-res-");
-        relocationFixture.ensureStock(parent.getId(), parentResId, 9.0);
-        relocationFixture.ensureStock(child.getId(), childRes.getId(), 6.0);
+        relocationFixture.seedExactStock(parent.getId(), parentResId, 9.0);
+        relocationFixture.seedExactStock(child.getId(), childRes.getId(), 6.0);
 
         String childName = childRes.getName();
 
@@ -172,33 +165,15 @@ public class InventoryHierarchyUiTest extends BaseUITest {
                 .openForStorage(parent.getId())
                 .waitForLoaded();
 
-        Allure.step("Експорт без hierarchy", () -> {
-            assertThat(stock.isHierarchyCheckboxChecked()).isFalse();
-            assertThat(stock.isExportToExcelButtonEnabled()).isTrue();
-            UnitManagementPage.ExportDownloadResult download = stock.clickExportToExcelAndDownload();
-            UiDownloadAssertions.assertNonEmptyXlsx(
-                    download.path(), download.sizeBytes(), "Export without hierarchy");
-            assertThat(XlsxContentAssertions.zipContainsText(download.path(), childName))
-                    .as("Single-location export must not contain child-only «%s»", childName)
-                    .isFalse();
-            stock.attachScreenshot("TC-WMS-007-017 — export without hierarchy");
-        });
-
-        Allure.step("Експорт з «По всій ієрархії»", () -> {
-            stock.enableHierarchyView();
-            assertThat(stock.isHierarchyCheckboxChecked()).isTrue();
-            assertThat(stock.isExportToExcelButtonEnabled())
-                    .as("Export stays enabled in hierarchy multi-view (unlike conduct)")
-                    .isTrue();
-            UnitManagementPage.ExportDownloadResult download = stock.clickExportToExcelAndDownload();
-            UiDownloadAssertions.assertNonEmptyXlsx(
-                    download.path(), download.sizeBytes(), "Export with hierarchy checkbox");
-            assertThat(XlsxContentAssertions.zipContainsText(download.path(), childName))
-                    .as("Hierarchy checkbox does not change export API — child-only «%s» still absent",
-                            childName)
-                    .isFalse();
-            stock.attachScreenshot("TC-WMS-007-017 — export with hierarchy");
-        });
+        assertThat(stock.isHierarchyCheckboxVisible()).isFalse();
+        assertThat(stock.isExportToExcelButtonEnabled()).isTrue();
+        UnitManagementPage.ExportDownloadResult download = stock.clickExportToExcelAndDownload();
+        UiDownloadAssertions.assertNonEmptyXlsx(
+                download.path(), download.sizeBytes(), "Hierarchy inventory export");
+        assertThat(XlsxContentAssertions.zipContainsText(download.path(), childName))
+                .as("Hierarchy export includes child-only «%s»", childName)
+                .isTrue();
+        stock.attachScreenshot("TC-WMS-007-017 — hierarchy export");
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {

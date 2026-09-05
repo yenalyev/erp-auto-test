@@ -1,9 +1,13 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.RelocationType;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.EquipmentFixture;
 import com.erp.fixtures.RelocationFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.StorageRegionFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.response.EquipmentSimpleResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.pages.EquipmentCreatePage;
@@ -12,11 +16,11 @@ import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class EquipmentCreateUITest extends BaseUITest {
 
     private EquipmentFixture equipmentFixture;
+    private StorageFixture storageFixture;
+    private StorageRegionFixture regionFixture;
     private long storageId;
     private Long categoryId;
     private Long supplierId;
@@ -38,13 +44,21 @@ public class EquipmentCreateUITest extends BaseUITest {
         super.baseTestClassSetup();
         new RelocationFixture(testContext, apiExecutor).prepareContext();
         equipmentFixture = new EquipmentFixture(testContext, apiExecutor);
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        regionFixture = new StorageRegionFixture(testContext, apiExecutor);
         equipmentFixture.prepareCategoryContext();
 
-        storageId = ConfigProvider.getOwner1StorageId();
+        long owner1Home = ConfigProvider.getOwner1StorageId();
+        storageId = storageFixture.createChildStorage(owner1Home, "ui-eq-batch-").getId();
         categoryId = testContext.get(ContextKey.EQUIPMENT_CATEGORY_ID);
         supplierId = testContext.get(ContextKey.RELOCATION_SUPPLIER_ID);
         categoryName = equipmentFixture.resolveCategoryName(categoryId);
         supplierName = equipmentFixture.resolveSupplierName(supplierId);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupIsolatedStorage() {
+        TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
     }
 
     @Test
@@ -72,7 +86,6 @@ public class EquipmentCreateUITest extends BaseUITest {
         Allure.parameter("equipmentB", nameB);
 
         injectRoleSession(UserRole.OWNER_1, storageId);
-        page = browserContext.newPage();
 
         EquipmentListPage listPage = Allure.step("UI: створити 2 позиції обладнання з постачальником", () -> {
             EquipmentCreatePage createPage = new EquipmentCreatePage(page)
@@ -91,6 +104,10 @@ public class EquipmentCreateUITest extends BaseUITest {
         });
 
         Allure.step("UI: обидві назви видимі в журналі обладнання", () -> {
+            listPage.filterBySearch("ui-eq-batch-")
+                    .includeStatus("В дорозі")
+                    .waitUntilEquipmentNameVisible(nameA)
+                    .waitUntilEquipmentNameVisible(nameB);
             listPage.attachScreenshot("TC-UI-EQ-002 — list after batch create");
             assertThat(listPage.isEquipmentNameVisible(nameA))
                     .as("Обладнання A має бути в таблиці")
@@ -107,6 +124,9 @@ public class EquipmentCreateUITest extends BaseUITest {
                     .map(EquipmentSimpleResponse::getName)
                     .toList();
 
+            assertThat(relocation.getType())
+                    .as("Пакетне створення має дати receive-переміщення типу EQUIPMENT")
+                    .isEqualTo(RelocationType.EQUIPMENT);
             assertThat(relocation.getEquipmentItems())
                     .as("Переміщення має містити рівно 2 одиниці обладнання")
                     .hasSize(2);
@@ -122,13 +142,15 @@ public class EquipmentCreateUITest extends BaseUITest {
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
-        Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(role.getUsername(), role.getPassword());
-        String domain = ConfigProvider.getBaseUrl()
-                .replaceFirst("https?://", "")
-                .split("/")[0];
-        injectSessionCookies(cookies, domain);
+        injectSessionCookies(cachedSessionCookies(role), sessionCookieDomain());
         browserContext.addInitScript(
                 "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        if (page != null && !page.isClosed()) {
+            page.close();
+        }
+        page = browserContext.newPage();
+        int timeoutMs = ConfigProvider.getUiTimeoutSeconds() * 1000;
+        page.setDefaultTimeout(timeoutMs);
+        page.setDefaultNavigationTimeout(timeoutMs);
     }
 }

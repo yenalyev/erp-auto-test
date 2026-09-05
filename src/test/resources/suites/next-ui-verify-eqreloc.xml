@@ -1,0 +1,18 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="EqReloc" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="EqReloc">
+        <classes>
+            <class name="com.erp.tests.ui.EquipmentRelocationUITest">
+                <methods>
+                    <include name="equipmentRelocationJournalAccessible"/>
+                    <include name="equipmentResolveFinishedShowsInJournal"/>
+                    <include name="equipmentEditReceiveRemoveInvoiceFile"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

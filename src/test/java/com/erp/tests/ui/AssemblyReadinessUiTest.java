@@ -262,20 +262,46 @@ public class AssemblyReadinessUiTest extends BaseUITest {
         AssemblyReadinessPage arPage = new AssemblyReadinessPage(page).openAndWaitForApi();
 
         arPage.selectSortByQuantityDesc();
-        int highQty = arPage.getReadyQtyForRow(highName);
-        int lowQty = arPage.getReadyQtyForRow(lowName);
-        assertThat(highQty).isGreaterThan(lowQty);
+        assertThat(arPage.getReadyQtyForRow(highName))
+                .as("Техкарта «багато» має більший readyQty ніж «мало»")
+                .isGreaterThan(arPage.getReadyQtyForRow(lowName));
+        page.waitForCondition(() -> {
+            List<String> names = arPage.collectVisibleTechMapNames();
+            int highIdx = names.indexOf(highName);
+            int lowIdx = names.indexOf(lowName);
+            return highIdx >= 0 && lowIdx >= 0 && highIdx < lowIdx;
+        }, new Page.WaitForConditionOptions().setTimeout(
+                ConfigProvider.getUiTimeoutSeconds() * 1000L));
+        assertThat(arPage.collectVisibleTechMapNames().indexOf(highName))
+                .as("«За кількістю ↓»: техкарта з більшою кількістю вище")
+                .isLessThan(arPage.collectVisibleTechMapNames().indexOf(lowName));
 
         arPage.selectSortByNameAsc();
+        Collator uk = Collator.getInstance(Locale.forLanguageTag("uk"));
+        int nameOrder = Integer.signum(uk.compare(highName, lowName));
+        page.waitForCondition(() -> {
+            List<String> names = arPage.collectVisibleTechMapNames();
+            int highIdx = names.indexOf(highName);
+            int lowIdx = names.indexOf(lowName);
+            if (highIdx < 0 || lowIdx < 0) {
+                return false;
+            }
+            if (nameOrder == 0) {
+                return true;
+            }
+            return Integer.signum(Integer.compare(highIdx, lowIdx)) == nameOrder;
+        }, new Page.WaitForConditionOptions().setTimeout(
+                ConfigProvider.getUiTimeoutSeconds() * 1000L));
         List<String> allNames = arPage.collectVisibleTechMapNames();
         int highIdx = allNames.indexOf(highName);
         int lowIdx = allNames.indexOf(lowName);
-        assertThat(highIdx).isGreaterThanOrEqualTo(0);
-        assertThat(lowIdx).isGreaterThanOrEqualTo(0);
-
-        Collator uk = Collator.getInstance(Locale.forLanguageTag("uk"));
-        assertThat(uk.compare(highName, lowName)).isLessThanOrEqualTo(0);
-        assertThat(highIdx).isLessThan(lowIdx);
+        assertThat(highIdx).as("Техкарта «багато» видима після сортування за назвою").isGreaterThanOrEqualTo(0);
+        assertThat(lowIdx).as("Техкарта «мало» видима після сортування за назвою").isGreaterThanOrEqualTo(0);
+        if (nameOrder != 0) {
+            assertThat(Integer.signum(Integer.compare(highIdx, lowIdx)))
+                    .as("«За назвою А-Я»: порядок «%s» vs «%s» як uk Collator", highName, lowName)
+                    .isEqualTo(nameOrder);
+        }
         arPage.attachScreenshot("TC-UI-AR-009 — sorting");
     }
 

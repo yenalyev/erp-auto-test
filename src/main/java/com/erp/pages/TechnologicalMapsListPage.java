@@ -23,6 +23,7 @@ public class TechnologicalMapsListPage extends BasePage {
     public static final String PATH = "/technological-maps";
 
     private static final String PAGE_TITLE = "Перегляд тех. карт";
+    private static final String CALCULATOR_BUTTON = "Калькулятор розхідників";
     private static final String PRODUCT_PLACEHOLDER = "Введіть назву продукту...";
     private static final String INGREDIENT_PLACEHOLDER = "Введіть назву сировини...";
     private static final String LOADING_TEXT = "Завантаження...";
@@ -46,6 +47,45 @@ public class TechnologicalMapsListPage extends BasePage {
         page.evaluate("localStorage.setItem('selectedStorageId', '" + storageId + "');");
         waitForTechMapsDuring(page::reload);
         return waitForLoaded();
+    }
+
+    public TechnologicalMapsListPage openAllLocations() {
+        String url = ConfigProvider.getBaseUrl() + PATH;
+        page.navigate(url);
+        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        page.evaluate("localStorage.setItem('selectedStorageId', 'all');");
+        try {
+            waitForTechMapsDuring(page::reload);
+        } catch (com.microsoft.playwright.PlaywrightException e) {
+            log.debug("Tech maps reload on «Всі локації» did not wait for list API: {}", e.getMessage());
+            page.reload();
+        }
+        return waitForLoaded();
+    }
+
+    public boolean isCalculatorButtonEnabled() {
+        Locator button = calculatorButton();
+        return button.count() > 0 && button.isEnabled();
+    }
+
+    public boolean isCalculatorButtonVisible() {
+        Locator button = calculatorButton();
+        return button.count() > 0 && button.isVisible();
+    }
+
+    public ResourceCalculatorPage openCalculator() {
+        calculatorButton().click();
+        ResourceCalculatorPage calculator = new ResourceCalculatorPage(page);
+        calculator.waitForTitle();
+        return calculator;
+    }
+
+    private Locator calculatorButton() {
+        Locator byRole = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CALCULATOR_BUTTON));
+        if (byRole.count() > 0) {
+            return byRole.first();
+        }
+        return page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName(CALCULATOR_BUTTON)).first();
     }
 
     public TechnologicalMapsListPage waitForLoaded() {
@@ -149,6 +189,7 @@ public class TechnologicalMapsListPage extends BasePage {
                             && !url.contains("/technological-maps/mode")
                             && !url.contains("/technological-maps/output-resources")
                             && !url.contains("/tag-statistics")
+                            && !url.contains("/calculate-resource-usage")
                             && "GET".equals(response.request().method())
                             && response.status() < 500;
                 },

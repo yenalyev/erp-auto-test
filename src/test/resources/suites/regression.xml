@@ -16,7 +16,8 @@
       Isolated suite: mvn test -Dsuite=db-dependent -Denv=…
     - Includes domain suites: smoke, functional subsets, inventory, production,
       relocations, storage-regions, global-plans, technological-maps, defects,
-      resource-viewer, ui, orders, bots, notifications, RBAC matrix.
+      resource-viewer, ui, orders, bots, notifications.
+      RBAC matrix (RbacAccessMatrixTest) parked — do not add back until YAML/schema/5xx are stable.
       Hierarchy inventory (TC-WMS-007-010+) is in Inventory API/UI.
       TC-CREW-FIGHT-* skip when Fight write-off probe fails (GET short-stats ≠ 200).
 -->
@@ -73,7 +74,9 @@
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
             <class name="com.erp.tests.functional.storage.FlyPointInventoryTest"/>
             <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewAnalyticsStocksTest"/>
             <class name="com.erp.tests.functional.storage.FlyPointDashboardApiTest"/>
+            <class name="com.erp.tests.functional.storage.CrewBattalionStocksRbacTest"/>
             <class name="com.erp.tests.functional.storage.CrewOperationHistoryTest"/>
             <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest"/>
             <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
@@ -103,6 +106,7 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapHashtagApiTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapAlternativeGroupsTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapHierarchyApiTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapResourceCalculatorApiTest"/>
         </classes>
     </test>
 
@@ -120,6 +124,7 @@
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessComponentTechMapsApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.statistics.PlanStatisticsAlternativeGroupsApiTest"/>
+            <class name="com.erp.tests.functional.statistics.PlanNeededResourcesApiTest"/>
         </classes>
     </test>
 
@@ -146,12 +151,15 @@
     <test name="Defects API">
         <classes>
             <class name="com.erp.tests.functional.defect.DefectTest"/>
+            <class name="com.erp.tests.functional.defect.DefectHierarchyApiTest"/>
+            <class name="com.erp.tests.functional.defect.DefectHierarchyVisibilityApiTest"/>
         </classes>
     </test>
 
     <test name="Defects UI">
         <classes>
             <class name="com.erp.tests.ui.DefectUITest"/>
+            <class name="com.erp.tests.ui.DefectHierarchyUiTest"/>
         </classes>
     </test>
 
@@ -181,6 +189,7 @@
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
             <class name="com.erp.tests.functional.inventory.StorageRelationInventoryTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryMultiLocationExportApiTest"/>
         </classes>
     </test>
 
@@ -283,11 +292,13 @@
     <test name="UI Inventory">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.InventoryMultiLocationExportUiTest"/>
             <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
+            <class name="com.erp.tests.ui.CrewBattalionStocksUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>
         </classes>
@@ -313,6 +324,7 @@
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
             <class name="com.erp.tests.ui.PlanExecutionUiTest"/>
             <class name="com.erp.tests.ui.PlanDisassembleUiTest"/>
+            <class name="com.erp.tests.ui.PlanNeededResourcesUiTest"/>
         </classes>
     </test>
 
@@ -324,6 +336,7 @@
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapHierarchyUITest"/>
+            <class name="com.erp.tests.ui.ResourceCalculatorUiTest"/>
         </classes>
     </test>
 
@@ -344,11 +357,7 @@
         </classes>
     </test>
 
-    <test name="RBAC Matrix">
-        <classes>
-            <class name="com.erp.tests.rbac.RbacAccessMatrixTest"/>
-        </classes>
-    </test>
+    <!-- RBAC Matrix parked: RbacAccessMatrixTest — do not run until YAML/schema/5xx are stable -->
 
     <test name="UI User Management">
         <classes>

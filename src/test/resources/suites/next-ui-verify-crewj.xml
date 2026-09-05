@@ -1,0 +1,18 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="CrewJournal" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="CrewJournal">
+        <classes>
+            <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest">
+                <methods>
+                    <include name="sentTabShowsCrewNameOutsideVisibilityScope"/>
+                    <include name="receivedTabShowsCrewNameOutsideVisibilityScope"/>
+                    <include name="receivedTabHidesNonCrewOutsiderName"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

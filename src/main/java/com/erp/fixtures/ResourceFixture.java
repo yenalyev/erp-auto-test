@@ -49,6 +49,11 @@ public class ResourceFixture extends BaseFixture {
     @Step("API: створити ізольований ресурс «{namePrefix}» у категорії {categoryId}")
     public ResourceResponse createUniqueResource(String namePrefix, Long categoryId) {
         Long unitId = testContext.get(com.erp.test_context.ContextKey.SHARED_UNIT_ID);
+        return createUniqueResource(namePrefix, unitId, categoryId);
+    }
+
+    @Step("API: створити ізольований ресурс «{namePrefix}» (unitId={unitId}, categoryId={categoryId})")
+    public ResourceResponse createUniqueResource(String namePrefix, Long unitId, Long categoryId) {
         ResourceRequest request = ResourceDataFactory.uniqueResource(namePrefix, unitId, categoryId);
 
         Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CREATE, UserRole.ADMIN, request);

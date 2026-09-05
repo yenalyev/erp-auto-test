@@ -3,9 +3,14 @@ package com.erp.pages;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Page Object for technological map create/update form (tk-ui {@code TechnologicalMapForm.tsx}).
@@ -39,7 +44,14 @@ public class TechnologicalMapFormPage extends BasePage {
     }
 
     public TechnologicalMapFormPage openUpdate(long techMapId) {
+        return openUpdate(techMapId, null);
+    }
+
+    public TechnologicalMapFormPage openUpdate(long techMapId, Long storageId) {
         String path = "/technological-maps/update/" + techMapId;
+        if (storageId != null) {
+            path += "?storageId=" + storageId;
+        }
         navigateTo(ConfigProvider.getBaseUrl() + path, "Редагування тех. карти");
         return waitForUpdateLoaded();
     }
@@ -48,6 +60,16 @@ public class TechnologicalMapFormPage extends BasePage {
         String path = PATH_CREATE + "?cloneId=" + techMapId;
         navigateTo(ConfigProvider.getBaseUrl() + path, "Клонування тех. карти");
         waitForLoaded();
+        try {
+            page.waitForCondition(
+                    this::isTypeValueLoaded,
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        } catch (PlaywrightException e) {
+            throw new AssertionError(
+                    "Clone form never loaded type. error='%s'".formatted(
+                            isErrorVisible() ? getErrorText() : ""),
+                    e);
+        }
         return waitForAlternativeGroupsSection();
     }
 
@@ -74,6 +96,19 @@ public class TechnologicalMapFormPage extends BasePage {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Створіть нову версію тех. карти"))
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        // First paint is an empty form (loading starts false). Wait until GET fills the type
+        // or the fetch error banner appears — otherwise input comboboxes stay disabled.
+        try {
+            page.waitForCondition(
+                    this::isTypeValueLoaded,
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        } catch (PlaywrightException e) {
+            throw new AssertionError(
+                    "Update form never loaded type. error='%s' %s".formatted(
+                            isErrorVisible() ? getErrorText() : "",
+                            describeSectionComboboxes(INPUT_SECTION_TITLE)),
+                    e);
+        }
         return this;
     }
 
@@ -108,6 +143,35 @@ public class TechnologicalMapFormPage extends BasePage {
 
     public TechnologicalMapFormPage selectOutputResource(int rowIndex, String resourceName) {
         selectResourceInSection(OUTPUT_SECTION_TITLE, rowIndex, resourceName);
+        return this;
+    }
+
+    public boolean isOutputResourceEnabled(int rowIndex) {
+        return resourceCombobox(OUTPUT_SECTION_TITLE, rowIndex).isEnabled();
+    }
+
+    public TechnologicalMapFormPage waitUntilOutputResourceEnabled(int rowIndex) {
+        page.waitForCondition(
+                () -> resourceCombobox(OUTPUT_SECTION_TITLE, rowIndex).isEnabled(),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public TechnologicalMapFormPage waitUntilInputResourceEnabled(int rowIndex) {
+        try {
+            page.waitForCondition(
+                    () -> isResourceComboboxEnabled(INPUT_SECTION_TITLE, rowIndex),
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        } catch (PlaywrightException e) {
+            throw new AssertionError(
+                    "Input resource combobox row %d never enabled. type='%s' error='%s' %s"
+                            .formatted(
+                                    rowIndex,
+                                    typeComboboxText(),
+                                    isErrorVisible() ? getErrorText() : "",
+                                    describeSectionComboboxes(INPUT_SECTION_TITLE)),
+                    e);
+        }
         return this;
     }
 
@@ -205,6 +269,22 @@ public class TechnologicalMapFormPage extends BasePage {
         return this;
     }
 
+    private Locator typeCombobox() {
+        return page.getByRole(AriaRole.COMBOBOX).filter(new Locator.FilterOptions()
+                .setHasText(java.util.regex.Pattern.compile("Оберіть тип|Виготовлення|Розбирання")));
+    }
+
+    private boolean isTypeValueLoaded() {
+        Locator type = page.getByRole(AriaRole.COMBOBOX).filter(new Locator.FilterOptions()
+                .setHasText(java.util.regex.Pattern.compile("Виготовлення|Розбирання")));
+        return type.count() > 0 && type.first().isVisible();
+    }
+
+    private String typeComboboxText() {
+        Locator type = typeCombobox();
+        return type.count() == 0 ? "" : type.first().innerText().trim().replace('\n', ' ');
+    }
+
     public boolean isErrorVisible() {
         return page.locator(".bg-red-50").isVisible();
     }
@@ -221,10 +301,15 @@ public class TechnologicalMapFormPage extends BasePage {
         return page.url().contains("/technological-maps/update/");
     }
 
+    /**
+     * Section root that owns both resource rows and the «Додати» button.
+     * Do not use {@code contains(@class,'p-4')} — that also matches {@code gap-4}/{@code px-4}
+     * ancestors and then {@code combobox} nth(0) is the disabled type Select on update.
+     */
     private Locator sectionCard(String sectionTitle) {
         return page.locator("h3")
                 .filter(new Locator.FilterOptions().setHasText(sectionTitle))
-                .locator("xpath=ancestor::div[contains(@class,'p-4')][1]");
+                .locator("xpath=ancestor::div[.//div[contains(@class,'space-y-3')]][1]");
     }
 
     private Locator altGroupsSection() {
@@ -239,9 +324,44 @@ public class TechnologicalMapFormPage extends BasePage {
                 .nth(groupIndex);
     }
 
+    private Locator resourceCombobox(String sectionTitle, int rowIndex) {
+        return sectionCard(sectionTitle).getByRole(AriaRole.COMBOBOX).nth(rowIndex);
+    }
+
+    private boolean isResourceComboboxEnabled(String sectionTitle, int rowIndex) {
+        Locator box = resourceCombobox(sectionTitle, rowIndex);
+        if (box.count() == 0) {
+            return false;
+        }
+        return Boolean.TRUE.equals(box.evaluate("el => !el.disabled && el.getAttribute('aria-disabled') !== 'true'"));
+    }
+
+    private String describeSectionComboboxes(String sectionTitle) {
+        Locator heading = page.locator("h3")
+                .filter(new Locator.FilterOptions().setHasText(sectionTitle));
+        Locator boxes = sectionCard(sectionTitle).getByRole(AriaRole.COMBOBOX);
+        List<String> rows = new ArrayList<>();
+        int n = boxes.count();
+        for (int i = 0; i < n; i++) {
+            Locator box = boxes.nth(i);
+            rows.add("nth=%d text='%s' disabled=%s".formatted(
+                    i,
+                    box.innerText().trim().replace('\n', ' '),
+                    box.evaluate("el => el.disabled || el.getAttribute('aria-disabled') === 'true'")));
+        }
+        return "url=%s headingCount=%d comboboxes=%d %s".formatted(
+                page.url(), heading.count(), n, rows);
+    }
+
     private void selectResourceInSection(String sectionTitle, int rowIndex, String resourceName) {
-        Locator section = sectionCard(sectionTitle);
-        Locator combobox = section.getByRole(AriaRole.COMBOBOX).nth(rowIndex);
+        Locator combobox = resourceCombobox(sectionTitle, rowIndex);
+        combobox.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        if (!combobox.isEnabled()) {
+            throw new IllegalStateException(
+                    "Resource combobox disabled in «" + sectionTitle + "» row " + rowIndex);
+        }
         combobox.click();
 
         String term = autocompleteSearchTerm(resourceName);

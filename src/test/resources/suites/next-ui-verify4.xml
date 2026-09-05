@@ -1,0 +1,30 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Re-run Crew-fly methods that failed on next-ui-verify3 after POM/location fixes.
+
+    mvn test "-Denv=dev" "-Dsuite=next-ui-verify4" "-Dtcm.enabled=false"
+-->
+<suite name="Next UI verify 4" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Crew-fly-rerun">
+        <classes>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest">
+                <methods>
+                    <include name="crewAnalyticsOpensUnattachedCrewInventoryAndConduct"/>
+                    <include name="attachedCrewRowLinksToFlyPointDashboardNotCrewInventory"/>
+                    <include name="flyPointDashboardOpensInventoryAndConduct"/>
+                    <include name="includeFlyPointStocksCheckboxTogglesAttachedRows"/>
+                    <include name="archivedCrewHiddenFromDefaultStocksTab"/>
+                    <include name="crewAndFlyPointAbsentFromWorkspacePicker"/>
+                    <include name="outsiderHasNoInventorySessionToggleOnFlyPointDeepLink"/>
+                    <include name="outsiderHasNoConductOnFlyPointDeepLink"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,21 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="AssemblyReadiness" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="AssemblyReadiness">
+        <classes>
+            <class name="com.erp.tests.ui.AssemblyReadinessUiTest">
+                <methods>
+                    <include name="testSharedComponentBadge"/>
+                    <include name="testSorting"/>
+                    <include name="testStorageSwitchReloadsData"/>
+                    <include name="testComponentTechMapLinkOpensInNewTab"/>
+                    <include name="testNoTechMapLinkWhenComponentHasNoProducer"/>
+                    <include name="testAdminSeesForeignStorageProducerOwnerDoesNot"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

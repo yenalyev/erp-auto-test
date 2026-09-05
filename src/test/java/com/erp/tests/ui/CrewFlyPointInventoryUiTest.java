@@ -19,7 +19,6 @@ import com.erp.pages.AppSidebarPage;
 import com.erp.pages.CrewAnalyticsPage;
 import com.erp.pages.FlyPointDashboardPage;
 import com.erp.pages.InventoryEditPage;
-import com.erp.pages.ProductionPage;
 import com.erp.pages.UnitManagementPage;
 import com.erp.tests.functional.storage.StorageRegionsAllureDescriptions;
 import com.erp.utils.config.ConfigProvider;
@@ -121,7 +120,9 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
         injectRoleSession(UserRole.ADMIN, scenario.unit().getId());
 
         CrewAnalyticsPage analytics = Allure.step("UI: /crew-analytics",
-                () -> new CrewAnalyticsPage(page).open().openStocksTab());
+                () -> new CrewAnalyticsPage(page).open()
+                        .selectCrewLocationByName(scenario.unit().getName())
+                        .openStocksTab());
         analytics.setIncludeFlyPointStocks(false);
         analytics.filterByResourceName(resourceName);
         analytics.clickCrewInventoryLink(crewId);
@@ -164,7 +165,9 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
 
         injectRoleSession(UserRole.ADMIN, scenario.unit().getId());
 
-        CrewAnalyticsPage analytics = new CrewAnalyticsPage(page).open().openStocksTab();
+        CrewAnalyticsPage analytics = new CrewAnalyticsPage(page).open()
+                .selectCrewLocationByName(scenario.unit().getName())
+                .openStocksTab();
         analytics.setIncludeFlyPointStocks(true);
         analytics.filterByResourceName(resourceName);
 
@@ -205,12 +208,14 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
         injectRoleSession(UserRole.ADMIN, scenario.unit().getId());
 
         FlyPointDashboardPage dashboard = new FlyPointDashboardPage(page)
-                .openWithFlyPointId(flyPointId)
-                .openStocksTab()
-                .filterByResourceName(resourceName);
+                .openViaSidebar()
+                .selectCrewLocation(scenario.unit().getName(), scenario.unit().getId(), true)
+                .openStocksTab();
         dashboard.clickFlyPointInventoryLink(flyPointId);
 
-        assertThat(page.url()).contains("/inventory?storageId=" + flyPointId);
+        assertThat(page.url()).containsAnyOf(
+                "/inventory?storageId=" + flyPointId,
+                "/inventory/" + flyPointId);
 
         UnitManagementPage stock = new UnitManagementPage(page).waitForLoaded()
                 .waitForSessionOpenState(true)
@@ -246,7 +251,9 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
 
         injectRoleSession(UserRole.ADMIN, scenario.unit().getId());
 
-        CrewAnalyticsPage analytics = new CrewAnalyticsPage(page).open().openStocksTab();
+        CrewAnalyticsPage analytics = new CrewAnalyticsPage(page).open()
+                .selectCrewLocationByName(scenario.unit().getName())
+                .openStocksTab();
         analytics.filterByResourceName(resourceName);
 
         analytics.setIncludeFlyPointStocks(true);
@@ -263,6 +270,69 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
         assertThat(stocksUrl)
                 .as("GET /crews/stocks має передати includeFlyPointStocks=false")
                 .containsIgnoringCase("includeFlyPointStocks=false");
+    }
+
+    @Test(priority = 45)
+    @TestCaseId("TC-UI-CREW-025")
+    @Description(StorageRegionsAllureDescriptions.TC_UI_CREW_025)
+    @Severity(SeverityLevel.CRITICAL)
+    public void archivedCrewHiddenFromDefaultStocksTab() {
+        CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("ui-cfp-arch-");
+        StorageResponse archivedCrew = storageFixture.createCrewStorage(
+                scenario.unit().getId(), "ui-cfp-arch-crew-");
+        ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "arch-");
+        String resourceName = normalizeName(resource.getName());
+        String activeCrewName = normalizeName(scenario.crew().getName());
+        String archivedCrewName = normalizeName(archivedCrew.getName());
+
+        relocationFixture.ensureStock(scenario.memberStorageId(), resource.getId(), 100.0);
+        relocationFixture.createSendAndFinishBySender(
+                UserRole.OWNER_1,
+                scenario.memberStorageId(),
+                scenario.crew().getId(),
+                resource.getId(),
+                ISSUE_AMOUNT);
+        relocationFixture.createSendAndFinishBySender(
+                UserRole.OWNER_1,
+                scenario.memberStorageId(),
+                archivedCrew.getId(),
+                resource.getId(),
+                ISSUE_AMOUNT);
+
+        inventoryFixture.clearStock(archivedCrew.getId());
+        assertThat(storageFixture.deactivate(UserRole.ADMIN, archivedCrew.getId()).statusCode())
+                .as("архівація CREW для UI-фільтра")
+                .isBetween(200, 299);
+
+        injectRoleSession(UserRole.ADMIN, scenario.unit().getId());
+
+        CrewAnalyticsPage analytics = new CrewAnalyticsPage(page).open()
+                .selectCrewLocationByName(scenario.unit().getName())
+                .openStocksTab();
+        analytics.setIncludeFlyPointStocks(false);
+        analytics.filterByResourceName(resourceName);
+
+        assertThat(analytics.isCrewNameVisibleInStocksTable(activeCrewName))
+                .as("За замовчуванням («Активні») — активний екіпаж у таблиці")
+                .isTrue();
+        assertThat(analytics.isCrewNameVisibleInStocksTable(archivedCrewName))
+                .as("За замовчуванням — архівний екіпаж прихований")
+                .isFalse();
+        analytics.attachScreenshot("TC-UI-CREW-025 — default active crews");
+
+        analytics.selectCrewActivityFilter(CrewAnalyticsPage.INACTIVE_CREWS_LABEL);
+        assertThat(analytics.isCrewNameVisibleInStocksTable(archivedCrewName))
+                .as("Фільтр «Неактивні» — архівний екіпаж видимий")
+                .isTrue();
+        assertThat(analytics.isCrewNameVisibleInStocksTable(activeCrewName))
+                .as("Фільтр «Неактивні» — активний екіпаж прихований")
+                .isFalse();
+        analytics.attachScreenshot("TC-UI-CREW-025 — inactive crews filter");
+
+        analytics.selectCrewActivityFilter(CrewAnalyticsPage.ALL_CREWS_LABEL);
+        assertThat(analytics.isCrewNameVisibleInStocksTable(activeCrewName)).isTrue();
+        assertThat(analytics.isCrewNameVisibleInStocksTable(archivedCrewName)).isTrue();
+        analytics.attachScreenshot("TC-UI-CREW-025 — all crews filter");
     }
 
     @Test(priority = 50)
@@ -303,10 +373,7 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
     }
 
     @Test(priority = 60)
-    @TestCaseId({
-            "TC-UI-FLY-INV-002",
-            "TC-UI-CREW-011"
-    })
+    @TestCaseId("TC-UI-FLY-INV-002")
     @Description(StorageRegionsAllureDescriptions.TC_UI_FLY_INV_002)
     @Severity(SeverityLevel.CRITICAL)
     public void adminTogglesInventorySessionOnFlyPointDeepLink() {
@@ -387,8 +454,7 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
         String fpName = scenario.flyPoint().getName();
 
         injectRoleSession(UserRole.ADMIN, scenario.unit().getId());
-        page.navigate(ConfigProvider.getBaseUrl() + "/production");
-        new ProductionPage(page).waitForLoaded();
+        new UnitManagementPage(page).openForStorage(scenario.unit().getId());
         AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
 
         assertThat(sidebar.isWorkspaceOptionVisible(crewName))
@@ -427,7 +493,7 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
         inventoryFixture.ensureClosed(flyPointId);
 
         injectRoleSession(UserRole.OWNER_2, ConfigProvider.getOwner2StorageId());
-        UnitManagementPage stock = new UnitManagementPage(page).openWithStorageIdQuery(flyPointId);
+        UnitManagementPage stock = new UnitManagementPage(page).openWithStorageIdQuery(flyPointId, false);
         assertThat(stock.isOpenInventoryButtonVisible())
                 .as("OWNER_2 без inventory-status — немає Open")
                 .isFalse();
@@ -445,7 +511,7 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
         sessionStorageId = flyPointId;
 
         injectRoleSession(UserRole.OWNER_2, ConfigProvider.getOwner2StorageId());
-        UnitManagementPage stock = new UnitManagementPage(page).openWithStorageIdQuery(flyPointId);
+        UnitManagementPage stock = new UnitManagementPage(page).openWithStorageIdQuery(flyPointId, false);
         // Conduct hidden or disabled without inventory update perm
         if (stock.isConductInventoryButtonVisible()) {
             assertThat(stock.isConductInventoryButtonEnabled()).isFalse();

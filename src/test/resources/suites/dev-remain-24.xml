@@ -1,0 +1,419 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Remaining run85 buckets 2–4 on DEV (not product B, not already-green C).
+
+    2 = staging-infra FAIL/SKIP (API + UI)
+    3 = UI/test-contract leftovers (RBAC matrix parked)
+    4 = JDBC / Fight / env known-skips  (needs -Duse.database=true)
+
+    mvn test -Denv=dev -Dsuite=dev-remain-24 -Duse.database=true -Dtcm.enabled=false
+-->
+<suite name="Dev remain 2-4" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="P2-FAIL-API">
+        <classes>
+            <class name="com.erp.tests.auth.AuthenticationTest">
+                <methods>
+                    <include name="testEndpointWithValidSession"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.inventory.InventoryStockApiTest">
+                <methods>
+                    <include name="tagFilterTwoTagsUsesOrNotAnd"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.invoice.InvoiceGenerateApiTest">
+                <methods>
+                    <include name="generateInvoiceForSend"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.notification.NotificationEscapingTest">
+                <methods>
+                    <include name="stockRedJournalPreservesMarkupSpecialCharsInStorageName"/>
+                    <include name="stockRedJournalPreservesWhatsAppBoldTrapInStorageName"/>
+                    <include name="stockRedJournalPreservesJsonCriticalCharsInStorageName"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.notification.NotificationJournalTest">
+                <methods>
+                    <include name="getNotificationsJournalPage"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.notification.NotificationRecipientTest">
+                <methods>
+                    <include name="getRecipientByIdAndList"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewAnalyticsStocksTest">
+                <methods>
+                    <include name="activeFilterHidesArchivedCrewFromAnalyticsStocks"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewFlyPointIncidentTest">
+                <methods>
+                    <include name="testDeleteIncidentThenFinishCreditsCrew"/>
+                    <include name="testIncidentOnAttachedCrewDoesNotAutoForwardToFlyPoint"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="P2-SKIP-API">
+        <classes>
+            <class name="com.erp.tests.functional.order.OrderStockRegressionApiTest">
+                <methods>
+                    <include name="testReceiveEditBelowHoldReturns400"/>
+                    <include name="testProductionInputBelowHoldReturns400"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.production.ProductionJournalFilterApiTest">
+                <methods>
+                    <include name="filterByProduct"/>
+                    <include name="filterByStartDate"/>
+                    <include name="filterByEndDate"/>
+                    <include name="filterByDateRange"/>
+                    <include name="filterByCategory"/>
+                    <include name="filterByProductAndDateRange"/>
+                    <include name="filterByProductAndCategory"/>
+                    <include name="filterByProductDateRangeAndCategory"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest">
+                <methods>
+                    <include name="testBomCountsActuallyUsedAlternativeAfterNonDefaultProduction"/>
+                    <include name="testBomCountsDefaultAlternativeAfterDefaultProduction"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest">
+                <methods>
+                    <include name="testDirectIssueOfTrackedResource"/>
+                    <include name="testSelfProducedProductWithTrackedComponent"/>
+                    <include name="testExternalFinishedGoodTechMapFallback"/>
+                    <include name="testMixedProducedAndReadyMadeScalePath"/>
+                    <include name="testBomDepth1"/>
+                    <include name="testBomDepth2"/>
+                    <include name="testBomDepth3"/>
+                    <include name="testSumAggregatesDirectAndNestedIssues"/>
+                    <include name="testMidLevelResourceAsProductAndIngredient"/>
+                    <include name="testUnrelatedProductExcludedByTrackedFilter"/>
+                    <include name="testBlendedBatchRecipesWeightedAverage"/>
+                    <include name="testItemWithoutBatchesFallsBackToTechMap"/>
+                    <include name="testTechMapLookupByRelocationDate"/>
+                    <include name="testRecipeCycleDoesNotInfiniteExpand"/>
+                    <include name="testScaleDownWhenProducedQtyExceedsMovedAmount"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationFilterTest">
+                <methods>
+                    <include name="testResourceViewerRelocationsSenderFilter"/>
+                    <include name="testUnitToCrewExcludedFromRelocationSum"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest">
+                <methods>
+                    <include name="testRelocationsSumSortedByResourceNameAsc"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewInventoryTest">
+                <methods>
+                    <include name="testCrewResourceStockReport"/>
+                    <include name="testCrewResourceIncomeReport"/>
+                    <include name="testCrewStockReportMatchesDirectInventory"/>
+                    <include name="owner1DeniedDirectCrewInventoryWithoutInventoryListPerm"/>
+                    <include name="testCrewManagerCanReadCrewDirectInventory"/>
+                    <include name="testOwner2DeniedCrewDirectInventory"/>
+                    <include name="testOwner1DeniedUnattachedCrewInventory"/>
+                    <include name="testCrewInventorySessionOpenRbac"/>
+                    <include name="testCrewInventoryConductUpdatesStock"/>
+                    <include name="putInventoryOnClosedCrewSessionReturns403"/>
+                    <include name="crewManagerCanOpenAndConductInventory"/>
+                    <include name="putNegativeAmountOnCrewReturns400"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="P4-DB-FIGHT">
+        <classes>
+            <class name="com.erp.tests.functional.order.OrderAvailabilityApiTest">
+                <methods>
+                    <include name="testAvailabilityWithoutRootConfig"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.defect.DefectTest">
+                <methods>
+                    <include name="testOwnerCannotDeleteDefectOlderThanTwoDays"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest">
+                <methods>
+                    <include name="testSaveMultipleImplicitResourcesForProduct"/>
+                    <include name="testImplicitWriteOffsAppearInJournalAndDebitFlyPoint"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewWriteOffTest">
+                <methods>
+                    <include name="testWriteOffCompleteReducesCrewStock"/>
+                    <include name="testCrewUsageWriteOffDebitsFlyPointNotCrew"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="P3-UI-CONTRACT">
+        <classes>
+            <class name="com.erp.tests.ui.DefectUITest">
+                <methods>
+                    <include name="testWriteOffFilterDefaultIsAll"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
+            <class name="com.erp.tests.ui.UnitAnalyticsUiTest">
+                <methods>
+                    <include name="unitAnalyticsTurnoverTabsLoadForPermittedUser"/>
+                    <include name="monthlyTabAllLocationsScopedToOwnerTree"/>
+                    <include name="byResourceTabAllLocationsScopedToOwnerTree"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.RelocationVisibilityUiTest">
+                <methods>
+                    <include name="sendFormExcludesOutsiderOutsideVisibilityRegions"/>
+                    <include name="sendFormShowsRegionAliasInRegionsMode"/>
+                    <include name="sendToRegionsAliasDeliversToRecipientStorageAnchor"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="P2-FAIL-UI">
+        <classes>
+            <class name="com.erp.tests.ui.AssemblyReadinessUiTest">
+                <methods>
+                    <include name="testSharedComponentBadge"/>
+                    <include name="testSorting"/>
+                    <include name="testStorageSwitchReloadsData"/>
+                    <include name="testComponentTechMapLinkOpensInNewTab"/>
+                    <include name="testNoTechMapLinkWhenComponentHasNoProducer"/>
+                    <include name="testAdminSeesForeignStorageProducerOwnerDoesNot"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest">
+                <methods>
+                    <include name="crewAnalyticsOpensUnattachedCrewInventoryAndConduct"/>
+                    <include name="adminTogglesInventorySessionOnFlyPointDeepLink"/>
+                    <include name="attachedCrewRowLinksToFlyPointDashboardNotCrewInventory"/>
+                    <include name="flyPointDashboardOpensInventoryAndConduct"/>
+                    <include name="includeFlyPointStocksCheckboxTogglesAttachedRows"/>
+                    <include name="allLocationsBlocksInventorySessionToggle"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.EquipmentCreateUITest">
+                <methods>
+                    <include name="createSeveralEquipmentInOneRelocation"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest">
+                <methods>
+                    <include name="stocksTableVisibleWhileShortStatsPending"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.InventoryHierarchyUiTest">
+                <methods>
+                    <include name="hierarchyCheckboxTogglesMultiTable"/>
+                    <include name="externalForcesHierarchyAndBlocksConduct"/>
+                    <include name="exportExcelWithAndWithoutHierarchyCheckbox"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.InventoryMultiLocationExportUiTest">
+                <methods>
+                    <include name="multiLocationOwnerExportsAllLocationsFromUi"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.InventoryUiTest">
+                <methods>
+                    <include name="copyRemaindersToClipboardUi"/>
+                    <include name="tagChipsTwoSelectedUseOrLogicUi"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.LocationPermissionsUiTest">
+                <methods>
+                    <include name="workspaceShowsAllAndSwitchUpdatesCta"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.NotificationRelocationGoUiTest">
+                <methods>
+                    <include name="adminGoSwitchesWorkspaceToSender"/>
+                    <include name="logistGoOpensLogisticsFilteredBySender"/>
+                    <include name="ownerGoSwitchesFromRecipientToSender"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.NotificationsUITest">
+                <methods>
+                    <include name="createRecipientViaDialog"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest">
+                <methods>
+                    <include name="ownerSeesDefectAndProductionCards"/>
+                    <include name="crewManagerHidesDefectAndProductionCards"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.OrderListUiTest">
+                <methods>
+                    <include name="resourceFilterAndReset"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.PlanDisassembleUiTest">
+                <methods>
+                    <include name="disassembleActualOutputShownOnPlanExecution"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest">
+                <methods>
+                    <include name="testSwitchNonDefaultAlternativeAndSubmit"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.RelocationUITest">
+                <methods>
+                    <include name="externalReceiveJournalAndStock"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest">
+                <methods>
+                    <include name="testUpdateTechMapSwapsDefaultViaUi"/>
+                    <include name="testClonePreFillsAlternativeGroups"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.UsersAdminUiTest">
+                <methods>
+                    <include name="createUserHappyPath"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="P2-SKIP-UI">
+        <classes>
+            <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest">
+                <methods>
+                    <include name="sentTabShowsCrewNameOutsideVisibilityScope"/>
+                    <include name="receivedTabShowsCrewNameOutsideVisibilityScope"/>
+                    <include name="receivedTabHidesNonCrewOutsiderName"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.EquipmentHistoryOnOperationsUiTest">
+                <methods>
+                    <include name="sentEquipmentShowsOnOperationHistory"/>
+                    <include name="receivedEquipmentShowsOnOperationHistory"/>
+                    <include name="inventoryAddedEquipmentShowsOnOperationHistory"/>
+                    <include name="cancelledEquipmentRelocationRemovedFromOperationHistory"/>
+                    <include name="editedEquipmentSendShowsUpdatedDescriptionOnOperationHistory"/>
+                    <include name="deletedSupplierReceiveRemovesEquipmentFromOperationHistory"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.EquipmentRelocationUITest">
+                <methods>
+                    <include name="equipmentRelocationJournalAccessible"/>
+                    <include name="equipmentResolveFinishedShowsInJournal"/>
+                    <include name="equipmentEditReceiveRemoveInvoiceFile"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.OperationHistoryUiTest">
+                <methods>
+                    <include name="nspQtyGreaterThanOneUsesTotalInHistory"/>
+                    <include name="nspInProgressUsageShownInHistory"/>
+                    <include name="nspDoneUsageShownInHistory"/>
+                    <include name="disassembleActualProducedAmountShownInHistory"/>
+                    <include name="nspUsedResourceAppearsInHistoryTable"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.OrderBookingUiTest">
+                <methods>
+                    <include name="inProgressOrderShowsBookingPanel"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.OrderCreateEditUiTest">
+                <methods>
+                    <include name="saveVisibleOnNewThenHiddenAfterTakeToWork"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.PlanExecutionUiTest">
+                <methods>
+                    <include name="techMapOnlyNotShownOnPlanExecution"/>
+                    <include name="techMapWithPlanShownOnPlanExecution"/>
+                    <include name="totalProducedSummaryCountsOnlyPiecesNotKg"/>
+                    <include name="testOwnerPlanAndProduction"/>
+                    <include name="testOwnerPlanNoProduction"/>
+                    <include name="testAdminNoPlanNoProduction"/>
+                    <include name="testAdminNoPlanHasProduction"/>
+                    <include name="testAdminPlanAndProduction"/>
+                    <include name="testAdminPlanNoProduction"/>
+                    <include name="testOwnerCopyProducedToClipboard"/>
+                    <include name="testOwnerFavouritesOnlyDisabledWhenEmpty"/>
+                    <include name="testOwnerConfigureFavouritesAndFilter"/>
+                    <include name="testOwnerAddFavouriteViaManageDialog"/>
+                    <include name="testOwnerEditExistingFavouritesViaManageDialog"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.PlanNeededResourcesUiTest">
+                <methods>
+                    <include name="neededTabActiveForCurrentMonth"/>
+                    <include name="neededTabDisabledForPastMonth"/>
+                    <include name="allLocationsShowsGuardInsteadOfTabs"/>
+                    <include name="tableColumnsAndProducedBadge"/>
+                    <include name="emptyStateWhenNoNeed"/>
+                    <include name="categoryFilterHidesOtherRows"/>
+                    <include name="onlyShortagesFilter"/>
+                    <include name="includeStockCheckbox"/>
+                    <include name="includeProducedCheckbox"/>
+                    <include name="sortByResourceName"/>
+                    <include name="copyNeededTableTsv"/>
+                    <include name="expandRowShowsSources"/>
+                    <include name="parentVersusChildAmounts"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.ProductionJournalFilterUITest">
+                <methods>
+                    <include name="filterByProductUiMatchesApi"/>
+                    <include name="filterByStartDateUiMatchesApi"/>
+                    <include name="filterByEndDateUiMatchesApi"/>
+                    <include name="filterByDateRangeUiMatchesApi"/>
+                    <include name="filterByCategoryUiMatchesApi"/>
+                    <include name="filterByProductAndDateRangeUiMatchesApi"/>
+                    <include name="filterByProductAndCategoryUiMatchesApi"/>
+                    <include name="filterByProductDateRangeAndCategoryUiMatchesApi"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.RelocationIncidentUITest">
+                <methods>
+                    <include name="createViewAndDeleteIncidentViaUi"/>
+                    <include name="operationHistoryAfterIncidentUi"/>
+                    <include name="lostTabAndHistoryShowWriteOffAmountAfterFullLoss"/>
+                    <include name="createPartialDeliveryIncidentViaUi"/>
+                    <include name="operationHistoryAfterPartialDeliveryUi"/>
+                    <include name="lostTabShowsOnlyWriteOffNotSentAfterPartialDelivery"/>
+                    <include name="partialDeliveryExceedingSentDisablesSave"/>
+                    <include name="partialDeliveryNegativeAmountDisablesSave"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.ResourceBundleApplyUiTest">
+                <methods>
+                    <include name="badgeVisibleWithHoverResources"/>
+                    <include name="applyFillsRowsWithEmptyQuantity"/>
+                    <include name="reapplyShowsAlreadyAddedToast"/>
+                    <include name="noStockShowsToast"/>
+                    <include name="partialApplyAddsOnlyMissing"/>
+                    <include name="applyOnCrewIssuanceForm"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.ResourceBundleManageUiTest"/>
+        </classes>
+    </test>
+
+    <!-- P3-RBAC parked: RbacAccessMatrixTest / testRbacAccessMatrix -->
+</suite>

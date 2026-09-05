@@ -72,6 +72,12 @@ public class NotificationsUITest extends BaseUITest {
                 .fillRecipientForm(createdCaption, phone)
                 .saveRecipientDialog();
 
+        boolean apiCreated = fixture.getAllRecipients(UserRole.ADMIN).stream()
+                .anyMatch(r -> createdCaption.equals(r.getCaption()));
+        Allure.parameter("apiCreated", apiCreated);
+        assertThat(apiCreated)
+                .as("POST recipient має зʼявитись у GET /notification-recipients")
+                .isTrue();
         assertThat(notifications.isCaptionVisibleInTable(createdCaption)).isTrue();
 
         // Track for API cleanup (find by caption)

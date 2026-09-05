@@ -122,6 +122,7 @@ rules:
     description: "Список областей видимості: ADMIN та OWNER_1 (business-unit-list::read)"
 
   - endpointName: "STORAGE_REGION_GET_BY_ID"
+    contextKey: "STORAGE_REGION_ID"
     allowedRoles: [ ADMIN, OWNER_1 ]
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
@@ -130,44 +131,50 @@ rules:
   - endpointName: "STORAGE_REGION_POST_CREATE"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, ANONYMOUS ]
-    bodyType: null
+    bodyType: "CREATE_REGION"
     description: "Створити область видимості: тільки ADMIN (business-unit::create)"
 
   - endpointName: "STORAGE_REGION_PUT_UPDATE"
+    contextKey: "STORAGE_REGION_ID"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, ANONYMOUS ]
-    bodyType: null
+    bodyType: "UPDATE_REGION"
     description: "Оновити область видимості: тільки ADMIN"
 
-  - endpointName: "STORAGE_REGION_DELETE"
-    allowedRoles: [ ADMIN ]
-    deniedRoles: [ OWNER_1, ANONYMOUS ]
-    bodyType: null
-    description: "Видалити область видимості: тільки ADMIN"
-
   - endpointName: "STORAGE_REGION_PUT_ADD_LOCATIONS"
+    contextKey: "STORAGE_REGION_ID"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, ANONYMOUS ]
     bodyType: null
     description: "Додати локації до області видимості: тільки ADMIN"
 
   - endpointName: "STORAGE_REGION_GET_RESOURCES"
+    contextKey: "STORAGE_REGION_ID"
     allowedRoles: [ ADMIN, OWNER_1 ]
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
     description: "Список ресурсів області видимості: ADMIN та OWNER_1"
 
   - endpointName: "STORAGE_REGION_PUT_ADD_RESOURCES"
+    contextKey: "STORAGE_REGION_ID"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, ANONYMOUS ]
     bodyType: null
     description: "Додати ресурси до області видимості: тільки ADMIN"
 
   - endpointName: "STORAGE_REGION_DELETE_RESOURCES"
+    contextKey: "STORAGE_REGION_ID"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, ANONYMOUS ]
     bodyType: null
     description: "Прибрати ресурси з області видимості: тільки ADMIN"
+
+  - endpointName: "STORAGE_REGION_DELETE"
+    contextKey: "STORAGE_REGION_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, ANONYMOUS ]
+    bodyType: null
+    description: "Видалити область видимості: тільки ADMIN"
 
   - endpointName: "STORAGE_GET_LOCATION_LINKS"
     allowedRoles: [ ADMIN, OWNER_1 ]

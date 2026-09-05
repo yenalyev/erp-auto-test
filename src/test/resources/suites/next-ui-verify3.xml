@@ -1,0 +1,49 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Next failed-case cluster: remaining TM-ALT + remaining Crew-fly
+  (skip already-green ALT-004, FLY-INV-002, FLY-INV-004, CREW-019).
+
+    mvn test "-Denv=dev" "-Dsuite=next-ui-verify3" "-Dtcm.enabled=false"
+-->
+<suite name="Next UI verify 3" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TC-UI-TM-ALT-rest">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest">
+                <methods>
+                    <include name="testAlternativeGroupsSectionVisibleOnlyForProduction"/>
+                    <include name="testCreateTechMapWithAlternativeGroupViaUi"/>
+                    <include name="testCreateTechMapWithSwitchedDefaultViaUi"/>
+                    <include name="testListShowsInterchangeableColumnForAltGroup"/>
+                    <include name="testClonePreFillsAlternativeGroups"/>
+                    <include name="testCreateRejectsInputInAlternativeGroup"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Crew-fly-rest">
+        <classes>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest">
+                <methods>
+                    <include name="crewAnalyticsOpensUnattachedCrewInventoryAndConduct"/>
+                    <include name="attachedCrewRowLinksToFlyPointDashboardNotCrewInventory"/>
+                    <include name="flyPointDashboardOpensInventoryAndConduct"/>
+                    <include name="includeFlyPointStocksCheckboxTogglesAttachedRows"/>
+                    <include name="archivedCrewHiddenFromDefaultStocksTab"/>
+                    <include name="flyPointInventoryAutocompleteUsesUnitAncestorScope"/>
+                    <include name="crewAndFlyPointAbsentFromWorkspacePicker"/>
+                    <include name="obsoleteCrewsModeUrlDoesNotCrash"/>
+                    <include name="outsiderHasNoInventorySessionToggleOnFlyPointDeepLink"/>
+                    <include name="outsiderHasNoConductOnFlyPointDeepLink"/>
+                    <include name="allLocationsBlocksInventorySessionToggle"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

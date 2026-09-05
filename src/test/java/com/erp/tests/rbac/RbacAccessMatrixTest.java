@@ -55,8 +55,9 @@ public class RbacAccessMatrixTest extends BaseRbacTest {
 
         // DataProvider часто випереджає @BeforeClass. Shared unit уже може бути з BaseTest,
         // але GLOBAL_PLAN (тіло PUT) з'являється лише після prepareFullRbacContext.
-        if (testContext.get(ContextKey.GLOBAL_PLAN) == null) {
-            log.info("GLOBAL_PLAN missing in DataProvider, preparing full RBAC context...");
+        if (testContext.get(ContextKey.GLOBAL_PLAN) == null
+                || testContext.get(ContextKey.DYNAMIC_TECH_MAP) == null) {
+            log.info("RBAC context incomplete in DataProvider, preparing full RBAC context...");
             rbacFixture.prepareFullRbacContext();
         }
 

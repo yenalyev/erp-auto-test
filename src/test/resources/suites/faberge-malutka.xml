@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Faberge Malutka" parallel="none" verbose="1">
+    <test name="malutka">
+        <classes>
+            <class name="com.erp.tests.functional.statistics.FabergeMalutkaPlanProbeTest"/>
+        </classes>
+    </test>
+</suite>

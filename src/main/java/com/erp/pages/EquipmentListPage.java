@@ -116,6 +116,13 @@ public class EquipmentListPage extends BasePage {
                 .count() > 0;
     }
 
+    public EquipmentListPage waitUntilEquipmentNameVisible(String equipmentName) {
+        page.waitForCondition(
+                () -> isEquipmentNameVisible(equipmentName),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     public EquipmentListPage filterBySearch(String searchTerm) {
         runGroupedEquipmentFilterAction(() ->
                 page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(searchTerm));

@@ -1,0 +1,19 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    mvn test "-Denv=dev" "-Dsuite=next-ui-verify5" "-Dtcm.enabled=false"
+-->
+<suite name="Next UI verify 5" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="TC-UI-CREW-017">
+        <classes>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest">
+                <methods>
+                    <include name="flyPointDashboardOpensInventoryAndConduct"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

@@ -126,21 +126,21 @@ public class AuthenticationTest extends BaseTest {
     @TestCaseId("TC-AUTH-004")
     @Story("REQ-AUTH-005: All Endpoints Require Authentication")
     @Severity(SeverityLevel.BLOCKER)
-    @Description("Verify API endpoint returns 401 when no token provided")
+    @Description("Verify GET /api/v1/users/me returns 401 when no session cookie or Bearer token")
     public void testEndpointWithoutToken() {
-        log.info("🔒 Testing API access without authentication token");
+        log.info("🔒 Testing /users/me without authentication");
 
         Response response = given()
                 .baseUri(ConfigProvider.getBackendUrl())
                 .contentType("application/json")
                 .when()
-                .get(ApiEndpointDefinition.RESOURCE_GET_ALL.getPath())
+                .get(ApiEndpointDefinition.USER_GET_ME.getPath())
                 .then()
                 .extract()
                 .response();
 
         assertThat(response.statusCode())
-                .as("Should return 401 Unauthorized")
+                .as("Unauthenticated request to /users/me should return 401")
                 .isEqualTo(401);
 
         log.info("✅ Unauthenticated request correctly rejected with 401");
@@ -150,23 +150,23 @@ public class AuthenticationTest extends BaseTest {
     @TestCaseId("TC-AUTH-005")
     @Story("REQ-AUTH-005: All Endpoints Require Authentication")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Verify API endpoint returns 401 when invalid token provided")
+    @Description("Verify GET /api/v1/users/me returns 401 when invalid Bearer token provided")
     public void testEndpointWithInvalidToken() {
         String invalidToken = "invalid.jwt.token";
-        log.info("🔒 Testing API access with invalid token");
+        log.info("🔒 Testing /users/me with invalid Bearer token");
 
         Response response = given()
                 .baseUri(ConfigProvider.getBackendUrl())
                 .header("Authorization", "Bearer " + invalidToken)
                 .contentType("application/json")
                 .when()
-                .get(ApiEndpointDefinition.RESOURCE_GET_ALL.getPath())
+                .get(ApiEndpointDefinition.USER_GET_ME.getPath())
                 .then()
                 .extract()
                 .response();
 
         assertThat(response.statusCode())
-                .as("Should return 401 Unauthorized")
+                .as("Invalid Bearer token on /users/me should return 401")
                 .isEqualTo(401);
 
         log.info("✅ Invalid token correctly rejected with 401");
@@ -176,32 +176,45 @@ public class AuthenticationTest extends BaseTest {
     @TestCaseId("TC-AUTH-006")
     @Story("REQ-AUTH-005: All Endpoints Require Authentication")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Verify API endpoint accepts valid session via browser-like login flow")
+    @Description("""
+            Після browser OAuth (Playwright на remote; RestAssured form flow локально)
+            cookie-сесія JSESSIONID приймається GET /api/v1/users/me без Authorization: Bearer.
+            """)
     public void testEndpointWithValidSession() {
-        log.info("🌐 Simulating browser login flow to get session cookies");
+        String username = ConfigProvider.getAuthUsername();
+        String password = ConfigProvider.getAuthPassword();
+        log.info("🌐 Browser OAuth → session cookies, then GET /users/me without Bearer");
 
-        Map<String, String> sessionCookies = authService.loginViaBrowserFlow(
-                ConfigProvider.getAuthUsername(),
-                ConfigProvider.getAuthPassword(),
-                ApiEndpointDefinition.RESOURCE_GET_ALL.getPath()
-        );
+        Map<String, String> sessionCookies = getPlaywrightSessionProvider() != null
+                ? authService.getSessionForUser(username, password)
+                : authService.loginViaBrowserFlow(
+                        username, password, ApiEndpointDefinition.USER_GET_ME.getPath());
 
-        log.info("🔓 Testing API access using obtained session");
+        assertThat(sessionCookies)
+                .as("JSESSIONID після browser OAuth")
+                .containsKey("JSESSIONID");
+        assertThat(sessionCookies.get("JSESSIONID"))
+                .as("JSESSIONID value")
+                .isNotBlank();
 
         Response response = given()
                 .baseUri(ConfigProvider.getBackendUrl())
+                .auth().none()
                 .cookies(sessionCookies)
                 .contentType("application/json")
                 .when()
-                .get(ApiEndpointDefinition.RESOURCE_GET_ALL.getPath())
+                .get(ApiEndpointDefinition.USER_GET_ME.getPath())
                 .then()
                 .extract()
                 .response();
 
         assertThat(response.statusCode())
-                .as("API should return 200 OK for a valid session; body=%s", response.asString())
-                .isIn(200, 404);
+                .as("Authenticated session should return 200 from /users/me; body=%s", response.asString())
+                .isEqualTo(200);
+        assertThat(response.jsonPath().getString("username"))
+                .as("Profile username")
+                .isEqualTo(username);
 
-        log.info("✅ Valid session accepted — status={}", response.statusCode());
+        log.info("✅ Valid cookie session accepted — /users/me status={}", response.statusCode());
     }
 }

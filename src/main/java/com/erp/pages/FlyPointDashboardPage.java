@@ -129,13 +129,27 @@ public class FlyPointDashboardPage extends BasePage {
         return this;
     }
 
-    /** Клік назви точки → /inventory?storageId=fpId */
+    /** Клік назви точки → /inventory?storageId=fpId (або /inventory/{id}). */
     public FlyPointDashboardPage clickFlyPointInventoryLink(long flyPointId) {
+        expandAllStockCategories();
         Locator link = flyPointInventoryLink(flyPointId);
-        link.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        try {
+            link.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        } catch (RuntimeException e) {
+            attachScreenshot("No fly-point inventory link for id=" + flyPointId);
+            throw new AssertionError(
+                    "Немає лінка інвентаризації точки. url=%s hrefs=%s".formatted(
+                            page.url(),
+                            page.locator("a[href*='inventory']").all()
+                                    .stream()
+                                    .map(a -> a.getAttribute("href"))
+                                    .toList()),
+                    e);
+        }
         link.click();
         page.waitForURL(
-                url -> url.contains("/inventory?storageId=" + flyPointId),
+                url -> url.contains("/inventory?storageId=" + flyPointId)
+                        || url.contains("/inventory/" + flyPointId),
                 new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
@@ -154,7 +168,7 @@ public class FlyPointDashboardPage extends BasePage {
         return table.count() > 0
                 && table.first().isVisible()
                 && table.getByText("Підрозділ").count() > 0
-                && table.getByText("Точка взлету").count() > 0
+                && table.getByText("Точка вильоту").count() > 0
                 && table.getByText("Ресурс").count() > 0
                 && table.getByText("Кількість").count() > 0
                 && table.getByText("Оновлено").count() > 0;
@@ -171,7 +185,7 @@ public class FlyPointDashboardPage extends BasePage {
     public boolean areStockFiltersUsable() {
         Locator resourceFilter = page.locator("input[placeholder='" + RESOURCE_FILTER_PLACEHOLDER + "']:visible")
                 .first();
-        Locator flyPointFilter = page.getByText("Точка взлету", new Page.GetByTextOptions().setExact(true));
+        Locator flyPointFilter = page.getByText("Точка вильоту", new Page.GetByTextOptions().setExact(true));
         Locator categoryFilter = page.getByText("Категорія", new Page.GetByTextOptions().setExact(true));
         return resourceFilter.count() > 0
                 && resourceFilter.isEnabled()
@@ -288,7 +302,9 @@ public class FlyPointDashboardPage extends BasePage {
     }
 
     private Locator flyPointInventoryLink(long flyPointId) {
-        return page.locator("a[href*='/inventory?storageId=" + flyPointId + "']").first();
+        return page.locator(
+                        "a[href*='storageId=" + flyPointId + "'], a[href*='/inventory/" + flyPointId + "']")
+                .first();
     }
 
     private void waitForLoadingHidden() {

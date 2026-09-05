@@ -27,6 +27,8 @@ import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -443,6 +445,41 @@ public class InventoryFixture extends BaseFixture {
                 ApiEndpointDefinition.EXPORT_REMAINDER_GET,
                 role,
                 Map.of("storageId", storageId));
+    }
+
+    /**
+     * Same request as tk-ui {@code exportAnalyticsApi.exportRemaindersHierarchy} on /inventory.
+     * Single location: {@code parentStorageId}. All-locations (CPMA-762): {@code locations} csv.
+     */
+    @Step("API: Експорт залишків hierarchy parentStorageId={parentStorageId}")
+    public Response exportRemaindersHierarchy(UserRole role, Long parentStorageId, Map<String, Object> filters) {
+        Map<String, Object> params = new HashMap<>();
+        if (parentStorageId != null) {
+            params.put("parentStorageId", parentStorageId);
+        }
+        if (filters != null) {
+            params.putAll(filters);
+        }
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.EXPORT_INVENTORY_HIERARCHY_GET,
+                role,
+                params);
+    }
+
+    /**
+     * CPMA-762: {@code GET /export-analytics/inventory?locations=id1,id2} — all-locations export from UI.
+     */
+    @Step("API: Експорт залишків по locations")
+    public Response exportRemaindersByLocations(UserRole role, Collection<Long> storageIds, Map<String, Object> filters) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("locations", new ArrayList<>(storageIds));
+        if (filters != null) {
+            params.putAll(filters);
+        }
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.EXPORT_INVENTORY_HIERARCHY_GET,
+                role,
+                params);
     }
 
     @Step("API: Історія операцій за сьогодні для складу {storageId}")

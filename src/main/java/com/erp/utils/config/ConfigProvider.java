@@ -146,6 +146,10 @@ public class ConfigProvider {
     public static String getLogistPassword() { return config.logistPassword(); }
     public static String getCrewManagerUsername() { return config.crewManagerUsername(); }
     public static String getCrewManagerPassword() { return config.crewManagerPassword(); }
+    public static String getCrewReadUsername() { return config.crewReadUsername(); }
+    public static String getCrewReadPassword() { return config.crewReadPassword(); }
+    public static String getCrewWriteUsername() { return config.crewWriteUsername(); }
+    public static String getCrewWritePassword() { return config.crewWritePassword(); }
     public static String getProjectAdminUsername() { return config.projectAdminUsername(); }
     public static String getProjectAdminPassword() { return config.projectAdminPassword(); }
     public static String getProjectManagerUsername() { return config.projectManagerUsername(); }

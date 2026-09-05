@@ -3,12 +3,16 @@ package com.erp.tests.ui;
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.EquipmentFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.StorageRegionFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.response.EquipmentGroupResponse;
 import com.erp.pages.EquipmentListPage;
 import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -24,6 +28,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class EquipmentGroupSortUITest extends BaseUITest {
 
     private EquipmentFixture equipmentFixture;
+    private StorageFixture storageFixture;
+    private StorageRegionFixture regionFixture;
     private long storageId;
     private Long categoryId;
 
@@ -32,9 +38,17 @@ public class EquipmentGroupSortUITest extends BaseUITest {
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         equipmentFixture = new EquipmentFixture(testContext, apiExecutor);
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        regionFixture = new StorageRegionFixture(testContext, apiExecutor);
         equipmentFixture.prepareCategoryContext();
-        storageId = ConfigProvider.getOwner1StorageId();
+        long owner1Home = ConfigProvider.getOwner1StorageId();
+        storageId = storageFixture.createChildStorage(owner1Home, "ui-eq-sort-").getId();
         categoryId = testContext.get(ContextKey.EQUIPMENT_CATEGORY_ID);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupIsolatedStorage() {
+        TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
     }
 
     @Test

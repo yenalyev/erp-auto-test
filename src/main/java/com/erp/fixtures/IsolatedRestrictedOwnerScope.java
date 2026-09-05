@@ -39,7 +39,6 @@ public class IsolatedRestrictedOwnerScope {
 
     private final StorageFixture storageFixture;
     private final UserFixture userFixture;
-    private final InventoryFixture inventoryFixture;
     private final ApiExecutor apiExecutor;
     private final PlaywrightSessionProvider playwright;
 
@@ -50,12 +49,10 @@ public class IsolatedRestrictedOwnerScope {
     public IsolatedRestrictedOwnerScope(
             StorageFixture storageFixture,
             UserFixture userFixture,
-            InventoryFixture inventoryFixture,
             ApiExecutor apiExecutor,
             PlaywrightSessionProvider playwright) {
         this.storageFixture = storageFixture;
         this.userFixture = userFixture;
-        this.inventoryFixture = inventoryFixture;
         this.apiExecutor = apiExecutor;
         this.playwright = playwright;
     }
@@ -157,18 +154,8 @@ public class IsolatedRestrictedOwnerScope {
     }
 
     private void archiveIsolatedUnit(Long id) {
-        try {
-            inventoryFixture.clearStock(id);
-        } catch (Exception e) {
-            log.warn("Failed to clear inventory on isolated UNIT id={}: {}", id, e.getMessage());
-        }
-        try {
-            var response = storageFixture.deactivate(UserRole.ADMIN, id);
-            if (response.statusCode() != 200) {
-                log.warn("Deactivate isolated UNIT id={} returned HTTP {}", id, response.statusCode());
-            }
-        } catch (Exception e) {
-            log.warn("Failed to deactivate isolated UNIT id={}: {}", id, e.getMessage());
+        if (!storageFixture.archiveStorage(UserRole.ADMIN, id)) {
+            log.warn("Failed to archive isolated UNIT id={}", id);
         }
     }
 

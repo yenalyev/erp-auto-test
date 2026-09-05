@@ -233,7 +233,9 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
         TechnologicalMapResponse source = techMapFixture.createTechMapWithAlternativeGroup(UserRole.ADMIN, storageId);
         long versionBefore = source.getVersion() != null ? source.getVersion() : 0L;
 
-        TechnologicalMapFormPage form = new TechnologicalMapFormPage(page).openUpdate(source.getId());
+        injectRoleSession(UserRole.ADMIN, storageId);
+        TechnologicalMapFormPage form = new TechnologicalMapFormPage(page)
+                .openUpdate(source.getId(), storageId);
         form.setAlternativeGroupDefault(0, 1).submit();
         page.waitForURL(
                 url -> !url.contains("/technological-maps/update/"),
@@ -286,6 +288,7 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
         TechnologicalMapResponse source = techMapFixture.createTechMapWithAlternativeGroup(UserRole.ADMIN, storageId);
         techMapForCleanup = source;
 
+        injectRoleSession(UserRole.ADMIN, storageId);
         TechnologicalMapFormPage form = new TechnologicalMapFormPage(page).openClone(source.getId());
         assertThat(form.isAlternativeGroupsSectionVisible()).isTrue();
         assertThat(page.getByPlaceholder("Назва групи (напр.: Пальне)").inputValue()).contains("Клей");

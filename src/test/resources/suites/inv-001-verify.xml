@@ -1,0 +1,23 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  TC-INV-001 only.
+
+    mvn test "-Denv=dev" "-Dsuite=inv-001-verify" "-Dtcm.enabled=false"
+-->
+<suite name="INV-001 verify" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TC-INV-001">
+        <classes>
+            <class name="com.erp.tests.functional.invoice.InvoiceGenerateApiTest">
+                <methods>
+                    <include name="generateInvoiceForSend"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

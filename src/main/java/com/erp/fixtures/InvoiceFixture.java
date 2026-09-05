@@ -3,12 +3,17 @@ package com.erp.fixtures;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.models.request.InvoiceDataRequest;
+import com.erp.models.request.InvoiceItemRequest;
+import com.erp.models.response.RelocationItemResponse;
+import com.erp.models.response.RelocationResponse;
+import com.erp.models.response.ResourceResponse;
 import com.erp.test_context.TestContext;
 import com.erp.api.clients.ApiExecutor;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -46,6 +51,31 @@ public class InvoiceFixture extends BaseFixture {
         }
         throw new IllegalStateException(
                 "Invoice file not ready for relocation " + relocationId + " after " + maxAttempts + " attempts");
+    }
+
+    /**
+     * Line items as {@code InvoiceFileFacade.buildResourceInvoiceItems}: name, unit, amount from send.
+     */
+    public static List<InvoiceItemRequest> itemsFromRelocation(RelocationResponse relocation) {
+        if (relocation == null || relocation.getItems() == null) {
+            return List.of();
+        }
+        return relocation.getItems().stream()
+                .map(InvoiceFixture::toInvoiceItem)
+                .toList();
+    }
+
+    private static InvoiceItemRequest toInvoiceItem(RelocationItemResponse item) {
+        ResourceResponse resource = item.getResource();
+        String unit = resource != null && resource.getUnit() != null
+                ? resource.getUnit().getShortName()
+                : null;
+        Integer amount = item.getAmount() != null ? item.getAmount().intValue() : 0;
+        return InvoiceItemRequest.builder()
+                .name(resource != null ? resource.getName() : null)
+                .unit(unit)
+                .totalAmount(amount)
+                .build();
     }
 
     @Step("API: POST generate invoice for relocation {relocationId}")

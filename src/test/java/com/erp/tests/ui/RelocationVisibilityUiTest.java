@@ -4,11 +4,13 @@ import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.IsolatedRestrictedOwnerScope;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageRegionLocationResponse;
@@ -47,7 +49,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Story("Relocation visibility regions")
 public class RelocationVisibilityUiTest extends BaseUITest {
 
-    private static final Object OWNER2_ACCESS_LOCK = new Object();
     private static final String SCENARIO_PREFIX = "ui-rel-vis-neg-";
     private static final String ALIAS_SEND_PREFIX = "ui-rel-vis-alias-";
     private static final String ALIAS_SEND_MARKER = "TC-UI-REL-VIS-003";
@@ -57,12 +58,11 @@ public class RelocationVisibilityUiTest extends BaseUITest {
     private StorageRegionFixture regionFixture;
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
+    private IsolatedRestrictedOwnerScope isolatedOwnerScope;
 
     private Long owner2StorageId;
     private String owner2StorageName;
     private Long resourceId;
-    private String originalOwner2AccessMode;
-    private boolean owner2AccessModeChanged;
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -74,17 +74,23 @@ public class RelocationVisibilityUiTest extends BaseUITest {
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         relocationFixture.prepareContext();
         resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
-        owner2StorageId = ConfigProvider.getOwner2StorageId();
+        isolatedOwnerScope = new IsolatedRestrictedOwnerScope(
+                storageFixture,
+                new UserFixture(testContext, apiExecutor),
+                apiExecutor,
+                getPlaywrightSessionProvider());
+        owner2StorageId = isolatedOwnerScope.acquire();
         owner2StorageName = storageFixture.getById(UserRole.ADMIN, owner2StorageId).getName();
-        ensureOwner2RestrictedAccess();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
         regionFixture.purgeRegionsByNamePrefixes(
                 UserRole.ADMIN, SCENARIO_PREFIX, ALIAS_SEND_PREFIX, "ui-rel-vis-", "vis-", "rel-vis-");
     }
 
     @AfterClass(alwaysRun = true)
-    public void restoreOwner2AccessMode() {
-        restoreOwner2AccessIfChanged();
+    public void releaseIsolatedOwner() {
+        if (isolatedOwnerScope != null) {
+            isolatedOwnerScope.release();
+        }
     }
 
     @AfterMethod(alwaysRun = true)
@@ -423,14 +429,18 @@ public class RelocationVisibilityUiTest extends BaseUITest {
     private RelocationCreateOutputPage openSendFormAsOwner2() {
         injectOwner2Session(owner2StorageId);
         RelocationPage journal = new RelocationPage(page).open();
-        new AppSidebarPage(page).waitForSidebarLoaded()
-                .selectWorkspaceByName(owner2StorageName);
+        AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
+        // Isolated owner often has a single UNIT — workspace combobox is hidden.
+        if (sidebar.isWorkspaceSelectorVisible()) {
+            sidebar.selectWorkspaceByName(owner2StorageName);
+        }
         return journal.clickSend();
     }
 
     private void injectOwner2Session(long selectedStorageId) {
+        UserFixture.RestrictedOwnerUser owner = isolatedOwnerScope.boundOwner(UserRole.OWNER_2);
         Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(UserRole.OWNER_2.getUsername(), UserRole.OWNER_2.getPassword());
+                .getSession(owner.username(), owner.password());
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
@@ -451,33 +461,6 @@ public class RelocationVisibilityUiTest extends BaseUITest {
             return false;
         }
         return haystack.toLowerCase().contains(needle.toLowerCase());
-    }
-
-    private void ensureOwner2RestrictedAccess() {
-        synchronized (OWNER2_ACCESS_LOCK) {
-            StorageResponse owner2Storage = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-            originalOwner2AccessMode = owner2Storage.getAccessMode();
-            if (!StorageAccessMode.REGIONS.name().equals(originalOwner2AccessMode)) {
-                storageFixture.setAccessMode(UserRole.ADMIN, owner2StorageId, StorageAccessMode.REGIONS);
-                owner2AccessModeChanged = true;
-            }
-        }
-    }
-
-    private void restoreOwner2AccessIfChanged() {
-        if (!owner2AccessModeChanged || originalOwner2AccessMode == null) {
-            return;
-        }
-        synchronized (OWNER2_ACCESS_LOCK) {
-            try {
-                storageFixture.setAccessMode(
-                        UserRole.ADMIN,
-                        owner2StorageId,
-                        StorageAccessMode.valueOf(originalOwner2AccessMode));
-            } catch (Exception e) {
-                log.warn("Failed to restore OWNER_2 storage accessMode: {}", e.getMessage());
-            }
-        }
     }
 
     private record InScopeOutsiderScenario(StorageResponse inScopeRecipient, StorageResponse outsider) {

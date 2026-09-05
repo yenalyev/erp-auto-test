@@ -25,13 +25,16 @@
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
             <class name="com.erp.tests.functional.storage.FlyPointInventoryTest"/>
             <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
+            <class name="com.erp.tests.functional.storage.CrewAnalyticsStocksTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryMultiLocationExportApiTest"/>
         </classes>
     </test>
 
     <test name="Inventory UI">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.InventoryMultiLocationExportUiTest"/>
             <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>

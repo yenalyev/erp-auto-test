@@ -1,0 +1,59 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Second pass: remaining P123 failures after first DEV verify.
+
+    mvn test "-Denv=dev" "-Dsuite=dev-p123-rerun" "-Dtcm.enabled=false"
+-->
+<suite name="Dev P123 rerun" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TM-034">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapValidationUITest">
+                <methods>
+                    <include name="testCannotUpdateProductionTechMapWithInputOutputOverlapViaUi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="UA-001">
+        <classes>
+            <class name="com.erp.tests.ui.UnitAnalyticsUiTest">
+                <methods>
+                    <include name="unitAnalyticsTurnoverTabsLoadForPermittedUser"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="REL-VIS">
+        <classes>
+            <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
+        </classes>
+    </test>
+
+    <test name="Hierarchy-export">
+        <classes>
+            <class name="com.erp.tests.ui.InventoryHierarchyUiTest">
+                <methods>
+                    <include name="exportExcelWithAndWithoutHierarchyCheckbox"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Crew-fly-toggle">
+        <classes>
+            <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest">
+                <methods>
+                    <include name="adminTogglesInventorySessionOnFlyPointDeepLink"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

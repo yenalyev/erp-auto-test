@@ -208,14 +208,12 @@ public class AssemblyReadinessPage extends BasePage {
     public AssemblyReadinessPage selectSortByQuantityDesc() {
         openSortDropdown();
         page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(SORT_BY_QUANTITY)).click();
-        page.waitForTimeout(300);
         return this;
     }
 
     public AssemblyReadinessPage selectSortByNameAsc() {
         openSortDropdown();
         page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(SORT_BY_NAME)).click();
-        page.waitForTimeout(300);
         return this;
     }
 

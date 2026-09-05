@@ -16,6 +16,10 @@ public enum UserRole {
     LOGIST,
     /** Dev/staging: argument — Crew-Manager-ROLE, UNIT storage ({@code unit.storage.id}). */
     CREW_MANAGER,
+    /** Battalion warehouse keeper — Crew-Read-ROLE ({@code perm_crews-stocks::view}). */
+    CREW_READ,
+    /** Battalion warehouse keeper — Crew-Write-ROLE (read + crew inventory conduct). */
+    CREW_WRITE,
     /**
      * Project production catalog admin ({@code Project-Production-ROLE}) —
      * staging/dev: {@code projectprod}, storage = owner1.
@@ -53,6 +57,8 @@ public enum UserRole {
             case ACCOUNTANT      -> ConfigProvider.getAccountantUsername();
             case LOGIST          -> ConfigProvider.getLogistUsername();
             case CREW_MANAGER    -> ConfigProvider.getCrewManagerUsername();
+            case CREW_READ       -> ConfigProvider.getCrewReadUsername();
+            case CREW_WRITE      -> ConfigProvider.getCrewWriteUsername();
             case PROJECT_ADMIN   -> ConfigProvider.getProjectAdminUsername();
             case PROJECT_MANAGER -> ConfigProvider.getProjectManagerUsername();
             case LOCATION_MIXED  -> ConfigProvider.getLocationMixedUsername();
@@ -72,6 +78,8 @@ public enum UserRole {
             case ACCOUNTANT      -> ConfigProvider.getAccountantPassword();
             case LOGIST          -> ConfigProvider.getLogistPassword();
             case CREW_MANAGER    -> ConfigProvider.getCrewManagerPassword();
+            case CREW_READ       -> ConfigProvider.getCrewReadPassword();
+            case CREW_WRITE      -> ConfigProvider.getCrewWritePassword();
             case PROJECT_ADMIN   -> ConfigProvider.getProjectAdminPassword();
             case PROJECT_MANAGER -> ConfigProvider.getProjectManagerPassword();
             case LOCATION_MIXED  -> ConfigProvider.getLocationMixedPassword();
@@ -89,7 +97,8 @@ public enum UserRole {
                     -> String.valueOf(ConfigProvider.getOwner1StorageId());
             case OWNER_2       -> String.valueOf(ConfigProvider.getOwner2StorageId());
             case ORDER_GATHERER -> String.valueOf(ConfigProvider.getOrderGatheringStorageId());
-            case CREW_MANAGER  -> String.valueOf(ConfigProvider.getUnitStorageId());
+            case CREW_MANAGER, CREW_READ, CREW_WRITE
+                    -> String.valueOf(ConfigProvider.getUnitStorageId());
             case UNIT_ANALYST -> {
                 long id = ConfigProvider.getOrderRequesterStorageId();
                 yield id > 0 ? String.valueOf(id) : "";

@@ -4,13 +4,15 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
+import com.erp.models.response.CrewResourceCategoryStockResponse;
 import com.erp.models.response.CrewResourceStockResponse;
-import com.erp.models.response.UnitFlyPointResourceStockResponse;
-import com.erp.models.response.UnitShortStatsResponse;
 import com.erp.models.response.RelocationCreationOptionsResponse;
+import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageHierarchyResponse;
 import com.erp.models.response.StorageRegionResponse;
 import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UnitFlyPointResourceStockResponse;
+import com.erp.models.response.UnitShortStatsResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -80,6 +82,77 @@ public class CrewRegionFixture extends BaseFixture {
         testContext.set(ContextKey.CREW_STORAGE_ID, crew.getId());
         testContext.set(ContextKey.CREW_PARENT_UNIT_ID, unit.getId());
         return scenario;
+    }
+
+    /**
+     * Як {@link #prepareSingleCrewScenario}, але учасники області — явний список storage id
+     * (напр. {@code unit.storage.id} для Crew-Read-ROLE).
+     */
+    @Step("FIXTURE: область CREWS з одним екіпажем, members={memberStorageIds}")
+    public CrewRegionScenario prepareSingleCrewScenarioForMembers(String namePrefix, Long... memberStorageIds) {
+        Long issuerStorageId = ConfigProvider.getOwner1StorageId();
+        StorageResponse member = storageFixture.getById(UserRole.ADMIN, issuerStorageId);
+        Long parentId = member.getParent() != null ? member.getParent().getId() : issuerStorageId;
+
+        StorageResponse unit = storageFixture.createUnitStorage(parentId, namePrefix + "unit-");
+        StorageResponse crew = storageFixture.createCrewStorage(unit.getId(), namePrefix + "crew-");
+
+        StorageRegionResponse region = regionFixture.createRegion(
+                unit, StorageAccessMode.CREWS, namePrefix + "reg-");
+        regionFixture.addRegionMembers(region.getId(), memberStorageIds);
+        regionFixture.addRegionLocations(region.getId(), unit.getId(), crew.getId());
+
+        CrewRegionScenario scenario = CrewRegionScenario.builder()
+                .region(region)
+                .unit(unit)
+                .childUnit(null)
+                .flyPoint(null)
+                .crew(crew)
+                .memberStorageId(issuerStorageId)
+                .build();
+        testContext.set(ContextKey.CREW_STORAGE_ID, crew.getId());
+        testContext.set(ContextKey.CREW_PARENT_UNIT_ID, unit.getId());
+        return scenario;
+    }
+
+    @Step("API: GET /crews/stocks (raw response)")
+    public Response getCrewAnalyticsResourceStocksRaw(
+            UserRole role,
+            Long parentId,
+            Boolean active,
+            String resourceName) {
+        Map<String, Object> params = new HashMap<>();
+        if (parentId != null) {
+            params.put("parentId", parentId);
+        }
+        if (active != null) {
+            params.put("active", active);
+        }
+        if (resourceName != null && !resourceName.isBlank()) {
+            params.put("resourceName", resourceName);
+        }
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.CREW_GET_RESOURCE_STOCKS, role, params);
+    }
+
+    @Step("API: GET /crews/locations")
+    public List<SimpleEntityResponse> getCrewLocations(UserRole role) {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.CREW_GET_LOCATIONS, role);
+        validateSuccess(response, "Get crew locations");
+        return DatabaseIntegrityValidator.extractList(response, SimpleEntityResponse.class);
+    }
+
+    @Step("API: GET /crews/hierarchy parentId={parentId}")
+    public List<StorageHierarchyResponse> getCrewHierarchy(UserRole role, Long parentId, boolean includeCrews) {
+        Map<String, Object> params = new HashMap<>();
+        if (parentId != null) {
+            params.put("parentId", parentId);
+        }
+        params.put("includeCrews", includeCrews);
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.CREW_GET_HIERARCHY, role, params);
+        validateSuccess(response, "Get crew hierarchy for parent " + parentId);
+        return DatabaseIntegrityValidator.extractList(response, StorageHierarchyResponse.class);
     }
 
     @Step("API: GET /fly-points/stocks parentId={parentId}")
@@ -243,6 +316,28 @@ public class CrewRegionFixture extends BaseFixture {
                 ApiEndpointDefinition.STORAGE_GET_CREW_INVENTORY, role, params);
         validateSuccess(response, "Get crew inventory");
         return DatabaseIntegrityValidator.extractList(response, CrewResourceStockResponse.class);
+    }
+
+    @Step("API: GET /crews/stocks parentId={parentId} active={active}")
+    public List<CrewResourceCategoryStockResponse> getCrewAnalyticsResourceStocks(
+            UserRole role,
+            Long parentId,
+            Boolean active,
+            String resourceName) {
+        Map<String, Object> params = new HashMap<>();
+        if (parentId != null) {
+            params.put("parentId", parentId);
+        }
+        if (active != null) {
+            params.put("active", active);
+        }
+        if (resourceName != null && !resourceName.isBlank()) {
+            params.put("resourceName", resourceName);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.CREW_GET_RESOURCE_STOCKS, role, params);
+        validateSuccess(response, "Get crew analytics resource stocks");
+        return DatabaseIntegrityValidator.extractList(response, CrewResourceCategoryStockResponse.class);
     }
 
     public static boolean hierarchyContainsUnitWithChild(

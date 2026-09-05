@@ -8,9 +8,11 @@ import com.erp.models.request.ProductionOrderOutputRequest;
 import com.erp.models.request.ProductionOrderRequest;
 import com.erp.models.request.DecompositionRequest;
 import com.erp.models.response.ProductionOrderResponse;
+import com.erp.models.response.SimpleEntityResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 public class ProductionOrderFixture extends BaseFixture {
@@ -105,5 +108,34 @@ public class ProductionOrderFixture extends BaseFixture {
             return fromContext;
         }
         return ConfigProvider.getOwner1StorageId();
+    }
+
+    /**
+     * Production orders reject targetStorageId that is not in the JWT location structure
+     * (staging {@code owner1.storage.id=1} is often a UNIT outside that list).
+     */
+    @Step("Resolve production-order targetStorageId from /target-locations")
+    public long resolveTargetStorageId(UserRole role) {
+        Response response = getTargetLocationsRaw(role);
+        validateSuccess(response, "Get production-order target locations");
+        List<SimpleEntityResponse> locations =
+                DatabaseIntegrityValidator.extractList(response, SimpleEntityResponse.class);
+        if (locations == null || locations.isEmpty()) {
+            throw new IllegalStateException("No production-order target locations for " + role);
+        }
+        long configured = defaultTargetStorageId();
+        List<Long> ids = locations.stream()
+                .map(SimpleEntityResponse::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (ids.isEmpty()) {
+            throw new IllegalStateException("Production-order target locations have no ids for " + role);
+        }
+        if (ids.contains(configured)) {
+            return configured;
+        }
+        long first = ids.getFirst();
+        log.info("Configured storage {} is not a production-order target; using {}", configured, first);
+        return first;
     }
 }

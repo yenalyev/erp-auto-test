@@ -3,6 +3,7 @@ package com.erp.tests.functional.order;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.order.OrderDataFactory;
+import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.OrderState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
@@ -17,7 +18,6 @@ import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -98,17 +98,24 @@ public class OrderCrudApiTest extends OrderApiTestBase {
     @Test(priority = 5)
     @TestCaseId("TC-ORD-005")
     @Story("Create validation")
-    @Description("Resource without grant on requester location → 400. Skipped when env uses FULL_ACCESS on requester storage.")
+    @Description("Resource without grant on a REGIONS requester location → 400.")
     public void testCreateResourceNotAccessibleToLocationReturns400() {
-        ResourceResponse ungranted = inventoryFixture.pickResourceNotOnStorage(
-                requesterStorageId, UserRole.ADMIN, sharedResources);
-        OrderRequest request = OrderDataFactory.buildOrderRequest(requesterStorageId, ungranted.getId(), 1.0);
-        Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, REQUESTER, request);
-        if (response.statusCode() == 200) {
-            throw new SkipException(
-                    "Requester storage allows ungranted resource (likely FULL_ACCESS) — TC-ORD-005 needs RESTRICTED location");
+        StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
+        try {
+            var restricted = storageFixture.createStorage(
+                    StorageDataFactory.restrictedStorage(requesterStorageId, "ord-005-").build());
+            ResourceResponse ungranted = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                    restricted.getId(), UserRole.ADMIN, "ord-005-res-");
+            OrderRequest request = OrderDataFactory.buildOrderRequest(
+                    restricted.getId(), ungranted.getId(), 1.0);
+            Response response = apiExecutor.execute(
+                    ApiEndpointDefinition.ORDER_POST_CREATE, REQUESTER, request);
+            assertThat(response.statusCode())
+                    .as("Ungranted resource on REGIONS location; body=%s", response.asString())
+                    .isEqualTo(400);
+        } finally {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
         }
-        assertThat(response.statusCode()).isEqualTo(400);
     }
 
     @Test(priority = 10)

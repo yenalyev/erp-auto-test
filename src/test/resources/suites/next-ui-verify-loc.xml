@@ -1,0 +1,19 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  LocationPermissions UI: TC-LOC-UI-001 / 002 / 003
+
+    mvn test "-Denv=dev" "-Dsuite=next-ui-verify-loc" "-Dtcm.enabled=false"
+-->
+<suite name="Next UI verify LocationPermissions" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TC-LOC-UI">
+        <classes>
+            <class name="com.erp.tests.ui.LocationPermissionsUiTest"/>
+        </classes>
+    </test>
+</suite>

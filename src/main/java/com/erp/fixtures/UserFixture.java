@@ -36,6 +36,8 @@ public class UserFixture extends BaseFixture {
     public static final String BUSINESS_UNIT_OWNER_ROLE_NAME = "Business_Unit_Owner-ROLE";
     public static final String BUSINESS_UNIT_VIEWER_ROLE_NAME = "Business_Unit_Viewer-ROLE";
     public static final String BUSINESS_UNIT_RO_PREFIX = "var_business_unit_id_ro::";
+    public static final String CREW_READ_ROLE_NAME = "Crew-Read-ROLE";
+    public static final String CREW_WRITE_ROLE_NAME = "Crew-Write-ROLE";
 
     private final List<String> trackedUserIds = new ArrayList<>();
 
@@ -156,6 +158,28 @@ public class UserFixture extends BaseFixture {
         playwright.bootstrapPermanentPassword(username, credentials.getPassword(), password);
         apiExecutor.clearSessionCache();
         return new LocationPermissionIds(a1, a2, b1, b2);
+    }
+
+    /**
+     * Ensures battalion warehouse keeper with {@link #CREW_READ_ROLE_NAME} or {@link #CREW_WRITE_ROLE_NAME}
+     * bound to {@code unit.storage.id} ({@code var_business_unit_id}).
+     */
+    @Step("FIXTURE: Ensure CREW_READ / CREW_WRITE battalion user")
+    public void ensureCrewBattalionUser(PlaywrightSessionProvider playwright, UserRole role) {
+        if (role != UserRole.CREW_READ && role != UserRole.CREW_WRITE) {
+            throw new IllegalArgumentException("Expected CREW_READ or CREW_WRITE, got: " + role);
+        }
+        String roleName = role == UserRole.CREW_WRITE ? CREW_WRITE_ROLE_NAME : CREW_READ_ROLE_NAME;
+        long storageId = ConfigProvider.getUnitStorageId();
+        ensureUser(
+                playwright,
+                role.getUsername(),
+                role.getPassword(),
+                "Crew",
+                role == UserRole.CREW_WRITE ? "Write" : "Read",
+                roleName,
+                storageId);
+        apiExecutor.clearSessionCache();
     }
 
     private static boolean hasMixedLocationBinding(UserModelResponse user,
@@ -304,6 +328,50 @@ public class UserFixture extends BaseFixture {
         playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
         waitForUser(UserRole.ADMIN, userId);
         log.info("Created isolated restricted owner username={} storageId={}", username, storage.getId());
+        return new RestrictedOwnerUser(userId, username, permanentPassword);
+    }
+
+    /**
+     * ADMIN {@code POST /users} → Keycloak owner bound to several full-access storages.
+     */
+    @Step("FIXTURE: створити multi-location owner на кількох локаціях")
+    public RestrictedOwnerUser createMultiLocationOwner(
+            PlaywrightSessionProvider playwright,
+            List<StorageResponse> storages) {
+        if (playwright == null) {
+            throw new IllegalStateException(
+                    "PlaywrightSessionProvider is required to bootstrap the multi-location owner password");
+        }
+        if (storages == null || storages.size() < 2) {
+            throw new IllegalArgumentException("Need at least 2 storages for multi-location owner");
+        }
+        long suffix = System.nanoTime();
+        String username = "mloc" + suffix;
+        String permanentPassword = "Mloc1!" + suffix;
+        RoleModelResponse ownerRole = fetchRealmRole(BUSINESS_UNIT_OWNER_ROLE_NAME);
+        List<SimpleEntityResponse> storageRefs = storages.stream()
+                .map(s -> SimpleEntityResponse.builder().id(s.getId()).name(s.getName()).build())
+                .toList();
+        UserRequest request = UserRequest.builder()
+                .username(username)
+                .firstName("Multi")
+                .lastName("Loc")
+                .rank("")
+                .enabled(true)
+                .storages(storageRefs)
+                .permissions(List.of())
+                .realmRoles(List.of(ownerRole))
+                .build();
+
+        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
+        validateSuccess(response, "Create multi-location owner");
+        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
+        String userId = findUserIdByUsername(username);
+        trackForCleanup(userId);
+        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
+        waitForUser(UserRole.ADMIN, userId);
+        log.info("Created multi-location owner username={} storageIds={}",
+                username, storageRefs.stream().map(SimpleEntityResponse::getId).toList());
         return new RestrictedOwnerUser(userId, username, permanentPassword);
     }
 

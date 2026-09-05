@@ -1,0 +1,47 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="ResourceViewerRemain" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="P2-SKIP-API-ResourceViewer">
+        <classes>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest">
+                <methods>
+                    <include name="testBomCountsActuallyUsedAlternativeAfterNonDefaultProduction"/>
+                    <include name="testBomCountsDefaultAlternativeAfterDefaultProduction"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest">
+                <methods>
+                    <include name="testDirectIssueOfTrackedResource"/>
+                    <include name="testSelfProducedProductWithTrackedComponent"/>
+                    <include name="testExternalFinishedGoodTechMapFallback"/>
+                    <include name="testMixedProducedAndReadyMadeScalePath"/>
+                    <include name="testBomDepth1"/>
+                    <include name="testBomDepth2"/>
+                    <include name="testBomDepth3"/>
+                    <include name="testSumAggregatesDirectAndNestedIssues"/>
+                    <include name="testMidLevelResourceAsProductAndIngredient"/>
+                    <include name="testUnrelatedProductExcludedByTrackedFilter"/>
+                    <include name="testBlendedBatchRecipesWeightedAverage"/>
+                    <include name="testItemWithoutBatchesFallsBackToTechMap"/>
+                    <include name="testTechMapLookupByRelocationDate"/>
+                    <include name="testRecipeCycleDoesNotInfiniteExpand"/>
+                    <include name="testScaleDownWhenProducedQtyExceedsMovedAmount"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationFilterTest">
+                <methods>
+                    <include name="testResourceViewerRelocationsSenderFilter"/>
+                    <include name="testUnitToCrewExcludedFromRelocationSum"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest">
+                <methods>
+                    <include name="testRelocationsSumSortedByResourceNameAsc"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

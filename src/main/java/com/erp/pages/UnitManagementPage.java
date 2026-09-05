@@ -83,10 +83,26 @@ public class UnitManagementPage extends BasePage {
 
     /** Deep-link зі analytics: /inventory?storageId=… (CREW / FLY_POINT поза sidebar tree). */
     public UnitManagementPage openWithStorageIdQuery(long storageId) {
+        return openWithStorageIdQuery(storageId, true);
+    }
+
+    /**
+     * @param requireSessionControls ADMIN/owner with inventory-status sees Open/Close/Conduct.
+     *        Outsiders may load the page with none of those buttons — pass {@code false}.
+     */
+    public UnitManagementPage openWithStorageIdQuery(long storageId, boolean requireSessionControls) {
         String url = ConfigProvider.getBaseUrl() + PATH + "?storageId=" + storageId;
         log.info("Opening Unit Management via storageId query: {}", url);
         waitForInventoryTableDuring(() -> navigateTo(url, "Залишки (?storageId)"));
-        return waitForLoaded();
+        waitForLoaded();
+        if (requireSessionControls) {
+            page.waitForCondition(
+                    () -> isOpenInventoryButtonVisible()
+                            || isCloseInventoryButtonVisible()
+                            || isConductInventoryButtonVisible(),
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        }
+        return this;
     }
 
     public UnitManagementPage waitForLoaded() {
@@ -249,6 +265,8 @@ public class UnitManagementPage extends BasePage {
     public UnitManagementPage clickOpenInventory() {
         Locator openBtn = inventoryToggleButton(OPEN_INVENTORY_BUTTON_TEXT);
         openBtn.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        page.waitForCondition(openBtn::isEnabled,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         if (!openBtn.isEnabled()) {
             throw new IllegalStateException("Кнопка «" + OPEN_INVENTORY_BUTTON_TEXT + "» недоступна");
         }
@@ -334,9 +352,17 @@ public class UnitManagementPage extends BasePage {
     }
 
     public UnitManagementPage waitForTagBadge(String tag) {
-        page.waitForCondition(
-                () -> isTagBadgeVisible(tag),
-                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        try {
+            page.waitForCondition(
+                    () -> isTagBadgeVisible(tag),
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        } catch (PlaywrightException e) {
+            List<String> chips = page.locator("[data-slot='badge']").allTextContents();
+            throw new AssertionError(
+                    "Tag chip '%s' not found on /inventory. visibleChips=%d sample=%s"
+                            .formatted(tag, chips.size(), chips.stream().limit(25).toList()),
+                    e);
+        }
         return this;
     }
 
@@ -351,8 +377,7 @@ public class UnitManagementPage extends BasePage {
                             && !response.url().contains("/status")
                             && !response.url().contains("/batches")
                             && !response.url().contains("/tag-statistics")
-                            && "GET".equals(response.request().method())
-                            && response.status() == 200,
+                            && "GET".equals(response.request().method()),
                     badge::click);
         } catch (Exception e) {
             log.warn("Inventory tag filter response wait timed out: {}", e.getMessage());
@@ -375,7 +400,11 @@ public class UnitManagementPage extends BasePage {
     }
 
     private Locator tagFilterBadge(String tag) {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(tag + " (")).first();
+        // Inventory chips are `{tag}` on [data-slot=badge]. Do not use Pattern.quote —
+        // Playwright evaluates the regex in JS, where \Q...\E is not valid.
+        return page.locator("[data-slot='badge']")
+                .filter(new Locator.FilterOptions().setHasText(tag))
+                .first();
     }
 
     public UnitManagementPage clickResourceAmountLink(String resourceName) {
@@ -461,10 +490,16 @@ public class UnitManagementPage extends BasePage {
         return stockTableBodyRows().count();
     }
 
-    /** Waits until at least one data row appears in the main stock table. */
+    /** Waits until at least one data row appears in the main stock table (not the spinner row). */
     public UnitManagementPage waitForStockRows() {
         page.waitForCondition(
-                () -> stockTableBodyRows().count() > 0,
+                () -> {
+                    Locator spinner = stockTable().locator("tbody .animate-spin");
+                    if (spinner.count() > 0 && spinner.first().isVisible()) {
+                        return false;
+                    }
+                    return stockTableBodyRows().count() > 0;
+                },
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
@@ -594,8 +629,10 @@ public class UnitManagementPage extends BasePage {
 
     public record ExportDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}
 
+    /** Data rows only — the loading spinner is a single colSpan cell in tbody. */
     private Locator stockTableBodyRows() {
-        return stockTable().locator("tbody tr");
+        return stockTable().locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHas(page.locator("td:nth-child(2)")));
     }
 
     private Locator stockTable() {

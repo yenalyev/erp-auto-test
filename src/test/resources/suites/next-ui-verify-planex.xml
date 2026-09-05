@@ -1,0 +1,29 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="PlanExecution" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="PlanExecution">
+        <classes>
+            <class name="com.erp.tests.ui.PlanExecutionUiTest">
+                <methods>
+                    <include name="techMapOnlyNotShownOnPlanExecution"/>
+                    <include name="techMapWithPlanShownOnPlanExecution"/>
+                    <include name="totalProducedSummaryCountsOnlyPiecesNotKg"/>
+                    <include name="testOwnerPlanAndProduction"/>
+                    <include name="testOwnerPlanNoProduction"/>
+                    <include name="testAdminNoPlanNoProduction"/>
+                    <include name="testAdminNoPlanHasProduction"/>
+                    <include name="testAdminPlanAndProduction"/>
+                    <include name="testAdminPlanNoProduction"/>
+                    <include name="testOwnerCopyProducedToClipboard"/>
+                    <include name="testOwnerFavouritesOnlyDisabledWhenEmpty"/>
+                    <include name="testOwnerConfigureFavouritesAndFilter"/>
+                    <include name="testOwnerAddFavouriteViaManageDialog"/>
+                    <include name="testOwnerEditExistingFavouritesViaManageDialog"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

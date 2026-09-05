@@ -3,6 +3,7 @@ package com.erp.pages;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -15,12 +16,12 @@ import java.util.Set;
 
 /**
  * Аналітика підрозділів.
- * URL: /unit-analytics
+ * URL: /analytics/unit-analytics
  */
 @Slf4j
 public class UnitAnalyticsPage extends BasePage {
 
-    private static final String PATH = "/unit-analytics";
+    private static final String PATH = "/analytics/unit-analytics";
     public static final String TAB_TURNOVER = "Обороти";
     public static final String TAB_STOCK = "Залишки";
     public static final String TAB_PERIOD = "За період";
@@ -43,21 +44,29 @@ public class UnitAnalyticsPage extends BasePage {
     }
 
     public UnitAnalyticsPage open() {
-        try {
-            page.waitForResponse(
-                    response -> response.url().contains("unit-analytics")
-                            && "GET".equals(response.request().method()),
-                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
-                    () -> navigateTo(ConfigProvider.getBaseUrl() + PATH, "Аналітика підрозділів (/unit-analytics)"));
-        } catch (Exception e) {
-            log.warn("unit-analytics response wait on open: {}", e.getMessage());
-        }
+        navigateTo(ConfigProvider.getBaseUrl() + PATH, "Аналітика підрозділів (/analytics/unit-analytics)");
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         return waitForLoaded();
     }
 
     public UnitAnalyticsPage waitForLoaded() {
-        turnoverTab().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        try {
+            page.waitForCondition(
+                    () -> isTurnoverTabVisible() || isAccessForbidden(),
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        } catch (PlaywrightException e) {
+            throw new AssertionError(pageDump("Вкладка «Обороти» не з'явилась"), e);
+        }
+        if (isAccessForbidden()) {
+            throw new AssertionError(pageDump(
+                    "403 на /analytics/unit-analytics: RouteGuard вимагає unit-analytics::view, "
+                            + "бекенд API — unit-analytics::read"));
+        }
+        // Inner tabs («За період» / «По місяцях» / «По ресурсах») render only inside
+        // TabsContent value="turnover". Ensure the outer tab is selected first.
+        if (!periodTab().isVisible()) {
+            turnoverTab().click();
+        }
         periodTab().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         waitUntil(() -> isPeriodContentReady() || hasLoadError());
         return this;
@@ -88,7 +97,9 @@ public class UnitAnalyticsPage extends BasePage {
     }
 
     public boolean isSidebarLinkVisible() {
-        return new AppSidebarPage(page).isNavItemVisible(AppSidebarPage.NAV_UNIT_ANALYTICS);
+        AppSidebarPage sidebar = new AppSidebarPage(page);
+        return sidebar.isNavItemVisible(AppSidebarPage.NAV_UNIT_ANALYTICS)
+                || sidebar.isPageTabVisible(AppSidebarPage.NAV_UNIT_ANALYTICS);
     }
 
     public boolean isTurnoverTabVisible() {
@@ -234,7 +245,23 @@ public class UnitAnalyticsPage extends BasePage {
     }
 
     private Locator tab(String name) {
-        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(name).setExact(true));
+        return page.locator("[data-slot='tabs-trigger']")
+                .filter(new Locator.FilterOptions().setHasText(name))
+                .first();
+    }
+
+    private boolean isAccessForbidden() {
+        return page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("403")).count() > 0
+                || page.getByText("У вас немає прав для перегляду цієї сторінки").count() > 0;
+    }
+
+    private String pageDump(String reason) {
+        List<String> tabs = page.locator("[data-slot='tabs-trigger']").allTextContents();
+        return "%s. url=%s heading='%s' tabs=%s".formatted(
+                reason,
+                page.url(),
+                page.locator("h1").first().count() > 0 ? page.locator("h1").first().innerText().trim() : "",
+                tabs);
     }
 
     private Locator turnoverTab() {

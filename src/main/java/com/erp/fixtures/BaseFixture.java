@@ -79,6 +79,47 @@ public abstract class BaseFixture {
         log.info("✅ Measurement units ready. Total: {}", validUnits.size());
     }
 
+    /**
+     * Resolves a measurement unit id by {@code shortName} (case-insensitive).
+     * Tries each candidate in order; fails fast when none match.
+     */
+    @Step("Resolve measurement unit by shortName candidates: {candidates}")
+    public Long resolveMeasurementUnitId(String... candidates) {
+        if (candidates == null || candidates.length == 0) {
+            throw new IllegalArgumentException("At least one shortName candidate is required");
+        }
+        Long found = findMeasurementUnitId(candidates);
+        if (found != null) {
+            return found;
+        }
+        fetchSharedUnit(10);
+        found = findMeasurementUnitId(candidates);
+        if (found != null) {
+            return found;
+        }
+        throw new IllegalStateException(
+                "Measurement unit not found for shortName candidates: " + String.join(", ", candidates));
+    }
+
+    private Long findMeasurementUnitId(String... candidates) {
+        List<MeasurementUnitResponse> units = testContext.get(ContextKey.SHARED_MEASUREMENT_UNIT_LIST);
+        if (units == null || units.isEmpty()) {
+            return null;
+        }
+        for (String candidate : candidates) {
+            if (candidate == null || candidate.isBlank()) {
+                continue;
+            }
+            for (MeasurementUnitResponse unit : units) {
+                if (unit != null && unit.getId() != null
+                        && candidate.equalsIgnoreCase(unit.getShortName())) {
+                    return unit.getId();
+                }
+            }
+        }
+        return null;
+    }
+
     @Step("Fetch Shared Resource Category")
     public void fetchSharedResourceCategory() {
         Response response = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CATEGORY_GET_ALL, UserRole.ADMIN);
@@ -190,19 +231,38 @@ public abstract class BaseFixture {
 
     @Step("Prepare dynamic Tech Map for update test")
     public void prepareTechMapForUpdate() {
-        List<ResourceResponse> sharedResources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
+        TechnologicalMapResponse existing = testContext.get(ContextKey.DYNAMIC_TECH_MAP);
+        if (hasOutputResources(existing)) {
+            if (testContext.get(ContextKey.DYNAMIC_TECH_MAP_ID) == null) {
+                testContext.set(ContextKey.DYNAMIC_TECH_MAP_ID, existing.getId());
+            }
+            return;
+        }
 
-        // Створюємо техкарту через API
+        List<ResourceResponse> sharedResources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
         Long storageId = com.erp.utils.config.ConfigProvider.getOwner1StorageId();
         TechnologicalMapRequest createRequest = TechnologicalMapDataFactory
                 .createProductionTechMap(sharedResources, storageId).build();
-        Response response = apiExecutor.execute(ApiEndpointDefinition.TECH_MAP_CREATE, UserRole.ADMIN, createRequest);
+        TechnologicalMapFixture techMapFixture = new TechnologicalMapFixture(testContext, apiExecutor);
+        TechnologicalMapResponse createdMap = techMapFixture.createTechMapWithRequest(UserRole.ADMIN, createRequest);
+        if (!hasOutputResources(createdMap) && createdMap.getId() != null) {
+            createdMap = techMapFixture.getById(UserRole.ADMIN, createdMap.getId(), storageId);
+        }
+        if (!hasOutputResources(createdMap)) {
+            throw new IllegalStateException(
+                    "RBAC tech map has no output resources after create/get id=" +
+                            (createdMap == null ? "null" : createdMap.getId()));
+        }
 
-        TechnologicalMapResponse createdMap = response.as(TechnologicalMapResponse.class);
-
-        // Кладемо в контекст і об'єкт, і ID (для URL)
         testContext.set(ContextKey.DYNAMIC_TECH_MAP, createdMap);
         testContext.set(ContextKey.DYNAMIC_TECH_MAP_ID, createdMap.getId());
+    }
+
+    private static boolean hasOutputResources(TechnologicalMapResponse techMap) {
+        return techMap != null
+                && techMap.getOutput() != null
+                && !techMap.getOutput().isEmpty()
+                && techMap.getOutput().getFirst().getResource() != null;
     }
 
     @Step("Create Dynamic Storage")

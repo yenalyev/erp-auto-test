@@ -2,27 +2,27 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
-import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.RelocationState;
-import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.fixtures.IsolatedRestrictedOwnerScope;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.common.RelocationJournalRow;
-import com.erp.models.request.StorageRequest;
+import com.erp.models.query.RelocationJournalQuery;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
+import com.erp.pages.AppSidebarPage;
 import com.erp.pages.RelocationPage;
 import com.erp.tests.functional.storage.StorageRegionsAllureDescriptions;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
-import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -38,13 +38,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * навіть коли CREW поза областями видимості REGIONS-користувача
  * ({@code StorageNamingService} — CREW не маскується як {@code _приховано_}).
  */
-@Slf4j
 @Epic("Relocation")
 @Feature("Crew journal names")
 @Story("Crew names regardless of visibility scope")
 public class CrewJournalNameVisibilityUiTest extends BaseUITest {
 
-    private static final Object OWNER2_ACCESS_LOCK = new Object();
     private static final String HIDDEN_NAME = "_приховано_";
     private static final String SCENARIO_PREFIX = "ui-crew-jn-";
     private static final String RESOURCE_PREFIX = "ui-crew-jn-res-";
@@ -55,11 +53,11 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
     private CrewRegionFixture crewFixture;
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
+    private IsolatedRestrictedOwnerScope isolatedOwnerScope;
 
     private Long owner2StorageId;
+    private String owner2StorageName;
     private Long resourceId;
-    private String originalOwner2AccessMode;
-    private boolean owner2AccessModeChanged;
 
     private CrewRegionScenario crewScenario;
 
@@ -80,15 +78,22 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
 
-        owner2StorageId = ConfigProvider.getOwner2StorageId();
-        ensureOwner2RestrictedAccess();
+        isolatedOwnerScope = new IsolatedRestrictedOwnerScope(
+                storageFixture,
+                new UserFixture(testContext, apiExecutor),
+                apiExecutor,
+                getPlaywrightSessionProvider());
+        owner2StorageId = isolatedOwnerScope.acquire();
+        owner2StorageName = storageFixture.getById(UserRole.ADMIN, owner2StorageId).getName();
         regionFixture.purgeViewerVisibilityScope(UserRole.ADMIN, owner2StorageId, storageFixture);
     }
 
     @AfterClass(alwaysRun = true)
-    public void restoreOwner2AccessMode() {
+    public void releaseIsolatedOwner() {
         TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
-        restoreOwner2AccessIfChanged();
+        if (isolatedOwnerScope != null) {
+            isolatedOwnerScope.release();
+        }
     }
 
     @AfterMethod(alwaysRun = true)
@@ -124,11 +129,9 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
             assertThat(finished.getState()).isEqualTo(RelocationState.FINISHED);
         });
 
-        injectOwner2Session(owner2StorageId);
-
         RelocationPage journal = Allure.step(
                 "UI: журнал → «Видано»",
-                () -> new RelocationPage(page).open().openSentTab().waitForJournalDataSettled());
+                () -> openJournalAsOwner2().openSentTab().waitForJournalDataSettled());
 
         assertThat(journal.isRowWithTextVisible(marker))
                 .as("Рядок з маркером «%s» має бути у «Видано»", marker)
@@ -174,11 +177,9 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
                     UserRole.OWNER_2, inTransit.getId(), owner2StorageId, RelocationState.FINISHED, marker);
         });
 
-        injectOwner2Session(owner2StorageId);
-
         RelocationPage journal = Allure.step(
                 "UI: журнал → «Отримано»",
-                () -> new RelocationPage(page).open().openReceivedTab().waitForJournalDataSettled());
+                () -> openJournalAsOwner2().openReceivedTab().waitForJournalDataSettled());
 
         assertThat(journal.isRowWithTextVisible(marker))
                 .as("Рядок з маркером «%s» має бути у «Отримано»", marker)
@@ -219,15 +220,32 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
                     UserRole.OWNER_2, inTransit.getId(), owner2StorageId, RelocationState.FINISHED, marker);
         });
 
-        injectOwner2Session(owner2StorageId);
+        String apiSenderName = Allure.step("API: sender.name у журналі isolated OWNER_2", () -> {
+            List<RelocationResponse> apiRows = relocationFixture.getJournalPage(
+                    RelocationJournalQuery.receivedHistoryUi(owner2StorageId)
+                            .toBuilder()
+                            .pageSize(50)
+                            .build(),
+                    UserRole.OWNER_2);
+            return apiRows.stream()
+                    .filter(row -> row.getDescription() != null && row.getDescription().contains(marker))
+                    .findFirst()
+                    .map(row -> row.getSender() != null ? row.getSender().getName() : "SENDER_NULL")
+                    .orElse("ROW_MISSING");
+        });
+        Allure.parameter("apiSenderName", apiSenderName);
+        Allure.parameter("outsiderName", outsider.getName());
 
         RelocationPage journal = Allure.step(
                 "UI: журнал → «Отримано»",
-                () -> new RelocationPage(page).open().openReceivedTab().waitForJournalDataSettled());
+                () -> openJournalAsOwner2().openReceivedTab().waitForJournalDataSettled());
 
         assertThat(journal.isRowWithTextVisible(marker))
                 .as("Рядок з маркером «%s» має бути у «Отримано»", marker)
                 .isTrue();
+        assertThat(apiSenderName)
+                .as("API GET /relocations sender.name для non-CREW outsider поза REGIONS scope")
+                .isEqualTo(HIDDEN_NAME);
         assertThat(journal.isRowWithTextVisible(HIDDEN_NAME))
                 .as("Non-CREW outsider маскується як «_приховано_»")
                 .isTrue();
@@ -256,43 +274,25 @@ public class CrewJournalNameVisibilityUiTest extends BaseUITest {
                         "Не знайдено рядок журналу з маркером «" + marker + "» або екіпажем «" + crewName + "»"));
     }
 
+    private RelocationPage openJournalAsOwner2() {
+        injectOwner2Session(owner2StorageId);
+        RelocationPage journal = new RelocationPage(page).open();
+        AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
+        if (sidebar.isWorkspaceSelectorVisible()) {
+            sidebar.selectWorkspaceByName(owner2StorageName);
+        }
+        return journal;
+    }
+
     private void injectOwner2Session(long selectedStorageId) {
+        UserFixture.RestrictedOwnerUser owner = isolatedOwnerScope.boundOwner(UserRole.OWNER_2);
         Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(UserRole.OWNER_2.getUsername(), UserRole.OWNER_2.getPassword());
+                .getSession(owner.username(), owner.password());
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
                 "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
-    }
-
-    private void ensureOwner2RestrictedAccess() {
-        synchronized (OWNER2_ACCESS_LOCK) {
-            StorageResponse owner2Storage = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-            originalOwner2AccessMode = owner2Storage.getAccessMode();
-            if (!StorageAccessMode.REGIONS.name().equals(originalOwner2AccessMode)) {
-                StorageRequest update = StorageDataFactory.withAccessMode(
-                        owner2Storage, StorageAccessMode.REGIONS);
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, update);
-                owner2AccessModeChanged = true;
-            }
-        }
-    }
-
-    private void restoreOwner2AccessIfChanged() {
-        if (!owner2AccessModeChanged || originalOwner2AccessMode == null) {
-            return;
-        }
-        synchronized (OWNER2_ACCESS_LOCK) {
-            try {
-                StorageResponse current = storageFixture.getById(UserRole.ADMIN, owner2StorageId);
-                StorageRequest restore = StorageDataFactory.withAccessMode(
-                        current, StorageAccessMode.valueOf(originalOwner2AccessMode));
-                storageFixture.update(UserRole.ADMIN, owner2StorageId, restore);
-            } catch (Exception e) {
-                log.warn("Failed to restore OWNER_2 storage accessMode: {}", e.getMessage());
-            }
-        }
     }
 }

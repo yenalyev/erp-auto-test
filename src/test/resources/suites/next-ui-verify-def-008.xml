@@ -1,0 +1,16 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="DefectWriteOffDefault" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="TC-UI-DEF-008">
+        <classes>
+            <class name="com.erp.tests.ui.DefectUITest">
+                <methods>
+                    <include name="testWriteOffFilterDefaultIsAll"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

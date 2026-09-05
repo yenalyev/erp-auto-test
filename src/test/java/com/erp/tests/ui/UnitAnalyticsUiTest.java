@@ -3,7 +3,9 @@ package com.erp.tests.ui;
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UserMeResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.UnitAnalyticsPage;
 import com.erp.utils.config.ConfigProvider;
@@ -35,12 +37,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UnitAnalyticsUiTest extends BaseUITest {
 
     private StorageFixture storageFixture;
+    private UserFixture userFixture;
 
     @BeforeClass(alwaysRun = true)
     @Override
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         storageFixture = new StorageFixture(testContext, apiExecutor);
+        userFixture = new UserFixture(testContext, apiExecutor);
     }
 
     @Test(priority = 1)
@@ -52,9 +56,11 @@ public class UnitAnalyticsUiTest extends BaseUITest {
             таблиця або порожній стан, немає toast/банера «Не вдалося завантажити…».
 
             Передумови: 3bat (UserRole.UNIT_ANALYST) має unit-analytics::read (dev/staging).
+            SPA RouteGuard на /analytics/unit-analytics вимагає unit-analytics::view
+            (sidebar option VIEW). Якщо 3bat має лише read — сторінка 403.
 
-            1) Залогінитися як 3bat і відкрити /unit-analytics
-               → URL містить /unit-analytics; у сайдбарі є «Аналітика Підрозділів»;
+            1) Залогінитися як 3bat і відкрити /analytics/unit-analytics
+               → URL містить /unit-analytics; у групі «Аналітика» є вкладка «Підрозділи»;
                  видимі вкладки «Обороти», «За період», «По місяцях», «По ресурсах»
             2) «За період» → заголовок «Використано та отримано»; таблиця або порожній стан
             3) «По місяцях» → таблиця «Рік/Місяць» або порожній стан
@@ -67,6 +73,24 @@ public class UnitAnalyticsUiTest extends BaseUITest {
             """)
     public void unitAnalyticsTurnoverTabsLoadForPermittedUser() {
         loginAsUnitAnalyst();
+
+        UserMeResponse me = userFixture.getMe(UserRole.UNIT_ANALYST);
+        List<String> analyticsPerms = me.getPermissions().stream()
+                .filter(p -> p.contains("unit-analytics") || p.contains("analytics"))
+                .toList();
+        List<String> entities = me.getPermissions().stream()
+                .map(p -> p.split("::")[0])
+                .distinct()
+                .sorted()
+                .toList();
+        log.info("3bat /users/me roles={} permCount={} analytics={} entities={}",
+                me.getRoles(), me.getPermissions().size(), analyticsPerms, entities);
+        assertThat(hasUnitAnalyticsView(me.getPermissions()))
+                .as("3bat GET /users/me має містити unit-analytics::view "
+                        + "(Keycloak роль perm_unit-analytics::view). "
+                        + "roles=%s permCount=%d analyticsPerms=%s entities=%s",
+                        me.getRoles(), me.getPermissions().size(), analyticsPerms, entities)
+                .isTrue();
 
         UnitAnalyticsPage analytics = new UnitAnalyticsPage(page).open();
 
@@ -247,12 +271,27 @@ public class UnitAnalyticsUiTest extends BaseUITest {
         return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 
+    /** Matches tk-ui hasPermission(entity=unit-analytics, id=null, option=view). */
+    private static boolean hasUnitAnalyticsView(List<String> permissions) {
+        if (permissions == null) {
+            return false;
+        }
+        return permissions.stream().anyMatch(p -> {
+            String[] parts = p.split("::");
+            if (parts.length == 2) {
+                return "unit-analytics".equals(parts[0]) && "view".equals(parts[1]);
+            }
+            if (parts.length == 3) {
+                return "unit-analytics".equals(parts[0]) && "view".equals(parts[2]);
+            }
+            return false;
+        });
+    }
+
     private void loginAsUnitAnalyst() {
         browserContext.clearCookies();
-        var cookies = getPlaywrightSessionProvider()
-                .getSession(UserRole.UNIT_ANALYST.getUsername(), UserRole.UNIT_ANALYST.getPassword());
-        String domain = ConfigProvider.getBaseUrl().replaceFirst("https?://", "").split("/")[0];
-        injectSessionCookies(cookies, domain);
+        injectSessionCookies(cachedSessionCookies(UserRole.UNIT_ANALYST), sessionCookieDomain());
+        injectAllLocationsView();
         if (page != null) {
             page.close();
         }

@@ -8,6 +8,8 @@ import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.YearMonth;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -35,6 +37,7 @@ public class PlanExecutionPage extends BasePage {
     private static final String GOAL_HEADER = "Ціль";
     private static final String COPY_BUTTON_TEXT = "Скопіювати";
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано зроблене";
+    private static final String TOTAL_PRODUCED_PCS_LABEL = "Загалом зроблено, шт";
 
     /** tk-ui CPMA-587: filter toggle on the «Виконання» tab (product requirement: «Тільки обрані»). */
     private static final String FAVOURITES_ONLY_BUTTON_TEXT = "Лише обрані";
@@ -46,6 +49,24 @@ public class PlanExecutionPage extends BasePage {
     private static final String MANAGE_FAVOURITES_CANCEL_TEXT = "Скасувати";
 
     private static final String DISASSEMBLE_HEADING = "Розбір";
+
+    public static final String NEEDED_TAB_TEXT = "Потрібні ресурси";
+    public static final String NEEDED_EMPTY_TEXT = "Немає потреби в додаткових ресурсах";
+    public static final String NEEDED_FILTER_EMPTY_TEXT = "Немає ресурсів за обраними фільтрами";
+    public static final String NEEDED_PAST_MONTH_TOOLTIP =
+            "Потреба в ресурсах недоступна для завершеного місяця";
+    public static final String NEEDED_PRODUCED_BADGE = "виробляється";
+    public static final String NEEDED_SOURCES_LABEL = "Потрібно для виробів:";
+    public static final String INCLUDE_STOCK_LABEL = "Враховувати залишки";
+    public static final String INCLUDE_PRODUCED_LABEL = "Враховувати виготовлене";
+    public static final String ONLY_SHORTAGES_LABEL = "Лише дефіцитні";
+    public static final String NEEDED_COPIED_FEEDBACK = "Скопійовано";
+
+    /** Stems that match both date-fns standalone (серпень) and Java CLDR genitive (серпня). */
+    private static final String[] UK_MONTH_STEMS = {
+            "січ", "лют", "берез", "квіт", "трав", "черв",
+            "липень", "серп", "верес", "жовт", "листоп", "груд"
+    };
 
     public PlanExecutionPage(Page page) {
         super(page);
@@ -61,8 +82,13 @@ public class PlanExecutionPage extends BasePage {
     public PlanExecutionPage open() {
         String url = ConfigProvider.getBaseUrl() + PATH;
         page.waitForResponse(
-                r -> r.url().contains("/statistics/execution") && "POST".equals(r.request().method()),
-                () -> navigateTo(url, "Виконання плану (/plan-execution)"));
+                r -> r.url().contains("/statistics/execution")
+                        && !r.url().contains("execution-periods-with-plan")
+                        && "POST".equals(r.request().method()),
+                () -> page.waitForResponse(
+                        r -> r.url().contains("execution-periods-with-plan")
+                                && "GET".equals(r.request().method()),
+                        () -> navigateTo(url, "Виконання плану (/plan-execution)")));
         return waitForLoaded();
     }
 
@@ -81,6 +107,324 @@ public class PlanExecutionPage extends BasePage {
         waitForExecutionDataSettled();
         log.info("Plan Execution page loaded — url: {}", page.url());
         return this;
+    }
+
+    /** Navigate without waiting for {@code POST /statistics/execution} (e.g. «Всі локації»). */
+    public PlanExecutionPage openWithoutExecutionFetch() {
+        String url = ConfigProvider.getBaseUrl() + PATH;
+        navigateTo(url, "Виконання плану (/plan-execution)");
+        return waitForLoaded();
+    }
+
+    public PlanExecutionPage openNeededResourcesTab() {
+        Locator tab = neededTab();
+        tab.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        if (!"active".equalsIgnoreCase(tab.getAttribute("data-state"))) {
+            tab.click();
+        }
+        return waitForNeededSettled();
+    }
+
+    public PlanExecutionPage waitForNeededSettled() {
+        page.waitForCondition(
+                () -> getNeededRowCount() > 0
+                        || isNeededEmptyVisible()
+                        || isNeededFilterEmptyVisible()
+                        || isAllLocationsGuardVisible(),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isNeededTabEnabled() {
+        Locator tab = neededTab();
+        return tab.count() > 0 && tab.first().isEnabled();
+    }
+
+    public boolean isNeededTabDisabled() {
+        Locator tab = neededTab();
+        return tab.count() > 0 && !tab.first().isEnabled();
+    }
+
+    public boolean isNeededTabVisible() {
+        Locator tab = neededTab();
+        return tab.count() > 0 && tab.first().isVisible();
+    }
+
+    public String getNeededPastMonthTooltip() {
+        Locator trigger = page.locator("span.cursor-help").filter(
+                new Locator.FilterOptions().setHas(neededTab()));
+        if (trigger.count() == 0) {
+            neededTab().hover();
+        } else {
+            trigger.first().hover();
+        }
+        Locator tooltip = page.getByText(NEEDED_PAST_MONTH_TOOLTIP);
+        tooltip.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return tooltip.innerText().trim();
+    }
+
+    public int getNeededRowCount() {
+        return neededDataRows().count();
+    }
+
+    public boolean isNeededRowVisible(String resourceName) {
+        Locator row = neededRow(resourceName);
+        return row.count() > 0 && row.first().isVisible();
+    }
+
+    public boolean isNeededProducedBadgeVisible(String resourceName) {
+        Locator badge = neededRow(resourceName).getByText(NEEDED_PRODUCED_BADGE);
+        return badge.count() > 0 && badge.first().isVisible();
+    }
+
+    public boolean isNeededEmptyVisible() {
+        Locator empty = page.getByText(NEEDED_EMPTY_TEXT);
+        return empty.count() > 0 && empty.first().isVisible();
+    }
+
+    public boolean isNeededFilterEmptyVisible() {
+        Locator empty = page.getByText(NEEDED_FILTER_EMPTY_TEXT);
+        return empty.count() > 0 && empty.first().isVisible();
+    }
+
+    public boolean isNeededSourcesVisible() {
+        Locator label = page.getByText(NEEDED_SOURCES_LABEL);
+        return label.count() > 0 && label.first().isVisible();
+    }
+
+    public String getNeededSourcesText() {
+        Locator block = page.locator("tr").filter(
+                new Locator.FilterOptions().setHasText(NEEDED_SOURCES_LABEL));
+        if (block.count() == 0) {
+            return "";
+        }
+        String text = block.first().innerText();
+        return text != null ? text.trim().replaceAll("\\s+", " ") : "";
+    }
+
+    public PlanExecutionPage expandNeededRow(String resourceName) {
+        if (!isNeededSourcesVisible()) {
+            neededRow(resourceName).first().click();
+        }
+        page.waitForCondition(
+                this::isNeededSourcesVisible,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public PlanExecutionPage collapseNeededRow(String resourceName) {
+        if (isNeededSourcesVisible()) {
+            neededRow(resourceName).first().click();
+        }
+        page.waitForCondition(
+                () -> !isNeededSourcesVisible(),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public PlanExecutionPage setIncludeStock(boolean enabled) {
+        return toggleNeededCheckbox(INCLUDE_STOCK_LABEL, enabled);
+    }
+
+    public PlanExecutionPage setIncludeProduced(boolean enabled) {
+        return toggleNeededCheckbox(INCLUDE_PRODUCED_LABEL, enabled);
+    }
+
+    public PlanExecutionPage setOnlyShortages(boolean enabled) {
+        Locator checkbox = neededCheckbox(ONLY_SHORTAGES_LABEL);
+        if (checkbox.isChecked() != enabled) {
+            checkbox.click();
+        }
+        return waitForNeededSettled();
+    }
+
+    public boolean isIncludeStockChecked() {
+        return neededCheckbox(INCLUDE_STOCK_LABEL).isChecked();
+    }
+
+    public PlanExecutionPage selectNeededCategory(String categoryName) {
+        page.getByPlaceholder("Категорії").click();
+        page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(categoryName))
+                .first()
+                .click();
+        page.keyboard().press("Escape");
+        return waitForNeededSettled();
+    }
+
+    public PlanExecutionPage clickNeededSort(String header) {
+        neededTable().locator("thead button")
+                .filter(new Locator.FilterOptions().setHasText(header))
+                .first()
+                .click();
+        return this;
+    }
+
+    public List<String> neededResourceNames() {
+        int count = neededDataRows().count();
+        java.util.ArrayList<String> names = new java.util.ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            names.add(neededDataRows().nth(i).locator("td").nth(1).innerText().trim().split("\\n")[0].trim());
+        }
+        return names;
+    }
+
+    public double getNeededAmount(String resourceName) {
+        return parseLeadingNumber(
+                neededRow(resourceName).locator("td").nth(neededColumnIndex("Потрібно")).innerText());
+    }
+
+    public boolean isNeededHeaderVisible(String header) {
+        Locator cell = neededTable().locator("thead th")
+                .filter(new Locator.FilterOptions().setHasText(header));
+        return cell.count() > 0;
+    }
+
+    public PlanExecutionPage clickCopyNeeded() {
+        copyButton().click();
+        return this;
+    }
+
+    public PlanExecutionPage waitForNeededCopiedFeedback() {
+        page.getByText(NEEDED_COPIED_FEEDBACK)
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public PlanExecutionPage selectPeriod(String periodLabel) {
+        return selectPeriodOption(periodLabel);
+    }
+
+    /**
+     * Opens the period popover from the current label and picks {@code targetPeriodLabel}.
+     */
+    public PlanExecutionPage selectPeriodFrom(String currentPeriodLabel, String targetPeriodLabel) {
+        return selectPeriod(targetPeriodLabel);
+    }
+
+    /** Picks a period in the date-fns uk {@code LLLL yyyy} popover (nominative or genitive month). */
+    public PlanExecutionPage selectPeriod(YearMonth period) {
+        String stem = UK_MONTH_STEMS[period.getMonthValue() - 1];
+        String year = String.valueOf(period.getYear());
+        periodTriggerButton().click();
+        Locator option = periodOptionButtons()
+                .filter(new Locator.FilterOptions().setHasText(
+                        Pattern.compile(stem, Pattern.CASE_INSENSITIVE)))
+                .filter(new Locator.FilterOptions().setHasText(year))
+                .last();
+        option.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        page.waitForResponse(
+                r -> r.url().contains("/statistics/execution")
+                        && !r.url().contains("execution-periods-with-plan")
+                        && "POST".equals(r.request().method()),
+                option::click);
+        return waitForExecutionDataSettled();
+    }
+
+    /**
+     * Picks a period by index in the open picker (backend returns newest first; 0 is typically
+     * the current month, 1 the previous month that has a plan).
+     */
+    public PlanExecutionPage selectPeriodAt(int index) {
+        periodTriggerButton().click();
+        Locator options = periodOptionButtons();
+        options.first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        page.waitForCondition(
+                () -> options.count() > index,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        page.waitForResponse(
+                r -> r.url().contains("/statistics/execution")
+                        && !r.url().contains("execution-periods-with-plan")
+                        && "POST".equals(r.request().method()),
+                () -> options.nth(index).click());
+        return waitForExecutionDataSettled();
+    }
+
+    private PlanExecutionPage selectPeriodOption(String optionText) {
+        periodTriggerButton().click();
+        Locator option = periodOptionButtons()
+                .filter(new Locator.FilterOptions().setHasText(optionText))
+                .last();
+        option.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        page.waitForResponse(
+                r -> r.url().contains("/statistics/execution")
+                        && !r.url().contains("execution-periods-with-plan")
+                        && "POST".equals(r.request().method()),
+                option::click);
+        return waitForExecutionDataSettled();
+    }
+
+    private Locator periodTriggerButton() {
+        return page.locator("button")
+                .filter(new Locator.FilterOptions().setHas(page.locator("svg")))
+                .filter(new Locator.FilterOptions().setHasText(Pattern.compile("20\\d{2}")))
+                .first();
+    }
+
+    private Locator periodOptionButtons() {
+        return page.locator("[data-radix-popper-content-wrapper] button");
+    }
+
+    private PlanExecutionPage toggleNeededCheckbox(String label, boolean enabled) {
+        Locator checkbox = neededCheckbox(label);
+        if (checkbox.isChecked() == enabled) {
+            return this;
+        }
+        page.waitForResponse(
+                r -> r.url().contains("/statistics/needed-resources") && "POST".equals(r.request().method()),
+                checkbox::click);
+        return waitForNeededSettled();
+    }
+
+    private Locator neededCheckbox(String label) {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText(label))
+                .locator("input[type='checkbox']")
+                .first();
+    }
+
+    private Locator neededTab() {
+        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(NEEDED_TAB_TEXT));
+    }
+
+    private Locator neededTable() {
+        return page.locator("table").first();
+    }
+
+    private Locator neededDataRows() {
+        return neededTable().locator("tbody tr").filter(
+                new Locator.FilterOptions().setHasNotText(NEEDED_EMPTY_TEXT)
+                        .setHasNotText(NEEDED_FILTER_EMPTY_TEXT)
+                        .setHasNotText(NEEDED_SOURCES_LABEL));
+    }
+
+    private Locator neededRow(String resourceName) {
+        return neededDataRows().filter(new Locator.FilterOptions().setHasText(resourceName));
+    }
+
+    private int neededColumnIndex(String headerText) {
+        Locator headers = neededTable().locator("thead th");
+        int count = headers.count();
+        for (int i = 0; i < count; i++) {
+            String text = headers.nth(i).innerText();
+            if (text != null && text.contains(headerText)) {
+                return i;
+            }
+        }
+        throw new IllegalStateException(
+                "Column «" + headerText + "» not found in the needed-resources table header. Present: "
+                        + headers.allInnerTexts());
     }
 
     /** Wait until the execution tab finishes loading (rows, empty state, or all-locations guard rendered). */
@@ -134,6 +478,25 @@ public class PlanExecutionPage extends BasePage {
     /** «Зроблено» cell text for the given product row. */
     public String getProducedCellText(String productName) {
         return cellText(productName, columnIndexByHeader(PRODUCED_HEADER));
+    }
+
+    /** Value of a summary stat card below the execution table (e.g. «Загалом зроблено, шт»). */
+    public String getSummaryStatValue(String label) {
+        Locator card = summaryStatCard(label);
+        card.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        Locator value = card.locator("p.text-xl.font-black");
+        if (value.count() == 0) {
+            value = card.locator("p.font-black").last();
+        }
+        String text = value.innerText();
+        return text != null ? text.trim().replaceAll("\\s+", " ") : "";
+    }
+
+    /** Shortcut for the «Загалом зроблено, шт» summary card. */
+    public String getTotalProducedPiecesSummary() {
+        return getSummaryStatValue(TOTAL_PRODUCED_PCS_LABEL);
     }
 
     public boolean isGoalAbsent(String productName) {
@@ -553,5 +916,15 @@ public class PlanExecutionPage extends BasePage {
 
     private Locator executionTable() {
         return page.locator("table").first();
+    }
+
+    /**
+     * Summary stat card whose label matches {@code label}
+     * (tk-ui shadcn Card with {@code data-slot="card"} in the stats grid below the table).
+     */
+    private Locator summaryStatCard(String label) {
+        return page.locator("[data-slot='card']")
+                .filter(new Locator.FilterOptions().setHasText(label))
+                .first();
     }
 }

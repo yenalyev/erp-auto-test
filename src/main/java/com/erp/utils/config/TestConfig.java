@@ -145,6 +145,24 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String crewManagerPassword();
 
+    /** Battalion crew stocks viewer (Crew-Read-ROLE, {@code unit.storage.id}). */
+    @Key("user.crew-read.username")
+    @DefaultValue("crewread")
+    String crewReadUsername();
+
+    @Key("user.crew-read.password")
+    @DefaultValue("")
+    String crewReadPassword();
+
+    /** Battalion crew stocks editor (Crew-Write-ROLE, {@code unit.storage.id}). */
+    @Key("user.crew-write.username")
+    @DefaultValue("crewwrite")
+    String crewWriteUsername();
+
+    @Key("user.crew-write.password")
+    @DefaultValue("")
+    String crewWritePassword();
+
     /** Project production admin (Project-Production-ROLE + catalog CRUD). */
     @Key("user.project-admin.username")
     @DefaultValue("projectprod")

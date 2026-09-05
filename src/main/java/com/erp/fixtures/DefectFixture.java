@@ -277,8 +277,13 @@ public class DefectFixture extends BaseFixture {
 
     @Step("API: GET список браку")
     public List<DefectResponse> listDefects(DefectQuery query) {
+        return listDefectsAs(UserRole.OWNER_1, query);
+    }
+
+    @Step("API: GET список браку роллю {role}")
+    public List<DefectResponse> listDefectsAs(UserRole role, DefectQuery query) {
         Response response = apiExecutor.executeWithQueryParams(
-                ApiEndpointDefinition.DEFECT_GET_PAGE, UserRole.OWNER_1, query.toListQueryParams());
+                ApiEndpointDefinition.DEFECT_GET_PAGE, role, query.toListQueryParams());
         validateSuccess(response, "List defects");
         return DatabaseIntegrityValidator.extractList(response, DefectResponse.class);
     }

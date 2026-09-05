@@ -1,0 +1,33 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="P4DbFightRemain" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="P4-DB-FIGHT">
+        <classes>
+            <class name="com.erp.tests.functional.order.OrderAvailabilityApiTest">
+                <methods>
+                    <include name="testAvailabilityWithoutRootConfig"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.defect.DefectTest">
+                <methods>
+                    <include name="testOwnerCannotDeleteDefectOlderThanTwoDays"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest">
+                <methods>
+                    <include name="testSaveMultipleImplicitResourcesForProduct"/>
+                    <include name="testImplicitWriteOffsAppearInJournalAndDebitFlyPoint"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewWriteOffTest">
+                <methods>
+                    <include name="testWriteOffCompleteReducesCrewStock"/>
+                    <include name="testCrewUsageWriteOffDebitsFlyPointNotCrew"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

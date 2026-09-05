@@ -17,6 +17,7 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapHashtagApiTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapAlternativeGroupsTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapHierarchyApiTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapResourceCalculatorApiTest"/>
         </classes>
     </test>
 
@@ -28,6 +29,7 @@
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapHierarchyUITest"/>
+            <class name="com.erp.tests.ui.ResourceCalculatorUiTest"/>
         </classes>
     </test>
 </suite>

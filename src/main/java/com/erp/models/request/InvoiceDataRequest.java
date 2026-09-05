@@ -21,7 +21,7 @@ public class InvoiceDataRequest {
     private String operationReason;
     private String sendName;
     private String receiveName;
-    private List<Object> items;
+    private List<InvoiceItemRequest> items;
     private String sendingPersonRank;
     private String sendingPersonName;
     private String receivingPersonRank;

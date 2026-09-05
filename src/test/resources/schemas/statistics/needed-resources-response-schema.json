@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PlanNeededResourcesResponse",
+  "type": "object",
+  "required": ["neededResources"],
+  "additionalProperties": true,
+  "properties": {
+    "neededResources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["resource", "needed", "inStock", "shortage", "produced", "sources"],
+        "additionalProperties": true,
+        "properties": {
+          "resource": {
+            "type": "object",
+            "required": ["id", "name"],
+            "additionalProperties": true,
+            "properties": {
+              "id": { "type": "number" },
+              "name": { "type": "string" },
+              "category": {
+                "type": ["object", "null"],
+                "properties": {
+                  "id": { "type": "number" },
+                  "name": { "type": "string" }
+                }
+              }
+            }
+          },
+          "needed": { "type": "number" },
+          "inStock": { "type": "number" },
+          "shortage": { "type": "number" },
+          "produced": { "type": "boolean" },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "amount"],
+              "additionalProperties": true,
+              "properties": {
+                "amount": { "type": "number" },
+                "path": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "name", "techMapName"],
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Next cluster: inventory copy (TC-WMS-007-009).
+  TC-WMS-007-018 tag chips parked — product 500 (ticket #20).
+
+    mvn test "-Denv=dev" "-Dsuite=next-ui-verify-copy" "-Dtcm.enabled=false"
+-->
+<suite name="Next UI verify inventory copy" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TC-WMS-007-009">
+        <classes>
+            <class name="com.erp.tests.ui.InventoryUiTest">
+                <methods>
+                    <include name="copyRemaindersToClipboardUi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

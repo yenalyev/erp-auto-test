@@ -1,0 +1,29 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Потрібні ресурси на /plan-execution (REQ-PLN-002, TC-PLN-NR-*).
+
+  Run:
+    mvn test -Denv=dev -Dsuite=plan-needed-resources
+-->
+<suite name="Plan Needed Resources" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Needed resources API">
+        <classes>
+            <class name="com.erp.tests.functional.statistics.PlanNeededResourcesApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Needed resources UI">
+        <classes>
+            <class name="com.erp.tests.ui.PlanNeededResourcesUiTest"/>
+        </classes>
+    </test>
+</suite>

@@ -187,15 +187,8 @@ public class StorageFixture extends BaseFixture {
             return;
         }
         for (Long storageId : List.copyOf(storagesToCleanup)) {
-            try {
-                Response response = deactivate(role, storageId);
-                if (response.statusCode() == 200) {
-                    log.debug("Cleanup: deactivated test storage id={}", storageId);
-                } else {
-                    log.warn("Cleanup: deactivate storage id={} returned HTTP {}", storageId, response.statusCode());
-                }
-            } catch (Exception e) {
-                log.warn("Cleanup: failed to deactivate storage id={}: {}", storageId, e.getMessage());
+            if (!archiveStorage(role, storageId)) {
+                log.warn("Cleanup: failed to archive test storage id={}", storageId);
             }
         }
         storagesToCleanup.clear();
@@ -204,7 +197,7 @@ public class StorageFixture extends BaseFixture {
     @Step("FIXTURE: деактивувати активні автотест-локації (маркер uniqueName)")
     public int deactivateAutotestStorages(UserRole role) {
         List<StorageResponse> names = getNames(role, true, null);
-        int deactivated = 0;
+        int archived = 0;
         int failed = 0;
         for (StorageResponse storage : names) {
             if (storage == null || storage.getId() == null
@@ -212,26 +205,25 @@ public class StorageFixture extends BaseFixture {
                 continue;
             }
             try {
-                Response response = deactivate(role, storage.getId());
-                if (response.statusCode() == 200) {
+                if (archiveStorage(role, storage.getId())) {
                     untrackForCleanup(storage.getId());
-                    deactivated++;
-                    log.debug("Sweep: deactivated storage id={} name={}", storage.getId(), storage.getName());
+                    archived++;
+                    log.debug("Sweep: archived storage id={} name={}", storage.getId(), storage.getName());
                 } else {
                     failed++;
-                    log.debug("Sweep: deactivate storage id={} name={} returned HTTP {} (often non-zero stock)",
-                            storage.getId(), storage.getName(), response.statusCode());
+                    log.debug("Sweep: archive storage id={} name={} failed after inventory clear",
+                            storage.getId(), storage.getName());
                 }
             } catch (Exception e) {
                 failed++;
-                log.warn("Sweep: failed to deactivate storage id={}: {}", storage.getId(), e.getMessage());
+                log.warn("Sweep: failed to archive storage id={}: {}", storage.getId(), e.getMessage());
             }
         }
-        if (deactivated > 0 || failed > 0) {
-            log.info("Sweep: deactivated {} autotest storages, {} left active (typically stock > 0)",
-                    deactivated, failed);
+        if (archived > 0 || failed > 0) {
+            log.info("Sweep: archived {} autotest storages, {} still active after inventory + deactivate",
+                    archived, failed);
         }
-        return deactivated;
+        return archived;
     }
 
     @Step("API: створити дочірню локацію parentId={parentId}, prefix={namePrefix}")
@@ -342,6 +334,31 @@ public class StorageFixture extends BaseFixture {
     public Response deactivate(UserRole role, Long storageId) {
         return apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_DELETE_DEACTIVATE, role, null, String.valueOf(storageId));
+    }
+
+    /**
+     * Clears non-zero stock via inventory session, then soft-deletes the storage.
+     * Required because {@code StorageValidator.validateDelete} rejects archive when stock remains.
+     */
+    @Step("API: інвентаризація (zero stock) + архівація локації id={storageId}")
+    public boolean archiveStorage(UserRole role, Long storageId) {
+        try {
+            new InventoryFixture(testContext, apiExecutor).clearStock(storageId);
+        } catch (Exception e) {
+            log.warn("Archive storage id={}: failed to clear stock: {}", storageId, e.getMessage());
+        }
+        try {
+            Response response = deactivate(role, storageId);
+            if (response.statusCode() == 200) {
+                log.debug("Archived storage id={}", storageId);
+                return true;
+            }
+            log.warn("Archive storage id={}: deactivate returned HTTP {}", storageId, response.statusCode());
+            return false;
+        } catch (Exception e) {
+            log.warn("Archive storage id={}: deactivate failed: {}", storageId, e.getMessage());
+            return false;
+        }
     }
 
     @Step("API: PUT розархівувати локацію id={storageId}")

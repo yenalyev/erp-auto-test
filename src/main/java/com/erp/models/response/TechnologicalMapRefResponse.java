@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor
@@ -14,5 +17,6 @@ import lombok.NoArgsConstructor;
 public class TechnologicalMapRefResponse {
     private Long id;
     private String name;
-    private Long version;
+    @Builder.Default
+    private List<SimpleEntityResponse> storages = new ArrayList<>();
 }

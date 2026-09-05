@@ -175,7 +175,7 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
         StorageResponse mid = storageFixture.createChildStorage(unit.getId(), "hier-m-");
         StorageResponse leaf = storageFixture.createChildStorage(mid.getId(), "hier-l-");
         ResourceResponse leafRes = resourceFixture.createUniqueResource("hier-leaf-res-");
-        relocationFixture.ensureStock(leaf.getId(), leafRes.getId(), LEAF_STOCK);
+        relocationFixture.seedExactStock(leaf.getId(), leafRes.getId(), LEAF_STOCK);
 
         Response response = inventoryFixture.getHierarchyInventory(unit.getId(), UserRole.ADMIN);
         assertThat(response.statusCode()).isEqualTo(200);
@@ -240,8 +240,8 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
     private HierarchySeed seedParentAndChild(long parentId, long childId) {
         ResourceResponse parentRes = resourceFixture.createUniqueResource("hier-p-res-");
         ResourceResponse childRes = resourceFixture.createUniqueResource("hier-c-res-");
-        relocationFixture.ensureStock(parentId, parentRes.getId(), PARENT_STOCK);
-        relocationFixture.ensureStock(childId, childRes.getId(), CHILD_STOCK);
+        relocationFixture.seedExactStock(parentId, parentRes.getId(), PARENT_STOCK);
+        relocationFixture.seedExactStock(childId, childRes.getId(), CHILD_STOCK);
         return new HierarchySeed(parentRes.getId(), childRes.getId());
     }
 

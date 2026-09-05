@@ -10,6 +10,7 @@ import com.erp.models.response.ResourceResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -53,11 +54,21 @@ public class InvoiceGenerateApiTest extends BaseFunctionalTest {
     @TestCaseId("TC-INV-001")
     @Story("Invoice exists and generate")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("GET exists + POST generate для relocation send.")
+    @Description("""
+            Після send: GET exists, POST /invoice/generate/{storageId}/{relocationId}
+            з items[] з рядків переміщення (як клієнт). Очікування: 2xx + PDF,
+            далі exists=true. Без items бекенд падає NPE у populateData.
+            """)
     public void generateInvoiceForSend() {
         RelocationResponse sent = relocationFixture.createSend(
                 UserRole.ADMIN, senderId, receiverId, resourceId, 1.0);
-        boolean existed = invoiceFixture.invoiceExists(UserRole.ADMIN, sent.getId(), senderId);
+        assertThat(sent.getItems())
+                .as("send relocation must expose line items for invoice generate")
+                .isNotEmpty();
+
+        boolean existedBefore = invoiceFixture.invoiceExists(UserRole.ADMIN, sent.getId(), senderId);
+        Allure.parameter("relocationId", sent.getId());
+        Allure.parameter("existedBeforeGenerate", existedBefore);
 
         InvoiceDataRequest request = InvoiceDataRequest.builder()
                 .operationDate(LocalDate.now())
@@ -66,15 +77,24 @@ public class InvoiceGenerateApiTest extends BaseFunctionalTest {
                 .receiveName("receiver")
                 .sendingPersonName("Test")
                 .receivingPersonName("Recv")
+                .items(InvoiceFixture.itemsFromRelocation(sent))
                 .build();
+        assertThat(request.getItems())
+                .as("invoice payload items from send rows")
+                .isNotEmpty();
+
         Response generated = invoiceFixture.generateRaw(UserRole.ADMIN, senderId, sent.getId(), request);
+        byte[] pdf = generated.asByteArray();
         assertThat(generated.statusCode())
-                .as("generate invoice; existed=%s status=%s body=%s",
-                        existed, generated.statusCode(), generated.asString())
-                .isIn(200, 201, 204, 400);
-        if (generated.statusCode() < 300) {
-            assertThat(invoiceFixture.invoiceExists(UserRole.ADMIN, sent.getId(), senderId)
-                    || existed).isTrue();
-        }
+                .as("POST generate; contentType=%s bytes=%s", generated.getContentType(), pdf.length)
+                .isBetween(200, 299);
+        assertThat(pdf.length)
+                .as("generate має повернути PDF (не порожнє тіло)")
+                .isGreaterThan(100);
+
+        invoiceFixture.waitUntilExists(UserRole.ADMIN, sent.getId(), senderId, 30);
+        assertThat(invoiceFixture.invoiceExists(UserRole.ADMIN, sent.getId(), senderId))
+                .as("GET /invoice/{id}/exists після generate")
+                .isTrue();
     }
 }

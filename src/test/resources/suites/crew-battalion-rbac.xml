@@ -1,0 +1,29 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Crew-Read / Crew-Write battalion stocks RBAC.
+
+  Run:
+    mvn test -Denv=staging -Dsuite=crew-battalion-rbac
+-->
+<suite name="Crew Battalion Stocks RBAC Suite" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Crew Battalion Stocks RBAC API">
+        <classes>
+            <class name="com.erp.tests.functional.storage.CrewBattalionStocksRbacTest"/>
+        </classes>
+    </test>
+
+    <test name="Crew Battalion Stocks RBAC UI">
+        <classes>
+            <class name="com.erp.tests.ui.CrewBattalionStocksUiTest"/>
+        </classes>
+    </test>
+</suite>

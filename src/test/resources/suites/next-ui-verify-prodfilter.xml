@@ -1,0 +1,23 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="ProdFilter" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="ProdFilter">
+        <classes>
+            <class name="com.erp.tests.ui.ProductionJournalFilterUITest">
+                <methods>
+                    <include name="filterByProductUiMatchesApi"/>
+                    <include name="filterByStartDateUiMatchesApi"/>
+                    <include name="filterByEndDateUiMatchesApi"/>
+                    <include name="filterByDateRangeUiMatchesApi"/>
+                    <include name="filterByCategoryUiMatchesApi"/>
+                    <include name="filterByProductAndDateRangeUiMatchesApi"/>
+                    <include name="filterByProductAndCategoryUiMatchesApi"/>
+                    <include name="filterByProductDateRangeAndCategoryUiMatchesApi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

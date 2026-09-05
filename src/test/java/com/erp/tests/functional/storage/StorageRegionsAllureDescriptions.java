@@ -813,6 +813,53 @@ public final class StorageRegionsAllureDescriptions {
             перевірка на unit workspace all-locations як WMS-003-004).
             """ + ON_FAIL_UI;
 
+    public static final String TC_CREW_ANL_001 = """
+            Що перевіряємо: аналітика екіпажів — залишки на екіпажах приховують архівні (деактивовані) CREW за замовчуванням.
+            Клієнт: tk-ui StocksTab → GET /api/v1/crews/stocks з active=true (default «Активні»).
+            Arrange: UNIT + CREWS region; активний CREW і архівний CREW (після видачі stock обнулено — DELETE не дозволяє archive з ненульовим stock).
+            Очікуваний результат:
+            — active=true: рядки лише активного екіпажу;
+            — active=false: лише архівного;
+            — active omitted: обидва.
+            UI: /crew-analytics → «Залишки на екіпажах» — за замовчуванням без архівного; «Неактивні»/«Усі» показують його.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_RBAC_001 = """
+            Crew-Read-ROLE + CREWS region member (unit.storage.id):
+            GET /api/v1/crews/locations повертає location id батальйону з області.
+            Arrange: prepareSingleCrewScenarioForMembers(member=unit.storage.id).
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_RBAC_002 = """
+            Crew-Read-ROLE: GET /api/v1/crews/hierarchy?parentId={unitId} — дерево UNIT→CREW
+            без екіпажів чужого батальйону.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_RBAC_003 = """
+            Crew-Read-ROLE: GET /api/v1/crews/stocks?parentId={unitId}&active=true
+            після видачі UNIT→CREW показує CREW з ресурсом; чужий parentId → 403.
+            JWT: var_business_unit_id=unit.storage.id; perm_crews-stocks::view.
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_RBAC_004 = """
+            Crew-Read-ROLE: region CREWS без member unit.storage.id → GET /crews/stocks?parentId → 403
+            (роль є, область не покриває підрозділ користувача).
+            """ + ON_FAIL_API;
+
+    public static final String TC_CREW_RBAC_010 = """
+            Crew-Write-ROLE vs Crew-Read-ROLE: PUT /storages/{crewId}/inventory/status open —
+            Write 2xx, Read 403.
+            """ + ON_FAIL_API;
+
+    public static final String TC_UI_CREW_RBAC_001 = """
+            UI: Crew-Read-ROLE — sidebar «Аналітика Екіпажів» видимий;
+            /crew-analytics → «Залишки на екіпажах» показує екіпаж батальйону після видачі stock.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_CREW_025 = """
+            Матриця UI-CR-05: вкладка «Залишки на екіпажах» — фільтр «Екіпажі» приховує архівні CREW за замовчуванням.
+            """ + ON_FAIL_UI;
+
     public static final String TC_UI_STR_RES_013 = """
             Матриця FP-INV-09 UI: inventory FP autocomplete лише in-scope ancestor.
             """ + ON_FAIL_UI;

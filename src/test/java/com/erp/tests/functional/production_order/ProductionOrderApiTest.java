@@ -11,7 +11,6 @@ import com.erp.models.response.ProductionOrderResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -43,7 +42,7 @@ public class ProductionOrderApiTest extends BaseFunctionalTest {
     public void setupProductionOrderTests() {
         fixture = new ProductionOrderFixture(testContext, apiExecutor);
         new ResourceFixture(testContext, apiExecutor).prepareContext();
-        storageId = ConfigProvider.getOwner1StorageId();
+        storageId = fixture.resolveTargetStorageId(UserRole.ADMIN);
         List<ResourceResponse> resources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
         resourceId = resources.getFirst().getId();
     }

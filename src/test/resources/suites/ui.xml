@@ -64,6 +64,7 @@
         <classes>
             <class name="com.erp.tests.ui.PlanExecutionUiTest"/>
             <class name="com.erp.tests.ui.PlanDisassembleUiTest"/>
+            <class name="com.erp.tests.ui.PlanNeededResourcesUiTest"/>
         </classes>
     </test>
 
@@ -80,6 +81,7 @@
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapHierarchyUITest"/>
+            <class name="com.erp.tests.ui.ResourceCalculatorUiTest"/>
         </classes>
     </test>
 

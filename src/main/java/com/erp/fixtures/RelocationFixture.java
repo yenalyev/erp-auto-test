@@ -72,6 +72,11 @@ public class RelocationFixture extends BaseFixture {
         ensureStock(storageId, resourceId, minAmount, UserRole.ADMIN);
     }
 
+    /**
+     * Shared-storage pad: receive {@code minAmount - current + 50} so concurrent tests do not
+     * drain below {@code minAmount}. Do <b>not</b> use when the test asserts an exact amount —
+     * call {@link #seedExactStock} on an isolated location/resource instead.
+     */
     @Step("API: поповнити залишок ресурсу {resourceId} на складі {storageId} (роль {role})")
     public void ensureStock(Long storageId, Long resourceId, double minAmount, UserRole role) {
         double current = getResourceStock(storageId, resourceId, role);
@@ -84,6 +89,24 @@ public class RelocationFixture extends BaseFixture {
                 () -> getResourceStock(storageId, resourceId, role) >= minAmount,
                 15_000,
                 "Stock for resource " + resourceId + " on storage " + storageId);
+    }
+
+    @Step("API: посіяти рівно {amount} од. ресурсу {resourceId} на складі {storageId}")
+    public void seedExactStock(Long storageId, Long resourceId, double amount) {
+        seedExactStock(storageId, resourceId, amount, UserRole.ADMIN);
+    }
+
+    @Step("API: посіяти рівно {amount} од. ресурсу {resourceId} на складі {storageId} (роль {role})")
+    public void seedExactStock(Long storageId, Long resourceId, double amount, UserRole role) {
+        double current = getResourceStock(storageId, resourceId, role);
+        if (current + 0.01 < amount) {
+            RelocationStockSeeder.receiveFromSupplier(
+                    apiExecutor, role, storageId, Map.of(resourceId, amount - current));
+        }
+        PollUtils.waitUntilTrue(
+                () -> getResourceStock(storageId, resourceId, role) >= amount,
+                15_000,
+                "Exact stock for resource " + resourceId + " on storage " + storageId);
     }
 
     @Step("API: seed batch {batchNumber} на складі {storageId}")

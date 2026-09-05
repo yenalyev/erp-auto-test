@@ -794,6 +794,26 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    TECH_MAP_CALCULATE_RESOURCE_USAGE(
+            "/api/v1/technological-maps/calculate-resource-usage",
+            Method.GET,
+            "schemas/technological-maps/calculate-resource-usage-response-schema.json",
+            "Calculate tech-map resource usage tree",
+            null,
+            new TypeReference<List<TechnologicalMapResourceUsageResponse>>() {},
+            null
+    ),
+
+    TECH_MAP_EXPORT_RESOURCE_USAGE(
+            "/api/v1/technological-maps/calculate-resource-usage/export",
+            Method.POST,
+            null,
+            "Export tech-map resource usage summary as xlsx",
+            new TypeReference<TechnologicalMapUsageExportRequest>() {},
+            null,
+            null
+    ),
+
     // ========================================
     // STORAGE ENDPOINTS
     // ========================================
@@ -889,6 +909,36 @@ public enum ApiEndpointDefinition {
             "Get crew resource stock or income report",
             null,
             new TypeReference<List<CrewResourceStockResponse>>() {},
+            null
+    ),
+
+    CREW_GET_RESOURCE_STOCKS(
+            "/api/v1/crews/stocks",
+            Method.GET,
+            null,
+            "Get crew analytics resource stocks (category breakdown)",
+            null,
+            new TypeReference<List<CrewResourceCategoryStockResponse>>() {},
+            null
+    ),
+
+    CREW_GET_LOCATIONS(
+            "/api/v1/crews/locations",
+            Method.GET,
+            null,
+            "Get crew analytics location roots for CREWS region member",
+            null,
+            new TypeReference<List<SimpleEntityResponse>>() {},
+            null
+    ),
+
+    CREW_GET_HIERARCHY(
+            "/api/v1/crews/hierarchy",
+            Method.GET,
+            null,
+            "Get crew analytics unit hierarchy under parentId",
+            null,
+            new TypeReference<List<StorageHierarchyResponse>>() {},
             null
     ),
 
@@ -1147,6 +1197,16 @@ public enum ApiEndpointDefinition {
             "Get statistic plan",
             null,
             new TypeReference<PlanStatisticsResponse>() {},
+            null
+    ),
+
+    STATISTIC_POST_NEEDED_RESOURCES(
+            "/api/v1/statistics/needed-resources?storageId={id}",
+            Method.POST,
+            "schemas/statistics/needed-resources-response-schema.json",
+            "Get needed resources for plan execution",
+            new TypeReference<ExecutionFilterRequest>() {},
+            new TypeReference<PlanNeededResourcesResponse>() {},
             null
     ),
 
@@ -2049,6 +2109,16 @@ public enum ApiEndpointDefinition {
             Method.GET,
             null,
             "Export storage remainders XLSX",
+            null,
+            null,
+            null
+    ),
+
+    EXPORT_INVENTORY_HIERARCHY_GET(
+            "/api/v1/export-analytics/inventory",
+            Method.GET,
+            null,
+            "Export inventory remainders XLSX (hierarchy / all-locations when parentStorageId omitted)",
             null,
             null,
             null

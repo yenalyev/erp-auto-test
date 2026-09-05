@@ -109,6 +109,13 @@ public class PlanExecutionFixture extends BaseFixture {
         return techMapFixture.createIsolatedProductionTechMap(UserRole.ADMIN, storageId);
     }
 
+    /** Creates an isolated product whose output resource uses {@code outputUnitId}. */
+    @Step("Створити ізольований продукт (unitId={outputUnitId}) з техкартою на сховищі {storageId}")
+    public TechnologicalMapFixture.IsolatedTechMapContext createIsolatedProduct(Long storageId, Long outputUnitId) {
+        return techMapFixture.createIsolatedProductionTechMap(
+                UserRole.ADMIN, storageId, "TM-PlanExec", outputUnitId);
+    }
+
     /** Creates the storage's current-month plan with a single output target for {@code resourceId}. */
     @Step("API: створити план поточного місяця для продукту {resourceId} на сховищі {storageId} (ціль {target})")
     public PlanResponse createCurrentMonthPlan(Long storageId, Long resourceId, double target) {

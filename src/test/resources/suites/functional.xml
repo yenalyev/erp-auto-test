@@ -53,6 +53,8 @@
             <class name="com.erp.tests.functional.global_plan.PlanDuplicatePeriodApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessComponentTechMapsApiTest"/>
+            <class name="com.erp.tests.functional.statistics.PlanNeededResourcesApiTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapResourceCalculatorApiTest"/>
         </classes>
     </test>
 </suite>

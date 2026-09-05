@@ -1,0 +1,16 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="WmsTagOrApi" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="TC-WMS-007-018 API">
+        <classes>
+            <class name="com.erp.tests.functional.inventory.InventoryStockApiTest">
+                <methods>
+                    <include name="tagFilterTwoTagsUsesOrNotAnd"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,26 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    mvn test "-Denv=dev" "-Dsuite=next-ui-verify-eqhist" "-Dtcm.enabled=false"
+-->
+<suite name="Next UI verify eq-hist" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="EquipmentHistoryOnOperations">
+        <classes>
+            <class name="com.erp.tests.ui.EquipmentHistoryOnOperationsUiTest">
+                <methods>
+                    <include name="sentEquipmentShowsOnOperationHistory"/>
+                    <include name="receivedEquipmentShowsOnOperationHistory"/>
+                    <include name="inventoryAddedEquipmentShowsOnOperationHistory"/>
+                    <include name="cancelledEquipmentRelocationRemovedFromOperationHistory"/>
+                    <include name="editedEquipmentSendShowsUpdatedDescriptionOnOperationHistory"/>
+                    <include name="deletedSupplierReceiveRemovesEquipmentFromOperationHistory"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

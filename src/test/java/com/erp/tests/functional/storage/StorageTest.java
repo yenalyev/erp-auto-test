@@ -10,14 +10,12 @@ import com.erp.enums.UserRole;
 import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.StorageRequest;
 import com.erp.models.response.StorageResponse;
-import com.erp.test_context.ContextKey;
 import com.erp.utils.helpers.AllureHelper;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -136,14 +134,11 @@ public class StorageTest extends StorageApiTestBase {
     @Description("Заборона створення дублікатів за назвою серед активних локацій")
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateDuplicateStorage() {
-        StorageResponse fromContext = testContext.get(ContextKey.DYNAMIC_STORAGE);
-        if (fromContext == null || fromContext.getId() == null) {
-            throw new SkipException("DYNAMIC_STORAGE відсутній у контексті — duplicate-name тест неможливий");
-        }
-        StorageResponse existing = storageFixture.getById(UserRole.ADMIN, fromContext.getId());
-        if (!Boolean.TRUE.equals(existing.getActive())) {
-            throw new SkipException("DYNAMIC_STORAGE id=" + existing.getId() + " уже не active — duplicate-name серед активних не перевірити");
-        }
+        StorageResponse existing = storageFixture.createUniqueStorage("dup-");
+        assertThat(existing.getId()).isNotNull();
+        assertThat(existing.getActive())
+                .as("fresh storage must be active for duplicate-name check")
+                .isTrue();
 
         // Full body clone: name-uniqueness must fail before other required-field NPEs → 500.
         StorageRequest.StorageRequestBuilder duplicateBuilder = StorageRequest.builder()

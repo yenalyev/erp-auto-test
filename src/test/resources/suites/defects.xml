@@ -12,12 +12,15 @@
     <test name="Defect Management API">
         <classes>
             <class name="com.erp.tests.functional.defect.DefectTest"/>
+            <class name="com.erp.tests.functional.defect.DefectHierarchyApiTest"/>
+            <class name="com.erp.tests.functional.defect.DefectHierarchyVisibilityApiTest"/>
         </classes>
     </test>
 
     <test name="Defect Management UI">
         <classes>
             <class name="com.erp.tests.ui.DefectUITest"/>
+            <class name="com.erp.tests.ui.DefectHierarchyUiTest"/>
         </classes>
     </test>
 </suite>

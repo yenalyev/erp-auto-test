@@ -16,4 +16,5 @@ public class ResourceResponse {
         private String name;
         private Boolean active;
         private MeasurementUnitResponse unit;
+        private SimpleEntityResponse category;
 }

@@ -7,7 +7,7 @@
     "username": { "type": "string" },
     "firstName": { "type": "string" },
     "lastName": { "type": "string" },
-    "rank": { "type": "string" },
+    "rank": { "type": ["string", "null"] },
     "enabled": { "type": "boolean" },
     "storages": { "type": "array" },
     "permissions": { "type": "array", "items": { "type": "string" } },

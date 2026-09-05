@@ -169,22 +169,24 @@ public class TechnologicalMapValidationUITest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Arrange: DISASSEMBLE техкарта (input A, output B) через API.
-            /technological-maps/update/{id}: змінити output на ресурс A (той самий що input) → помилка overlap.
-            Дані техкарти через API без змін.
+            Update: вхідний ресурс заблокований UI; змінюємо output на A
+            → помилка overlap. Дані техкарти через API без змін.
             """)
-    public void testCannotUpdateDisassembleTechMapWithInputOutputOverlapViaUi() {
+    public void testCannotUpdateProductionTechMapWithInputOutputOverlapViaUi() {
         List<ResourceResponse> resources = List.of(resourceA, resourceB);
         TechnologicalMapResponse source = techMapFixture.createTechMapWithRequest(
                 UserRole.OWNER_1,
                 TechnologicalMapDataFactory.createDisassembleTechMap(resources, storageId).build());
         techMapForCleanup = source;
 
-        String inputResourceName = source.getInput().getFirst().getResource().getName().trim();
         String originalOutputName = source.getOutput().getFirst().getResource().getName().trim();
+        String inputResourceName = source.getInput().getFirst().getResource().getName().trim();
 
-        TechnologicalMapFormPage form = new TechnologicalMapFormPage(page).openUpdate(source.getId());
+        injectRoleSession(UserRole.ADMIN, storageId);
+        TechnologicalMapFormPage form = new TechnologicalMapFormPage(page)
+                .openUpdate(source.getId(), storageId);
+        form.waitUntilOutputResourceEnabled(0);
         form.selectOutputResource(0, inputResourceName)
-                .fillOutputAmount(0, "0.5")
                 .submit();
 
         assertThat(form.isErrorVisible()).as("Повідомлення про помилку").isTrue();
@@ -202,7 +204,11 @@ public class TechnologicalMapValidationUITest extends BaseUITest {
                 .orElseThrow(() -> new AssertionError("Tech map not found: " + source.getId()));
 
         assertThat(current.getOutput().getFirst().getResource().getName().trim())
+                .as("Вихідний ресурс не змінений після відхиленого overlap")
                 .isEqualTo(originalOutputName);
+        assertThat(current.getInput().getFirst().getResource().getName().trim())
+                .as("Вхідний ресурс не змінений після відхиленого overlap")
+                .isEqualTo(inputResourceName);
     }
 
     private void assertOverlapRejectedOnCreate(

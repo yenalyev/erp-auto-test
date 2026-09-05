@@ -204,6 +204,88 @@ public class RelocationEditActionsUiTest extends BaseUITest {
                 .isFalse();
     }
 
+    @Test(priority = 24)
+    @TestCaseId("TC-UI-REL-022")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            REQ-EDIT_REL-007 AC-06: у режимі «Всі локації» «Прийняти» і «Скасувати»
+            на «В дорозі» disabled; hover показує тултіп про вибір локації;
+            банера «Помилка. Оновіть сторінку» немає.
+            """)
+    public void allLocationsDisablesInTransitAccept() {
+        String marker = "in-transit-accept-all-" + System.currentTimeMillis();
+        relocationFixture.createSendWithDescription(
+                UserRole.OWNER_1, storageId, owner2StorageId, resourceId, 8.0, marker);
+
+        reopenPageWithSession(UserRole.ADMIN, storageId);
+        RelocationPage journal = new RelocationPage(page).open();
+        AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
+        assertThat(sidebar.isWorkspaceSelectorVisible())
+                .as("У адміна з багатьма локаціями є селектор «Робочий простір»")
+                .isTrue();
+        sidebar.selectAllLocations();
+
+        journal.waitForLoaded().waitForJournalDataSettled().openInTransitTab();
+        journal.attachScreenshot("TC-UI-REL-022 — all locations");
+
+        assertThat(journal.isRowWithTextVisible(marker))
+                .as("Рядок видачі видимий без обраної локації (%s)", marker)
+                .isTrue();
+        assertThat(journal.isAcceptButtonDisabledInRow(marker))
+                .as("«Прийняти» disabled у режимі «Всі локації»")
+                .isTrue();
+        assertThat(journal.isCancelButtonDisabledInRow(marker))
+                .as("«Скасувати» disabled у режимі «Всі локації»")
+                .isTrue();
+        assertThat(journal.hoverDisabledAcceptTooltip(marker))
+                .as("Тултіп disabled «Прийняти»")
+                .contains("Оберіть конкретну локацію в бічній панелі для виконання дії");
+        assertThat(journal.hasResolveErrorBanner())
+                .as("Банера «Помилка. Оновіть сторінку» немає")
+                .isFalse();
+    }
+
+    @Test(priority = 25)
+    @TestCaseId("TC-UI-REL-023")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            REQ-EDIT_REL-007 AC-06: на складі-отримувачі «Прийняти» enabled;
+            підтвердження завершує видачу, рядка немає на «В дорозі»,
+            банера «Помилка. Оновіть сторінку» немає.
+            """)
+    public void recipientLocationEnablesAccept() {
+        String marker = "in-transit-accept-ok-" + System.currentTimeMillis();
+        relocationFixture.createSendWithDescription(
+                UserRole.OWNER_1, storageId, owner2StorageId, resourceId, 8.0, marker);
+
+        reopenPageWithSession(UserRole.OWNER_2, owner2StorageId);
+        RelocationPage journal = new RelocationPage(page).open().openInTransitTab();
+        journal.attachScreenshot("TC-UI-REL-023 — recipient location");
+
+        assertThat(journal.isRowWithTextVisible(marker))
+                .as("Рядок видачі на складі отримувача (%s)", marker)
+                .isTrue();
+        assertThat(journal.isAcceptButtonVisibleInRow(marker))
+                .as("Кнопка «Прийняти» видима")
+                .isTrue();
+        assertThat(journal.isAcceptButtonDisabledInRow(marker))
+                .as("«Прийняти» enabled на складі отримувача")
+                .isFalse();
+        assertThat(journal.hasResolveErrorBanner())
+                .as("Банера немає до прийому")
+                .isFalse();
+
+        journal.acceptInTransitAsRecipient(marker);
+        journal.attachScreenshot("TC-UI-REL-023 — after accept");
+
+        assertThat(journal.isRowWithTextVisible(marker))
+                .as("Після прийому рядка немає на «В дорозі» (%s)", marker)
+                .isFalse();
+        assertThat(journal.hasResolveErrorBanner())
+                .as("Банера «Помилка. Оновіть сторінку» немає після прийому")
+                .isFalse();
+    }
+
     private void injectRoleSession(UserRole role, long selectedStorageId) {
         Map<String, String> cookies = getPlaywrightSessionProvider()
                 .getSession(role.getUsername(), role.getPassword());

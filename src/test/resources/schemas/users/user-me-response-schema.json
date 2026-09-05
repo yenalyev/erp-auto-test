@@ -5,7 +5,7 @@
   "properties": {
     "username": { "type": "string" },
     "name": { "type": "string" },
-    "rank": { "type": "string" },
+    "rank": { "type": ["string", "null"] },
     "permissions": { "type": "array", "items": { "type": "string" } },
     "roles": { "type": "array", "items": { "type": "string" } },
     "allowedStorageIds": { "type": "array", "items": { "type": "integer" } },

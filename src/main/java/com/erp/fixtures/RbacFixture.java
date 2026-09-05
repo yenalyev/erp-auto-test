@@ -2,11 +2,13 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
 import com.erp.models.request.ResourceReconciliationRequest;
 import com.erp.models.response.*;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
+import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +33,11 @@ public class RbacFixture extends BaseFixture {
         fetchSharedResourceCategory();
         setupSharedResource();
         setupSharedResourceList(4);
+        new ProductionFixture(testContext, apiExecutor).prepareContext();
         prepareTechMapForUpdate();
         setupDynamicProductionList(3, UserRole.OWNER_1);
         setupDynamicBusinessUnit();
+        prepareStorageRegionRbacContext();
         setupDynamicPlan(2);
         prepareRelocationRbacContext();
         prepareCrewRbacContext();
@@ -75,6 +79,23 @@ public class RbacFixture extends BaseFixture {
             return;
         }
         new UserFixture(testContext, apiExecutor).prepareRbacUserContext();
+    }
+
+    @Step("Setup storage visibility region for RBAC matrix")
+    public void prepareStorageRegionRbacContext() {
+        if (testContext.get(ContextKey.STORAGE_REGION_ID) != null) {
+            return;
+        }
+        StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
+        storageFixture.prepareContext();
+        StorageResponse recipient = testContext.get(ContextKey.DYNAMIC_STORAGE);
+        if (recipient == null) {
+            recipient = storageFixture.getById(UserRole.ADMIN, ConfigProvider.getOwner1StorageId());
+        }
+        StorageRegionResponse region = new StorageRegionFixture(testContext, apiExecutor)
+                .createRegion(recipient, StorageAccessMode.FULL_ACCESS, "rbac-reg-");
+        testContext.set(ContextKey.STORAGE_REGION_ID, region.getId());
+        log.info("Storage region RBAC id={}", region.getId());
     }
 
     @Step("Setup crew storage in CREWS region for RBAC matrix")
@@ -122,8 +143,8 @@ public class RbacFixture extends BaseFixture {
             RelocationFixture relocationFixture = new RelocationFixture(testContext, apiExecutor);
             relocationFixture.prepareContext();
 
-            Long owner1 = com.erp.utils.config.ConfigProvider.getOwner1StorageId();
-            Long owner2 = com.erp.utils.config.ConfigProvider.getOwner2StorageId();
+            Long owner1 = ConfigProvider.getOwner1StorageId();
+            Long owner2 = ConfigProvider.getOwner2StorageId();
             Long resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
             Long unitId = testContext.get(ContextKey.RELOCATION_UNIT_STORAGE_ID);
 

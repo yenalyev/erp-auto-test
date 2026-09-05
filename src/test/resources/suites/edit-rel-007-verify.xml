@@ -55,6 +55,8 @@
                     <include name="recipientDoesNotSeeEditOnInTransit"/>
                     <include name="finishedSendLeavesInTransitTab"/>
                     <include name="allLocationsHidesInTransitEdit"/>
+                    <include name="allLocationsDisablesInTransitAccept"/>
+                    <include name="recipientLocationEnablesAccept"/>
                 </methods>
             </class>
         </classes>

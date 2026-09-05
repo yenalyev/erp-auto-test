@@ -208,7 +208,8 @@ public class NotificationFixture extends BaseFixture {
                     if (response.statusCode() >= 200 && response.statusCode() < 300) {
                         return true;
                     }
-                    log.info("Subscribe {} to relocation_incoming returned {}", role, response.statusCode());
+                    log.info("Subscribe {} to relocation_incoming returned {} body={}",
+                            role, response.statusCode(), response.getBody().asString());
                     return false;
                 },
                 20_000,

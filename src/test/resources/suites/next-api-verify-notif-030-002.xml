@@ -1,0 +1,25 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="NotifJournalAndRecipients" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="TC-NOTIF-030">
+        <classes>
+            <class name="com.erp.tests.functional.notification.NotificationJournalTest">
+                <methods>
+                    <include name="getNotificationsJournalPage"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+    <test name="TC-NOTIF-002">
+        <classes>
+            <class name="com.erp.tests.functional.notification.NotificationRecipientTest">
+                <methods>
+                    <include name="getRecipientByIdAndList"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,21 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="OrderBook" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="OrderBook">
+        <classes>
+            <class name="com.erp.tests.ui.OrderBookingUiTest">
+                <methods>
+                    <include name="inProgressOrderShowsBookingPanel"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.OrderCreateEditUiTest">
+                <methods>
+                    <include name="saveVisibleOnNewThenHiddenAfterTakeToWork"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

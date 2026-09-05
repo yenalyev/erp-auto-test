@@ -7,7 +7,11 @@
 <suite name="Unit Analytics Verify" parallel="none" verbose="1">
     <test name="Unit analytics turnover tabs">
         <classes>
-            <class name="com.erp.tests.ui.UnitAnalyticsUiTest"/>
+            <class name="com.erp.tests.ui.UnitAnalyticsUiTest">
+                <methods>
+                    <include name="unitAnalyticsTurnoverTabsLoadForPermittedUser"/>
+                </methods>
+            </class>
         </classes>
     </test>
 </suite>

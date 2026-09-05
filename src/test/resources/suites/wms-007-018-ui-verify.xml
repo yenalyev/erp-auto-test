@@ -1,0 +1,23 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  TC-WMS-007-018 UI only.
+
+    mvn test "-Denv=dev" "-Dsuite=wms-007-018-ui-verify" "-Dtcm.enabled=false"
+-->
+<suite name="WMS-007-018 UI verify" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TC-WMS-007-018 UI">
+        <classes>
+            <class name="com.erp.tests.ui.InventoryUiTest">
+                <methods>
+                    <include name="tagChipsTwoSelectedUseOrLogicUi"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,26 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Re-run Incident UI after placeholder fix. Skip TC-UI-INC-PD-003 (CPMA-652 product).
+
+    mvn test "-Denv=dev" "-Dsuite=next-ui-verify-inc2" "-Dtcm.enabled=false"
+-->
+<suite name="Next UI verify Incident rerun" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Incident-rerun">
+        <classes>
+            <class name="com.erp.tests.ui.RelocationIncidentUITest">
+                <methods>
+                    <include name="createViewAndDeleteIncidentViaUi"/>
+                    <include name="createPartialDeliveryIncidentViaUi"/>
+                    <include name="partialDeliveryExceedingSentDisablesSave"/>
+                    <include name="partialDeliveryNegativeAmountDisablesSave"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

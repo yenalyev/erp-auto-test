@@ -37,7 +37,8 @@ public class ProductionPage extends BasePage {
     private static final String EMPTY_STATE_TEXT = "Нічого не знайдено";
     private static final String LOADING_TEXT = "Завантаження...";
     private static final String PRODUCTION_TABLE_WRAPPER_SELECTOR =
-            "div.rounded-xl.border.border-gray-200.bg-white";
+            "div.rounded-\\[6px\\].border.border-gray-200.bg-white, "
+                    + "div.rounded-xl.border.border-gray-200.bg-white";
     private static final String PAGE_SIZE_STORAGE_KEY = "pageSize_production-list";
     private static final DateTimeFormatter UI_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final DateTimeFormatter UI_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");

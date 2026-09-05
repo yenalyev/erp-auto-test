@@ -93,9 +93,14 @@ public class NotificationsPage extends BasePage {
 
     public NotificationsPage fillRecipientForm(String caption, String addressInfo) {
         Locator dialog = page.getByRole(AriaRole.DIALOG);
-        Locator inputs = dialog.locator("input");
-        inputs.nth(0).fill(caption);
-        inputs.nth(1).fill(addressInfo);
+        dialog.locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Назва"))
+                .locator("xpath=following::input[1]")
+                .fill(caption);
+        dialog.locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Адреса"))
+                .locator("xpath=following::input[1]")
+                .fill(addressInfo);
         return this;
     }
 
@@ -110,7 +115,16 @@ public class NotificationsPage extends BasePage {
     }
 
     public boolean isCaptionVisibleInTable(String caption) {
-        return page.locator("table").getByText(caption, new Locator.GetByTextOptions().setExact(true)).isVisible();
+        Locator cell = page.getByText(caption, new Page.GetByTextOptions().setExact(true));
+        try {
+            cell.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            return true;
+        } catch (RuntimeException e) {
+            log.warn("Recipient caption «{}» not on page: {}", caption, e.getMessage());
+            return false;
+        }
     }
 
     public boolean hasTemplateRows() {

@@ -164,7 +164,10 @@ public class RelocationPage extends BasePage {
     }
 
     public boolean isReceiveButtonVisible() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(RECEIVE_BUTTON)).isVisible();
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                        .setName(RECEIVE_BUTTON)
+                        .setExact(true))
+                .isVisible();
     }
 
     public boolean isSendButtonVisible() {
@@ -356,7 +359,10 @@ public class RelocationPage extends BasePage {
     }
 
     public RelocationCreateInputPage clickReceive() {
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(RECEIVE_BUTTON)).click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                        .setName(RECEIVE_BUTTON)
+                        .setExact(true))
+                .click();
         return new RelocationCreateInputPage(page).waitForLoaded();
     }
 
@@ -568,15 +574,50 @@ public class RelocationPage extends BasePage {
     }
 
     public boolean isAcceptButtonVisibleInRow(String rowText) {
-        return rowContainingText(rowText)
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Прийняти"))
-                .count() > 0;
+        return acceptButtonInRow(rowText).count() > 0;
+    }
+
+    public boolean isAcceptButtonDisabledInRow(String rowText) {
+        Locator btn = acceptButtonInRow(rowText);
+        return btn.count() > 0 && btn.isDisabled();
     }
 
     public boolean isCancelButtonVisibleInRow(String rowText) {
+        return cancelButtonInRow(rowText).count() > 0;
+    }
+
+    public boolean isCancelButtonDisabledInRow(String rowText) {
+        Locator btn = cancelButtonInRow(rowText);
+        return btn.count() > 0 && btn.isDisabled();
+    }
+
+    /**
+     * Hover disabled «Прийняти» (TooltipTrigger wraps the button in {@code <span>}).
+     */
+    public String hoverDisabledAcceptTooltip(String rowText) {
+        Locator btn = acceptButtonInRow(rowText);
+        btn.locator("xpath=ancestor::span[1]").hover();
+        Locator tooltip = page.locator("[role='tooltip']")
+                .filter(new Locator.FilterOptions().setHasText("Оберіть конкретну локацію в бічній панелі"));
+        tooltip.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(5_000));
+        return tooltip.innerText().trim();
+    }
+
+    public boolean hasResolveErrorBanner() {
+        Locator banner = page.getByText("Оновіть сторінку");
+        return banner.count() > 0 && banner.first().isVisible();
+    }
+
+    private Locator acceptButtonInRow(String rowText) {
         return rowContainingText(rowText)
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Скасувати"))
-                .count() > 0;
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Прийняти"));
+    }
+
+    private Locator cancelButtonInRow(String rowText) {
+        return rowContainingText(rowText)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Скасувати"));
     }
 
     private Locator editButtonInRow(String rowText) {
@@ -605,7 +646,12 @@ public class RelocationPage extends BasePage {
         row.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        editButtonInRow(rowText).click();
+        waitForResponseTolerant(
+                r -> r.url().contains("/relocations/")
+                        && "GET".equals(r.request().method())
+                        && r.status() == 200,
+                () -> editButtonInRow(rowText).click(),
+                "GET relocation for edit send");
         return new RelocationUpdateOutputPage(page).waitForLoaded();
     }
 

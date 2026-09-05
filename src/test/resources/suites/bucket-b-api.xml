@@ -1,0 +1,127 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Repeatable product/contract API failures from run85 FAIL-API (bucket B).
+  Excludes staging 5xx, UI, RBAC matrix, production-order fixture (bucket C), Fight.
+
+    mvn test -Denv=staging -Dsuite=bucket-b-api
+-->
+<suite name="Bucket B contract API (staging)" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="B-comments">
+        <classes>
+            <class name="com.erp.tests.functional.inventory.InventoryCommentApiTest">
+                <methods>
+                    <include name="commentStoredInHistoryForSupportedLocationType"/>
+                    <include name="commentOnlyOnChangedResourcesWithSiblingIsolation"/>
+                    <include name="commentExactlyMaxLengthStoredInHistory"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="B-visibility">
+        <classes>
+            <class name="com.erp.tests.functional.storage.RelocationVisibilityTest">
+                <methods>
+                    <include name="testSendOutsideVisibilityRegionRejected"/>
+                    <include name="testRevokeExplicitGrantBlocksSubsequentSend"/>
+                    <include name="testSendWithResourceOutsideVisibilityScopeRejected"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.StorageResourceVisibilityTest">
+                <methods>
+                    <include name="testInventoryRejectsResourceOutsideVisibilityScope"/>
+                    <include name="testFlyPointInventoryPutOutOfScopeReturns400"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest">
+                <methods>
+                    <include name="testAccountantMyUnitsExcludesUnitType"/>
+                    <include name="testResourceViewerMyUnitsExcludesUnitType"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.defect.DefectHierarchyVisibilityApiTest">
+                <methods>
+                    <include name="parentQueryIncludesDefectOnChildOutsideVisibilityScope"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.tech_map.TechnologicalMapHierarchyApiTest">
+                <methods>
+                    <include name="parentContextListsEntireSubtreeMaps"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="B-orders-analytics">
+        <classes>
+            <class name="com.erp.tests.functional.order.OrderBookingApiTest">
+                <methods>
+                    <include name="testShipUndersendReturns400"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.order.OrderRbacTest">
+                <methods>
+                    <include name="testGathererCanPrepareButCannotBookOrSend"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.analytics.AnalyticsAuditApiTest"/>
+        </classes>
+    </test>
+
+    <test name="B-stock-contract">
+        <classes>
+            <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest">
+                <methods>
+                    <include name="hierarchyIncludesParentAndChildStock"/>
+                    <include name="deepNestLeafVisibleFromRoot"/>
+                    <include name="singleStorageGetExcludesChildOnlyStock"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.inventory.InventoryMultiLocationExportApiTest">
+                <methods>
+                    <include name="multiLocationOwnerExportsAllLocationsExcel"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.disassemble.DisassembleCrudApiTest">
+                <methods>
+                    <include name="createDisassembleAdjustsStock"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.shift.ShiftCrudApiTest">
+                <methods>
+                    <include name="outsiderCannotCreateShiftOnOwner1"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.resource.ResourceDeactivationTest">
+                <methods>
+                    <include name="testCannotModifyProductionWhenTechMapResourceDeactivated"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest">
+                <methods>
+                    <include name="attachedCrewInventoryPutProxiesToFlyPoint"/>
+                    <include name="attachedCrewPutEquivalentToDirectFlyPointPut"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.FlyPointInventoryTest">
+                <methods>
+                    <include name="multiLocationInventoryIncludesFlyPoint"/>
+                    <include name="putUnknownResourceOnFlyPointReturns4xx"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest">
+                <methods>
+                    <include name="testAccountantSeesOnlyStorageToUnitRelocations"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

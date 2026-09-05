@@ -17,9 +17,12 @@ public class CrewAnalyticsPage extends BasePage {
 
     private static final String PATH = "/crew-analytics";
     private static final String STOCKS_TAB = "Залишки на екіпажах";
-    private static final String INCLUDE_FP_LABEL = "Враховувати залишки на точках взльоту";
     private static final String RESOURCE_FILTER_PLACEHOLDER = "Пошук по назві...";
     private static final String CREW_FILTER_LABEL = "Екіпаж";
+    private static final String CREW_ACTIVITY_FILTER_LABEL = "Екіпажі";
+    public static final String ACTIVE_CREWS_LABEL = "Активні";
+    public static final String INACTIVE_CREWS_LABEL = "Неактивні";
+    public static final String ALL_CREWS_LABEL = "Усі";
 
     public CrewAnalyticsPage(Page page) {
         super(page);
@@ -44,12 +47,40 @@ public class CrewAnalyticsPage extends BasePage {
         return this;
     }
 
+    /**
+     * «Локація» на /crew-analytics (видимий лише коли {@code /crews/locations} повертає &gt;1 id).
+     */
+    public CrewAnalyticsPage selectCrewLocationByName(String locationName) {
+        Locator label = page.getByText("Локація:", new Page.GetByTextOptions().setExact(true));
+        try {
+            label.first().waitFor(new Locator.WaitForOptions()
+                    .setTimeout(Math.min(8_000, uiTimeoutMs())));
+        } catch (RuntimeException e) {
+            log.debug("Location picker not shown — using the only crew location");
+            return this;
+        }
+        Locator row = page.locator("div.flex-wrap")
+                .filter(new Locator.FilterOptions().setHasText("Локація:"))
+                .first();
+        Locator trigger = row.getByRole(AriaRole.COMBOBOX).first();
+        String current = trigger.innerText();
+        if (current != null && current.contains(locationName.trim())) {
+            waitForCrewStocksSettled();
+            return this;
+        }
+        trigger.click();
+        Locator option = page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(locationName.trim()));
+        option.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        waitForCrewStocksDuring(option::click);
+        return this;
+    }
+
     public CrewAnalyticsPage setIncludeFlyPointStocks(boolean include) {
-        Locator checkbox = page.locator("#includeFlyPointStocks");
+        Locator checkbox = includeFlyPointStocksCheckbox();
         checkbox.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         boolean checked = checkbox.isChecked();
         if (checked != include) {
-            waitForCrewStocksDuring(() -> page.getByText(INCLUDE_FP_LABEL).click());
+            waitForCrewStocksDuring(checkbox::click);
         } else {
             waitForCrewStocksSettled();
         }
@@ -58,7 +89,7 @@ public class CrewAnalyticsPage extends BasePage {
 
     /** Toggle checkbox and return the /crews/stocks request URL (for includeFlyPointStocks assert). */
     public String setIncludeFlyPointStocksAndCaptureStocksUrl(boolean include) {
-        Locator checkbox = page.locator("#includeFlyPointStocks");
+        Locator checkbox = includeFlyPointStocksCheckbox();
         checkbox.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         if (checkbox.isChecked() == include) {
             return "";
@@ -68,7 +99,7 @@ public class CrewAnalyticsPage extends BasePage {
                         && !r.url().contains("stocks-aggregated")
                         && "GET".equals(r.request().method())
                         && r.status() == 200,
-                () -> page.getByText(INCLUDE_FP_LABEL).click());
+                checkbox::click);
         waitForLoadingHidden();
         return response.url();
     }
@@ -107,6 +138,24 @@ public class CrewAnalyticsPage extends BasePage {
         return this;
     }
 
+    /** Фільтр «Екіпажі» на вкладці залишків: Активні / Неактивні / Усі. */
+    public CrewAnalyticsPage selectCrewActivityFilter(String activityLabel) {
+        Locator filterCard = page.getByText(CREW_ACTIVITY_FILTER_LABEL, new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=ancestor::div[contains(@class,'space-y-1')][1]");
+        Locator trigger = filterCard.getByRole(AriaRole.COMBOBOX).first();
+        trigger.click();
+        Locator option = page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(activityLabel));
+        option.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        waitForCrewStocksDuring(option::click);
+        return this;
+    }
+
+    public boolean isCrewNameVisibleInStocksTable(String crewName) {
+        return page.locator("table tbody")
+                .getByText(crewName.trim(), new Locator.GetByTextOptions().setExact(false))
+                .count() > 0;
+    }
+
     /** Клік по лінку unattached екіпажу → /inventory?storageId=crewId */
     public CrewAnalyticsPage clickCrewInventoryLink(long crewId) {
         Locator link = crewInventoryLink(crewId);
@@ -141,6 +190,10 @@ public class CrewAnalyticsPage extends BasePage {
                 .filter(new Locator.FilterOptions().setHasText(crewName.trim()))
                 .filter(new Locator.FilterOptions().setHasText(flyPointName.trim()));
         return row.count() > 0;
+    }
+
+    private Locator includeFlyPointStocksCheckbox() {
+        return page.locator("#includeFlyPointStocks");
     }
 
     private Locator crewInventoryLink(long crewId) {
