@@ -70,6 +70,7 @@
             <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
             <class name="com.erp.tests.functional.storage.FlyPointRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointToFlyPointRelocationTest"/>
             <class name="com.erp.tests.functional.storage.CrewReturnTest"/>
             <class name="com.erp.tests.functional.storage.CrewFlyPointIncidentTest"/>
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
@@ -83,6 +84,7 @@
             <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
             <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
             <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaResourcesApiTest"/>
             <class name="com.erp.tests.functional.location_permissions.LocationPermissionMeTest"/>
             <class name="com.erp.tests.functional.location_permissions.LocationScopedAccessTest"/>
         </classes>
@@ -178,6 +180,7 @@
             <class name="com.erp.tests.functional.equipment.EquipmentInventoryCreateTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentCategoryCrudApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertCrudApiTest"/>
+            <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
             <class name="com.erp.tests.functional.invoice.InvoiceGenerateApiTest"/>
         </classes>
     </test>
@@ -274,6 +277,7 @@
             <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewIssuanceUITest"/>
             <class name="com.erp.tests.ui.CrewReturnUITest"/>
+            <class name="com.erp.tests.ui.FlyPointToFlyPointIssuanceUiTest"/>
             <class name="com.erp.tests.ui.CrewJournalNameVisibilityUiTest"/>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
@@ -297,8 +301,10 @@
             <class name="com.erp.tests.ui.InventoryMultiLocationExportUiTest"/>
             <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
+            <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
+            <class name="com.erp.tests.ui.FaitaResourcesUiTest"/>
             <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
             <class name="com.erp.tests.ui.CrewBattalionStocksUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>

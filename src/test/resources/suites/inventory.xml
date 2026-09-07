@@ -28,6 +28,7 @@
             <class name="com.erp.tests.functional.storage.CrewAnalyticsStocksTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryMultiLocationExportApiTest"/>
+            <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
         </classes>
     </test>
 
@@ -37,6 +38,7 @@
             <class name="com.erp.tests.ui.InventoryMultiLocationExportUiTest"/>
             <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
+            <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
         </classes>

@@ -22,6 +22,7 @@
             <class name="com.erp.tests.ui.ResourcePhotoUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
+            <class name="com.erp.tests.ui.FaitaResourcesUiTest"/>
         </classes>
     </test>
 
@@ -105,6 +106,7 @@
     <test name="Inventory UI">
         <classes>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
+            <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
         </classes>
     </test>
 

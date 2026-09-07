@@ -18,6 +18,7 @@
             <class name="com.erp.tests.functional.resource.ResourceWithTechnologicalMapApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourcePriceApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertCrudApiTest"/>
+            <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
             <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
             <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>
@@ -33,6 +34,7 @@
             <class name="com.erp.tests.functional.storage.CrewVisibilityTest"/>
             <class name="com.erp.tests.functional.storage.CrewRelocationTest"/>
             <class name="com.erp.tests.functional.storage.FlyPointRelocationTest"/>
+            <class name="com.erp.tests.functional.storage.FlyPointToFlyPointRelocationTest"/>
             <class name="com.erp.tests.functional.storage.CrewReturnTest"/>
             <class name="com.erp.tests.functional.storage.CrewFlyPointIncidentTest"/>
             <class name="com.erp.tests.functional.storage.CrewInventoryTest"/>
@@ -40,6 +42,7 @@
             <class name="com.erp.tests.functional.storage.CrewFlyPointInventoryTest"/>
             <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
             <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaResourcesApiTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
