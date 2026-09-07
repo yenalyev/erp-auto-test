@@ -25,6 +25,7 @@ public class RelocationPage extends BasePage {
     private static final String RECEIVE_BUTTON = "Отримати";
     private static final String SEND_BUTTON = "Видати";
     private static final String ISSUE_TO_CREW_BUTTON = "Видати на екіпаж";
+    private static final String ISSUE_BETWEEN_FLY_POINTS_BUTTON = "Видати між точками зльоту";
     private static final String RECEIVE_FROM_CREW_BUTTON = "Отримати від екіпажа";
     private static final String HISTORY_RECEIVED_TAB = "Отримано";
     private static final String IN_TRANSIT_TAB = "В дорозі";
@@ -128,6 +129,16 @@ public class RelocationPage extends BasePage {
     public RelocationCreateOutputCrewPage clickIssueToCrew() {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ISSUE_TO_CREW_BUTTON)).click();
         return new RelocationCreateOutputCrewPage(page).waitForLoaded();
+    }
+
+    public boolean isIssueBetweenFlyPointsButtonVisible() {
+        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ISSUE_BETWEEN_FLY_POINTS_BUTTON))
+                .isVisible();
+    }
+
+    public RelocationCreateOutputFlyPointPage clickIssueBetweenFlyPoints() {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ISSUE_BETWEEN_FLY_POINTS_BUTTON)).click();
+        return new RelocationCreateOutputFlyPointPage(page).waitForLoaded();
     }
 
     public boolean isReceiveFromCrewButtonVisible() {

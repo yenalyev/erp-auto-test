@@ -9,7 +9,7 @@ SUT: backend `tk`, frontend `tk-ui`. Автотести: `erp-auto-test`.
 
 | Feature | Що дає цій фічі |
 |---------|-----------------|
-| `REQ-CREW-002` | Видача UNIT→CREW / FLY_POINT, auto-forward, journal |
+| `REQ-CREW-002` | Видача UNIT→CREW / FLY_POINT, FP→FP, auto-forward, journal |
 | `REQ-REGION-002` | RESOURCES scope для autocomplete / PUT guard |
 | `REQ-WMS-003` / `REQ-WMS-007` | Загальний UNIT inventory session (той самий API path) |
 | `REQ-WMS-008` | Інциденти на видачі CREW/FP (окремий doc) |

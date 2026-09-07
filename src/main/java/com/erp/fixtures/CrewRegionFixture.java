@@ -49,6 +49,7 @@ public class CrewRegionFixture extends BaseFixture {
             StorageResponse unit,
             StorageResponse childUnit,
             StorageResponse flyPoint,
+            StorageResponse flyPointB,
             StorageResponse crew,
             Long memberStorageId) {
     }
@@ -246,6 +247,36 @@ public class CrewRegionFixture extends BaseFixture {
                 .unit(unit)
                 .childUnit(null)
                 .flyPoint(flyPoint)
+                .crew(null)
+                .memberStorageId(memberId)
+                .build();
+    }
+
+    /**
+     * UNIT → FLY_POINT_A + FLY_POINT_B (без екіпажу) для передачі між точками зльоту.
+     */
+    @Step("FIXTURE: підготувати область CREWS з двома точками вильоту")
+    public CrewRegionScenario prepareTwoFlyPointsScenario(String namePrefix) {
+        Long memberId = ConfigProvider.getOwner1StorageId();
+        StorageResponse member = storageFixture.getById(UserRole.ADMIN, memberId);
+        Long parentId = member.getParent() != null ? member.getParent().getId() : memberId;
+
+        StorageResponse unit = storageFixture.createUnitStorage(parentId, namePrefix + "unit-");
+        StorageResponse flyPointA = storageFixture.createFlyPointStorage(unit.getId(), namePrefix + "fpA-");
+        StorageResponse flyPointB = storageFixture.createFlyPointStorage(unit.getId(), namePrefix + "fpB-");
+
+        StorageRegionResponse region = regionFixture.createRegion(
+                unit, StorageAccessMode.CREWS, namePrefix + "reg-");
+        addCrewRegionMembers(region.getId());
+        regionFixture.addRegionLocations(
+                region.getId(), unit.getId(), flyPointA.getId(), flyPointB.getId());
+
+        return CrewRegionScenario.builder()
+                .region(region)
+                .unit(unit)
+                .childUnit(null)
+                .flyPoint(flyPointA)
+                .flyPointB(flyPointB)
                 .crew(null)
                 .memberStorageId(memberId)
                 .build();

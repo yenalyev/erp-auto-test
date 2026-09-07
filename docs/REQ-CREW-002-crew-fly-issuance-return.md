@@ -17,12 +17,13 @@ SUT: backend `tk`, frontend `tk-ui`. Автотести: `erp-auto-test`.
 
 ## 1. Огляд
 
-Фіча покриває **два напрямки** переміщень ресурсів між складом локації та CREW / FLY_POINT:
+Фіча покриває **три напрямки** переміщень ресурсів між складом локації та CREW / FLY_POINT:
 
 1. **Видача** (UNIT/склад → CREW або FLY_POINT) — send → CREATED → FINISHED / AUTO_FINISHED; для attached CREW — auto-forward на FLY_POINT.
 2. **Повернення** (CPMA-647) — отримання від екіпажу назад на склад локації через `POST /relocations/receive` з `senderId` = CREW.
+3. **Передача між точками зльоту** (AC-23) — `POST /relocations/send` з `senderId`/`recipientId` = дві різні FLY_POINT; CREATED → FINISHED відправником (точка-відправник).
 
-Цей документ детально описує **повернення (AC-22)**. Видача (AC-01…AC-21) — у TCM acceptance criteria тієї ж фічі; автотести: `CrewRelocationTest`, `FlyPointRelocationTest`, `CrewIssuanceUITest`.
+Цей документ детально описує **повернення (AC-22)** і **передачу FP→FP (AC-23)**. Видача (AC-01…AC-21) — у TCM acceptance criteria тієї ж фічі; автотести: `CrewRelocationTest`, `FlyPointRelocationTest`, `FlyPointToFlyPointRelocationTest`, `CrewIssuanceUITest`, `FlyPointToFlyPointIssuanceUiTest`.
 
 ### 1.1. Терміни
 
@@ -39,6 +40,8 @@ SUT: backend `tk`, frontend `tk-ui`. Автотести: `erp-auto-test`.
 
 ```text
 UNIT
+├── FLY_POINT_A             ← prepareTwoFlyPointsScenario (sender)
+├── FLY_POINT_B             ← prepareTwoFlyPointsScenario (recipient)
 ├── FLY_POINT
 │   └── CREW (attached)     ← prepareAttachedCrewScenario
 └── CREW (unattached)       ← prepareSingleCrewScenario
@@ -118,6 +121,66 @@ AC-01…AC-21 — видача UNIT→CREW/FLY, journal, RBAC, UI «Видати
 
 ---
 
+## 3.1. Передача між точками зльоту — AC-23
+
+### 3.1.1. Бізнес-правила
+
+1. Sender і recipient — **різні** `FLY_POINT`. З точки вильоту не можна видати на UNIT або CREW (`relocation.send.flyPointRecipientOnly`).
+2. Caller має мати `relocation::{recipient}::create` (точки з CREWS-області користувача).
+3. Lifecycle як UNIT→FP: **CREATED**, отримувач без зарахування, поки відправник не зробить **FINISHED** (`resolve` з `storageId` = FP_A). CREW↔FP — єдиний випадок без підтвердження.
+4. Stock: спочатку засіяти FP_A видачею склад→FP_A. Після FINISHED: FP_A −N, FP_B +N, склад локації без змін.
+
+```mermaid
+flowchart TD
+  seed["склад → FP_A FINISHED"] --> send["POST /relocations/send FP_A → FP_B"]
+  send --> created["CREATED: FP_B без +N"]
+  created --> finish["resolve FINISHED storageId=FP_A"]
+  finish --> stock["FP_A −N; FP_B +N; склад 0"]
+```
+
+### 3.1.2. API
+
+| Метод | Path | Enum | Примітка |
+|-------|------|------|----------|
+| POST | `/api/v1/relocations/send` | `RELOCATION_POST_SEND` | `senderId`/`recipientId` = дві FLY_POINT |
+| PUT | `/api/v1/relocations/{id}/resolve` | resolve FINISHED | `storageId` = точка-відправник |
+
+SUT (read-only):
+
+- `RelocationValidator#validateFlyPointHandout` — recipient має бути FLY_POINT + `relocation::create`
+- `RelocationUtil#requiresDeliveryConfirmation` — true для FP→FP (не CREW↔FP)
+- UI submit: той самий `relocationsApi.send`
+
+Fixture: `CrewRegionFixture.prepareTwoFlyPointsScenario`, `RelocationFixture.createSend` / `createSendAndFinishBySender` / `resolve`.
+
+### 3.1.3. UI
+
+| Елемент | Значення |
+|---------|----------|
+| CTA журналу | «Видати між точками зльоту» → `/relocation/create-output-fly-point` |
+| Умова CTA | `canRelocate && hasCrews`; прихована для «Всі локації» |
+| h1 форми | «Видача між точками зльоту» |
+| Поля | «Точка зльоту (звідки)» / «(куди)» (обов’язково різні), ресурс зі stock FP_A, кількість, видавець, Підтвердити |
+| Після submit | CREATED → вкладка «В дорозі» |
+
+Page objects: `RelocationPage.clickIssueBetweenFlyPoints()`, `RelocationCreateOutputFlyPointPage`.
+
+Опції combobox: `GET /storages/names/crew-units` (лістинг включає FLY_POINT без CREW); підпис `unit / fpName`.
+
+### 3.1.4. Acceptance Criteria — AC-23
+
+**TCM:** Передача FLY_POINT→FLY_POINT: send → CREATED → FINISHED відправником; FP_A −N, FP_B +N, склад без змін. FLY_POINT → UNIT/CREW заборонено.
+
+| TestCaseId | Клас / метод | Суть |
+|------------|--------------|------|
+| TC-FLY-FP-001 | `FlyPointToFlyPointRelocationTest.testSendBetweenFlyPointsCreatedThenFinishedBySender` | API happy: CREATED, потім FP_A −N / FP_B +N |
+| TC-FLY-FP-002 | `FlyPointToFlyPointRelocationTest.testSendFromFlyPointToUnitOrCrewRejected` | API negative: FP→UNIT і FP→CREW → 4xx |
+| TC-UI-FLY-FP-001 | `FlyPointToFlyPointIssuanceUiTest.testIssueBetweenFlyPointsButtonVisible` | CTA видима |
+| TC-UI-FLY-FP-002 | `FlyPointToFlyPointIssuanceUiTest.testHappyPathFlyPointToFlyPointIssuance` | UI форма + stock |
+| TC-UI-FLY-FP-003 | `FlyPointToFlyPointIssuanceUiTest.testIssueBetweenFlyPointsHiddenForAllLocations` | «Всі локації» ховає CTA |
+
+---
+
 ## 4. Як ганяти
 
 ```bash
@@ -126,6 +189,12 @@ mvn test -Denv=staging -Dtest=CrewReturnTest
 
 # UI повернення
 mvn test -Denv=staging -Dtest=CrewReturnUITest
+
+# API передача між точками зльоту
+mvn test -Denv=dev -Dtest=FlyPointToFlyPointRelocationTest
+
+# UI передача між точками зльоту
+mvn test -Denv=dev -Dtest=FlyPointToFlyPointIssuanceUiTest
 
 # Обидва
 mvn test -Denv=staging -Dtest=CrewReturnTest,CrewReturnUITest
@@ -144,8 +213,11 @@ Suites: `relocations.xml`, `functional.xml`, `storage-regions.xml`, `regression.
 | Validate receive + crew stock | `tk` … `RelocationValidator#validateCreateReceive` |
 | Attached chain on receive | `tk` … `FlyPointFacade#onRelocationReceived` |
 | Receive endpoint | `tk` … `RelocationController` POST `/receive` |
-| UI форма | `tk-ui` … `RelocationCreateInputCrewPage.tsx` |
-| UI CTA | `tk-ui` … `RelocationPage.tsx` («Отримати від екіпажа») |
+| UI форма повернення | `tk-ui` … `RelocationCreateInputCrewPage.tsx` |
+| UI CTA повернення | `tk-ui` … `RelocationPage.tsx` («Отримати від екіпажа») |
+| Validate FP→FP send | `tk` … `RelocationValidator#validateFlyPointHandout` |
+| UI форма FP→FP | `tk-ui` … `RelocationCreateOutputFlyPointPage.tsx` / `RelocationOutputBetweenFlyPointsForm.tsx` |
+| UI CTA FP→FP | `tk-ui` … `RelocationPage.tsx` («Видати між точками зльоту») |
 
 З `erp-auto-test` **не** редагувати `tk` / `tk-ui` (див. `.cursor/rules/sut-no-modify.mdc`).
 
@@ -156,3 +228,4 @@ Suites: `relocations.xml`, `functional.xml`, `storage-regions.xml`, `regression.
 | Дата | Зміна |
 |------|--------|
 | 2026-07-27 | Перша версія: фокус AC-22 повернення CPMA-647; карта TC API/UI; дзеркало TCM |
+| 2026-09-05 | AC-23: передача FLY_POINT→FLY_POINT (API + UI + карта TC) |
