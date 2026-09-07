@@ -2,6 +2,8 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.enums.StorageRelation;
+import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.models.request.ResourceAlertRequest;
 import com.erp.models.request.StorageAlertRequest;
@@ -45,6 +47,19 @@ public class AlertFixture extends BaseFixture {
             ResourceResponse yellow,
             ResourceResponse green,
             ResourceResponse plain) {}
+
+    public record TypedAlertSeed(
+            UnitType type,
+            StorageResponse storage,
+            String searchToken,
+            ResourceResponse alerted,
+            ResourceResponse plain,
+            StorageAlertResponse alert) {
+        /** Ресурс із порогом — для перевірок бейджа /alerts. */
+        public ResourceResponse resource() {
+            return alerted;
+        }
+    }
 
     @Step("API: GET сповіщення для складу {storageId}")
     public Response getByStorageIdRaw(long storageId, UserRole role) {
@@ -225,6 +240,63 @@ public class AlertFixture extends BaseFixture {
                 20_000,
                 "red inventory row weight=" + RED_WEIGHT);
         return new StockHighlightSeed(storage, searchToken, red, yellow, green, plain);
+    }
+
+    /**
+     * Isolated location of {@code type} plus one resource threshold.
+     * CREW / FLY_POINT hang under a fresh UNIT — same shape as inventory comment seeds.
+     */
+    /**
+     * Isolated location: {@code zzz-alert} has a threshold (weight 100 at amount 0),
+     * {@code aaa-plain} has stock and no alert (weight 0). Alphabetically plain comes first,
+     * so pin-to-top is visible: alerted rows, then the rest.
+     */
+    @Step("FIXTURE: локація type={type} з порогом і рядком без алерту")
+    public TypedAlertSeed seedAlertForType(
+            StorageFixture storageFixture,
+            ResourceFixture resourceFixture,
+            InventoryFixture inventoryFixture,
+            Long parentId,
+            UnitType type,
+            double limit) {
+        String searchToken = "alrt" + DataUtils.getUniqueSuffix();
+        StorageResponse location = createTypedLocation(
+                storageFixture, parentId, type, searchToken + "-st-");
+        ResourceResponse plain = resourceFixture.createUniqueResource(searchToken + "-aaa-plain-");
+        ResourceResponse alerted = resourceFixture.createUniqueResource(searchToken + "-zzz-alert-");
+        StorageAlertResponse alert = createOrUpdateStockAlert(
+                UserRole.ADMIN, location.getId(), alerted.getId(), limit);
+        inventoryFixture.resetResourceStock(location.getId(), plain.getId(), 15.0, UserRole.ADMIN);
+        PollUtils.waitUntil(
+                () -> inventoryFixture.findItemIncludingZero(location.getId(), alerted.getId(), UserRole.ADMIN),
+                item -> item != null && Integer.valueOf(RED_WEIGHT).equals(item.getWeight()),
+                20_000,
+                "alerted inventory row weight=" + RED_WEIGHT);
+        PollUtils.waitUntil(
+                () -> inventoryFixture.findItemIncludingZero(location.getId(), plain.getId(), UserRole.ADMIN),
+                item -> item != null && item.getAmount() != null && item.getAmount() >= 15.0,
+                20_000,
+                "plain inventory row amount>=15");
+        return new TypedAlertSeed(type, location, searchToken, alerted, plain, alert);
+    }
+
+    @Step("FIXTURE: створити локацію type={type}")
+    public StorageResponse createTypedLocation(
+            StorageFixture storageFixture, Long parentId, UnitType type, String prefix) {
+        return switch (type) {
+            case STORAGE, UNIT, PRODUCTION -> storageFixture.createChildStorage(
+                    parentId, prefix, type, StorageRelation.INTERNAL);
+            case CREW -> {
+                StorageResponse unit = storageFixture.createUnitStorage(parentId, prefix + "u-");
+                yield storageFixture.createCrewStorage(unit.getId(), prefix + "c-");
+            }
+            case FLY_POINT -> {
+                StorageResponse unit = storageFixture.createUnitStorage(parentId, prefix + "u-");
+                yield storageFixture.createFlyPointStorage(unit.getId(), prefix + "fp-");
+            }
+            case SUPPLIER -> throw new IllegalArgumentException(
+                    "SUPPLIER не веде залишки — сповіщення по порогу не налаштовують");
+        };
     }
 
     @Step("API: прибрати ресурс {resourceId} зі сповіщень складу {storageId}")

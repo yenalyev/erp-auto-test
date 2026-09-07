@@ -159,6 +159,20 @@ public class UnitManagementPage extends BasePage {
         return copyButton().isEnabled();
     }
 
+    public boolean isConfigureAlertsButtonVisible() {
+        Locator control = configureAlertsControl();
+        return control.count() > 0 && control.first().isVisible();
+    }
+
+    public StorageAlertsPage openConfigureAlerts() {
+        Locator control = configureAlertsControl();
+        control.first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        control.first().click();
+        return new StorageAlertsPage(page).waitForLoaded();
+    }
+
     /**
      * Stubs {@code navigator.clipboard.writeText} so the payload can be read back without OS
      * clipboard permissions (reliable in headless CI). Call before {@link #clickCopyRemainders()}.
@@ -677,6 +691,20 @@ public class UnitManagementPage extends BasePage {
 
     private Locator copyButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(COPY_BUTTON_TEXT));
+    }
+
+    private Locator configureAlertsControl() {
+        Locator button = page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName(StorageAlertsPage.CONFIGURE_BUTTON));
+        if (button.count() > 0) {
+            return button;
+        }
+        Locator link = page.getByRole(
+                AriaRole.LINK, new Page.GetByRoleOptions().setName(StorageAlertsPage.CONFIGURE_BUTTON));
+        if (link.count() > 0) {
+            return link;
+        }
+        return page.getByText(StorageAlertsPage.CONFIGURE_BUTTON);
     }
 
     public record ExportDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}

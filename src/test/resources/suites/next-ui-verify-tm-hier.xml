@@ -1,0 +1,21 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Re-check TC-UI-MFG-035 after switching context via openForStorage.
+
+    mvn test "-Denv=dev" "-Dsuite=next-ui-verify-tm-hier" "-Dtcm.enabled=false"
+-->
+<suite name="Fail85-UI-tm-hier" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="tm-hier">
+        <classes>
+            <class name="com.erp.tests.ui.TechnologicalMapHierarchyUITest">
+                <methods>
+                    <include name="parentWorkspaceShowsEntireSubtreeMaps"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

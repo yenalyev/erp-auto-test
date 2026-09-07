@@ -3,6 +3,7 @@ package com.erp.tests.ui;
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.UserFixture;
+import com.erp.models.response.RoleModelResponse;
 import com.erp.models.response.UserModelResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.ProductionPage;
@@ -14,6 +15,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -188,6 +190,62 @@ public class UsersAdminUiTest extends BaseUITest {
         assertThat(usersPage.isOnUsersListPath()).isTrue();
         assertThat(usersPage.isListPageLoaded()).isTrue();
         usersPage.attachScreenshot("TC-UI-USR-008 — sidebar navigation");
+    }
+
+    @Test
+    @TestCaseId("TC-UI-USR-009")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("ADMIN: на картці користувача список ролей видимий повністю (без перекриття UI)")
+    public void userRolesListNotObscuredByUi() {
+        arrangedUser = userFixture.createTestUserWithManyRoles(UI_USER_PREFIX + "roles-");
+        List<String> roleNames = arrangedUser.getRealmRoles() == null
+                ? List.of()
+                : arrangedUser.getRealmRoles().stream()
+                        .map(RoleModelResponse::getName)
+                        .filter(n -> n != null && !n.isBlank())
+                        .toList();
+        assertThat(roleNames)
+                .as("Arrange: user must have ≥%d assigned roles", UserFixture.MIN_ROLES_FOR_LIST_OVERFLOW)
+                .hasSizeGreaterThanOrEqualTo(UserFixture.MIN_ROLES_FOR_LIST_OVERFLOW);
+
+        prepareAdminSession();
+
+        UsersAdminPage usersPage = new UsersAdminPage(page).open()
+                .searchByUsername(arrangedUser.getUsername())
+                .clickUsernameLink(arrangedUser.getUsername())
+                .waitForRolesSection(roleNames);
+
+        assertThat(usersPage.rolesSectionVisible())
+                .as("На /users/{id} є блок списку ролей")
+                .isTrue();
+
+        String first = usersPage.visuallyFirstRole(roleNames);
+        String last = usersPage.visuallyLastRole(roleNames);
+        assertThat(first).as("Перша видима призначена роль").isNotBlank();
+        assertThat(last).as("Остання видима призначена роль").isNotBlank();
+
+        assertThat(usersPage.roleObstructionReason(first))
+                .as("Перша роль не перекрита UI: %s", first)
+                .isNull();
+
+        String lastReason = usersPage.roleObstructionReason(last);
+        if ("needs-list-scroll".equals(lastReason)) {
+            usersPage.scrollRolesListTo(last);
+            last = usersPage.visuallyLastRole(roleNames);
+            lastReason = usersPage.roleObstructionReason(last);
+        }
+        assertThat(lastReason)
+                .as("Остання роль повністю читабельна і не перекрита UI: %s", last)
+                .isNull();
+        assertThat(usersPage.rolesClippedByField(roleNames))
+                .as("Жоден чіп ролі не обрізаний рамкою поля «Ролі»")
+                .isEmpty();
+        Map<String, Object> fieldOverflow = usersPage.rolesFieldOverflow(roleNames);
+        assertThat(fieldOverflow.get("clipped"))
+                .as("Поле «Ролі» має вміщати всі чіпи без внутрішнього скролу/кліпу: %s", fieldOverflow)
+                .isEqualTo(false);
+
+        usersPage.attachScreenshot("TC-UI-USR-009 — roles list layout");
     }
 
     private UserModelResponse arrangeUser(String prefix) {

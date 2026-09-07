@@ -16,6 +16,7 @@ import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.auth.PlaywrightSessionProvider;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.ApiResponseHelper;
 import com.erp.utils.helpers.PollUtils;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
@@ -23,6 +24,7 @@ import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +40,8 @@ public class UserFixture extends BaseFixture {
     public static final String BUSINESS_UNIT_RO_PREFIX = "var_business_unit_id_ro::";
     public static final String CREW_READ_ROLE_NAME = "Crew-Read-ROLE";
     public static final String CREW_WRITE_ROLE_NAME = "Crew-Write-ROLE";
+    public static final int MIN_ROLES_FOR_LIST_OVERFLOW = 5;
+    private static final int MAX_ROLES_FOR_LIST_OVERFLOW = 8;
 
     private final List<String> trackedUserIds = new ArrayList<>();
 
@@ -464,6 +468,41 @@ public class UserFixture extends BaseFixture {
         UserModelResponse user = waitForUser(UserRole.ADMIN, userId);
         trackForCleanup(userId);
         return user;
+    }
+
+    /**
+     * Test user with enough realm roles for the assigned-roles list / combobox to overflow.
+     */
+    @Step("API: створити користувача «{prefix}» з кількома ролями")
+    public UserModelResponse createTestUserWithManyRoles(String prefix) {
+        UserModelResponse user = createTestUser(prefix);
+        List<RoleModelResponse> catalog = listRealmRoles().stream()
+                .filter(r -> r.getName() != null && !r.getName().isBlank())
+                .sorted(Comparator.comparing(RoleModelResponse::getName))
+                .toList();
+        if (catalog.size() < MIN_ROLES_FOR_LIST_OVERFLOW) {
+            throw new IllegalStateException(
+                    "Need ≥" + MIN_ROLES_FOR_LIST_OVERFLOW + " realm roles to cover roles-list overflow, got "
+                            + catalog.size());
+        }
+        List<RoleModelResponse> assigned = catalog.size() > MAX_ROLES_FOR_LIST_OVERFLOW
+                ? catalog.subList(0, MAX_ROLES_FOR_LIST_OVERFLOW)
+                : catalog;
+        UserRequest update = UserDataFactory.fromExisting(user).toBuilder()
+                .realmRoles(assigned)
+                .build();
+        updateUser(UserRole.ADMIN, user.getId(), update);
+        UserModelResponse reloaded = getUser(UserRole.ADMIN, user.getId());
+        log.info("User {} assigned {} roles", reloaded.getUsername(),
+                reloaded.getRealmRoles() == null ? 0 : reloaded.getRealmRoles().size());
+        return reloaded;
+    }
+
+    @Step("API: GET /users/roles")
+    public List<RoleModelResponse> listRealmRoles() {
+        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_GET_ROLES, UserRole.ADMIN);
+        validateSuccess(response, "List realm roles");
+        return ApiResponseHelper.parseList(response, RoleModelResponse.class, "List realm roles");
     }
 
     @Step("API: отримати користувача {userId}")

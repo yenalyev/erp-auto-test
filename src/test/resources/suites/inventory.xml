@@ -29,6 +29,7 @@
             <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryMultiLocationExportApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
+            <class name="com.erp.tests.functional.alert.AlertStorageTypeApiTest"/>
         </classes>
     </test>
 
@@ -39,6 +40,7 @@
             <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
+            <class name="com.erp.tests.ui.AlertStorageTypeUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
         </classes>

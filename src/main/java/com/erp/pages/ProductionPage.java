@@ -40,6 +40,8 @@ public class ProductionPage extends BasePage {
             "div.rounded-\\[6px\\].border.border-gray-200.bg-white, "
                     + "div.rounded-xl.border.border-gray-200.bg-white";
     private static final String PAGE_SIZE_STORAGE_KEY = "pageSize_production-list";
+    /** tk-ui {@code PRODUCTION_LIST_DATE_RANGE_STORAGE_KEY} — pins DateRangePicker default preset. */
+    public static final String DATE_RANGE_STORAGE_KEY = "production-list";
     private static final DateTimeFormatter UI_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final DateTimeFormatter UI_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final Pattern DATE_TIME_PATTERN =
@@ -513,6 +515,10 @@ public class ProductionPage extends BasePage {
             return byLabel.first();
         }
         return page.locator(PRODUCT_INPUT_SELECTOR).first();
+    }
+
+    public DateRangePickerComponent periodPicker() {
+        return dateRangePicker();
     }
 
     private DateRangePickerComponent dateRangePicker() {

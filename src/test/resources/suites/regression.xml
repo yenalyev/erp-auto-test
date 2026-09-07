@@ -181,6 +181,7 @@
             <class name="com.erp.tests.functional.equipment.EquipmentCategoryCrudApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertCrudApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
+            <class name="com.erp.tests.functional.alert.AlertStorageTypeApiTest"/>
             <class name="com.erp.tests.functional.invoice.InvoiceGenerateApiTest"/>
         </classes>
     </test>
@@ -243,12 +244,14 @@
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
+            <class name="com.erp.tests.ui.ProductionJournalDatePickerUiTest"/>
             <class name="com.erp.tests.ui.ProductionHashtagUITest"/>
             <class name="com.erp.tests.ui.AssemblyReadinessUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
             <class name="com.erp.tests.ui.EquipmentHistoryOnOperationsUiTest"/>
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
+            <class name="com.erp.tests.ui.ProductionAnalyticsDatePickerUiTest"/>
         </classes>
     </test>
 
@@ -303,6 +306,7 @@
             <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
+            <class name="com.erp.tests.ui.AlertStorageTypeUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.FaitaResourcesUiTest"/>

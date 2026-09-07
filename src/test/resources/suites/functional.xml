@@ -19,6 +19,7 @@
             <class name="com.erp.tests.functional.resource.ResourcePriceApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertCrudApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
+            <class name="com.erp.tests.functional.alert.AlertStorageTypeApiTest"/>
             <class name="com.erp.tests.functional.storage.StorageTest"/>
             <class name="com.erp.tests.functional.storage.StorageRelationTest"/>
             <class name="com.erp.tests.functional.storage.StorageFieldLengthValidationTest"/>

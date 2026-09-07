@@ -1,0 +1,27 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Bucket B orders + analytics (run #85 FAIL-API).
+
+    mvn test "-Denv=dev" "-Dsuite=next-api-verify-ord-anl" "-Dtcm.enabled=false"
+-->
+<suite name="BucketB-OrdersAnalytics" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="B-orders-analytics">
+        <classes>
+            <class name="com.erp.tests.functional.order.OrderBookingApiTest">
+                <methods>
+                    <include name="testShipUndersendReturns400"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.order.OrderRbacTest">
+                <methods>
+                    <include name="testGathererCanPrepareButCannotBookOrSend"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.functional.analytics.AnalyticsAuditApiTest"/>
+        </classes>
+    </test>
+</suite>

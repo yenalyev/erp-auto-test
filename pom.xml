@@ -21,6 +21,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Dependencies -->
         <rest-assured.version>5.5.0</rest-assured.version>
@@ -336,13 +337,23 @@
                     <systemPropertyVariables>
                         <env>${env}</env>
                         <file.encoding>UTF-8</file.encoding>
+                        <stdout.encoding>UTF-8</stdout.encoding>
+                        <stderr.encoding>UTF-8</stderr.encoding>
+                        <sun.stdout.encoding>UTF-8</sun.stdout.encoding>
+                        <sun.stderr.encoding>UTF-8</sun.stderr.encoding>
+                        <console.encoding>UTF-8</console.encoding>
                         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                     </systemPropertyVariables>
+                    <encoding>UTF-8</encoding>
                     <argLine>
                         -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                         -Dfile.encoding=UTF-8
                         -Dstdout.encoding=UTF-8
                         -Dstderr.encoding=UTF-8
+                        -Dsun.stdout.encoding=UTF-8
+                        -Dsun.stderr.encoding=UTF-8
+                        -Dsun.jnu.encoding=UTF-8
+                        -Dconsole.encoding=UTF-8
                         --add-opens java.base/java.lang=ALL-UNNAMED
                         --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.time=ALL-UNNAMED

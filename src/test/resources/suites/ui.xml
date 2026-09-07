@@ -108,6 +108,7 @@
         <classes>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
+            <class name="com.erp.tests.ui.AlertStorageTypeUiTest"/>
         </classes>
     </test>
 
@@ -119,6 +120,18 @@
             <class name="com.erp.tests.ui.OrderBookingUiTest"/>
             <class name="com.erp.tests.ui.OrderFreeStockUiTest"/>
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
+        </classes>
+    </test>
+
+    <test name="Production Journal UI">
+        <classes>
+            <class name="com.erp.tests.ui.ProductionJournalDatePickerUiTest"/>
+        </classes>
+    </test>
+
+    <test name="Production Analytics UI">
+        <classes>
+            <class name="com.erp.tests.ui.ProductionAnalyticsDatePickerUiTest"/>
         </classes>
     </test>
 

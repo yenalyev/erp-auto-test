@@ -182,10 +182,18 @@ public class OperationHistoryPage extends BasePage {
         return rows.count() > 0;
     }
 
+    /**
+     * Resource table is empty only when it has no operation rows.
+     * Page-wide «Немає даних за вибраний період» is ignored: the equipment table
+     * (and a leftover placeholder under filled resource rows) uses the same copy.
+     */
     public boolean isResourceTableEmptyStateVisible() {
-        Locator empty = page.getByText("Немає даних за вибраний період");
+        if (hasResourceOperationDataRows()) {
+            return false;
+        }
+        Locator empty = resourceTable().getByText("Немає даних за вибраний період");
         if (empty.count() == 0) {
-            empty = page.getByText("Немає записів за вибраний період");
+            empty = resourceTable().getByText("Немає записів за вибраний період");
         }
         return empty.count() > 0 && empty.first().isVisible();
     }
@@ -219,9 +227,23 @@ public class OperationHistoryPage extends BasePage {
         return checkbox.isChecked();
     }
 
+    private Locator resourceTable() {
+        Locator tables = page.locator("[data-slot='table']")
+                .filter(new Locator.FilterOptions().setHasText("Ресурс"));
+        Locator withoutEquipment = tables.filter(new Locator.FilterOptions().setHasNotText("Обладнання"));
+        return withoutEquipment.count() > 0 ? withoutEquipment : tables;
+    }
+
     private Locator resourceOperationRows() {
-        return page.locator("[data-slot='table'] tbody tr")
+        return resourceTable().locator("tbody tr")
                 .filter(new Locator.FilterOptions().setHasNotText("Обладнання"));
+    }
+
+    private boolean hasResourceOperationDataRows() {
+        return resourceOperationRows()
+                .filter(new Locator.FilterOptions().setHasNotText("Немає даних за вибраний період"))
+                .filter(new Locator.FilterOptions().setHasNotText("Немає записів за вибраний період"))
+                .count() > 0;
     }
 
     /** True when UI shows incident write-off markers (summary card and/or table label). */

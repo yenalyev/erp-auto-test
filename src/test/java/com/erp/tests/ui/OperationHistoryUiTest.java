@@ -253,13 +253,13 @@ public class OperationHistoryUiTest extends BaseUITest {
             history.filterBySummaryCard(USED_CARD_TITLE, resourceName);
             history.attachScreenshot("TC-UI-HIST-NSP-001 — after Використано filter");
 
-            assertThat(history.isResourceTableEmptyStateVisible())
-                    .as("Після фільтра картки «Використано» таблиця не має бути порожньою")
-                    .isFalse();
             assertThat(history.tableHasResourceOperation(resourceName, USED_CARD_TITLE))
                     .as("Після фільтра картки рядок «%s / Використано» лишається в таблиці",
                             resourceName)
                     .isTrue();
+            assertThat(history.isResourceTableEmptyStateVisible())
+                    .as("Після фільтра картки таблиця ресурсів не порожня (плейсхолдер «Немає даних» у таблиці обладнання не рахується)")
+                    .isFalse();
         });
     }
 
