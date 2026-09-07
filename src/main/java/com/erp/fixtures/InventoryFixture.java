@@ -156,6 +156,14 @@ public class InventoryFixture extends BaseFixture {
                 .orElse(null);
     }
 
+    @Step("API: рядок залишку ресурсу {resourceId} на складі {storageId} (включно з 0)")
+    public StorageItemResponse findItemIncludingZero(long storageId, long resourceId, UserRole role) {
+        return listItems(storageId, role).stream()
+                .filter(i -> i.getResource() != null && resourceId == i.getResource().getId())
+                .findFirst()
+                .orElse(null);
+    }
+
     @Step("API: Ресурс з довідника, якого немає на складі {storageId}")
     public ResourceResponse pickResourceNotOnStorage(long storageId,
                                                      UserRole role,

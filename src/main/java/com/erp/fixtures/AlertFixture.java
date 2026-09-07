@@ -6,25 +6,45 @@ import com.erp.enums.UserRole;
 import com.erp.models.request.ResourceAlertRequest;
 import com.erp.models.request.StorageAlertRequest;
 import com.erp.models.response.ResourceAlertResponse;
+import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageAlertResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.test_context.TestContext;
+import com.erp.utils.data.DataUtils;
+import com.erp.utils.helpers.PollUtils;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
 public class AlertFixture extends BaseFixture {
+
+    public static final int RED_WEIGHT = 100;
+    public static final int YELLOW_WEIGHT = 60;
+    public static final int GREEN_WEIGHT = 40;
+    public static final int ZERO_WEIGHT = 0;
+    public static final double DEFAULT_LIMIT = 10.0;
 
     public AlertFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
     }
 
     public record AlertSnapshot(boolean existed, Long alertId, StorageAlertResponse snapshot) {}
+
+    public record StockHighlightSeed(
+            StorageResponse storage,
+            String searchToken,
+            ResourceResponse red,
+            ResourceResponse yellow,
+            ResourceResponse green,
+            ResourceResponse plain) {}
 
     @Step("API: GET сповіщення для складу {storageId}")
     public Response getByStorageIdRaw(long storageId, UserRole role) {
@@ -149,6 +169,62 @@ public class AlertFixture extends BaseFixture {
         if (alert != null && alert.getId() != null) {
             deleteAlertById(role, alert.getId());
         }
+    }
+
+    @Step("API: замінити всі пороги залишків складу {storageId}")
+    public StorageAlertResponse replaceAllResourceAlerts(
+            UserRole role, long storageId, Map<Long, Double> limitsByResourceId) {
+        List<ResourceAlertRequest> resourceAlerts = new ArrayList<>();
+        limitsByResourceId.forEach((resourceId, limit) -> resourceAlerts.add(ResourceAlertRequest.builder()
+                .resourceId(resourceId)
+                .value(BigDecimal.valueOf(limit))
+                .build()));
+        StorageAlertRequest request = StorageAlertRequest.builder()
+                .storageId(storageId)
+                .resourceAlerts(resourceAlerts)
+                .build();
+        StorageAlertResponse existing = getByStorageId(storageId, role);
+        if (existing != null && existing.getId() != null) {
+            return putUpdate(role, existing.getId(), request);
+        }
+        Response response = apiExecutor.execute(ApiEndpointDefinition.ALERT_POST_CREATE, role, request);
+        validateSuccess(response, "Replace stock alerts for storage " + storageId);
+        return response.as(StorageAlertResponse.class);
+    }
+
+    /**
+     * Isolated storage with four uniquely named resources so alphabetical order is
+     * green → plain → yellow → red, while weight order is red → yellow → green → plain.
+     */
+    @Step("FIXTURE: ізольований склад з red/yellow/green/plain порогами залишків")
+    public StockHighlightSeed seedHighlightScenario(
+            StorageFixture storageFixture,
+            ResourceFixture resourceFixture,
+            RelocationFixture relocationFixture,
+            InventoryFixture inventoryFixture) {
+        String searchToken = "alrt" + DataUtils.getUniqueSuffix();
+        StorageResponse storage = storageFixture.createUniqueStorage("alrt-st-");
+        ResourceResponse green = resourceFixture.createUniqueResource(searchToken + "-aaa-ok-");
+        ResourceResponse plain = resourceFixture.createUniqueResource(searchToken + "-bbb-plain-");
+        ResourceResponse yellow = resourceFixture.createUniqueResource(searchToken + "-mmm-low-");
+        ResourceResponse red = resourceFixture.createUniqueResource(searchToken + "-zzz-out-");
+
+        relocationFixture.seedExactStock(storage.getId(), yellow.getId(), 4.0);
+        relocationFixture.seedExactStock(storage.getId(), green.getId(), 25.0);
+        relocationFixture.seedExactStock(storage.getId(), plain.getId(), 15.0);
+
+        Map<Long, Double> limits = new LinkedHashMap<>();
+        limits.put(red.getId(), DEFAULT_LIMIT);
+        limits.put(yellow.getId(), DEFAULT_LIMIT);
+        limits.put(green.getId(), DEFAULT_LIMIT);
+        replaceAllResourceAlerts(UserRole.ADMIN, storage.getId(), limits);
+
+        PollUtils.waitUntil(
+                () -> inventoryFixture.findItemIncludingZero(storage.getId(), red.getId(), UserRole.ADMIN),
+                item -> item != null && Integer.valueOf(RED_WEIGHT).equals(item.getWeight()),
+                20_000,
+                "red inventory row weight=" + RED_WEIGHT);
+        return new StockHighlightSeed(storage, searchToken, red, yellow, green, plain);
     }
 
     @Step("API: прибрати ресурс {resourceId} зі сповіщень складу {storageId}")

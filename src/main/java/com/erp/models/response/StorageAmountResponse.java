@@ -15,4 +15,6 @@ public class StorageAmountResponse {
     private SimpleEntityResponse storage;
     private Double amount;
     private Double bookedAmount;
+    private Integer weight;
+    private Double alertLimit;
 }

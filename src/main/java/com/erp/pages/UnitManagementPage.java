@@ -40,6 +40,10 @@ public class UnitManagementPage extends BasePage {
     private static final String SEARCH_PLACEHOLDER = "Пошук...";
     /** Quantity column of the stock table — «Кількість» only labels the per-batch detail table. */
     private static final String AMOUNT_HEADER = "Вільна к-сть";
+    private static final String LOCATION_HEADER = "Локація";
+    public static final String BADGE_ABSENT = "відсутній";
+    public static final String BADGE_BELOW_NORM = "менше норми";
+    public static final String BADGE_ENOUGH = "достатньо";
     private static final String ALL_LOCATIONS_TOOLTIP = "Оберіть конкретну локацію для виконання дії";
     private static final String ADMIN_CONDUCT_TOOLTIP = "Зверніться до адміністратора для проведення інвентаризації";
     private static final String EXPORT_API_FRAGMENT = "/export-analytics/";
@@ -351,6 +355,54 @@ public class UnitManagementPage extends BasePage {
         return resourceRow(resourceName).count() > 0;
     }
 
+    public List<String> getVisibleResourceNames() {
+        Locator rows = stockTableBodyRows();
+        int count = rows.count();
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            String text = rows.nth(i).locator("td").first().innerText();
+            if (text != null && !text.isBlank()) {
+                names.add(text.trim().replaceAll("\\s+", " "));
+            }
+        }
+        return names;
+    }
+
+    public int indexOfResource(String resourceName) {
+        String needle = rowFilterNeedle(resourceName);
+        List<String> names = getVisibleResourceNames();
+        for (int i = 0; i < names.size(); i++) {
+            if (names.get(i).contains(needle)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public String getLocationCellText(String resourceName) {
+        Locator row = resourceRow(resourceName).first();
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return row.locator("td").nth(columnIndexByHeader(LOCATION_HEADER)).innerText()
+                .trim()
+                .replaceAll("\\s+", " ");
+    }
+
+    public Locator statusBadge(String resourceName, String badgeText) {
+        return resourceRow(resourceName).locator("[data-slot='badge']")
+                .filter(new Locator.FilterOptions().setHasText(badgeText));
+    }
+
+    public boolean hasStatusBadge(String resourceName, String badgeText) {
+        Locator badge = statusBadge(resourceName, badgeText);
+        return badge.count() > 0 && badge.first().isVisible();
+    }
+
+    public String statusBadgeVariant(String resourceName, String badgeText) {
+        Locator badge = statusBadge(resourceName, badgeText).first();
+        badge.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return badge.getAttribute("data-variant");
+    }
+
     public UnitManagementPage waitForTagBadge(String tag) {
         try {
             page.waitForCondition(
@@ -641,9 +693,12 @@ public class UnitManagementPage extends BasePage {
     }
 
     private Locator resourceRow(String resourceName) {
+        return stockTableBodyRows().filter(new Locator.FilterOptions().setHasText(rowFilterNeedle(resourceName)));
+    }
+
+    private static String rowFilterNeedle(String resourceName) {
         String needle = resourceName.trim();
-        String rowFilter = needle.length() > 24 ? needle.substring(0, 24) : needle;
-        return stockTableBodyRows().filter(new Locator.FilterOptions().setHasText(rowFilter));
+        return needle.length() > 24 ? needle.substring(0, 24) : needle;
     }
 
     private void waitForInventoryTableDuring(Runnable action) {
