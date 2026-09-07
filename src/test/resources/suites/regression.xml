@@ -221,6 +221,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAddOutputTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAmountApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanTechMapDeactivationGuardTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanHistoricalTechMapApiTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanListSortApiTest"/>
             <class name="com.erp.tests.functional.global_plan.PlanDuplicatePeriodApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanAlternativeGroupsApiTest"/>
@@ -330,6 +331,7 @@
             <class name="com.erp.tests.ui.GlobalPlanRequirementsUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanHistoricalTechMapUiTest"/>
             <class name="com.erp.tests.ui.PlanExecutionUiTest"/>
             <class name="com.erp.tests.ui.PlanDisassembleUiTest"/>
             <class name="com.erp.tests.ui.PlanNeededResourcesUiTest"/>

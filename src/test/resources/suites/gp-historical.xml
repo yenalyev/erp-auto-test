@@ -1,0 +1,27 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Historical GP snapshot seed (JDBC backdate): TC-GP-056/057/061/062 + UI-062.
+  mvn test -Denv=dev -Dsuite=gp-historical
+-->
+<suite name="TC-GP-062 historical snapshot" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="TC-GP-062 API">
+        <classes>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanHistoricalTechMapApiTest"/>
+        </classes>
+    </test>
+
+    <test name="TC-GP-UI-062 UI">
+        <classes>
+            <class name="com.erp.tests.ui.GlobalPlanHistoricalTechMapUiTest"/>
+        </classes>
+    </test>
+</suite>

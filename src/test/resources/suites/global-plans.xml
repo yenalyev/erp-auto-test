@@ -21,6 +21,7 @@
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAddOutputTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanEditAmountApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanTechMapDeactivationGuardTest"/>
+            <class name="com.erp.tests.functional.global_plan.GlobalPlanHistoricalTechMapApiTest"/>
             <class name="com.erp.tests.functional.global_plan.GlobalPlanAlternativeGroupsApiTest"/>
         </classes>
     </test>
@@ -33,6 +34,7 @@
             <class name="com.erp.tests.ui.GlobalPlanRequirementsUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanHistoricalTechMapUiTest"/>
         </classes>
     </test>
 </suite>

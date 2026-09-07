@@ -23,12 +23,17 @@ import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.DatabaseHelper;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -229,6 +234,148 @@ public class GlobalPlanFixture extends BaseFixture {
         } while (occupied.contains(candidate.getYear() + "-" + candidate.getMonthValue()));
         log.info("Allocated unique global plan period {}/{}", candidate.getMonthValue(), candidate.getYear());
         return candidate;
+    }
+
+    /**
+     * Free calendar month strictly before the current month (GP unique + optional location plans).
+     * Used to backdate a generated plan so the snapshot becomes «неактуальний».
+     */
+    public YearMonth nextUniquePastPeriod(Long locationStorageId) {
+        Set<String> occupied = new HashSet<>();
+        for (GlobalPlanResponse plan : getAllGlobalPlans()) {
+            occupied.add(plan.getYear() + "-" + plan.getMonth());
+        }
+        if (locationStorageId != null) {
+            for (PlanResponse plan : getLocationPlans(locationStorageId)) {
+                occupied.add(plan.getYear() + "-" + plan.getMonth());
+            }
+        }
+        YearMonth candidate = YearMonth.now().minusMonths(1);
+        int attempts = 0;
+        while (occupied.contains(candidate.getYear() + "-" + candidate.getMonthValue())) {
+            candidate = candidate.minusMonths(1);
+            attempts++;
+            if (attempts > 120) {
+                throw new IllegalStateException("No free past global plan period found within 10 years");
+            }
+        }
+        log.info("Allocated unique past global plan period {}/{}", candidate.getMonthValue(), candidate.getYear());
+        return candidate;
+    }
+
+    /**
+     * Generate a live GP (API), then JDBC-backdate it and its location plans to a free past month.
+     * Snapshot stays; the plan becomes historical so archive of maps in the snapshot is allowed.
+     */
+    @Step("Seed: generated GP + backdate to past month (historical snapshot)")
+    public HistoricalPlanSeed seedHistoricalGeneratedPlan(
+            DatabaseHelper db,
+            Long outputResourceId,
+            Long storageId,
+            Long techMapId,
+            double amount) {
+        if (db == null || db.getConnection() == null) {
+            throw new IllegalStateException("JDBC is required to backdate a generated global plan");
+        }
+        YearMonth pastPeriod = nextUniquePastPeriod(storageId);
+        YearMonth livePeriod = nextUniquePeriod();
+
+        GlobalPlanRequest gpRequest = GlobalPlanDataFactory.createPlan(
+                livePeriod.getMonthValue(), livePeriod.getYear(), outputResourceId, amount).build();
+        Response createResponse = apiExecutor.execute(
+                ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE,
+                UserRole.ADMIN,
+                gpRequest);
+        validateSuccess(createResponse, "Create live GP before backdate");
+        SchemaRegistry.validateIfSuccess(createResponse, ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE);
+        GlobalPlanResponse created = createResponse.as(GlobalPlanResponse.class);
+
+        DecompositionRequest decomposition = DecompositionRequest.builder()
+                .blocks(List.of(GlobalPlanDataFactory.block(GlobalPlanDataFactory.item(
+                        outputResourceId,
+                        GlobalPlanDataFactory.assignment(storageId, techMapId, String.valueOf((int) amount))))))
+                .build();
+        decompose(created.getId(), decomposition);
+        GenerationResponse generation = generate(created.getId(), decomposition);
+        List<Long> locationPlanIds = generation.getPlans().stream()
+                .map(gp -> gp.getPlan().getId())
+                .toList();
+
+        backdateGeneratedPlan(db, created.getId(), locationPlanIds, pastPeriod);
+
+        GlobalPlanResponse pastPlan = getById(created.getId());
+        assertThat(pastPlan.getMonth()).isEqualTo(pastPeriod.getMonthValue());
+        assertThat(pastPlan.getYear()).isEqualTo(pastPeriod.getYear());
+        assertThat(pastPlan.getDecomposition()).isNotNull();
+        assertThat(pastPlan.getTo()).isBefore(LocalDate.now().withDayOfMonth(1));
+        return new HistoricalPlanSeed(pastPlan, pastPeriod, locationPlanIds);
+    }
+
+    @Step("DB: backdate GP {globalPlanId} and location plans to {pastPeriod}")
+    public void backdateGeneratedPlan(
+            DatabaseHelper db,
+            Long globalPlanId,
+            List<Long> locationPlanIds,
+            YearMonth pastPeriod) {
+        LocalDate from = pastPeriod.atDay(1);
+        LocalDate to = pastPeriod.atEndOfMonth();
+        try {
+            try (PreparedStatement gp = db.getConnection().prepareStatement(
+                    "UPDATE global_plan SET from_date = ?, to_date = ? WHERE id = ?")) {
+                gp.setDate(1, Date.valueOf(from));
+                gp.setDate(2, Date.valueOf(to));
+                gp.setLong(3, globalPlanId);
+                int updated = gp.executeUpdate();
+                if (updated != 1) {
+                    throw new IllegalStateException(
+                            "Expected 1 global_plan row backdated, got " + updated + " for id=" + globalPlanId);
+                }
+            }
+            if (locationPlanIds != null) {
+                for (Long locationPlanId : locationPlanIds) {
+                    if (locationPlanId == null) {
+                        continue;
+                    }
+                    try (PreparedStatement plan = db.getConnection().prepareStatement(
+                            "UPDATE plan SET from_date = ?, to_date = ? WHERE id = ?")) {
+                        plan.setDate(1, Date.valueOf(from));
+                        plan.setDate(2, Date.valueOf(to));
+                        plan.setLong(3, locationPlanId);
+                        plan.executeUpdate();
+                    }
+                    try (PreparedStatement output = db.getConnection().prepareStatement(
+                            "UPDATE plan_output SET from_date = ?, to_date = ? WHERE plan_id = ?")) {
+                        output.setDate(1, Date.valueOf(from));
+                        output.setDate(2, Date.valueOf(to));
+                        output.setLong(3, locationPlanId);
+                        output.executeUpdate();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to backdate global plan " + globalPlanId + " to " + pastPeriod, e);
+        }
+        log.info("Backdated global plan {} and {} location plans to {}/{}",
+                globalPlanId, locationPlanIds == null ? 0 : locationPlanIds.size(),
+                pastPeriod.getMonthValue(), pastPeriod.getYear());
+    }
+
+    public record HistoricalPlanSeed(
+            GlobalPlanResponse pastPlan,
+            YearMonth pastPeriod,
+            List<Long> locationPlanIds
+    ) {}
+
+    public static List<Long> snapshotTechMapIds(GlobalPlanResponse plan) {
+        if (plan.getDecomposition() == null || plan.getDecomposition().getBlocks() == null) {
+            return List.of();
+        }
+        return plan.getDecomposition().getBlocks().stream()
+                .flatMap(block -> block.getItems().stream())
+                .flatMap(item -> item.getAssignments().stream())
+                .map(DecompositionRequest.DecompositionAssignmentRequest::getTechnologicalMapId)
+                .filter(id -> id != null)
+                .toList();
     }
 
     @Step("API: GET all global plans")

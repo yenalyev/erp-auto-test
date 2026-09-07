@@ -135,14 +135,21 @@ public class GlobalPlanWizardPage extends BasePage {
 
     @Step("Відкрити глобальний план id={planId} для редагування")
     public GlobalPlanWizardPage openById(long planId) {
+        return openById(planId, false);
+    }
+
+    @Step("Відкрити глобальний план id={planId} (readOnly={readOnly})")
+    public GlobalPlanWizardPage openById(long planId, boolean readOnly) {
         String url = ConfigProvider.getBaseUrl() + "/global-plans/" + planId;
-        log.info("Global plan wizard — open edit id={}", planId);
-        navigateTo(url, "Global plan edit /" + planId);
+        log.info("Global plan wizard — open id={} readOnly={}", planId, readOnly);
+        navigateTo(url, "Global plan /" + planId);
         waitForLoaded();
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SAVE_CHANGES_BUTTON))
-                .waitFor(new Locator.WaitForOptions()
-                        .setState(WaitForSelectorState.VISIBLE)
-                        .setTimeout(uiTimeoutMs()));
+        if (!readOnly) {
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SAVE_CHANGES_BUTTON))
+                    .waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout(uiTimeoutMs()));
+        }
         outputProductRows().first().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
@@ -675,6 +682,21 @@ public class GlobalPlanWizardPage extends BasePage {
     public boolean isTabEnabled(String tabLabel) {
         Locator tab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(tabLabel));
         return tab.isVisible() && !isTabDisabled(tabLabel);
+    }
+
+    @Step("Відкрити вкладку «{tabLabel}»")
+    public GlobalPlanWizardPage openTab(String tabLabel) {
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(tabLabel)).click();
+        return this;
+    }
+
+    @Step("Відкрити вкладку декомпозиції")
+    public GlobalPlanWizardPage openProductionTab() {
+        return openTab(TAB_2);
+    }
+
+    public boolean isPastPeriodReadOnlyBannerVisible() {
+        return page.getByText("План за минулий період").isVisible();
     }
 
     private void openAssignmentDialogForResource(String resourceName) {

@@ -12,6 +12,7 @@ import com.erp.models.common.GlobalPlanChainContext;
 import com.erp.models.request.DecompositionRequest;
 import com.erp.models.request.GlobalPlanRequest;
 import com.erp.models.request.TechnologicalMapRequest;
+import com.erp.models.response.DecompositionResponse;
 import com.erp.models.response.GenerationResponse;
 import com.erp.models.response.GlobalPlanResponse;
 import com.erp.models.response.TechnologicalMapResponse;
@@ -267,6 +268,87 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         });
     }
 
+    @Test(priority = 17, dataProvider = "ownerAndAdminRoles")
+    @TestCaseId("TC-GP-058")
+    @Story("Name update allowed in current-month global plan")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** PUT лише назви дозволений для карти в snapshot актуального GP **поточного** місяця.
+            id і version без змін. Пара до TC-GP-053 (майбутній місяць).
+            
+            Arrange GP — той самий, що TC-GP-047 (`ensureCurrentMonthGuardPlan`).
+            """)
+    public void testCanUpdateTechMapNameWhenUsedInCurrentMonthGlobalPlan(UserRole role) {
+        GlobalPlanResponse globalPlan = ensureCurrentMonthGuardPlan();
+
+        TechnologicalMapResponse mapBefore = techMapFixture.getById(
+                UserRole.ADMIN, chain.getMapM1().getId(), l1StorageId);
+        String newName = mapBefore.getName() + "-cur-renamed-" + System.currentTimeMillis();
+        TechnologicalMapRequest updateRequest = TechnologicalMapDataFactory.withRenamed(mapBefore, newName);
+
+        Response response = Allure.step(role + ": PUT rename M1 in current-month GP (expected success)", () ->
+                techMapFixture.updateTechMap(role, chain.getMapM1().getId(), updateRequest));
+
+        Allure.step("Assert: назва оновлена, id і version без змін (GP «" + globalPlan.getDescription() + "»)", () -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+            TechnologicalMapResponse updated = response.as(TechnologicalMapResponse.class);
+            assertThat(updated.getId()).isEqualTo(mapBefore.getId());
+            assertThat(updated.getVersion()).isEqualTo(mapBefore.getVersion());
+            assertThat(updated.getName()).isEqualTo(newName);
+
+            TechnologicalMapResponse fetched = techMapFixture.getById(
+                    UserRole.ADMIN, chain.getMapM1().getId(), l1StorageId);
+            assertThat(fetched.getName()).isEqualTo(newName);
+        });
+    }
+
+    @Test(priority = 18, dataProvider = "ownerAndAdminRoles")
+    @TestCaseId("TC-GP-059")
+    @Story("Structural update blocked by current-month global plan")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** заборонити PUT структури для карти в snapshot актуального GP **поточного** місяця.
+            Пара до TC-GP-054 (майбутній місяць).
+            
+            Якщо поточний місяць вільний — ізольована карта + generate.
+            Якщо вже зайнятий TC-GP-047 — той самий current-month GP і shared M1.
+            """)
+    public void testCannotUpdateTechMapStructureWhenUsedInCurrentMonthGlobalPlan(UserRole role) {
+        TechMapInGlobalPlan context = arrangeCurrentMonthTechMapForStructureGuard();
+        GlobalPlanResponse globalPlan = context.globalPlan();
+        TechnologicalMapResponse mapBefore = context.techMap();
+
+        TechnologicalMapResponse mapFetched = techMapFixture.getById(
+                UserRole.ADMIN, mapBefore.getId(), l1StorageId);
+        double originalAmount = mapFetched.getInput().getFirst().getAmount();
+        double modifiedAmount = originalAmount + 1.0;
+        TechnologicalMapRequest updateRequest =
+                TechnologicalMapDataFactory.withFirstInputAmount(mapFetched, modifiedAmount);
+
+        long activeCountBefore = techMapFixture.countActiveTechMapsByName(
+                l1StorageId, UserRole.ADMIN, mapFetched.getName());
+
+        Response response = Allure.step(role + ": PUT change input amount in current-month GP (expected failure)", () ->
+                techMapFixture.updateTechMap(role, mapBefore.getId(), updateRequest));
+
+        Allure.step("Assert: відмова через GP поточного місяця «" + globalPlan.getDescription() + "»", () -> {
+            techMapFixture.assertUsedInGlobalPlanRejection(response, globalPlan.getDescription());
+
+            TechnologicalMapResponse mapAfter = techMapFixture.getById(
+                    UserRole.ADMIN, mapBefore.getId(), l1StorageId);
+            assertThat(mapAfter.getVersion())
+                    .as("Version не має змінитись")
+                    .isEqualTo(mapFetched.getVersion());
+            assertThat(mapAfter.getInput().getFirst().getAmount())
+                    .as("Норма input не має змінитись")
+                    .isEqualTo(originalAmount);
+            assertThat(techMapFixture.countActiveTechMapsByName(
+                    l1StorageId, UserRole.ADMIN, mapFetched.getName()))
+                    .as("Не має з'явитись нова активна версія")
+                    .isEqualTo(activeCountBefore);
+        });
+    }
+
     @Test(priority = 20, dataProvider = "ownerAndAdminRoles")
     @TestCaseId("TC-GP-049")
     @Severity(SeverityLevel.NORMAL)
@@ -304,6 +386,142 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         });
     }
 
+    @Test(priority = 25)
+    @TestCaseId("TC-GP-060")
+    @Story("Archive then create replacement tech map")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** після архіву техкарти (немає snapshot актуального GP) нова карта на той самий
+            продукт працює в новому актуальному глобальному плані — без 400/500.
+            
+            Покриває «видалення і створення техкарт призводить до помилки».
+            
+            **Arrange → mutate → replay:**
+            1. Ізольовані продукт A + M1 на L1; snapshot актуального GP з M1 відсутній.
+            2. DELETE M1 @ L1 (архів).
+            3. POST M2 на продукт A (унікальна назва).
+            4. POST новий GP на вільний майбутній місяць, output A.
+            5. POST /decompose block 0 assignment **M2 @ L1** (не M1, не порожні assignments).
+            6. POST /generate з тією ж декомпозицією.
+            
+            **Примітка:** generate за минулий місяць заборонений (`global-plan.generate.pastPeriod`),
+            тому snapshot неактуального плану в одному прогоні не створюється.
+            
+            **Очікування:** decompose+generate HTTP 200; snapshot = M2; options містять M2 і не M1;
+            M1 лишається архівованою.
+            """)
+    public void testAfterArchivingMapNewMapWorksInNewActiveGlobalPlan() {
+        IsolatedTechMapContext isolated = Allure.step("Arrange: ізольовані продукт A і M1 на L1", () ->
+                techMapFixture.createIsolatedProductionTechMap(UserRole.ADMIN, l1StorageId, "GP-060-M1"));
+        TechnologicalMapResponse mapM1 = isolated.getTechMap();
+        Long productAId = isolated.getProduct().getId();
+        String mapM1Name = mapM1.getName();
+
+        Allure.step("Mutate: архів M1", () -> {
+            long activeBefore = techMapFixture.countActiveTechMapsByName(
+                    l1StorageId, UserRole.ADMIN, mapM1Name);
+            assertThat(activeBefore).as("M1 має бути активною до архіву").isEqualTo(1);
+
+            Response deactivate = techMapFixture.deactivateTechMap(
+                    UserRole.ADMIN, mapM1.getId(), l1StorageId);
+            assertThat(deactivate.statusCode()).isEqualTo(200);
+            assertThat(techMapFixture.countActiveTechMapsByName(
+                    l1StorageId, UserRole.ADMIN, mapM1Name))
+                    .as("M1 має зникнути з active-list")
+                    .isZero();
+        });
+
+        TechnologicalMapResponse mapM2 = Allure.step("Mutate: POST нова карта M2 на продукт A", () -> {
+            TechnologicalMapResponse created = techMapFixture.createAlternateActiveTechMap(
+                    UserRole.ADMIN, mapM1);
+            assertThat(created.getId()).isNotEqualTo(mapM1.getId());
+            assertThat(techMapFixture.getOutputResourceId(created)).isEqualTo(productAId);
+            assertThat(activeTechMapIdsByName(created.getName()))
+                    .as("M2 має бути активною")
+                    .contains(created.getId());
+            assertThat(activeTechMapIdsByName(mapM1Name))
+                    .as("M1 лишається архівованою після створення M2")
+                    .doesNotContain(mapM1.getId());
+            return created;
+        });
+
+        GlobalPlanResponse createdPlan = Allure.step("Replay: новий актуальний GP, output A", () -> {
+            YearMonth period = globalPlanFixture.nextUniquePeriod();
+            GlobalPlanRequest gpRequest = GlobalPlanDataFactory.createPlan(
+                    period.getMonthValue(), period.getYear(), productAId, 10.0).build();
+            Response createResponse = apiExecutor.execute(
+                    ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE,
+                    UserRole.ADMIN,
+                    gpRequest);
+            assertThat(createResponse.statusCode()).isEqualTo(200);
+            SchemaRegistry.validateIfSuccess(createResponse, ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE);
+            GlobalPlanResponse created = createResponse.as(GlobalPlanResponse.class);
+            trackGlobalPlan(created.getId());
+            assertThat(globalPlanFixture.getById(created.getId()).getDecomposition()).isNull();
+            return created;
+        });
+
+        DecompositionRequest decomposition = DecompositionRequest.builder()
+                .blocks(List.of(GlobalPlanDataFactory.block(GlobalPlanDataFactory.item(
+                        productAId,
+                        GlobalPlanDataFactory.assignment(l1StorageId, mapM2.getId(), "10")))))
+                .build();
+
+        Allure.step("Replay: decompose block 0 з assignment M2 @ L1", () -> {
+            DecompositionResponse decompose = globalPlanFixture.decompose(createdPlan.getId(), decomposition);
+            assertThat(decompose.isComplete()).as("Одноблочна декомпозиція з M2 має бути повною").isTrue();
+
+            List<Long> optionIds = decompose.getBlocks().getFirst().getItems().getFirst().getOptions()
+                    .stream()
+                    .map(opt -> opt.getTechnologicalMap().getId())
+                    .toList();
+            assertThat(optionIds)
+                    .as("Options нового GP мають містити активну M2")
+                    .contains(mapM2.getId());
+            assertThat(optionIds)
+                    .as("Архівована M1 не має бути серед options актуального GP")
+                    .doesNotContain(mapM1.getId());
+        });
+
+        Allure.step("Replay: generate + GET snapshot = M2, не M1", () -> {
+            GenerationResponse generation = globalPlanFixture.generate(createdPlan.getId(), decomposition);
+            trackGeneratedPlans(generation.getPlans().stream()
+                    .map(gp -> gp.getPlan().getId())
+                    .toList());
+
+            GlobalPlanResponse fetched = globalPlanFixture.getById(createdPlan.getId());
+            assertThat(fetched.getDecomposition()).isNotNull();
+            List<Long> snapshotIds = snapshotTechMapIds(fetched);
+            assertThat(snapshotIds)
+                    .as("Snapshot нового GP має містити M2")
+                    .contains(mapM2.getId());
+            assertThat(snapshotIds)
+                    .as("Snapshot нового GP не має містити архівовану M1")
+                    .doesNotContain(mapM1.getId());
+            assertThat(activeTechMapIdsByName(mapM1Name))
+                    .as("M1 лишається архівованою після generate")
+                    .doesNotContain(mapM1.getId());
+        });
+    }
+
+    private List<Long> activeTechMapIdsByName(String name) {
+        return techMapFixture.getActiveTechMapsByName(l1StorageId, UserRole.ADMIN, name).stream()
+                .map(TechnologicalMapResponse::getId)
+                .toList();
+    }
+
+    private static List<Long> snapshotTechMapIds(GlobalPlanResponse plan) {
+        if (plan.getDecomposition() == null || plan.getDecomposition().getBlocks() == null) {
+            return List.of();
+        }
+        return plan.getDecomposition().getBlocks().stream()
+                .flatMap(block -> block.getItems().stream())
+                .flatMap(item -> item.getAssignments().stream())
+                .map(DecompositionRequest.DecompositionAssignmentRequest::getTechnologicalMapId)
+                .filter(id -> id != null)
+                .toList();
+    }
+
     private GlobalPlanResponse arrangeGlobalPlanWithGeneratedDecomposition(YearMonth period) {
         return Allure.step("Arrange: global plan " + period + " + decompose + generate", () -> {
             GlobalPlanResponse created = globalPlanFixture.createGlobalPlanForPeriod(
@@ -325,13 +543,27 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
 
     private record TechMapInGlobalPlan(GlobalPlanResponse globalPlan, TechnologicalMapResponse techMap) {}
 
+    private TechMapInGlobalPlan arrangeCurrentMonthTechMapForStructureGuard() {
+        YearMonth current = allocateCurrentMonthIfFree();
+        if (current != null) {
+            return arrangeIsolatedTechMapInGlobalPlan(current);
+        }
+        if (currentMonthGuardPlan != null) {
+            return new TechMapInGlobalPlan(currentMonthGuardPlan, chain.getMapM1());
+        }
+        throw new SkipException("Поточний місяць зайнятий іншим глобальним планом, shared current-month GP немає");
+    }
+
     private TechMapInGlobalPlan arrangeIsolatedTechMapInGlobalPlan() {
-        return Allure.step("Arrange: isolated tech map in global plan + generate", () -> {
+        return arrangeIsolatedTechMapInGlobalPlan(globalPlanFixture.nextUniquePeriod());
+    }
+
+    private TechMapInGlobalPlan arrangeIsolatedTechMapInGlobalPlan(YearMonth period) {
+        return Allure.step("Arrange: isolated tech map in global plan " + period + " + generate", () -> {
             IsolatedTechMapContext isolated = techMapFixture.createIsolatedProductionTechMap(UserRole.ADMIN, l1StorageId);
             TechnologicalMapResponse techMap = isolated.getTechMap();
             Long outputResourceId = techMapFixture.getOutputResourceId(techMap);
 
-            YearMonth period = globalPlanFixture.nextUniquePeriod();
             GlobalPlanRequest gpRequest = GlobalPlanDataFactory.createPlan(
                     period.getMonthValue(), period.getYear(), outputResourceId, 10.0).build();
 
@@ -363,9 +595,26 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
 
     private YearMonth allocateCurrentMonthIfFree() {
         YearMonth current = YearMonth.now();
-        boolean occupied = globalPlanFixture.getAllGlobalPlans().stream()
-                .anyMatch(p -> p.getYear() == current.getYear()
-                        && p.getMonth() == current.getMonthValue());
-        return occupied ? null : current;
+        GlobalPlanResponse occupant = globalPlanFixture.getAllGlobalPlans().stream()
+                .filter(p -> p.getYear() == current.getYear()
+                        && p.getMonth() == current.getMonthValue())
+                .findFirst()
+                .orElse(null);
+        if (occupant == null) {
+            return current;
+        }
+        if (currentMonthGuardPlan != null) {
+            return null;
+        }
+        String description = occupant.getDescription() == null ? "" : occupant.getDescription();
+        boolean autotestLeftover = description.startsWith("GP-") || description.contains("GP-");
+        if (autotestLeftover) {
+            Allure.step("Звільнити поточний місяць: видалити leftover autotest GP «" + description + "»", () ->
+                    globalPlanFixture.deleteGlobalPlan(occupant.getId()));
+            return current;
+        }
+        log.warn("Поточний місяць зайнятий GP id={} «{}» — skip current-month mutation tests",
+                occupant.getId(), description);
+        return null;
     }
 }

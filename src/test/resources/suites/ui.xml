@@ -59,6 +59,7 @@
             <class name="com.erp.tests.ui.GlobalPlanRequirementsUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanHistoricalTechMapUiTest"/>
         </classes>
     </test>
 

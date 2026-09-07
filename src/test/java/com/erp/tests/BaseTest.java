@@ -476,6 +476,30 @@ public abstract class BaseTest {
     }
 
     /**
+     * Lazy JDBC when {@code @BeforeSuite} ran on an instance that skipped DB
+     * ({@code use.database=false} on dev). Historical GP seeds need a live connection.
+     */
+    protected DatabaseHelper ensureDatabaseHelper() {
+        if (dbHelper != null) {
+            return dbHelper;
+        }
+        try {
+            DatabaseHelper helper = new DatabaseHelper();
+            if (!helper.ping()) {
+                helper.closeConnection();
+                log.warn("Lazy JDBC ping failed — DB-seeded tests will skip");
+                return null;
+            }
+            dbHelper = helper;
+            log.info("Lazy JDBC connection established for DB-seeded tests");
+            return dbHelper;
+        } catch (Exception e) {
+            log.warn("Lazy JDBC init failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Expose the shared PlaywrightSessionProvider so UI-test subclasses can
      * reuse the already-launched Browser instance.
      */
