@@ -5,7 +5,6 @@ import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TechnologicalMapHierarchyFixture;
 import com.erp.fixtures.TestArtifactCleanup;
-import com.erp.pages.AppSidebarPage;
 import com.erp.pages.TechnologicalMapsListPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
@@ -71,9 +70,11 @@ public class TechnologicalMapHierarchyUITest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Isolated REGIONS owner bound to STORAGE parent P (not UNIT).
-            Open /technological-maps with STORAGE P, then PRODUCTION P.
+            Open /technological-maps with selectedStorageId = STORAGE P, then PRODUCTION P
+            (same storageIds context as TC-MFG-035 API; PRODUCTION P is a sibling, not in the
+            workspace tree of STORAGE home).
             Each table contains TM-P, TM-A, TM-B (no location access) and TM-C; not TM-X or the other branch.
-            Switch workspace to STORAGE A → only TM-A.
+            Switch to STORAGE A → only TM-A.
             """)
     public void parentWorkspaceShowsEntireSubtreeMaps() {
         TechnologicalMapHierarchyFixture.Branch storage = seed.getStorageParent();
@@ -87,11 +88,13 @@ public class TechnologicalMapHierarchyUITest extends BaseUITest {
         assertParentTable("STORAGE", listPage.getDisplayedTechMapNames(), storage, production);
         listPage.attachScreenshot("TC-MFG-035 — STORAGE parent P subtree");
 
-        switchWorkspace(production.getParent().getName());
+        // Sibling PRODUCTION P is not in this owner's workspace tree (home is STORAGE P).
+        // Select the same storageIds context the API test uses — not the sidebar picker.
+        listPage.openForStorage(production.getParent().getId());
         assertParentTable("PRODUCTION", listPage.getDisplayedTechMapNames(), production, storage);
         listPage.attachScreenshot("TC-MFG-035 — PRODUCTION parent P subtree");
 
-        switchWorkspace(storage.getStorageA().getName());
+        listPage.openForStorage(storage.getStorageA().getId());
         List<String> leafNames = listPage.getDisplayedTechMapNames();
         assertThat(leafNames)
                 .as("Leaf A table must contain TM-A and not expand the tree")
@@ -121,24 +124,6 @@ public class TechnologicalMapHierarchyUITest extends BaseUITest {
                 .noneMatch(name -> name.contains(other.getMapA().getName()))
                 .noneMatch(name -> name.contains(other.getMapB().getName()))
                 .noneMatch(name -> name.contains(other.getMapC().getName()));
-    }
-
-    private void switchWorkspace(String locationName) {
-        try {
-            page.waitForResponse(
-                    response -> {
-                        String url = response.url();
-                        return url.contains("/technological-maps")
-                                && !url.contains("/technological-maps/mode")
-                                && "GET".equals(response.request().method())
-                                && response.status() < 500;
-                    },
-                    () -> new AppSidebarPage(page).selectWorkspaceByName(locationName));
-        } catch (com.microsoft.playwright.PlaywrightException e) {
-            log.debug("Workspace switch did not trigger tech-map GET, selecting anyway: {}", e.getMessage());
-            new AppSidebarPage(page).selectWorkspaceByName(locationName);
-        }
-        new TechnologicalMapsListPage(page).waitForTableSettled();
     }
 
     private void injectIsolatedOwnerSession(long selectedStorageId) {

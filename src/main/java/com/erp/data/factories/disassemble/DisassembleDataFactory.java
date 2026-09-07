@@ -4,6 +4,7 @@ import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.models.request.DisassembleItemRequest;
 import com.erp.models.request.DisassembleListRequest;
 import com.erp.models.request.ProcessResourceOutputRequest;
+import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.response.ResourceUsageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 
@@ -51,6 +52,9 @@ public final class DisassembleDataFactory {
                         .totalAmount(actualTotalProduced)
                         .build()
         );
+        List<ResourceUsageRequest> inputs = techMap.getInput().stream()
+                .map(usage -> new ResourceUsageRequest(usage.getResource().getId(), usage.getAmount()))
+                .toList();
 
         DisassembleItemRequest item = DisassembleItemRequest.builder()
                 .disassembledItemId(inputUsage.getResource().getId())
@@ -59,6 +63,7 @@ public final class DisassembleDataFactory {
                 .date(date)
                 .batchNumber(batchNumber)
                 .outputs(outputs)
+                .inputs(inputs)
                 .build();
 
         return DisassembleListRequest.builder()

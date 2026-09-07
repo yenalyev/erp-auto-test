@@ -1,15 +1,21 @@
 package com.erp.tests.functional.global_plan;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.global_plan.GlobalPlanDataFactory;
+import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.fixtures.TechnologicalMapFixture.IsolatedTechMapContext;
 import com.erp.models.common.GlobalPlanChainContext;
 import com.erp.models.request.DecompositionRequest;
+import com.erp.models.request.GlobalPlanRequest;
+import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.GenerationResponse;
 import com.erp.models.response.GlobalPlanResponse;
 import com.erp.models.response.TechnologicalMapResponse;
+import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +26,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.time.YearMonth;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -170,6 +177,96 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         });
     }
 
+    @Test(priority = 15, dataProvider = "ownerAndAdminRoles")
+    @TestCaseId("TC-GP-053")
+    @Story("Name update allowed in global plan")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** дозволити редагування **лише назви** техкарти, якщо вона в decomposition snapshot
+            глобального плану — зміна назви не створює нову версію (id і version без змін).
+            
+            **Ендпоінт:** `PUT /api/v1/technological-maps/{id}`
+            
+            **Arrange:** global plan + generate, M1 @ L1 у snapshot.
+            **Act:** PUT — нова назва, input/output без змін.
+            **Очікування:** HTTP 200; той самий id і version; назва оновлена.
+            """)
+    public void testCanUpdateTechMapNameWhenUsedInFutureGlobalPlan(UserRole role) {
+        GlobalPlanResponse globalPlan = arrangeGlobalPlanWithGeneratedDecomposition(globalPlanFixture.nextUniquePeriod());
+
+        TechnologicalMapResponse mapBefore = techMapFixture.getById(
+                UserRole.ADMIN, chain.getMapM1().getId(), l1StorageId);
+        String newName = mapBefore.getName() + "-renamed-" + System.currentTimeMillis();
+        TechnologicalMapRequest updateRequest = TechnologicalMapDataFactory.withRenamed(mapBefore, newName);
+
+        Response response = Allure.step(role + ": PUT rename M1 (expected success)", () ->
+                techMapFixture.updateTechMap(role, chain.getMapM1().getId(), updateRequest));
+
+        Allure.step("Assert: назва оновлена, id і version без змін (GP «" + globalPlan.getDescription() + "»)", () -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+            TechnologicalMapResponse updated = response.as(TechnologicalMapResponse.class);
+            assertThat(updated.getId()).isEqualTo(mapBefore.getId());
+            assertThat(updated.getVersion()).isEqualTo(mapBefore.getVersion());
+            assertThat(updated.getName()).isEqualTo(newName);
+
+            TechnologicalMapResponse fetched = techMapFixture.getById(
+                    UserRole.ADMIN, chain.getMapM1().getId(), l1StorageId);
+            assertThat(fetched.getName()).isEqualTo(newName);
+        });
+    }
+
+    @Test(priority = 16, dataProvider = "ownerAndAdminRoles")
+    @TestCaseId("TC-GP-054")
+    @Story("Structural update blocked by global plan")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** заборонити PUT, що змінює структуру техкарти (input/output/groups), якщо вона в snapshot
+            глобального плану — така зміна створила б нову версію (новий id), що зламає decomposition.
+            
+            **Ендпоінт:** `PUT /api/v1/technological-maps/{id}`
+            
+            **Arrange:** ізольована техкарта + global plan + generate (не shared M1 — structural PUT може деактивувати map).
+            **Act:** PUT — змінити норму першого input (version bump).
+            **Очікування:** HTTP 400; id, version і input без змін.
+            
+            **Відомий дефект (dev):** guard відсутній на structural PUT — можливий 200 і createNewVersion.
+            Тест — regression до фіксу в `tk`.
+            """)
+    public void testCannotUpdateTechMapStructureWhenUsedInFutureGlobalPlan(UserRole role) {
+        TechMapInGlobalPlan context = arrangeIsolatedTechMapInGlobalPlan();
+        GlobalPlanResponse globalPlan = context.globalPlan();
+        TechnologicalMapResponse mapBefore = context.techMap();
+
+        TechnologicalMapResponse mapFetched = techMapFixture.getById(
+                UserRole.ADMIN, mapBefore.getId(), l1StorageId);
+        double originalAmount = mapFetched.getInput().getFirst().getAmount();
+        double modifiedAmount = originalAmount + 1.0;
+        TechnologicalMapRequest updateRequest = TechnologicalMapDataFactory.withFirstInputAmount(mapFetched, modifiedAmount);
+
+        long activeCountBefore = techMapFixture.countActiveTechMapsByName(
+                l1StorageId, UserRole.ADMIN, mapFetched.getName());
+
+        Response response = Allure.step(role + ": PUT change input amount (expected failure)", () ->
+                techMapFixture.updateTechMap(role, mapBefore.getId(), updateRequest));
+
+        Allure.step("Assert: відмова через глобальний план «" + globalPlan.getDescription() + "»", () -> {
+            techMapFixture.assertUsedInGlobalPlanRejection(response, globalPlan.getDescription());
+
+            TechnologicalMapResponse mapAfter = techMapFixture.getById(
+                    UserRole.ADMIN, mapBefore.getId(), l1StorageId);
+            assertThat(mapAfter.getVersion())
+                    .as("Version не має змінитись")
+                    .isEqualTo(mapFetched.getVersion());
+            assertThat(mapAfter.getInput().getFirst().getAmount())
+                    .as("Норма input не має змінитись")
+                    .isEqualTo(originalAmount);
+            assertThat(techMapFixture.countActiveTechMapsByName(
+                    l1StorageId, UserRole.ADMIN, mapFetched.getName()))
+                    .as("Не має з'явитись нова активна версія")
+                    .isEqualTo(activeCountBefore);
+        });
+    }
+
     @Test(priority = 20, dataProvider = "ownerAndAdminRoles")
     @TestCaseId("TC-GP-049")
     @Severity(SeverityLevel.NORMAL)
@@ -223,6 +320,44 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
             GlobalPlanResponse fetched = globalPlanFixture.getById(created.getId());
             assertThat(fetched.getDecomposition()).isNotNull();
             return fetched;
+        });
+    }
+
+    private record TechMapInGlobalPlan(GlobalPlanResponse globalPlan, TechnologicalMapResponse techMap) {}
+
+    private TechMapInGlobalPlan arrangeIsolatedTechMapInGlobalPlan() {
+        return Allure.step("Arrange: isolated tech map in global plan + generate", () -> {
+            IsolatedTechMapContext isolated = techMapFixture.createIsolatedProductionTechMap(UserRole.ADMIN, l1StorageId);
+            TechnologicalMapResponse techMap = isolated.getTechMap();
+            Long outputResourceId = techMapFixture.getOutputResourceId(techMap);
+
+            YearMonth period = globalPlanFixture.nextUniquePeriod();
+            GlobalPlanRequest gpRequest = GlobalPlanDataFactory.createPlan(
+                    period.getMonthValue(), period.getYear(), outputResourceId, 10.0).build();
+
+            Response createResponse = apiExecutor.execute(
+                    ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE,
+                    UserRole.ADMIN,
+                    gpRequest);
+            assertThat(createResponse.statusCode()).isEqualTo(200);
+            SchemaRegistry.validateIfSuccess(createResponse, ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE);
+            GlobalPlanResponse created = createResponse.as(GlobalPlanResponse.class);
+            trackGlobalPlan(created.getId());
+
+            DecompositionRequest decomposition = DecompositionRequest.builder()
+                    .blocks(List.of(GlobalPlanDataFactory.block(GlobalPlanDataFactory.item(
+                            outputResourceId,
+                            GlobalPlanDataFactory.assignment(l1StorageId, techMap.getId(), "10")))))
+                    .build();
+            globalPlanFixture.decompose(created.getId(), decomposition);
+            GenerationResponse generation = globalPlanFixture.generate(created.getId(), decomposition);
+            trackGeneratedPlans(generation.getPlans().stream()
+                    .map(gp -> gp.getPlan().getId())
+                    .toList());
+
+            GlobalPlanResponse fetched = globalPlanFixture.getById(created.getId());
+            assertThat(fetched.getDecomposition()).isNotNull();
+            return new TechMapInGlobalPlan(fetched, techMap);
         });
     }
 

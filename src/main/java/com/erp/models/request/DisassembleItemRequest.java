@@ -26,4 +26,8 @@ public class DisassembleItemRequest {
 
     @Builder.Default
     private List<ProcessResourceOutputRequest> outputs = new ArrayList<>();
+
+    /** Same as tk-ui create: tech-map input lines; omit them and produce() deducts nothing. */
+    @Builder.Default
+    private List<ResourceUsageRequest> inputs = new ArrayList<>();
 }

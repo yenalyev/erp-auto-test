@@ -57,10 +57,15 @@ public class InventoryCommentApiTest extends CrewApiTestBase {
     private long isolationResourceBId;
     private final List<Long> sessionStorageIds = new ArrayList<>();
 
+    @Override
+    @AfterMethod(alwaysRun = true)
+    public void cleanupCreatedStoragesAfterTest() {
+        // BeforeClass seeds must survive all data-provider rows; AfterClass still archives.
+    }
+
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupCrewApiBase")
     @Step("Підготовка локацій UNIT/STORAGE/PRODUCTION/FLY_POINT/CREW для comment-тестів")
     public void setupInventoryCommentLocations() {
-        storageFixture.prepareContext();
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
         relocationFixture.prepareContext();

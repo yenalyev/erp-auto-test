@@ -232,6 +232,15 @@ public class TechnologicalMapFixture extends BaseFixture {
                 String.valueOf(storageId));
     }
 
+    @Step("{role}: PUT update tech map {techMapId}")
+    public Response updateTechMap(UserRole role, Long techMapId, TechnologicalMapRequest request) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_UPDATE_NAME,
+                role,
+                request,
+                String.valueOf(techMapId));
+    }
+
     @Step("API: DELETE per-location plan {planId}")
     public void deleteLocationPlan(Long planId) {
         Response response = apiExecutor.execute(

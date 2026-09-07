@@ -501,10 +501,24 @@ public class TechnologicalMapDataFactory {
     }
 
     /**
-     * Update request з новою назвою (input/output без змін).
+     * Update request з новою назвою (input/output без змін) — не створює нову версію.
      */
     public static TechnologicalMapRequest withRenamed(@NonNull TechnologicalMapResponse source, String newName) {
         return fromExisting(source).name(newName).build();
+    }
+
+    /**
+     * Update request із зміненою нормою першого input — створює нову версію (новий id).
+     */
+    public static TechnologicalMapRequest withFirstInputAmount(
+            @NonNull TechnologicalMapResponse existing,
+            double newAmount) {
+        TechnologicalMapRequest request = fromExisting(existing).build();
+        if (request.getInput() == null || request.getInput().isEmpty()) {
+            throw new IllegalStateException("Tech map has no input resources to modify");
+        }
+        request.getInput().getFirst().setAmount(java.math.BigDecimal.valueOf(newAmount));
+        return request;
     }
 
     /**
