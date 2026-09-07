@@ -387,6 +387,19 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: crew1/crew2 без приросту; FLY_POINT +2N; обидва в crew-names точки.
             """ + ON_FAIL_STOCK;
 
+    public static final String TC_FLY_FP_001 = """
+            Що перевіряємо: send FLY_POINT_A → FLY_POINT_B → CREATED → FINISHED відправником (FP_A);
+            баланс точок і ізоляція складу локації.
+            Тестові дані: prepareTwoFlyPointsScenario; seed склад→FP_A; ISSUE_AMOUNT.
+            Очікуваний результат: після send FP_B без +N; після FINISHED — FP_A −N, FP_B +N, склад без змін.
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_FLY_FP_002 = """
+            Що перевіряємо: з FLY_POINT не можна send на UNIT або CREW (flyPointRecipientOnly).
+            Тестові дані: prepareTwoFlyPointsScenario + CREW під UNIT; seed на FP_A.
+            Очікуваний результат: обидва send — HTTP 4xx; залишки FP_A / UNIT / CREW без змін.
+            """ + ON_FAIL_API;
+
     public static final String TC_CREW_RET_001 = """
             Що перевіряємо: повернення від unattached CREW на склад (POST /relocations/receive).
             Тестові дані: prepareSingleCrewScenario; видача UNIT→CREW FINISHED; RETURN_AMOUNT < stock.
@@ -423,6 +436,57 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: HTTP 200; response і GET /faita/resources містять обидва implicit id;
             за наявності БД — sync_process_config.implicit_resource_usage містить усі три externalId.
             """ + ON_FAIL_API;
+
+    public static final String TC_FAITA_REC_001 = """
+            Що перевіряємо: POST /resources/reconciliations з двома resourceIds створює 1 FAITA → 2 ERP;
+            виріб з'являється в GET /integrations/faita/resources.
+            Тестові дані: новий externalId + 2 ізольовані ERP; ADMIN.
+            Очікуваний результат: HTTP 200, два id; list містить обидва ERP id/name.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FAITA_REC_002 = """
+            Що перевіряємо: до вже зіставленого виробу можна додати третій ERP повторним POST.
+            Тестові дані: виріб з 2 reconciliation; третій resourceId.
+            Очікуваний результат: GET list — три ERP на цей externalId.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FAITA_REC_003 = """
+            Що перевіряємо: DELETE /resources/reconciliations/{id} знімає одну прив'язку, інші лишаються.
+            Тестові дані: виріб з 2 reconciliation; видаляємо перший id з CREATE.
+            Очікуваний результат: у list залишився лише другий ERP.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FAITA_IMPL_003 = """
+            Що перевіряємо: PUT implicit-resources замінює повний набір — після 2 позицій PUT з однією
+            прибирає другу. Суміжний TC-FAITA-IMPL-001 (збереження кількох) — REQ-CREW-003 AC-15.
+            Тестові дані: виріб + 2 implicit FAITA (кожний з FLIGHT reconciliation).
+            Очікуваний результат: response і GET list містять лише перший implicit id.
+            """ + ON_FAIL_API;
+
+    public static final String TC_UI_FAITA_001 = """
+            Що перевіряємо: UI /faita-resources — sidebar Екіпажі → Ресурси Файти; пошук за назвою;
+            колонки ID / Назва / Зіставлення / Додаткові; фільтри типу.
+            Тестові дані: виріб з 1 ERP і 1 implicit; ADMIN session.
+            Очікуваний результат: рядок знайдено, ERP та implicit назви видимі.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FAITA_002 = """
+            Що перевіряємо: картка виробу → Зіставлення → діалог «Призначити ресурс» додає другий ERP.
+            Тестові дані: виріб з 1 reconciliation; другий активний ERP.
+            Очікуваний результат: обидві ERP-назви в блоці Зіставлення.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FAITA_003 = """
+            Що перевіряємо: «−» на картці знімає одне зіставлення; інше лишається; implicit CTA видима.
+            Тестові дані: виріб з 2 ERP.
+            Очікуваний результат: видаленого ERP немає; другий є; «Додати ресурс» у implicit-блоці видима.
+            """ + ON_FAIL_UI;
+
+    public static final String TC_UI_FAITA_004 = """
+            Що перевіряємо: картка → додаткові ресурси — додати інший виріб FAITA через combobox і прибрати «−».
+            Тестові дані: цільовий виріб зі зіставленням; другий FAITA-виріб як опція.
+            Очікуваний результат: після Зберегти назва в списку; після «−» порожньо.
+            """ + ON_FAIL_UI;
 
     public static final String TC_FAITA_IMPL_002 = """
             Що перевіряємо: після usage (симуляція SyncTeamProcess) у журналі з'являються write-off виробу

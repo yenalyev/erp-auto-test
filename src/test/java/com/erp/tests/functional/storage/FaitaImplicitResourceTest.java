@@ -4,10 +4,9 @@ import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
-import com.erp.models.request.ResourceReconciliationRequest;
+import com.erp.fixtures.FaitaResourceFixture;
 import com.erp.models.request.SaveImplicitResourcesRequest;
 import com.erp.models.response.FaitaResourceResponse;
-import com.erp.models.response.ResourceReconciliationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.utils.helpers.ApiResponseHelper;
 import com.erp.utils.helpers.ProductionStockAssertions;
@@ -69,6 +68,7 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
     private ResourceResponse productResource;
     private ResourceResponse implicitResource1;
     private ResourceResponse implicitResource2;
+    private FaitaResourceFixture faitaFixture;
 
     private final List<Long> reconciliationIdsToCleanup = new ArrayList<>();
 
@@ -86,6 +86,7 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
             return;
         }
 
+        faitaFixture = new FaitaResourceFixture(testContext, apiExecutor);
         storageFixture.prepareContext();
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
@@ -103,14 +104,14 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
         implicitResource1 = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "i1-");
         implicitResource2 = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "i2-");
 
-        reconciliationIdsToCleanup.addAll(createFlightReconciliation(
+        reconciliationIdsToCleanup.addAll(faitaFixture.createFlightReconciliation(
                 productExternalId, productExternalName, productResource.getId()));
-        reconciliationIdsToCleanup.addAll(createFlightReconciliation(
+        reconciliationIdsToCleanup.addAll(faitaFixture.createFlightReconciliation(
                 implicit1ExternalId, implicit1ExternalName, implicitResource1.getId()));
-        reconciliationIdsToCleanup.addAll(createFlightReconciliation(
+        reconciliationIdsToCleanup.addAll(faitaFixture.createFlightReconciliation(
                 implicit2ExternalId, implicit2ExternalName, implicitResource2.getId()));
 
-        assertFaitaResourceVisible(productExternalId);
+        faitaFixture.requireByExternalId(productExternalId);
 
         refreshRoleSessions(UserRole.OWNER_1, UserRole.ADMIN);
     }
@@ -129,22 +130,11 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
     @AfterClass(alwaysRun = true)
     @Step("Cleanup: clear implicit config + delete test reconciliations")
     public void cleanupFaitaImplicitArtifacts() {
-        try {
-            clearImplicitResources(productExternalId, productExternalName);
-        } catch (Exception e) {
-            log.warn("Failed to clear implicit resources for {}: {}", productExternalId, e.getMessage());
+        if (faitaFixture == null) {
+            return;
         }
-        for (Long id : reconciliationIdsToCleanup) {
-            try {
-                apiExecutor.execute(
-                        ApiEndpointDefinition.RESOURCE_RECONCILIATION_DELETE_BY_ID,
-                        UserRole.ADMIN,
-                        null,
-                        String.valueOf(id));
-            } catch (Exception e) {
-                log.warn("Failed to delete reconciliation id={}: {}", id, e.getMessage());
-            }
-        }
+        faitaFixture.clearImplicitQuietly(productExternalId, productExternalName);
+        faitaFixture.deleteReconciliationsQuietly(reconciliationIdsToCleanup);
     }
 
     @Test(priority = 10)
@@ -304,59 +294,6 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
                             + "(GET /api/v1/integrations/faita/resources ≠ 200). "
                             + "Потрібен бекенд з FaitaResourceController (CPMA-629).");
         }
-    }
-
-    @Step("API: create FLIGHT reconciliation externalId={externalId} → resourceId={resourceId}")
-    private List<Long> createFlightReconciliation(String externalId, String externalName, Long resourceId) {
-        ResourceReconciliationRequest body = ResourceReconciliationRequest.builder()
-                .source("FLIGHT")
-                .externalId(externalId)
-                .externalName(externalName)
-                .resourceIds(List.of(resourceId))
-                .build();
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.RESOURCE_RECONCILIATION_CREATE, UserRole.ADMIN, body);
-        assertThat(response.statusCode())
-                .as("POST /resources/reconciliations для %s. Body: %s",
-                        externalId, response.getBody().asString())
-                .isEqualTo(200);
-        List<ResourceReconciliationResponse> created = ApiResponseHelper.parseList(
-                response, ResourceReconciliationResponse.class, "Create FLIGHT reconciliation");
-        assertThat(created)
-                .as("create reconciliations має повернути хоча б один id для %s", externalId)
-                .isNotEmpty();
-        return created.stream().map(ResourceReconciliationResponse::getId).toList();
-    }
-
-    @Step("API: assert FAITA resource list contains externalId={externalId}")
-    private void assertFaitaResourceVisible(String externalId) {
-        Response get = apiExecutor.execute(ApiEndpointDefinition.FAITA_RESOURCES_GET, UserRole.ADMIN);
-        assertThat(get.statusCode())
-                .as("GET /integrations/faita/resources. Body: %s", get.getBody().asString())
-                .isEqualTo(200);
-        List<FaitaResourceResponse> all = ApiResponseHelper.parseList(
-                get, FaitaResourceResponse.class, "GET FAITA resources");
-        assertThat(all)
-                .extracting(FaitaResourceResponse::getResourceId)
-                .as("після FLIGHT reconciliation виріб має з'явитись у списку FAITA resources")
-                .contains(externalId);
-    }
-
-    @Step("API: clear implicit resources for product {externalId}")
-    private void clearImplicitResources(String externalId, String externalName) {
-        if (externalId == null) {
-            return;
-        }
-        SaveImplicitResourcesRequest body = SaveImplicitResourcesRequest.builder()
-                .externalId(externalId)
-                .externalName(externalName)
-                .implicitResources(List.of())
-                .build();
-        apiExecutor.execute(
-                ApiEndpointDefinition.FAITA_IMPLICIT_RESOURCES_PUT,
-                UserRole.ADMIN,
-                body,
-                externalId);
     }
 
     @Step("DB: assert sync_process_config contains implicits for {productExternalId}")

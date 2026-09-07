@@ -64,6 +64,7 @@ public class AppSidebarPage extends BasePage {
     public static final String TAB_PROJECT_PRODUCTS = "Продукти";
     public static final String NAV_UNIT_ANALYTICS = "Підрозділи";
     public static final String TAB_FLY_POINTS = "Точки вильоту";
+    public static final String TAB_FAITA_RESOURCES = "Ресурси Файти";
 
     public AppSidebarPage(Page page) {
         super(page);

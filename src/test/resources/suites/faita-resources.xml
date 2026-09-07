@@ -1,0 +1,29 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  REQ-FAITA-001 — зіставлення FAITA↔ERP + implicit CRUD (API + UI).
+
+  Run:
+    mvn test -Denv=dev -Dsuite=faita-resources -Dtcm.feature.id=109 -Dtcm.base.url=http://localhost:8100
+-->
+<suite name="FAITA Resources" parallel="none" verbose="1">
+
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="FAITA Resources API">
+        <classes>
+            <class name="com.erp.tests.functional.storage.FaitaResourcesApiTest"/>
+        </classes>
+    </test>
+
+    <test name="FAITA Resources UI">
+        <classes>
+            <class name="com.erp.tests.ui.FaitaResourcesUiTest"/>
+        </classes>
+    </test>
+</suite>
