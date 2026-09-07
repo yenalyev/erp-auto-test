@@ -13,6 +13,7 @@
         <classes>
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
+            <class name="com.erp.tests.functional.resource.ResourceImageApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
             <class name="com.erp.tests.functional.resource.ResourceWithTechnologicalMapApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourcePriceApiTest"/>

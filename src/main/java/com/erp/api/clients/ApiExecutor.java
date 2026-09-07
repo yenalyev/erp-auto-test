@@ -254,6 +254,13 @@ public class ApiExecutor {
                 request));
     }
 
+    @Step("API Request: POST /resources/{resourceId}/image as {role}")
+    public Response executeResourceImageUpload(Long resourceId, byte[] imageBytes, UserRole role) {
+        String path = ApiEndpointDefinition.RESOURCE_UPLOAD_IMAGE.getPath(resourceId);
+        return executeWithSessionRetry(role, cookies -> apiClient.executeMultipartFilePost(
+                path, cookies, "file", imageBytes, "photo.png", "image/png"));
+    }
+
     /**
      * {@code POST /api/v1/project-production} — multipart with JSON part {@code request}
      * (backend also accepts optional {@code files} parts, not used by erp-auto-test).

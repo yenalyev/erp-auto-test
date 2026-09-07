@@ -83,6 +83,32 @@ public class SessionClient extends BaseClient {
         return executeMultipart(io.restassured.http.Method.PUT, path, cookies, partName, jsonPart);
     }
 
+    /**
+     * Multipart POST with a binary file part (e.g. {@code POST /resources/{id}/image}, part {@code file}).
+     */
+    public Response executeMultipartFilePost(
+            String path,
+            Map<String, String> cookies,
+            String partName,
+            byte[] content,
+            String filename,
+            String mimeType
+    ) {
+        return given()
+                .baseUri(ConfigProvider.getBackendUrl())
+                .accept(io.restassured.http.ContentType.ANY)
+                .cookies(cookies != null ? cookies : Map.of())
+                .multiPart(partName, filename, content, mimeType)
+                .filter(new io.qameta.allure.restassured.AllureRestAssured())
+                .filter(RequestDiagnostics.capturingFilter())
+                .when()
+                .post(path)
+                .then()
+                .spec(responseSpec)
+                .extract()
+                .response();
+    }
+
     private Response executeMultipart(
             io.restassured.http.Method method,
             String path,

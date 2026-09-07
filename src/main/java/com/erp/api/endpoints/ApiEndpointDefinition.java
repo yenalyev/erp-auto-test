@@ -536,6 +536,26 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    RESOURCE_UPLOAD_IMAGE(
+            "/api/v1/resources/{id}/image",
+            Method.POST,
+            null,
+            "Upload resource photo (multipart file)",
+            null,
+            null,
+            "UPLOAD_IMAGE"
+    ),
+
+    RESOURCE_GET_IMAGE(
+            "/api/v1/resources/{id}/image",
+            Method.GET,
+            null,
+            "Stream resource photo",
+            null,
+            null,
+            null
+    ),
+
     RESOURCE_DEACTIVATE(
             "/api/v1/resources/{id}",
             Method.DELETE,

@@ -19,6 +19,7 @@
     <test name="Resources UI">
         <classes>
             <class name="com.erp.tests.ui.ResourceAutocompleteUiTest"/>
+            <class name="com.erp.tests.ui.ResourcePhotoUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
         </classes>

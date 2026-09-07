@@ -20,4 +20,6 @@ public class ResourceRequest {
     private Long categoryId;
     @Builder.Default
     private List<ResourcePropertyRequest> properties = new ArrayList<>();
+    private String notes;
+    private Boolean removeImage;
 }

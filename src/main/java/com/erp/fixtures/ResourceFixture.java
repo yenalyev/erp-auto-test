@@ -10,6 +10,7 @@ import com.erp.models.response.ResourcePriceResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.validators.SchemaRegistry;
 import com.erp.test_context.TestContext;
+import com.erp.utils.data.TestPng;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
@@ -105,6 +106,29 @@ public class ResourceFixture extends BaseFixture {
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.RESOURCE_GET_BY_ID, role, null, String.valueOf(resourceId));
         validateSuccess(response, "Get resource by id " + resourceId);
+        return response.as(ResourceResponse.class);
+    }
+
+    @Step("API: завантажити PNG фото ресурсу id={resourceId}")
+    public void uploadPng(UserRole role, Long resourceId) {
+        Response response = apiExecutor.executeResourceImageUpload(resourceId, TestPng.onePixel(), role);
+        validateSuccess(response, "Upload resource image id=" + resourceId);
+    }
+
+    @Step("API: GET фото ресурсу id={resourceId}")
+    public Response getImage(UserRole role, Long resourceId) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.RESOURCE_GET_IMAGE, role, null, String.valueOf(resourceId));
+    }
+
+    @Step("API: PUT ресурс id={resourceId}")
+    public ResourceResponse update(UserRole role, Long resourceId, ResourceRequest request) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.RESOURCE_UPDATE_NAME,
+                role,
+                request,
+                String.valueOf(resourceId));
+        validateSuccess(response, "Update resource id=" + resourceId);
         return response.as(ResourceResponse.class);
     }
 

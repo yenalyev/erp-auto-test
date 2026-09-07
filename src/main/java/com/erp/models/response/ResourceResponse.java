@@ -17,4 +17,5 @@ public class ResourceResponse {
         private Boolean active;
         private MeasurementUnitResponse unit;
         private SimpleEntityResponse category;
+        private String imagePath;
 }
