@@ -17,6 +17,12 @@
     "type": {
       "type": ["string", "null"]
     },
+    "milUnitType": {
+      "type": ["string", "null"]
+    },
+    "milUnitNumber": {
+      "type": ["integer", "null"]
+    },
     "relation": {
       "type": ["string", "null"]
     },
@@ -30,6 +36,9 @@
       "type": ["string", "null"]
     },
     "orderHub": {
+      "type": "boolean"
+    },
+    "productionGroup": {
       "type": "boolean"
     }
   },

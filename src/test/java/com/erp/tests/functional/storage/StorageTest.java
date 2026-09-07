@@ -3,9 +3,7 @@ package com.erp.tests.functional.storage;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
-import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
-import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.StorageRequest;
@@ -140,25 +138,8 @@ public class StorageTest extends StorageApiTestBase {
                 .as("fresh storage must be active for duplicate-name check")
                 .isTrue();
 
-        // Full body clone: name-uniqueness must fail before other required-field NPEs → 500.
-        StorageRequest.StorageRequestBuilder duplicateBuilder = StorageRequest.builder()
-                .name(existing.getName())
-                .alias(existing.getAlias())
-                .identifierNumber(existing.getIdentifierNumber())
-                .nameForInvoices(existing.getNameForInvoices());
-        if (existing.getType() != null) {
-            duplicateBuilder.type(UnitType.valueOf(existing.getType()));
-        }
-        if (existing.getRelation() != null) {
-            duplicateBuilder.relation(StorageRelation.valueOf(existing.getRelation()));
-        }
-        if (existing.getAccessMode() != null) {
-            duplicateBuilder.accessMode(StorageAccessMode.valueOf(existing.getAccessMode()));
-        }
-        if (existing.getParent() != null) {
-            duplicateBuilder.parentId(existing.getParent().getId());
-        }
-        StorageRequest duplicateRequest = duplicateBuilder.build();
+        // Full body clone (incl. primitive booleans) so uniqueness fails before empty-body 400.
+        StorageRequest duplicateRequest = StorageDataFactory.fromExisting(existing).build();
 
         long countBefore = getDbCount(
                 ApiEndpointDefinition.STORAGE_GET_ALL,

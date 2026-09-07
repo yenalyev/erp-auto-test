@@ -1,5 +1,6 @@
 package com.erp.models.request;
 
+import com.erp.enums.MilUnitType;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
@@ -19,10 +20,14 @@ public class StorageRequest {
     private String alias;
     private Long parentId;
     private UnitType type;
+    private MilUnitType milUnitType;
+    private Integer milUnitNumber;
     private StorageRelation relation;
     private String identifierNumber;
     private StorageAccessMode accessMode;
     private String nameForInvoices;
     /** Backend field is primitive {@code boolean}; omit it and Jackson returns empty 400. */
     private boolean orderHub;
+    /** Same as {@link #orderHub}: UI always sends it; omit it and POST /storages returns empty 400. */
+    private boolean productionGroup;
 }

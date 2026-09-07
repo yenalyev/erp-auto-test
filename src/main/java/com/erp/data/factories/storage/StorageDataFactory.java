@@ -1,6 +1,7 @@
 package com.erp.data.factories.storage;
 
 import com.erp.data.FakerProvider;
+import com.erp.enums.MilUnitType;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
@@ -163,6 +164,11 @@ public class StorageDataFactory {
             builder.accessMode(StorageAccessMode.FULL_ACCESS);
         }
         builder.orderHub(Boolean.TRUE.equals(existing.getOrderHub()));
+        builder.productionGroup(Boolean.TRUE.equals(existing.getProductionGroup()));
+        if (existing.getMilUnitType() != null && !existing.getMilUnitType().isBlank()) {
+            builder.milUnitType(MilUnitType.valueOf(existing.getMilUnitType()));
+        }
+        builder.milUnitNumber(existing.getMilUnitNumber());
         return builder;
     }
 

@@ -19,12 +19,15 @@ public class StorageResponse {
     private String alias;
     /** Backend {@code UnitType} name, e.g. SUPPLIER, STORAGE, PRODUCTION. */
     private String type;
+    private String milUnitType;
+    private Integer milUnitNumber;
     private String relation;
     private Boolean active;
     private String identifierNumber;
     private String accessMode;
     private String nameForInvoices;
     private Boolean orderHub;
+    private Boolean productionGroup;
     private SimpleEntityResponse parent;
     private List<StorageItemResponse> items;
 }
