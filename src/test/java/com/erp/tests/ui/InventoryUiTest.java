@@ -16,6 +16,7 @@ import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.InventoryStockUiVerification;
 import com.erp.utils.helpers.PollUtils;
 import com.erp.utils.helpers.UiDownloadAssertions;
+import com.erp.utils.helpers.XlsxContentAssertions;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterMethod;
@@ -568,9 +569,9 @@ public class InventoryUiTest extends BaseUITest {
         });
     }
 
-    /** «<Назва>\\t<Кількість> <од. вимір.>» — handleCopyTable у InventoryPage.tsx. */
+    /** «<Назва>\\t<Кількість>\\t<од. вимір.>» — handleCopyTable у InventoryPage.tsx. */
     private static final Pattern CLIPBOARD_LINE_FORMAT =
-            Pattern.compile("^(?<name>.+)\\t(?<amount>-?\\d+(?:\\.\\d+)?) (?<unit>.+)$");
+            Pattern.compile("^(?<name>.+)\\t(?<amount>-?\\d+(?:\\.\\d+)?)\\t(?<unit>\\S+)$");
 
     @Test(priority = 155)
     @TestCaseId("TC-WMS-007-009")
@@ -581,12 +582,11 @@ public class InventoryUiTest extends BaseUITest {
             «Скопіювати». Arrange: унікальний ресурс із залишком на локації.
             Очікується:
             1) кнопка активна, фідбек «Скопійовано»;
-            2) кожен рядок буфера у форматі «<Назва>\\t<Кількість> <од. вимір.>»
-               (handleCopyTable у InventoryPage.tsx);
+            2) кожен рядок буфера TSV «<Назва>\\t<Кількість>\\t<од. вимір.>» —
+               кількість окремо від «шт»/кг (сортування в таблиці по числу);
             3) кількість рядків буфера = кількість видимих рядків таблиці;
             4) після пошуку за унікальним ресурсом кожен рядок буфера відповідає залишкам
-               локації з API (назва, кількість, од. вимір.); кількість і од. вимір. унікального
-               ресурсу збігаються з API.""")
+               локації з API (назва, кількість, од. вимір.).""")
     public void copyRemaindersToClipboardUi() {
         ResourceResponse uniqueResource = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
                 storageId, UserRole.ADMIN, "InvCopy_");
@@ -632,8 +632,12 @@ public class InventoryUiTest extends BaseUITest {
                     .as("Кількість рядків буфера має збігатися з видимими рядками таблиці")
                     .hasSize(stock.stockRowCount());
             assertThat(clipboardLines)
-                    .as("Кожен рядок буфера: «<Назва>\\t<Кількість> <од. вимір.»")
+                    .as("Кожен рядок буфера: «<Назва>\\t<Кількість>\\t<од. вимір.»")
                     .allMatch(line -> CLIPBOARD_LINE_FORMAT.matcher(line).matches());
+            assertThat(clipboardLines)
+                    .as("Поле кількості не містить одиницю виміру (шт/кг)")
+                    .noneMatch(line -> line.matches(".*\\t-?\\d+(?:\\.\\d+)?\\s+\\S+\\t.*")
+                            || line.matches(".*\\t-?\\d+(?:\\.\\d+)?\\s+\\S+$"));
 
             stock.attachScreenshot("TC-WMS-007-009 — after page copy");
         });
@@ -686,7 +690,7 @@ public class InventoryUiTest extends BaseUITest {
     }
 
     /**
-     * Verifies each clipboard line has format {@code name\\tamount unit} and matches a location
+     * Verifies each clipboard line has format {@code name\\tamount\\tunit} and matches a location
      * inventory row (same name, amount, unit short name).
      */
     private static void assertClipboardMatchesLocationStock(List<String> clipboardLines,
@@ -701,7 +705,7 @@ public class InventoryUiTest extends BaseUITest {
         for (String line : clipboardLines) {
             Matcher matcher = CLIPBOARD_LINE_FORMAT.matcher(line);
             assertThat(matcher.matches())
-                    .as("Рядок буфера має формат «<Назва>\\t<Кількість> <од. вимір.»: [%s]", line)
+                    .as("Рядок буфера має формат «<Назва>\\t<Кількість>\\t<од. вимір.»: [%s]", line)
                     .isTrue();
 
             String name = matcher.group("name");
@@ -762,6 +766,80 @@ public class InventoryUiTest extends BaseUITest {
                     download.sizeBytes(),
                     "Експорт залишків Excel з UI");
             stock.attachScreenshot("TC-WMS-007-006 — export downloaded");
+        });
+    }
+
+    @Test(priority = 162)
+    @TestCaseId("TC-WMS-007-021")
+    @Story("Export remainders UI with and without zero stock")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Owner 1 на /inventory: тогл «Показувати нульові залишки» керує Excel.
+            Arrange: унікальний ресурс з залишком і унікальний вичерпаний (amount=0).
+            Тогл off → таблиця і XLSX без нуля; on → обидва в таблиці і в файлі.
+            """)
+    public void exportExcelWithAndWithoutZeroStockUi() {
+        String prefix = "InvExpZUi_" + System.currentTimeMillis() + "_";
+        ResourceResponse plus = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                storageId, UserRole.ADMIN, prefix + "p_");
+        ResourceResponse zero = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                storageId, UserRole.ADMIN, prefix + "z_");
+        trackStorageResourceForCleanup(plus.getId());
+        trackStorageResourceForCleanup(zero.getId());
+
+        relocationFixture.ensureStock(storageId, plus.getId(), 7.0);
+        relocationFixture.ensureStock(storageId, zero.getId(), 3.0);
+        inventoryFixture.requireItemForResourceWithRetry(
+                storageId, plus.getId(), UserRole.ADMIN, 15_000);
+        inventoryFixture.depleteToZero(storageId, zero.getId());
+
+        String plusName = plus.getName();
+        String zeroName = zero.getName();
+        Allure.parameter("plusResource", plusName);
+        Allure.parameter("zeroResource", zeroName);
+
+        UnitManagementPage stock = Allure.step("Owner 1 відкриває «Залишки» і шукає префікс", () -> {
+            injectRoleSession(UserRole.OWNER_1, storageId);
+            page = browserContext.newPage();
+            UnitManagementPage pageObj = new UnitManagementPage(page)
+                    .openForStorage(storageId)
+                    .waitForLoaded()
+                    .setShowZeroStock(false)
+                    .searchAndWaitForResource(prefix, plusName);
+            pageObj.waitForResourceAbsentFromTable(zeroName);
+            pageObj.attachScreenshot("TC-WMS-007-021 — zeros hidden");
+            return pageObj;
+        });
+
+        Allure.step("Експорт без нулів", () -> {
+            assertThat(stock.isShowZeroStockOn()).isFalse();
+            UnitManagementPage.ExportDownloadResult download = stock.clickExportToExcelAndDownload();
+            UiDownloadAssertions.assertNonEmptyXlsx(
+                    download.path(), download.sizeBytes(), "Export without zero stock");
+            assertThat(XlsxContentAssertions.zipContainsText(download.path(), plusName))
+                    .as("XLSX без нулів містить ресурс з залишком")
+                    .isTrue();
+            assertThat(XlsxContentAssertions.zipContainsText(download.path(), zeroName))
+                    .as("XLSX без нулів не містить вичерпаний ресурс")
+                    .isFalse();
+        });
+
+        Allure.step("Тогл нулів і експорт з нулями", () -> {
+            stock.setShowZeroStock(true)
+                    .searchAndWaitForResource(prefix, plusName)
+                    .waitForResourceInTable(zeroName);
+            stock.attachScreenshot("TC-WMS-007-021 — zeros visible");
+
+            UnitManagementPage.ExportDownloadResult download = stock.clickExportToExcelAndDownload();
+            UiDownloadAssertions.assertNonEmptyXlsx(
+                    download.path(), download.sizeBytes(), "Export with zero stock");
+            assertThat(XlsxContentAssertions.zipContainsText(download.path(), plusName))
+                    .as("XLSX з нулями містить ресурс з залишком")
+                    .isTrue();
+            assertThat(XlsxContentAssertions.zipContainsText(download.path(), zeroName))
+                    .as("XLSX з нулями містить вичерпаний ресурс")
+                    .isTrue();
+            stock.attachScreenshot("TC-WMS-007-021 — export with zeros");
         });
     }
 

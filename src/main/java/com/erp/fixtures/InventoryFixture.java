@@ -447,6 +447,42 @@ public class InventoryFixture extends BaseFixture {
         return DatabaseIntegrityValidator.extractList(response, ProductionProcessTagStatisticResponse.class);
     }
 
+    /**
+     * Seeds stock then inventory-PUT amount=0 so a {@code StorageItem} remains (hidden unless
+     * {@code showZeroStock=true}). Does not delete the row.
+     */
+    @Step("API: Обнулити ресурс {resourceId} на складі {storageId}, лишивши StorageItem=0")
+    public void depleteToZero(long storageId, long resourceId) {
+        resetResourceStock(storageId, resourceId, 0.0, UserRole.ADMIN);
+        PollUtils.waitUntilTrue(
+                () -> hierarchyContainsResource(storageId, resourceId, UserRole.ADMIN, true)
+                        && !hierarchyContainsResource(storageId, resourceId, UserRole.ADMIN, false),
+                15_000,
+                "Resource " + resourceId + " is zero-only on storage " + storageId);
+    }
+
+    @Step("API: hierarchy inventory містить resourceId={resourceId} showZeroStock={showZeroStock}")
+    public boolean hierarchyContainsResource(long parentStorageId,
+                                             long resourceId,
+                                             UserRole role,
+                                             boolean showZeroStock) {
+        Response response = getHierarchyInventory(
+                parentStorageId, role, Map.of(
+                        "showZeroStock", showZeroStock,
+                        "resourceIds", List.of(resourceId),
+                        "size", 20));
+        if (response.statusCode() != 200) {
+            return false;
+        }
+        List<MultiLocationStorageItemResponse> rows =
+                response.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
+        if (rows == null) {
+            return false;
+        }
+        return rows.stream().anyMatch(row -> row.getResource() != null
+                && Objects.equals(resourceId, row.getResource().getId()));
+    }
+
     @Step("API: Експорт залишків складу {storageId}")
     public Response exportRemainders(long storageId, UserRole role) {
         return apiExecutor.executeWithQueryParams(

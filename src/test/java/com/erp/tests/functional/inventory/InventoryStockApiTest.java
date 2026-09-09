@@ -7,6 +7,8 @@ import com.erp.fixtures.InventoryFixture;
 import com.erp.models.response.MultiLocationStorageItemResponse;
 import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.StorageItemResponse;
+import com.erp.models.response.ResourceResponse;
+import com.erp.utils.helpers.XlsxContentAssertions;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -88,6 +90,74 @@ public class InventoryStockApiTest extends InventoryApiTestBase {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.getContentType()).contains("octet-stream");
         assertThat(response.asByteArray().length).isGreaterThan(100);
+    }
+
+    @Test(priority = 55)
+    @TestCaseId("TC-WMS-007-020")
+    @Story("Export remainders XLSX with and without zero stock")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            GET /export-analytics/inventory?parentStorageId= (як кнопка «Експорт в Excel» на /inventory).
+            Arrange: унікальний ресурс з залишком і унікальний вичерпаний StorageItem (amount=0).
+            Без showZeroStock (default false) — у XLSX є лише ненуль; з showZeroStock=true — обидва.
+            Колонки кількості числові, одиниця виміру окрема («Одиниця Виміру»).
+            """)
+    public void exportExcelWithAndWithoutZeroStock() {
+        String prefix = "InvExpZ_" + System.currentTimeMillis() + "_";
+        ResourceResponse plus = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                owner1StorageId, UserRole.ADMIN, prefix + "p_");
+        ResourceResponse zero = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                owner1StorageId, UserRole.ADMIN, prefix + "z_");
+        trackStorageResourceForCleanup(plus.getId());
+        trackStorageResourceForCleanup(zero.getId());
+
+        relocationFixture.ensureStock(owner1StorageId, plus.getId(), 7.0);
+        relocationFixture.ensureStock(owner1StorageId, zero.getId(), 3.0);
+        inventoryFixture.requireItemForResourceWithRetry(
+                owner1StorageId, plus.getId(), UserRole.ADMIN, 15_000);
+        inventoryFixture.depleteToZero(owner1StorageId, zero.getId());
+
+        Allure.parameter("plusResource", plus.getName());
+        Allure.parameter("zeroResource", zero.getName());
+        Allure.parameter("searchTerm", prefix);
+
+        Allure.step("Експорт без нулів — є ненуль, немає вичерпаного", () -> {
+            Response response = inventoryFixture.exportRemaindersHierarchy(
+                    UserRole.OWNER_1, owner1StorageId, Map.of(
+                            "searchTerm", prefix,
+                            "showZeroStock", false));
+            assertThat(response.statusCode()).isEqualTo(200);
+            byte[] xlsx = response.asByteArray();
+            assertThat(xlsx.length).isGreaterThan(100);
+            assertThat(XlsxContentAssertions.zipContainsText(xlsx, "Одиниця Виміру"))
+                    .as("XLSX має колонку одиниці виміру")
+                    .isTrue();
+            assertThat(XlsxContentAssertions.zipContainsText(xlsx, plus.getName()))
+                    .as("Без нулів XLSX містить ресурс з залишком")
+                    .isTrue();
+            assertThat(XlsxContentAssertions.zipContainsAmount(xlsx, 7.0))
+                    .as("Без нулів XLSX містить кількість ненульового ресурсу")
+                    .isTrue();
+            assertThat(XlsxContentAssertions.zipContainsText(xlsx, zero.getName()))
+                    .as("Без нулів XLSX не містить вичерпаний ресурс")
+                    .isFalse();
+        });
+
+        Allure.step("Експорт з нулями — обидва ресурси", () -> {
+            Response response = inventoryFixture.exportRemaindersHierarchy(
+                    UserRole.OWNER_1, owner1StorageId, Map.of(
+                            "searchTerm", prefix,
+                            "showZeroStock", true));
+            assertThat(response.statusCode()).isEqualTo(200);
+            byte[] xlsx = response.asByteArray();
+            assertThat(xlsx.length).isGreaterThan(100);
+            assertThat(XlsxContentAssertions.zipContainsText(xlsx, plus.getName()))
+                    .as("З нулями XLSX містить ресурс з залишком")
+                    .isTrue();
+            assertThat(XlsxContentAssertions.zipContainsText(xlsx, zero.getName()))
+                    .as("З нулями XLSX містить вичерпаний ресурс")
+                    .isTrue();
+        });
     }
 
     @Test(priority = 60)

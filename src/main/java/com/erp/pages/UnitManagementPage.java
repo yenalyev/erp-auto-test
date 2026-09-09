@@ -159,6 +159,41 @@ public class UnitManagementPage extends BasePage {
         return copyButton().isEnabled();
     }
 
+    /** Тогл «Показувати нульові залишки» — той самий {@code showZeroStock}, що йде в Excel-експорт. */
+    public boolean isShowZeroStockOn() {
+        Locator toggle = zeroStockSwitch();
+        if (toggle.count() == 0) {
+            return false;
+        }
+        String aria = toggle.first().getAttribute("aria-checked");
+        if (aria != null) {
+            return "true".equalsIgnoreCase(aria);
+        }
+        return "checked".equalsIgnoreCase(toggle.first().getAttribute("data-state"));
+    }
+
+    public UnitManagementPage setShowZeroStock(boolean show) {
+        Locator toggle = zeroStockSwitch();
+        toggle.first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        if (isShowZeroStockOn() == show) {
+            return this;
+        }
+        waitForInventoryTableDuring(() -> toggle.first().click());
+        page.waitForCondition(
+                () -> isShowZeroStockOn() == show,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage waitForResourceAbsentFromTable(String resourceName) {
+        page.waitForCondition(
+                () -> !isResourceVisibleInTable(resourceName),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     public boolean isConfigureAlertsButtonVisible() {
         Locator control = configureAlertsControl();
         return control.count() > 0 && control.first().isVisible();
@@ -691,6 +726,12 @@ public class UnitManagementPage extends BasePage {
 
     private Locator copyButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(COPY_BUTTON_TEXT));
+    }
+
+    private Locator zeroStockSwitch() {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Показувати нульові"))
+                .locator("[role='switch']");
     }
 
     private Locator configureAlertsControl() {

@@ -150,7 +150,7 @@ mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest,StorageNamesEn
 | **TC-STR-CREW-011..012** | `CrewVisibilityTest` | Ієрархія UNIT та рекурсивний пошук екіпажів | Critical |
 | **TC-CREW-REL-001..011** | `CrewRelocationTest` | Send→CREW CREATED→FINISHED (відправник); journal; cancel; recipient cannot finish | Critical |
 | **TC-FLY-REL-001..005** | `FlyPointRelocationTest` | FLY_POINT lifecycle; attached CREW auto-forward; CREW→FLY_POINT AUTO_FINISHED; reparent one-parent; multi-CREW | Critical |
-| **TC-CREW-RET-001..004** | `CrewReturnTest` | Повернення CREW→склад (receive): unattached/attached stock; over-stock → 400 | Critical |
+| **TC-CREW-RET-001..006** | `CrewReturnTest` | Повернення CREW→склад (receive): unattached/attached stock; over-stock → 400; DELETE rollback на FP vs CREW | Critical |
 | **TC-UI-CREW-RET-001..003** | `CrewReturnUITest` | UI «Отримати від екіпажа»: CTA; happy path unattached; attached→FP debit | Critical |
 | **TC-CREW-INC-001..006** | `CrewFlyPointIncidentTest` | Надзвичайна подія на CREW/FLY_POINT: LOST, без credit отримувачу | Critical |
 | **TC-FLY-WO-001** | `CrewWriteOffTest` | Complete write-off attached CREW → debit parent FLY_POINT (DB seed) | Critical |

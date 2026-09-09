@@ -27,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Повернення виробів від екіпажу на склад (CPMA-647):
- * {@code POST /api/v1/relocations/receive} з sender=CREW.
+ * {@code POST /api/v1/relocations/receive} з sender=CREW;
+ * DELETE відкочує залишок на FLY_POINT (attached) або на CREW (unattached).
  */
 @Slf4j
 @Epic("Relocation")
@@ -230,5 +231,96 @@ public class CrewReturnTest extends CrewApiTestBase {
                 beforeFp, afterFp, flyPointId, resourceId, "overstock — FLY_POINT без змін");
         RelocationStockAssertions.assertUnchanged(
                 beforeWarehouse, afterWarehouse, warehouseId, resourceId, "overstock — склад без змін");
+    }
+
+    @Test(priority = 50)
+    @TestCaseId("TC-CREW-RET-005")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_RET_005)
+    @Severity(SeverityLevel.CRITICAL)
+    public void attachedCrewReturnDeleteRestoresFlyPointNotCrew() {
+        CrewRegionScenario scenario = crewFixture.prepareAttachedCrewScenario("crew-ret-del-a-");
+        refreshRoleSessions(UserRole.OWNER_1);
+
+        Long crewId = scenario.crew().getId();
+        Long flyPointId = scenario.flyPoint().getId();
+        Long warehouseId = scenario.memberStorageId();
+
+        relocationFixture.createSendAndFinishBySender(
+                UserRole.OWNER_1, warehouseId, crewId, resourceId, ISSUE_AMOUNT);
+
+        ProductionStockAssertions.StockSnapshot beforeFp = RelocationStockAssertions.capture(
+                apiExecutor, flyPointId, STOCK_READER, Set.of(resourceId), "fp before return");
+        ProductionStockAssertions.StockSnapshot beforeCrew = RelocationStockAssertions.capture(
+                apiExecutor, crewId, STOCK_READER, Set.of(resourceId), "crew before return");
+        ProductionStockAssertions.StockSnapshot beforeWarehouse = RelocationStockAssertions.capture(
+                apiExecutor, warehouseId, UserRole.OWNER_1, Set.of(resourceId), "warehouse before return");
+
+        assertThat(beforeCrew.amountOf(resourceId))
+                .as("attached CREW shelf ≈ 0 після auto-forward")
+                .isLessThan(0.01);
+
+        RelocationResponse received = relocationFixture.createCrewReceive(
+                UserRole.OWNER_1, crewId, warehouseId, resourceId, RETURN_AMOUNT);
+        assertThat(received.getState()).isEqualTo(RelocationState.AUTO_FINISHED);
+
+        relocationFixture.deleteRelocation(UserRole.ADMIN, received.getId(), warehouseId);
+
+        ProductionStockAssertions.StockSnapshot afterFp = RelocationStockAssertions.capture(
+                apiExecutor, flyPointId, STOCK_READER, Set.of(resourceId), "fp after delete return");
+        ProductionStockAssertions.StockSnapshot afterCrew = RelocationStockAssertions.capture(
+                apiExecutor, crewId, STOCK_READER, Set.of(resourceId), "crew after delete return");
+        ProductionStockAssertions.StockSnapshot afterWarehouse = RelocationStockAssertions.capture(
+                apiExecutor, warehouseId, UserRole.OWNER_1, Set.of(resourceId), "warehouse after delete return");
+
+        RelocationStockAssertions.assertUnchanged(
+                beforeFp, afterFp, flyPointId, resourceId,
+                "attached DELETE — залишок повернувся на FLY_POINT");
+        RelocationStockAssertions.assertUnchanged(
+                beforeWarehouse, afterWarehouse, warehouseId, resourceId,
+                "attached DELETE — склад як перед поверненням");
+        RelocationStockAssertions.assertUnchanged(
+                beforeCrew, afterCrew, crewId, resourceId,
+                "attached DELETE — CREW не тримає відкатаний залишок");
+        assertThat(afterCrew.amountOf(resourceId))
+                .as("після DELETE повернення attached CREW залишок має бути на точці, не на екіпажі")
+                .isLessThan(0.01);
+    }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-CREW-RET-006")
+    @Description(StorageRegionsAllureDescriptions.TC_CREW_RET_006)
+    @Severity(SeverityLevel.NORMAL)
+    public void unattachedCrewReturnDeleteRestoresCrew() {
+        CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("crew-ret-del-u-");
+        refreshRoleSessions(UserRole.OWNER_1);
+
+        Long crewId = scenario.crew().getId();
+        Long warehouseId = scenario.memberStorageId();
+
+        relocationFixture.createSendAndFinishBySender(
+                UserRole.OWNER_1, warehouseId, crewId, resourceId, ISSUE_AMOUNT);
+
+        ProductionStockAssertions.StockSnapshot beforeCrew = RelocationStockAssertions.capture(
+                apiExecutor, crewId, STOCK_READER, Set.of(resourceId), "crew before return");
+        ProductionStockAssertions.StockSnapshot beforeWarehouse = RelocationStockAssertions.capture(
+                apiExecutor, warehouseId, UserRole.OWNER_1, Set.of(resourceId), "warehouse before return");
+
+        RelocationResponse received = relocationFixture.createCrewReceive(
+                UserRole.OWNER_1, crewId, warehouseId, resourceId, RETURN_AMOUNT);
+        assertThat(received.getState()).isEqualTo(RelocationState.AUTO_FINISHED);
+
+        relocationFixture.deleteRelocation(UserRole.ADMIN, received.getId(), warehouseId);
+
+        ProductionStockAssertions.StockSnapshot afterCrew = RelocationStockAssertions.capture(
+                apiExecutor, crewId, STOCK_READER, Set.of(resourceId), "crew after delete return");
+        ProductionStockAssertions.StockSnapshot afterWarehouse = RelocationStockAssertions.capture(
+                apiExecutor, warehouseId, UserRole.OWNER_1, Set.of(resourceId), "warehouse after delete return");
+
+        RelocationStockAssertions.assertUnchanged(
+                beforeCrew, afterCrew, crewId, resourceId,
+                "unattached DELETE — залишок повернувся на екіпаж");
+        RelocationStockAssertions.assertUnchanged(
+                beforeWarehouse, afterWarehouse, warehouseId, resourceId,
+                "unattached DELETE — склад як перед поверненням");
     }
 }

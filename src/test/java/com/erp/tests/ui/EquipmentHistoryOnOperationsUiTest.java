@@ -6,6 +6,7 @@ import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.EquipmentFixture;
 import com.erp.fixtures.InventoryFixture;
+import com.erp.fixtures.RelocationFixture;
 import com.erp.models.response.EquipmentResponse;
 import com.erp.models.response.InventorySessionStatus;
 import com.erp.models.response.RelocationResponse;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
 
     private EquipmentFixture equipmentFixture;
+    private RelocationFixture relocationFixture;
     private InventoryFixture inventoryFixture;
     private long owner1StorageId;
     private long owner2StorageId;
@@ -40,6 +42,7 @@ public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         equipmentFixture = new EquipmentFixture(testContext, apiExecutor);
+        relocationFixture = new RelocationFixture(testContext, apiExecutor);
         inventoryFixture = new InventoryFixture(testContext, apiExecutor);
         equipmentFixture.prepareCategoryContext();
         owner1StorageId = ConfigProvider.getOwner1StorageId();
@@ -267,8 +270,10 @@ public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
         EquipmentResponse equipment = Allure.step("API: створити обладнання і видати Owner1→Owner2", () -> {
             EquipmentResponse created = equipmentFixture.createEquipmentOnStorage(
                     UserRole.ADMIN, owner1StorageId, categoryId);
-            equipmentFixture.sendEquipment(
+            RelocationResponse sent = equipmentFixture.sendEquipment(
                     UserRole.OWNER_1, owner1StorageId, owner2StorageId, created.getId());
+            relocationFixture.waitUntilInTransitReadyForEdit(
+                    UserRole.OWNER_1, owner1StorageId, sent.getId());
             return created;
         });
 
@@ -278,7 +283,7 @@ public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
         injectRoleSession(UserRole.OWNER_1, owner1StorageId);
         page = browserContext.newPage();
 
-        Allure.step("UI: редагувати видачу на «В дорозі» — примітки з version", () -> {
+        Allure.step("UI: редагувати видачу на «В дорозі» — примітки з актуальним version", () -> {
             RelocationPage journal = new RelocationPage(page).open().openInTransitTab();
             RelocationUpdateOutputPage form = journal.clickEditSendInRow(equipment.getName());
             form.attachScreenshot("TC-UI-HIST-EQ-005 — edit send form");

@@ -11,6 +11,11 @@
                     <include name="editedEquipmentSendShowsUpdatedDescriptionOnOperationHistory"/>
                 </methods>
             </class>
+            <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest">
+                <methods>
+                    <include name="unitHistoryShowsEditedSendDescription"/>
+                </methods>
+            </class>
         </classes>
     </test>
 </suite>

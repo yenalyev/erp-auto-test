@@ -657,12 +657,9 @@ public class RelocationPage extends BasePage {
         row.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        waitForResponseTolerant(
-                r -> r.url().contains("/relocations/")
-                        && "GET".equals(r.request().method())
-                        && r.status() == 200,
-                () -> editButtonInRow(rowText).click(),
-                "GET relocation for edit send");
+        // Form hydrates from journal location.state — there is no GET /relocations/{id}.
+        // Waiting for that GET only burns uiTimeout and lets async invoice bump @Version.
+        editButtonInRow(rowText).click();
         return new RelocationUpdateOutputPage(page).waitForLoaded();
     }
 

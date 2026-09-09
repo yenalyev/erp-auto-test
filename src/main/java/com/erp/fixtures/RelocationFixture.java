@@ -282,6 +282,86 @@ public class RelocationFixture extends BaseFixture {
                 .orElse(null);
     }
 
+    @Step("API: знайти переміщення «В дорозі» id={relocationId}")
+    public RelocationResponse findInTransitById(UserRole role, Long storageId, Long relocationId) {
+        return inTransitJournal(role, storageId).stream()
+                .filter(r -> relocationId.equals(r.getId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Step("API: знайти переміщення «В дорозі» за назвою обладнання")
+    public RelocationResponse findInTransitByEquipmentName(UserRole role, Long storageId, String equipmentName) {
+        return inTransitJournal(role, storageId).stream()
+                .filter(r -> r.getEquipmentItems() != null && r.getEquipmentItems().stream()
+                        .anyMatch(e -> equipmentName.equals(e.getName())))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * After equipment send, {@code generateEquipmentInvoiceAsync} saves the relocation and bumps
+     * {@code @Version}. UI edit send reads version from the journal row — submit before that
+     * save finishes (or after a stale 30s GET wait) yields PUT 409.
+     */
+    @Step("API: дочекатися стабільного version видачі «В дорозі» (після async-накладної)")
+    public RelocationResponse waitUntilInTransitReadyForEdit(UserRole role, Long storageId, Long relocationId) {
+        return waitUntilInTransitReadyForEdit(
+                role, storageId, r -> relocationId.equals(r.getId()), "relocationId=" + relocationId);
+    }
+
+    @Step("API: дочекатися стабільного version видачі «В дорозі» за обладнанням")
+    public RelocationResponse waitUntilInTransitReadyForEditByEquipment(
+            UserRole role, Long storageId, String equipmentName) {
+        return waitUntilInTransitReadyForEdit(
+                role, storageId,
+                r -> r.getEquipmentItems() != null && r.getEquipmentItems().stream()
+                        .anyMatch(e -> equipmentName.equals(e.getName())),
+                "equipment=" + equipmentName);
+    }
+
+    private List<RelocationResponse> inTransitJournal(UserRole role, Long storageId) {
+        Response response = getInTransitJournalResponse(role, storageId);
+        validateSuccess(response, "Get in-transit relocations");
+        return DatabaseIntegrityValidator.extractList(response, RelocationResponse.class);
+    }
+
+    private RelocationResponse waitUntilInTransitReadyForEdit(
+            UserRole role,
+            Long storageId,
+            java.util.function.Predicate<RelocationResponse> match,
+            String label) {
+        RelocationResponse last = null;
+        Long lastVersion = null;
+        int stableHits = 0;
+        long deadline = System.currentTimeMillis() + 20_000;
+        while (System.currentTimeMillis() < deadline) {
+            last = inTransitJournal(role, storageId).stream()
+                    .filter(match)
+                    .findFirst()
+                    .orElse(null);
+            if (last != null) {
+                if (last.getInvoiceNumber() != null && !last.getInvoiceNumber().isBlank()) {
+                    return last;
+                }
+                if (java.util.Objects.equals(lastVersion, last.getVersion())) {
+                    stableHits++;
+                    if (stableHits >= 3) {
+                        return last;
+                    }
+                } else {
+                    lastVersion = last.getVersion();
+                    stableHits = 0;
+                }
+            }
+            sleep(500);
+        }
+        if (last != null) {
+            return last;
+        }
+        throw new IllegalStateException("In-transit relocation not found for " + label + " within 20s");
+    }
+
     @Step("API: очікування № накладної у журналі «В дорозі»")
     public RelocationResponse waitForInTransitWithInvoiceNumber(UserRole role,
                                                                 Long storageId,

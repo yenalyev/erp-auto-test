@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class EquipmentUnitHistoryUiTest extends BaseUITest {
 
     private EquipmentFixture equipmentFixture;
+    private RelocationFixture relocationFixture;
     private StorageFixture storageFixture;
     private long owner1StorageId;
     private long owner2StorageId;
@@ -38,7 +39,9 @@ public class EquipmentUnitHistoryUiTest extends BaseUITest {
     @Override
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
-        new RelocationFixture(testContext, apiExecutor).prepareContext();
+        RelocationFixture relocationFixture = new RelocationFixture(testContext, apiExecutor);
+        relocationFixture.prepareContext();
+        this.relocationFixture = relocationFixture;
         equipmentFixture = new EquipmentFixture(testContext, apiExecutor);
         storageFixture = new StorageFixture(testContext, apiExecutor);
         equipmentFixture.prepareCategoryContext();
@@ -248,7 +251,9 @@ public class EquipmentUnitHistoryUiTest extends BaseUITest {
         Allure.parameter("equipmentName", name);
         Allure.parameter("editMarker", marker);
 
-        Allure.step("UI: редагувати видачу на «В дорозі» — примітки з version", () -> {
+        Allure.step("UI: редагувати видачу на «В дорозі» — примітки з актуальним version", () -> {
+            relocationFixture.waitUntilInTransitReadyForEditByEquipment(
+                    UserRole.OWNER_1, owner1StorageId, name);
             RelocationPage journal = new RelocationPage(page).open().openInTransitTab();
             RelocationUpdateOutputPage form = journal.clickEditSendInRow(name);
             form.attachScreenshot("TC-UI-EQ-HIST-005 — edit send form");
@@ -342,6 +347,8 @@ public class EquipmentUnitHistoryUiTest extends BaseUITest {
         Allure.parameter("equipmentName", name);
 
         Allure.step("UI: edit send і скасувати, щоб відкрити журнал", () -> {
+            relocationFixture.waitUntilInTransitReadyForEditByEquipment(
+                    UserRole.OWNER_1, owner1StorageId, name);
             RelocationPage journal = new RelocationPage(page).open().openInTransitTab();
             RelocationUpdateOutputPage form = journal.clickEditSendInRow(name);
             form.fillDescription("ui-eq-no-dup-" + (System.currentTimeMillis() % 1_000_000))

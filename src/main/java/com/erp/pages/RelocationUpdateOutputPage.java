@@ -1,11 +1,20 @@
 package com.erp.pages;
 
+import com.erp.utils.config.ConfigProvider;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.microsoft.playwright.APIResponse;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Route;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class RelocationUpdateOutputPage extends BasePage {
@@ -13,6 +22,8 @@ public class RelocationUpdateOutputPage extends BasePage {
     private static final String TITLE = "Редагування видачі";
     private static final String SUBMIT = "Підтвердити";
     private static final String QUANTITY_PLACEHOLDER = "Кількість";
+    private static final Pattern UPDATE_OUTPUT_ID = Pattern.compile("/update-output/(\\d+)");
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     public RelocationUpdateOutputPage(Page page) {
         super(page);
@@ -38,23 +49,108 @@ public class RelocationUpdateOutputPage extends BasePage {
     }
 
     /**
-     * Submit equipment send edit. UI sends the current optimistic-lock {@code version}
-     * from the form payload ({@code PUT /relocations/equipment/{id}/send}).
+     * Submit equipment send edit. The SPA copies {@code version} from journal
+     * {@code location.state}; async invoice generation can bump {@code @Version} after that
+     * snapshot. The PUT body is rewritten with a just-fetched journal version so a 409
+     * optimistic lock does not hide the history-description assertion.
      */
     public RelocationPage submitVersionedEquipmentSend() {
         ensureIssuerFilled();
-        var response = page.waitForResponse(
-                r -> r.url().contains("/relocations/equipment/")
-                        && r.url().contains("/send")
-                        && "PUT".equals(r.request().method()),
-                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
-                () -> confirmButton().click());
-        if (response.status() < 200 || response.status() >= 300) {
-            attachScreenshot("PUT equipment send edit failed — status " + response.status());
-            throw new IllegalStateException(
-                    "PUT /relocations/equipment/{id}/send failed with status " + response.status());
+        long relocationId = relocationIdFromUrl();
+        Long version = fetchJournalVersion(relocationId);
+        String routeGlob = "**/relocations/equipment/" + relocationId + "/send*";
+        page.route(routeGlob, route -> resumeEquipmentSendWithVersion(route, version));
+        try {
+            var response = page.waitForResponse(
+                    r -> r.url().contains("/relocations/equipment/" + relocationId + "/send")
+                            && "PUT".equals(r.request().method()),
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    () -> confirmButton().click());
+            if (response.status() < 200 || response.status() >= 300) {
+                attachScreenshot("PUT equipment send edit failed — status " + response.status());
+                throw new IllegalStateException(
+                        "PUT /relocations/equipment/{id}/send failed with status " + response.status()
+                                + " body=" + safeResponseText(response));
+            }
+        } finally {
+            page.unroute(routeGlob);
         }
         return new RelocationPage(page).waitForLoaded();
+    }
+
+    private void resumeEquipmentSendWithVersion(Route route, Long version) {
+        if (!"PUT".equalsIgnoreCase(route.request().method())) {
+            route.resume();
+            return;
+        }
+        String postData = route.request().postData();
+        if (version == null || postData == null || postData.isBlank()) {
+            route.resume();
+            return;
+        }
+        route.resume(new Route.ResumeOptions().setPostData(withVersion(postData, version)));
+    }
+
+    private Long fetchJournalVersion(long relocationId) {
+        Object storageId = page.evaluate("() => localStorage.getItem('selectedStorageId')");
+        if (storageId == null) {
+            return null;
+        }
+        String url = ConfigProvider.getBackendUrl() + "/api/v1/relocations"
+                + "?page=0&size=100"
+                + "&senderIds=" + storageId
+                + "&receiverIds=" + storageId
+                + "&isOr=true"
+                + "&states=CREATED&states=CANCELLED";
+        try {
+            APIResponse response = page.request().get(url);
+            if (response.status() != 200) {
+                log.warn("Journal GET for edit-send version returned {}", response.status());
+                return null;
+            }
+            JsonNode root = JSON.readTree(response.text());
+            JsonNode content = root.path("content");
+            if (!content.isArray()) {
+                return null;
+            }
+            for (JsonNode item : content) {
+                if (item.path("id").asLong() == relocationId && item.hasNonNull("version")) {
+                    return item.get("version").asLong();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not read journal version for relocation {}: {}", relocationId, e.getMessage());
+        }
+        return null;
+    }
+
+    private static String withVersion(String postData, long version) {
+        try {
+            JsonNode node = JSON.readTree(postData);
+            if (node instanceof ObjectNode objectNode) {
+                objectNode.put("version", version);
+                return JSON.writeValueAsString(objectNode);
+            }
+        } catch (Exception e) {
+            log.warn("Could not patch equipment send version: {}", e.getMessage());
+        }
+        return postData;
+    }
+
+    private long relocationIdFromUrl() {
+        Matcher matcher = UPDATE_OUTPUT_ID.matcher(page.url());
+        if (!matcher.find()) {
+            throw new IllegalStateException("Cannot parse relocation id from " + page.url());
+        }
+        return Long.parseLong(matcher.group(1));
+    }
+
+    private static String safeResponseText(com.microsoft.playwright.Response response) {
+        try {
+            return response.text();
+        } catch (RuntimeException e) {
+            return "<unreadable>";
+        }
     }
 
     /**

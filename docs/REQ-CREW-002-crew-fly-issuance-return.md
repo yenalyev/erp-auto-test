@@ -107,9 +107,13 @@ Page objects: `RelocationPage.clickReceiveFromCrew()`, `RelocationCreateInputCre
 | TC-CREW-RET-002 | `CrewReturnTest.attachedCrewReturnDebitsFlyPointCreditsWarehouse` | API attached: FP −N, warehouse +N, CREW ≈ 0 |
 | TC-CREW-RET-003 | `CrewReturnTest.unattachedCrewReturnOverStockRejected` | amount > CREW stock → 400 |
 | TC-CREW-RET-004 | `CrewReturnTest.attachedCrewReturnOverStockOnFlyPointRejected` | amount > FP stock → 400 |
+| TC-CREW-RET-005 | `CrewReturnTest.attachedCrewReturnDeleteRestoresFlyPointNotCrew` | DELETE attached return: FP і склад як до receive; CREW ≈ 0 |
+| TC-CREW-RET-006 | `CrewReturnTest.unattachedCrewReturnDeleteRestoresCrew` | DELETE unattached return: CREW і склад як до receive |
 | TC-UI-CREW-RET-001 | `CrewReturnUITest.receiveFromCrewButtonVisible` | CTA видима |
 | TC-UI-CREW-RET-002 | `CrewReturnUITest.happyPathUnattachedCrewReturn` | UI unattached + stock |
 | TC-UI-CREW-RET-003 | `CrewReturnUITest.happyPathAttachedCrewReturnDebitsFlyPoint` | UI attached + FP debit |
+
+**AC-24:** після DELETE повернення attached — залишок на FLY_POINT, не на CREW; unattached — на CREW.
 
 ---
 
@@ -229,3 +233,4 @@ Suites: `relocations.xml`, `functional.xml`, `storage-regions.xml`, `regression.
 |------|--------|
 | 2026-07-27 | Перша версія: фокус AC-22 повернення CPMA-647; карта TC API/UI; дзеркало TCM |
 | 2026-09-05 | AC-23: передача FLY_POINT→FLY_POINT (API + UI + карта TC) |
+| 2026-09-07 | AC-24: DELETE повернення — rollback на FP (attached) / CREW (unattached); TC-CREW-RET-005/006 |

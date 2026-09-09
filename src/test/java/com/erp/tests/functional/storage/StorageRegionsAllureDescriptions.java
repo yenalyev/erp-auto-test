@@ -424,6 +424,18 @@ public final class StorageRegionsAllureDescriptions {
             Очікуваний результат: HTTP 400; FLY_POINT і склад без змін.
             """ + ON_FAIL_STOCK;
 
+    public static final String TC_CREW_RET_005 = """
+            Що перевіряємо: DELETE повернення від attached CREW відкатує залишок на FLY_POINT, не на екіпаж.
+            Тестові дані: prepareAttachedCrewScenario; видача FINISHED; receive RETURN_AMOUNT; ADMIN DELETE.
+            Очікуваний результат: FLY_POINT і склад як перед поверненням; CREW ≈ 0 (не +N на екіпаж).
+            """ + ON_FAIL_STOCK;
+
+    public static final String TC_CREW_RET_006 = """
+            Що перевіряємо: DELETE повернення від unattached CREW відкатує залишок на екіпаж.
+            Тестові дані: prepareSingleCrewScenario; видача FINISHED; receive RETURN_AMOUNT; ADMIN DELETE.
+            Очікуваний результат: CREW і склад як перед поверненням.
+            """ + ON_FAIL_STOCK;
+
     public static final String TC_FLY_WO_001 = """
             Що перевіряємо: complete write-off для attached CREW списує з parent FLY_POINT, не з CREW.
             Тестові дані: attached CREW; stock на FLY_POINT після видачі; DB seed PENDING write-off; PUT complete.
