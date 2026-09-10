@@ -15,6 +15,7 @@ import com.erp.models.response.TechnologicalMapResourceUsageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.PollUtils;
 import com.erp.utils.helpers.XlsxContentAssertions;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -111,6 +112,37 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
         assertThat(fixture.hasComponent(own, chainB.getChip().getName()))
                 .as("чужий ланцюжок не підмішується в розрахунок карти A")
                 .isFalse();
+    }
+
+    @Test(priority = 21)
+    @TestCaseId("TC-TM-CALC-004")
+    @Story("Access")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Корінь карти на дочірній локації: GET з батьківського storageId → 200; sibling поза піддеревом → 404.")
+    public void parentStorageCalculatesChildRootMap() {
+        Long parentId = newStorage("calc-par-");
+        Long childId = newChildStorage(parentId, "calc-kid-");
+        Long siblingId = newStorage("calc-sib-");
+        ResourceCalculatorFixture.Chain childChain = trackChain(childId, fixture.createCanonicalChain(childId));
+        ResourceCalculatorFixture.Chain siblingChain = trackChain(siblingId, fixture.createCanonicalChain(siblingId));
+
+        PollUtils.waitUntilTrue(
+                () -> fixture.calculateRaw(
+                        UserRole.ADMIN, parentId, childChain.getProductMap().getId(), "1", List.of())
+                        .statusCode() == 200,
+                15_000,
+                "ієрархія підхопила дочірню локацію для calculate-resource-usage");
+        TechnologicalMapResourceUsageResponse fromParent = fixture.calculate(
+                UserRole.ADMIN, parentId, childChain.getProductMap().getId(), "1");
+        assertThat(fromParent.getId()).isEqualTo(childChain.getProductMap().getId());
+        assertThat(fixture.hasComponent(fromParent, childChain.getBody().getName())).isTrue();
+        assertThat(fixture.hasComponent(fromParent, siblingChain.getChip().getName()))
+                .as("карта sibling не підмішується в розрахунок з батька")
+                .isFalse();
+
+        Response sibling = fixture.calculateRaw(
+                UserRole.ADMIN, parentId, siblingChain.getProductMap().getId(), "1", List.of());
+        assertThat(sibling.statusCode()).isEqualTo(404);
     }
 
     @Test(priority = 30)
@@ -414,6 +446,12 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
 
     private Long newStorage(String prefix) {
         StorageResponse storage = storageFixture.createChildStorage(prefix);
+        storagesNewestFirst.add(0, storage.getId());
+        return storage.getId();
+    }
+
+    private Long newChildStorage(Long parentId, String prefix) {
+        StorageResponse storage = storageFixture.createChildStorage(parentId, prefix);
         storagesNewestFirst.add(0, storage.getId());
         return storage.getId();
     }

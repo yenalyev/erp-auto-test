@@ -9,6 +9,7 @@ import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.pages.ResourceCalculatorPage;
 import com.erp.pages.TechnologicalMapsListPage;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.XlsxContentAssertions;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -67,7 +68,9 @@ public class ResourceCalculatorUiTest extends BaseUITest {
             }
         }
         storagesNewestFirst.clear();
-        storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
     @Test(priority = 10)
@@ -94,13 +97,15 @@ public class ResourceCalculatorUiTest extends BaseUITest {
     @TestCaseId("TC-TM-CALC-002")
     @Story("Access")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("«Всі локації» — кнопка disabled; прямий захід показує банер.")
+    @Description("«Всі локації» — кнопка disabled з tooltip; прямий захід показує банер.")
     public void allLocationsDisablesCalculator() {
         injectAllLocationsSession();
         TechnologicalMapsListPage listPage = new TechnologicalMapsListPage(page).openAllLocations();
 
         assertThat(listPage.isCalculatorButtonVisible()).isTrue();
         assertThat(listPage.isCalculatorButtonEnabled()).isFalse();
+        assertThat(listPage.calculatorDisabledTooltip())
+                .isEqualTo("Оберіть конкретну локацію для виконання дії");
         listPage.attachScreenshot("TC-TM-CALC-002 disabled button");
 
         ResourceCalculatorPage calculator = new ResourceCalculatorPage(page).open().waitForTitle();
@@ -159,7 +164,7 @@ public class ResourceCalculatorUiTest extends BaseUITest {
     @TestCaseId("TC-TM-CALC-030")
     @Story("Summary")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Вкладки Дерево/Зведення; зведення містить лист, не розкладений проміжний.")
+    @Description("Вкладки Дерево/Зведення; зведення містить лист, не розкладений проміжний; pending — бейдж.")
     public void summaryTabShowsLeafResources() {
         IsolatedChain isolated = arrangeCanonical();
         ResourceCalculatorPage calculator = openCalculator(isolated.storageId());
@@ -176,6 +181,18 @@ public class ResourceCalculatorUiTest extends BaseUITest {
                 .as("розкладений корпус не потрапляє у зведення")
                 .isFalse();
         calculator.attachScreenshot("TC-TM-CALC-030 summary");
+
+        calculator.stubCalculateWithPendingComponent();
+        try {
+            calculator.calculate();
+            calculator.openSummaryTab().waitUntilPendingBadgeVisible();
+            assertThat(calculator.isPendingBadgeVisible())
+                    .as("pending-компонент має бейдж «не розкладено»")
+                    .isTrue();
+            calculator.attachScreenshot("TC-TM-CALC-030 pending badge");
+        } finally {
+            calculator.clearCalculateStub();
+        }
     }
 
     @Test(priority = 60)
@@ -210,18 +227,32 @@ public class ResourceCalculatorUiTest extends BaseUITest {
     @TestCaseId("TC-TM-CALC-033")
     @Story("Export")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Після розрахунку «Експорт в Excel» качає непорожній xlsx.")
+    @Description("Після «Тільки моя локація» Excel повторює зведення на екрані (немає чіпа чужої карти).")
     public void exportExcelAfterCalculate() {
-        IsolatedChain isolated = arrangeCanonical();
-        ResourceCalculatorPage calculator = openCalculator(isolated.storageId());
-        calculator.selectTechMap(isolated.chain().getProductMap().getName())
+        Long storageA = newStorage("calc-ui-xls-a-");
+        Long storageB = newStorage("calc-ui-xls-b-");
+        ResourceCalculatorFixture.ChoiceChain chain = fixture.createRemoteProducerChain(storageA, storageB);
+        maps.add(new CleanupMap(chain.getProductMap(), storageA));
+        maps.add(new CleanupMap(chain.getBoardMapA(), storageB));
+
+        ResourceCalculatorPage calculator = openCalculator(storageA);
+        calculator.selectTechMap(chain.getProductMap().getName())
                 .setAmount("10")
                 .calculate()
-                .waitUntilResourceVisible(isolated.chain().getChip().getName());
+                .waitUntilResourceVisible(chain.getChip().getName());
+        calculator.setOnlyMyLocation(true);
+        assertThat(calculator.isResourceVisible(chain.getBoard().getName())).isTrue();
+        assertThat(calculator.isResourceVisible(chain.getChip().getName())).isFalse();
 
         assertThat(calculator.isExportEnabled()).isTrue();
         Path download = calculator.exportToExcel();
         assertThat(download).isNotNull();
+        assertThat(XlsxContentAssertions.zipContainsText(download, chain.getBoard().getName()))
+                .as("xlsx містить кінцеву позицію локації A")
+                .isTrue();
+        assertThat(XlsxContentAssertions.zipContainsText(download, chain.getChip().getName()))
+                .as("xlsx не містить чіпа карти іншої локації після фільтра")
+                .isFalse();
         calculator.attachScreenshot("TC-TM-CALC-033 exported");
     }
 

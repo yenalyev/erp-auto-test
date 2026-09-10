@@ -24,6 +24,7 @@ public class TechnologicalMapsListPage extends BasePage {
 
     private static final String PAGE_TITLE = "Перегляд тех. карт";
     private static final String CALCULATOR_BUTTON = "Калькулятор розхідників";
+    private static final String ALL_LOCATIONS_TOOLTIP = "Оберіть конкретну локацію для виконання дії";
     private static final String PRODUCT_PLACEHOLDER = "Введіть назву продукту...";
     private static final String INGREDIENT_PLACEHOLDER = "Введіть назву сировини...";
     private static final String LOADING_TEXT = "Завантаження...";
@@ -71,6 +72,20 @@ public class TechnologicalMapsListPage extends BasePage {
     public boolean isCalculatorButtonVisible() {
         Locator button = calculatorButton();
         return button.count() > 0 && button.isVisible();
+    }
+
+    /**
+     * Hover the TooltipTrigger wrapper (disabled button itself does not receive pointer events).
+     */
+    public String calculatorDisabledTooltip() {
+        Locator button = calculatorButton();
+        button.locator("xpath=ancestor::span[1]").or(button).first().hover();
+        Locator tip = page.locator("[role='tooltip']").filter(new Locator.FilterOptions()
+                .setHasText(ALL_LOCATIONS_TOOLTIP));
+        tip.first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return tip.first().innerText().trim();
     }
 
     public ResourceCalculatorPage openCalculator() {

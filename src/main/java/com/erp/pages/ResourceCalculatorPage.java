@@ -6,6 +6,7 @@ import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.PlaywrightException;
+import com.microsoft.playwright.Route;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Page Object for tk-ui {@code ResourceCalculatorPage}.
@@ -31,6 +33,8 @@ public class ResourceCalculatorPage extends BasePage {
     public static final String ALL_LOCATIONS_BANNER = "Оберіть конкретну локацію для розрахунку";
     public static final String EMPTY_PROMPT = "Оберіть тех. карту та вкажіть кількість продукції";
     public static final String NO_INPUTS = "У тех. карти немає вхідних ресурсів";
+    public static final String PENDING_BADGE = "не розкладено";
+    public static final String PENDING_STUB_RESOURCE = "CALC-PENDING-STUB";
 
     private static final String TECH_MAP_PLACEHOLDER = "Оберіть тех. карту";
     private static final String TECH_MAP_LOADING = "Завантаження...";
@@ -42,6 +46,8 @@ public class ResourceCalculatorPage extends BasePage {
     private static final String COMBOBOX_ITEM = "[data-slot='combobox-item']";
     private static final String CALCULATE_API = "/technological-maps/calculate-resource-usage";
     private static final String EXPORT_API = "/technological-maps/calculate-resource-usage/export";
+    private static final Predicate<String> CALCULATE_USAGE_ROUTE = url ->
+            url.contains(CALCULATE_API) && !url.contains("/export");
     private static final int DOWNLOAD_EVENT_GRACE_MS = 3_000;
 
     public ResourceCalculatorPage(Page page) {
@@ -149,6 +155,31 @@ public class ResourceCalculatorPage extends BasePage {
         return page.getByText(formattedAmount).count() > 0;
     }
 
+    public boolean isPendingBadgeVisible() {
+        Locator badge = page.getByText(PENDING_BADGE, new Page.GetByTextOptions().setExact(true));
+        return badge.count() > 0 && badge.first().isVisible();
+    }
+
+    /**
+     * Stubs GET calculate-resource-usage with a pending leaf so the summary badge is stable.
+     * A dummy producer is required: empty {@code technolMaps} is treated as a stock leaf
+     * ({@code isRequiresChoice=false}). Auto-pick re-GETs once; the stub keeps {@code selectedTmId}
+     * null so the badge remains.
+     */
+    public ResourceCalculatorPage stubCalculateWithPendingComponent() {
+        page.context().route(CALCULATE_USAGE_ROUTE, this::fulfillPendingCalculate);
+        return this;
+    }
+
+    public ResourceCalculatorPage clearCalculateStub() {
+        try {
+            page.context().unroute(CALCULATE_USAGE_ROUTE);
+        } catch (RuntimeException e) {
+            log.debug("No calculate-resource-usage route to remove: {}", e.getMessage());
+        }
+        return this;
+    }
+
     public boolean isExportEnabled() {
         Locator button = exportButton();
         return button.count() > 0 && button.isEnabled();
@@ -194,6 +225,24 @@ public class ResourceCalculatorPage extends BasePage {
         return this;
     }
 
+    public ResourceCalculatorPage waitUntilTextVisible(String text) {
+        page.getByText(text, new Page.GetByTextOptions().setExact(true))
+                .first()
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public ResourceCalculatorPage waitUntilPendingBadgeVisible() {
+        page.getByText(PENDING_BADGE, new Page.GetByTextOptions().setExact(true))
+                .first()
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     private void waitForTechMapComboboxReady() {
         page.waitForCondition(
                 () -> {
@@ -203,6 +252,40 @@ public class ResourceCalculatorPage extends BasePage {
                             && (loading.count() == 0 || !loading.first().isVisible());
                 },
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+    }
+
+    private void fulfillPendingCalculate(Route route) {
+        String url = route.request().url();
+        if (url.contains("/export") || !"GET".equalsIgnoreCase(route.request().method())) {
+            route.resume();
+            return;
+        }
+        log.info("Stubbing GET calculate-resource-usage with pending component");
+        route.fulfill(new Route.FulfillOptions()
+                .setStatus(200)
+                .setContentType("application/json")
+                .setBody("""
+                        [{
+                          "id": 1,
+                          "name": "stub-root",
+                          "amount": 10,
+                          "unit": "шт",
+                          "storages": [],
+                          "components": [{
+                            "resource": {"id": 9001, "name": "%s"},
+                            "unit": "шт",
+                            "amount": 20,
+                            "technolMaps": [{
+                              "id": 9101,
+                              "name": "stub-producer",
+                              "storages": [{"id": 1, "name": "stub-loc"}]
+                            }],
+                            "selectedTmId": null,
+                            "isRequiresChoice": true,
+                            "components": []
+                          }]
+                        }]
+                        """.formatted(PENDING_STUB_RESOURCE)));
     }
 
     private Locator heading() {
