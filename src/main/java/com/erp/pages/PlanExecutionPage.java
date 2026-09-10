@@ -16,28 +16,26 @@ import java.util.regex.Pattern;
  * Page Object for the Plan Execution page (tk-ui {@code PlanExecutionPage.tsx}).
  * URL: /plan-execution
  *
- * <p>The lead/lag card ("Випередження" / "Відставання") is rendered only when
- * {@code resourcePlanExecutionList.length > 0} — i.e. at least one product with an active
- * PRODUCTION tech map on the selected storage has either a current-month plan goal or
- * current-month production. See tk-ui lines ~211-215 and ~475-499.
+ * <p>The current UI separates planned products from production outside the plan and always
+ * renders the five summary indicators, including «Темп», even for an empty period.
  */
 @Slf4j
 public class PlanExecutionPage extends BasePage {
 
     private static final String PATH = "/plan-execution";
 
-    private static final String HEADING_TEXT = "Виконання плану";
+    private static final String EXECUTION_TAB_TEXT = "Виконання";
     private static final String EMPTY_STATE_TEXT = "Дані про виконання плану за цей місяць відсутні";
     private static final String ALL_LOCATIONS_GUARD_TEXT =
             "Оберіть конкретну локацію, щоб переглянути виконання плану";
-    private static final String LEAD_TEXT = "Випередження";
-    private static final String LAG_TEXT = "Відставання";
+    private static final String TEMPO_LABEL = "Темп";
     private static final String GOAL_PLACEHOLDER = "—";
     private static final String PRODUCED_HEADER = "Зроблено";
     private static final String GOAL_HEADER = "Ціль";
     private static final String COPY_BUTTON_TEXT = "Скопіювати";
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано зроблене";
-    private static final String TOTAL_PRODUCED_PCS_LABEL = "Загалом зроблено, шт";
+    private static final String PRODUCED_GOAL_LABEL = "Зроблено / Ціль";
+    private static final String OUT_OF_PLAN_TEXT = "Поза планом";
 
     /** tk-ui CPMA-587: filter toggle on the «Виконання» tab (product requirement: «Тільки обрані»). */
     private static final String FAVOURITES_ONLY_BUTTON_TEXT = "Лише обрані";
@@ -53,13 +51,12 @@ public class PlanExecutionPage extends BasePage {
     public static final String NEEDED_TAB_TEXT = "Потрібні ресурси";
     public static final String NEEDED_EMPTY_TEXT = "Немає потреби в додаткових ресурсах";
     public static final String NEEDED_FILTER_EMPTY_TEXT = "Немає ресурсів за обраними фільтрами";
-    public static final String NEEDED_PAST_MONTH_TOOLTIP =
-            "Потреба в ресурсах недоступна для завершеного місяця";
+    public static final String NEEDED_UNAVAILABLE_TEXT = "Розрахунок недоступний";
     public static final String NEEDED_PRODUCED_BADGE = "виробляється";
-    public static final String NEEDED_SOURCES_LABEL = "Потрібно для виробів:";
-    public static final String INCLUDE_STOCK_LABEL = "Враховувати залишки";
-    public static final String INCLUDE_PRODUCED_LABEL = "Враховувати виготовлене";
-    public static final String ONLY_SHORTAGES_LABEL = "Лише дефіцитні";
+    public static final String NEEDED_SOURCES_LABEL = "Звідки потреба";
+    public static final String INCLUDE_STOCK_LABEL = "Враховувати залишки на складі";
+    public static final String INCLUDE_PRODUCED_LABEL = "Залишок до виконання";
+    public static final String ONLY_SHORTAGES_LABEL = "Лише дефіцит";
     public static final String NEEDED_COPIED_FEEDBACK = "Скопійовано";
 
     /** Stems that match both date-fns standalone (серпень) and Java CLDR genitive (серпня). */
@@ -74,7 +71,7 @@ public class PlanExecutionPage extends BasePage {
 
     /**
      * Opens the page and waits for the {@code POST .../statistics/execution} response that feeds
-     * both the table and the lead/lag card — a DOM-only heuristic (e.g. "any table row present")
+     * both the table and the summary indicators — a DOM-only heuristic (e.g. "any table row present")
      * is unreliable here because the page also renders an unrelated "Розбір" (disassembly)
      * {@code DataTable} below the tabs that can populate its own rows before the execution fetch
      * resolves.
@@ -94,7 +91,7 @@ public class PlanExecutionPage extends BasePage {
 
     public PlanExecutionPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        Locator ready = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(HEADING_TEXT))
+        Locator ready = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(EXECUTION_TAB_TEXT))
                 .or(page.getByText(ALL_LOCATIONS_GUARD_TEXT))
                 .or(page.getByText(EMPTY_STATE_TEXT))
                 .or(page.getByRole(AriaRole.BUTTON,
@@ -132,6 +129,7 @@ public class PlanExecutionPage extends BasePage {
                 () -> getNeededRowCount() > 0
                         || isNeededEmptyVisible()
                         || isNeededFilterEmptyVisible()
+                        || isNeededUnavailableVisible()
                         || isAllLocationsGuardVisible(),
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
@@ -152,19 +150,9 @@ public class PlanExecutionPage extends BasePage {
         return tab.count() > 0 && tab.first().isVisible();
     }
 
-    public String getNeededPastMonthTooltip() {
-        Locator trigger = page.locator("span.cursor-help").filter(
-                new Locator.FilterOptions().setHas(neededTab()));
-        if (trigger.count() == 0) {
-            neededTab().hover();
-        } else {
-            trigger.first().hover();
-        }
-        Locator tooltip = page.getByText(NEEDED_PAST_MONTH_TOOLTIP);
-        tooltip.waitFor(new Locator.WaitForOptions()
-                .setState(WaitForSelectorState.VISIBLE)
-                .setTimeout(uiTimeoutMs()));
-        return tooltip.innerText().trim();
+    public boolean isNeededUnavailableVisible() {
+        Locator unavailable = page.getByText(NEEDED_UNAVAILABLE_TEXT);
+        return unavailable.count() > 0 && unavailable.first().isVisible();
     }
 
     public int getNeededRowCount() {
@@ -231,19 +219,26 @@ public class PlanExecutionPage extends BasePage {
     }
 
     public PlanExecutionPage setIncludeProduced(boolean enabled) {
-        return toggleNeededCheckbox(INCLUDE_PRODUCED_LABEL, enabled);
+        Locator option = neededCalculationOption(enabled ? INCLUDE_PRODUCED_LABEL : "Весь план");
+        if (isTogglePressed(option)) {
+            return this;
+        }
+        page.waitForResponse(
+                r -> r.url().contains("/statistics/needed-resources") && "POST".equals(r.request().method()),
+                option::click);
+        return waitForNeededSettled();
     }
 
     public PlanExecutionPage setOnlyShortages(boolean enabled) {
         Locator checkbox = neededCheckbox(ONLY_SHORTAGES_LABEL);
-        if (checkbox.isChecked() != enabled) {
+        if (isToggleChecked(checkbox) != enabled) {
             checkbox.click();
         }
         return waitForNeededSettled();
     }
 
     public boolean isIncludeStockChecked() {
-        return neededCheckbox(INCLUDE_STOCK_LABEL).isChecked();
+        return isToggleChecked(neededCheckbox(INCLUDE_STOCK_LABEL));
     }
 
     public PlanExecutionPage selectNeededCategory(String categoryName) {
@@ -325,7 +320,7 @@ public class PlanExecutionPage extends BasePage {
                         && !r.url().contains("execution-periods-with-plan")
                         && "POST".equals(r.request().method()),
                 option::click);
-        return waitForExecutionDataSettled();
+        return waitForSelectedTabSettled();
     }
 
     /**
@@ -346,7 +341,7 @@ public class PlanExecutionPage extends BasePage {
                         && !r.url().contains("execution-periods-with-plan")
                         && "POST".equals(r.request().method()),
                 () -> options.nth(index).click());
-        return waitForExecutionDataSettled();
+        return waitForSelectedTabSettled();
     }
 
     private PlanExecutionPage selectPeriodOption(String optionText) {
@@ -362,6 +357,15 @@ public class PlanExecutionPage extends BasePage {
                         && !r.url().contains("execution-periods-with-plan")
                         && "POST".equals(r.request().method()),
                 option::click);
+        return waitForSelectedTabSettled();
+    }
+
+    /** Period selection preserves the active tab, so settle the content that is actually mounted. */
+    private PlanExecutionPage waitForSelectedTabSettled() {
+        Locator tab = neededTab();
+        if (tab.count() > 0 && "active".equalsIgnoreCase(tab.first().getAttribute("data-state"))) {
+            return waitForNeededSettled();
+        }
         return waitForExecutionDataSettled();
     }
 
@@ -378,7 +382,7 @@ public class PlanExecutionPage extends BasePage {
 
     private PlanExecutionPage toggleNeededCheckbox(String label, boolean enabled) {
         Locator checkbox = neededCheckbox(label);
-        if (checkbox.isChecked() == enabled) {
+        if (isToggleChecked(checkbox) == enabled) {
             return this;
         }
         page.waitForResponse(
@@ -390,8 +394,34 @@ public class PlanExecutionPage extends BasePage {
     private Locator neededCheckbox(String label) {
         return page.locator("label")
                 .filter(new Locator.FilterOptions().setHasText(label))
-                .locator("input[type='checkbox']")
+                .locator("[role='switch'], [role='checkbox'], input[type='checkbox']")
                 .first();
+    }
+
+    private Locator neededCalculationOption(String label) {
+        return page.locator("[data-slot='toggle-group-item']")
+                .filter(new Locator.FilterOptions().setHasText(label))
+                .first();
+    }
+
+    private boolean isToggleChecked(Locator control) {
+        String state = control.getAttribute("data-state");
+        if (state != null) {
+            return "checked".equalsIgnoreCase(state) || "on".equalsIgnoreCase(state);
+        }
+        String ariaChecked = control.getAttribute("aria-checked");
+        if (ariaChecked != null) {
+            return Boolean.parseBoolean(ariaChecked);
+        }
+        return control.isChecked();
+    }
+
+    private boolean isTogglePressed(Locator control) {
+        String state = control.getAttribute("data-state");
+        if (state != null) {
+            return "on".equalsIgnoreCase(state) || "checked".equalsIgnoreCase(state);
+        }
+        return Boolean.parseBoolean(control.getAttribute("aria-pressed"));
     }
 
     private Locator neededTab() {
@@ -448,18 +478,14 @@ public class PlanExecutionPage extends BasePage {
         return empty.count() > 0 && empty.first().isVisible();
     }
 
-    /** True when either the "Випередження" or "Відставання" summary card is rendered. */
-    public boolean isLeadLagCardVisible() {
-        return leadLagCardLocator().count() > 0 && leadLagCardLocator().first().isVisible();
+    /** The redesigned UI always renders the «Темп» summary, including an empty period. */
+    public boolean isTempoSummaryVisible() {
+        Locator summary = summaryStatItem(TEMPO_LABEL);
+        return summary.count() > 0 && summary.first().isVisible();
     }
 
-    /** Text of the lead/lag card (e.g. "Відставання" / "-9.7%"), or empty when not rendered. */
-    public String getLeadLagCardText() {
-        if (!isLeadLagCardVisible()) {
-            return "";
-        }
-        String text = leadLagCardLocator().first().innerText();
-        return text != null ? text.trim().replaceAll("\\s+", " ") : "";
+    public String getExecutionSummaryValue() {
+        return getSummaryStatValue("Виконання");
     }
 
     public int getProductRowCount() {
@@ -480,27 +506,57 @@ public class PlanExecutionPage extends BasePage {
         return cellText(productName, columnIndexByHeader(PRODUCED_HEADER));
     }
 
-    /** Value of a summary stat card below the execution table (e.g. «Загалом зроблено, шт»). */
+    /** Value of a summary indicator above the execution table (e.g. «Зроблено / Ціль»). */
     public String getSummaryStatValue(String label) {
-        Locator card = summaryStatCard(label);
-        card.waitFor(new Locator.WaitForOptions()
+        Locator item = summaryStatItem(label);
+        item.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        Locator value = card.locator("p.text-xl.font-black");
-        if (value.count() == 0) {
-            value = card.locator("p.font-black").last();
-        }
+        Locator value = item.locator("xpath=./*[2]");
         String text = value.innerText();
         return text != null ? text.trim().replaceAll("\\s+", " ") : "";
     }
 
-    /** Shortcut for the «Загалом зроблено, шт» summary card. */
-    public String getTotalProducedPiecesSummary() {
-        return getSummaryStatValue(TOTAL_PRODUCED_PCS_LABEL);
+    public String getProducedGoalSummary() {
+        return getSummaryStatValue(PRODUCED_GOAL_LABEL);
     }
 
     public boolean isGoalAbsent(String productName) {
         return GOAL_PLACEHOLDER.equals(getGoalCellText(productName));
+    }
+
+    public boolean isOutOfPlanSectionVisible() {
+        Locator toggle = outOfPlanToggle();
+        return toggle.count() > 0 && toggle.first().isVisible();
+    }
+
+    public PlanExecutionPage expandOutOfPlanSection() {
+        Locator toggle = outOfPlanToggle();
+        toggle.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        if (outOfPlanTable().count() == 0 || !outOfPlanTable().first().isVisible()) {
+            toggle.click();
+        }
+        outOfPlanTable().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isOutOfPlanProductRowVisible(String productName) {
+        Locator row = outOfPlanTable().locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(productName));
+        return row.count() > 0 && row.first().isVisible();
+    }
+
+    public String getOutOfPlanProducedCellText(String productName) {
+        Locator table = outOfPlanTable();
+        Locator row = table.locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(productName))
+                .first();
+        String text = row.locator("td").nth(columnIndexByHeader(table, PRODUCED_HEADER)).innerText();
+        return text != null ? text.trim().replaceAll("\\s+", " ") : "";
     }
 
     /** True when the «Скопіювати» button is visible on the «Виконання» tab. */
@@ -561,10 +617,8 @@ public class PlanExecutionPage extends BasePage {
     }
 
     /**
-     * True when the «Лише обрані» toggle can be activated. Product requirement expects the control
-     * disabled while no favourites are configured; current tk-ui keeps it always enabled and shows
-     * an empty state instead — assert the expected disabled state so the regression stays red until
-     * the UI matches the requirement.
+     * True when the «Лише обрані» toggle can be activated. The current UI disables it while no
+     * favourite resources are configured.
      */
     public boolean isFavouritesOnlyButtonEnabled() {
         return favouritesOnlyButton().isEnabled();
@@ -772,8 +826,8 @@ public class PlanExecutionPage extends BasePage {
 
     /** True when the «Розбір» block under the execution tab is rendered. */
     public boolean isDisassembleSectionVisible() {
-        Locator heading = disassembleHeading();
-        return heading.count() > 0 && heading.first().isVisible();
+        Locator toggle = disassembleToggle();
+        return toggle.count() > 0 && toggle.first().isVisible();
     }
 
     /**
@@ -806,26 +860,31 @@ public class PlanExecutionPage extends BasePage {
     }
 
     public PlanExecutionPage waitForDisassembleSection() {
-        disassembleHeading().first().waitFor(new Locator.WaitForOptions()
+        Locator toggle = disassembleToggle();
+        toggle.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
+        if (disassembleTableRows().count() == 0) {
+            toggle.click();
+        }
         page.waitForCondition(
                 () -> disassembleTableRows().count() > 0,
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
 
-    private Locator disassembleHeading() {
-        return page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(DISASSEMBLE_HEADING));
+    private Locator disassembleToggle() {
+        return page.getByText(DISASSEMBLE_HEADING, new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=ancestor::button[1]")
+                .first();
     }
 
     /**
-     * Desktop «Розбір» {@code DataTable} is the first table after the h3 heading
+     * Desktop «Розбір» {@code DataTable} is the first table after the collapsible toggle
      * (execution table is earlier in the DOM while the Виконання tab is active).
      */
     private Locator disassembleTableRows() {
-        return page.locator("h3")
-                .filter(new Locator.FilterOptions().setHasText(DISASSEMBLE_HEADING))
+        return disassembleToggle()
                 .locator("xpath=following::table[1]")
                 .locator("tbody tr");
     }
@@ -871,23 +930,19 @@ public class PlanExecutionPage extends BasePage {
         return text != null ? text.trim().replaceAll("\\s+", " ") : "";
     }
 
-    /**
-     * Resolves a body-cell index from a summary header label («Зроблено», «Ціль», …).
-     *
-     * <p>The execution table has a two-row header: the first row holds «Продукт» (rowSpan=2),
-     * the «Динаміка по днях» group and the «Станом на поточний день» group; the second row holds
-     * one {@code th} per day of the sliding window followed by the summary columns. A body row
-     * therefore starts with the «Продукт» cell that the second header row does not repeat, so the
-     * cell index is the header's position in the second row shifted by one. Resolving this at
-     * runtime keeps the page object correct when the day-window size changes.
-     */
     private int columnIndexByHeader(String headerText) {
-        Locator headers = executionTable().locator("thead tr").nth(1).locator("th");
+        return columnIndexByHeader(executionTable(), headerText);
+    }
+
+    /** Supports both the former two-row table and the redesigned single-row table. */
+    private int columnIndexByHeader(Locator table, String headerText) {
+        Locator headers = table.locator("thead tr").last().locator("th");
         int count = headers.count();
+        int offset = headers.filter(new Locator.FilterOptions().setHasText("Продукт")).count() > 0 ? 0 : 1;
         for (int i = 0; i < count; i++) {
             String text = headers.nth(i).innerText();
             if (text != null && headerText.equals(text.trim().replaceAll("\\s+", " "))) {
-                return i + 1;
+                return i + offset;
             }
         }
         throw new IllegalStateException(
@@ -900,8 +955,14 @@ public class PlanExecutionPage extends BasePage {
                 .filter(new Locator.FilterOptions().setHasText(productName));
     }
 
-    private Locator leadLagCardLocator() {
-        return page.getByText(LEAD_TEXT).or(page.getByText(LAG_TEXT));
+    private Locator outOfPlanToggle() {
+        return page.getByText(OUT_OF_PLAN_TEXT, new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=ancestor::button[1]")
+                .first();
+    }
+
+    private Locator outOfPlanTable() {
+        return outOfPlanToggle().locator("xpath=following::table[1]");
     }
 
     /**
@@ -920,13 +981,9 @@ public class PlanExecutionPage extends BasePage {
         return page.locator("table").first();
     }
 
-    /**
-     * Summary stat card whose label matches {@code label}
-     * (tk-ui shadcn Card with {@code data-slot="card"} in the stats grid below the table).
-     */
-    private Locator summaryStatCard(String label) {
-        return page.locator("[data-slot='card']")
-                .filter(new Locator.FilterOptions().setHasText(label))
+    private Locator summaryStatItem(String label) {
+        return page.getByText(label, new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=..")
                 .first();
     }
 }

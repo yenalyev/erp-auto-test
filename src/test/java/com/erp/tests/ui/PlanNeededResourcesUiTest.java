@@ -127,8 +127,8 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @TestCaseId("TC-PLN-NR-002")
     @Story("Tab availability")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Для завершеного місяця вкладка disabled з tooltip.")
-    public void neededTabDisabledForPastMonth() {
+    @Description("Для завершеного місяця вкладка показує повідомлення, що розрахунок недоступний.")
+    public void neededCalculationUnavailableForPastMonth() {
         IsolatedChain isolated = arrangeCanonicalUnderOwner();
         YearMonth past = YearMonth.now().minusMonths(1);
         plans.add(fixture.createPlan(
@@ -138,11 +138,13 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
         PlanExecutionPage planPage = new PlanExecutionPage(page).open().openNeededResourcesTab();
         assertThat(planPage.isNeededTabEnabled()).isTrue();
 
-        planPage.selectPeriodAt(1);
-        assertThat(planPage.isNeededTabDisabled())
-                .as("Вкладка «Потрібні ресурси» disabled для минулого місяця")
+        planPage.selectPeriodAt(1).openNeededResourcesTab();
+        assertThat(planPage.isNeededTabEnabled())
+                .as("Вкладка лишається доступною для перегляду стану завершеного місяця")
                 .isTrue();
-        assertThat(planPage.getNeededPastMonthTooltip()).contains("завершеного місяця");
+        assertThat(planPage.isNeededUnavailableVisible())
+                .as("Для завершеного місяця показано «Розрахунок недоступний»")
+                .isTrue();
         planPage.attachScreenshot("TC-PLN-NR-002 past month");
     }
 
@@ -174,7 +176,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
         assertThat(planPage.isNeededHeaderVisible("Ресурс")).isTrue();
         assertThat(planPage.isNeededHeaderVisible("Категорія")).isTrue();
         assertThat(planPage.isNeededHeaderVisible("Потрібно")).isTrue();
-        assertThat(planPage.isNeededHeaderVisible("В наявності")).isTrue();
+        assertThat(planPage.isNeededHeaderVisible("На складі")).isTrue();
         assertThat(planPage.isNeededHeaderVisible("Дефіцит")).isTrue();
         assertThat(planPage.isNeededProducedBadgeVisible(isolated.chain().getIntermediate().getName())).isTrue();
         assertThat(planPage.isNeededProducedBadgeVisible(isolated.chain().getRaw().getName())).isFalse();
@@ -235,7 +237,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @TestCaseId("TC-PLN-NR-021")
     @Story("Filters")
     @Severity(SeverityLevel.NORMAL)
-    @Description("«Лише дефіцитні» ховає покриті рядки; empty фільтрів, якщо всі відсіяні.")
+    @Description("«Лише дефіцит» ховає покриті рядки; empty фільтрів, якщо всі відсіяні.")
     public void onlyShortagesFilter() {
         StorageResponse storage = storageFixture.createChildStorage(ownerStorageId, "nr-ui-def-");
         storagesNewestFirst.add(0, storage.getId());
@@ -257,7 +259,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @TestCaseId("TC-PLN-NR-022")
     @Story("Filters")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Чекбокс «Враховувати залишки» перемикає includeStock.")
+    @Description("Перемикач «Враховувати залишки на складі» перемикає includeStock.")
     public void includeStockCheckbox() {
         IsolatedChain isolated = arrangeCanonicalUnderOwner();
         injectRoleSession(UserRole.OWNER_1, isolated.storageId());
@@ -275,7 +277,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @TestCaseId("TC-PLN-NR-023")
     @Story("Filters")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Чекбокс «Враховувати виготовлене» перемикає includeProduced.")
+    @Description("Режим «Залишок до виконання» перемикає includeProduced.")
     public void includeProducedCheckbox() {
         IsolatedChain isolated = arrangeCanonicalUnderOwner();
         injectRoleSession(UserRole.OWNER_1, isolated.storageId());
@@ -329,16 +331,16 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @TestCaseId("TC-PLN-NR-033")
     @Story("Drill-down")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Розгортання рядка показує «Потрібно для виробів» з техкартами.")
+    @Description("Розгортання рядка показує «Звідки потреба» з ланцюжком техкарт.")
     public void expandRowShowsSources() {
         IsolatedChain isolated = arrangeCanonicalUnderOwner();
         injectRoleSession(UserRole.OWNER_1, isolated.storageId());
         PlanExecutionPage planPage = new PlanExecutionPage(page).open().openNeededResourcesTab();
         planPage.expandNeededRow(isolated.chain().getRaw().getName());
         String sources = planPage.getNeededSourcesText();
-        assertThat(sources).contains("Потрібно для виробів");
+        assertThat(sources).contains("Звідки потреба");
         assertThat(sources).contains(isolated.chain().getProduct().getName());
-        assertThat(sources).contains("техкарта");
+        assertThat(sources).contains("ТК «");
         planPage.collapseNeededRow(isolated.chain().getRaw().getName());
         assertThat(planPage.isNeededSourcesVisible()).isFalse();
         planPage.attachScreenshot("TC-PLN-NR-033 expand");

@@ -9,7 +9,7 @@
             <class name="com.erp.tests.ui.PlanNeededResourcesUiTest">
                 <methods>
                     <include name="neededTabActiveForCurrentMonth"/>
-                    <include name="neededTabDisabledForPastMonth"/>
+                    <include name="neededCalculationUnavailableForPastMonth"/>
                     <include name="allLocationsShowsGuardInsteadOfTabs"/>
                     <include name="tableColumnsAndProducedBadge"/>
                     <include name="emptyStateWhenNoNeed"/>

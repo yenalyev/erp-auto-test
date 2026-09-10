@@ -5,6 +5,8 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.UserRole;
 import com.erp.models.query.ProductionJournalQuery;
+import com.erp.models.request.PlanRequest;
+import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.request.SaveFavouriteResourcesRequest;
 import com.erp.models.response.FavouriteResourceResponse;
 import com.erp.models.response.ManufacturingItemResponse;
@@ -120,6 +122,24 @@ public class PlanExecutionFixture extends BaseFixture {
     @Step("API: створити план поточного місяця для продукту {resourceId} на сховищі {storageId} (ціль {target})")
     public PlanResponse createCurrentMonthPlan(Long storageId, Long resourceId, double target) {
         return techMapFixture.createLocationPlan(storageId, resourceId, YearMonth.now(), target);
+    }
+
+    @Step("API: створити план поточного місяця з кількома виробами на сховищі {storageId}")
+    public PlanResponse createCurrentMonthPlan(Long storageId, List<ResourceUsageRequest> outputs) {
+        YearMonth period = YearMonth.now();
+        PlanRequest request = PlanRequest.builder()
+                .description("Plan execution multi-output")
+                .storageId(storageId)
+                .month(period.getMonthValue())
+                .year(period.getYear())
+                .output(outputs)
+                .build();
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PLAN_POST_CREATE,
+                UserRole.ADMIN,
+                request);
+        validateSuccess(response, "Create plan-execution plan with " + outputs.size() + " outputs");
+        return response.as(PlanResponse.class);
     }
 
     /** Seeds input stock and creates a current-month production batch for {@code techMap}'s output product. */

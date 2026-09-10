@@ -6,6 +6,7 @@ import com.erp.fixtures.PlanExecutionFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
+import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceResponse;
@@ -32,10 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * UI coverage for the Plan Execution page ("Виконання плану", tk-ui {@code PlanExecutionPage.tsx}):
- * the lead/lag card ("Випередження" / "Відставання") must be visible only when the storage has a
- * PLAN for the current month (it compares actual output against a planned goal, so it is hidden
- * whenever no plan exists — even if the storage already has unplanned production this month), and
- * absent otherwise; plus clipboard copy of produced amounts.
+ * the redesigned execution page: summary indicators are always visible, planned and out-of-plan
+ * production are rendered separately, and clipboard export reflects the planned table.
  *
  * <p>Covers all 4 data combinations (no plan/no production, no plan/has production, plan/production,
  * plan/no production) for two personas:
@@ -132,11 +131,11 @@ public class PlanExecutionUiTest extends BaseUITest {
 
     @Test(priority = 10)
     @TestCaseId("TC-UI-PLANEXEC-001")
-    @Story("No plan and no production => lead/lag card hidden (Owner)")
+    @Story("No plan and no production => zero summary and empty table (Owner)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Arrange: свіжий дочірній склад OWNER_1 без плану і виробництва (не shared warehouse).
-            Assert: картка «Випередження»/«Відставання» відсутня, показано порожній стан
+            Assert: summary-картки показують нульове виконання, показано порожній стан
             «Дані про виконання плану за цей місяць відсутні».""")
     public void testOwnerNoPlanNoProduction() {
         StorageResponse isolated = storageFixture.createChildStorage(ownerStorageId, "planexec-empty-owner-");
@@ -148,25 +147,23 @@ public class PlanExecutionUiTest extends BaseUITest {
         injectRoleSession(UserRole.OWNER_1, currentStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
-        assertThat(planPage.isLeadLagCardVisible())
-                .as("Картка «Випередження/Відставання» має бути відсутня без плану і виробництва")
-                .isFalse();
+        assertThat(planPage.isTempoSummaryVisible()).isTrue();
+        assertThat(planPage.getExecutionSummaryValue()).contains("0 %");
         assertThat(planPage.isEmptyStateVisible())
                 .as("Має відображатись порожній стан «Дані про виконання плану за цей місяць відсутні»")
                 .isTrue();
-        planPage.attachScreenshot("TC-UI-PLANEXEC-001 — no plan, no production — no card");
+        planPage.attachScreenshot("TC-UI-PLANEXEC-001 — empty plan with zero summary");
     }
 
     @Test(priority = 20)
     @TestCaseId("TC-UI-PLANEXEC-002")
-    @Story("No plan but has production => lead/lag card still hidden (Owner)")
+    @Story("No plan but has production => product is grouped under out-of-plan (Owner)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Arrange: видалити план поточного місяця (якщо є); створити ізольований продукт з
             активною виробничою техкартою і виготовити партію за поточний місяць без плану на нього.
-            Assert: картка «Випередження»/«Відставання» відсутня — вона прив'язана до наявності
-            ПЛАНУ (порівняння факту з ціллю), а не просто до наявності виробництва; рядок продукту
-            все ж показує вироблену кількість у таблиці, а колонка «Ціль» — «—» (плану немає).""")
+            Assert: summary-картки відображаються; продукт без цілі винесений з основної таблиці
+            в окремий блок «Поза планом», де показано фактично вироблену кількість.""")
     public void testOwnerNoPlanHasProduction() {
         currentStorageId = ownerStorageId;
         fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
@@ -177,26 +174,23 @@ public class PlanExecutionUiTest extends BaseUITest {
         injectRoleSession(UserRole.OWNER_1, ownerStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
-        assertThat(planPage.isLeadLagCardVisible())
-                .as("Картка «Випередження/Відставання» має залишатись прихованою без плану, навіть якщо є виробництво")
-                .isFalse();
-        assertThat(planPage.isProductRowVisible(productName))
-                .as("Рядок продукту з виробництвом має бути видимий у таблиці")
-                .isTrue();
-        assertThat(planPage.isGoalAbsent(productName))
-                .as("Без плану колонка «Ціль» має показувати «—»")
-                .isTrue();
-        planPage.attachScreenshot("TC-UI-PLANEXEC-002 — no plan, has production — no card");
+        assertThat(planPage.isTempoSummaryVisible()).isTrue();
+        assertThat(planPage.isProductRowVisible(productName)).isFalse();
+        assertThat(planPage.isOutOfPlanSectionVisible()).isTrue();
+        planPage.expandOutOfPlanSection();
+        assertThat(planPage.isOutOfPlanProductRowVisible(productName)).isTrue();
+        assertThat(planPage.getOutOfPlanProducedCellText(productName)).contains("5");
+        planPage.attachScreenshot("TC-UI-PLANEXEC-002 — production outside plan");
     }
 
     @Test(priority = 30)
     @TestCaseId("TC-UI-PLANEXEC-003")
-    @Story("Plan and production both present => lead/lag card visible (Owner)")
+    @Story("Plan and production both present => execution summary visible (Owner)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Arrange: створити ізольований продукт з активною виробничою техкартою; створити план
             поточного місяця (ціль 20) і виготовити партію (5 од.) для цього ж продукту.
-            Assert: картка «Випередження»/«Відставання» відображається; рядок продукту показує
+            Assert: картка «Темп» відображається; рядок продукту показує
             і ціль, і вироблену кількість.""")
     public void testOwnerPlanAndProduction() {
         currentStorageId = ownerStorageId;
@@ -209,7 +203,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         injectRoleSession(UserRole.OWNER_1, ownerStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
-        assertThat(planPage.isLeadLagCardVisible())
+        assertThat(planPage.isTempoSummaryVisible())
                 .as("Картка має з'явитись — є і план, і виробництво")
                 .isTrue();
         assertThat(planPage.isProductRowVisible(productName)).isTrue();
@@ -220,12 +214,12 @@ public class PlanExecutionUiTest extends BaseUITest {
 
     @Test(priority = 40)
     @TestCaseId("TC-UI-PLANEXEC-004")
-    @Story("Plan present but no production => lead/lag card visible (Owner)")
+    @Story("Plan present but no production => execution summary visible (Owner)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Arrange: створити ізольований продукт з активною виробничою техкартою; створити план
             поточного місяця (ціль 15) без жодного виробництва.
-            Assert: картка «Випередження»/«Відставання» відображається; рядок продукту показує
+            Assert: картка «Темп» відображається; рядок продукту показує
             ціль 15 і вироблено 0.""")
     public void testOwnerPlanNoProduction() {
         currentStorageId = ownerStorageId;
@@ -237,7 +231,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         injectRoleSession(UserRole.OWNER_1, ownerStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
-        assertThat(planPage.isLeadLagCardVisible())
+        assertThat(planPage.isTempoSummaryVisible())
                 .as("Картка має з'явитись — є план (навіть без виробництва)")
                 .isTrue();
         assertThat(planPage.isProductRowVisible(productName)).isTrue();
@@ -298,9 +292,9 @@ public class PlanExecutionUiTest extends BaseUITest {
     @Severity(SeverityLevel.NORMAL)
     @Description("""
             Arrange: ізольований дочірній склад; два продукти з активними виробничими техкартами —
-            один у шт (7 од.), другий у кг (25 од.); план не потрібен.
-            Assert: обидва рядки видимі з коректними «Зроблено»; картка «Загалом зроблено, шт»
-            показує лише суму штучних виробів (7), без кілограмів.""")
+            один у шт (7 од.), другий у кг (25 од.); обидва входять до плану.
+            Assert: обидва рядки видимі з коректними «Зроблено»; summary «Зроблено / Ціль»
+            рахує лише штучні/комплектні вироби (7 / 7), без кілограмів.""")
     public void totalProducedSummaryCountsOnlyPiecesNotKg() {
         StorageResponse isolated = storageFixture.createChildStorage(ownerStorageId, "planexec-units-");
         currentStorageId = isolated.getId();
@@ -318,6 +312,11 @@ public class PlanExecutionUiTest extends BaseUITest {
                 currentStorageId, currentContext.getTechMap(), pcsAmount);
         secondProduction = fixture.createCurrentMonthProduction(
                 currentStorageId, secondContext.getTechMap(), kgAmount);
+        currentPlan = fixture.createCurrentMonthPlan(currentStorageId, List.of(
+                ResourceUsageRequest.builder()
+                        .resourceId(currentContext.getProduct().getId()).amount(BigDecimal.valueOf(pcsAmount)).build(),
+                ResourceUsageRequest.builder()
+                        .resourceId(secondContext.getProduct().getId()).amount(BigDecimal.valueOf(kgAmount)).build()));
 
         String pcsProductName = currentContext.getProduct().getName().trim();
         String kgProductName = secondContext.getProduct().getName().trim();
@@ -335,9 +334,9 @@ public class PlanExecutionUiTest extends BaseUITest {
         assertThat(planPage.getProducedCellText(pcsProductName)).contains(expectedPcsTotal);
         assertThat(planPage.getProducedCellText(kgProductName))
                 .contains(BigDecimal.valueOf(kgAmount).stripTrailingZeros().toPlainString());
-        assertThat(planPage.getTotalProducedPiecesSummary())
-                .as("«Загалом зроблено, шт» має рахувати лише штучні вироби, без кг")
-                .isEqualTo(expectedPcsTotal);
+        assertThat(planPage.getProducedGoalSummary())
+                .as("«Зроблено / Ціль» має рахувати лише штучні/комплектні вироби, без кг")
+                .contains(expectedPcsTotal + " / " + expectedPcsTotal);
         planPage.attachScreenshot("TC-PLN-005 — total produced pcs excludes kg");
     }
 
@@ -346,8 +345,8 @@ public class PlanExecutionUiTest extends BaseUITest {
     @Story("Copy produced amounts to clipboard (Owner)")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Arrange: видалити план поточного місяця (якщо є); створити ізольований продукт з
-            активною виробничою техкартою і виготовити партію за поточний місяць.
+            Arrange: створити ізольований продукт з активною виробничою техкартою, планом і
+            виготовленою партією за поточний місяць.
             Act: на вкладці «Виконання» натиснути «Скопіювати».
             Assert: кнопка активна; з’являється фідбек «Скопійовано зроблене»; буфер обміну
             містить рядок у форматі «<Назва> - <Кількість вироблено> <од. вимір.>»
@@ -360,6 +359,8 @@ public class PlanExecutionUiTest extends BaseUITest {
         double producedAmount = 5.0;
         currentProduction = fixture.createCurrentMonthProduction(
                 ownerStorageId, currentContext.getTechMap(), producedAmount);
+        currentPlan = fixture.createCurrentMonthPlan(
+                ownerStorageId, currentContext.getProduct().getId(), producedAmount);
 
         String productName = currentContext.getProduct().getName().trim();
         String unitShortName = currentContext.getProduct().getUnit().getShortName();
@@ -671,12 +672,12 @@ public class PlanExecutionUiTest extends BaseUITest {
 
     @Test(priority = 50)
     @TestCaseId("TC-UI-PLANEXEC-005")
-    @Story("No plan and no production => lead/lag card hidden (Admin)")
+    @Story("No plan and no production => zero summary and empty table (Admin)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Той самий сценарій, що й TC-UI-PLANEXEC-001, але під логіном ADMIN на свіжому
             дочірньому складі OWNER_2 (не shared warehouse).
-            Assert: картка відсутня, показано порожній стан.""")
+            Assert: summary показує нульове виконання, показано порожній стан.""")
     public void testAdminNoPlanNoProduction() {
         StorageResponse isolated = storageFixture.createChildStorage(
                 adminViewStorageId, "planexec-empty-admin-");
@@ -688,23 +689,21 @@ public class PlanExecutionUiTest extends BaseUITest {
         injectRoleSession(UserRole.ADMIN, currentStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
-        assertThat(planPage.isLeadLagCardVisible())
-                .as("Картка «Випередження/Відставання» має бути відсутня без плану і виробництва")
-                .isFalse();
+        assertThat(planPage.isTempoSummaryVisible()).isTrue();
+        assertThat(planPage.getExecutionSummaryValue()).contains("0 %");
         assertThat(planPage.isEmptyStateVisible())
                 .as("Має відображатись порожній стан «Дані про виконання плану за цей місяць відсутні»")
                 .isTrue();
-        planPage.attachScreenshot("TC-UI-PLANEXEC-005 — Admin — no plan, no production — no card");
+        planPage.attachScreenshot("TC-UI-PLANEXEC-005 — Admin — empty plan with zero summary");
     }
 
     @Test(priority = 60)
     @TestCaseId("TC-UI-PLANEXEC-006")
-    @Story("No plan but has production => lead/lag card still hidden (Admin)")
+    @Story("No plan but has production => product is grouped under out-of-plan (Admin)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Той самий сценарій, що й TC-UI-PLANEXEC-002, але під логіном ADMIN на сховищі OWNER_2.
-            Assert: картка відсутня (немає плану для порівняння факту з ціллю); рядок продукту
-            все ж показує вироблену кількість у таблиці, «Ціль» — «—».""")
+            Assert: summary відображається; продукт винесений в окремий блок «Поза планом».""")
     public void testAdminNoPlanHasProduction() {
         currentStorageId = adminViewStorageId;
         fixture.ensureNoPlanForCurrentMonth(adminViewStorageId);
@@ -715,19 +714,17 @@ public class PlanExecutionUiTest extends BaseUITest {
         injectRoleSession(UserRole.ADMIN, adminViewStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
-        assertThat(planPage.isLeadLagCardVisible())
-                .as("Картка «Випередження/Відставання» має залишатись прихованою без плану, навіть якщо є виробництво")
-                .isFalse();
-        assertThat(planPage.isProductRowVisible(productName)).isTrue();
-        assertThat(planPage.isGoalAbsent(productName))
-                .as("Без плану колонка «Ціль» має показувати «—»")
-                .isTrue();
-        planPage.attachScreenshot("TC-UI-PLANEXEC-006 — Admin — no plan, has production — no card");
+        assertThat(planPage.isTempoSummaryVisible()).isTrue();
+        assertThat(planPage.isProductRowVisible(productName)).isFalse();
+        planPage.expandOutOfPlanSection();
+        assertThat(planPage.isOutOfPlanProductRowVisible(productName)).isTrue();
+        assertThat(planPage.getOutOfPlanProducedCellText(productName)).contains("5");
+        planPage.attachScreenshot("TC-UI-PLANEXEC-006 — Admin — production outside plan");
     }
 
     @Test(priority = 70)
     @TestCaseId("TC-UI-PLANEXEC-007")
-    @Story("Plan and production both present => lead/lag card visible (Admin)")
+    @Story("Plan and production both present => execution summary visible (Admin)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Той самий сценарій, що й TC-UI-PLANEXEC-003, але під логіном ADMIN на сховищі OWNER_2.
@@ -743,7 +740,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         injectRoleSession(UserRole.ADMIN, adminViewStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
-        assertThat(planPage.isLeadLagCardVisible())
+        assertThat(planPage.isTempoSummaryVisible())
                 .as("Картка має з'явитись — є і план, і виробництво")
                 .isTrue();
         assertThat(planPage.isProductRowVisible(productName)).isTrue();
@@ -754,7 +751,7 @@ public class PlanExecutionUiTest extends BaseUITest {
 
     @Test(priority = 80)
     @TestCaseId("TC-UI-PLANEXEC-008")
-    @Story("Plan present but no production => lead/lag card visible (Admin)")
+    @Story("Plan present but no production => execution summary visible (Admin)")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Той самий сценарій, що й TC-UI-PLANEXEC-004, але під логіном ADMIN на сховищі OWNER_2.
@@ -769,7 +766,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         injectRoleSession(UserRole.ADMIN, adminViewStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
 
-        assertThat(planPage.isLeadLagCardVisible())
+        assertThat(planPage.isTempoSummaryVisible())
                 .as("Картка має з'явитись — є план (навіть без виробництва)")
                 .isTrue();
         assertThat(planPage.isProductRowVisible(productName)).isTrue();
