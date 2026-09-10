@@ -120,9 +120,11 @@
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
             <class name="com.erp.tests.functional.production_order.ProductionOrderApiTest"/>
+            <class name="com.erp.tests.functional.production_order.ProductionGroupApiTest"/>
             <class name="com.erp.tests.functional.disassemble.DisassembleCrudApiTest"/>
             <class name="com.erp.tests.functional.shift.ShiftCrudApiTest"/>
             <class name="com.erp.tests.functional.analytics.AnalyticsAuditApiTest"/>
+            <class name="com.erp.tests.functional.analytics.PlanAnalyticApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessComponentTechMapsApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
@@ -243,6 +245,7 @@
     <test name="UI Production">
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
+            <class name="com.erp.tests.ui.ProductionGroupsUiTest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalDatePickerUiTest"/>
             <class name="com.erp.tests.ui.ProductionHashtagUITest"/>
@@ -252,6 +255,7 @@
             <class name="com.erp.tests.ui.EquipmentHistoryOnOperationsUiTest"/>
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
             <class name="com.erp.tests.ui.ProductionAnalyticsDatePickerUiTest"/>
+            <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
         </classes>
     </test>
 

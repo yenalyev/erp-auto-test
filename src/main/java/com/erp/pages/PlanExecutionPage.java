@@ -720,7 +720,9 @@ public class PlanExecutionPage extends BasePage {
                 .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions()
                         .setName(Pattern.compile("^" + MANAGE_FAVOURITES_SAVE_PREFIX)));
         page.waitForResponse(
-                r -> r.url().contains("/app-config/favourite-resources") && "PUT".equals(r.request().method()),
+                r -> r.url().contains("/api/v1/storages/")
+                        && r.url().contains("/favourite-resources")
+                        && "PUT".equals(r.request().method()),
                 save::click);
         manageFavouritesDialog().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.HIDDEN)

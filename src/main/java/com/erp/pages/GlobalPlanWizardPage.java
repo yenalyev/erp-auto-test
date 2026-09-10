@@ -37,6 +37,8 @@ public class GlobalPlanWizardPage extends BasePage {
     private static final String RESOURCE_COMBO_PLACEHOLDER = "Оберіть зі списку...";
     private static final String AMOUNT_PLACEHOLDER = "Введіть кількість...";
     private static final String WIZARD_LOADING_TEXT = "Завантаження...";
+    private static final String STOCK_HINT_PREFIX = "В наявності";
+    private static final String CREATE_PATH = "/global-plans/create";
     private static final String PRODUCT_OUTPUT_ROW =
             "div.overflow-hidden.rounded-\\[6px\\].border.border-gray-200.px-4";
     private static final String PERIOD_FIELDS_ROW = "div.flex.flex-col.md\\:flex-row.gap-2";
@@ -83,6 +85,11 @@ public class GlobalPlanWizardPage extends BasePage {
                         .setState(WaitForSelectorState.VISIBLE)
                         .setTimeout(uiTimeoutMs()));
         return this;
+    }
+
+    public GlobalPlanWizardPage openCreate() {
+        navigateTo(ConfigProvider.getBaseUrl() + CREATE_PATH, "Новий глобальний план");
+        return waitForLoaded();
     }
 
     public boolean isWizardHeadingVisible() {
@@ -160,6 +167,42 @@ public class GlobalPlanWizardPage extends BasePage {
     public GlobalPlanWizardPage fillOutputProduct(String resourceName, String amount) {
         fillOutputProductAtLastRow(resourceName, amount);
         waitForCreatePlanEnabled();
+        return this;
+    }
+
+    @Step("Tab 1: обрати перший доступний виріб (без збереження плану)")
+    public GlobalPlanWizardPage selectFirstPlannableProduct() {
+        Locator row = outputProductRows().last();
+        Locator combo = row.getByPlaceholder(RESOURCE_COMBO_PLACEHOLDER);
+        combo.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        combo.click();
+        Locator option = page.locator("[data-slot='combobox-item']").first();
+        option.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        option.click();
+        waitForStockHint();
+        return this;
+    }
+
+    public boolean isStockHintVisible() {
+        return stockHint().count() > 0 && stockHint().first().isVisible();
+    }
+
+    public String stockHintText() {
+        return isStockHintVisible() ? stockHint().first().innerText().trim() : "";
+    }
+
+    private Locator stockHint() {
+        return page.getByText(STOCK_HINT_PREFIX);
+    }
+
+    private GlobalPlanWizardPage waitForStockHint() {
+        stockHint().first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         return this;
     }
 

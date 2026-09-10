@@ -452,21 +452,21 @@ public enum ApiEndpointDefinition {
             null
     ),
 
-    APP_CONFIG_FAVOURITE_RESOURCES_GET(
-            "/api/v1/app-config/favourite-resources",
+    STORAGE_FAVOURITE_RESOURCES_GET(
+            "/api/v1/storages/{storageId}/favourite-resources",
             Method.GET,
             null,
-            "Get favourite resources for current user",
+            "Get favourite resources for storage",
             null,
             new TypeReference<List<FavouriteResourceResponse>>() {},
             null
     ),
 
-    APP_CONFIG_FAVOURITE_RESOURCES_PUT(
-            "/api/v1/app-config/favourite-resources",
+    STORAGE_FAVOURITE_RESOURCES_PUT(
+            "/api/v1/storages/{storageId}/favourite-resources",
             Method.PUT,
             null,
-            "Save favourite resources for current user",
+            "Save favourite resources for storage",
             new TypeReference<SaveFavouriteResourcesRequest>() {},
             new TypeReference<List<FavouriteResourceResponse>>() {},
             null
@@ -2861,6 +2861,31 @@ public enum ApiEndpointDefinition {
             "GENERATE_PRODUCTION_ORDER"
     ),
 
+    PRODUCTION_ORDER_SEND_DELEGATIONS(
+            "/api/v1/production-orders/{id}/delegations", Method.POST, null,
+            "Send production group requests", new TypeReference<DecompositionRequest>() {}, null, null
+    ),
+    PRODUCTION_ORDER_GET_DELEGATIONS(
+            "/api/v1/production-orders/{id}/delegations", Method.GET, null,
+            "Get production group requests", null, null, null
+    ),
+    PRODUCTION_DELEGATION_QUEUE(
+            "/api/v1/production-order-delegations", Method.GET, null,
+            "Get caller production group queue", null, null, null
+    ),
+    PRODUCTION_DELEGATION_GET_PLAN(
+            "/api/v1/production-order-delegations/{id}/plan", Method.GET, null,
+            "Get group request plan", null, null, null
+    ),
+    PRODUCTION_DELEGATION_DECOMPOSE(
+            "/api/v1/production-order-delegations/{id}/decompose", Method.POST, null,
+            "Decompose group request", new TypeReference<DecompositionRequest>() {}, null, null
+    ),
+    PRODUCTION_DELEGATION_ANSWER(
+            "/api/v1/production-order-delegations/{id}/plan", Method.PUT, null,
+            "Answer group request", new TypeReference<java.util.Map<String, Object>>() {}, null, null
+    ),
+
     PRODUCTION_ORDER_GET_LINKED_ORDERS(
             "/api/v1/production-orders/{id}/orders",
             Method.GET,
@@ -2939,6 +2964,26 @@ public enum ApiEndpointDefinition {
             Method.GET,
             null,
             "Get user session analytics",
+            null,
+            null,
+            null
+    ),
+
+    PLAN_ANALYTIC_ROWS_GET(
+            "/api/v1/analytics/plan/rows",
+            Method.GET,
+            "schemas/plan-analytic/plan-analytic-page-schema.json",
+            "Plan analytics rows: produced / relocated / used / stock for a resource or category selection",
+            null,
+            null,
+            null
+    ),
+
+    PLAN_ANALYTIC_STOCK_GET(
+            "/api/v1/analytics/plan/stock/{resourceId}",
+            Method.GET,
+            "schemas/plan-analytic/plan-analytic-stock-schema.json",
+            "Plan analytics stock locations for a resource (Цукрарня vs other PM storages)",
             null,
             null,
             null

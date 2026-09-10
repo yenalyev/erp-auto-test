@@ -132,6 +132,7 @@
     <test name="Production Analytics UI">
         <classes>
             <class name="com.erp.tests.ui.ProductionAnalyticsDatePickerUiTest"/>
+            <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
         </classes>
     </test>
 
@@ -141,4 +142,9 @@
         </classes>
     </test>
 
+    <test name="Production Groups UI">
+        <classes>
+            <class name="com.erp.tests.ui.ProductionGroupsUiTest"/>
+        </classes>
+    </test>
 </suite>

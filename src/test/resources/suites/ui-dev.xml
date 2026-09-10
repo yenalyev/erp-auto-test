@@ -27,6 +27,7 @@
             <class name="com.erp.tests.ui.UnitAnalyticsUiTest"/>
             <class name="com.erp.tests.ui.ProductionJournalDatePickerUiTest"/>
             <class name="com.erp.tests.ui.ProductionAnalyticsDatePickerUiTest"/>
+            <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
         </classes>
     </test>
 

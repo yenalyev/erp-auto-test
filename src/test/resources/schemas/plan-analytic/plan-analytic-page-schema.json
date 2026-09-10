@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PlanAnalyticPage",
+  "type": "object",
+  "required": ["content", "page", "totals"],
+  "additionalProperties": true,
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "resourceId",
+          "resourceName",
+          "produced",
+          "relocated",
+          "used",
+          "stockTotal",
+          "stockInRoot"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "resourceId": { "type": "integer" },
+          "resourceName": { "type": "string" },
+          "resourceCategoryId": { "type": ["integer", "null"] },
+          "resourceCategoryName": { "type": ["string", "null"] },
+          "unit": { "type": ["string", "null"] },
+          "produced": { "type": "number" },
+          "relocated": { "type": "number" },
+          "used": { "type": "number" },
+          "stockTotal": { "type": "number" },
+          "stockInRoot": { "type": "number" }
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "required": ["size", "number", "totalElements", "totalPages"],
+      "additionalProperties": true,
+      "properties": {
+        "size": { "type": "integer" },
+        "number": { "type": "integer" },
+        "totalElements": { "type": "integer" },
+        "totalPages": { "type": "integer" }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": ["produced", "relocated", "used", "stockTotal", "stockInRoot"],
+      "additionalProperties": true,
+      "properties": {
+        "produced": { "type": "number" },
+        "relocated": { "type": "number" },
+        "used": { "type": "number" },
+        "stockTotal": { "type": "number" },
+        "stockInRoot": { "type": "number" }
+      }
+    }
+  }
+}

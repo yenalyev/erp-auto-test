@@ -35,8 +35,13 @@ public class DateRangePickerComponent {
     public static final String PRESET_30_DAYS = "30 днів";
     public static final String PRESET_MONTH = "Місяць";
     public static final String PRESET_YEAR = "Рік";
+    public static final String PRESET_3_MONTHS = "3 місяці";
+    public static final String PRESET_HALF_YEAR = "Півроку";
     public static final List<String> PRESET_LABELS = List.of(
             PRESET_1_DAY, PRESET_7_DAYS, PRESET_30_DAYS, PRESET_MONTH, PRESET_YEAR);
+    /** tk-ui {@code planPresets()} on /analytics/plan. */
+    public static final List<String> PLAN_PRESET_LABELS = List.of(
+            PRESET_MONTH, PRESET_3_MONTHS, PRESET_HALF_YEAR, PRESET_YEAR);
     private static final Locale UK = Locale.forLanguageTag("uk");
     private static final DateTimeFormatter DISPLAY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     /** Matches {@code toLocaleDateString('uk')} used for {@code data-day} in CalendarDayButton. */
@@ -128,9 +133,13 @@ public class DateRangePickerComponent {
     }
 
     public List<String> visiblePresetLabels() {
+        return visiblePresetLabels(PRESET_LABELS);
+    }
+
+    public List<String> visiblePresetLabels(List<String> labels) {
         open();
         List<String> found = new ArrayList<>();
-        for (String label : PRESET_LABELS) {
+        for (String label : labels) {
             Locator button = presetButton(label);
             if (button.count() > 0 && button.first().isVisible()) {
                 found.add(label);

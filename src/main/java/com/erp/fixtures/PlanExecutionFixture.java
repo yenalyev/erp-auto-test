@@ -160,32 +160,32 @@ public class PlanExecutionFixture extends BaseFixture {
     }
 
     /**
-     * Reads the per-user favourite resource list ({@code GET /app-config/favourite-resources}).
-     * Favourites are account-scoped, not storage-scoped — tests that mutate them must restore
-     * the previous list in teardown to avoid polluting shared owner/admin profiles.
+     * Reads the per-storage favourite resource list
+     * ({@code GET /storages/{storageId}/favourite-resources}). Tests that mutate it must restore
+     * the previous list in teardown to avoid polluting the shared storage configuration.
      */
     @Step("API: {role} — прочитати обрані продукти")
-    public List<FavouriteResourceResponse> getFavouriteResources(UserRole role) {
+    public List<FavouriteResourceResponse> getFavouriteResources(UserRole role, Long storageId) {
         Response response = apiExecutor.execute(
-                ApiEndpointDefinition.APP_CONFIG_FAVOURITE_RESOURCES_GET, role);
+                ApiEndpointDefinition.STORAGE_FAVOURITE_RESOURCES_GET, role, String.valueOf(storageId));
         return ApiResponseHelper.parseList(
                 response, FavouriteResourceResponse.class, "GET favourite resources as " + role);
     }
 
     /**
-     * Replaces the per-user favourite list with exactly {@code resourceIds}
-     * ({@code PUT /app-config/favourite-resources}, body {@code { resourcesId: [...] }}).
+     * Replaces the storage favourite list with exactly {@code resourceIds}
+     * ({@code PUT /storages/{storageId}/favourite-resources}, body {@code { resourcesId: [...] }}).
      * Pass an empty list to clear favourites.
      */
     @Step("API: {role} — зберегти обрані продукти ({resourceIds})")
-    public List<FavouriteResourceResponse> saveFavouriteResources(UserRole role, List<Long> resourceIds) {
+    public List<FavouriteResourceResponse> saveFavouriteResources(UserRole role, Long storageId, List<Long> resourceIds) {
         List<Long> ids = resourceIds == null ? List.of()
                 : resourceIds.stream().filter(Objects::nonNull).toList();
         SaveFavouriteResourcesRequest body = SaveFavouriteResourcesRequest.builder()
                 .resourcesId(ids)
                 .build();
         Response response = apiExecutor.execute(
-                ApiEndpointDefinition.APP_CONFIG_FAVOURITE_RESOURCES_PUT, role, body);
+                ApiEndpointDefinition.STORAGE_FAVOURITE_RESOURCES_PUT, role, body, storageId);
         validateSuccess(response, "PUT favourite resources as " + role);
         return ApiResponseHelper.parseList(
                 response, FavouriteResourceResponse.class, "PUT favourite resources as " + role);
@@ -193,8 +193,8 @@ public class PlanExecutionFixture extends BaseFixture {
 
     /** Snapshot of favourite resource ids for later {@link #restoreFavouriteResources}. */
     @Step("API: {role} — snapshot обраних продуктів")
-    public List<Long> snapshotFavouriteResourceIds(UserRole role) {
-        return getFavouriteResources(role).stream()
+    public List<Long> snapshotFavouriteResourceIds(UserRole role, Long storageId) {
+        return getFavouriteResources(role, storageId).stream()
                 .map(FavouriteResourceResponse::getResource)
                 .filter(Objects::nonNull)
                 .map(r -> r.getId())
@@ -203,8 +203,8 @@ public class PlanExecutionFixture extends BaseFixture {
     }
 
     @Step("API: {role} — відновити обрані продукти після тесту")
-    public void restoreFavouriteResources(UserRole role, List<Long> previousIds) {
-        saveFavouriteResources(role, previousIds == null ? List.of() : previousIds);
+    public void restoreFavouriteResources(UserRole role, Long storageId, List<Long> previousIds) {
+        saveFavouriteResources(role, storageId, previousIds == null ? List.of() : previousIds);
     }
 
     private void seedInputsForTechMap(Long storageId, TechnologicalMapResponse techMap, double outputAmount) {

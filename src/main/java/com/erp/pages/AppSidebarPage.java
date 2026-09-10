@@ -36,6 +36,8 @@ public class AppSidebarPage extends BasePage {
     public static final String GROUP_ORDERS = "Замовлення";
     public static final String GROUP_AUDIT = "Аудит";
     public static final String GROUP_CREW = "Екіпажі";
+    public static final String GROUP_ANALYTICS = "Аналітика";
+    public static final String NAV_PLAN_ANALYTICS = "Для плану";
 
     public static final String TAB_NON_SERIES = "Несерійне виробництво";
     public static final String TAB_ASSEMBLY_READINESS = "Готово до комплектації";
@@ -88,6 +90,28 @@ public class AppSidebarPage extends BasePage {
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
         link.click();
+        return this;
+    }
+
+    /**
+     * Expand a collapsible sidebar group (e.g. «Аналітика») and open a child link.
+     * Collapsible triggers are buttons, not links.
+     */
+    public AppSidebarPage openCollapsibleItem(String groupLabel, String itemLabel) {
+        Locator child = sidebarNavLink(itemLabel).first();
+        if (child.count() == 0 || !child.isVisible()) {
+            Locator trigger = page.locator(SIDEBAR_SELECTOR)
+                    .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(groupLabel));
+            trigger.first().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            trigger.first().click();
+            child = sidebarNavLink(itemLabel).first();
+        }
+        child.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        child.click();
         return this;
     }
 

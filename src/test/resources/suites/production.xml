@@ -16,15 +16,18 @@
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
             <class name="com.erp.tests.functional.production_order.ProductionOrderApiTest"/>
+            <class name="com.erp.tests.functional.production_order.ProductionGroupApiTest"/>
             <class name="com.erp.tests.functional.disassemble.DisassembleCrudApiTest"/>
             <class name="com.erp.tests.functional.shift.ShiftCrudApiTest"/>
             <class name="com.erp.tests.functional.analytics.AnalyticsAuditApiTest"/>
+            <class name="com.erp.tests.functional.analytics.PlanAnalyticApiTest"/>
         </classes>
     </test>
 
     <test name="Production UI">
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
+            <class name="com.erp.tests.ui.ProductionGroupsUiTest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalDatePickerUiTest"/>
             <class name="com.erp.tests.ui.ProductionHashtagUITest"/>
@@ -32,6 +35,7 @@
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
             <class name="com.erp.tests.ui.ProductionAnalyticsDatePickerUiTest"/>
+            <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
         </classes>
     </test>
 </suite>

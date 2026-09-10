@@ -114,7 +114,7 @@ public class PlanExecutionUiTest extends BaseUITest {
                 secondContext = null;
             }
             if (favouritesMutated && favouritesRole != null) {
-                fixture.restoreFavouriteResources(favouritesRole, previousFavouriteIds);
+                fixture.restoreFavouriteResources(favouritesRole, currentStorageId, previousFavouriteIds);
                 favouritesMutated = false;
                 favouritesRole = null;
                 previousFavouriteIds = null;
@@ -396,24 +396,18 @@ public class PlanExecutionUiTest extends BaseUITest {
     @Severity(SeverityLevel.NORMAL)
     @Issue("CPMA-587")
     @Description("""
-            Arrange: очистити обрані продукти OWNER_1; створити ізольований продукт з виробництвом
+            Arrange: очистити обрані продукти на локації OWNER_1 через
+            PUT /storages/{storageId}/favourite-resources; створити ізольований продукт з виробництвом
             за поточний місяць (щоб вкладка «Виконання» не була порожньою).
             Assert: кнопки «Лише обрані» і «Керувати обраними (0)» видимі; «Лише обрані» disabled,
             бо обрані не налаштовані (вимога продукту: «Тільки обрані» disabled без обраних).
-
-            Відомий дефект: tk-ui CPMA-587 зараз лишає «Лише обрані» завжди enabled і показує
-            empty state «Немає обраних ресурсів…» після кліку. Очікувана поведінка — disabled
-            до налаштування обраних; тест червоний до фіксу в tk-ui.
-
-            Додатковий баг продукту (прогін 34): тест падає ще раніше, на arrange —
-            PUT /resources/user-bundles з порожнім списком віддає 500 замість 200, тому обрані
-            неможливо очистити через API. Потрібен фікс у tk.""")
+            """)
     public void testOwnerFavouritesOnlyDisabledWhenEmpty() {
         currentStorageId = ownerStorageId;
         favouritesRole = UserRole.OWNER_1;
-        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole);
+        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole, ownerStorageId);
         favouritesMutated = true;
-        fixture.saveFavouriteResources(favouritesRole, List.of());
+        fixture.saveFavouriteResources(favouritesRole, ownerStorageId, List.of());
 
         fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
         currentContext = fixture.createIsolatedProduct(ownerStorageId);
@@ -445,7 +439,7 @@ public class PlanExecutionUiTest extends BaseUITest {
     @Issue("CPMA-587")
     @Description("""
             Arrange: очистити обрані OWNER_1; створити два ізольовані продукти з виробництвом;
-            через API PUT /app-config/favourite-resources зберегти лише перший як обраний.
+            через API PUT /storages/{storageId}/favourite-resources зберегти лише перший як обраний.
             Act (UI): відкрити сторінку → «Керувати обраними» (модалка) → закрити →
             «Лише обрані».
             Assert: модалка «Керування обраними ресурсами» відкривається; лічильник «(1)»;
@@ -458,9 +452,9 @@ public class PlanExecutionUiTest extends BaseUITest {
     public void testOwnerConfigureFavouritesAndFilter() {
         currentStorageId = ownerStorageId;
         favouritesRole = UserRole.OWNER_1;
-        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole);
+        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole, ownerStorageId);
         favouritesMutated = true;
-        fixture.saveFavouriteResources(favouritesRole, List.of());
+        fixture.saveFavouriteResources(favouritesRole, ownerStorageId, List.of());
 
         fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
         currentContext = fixture.createIsolatedProduct(ownerStorageId);
@@ -474,7 +468,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         String otherProduct = secondContext.getProduct().getName().trim();
         Long favouriteId = currentContext.getProduct().getId();
 
-        fixture.saveFavouriteResources(favouritesRole, List.of(favouriteId));
+        fixture.saveFavouriteResources(favouritesRole, ownerStorageId, List.of(favouriteId));
 
         injectRoleSession(UserRole.OWNER_1, ownerStorageId);
         PlanExecutionPage planPage = new PlanExecutionPage(page).open();
@@ -518,8 +512,9 @@ public class PlanExecutionUiTest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Issue("CPMA-587")
     @Description("""
-            Arrange: очистити обрані OWNER_1; створити два ізольовані продукти з виробництвом;
-            через API зберегти лише перший як обраний (щоб стартовий стан був непорожнім).
+            Arrange: очистити обрані на локації OWNER_1; створити два ізольовані продукти з виробництвом;
+            через API /storages/{storageId}/favourite-resources зберегти лише перший як обраний
+            (щоб стартовий стан був непорожнім).
             Act (UI): «Керувати обраними» → у каталозі знайти другий продукт → зірка/рядок →
             «Зберегти».
             Assert: лічильник «Керувати обраними (2)»; «Лише обрані» на сторінці показує обидва
@@ -531,9 +526,9 @@ public class PlanExecutionUiTest extends BaseUITest {
     public void testOwnerAddFavouriteViaManageDialog() {
         currentStorageId = ownerStorageId;
         favouritesRole = UserRole.OWNER_1;
-        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole);
+        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole, ownerStorageId);
         favouritesMutated = true;
-        fixture.saveFavouriteResources(favouritesRole, List.of());
+        fixture.saveFavouriteResources(favouritesRole, ownerStorageId, List.of());
 
         fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
         currentContext = fixture.createIsolatedProduct(ownerStorageId);
@@ -545,7 +540,7 @@ public class PlanExecutionUiTest extends BaseUITest {
 
         String existingFavourite = currentContext.getProduct().getName().trim();
         String productToAdd = secondContext.getProduct().getName().trim();
-        fixture.saveFavouriteResources(favouritesRole, List.of(currentContext.getProduct().getId()));
+        fixture.saveFavouriteResources(favouritesRole, ownerStorageId, List.of(currentContext.getProduct().getId()));
 
         var resourceFixture = new ResourceFixture(testContext, apiExecutor);
         assertThat(resourceFixture.getWithTechnologicalMap(
@@ -593,7 +588,8 @@ public class PlanExecutionUiTest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Issue("CPMA-587")
     @Description("""
-            Arrange: два ізольовані продукти з виробництвом; API зберігає обидва як обрані.
+            Arrange: два ізольовані продукти з виробництвом; API
+            /storages/{storageId}/favourite-resources зберігає обидва як обрані.
             Act (UI): «Керувати обраними» → чекбокс «Лише обрані» у модалці → прибрати зірку
             з першого → «Зберегти» → на сторінці «Лише обрані».
             Assert: у модалці обидва видно як обрані; після збереження лічильник «(1)»;
@@ -604,9 +600,9 @@ public class PlanExecutionUiTest extends BaseUITest {
     public void testOwnerEditExistingFavouritesViaManageDialog() {
         currentStorageId = ownerStorageId;
         favouritesRole = UserRole.OWNER_1;
-        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole);
+        previousFavouriteIds = fixture.snapshotFavouriteResourceIds(favouritesRole, ownerStorageId);
         favouritesMutated = true;
-        fixture.saveFavouriteResources(favouritesRole, List.of());
+        fixture.saveFavouriteResources(favouritesRole, ownerStorageId, List.of());
 
         fixture.ensureNoPlanForCurrentMonth(ownerStorageId);
         currentContext = fixture.createIsolatedProduct(ownerStorageId);
@@ -618,7 +614,7 @@ public class PlanExecutionUiTest extends BaseUITest {
 
         String removedProduct = currentContext.getProduct().getName().trim();
         String keptProduct = secondContext.getProduct().getName().trim();
-        fixture.saveFavouriteResources(favouritesRole, List.of(
+        fixture.saveFavouriteResources(favouritesRole, ownerStorageId, List.of(
                 currentContext.getProduct().getId(),
                 secondContext.getProduct().getId()));
 

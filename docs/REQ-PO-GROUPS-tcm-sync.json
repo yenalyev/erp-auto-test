@@ -1,0 +1,405 @@
+{
+  "verifiedAtUtc": "2026-09-10 12:38:34 UTC",
+  "featureId": "REQ-PO-GROUPS",
+  "parentFeatureId": "REQ-PO",
+  "targets": [
+    "prod TCM",
+    "local TCM"
+  ],
+  "acceptanceCriteria": 12,
+  "testCasesPerTarget": 30,
+  "verification": "Full read-back: feature description/documentation, criterion texts, case-to-criterion links, case fields and ordered steps match the local bundle.",
+  "executionResultsPublished": false,
+  "featureChecks": [
+    {
+      "env": "prod",
+      "ok": true,
+      "issues": [],
+      "criteria": 12
+    },
+    {
+      "env": "local",
+      "ok": true,
+      "issues": [],
+      "criteria": 12
+    }
+  ],
+  "testCaseChecks": [
+    {
+      "env": "prod",
+      "testId": "TC-PG-001",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-002",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-003",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-004",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-005",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-006",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-007",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-008",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-009",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-010",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-011",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-012",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-013",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-014",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-015",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-016",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-017",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-018",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-019",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-020",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-021",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-022",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-023",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-024",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-025",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-026",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-027",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-028",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-029",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "prod",
+      "testId": "TC-PG-030",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-001",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-002",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-003",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-004",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-005",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-006",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-007",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-008",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-009",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-010",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-011",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-012",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-013",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-014",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-015",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-016",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-017",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-018",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-019",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-020",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-021",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-022",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-023",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-024",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-025",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-026",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-027",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-028",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-029",
+      "ok": true,
+      "mismatches": []
+    },
+    {
+      "env": "local",
+      "testId": "TC-PG-030",
+      "ok": true,
+      "mismatches": []
+    }
+  ],
+  "selectorRequirementAmendment": {
+    "verifiedAtUtc": "2026-09-10T12:48:18.3302406Z",
+    "acceptanceCriteria": 13,
+    "testCasesPerTarget": 32,
+    "updatedCriterion": "AC-13",
+    "verifiedTestCases": [
+      "TC-PG-031",
+      "TC-PG-032"
+    ],
+    "targets": [
+      "prod TCM",
+      "local TCM"
+    ],
+    "verification": "Feature documentation, new criterion and both new cases read back and matched; previous verification remains recorded above.",
+    "executionResultsPublished": false
+  }
+}
