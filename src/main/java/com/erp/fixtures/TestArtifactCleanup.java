@@ -1,7 +1,6 @@
 package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
-import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.test_context.GlobalTestContext;
 import com.erp.test_context.TestContext;
@@ -12,8 +11,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Два шари:
  * <ol>
  *   <li><b>Tracked</b> — id з {@code create*} поточного класу ({@link #cleanupRegionsAndStorages}).</li>
- *   <li><b>Orphan sweep</b> — сиріти з попередніх прогонів за маркером імен
- *       {@link StorageDataFactory#isAutotestUniqueName(String)} ({@link #sweepOrphanAutotestArtifacts}).</li>
+ *   <li><b>Suite retry</b> — залишки поточного запуску з {@link TestArtifactRegistry}.
+ *       Назви та артефакти попередніх JVM не дають права на видалення.</li>
  * </ol>
  */
 @Slf4j
@@ -45,9 +44,8 @@ public final class TestArtifactCleanup {
     }
 
     /**
-     * Suite-level sweep of autotest regions (and optionally storages).
-     * Before tests: regions only — mass storage deactivate starves ADMIN session / first @BeforeClass.
-     * After tests: regions + best-effort storage deactivate.
+     * Retry this suite's registered regions and storages after tests.
+     * The legacy method name is retained for callers; no orphan/name-based scan occurs.
      * Opt-out: {@code -Dsuite.artifact.sweep=false}.
      */
     public static void sweepOrphanAutotestArtifacts(
@@ -75,8 +73,7 @@ public final class TestArtifactCleanup {
     }
 
     /**
-     * Sweep using a throwaway context — for {@code @BeforeSuite}/{@code @AfterSuite}
-     * before class fixtures exist.
+     * Retry with a throwaway context at {@code @AfterSuite}; ownership comes from ApiExecutor's SessionClient.
      */
     public static void sweepOrphanAutotestArtifacts(ApiExecutor apiExecutor, boolean includeStorages) {
         if (apiExecutor == null) {
@@ -107,7 +104,7 @@ public final class TestArtifactCleanup {
     }
 
     /**
-     * Suite orphan sweep flag. Default {@code true}; opt-out with {@code -Dsuite.artifact.sweep=false}.
+     * Suite registered-artifact retry flag. Default {@code true}; opt-out with {@code -Dsuite.artifact.sweep=false}.
      */
     public static boolean shouldSweepOrphans() {
         return Boolean.parseBoolean(System.getProperty("suite.artifact.sweep", "true"));

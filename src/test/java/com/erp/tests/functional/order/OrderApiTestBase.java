@@ -1,5 +1,7 @@
 package com.erp.tests.functional.order;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
@@ -15,7 +17,6 @@ import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -104,7 +105,7 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
                     gatheringStorageId, booked, attempt + 1);
         }
         if (booked != null && booked >= 0.01) {
-            throw new SkipException(
+            throw new AssertionError(
                     "Cannot clear ACTIVE holds on gathering " + gatheringStorageId
                             + " resource " + resourceId + ": bookedAmount=" + booked);
         }
@@ -117,7 +118,7 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
     protected void resetGatheringOnHandKeepingOrders(double onHandTarget) {
         Double booked = readGatheringBookedAmount();
         if (booked != null && booked >= 0.01) {
-            throw new SkipException(
+            throw new AssertionError(
                     "Gathering " + gatheringStorageId + " has bookedAmount=" + booked
                             + " before pin; clear holds in @BeforeMethod / previous tests");
         }
@@ -132,11 +133,7 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
                         "locations", gatheringStorageId,
                         "resourceIds", resourceId,
                         "size", 5));
-        if (response.statusCode() != 200) {
-            log.warn("Could not read bookedAmount for gathering {}: status={}",
-                    gatheringStorageId, response.statusCode());
-            return null;
-        }
+        assertThat(response.statusCode()).as("Read gathering bookedAmount").isEqualTo(200);
         List<MultiLocationStorageItemResponse> content =
                 response.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
         if (content == null || content.isEmpty() || content.getFirst().getLocations() == null) {

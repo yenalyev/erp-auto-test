@@ -41,7 +41,7 @@ public final class RequestDiagnostics {
             try {
                 return delegate.filter(requestSpec, responseSpec, ctx);
             } finally {
-                store(buffer.toString(StandardCharsets.UTF_8));
+                record(buffer.toString(StandardCharsets.UTF_8));
             }
         };
     }
@@ -55,38 +55,15 @@ public final class RequestDiagnostics {
         LAST_REQUEST.remove();
     }
 
-    private static void store(String captured) {
+    static void record(String captured) {
         if (captured == null || captured.isBlank()) {
             LAST_REQUEST.remove();
             return;
         }
-        String sanitized = redactCookies(captured);
+        String sanitized = HttpSecretRedactor.redact(captured);
         LAST_REQUEST.set(sanitized.length() <= MAX_CAPTURED_CHARS
                 ? sanitized
                 : sanitized.substring(0, MAX_CAPTURED_CHARS) + "...<truncated>");
     }
 
-    /**
-     * Drops the {@code Cookies:} block: it carries live Keycloak session tokens and, being several
-     * kilobytes long, would push the request body out of any truncated failure message.
-     */
-    private static String redactCookies(String captured) {
-        StringBuilder result = new StringBuilder(captured.length());
-        boolean insideCookies = false;
-        for (String line : captured.split("\\R", -1)) {
-            if (insideCookies) {
-                if (line.isEmpty() || Character.isWhitespace(line.charAt(0))) {
-                    continue;
-                }
-                insideCookies = false;
-            }
-            if (line.startsWith("Cookies:")) {
-                insideCookies = true;
-                result.append("Cookies:\t\t<redacted>").append(System.lineSeparator());
-                continue;
-            }
-            result.append(line).append(System.lineSeparator());
-        }
-        return result.toString();
-    }
 }

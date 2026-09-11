@@ -204,7 +204,7 @@ mvn test -Denv=dev -Dtest=FlyPointToFlyPointIssuanceUiTest
 mvn test -Denv=staging -Dtest=CrewReturnTest,CrewReturnUITest
 ```
 
-Suites: `relocations.xml`, `functional.xml`, `storage-regions.xml`, `regression.xml`, `ui-dev.xml`.
+Suites: `relocations.xml`, `functional.xml`, `storage-regions.xml`, `regression.xml`, `ui.xml`.
 
 **Staging:** cleanup локацій/областей зазвичай пропускається — для UI autocomplete шукати ресурс за унікальним суфіксом імені (див. `RelocationCreateInputCrewPage.selectResourceByName`).
 

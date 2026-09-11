@@ -380,7 +380,7 @@ public class OrderFixture extends BaseFixture {
     }
 
     /**
-     * Cancels IN_PROGRESS orders on the given storages so ACTIVE booking holds
+     * Cancels this suite's IN_PROGRESS orders on the given storages so ACTIVE booking holds
      * do not pollute shared gathering stock between tests.
      */
     @Step("Clear IN_PROGRESS orders (release holds) on storages {storageIds}")
@@ -393,6 +393,7 @@ public class OrderFixture extends BaseFixture {
                 continue;
             }
             int pageNumber = 0;
+            int scanPage = 0;
             int cancelledOnStorage = 0;
             while (pageNumber < 20) {
                 int cancelledBeforePage = cancelledOnStorage;
@@ -402,7 +403,7 @@ public class OrderFixture extends BaseFixture {
                         Map.of(
                                 "storageIds", storageId,
                                 "states", "IN_PROGRESS",
-                                "page", 0,
+                                "page", scanPage,
                                 "size", 100));
                 if (response.statusCode() != 200) {
                     log.warn("Skip hold cleanup for storage {}: GET orders status={}",
@@ -415,7 +416,7 @@ public class OrderFixture extends BaseFixture {
                     break;
                 }
                 for (OrderResponse order : content) {
-                    if (order.getId() == null) {
+                    if (!apiExecutor.getArtifactRegistry().owns(TestArtifactRegistry.Kind.ORDER, order.getId())) {
                         continue;
                     }
                     Long cancelStorageId = order.getStorage() != null && order.getStorage().getId() != null
@@ -443,9 +444,9 @@ public class OrderFixture extends BaseFixture {
                     }
                 }
                 if (cancelledOnStorage == cancelledBeforePage) {
-                    log.warn("Hold cleanup stalled on storage {} ({} still IN_PROGRESS)",
+                    log.debug("No owned orders cancelled on storage {} ({} entries); advancing page",
                             storageId, content.size());
-                    break;
+                    scanPage++;
                 }
                 if (content.size() < 100) {
                     break;

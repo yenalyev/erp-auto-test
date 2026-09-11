@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Write-off після використання екіпажем: списання з parent FLY_POINT.
- * Fight sync (TC-CREW-FIGHT-001) — skip when GET /write-off/short-stats ≠ 200.
+ * Fight sync (TC-CREW-FIGHT-001) — skip only when fight.integration.enabled=false.
  * TC-CREW-FIGHT-002 і TC-FLY-WO-001 сіють PENDING через БД ({@code use.database=true}) і complete через API.
  */
 @Slf4j
@@ -49,18 +49,14 @@ public class CrewWriteOffTest extends CrewApiTestBase {
     private static final double WRITE_OFF_AMOUNT = 5.0;
     private static final UserRole STOCK_READER = UserRole.ADMIN;
 
-    private static boolean fightIntegrationEnabled;
+    private boolean fightIntegrationEnabled;
     private Long resourceId;
     private String resourceName;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupCrewApiBase")
     @Step("Probe Fight / write-off integration + підготовка ресурсу")
     public void setupWriteOffTests() {
-        Response stats = apiExecutor.execute(
-                ApiEndpointDefinition.INVENTORY_WRITE_OFF_GET_SHORT_STATS,
-                UserRole.ADMIN);
-        fightIntegrationEnabled = stats.statusCode() == 200;
-        log.info("Fight write-off integration probe: enabled={}", fightIntegrationEnabled);
+        fightIntegrationEnabled = com.erp.utils.config.ConfigProvider.getConfig().fightIntegrationEnabled();
 
         storageFixture.prepareContext();
         resourceFixture.fetchSharedUnit(3);
@@ -99,18 +95,16 @@ public class CrewWriteOffTest extends CrewApiTestBase {
     @Severity(SeverityLevel.NORMAL)
     public void testWriteOffAppearsAfterFightSync() {
         if (!fightIntegrationEnabled) {
-            throw new SkipException("Fight sync disabled — GET write-off/short-stats as ADMIN ≠ 200");
+            throw new SkipException("Fight explicitly disabled: fight.integration.enabled=false");
         }
+        com.erp.utils.helpers.IntegrationPrerequisites.probe(true, "Fight",
+                () -> apiExecutor.execute(ApiEndpointDefinition.INVENTORY_WRITE_OFF_GET_SHORT_STATS, UserRole.ADMIN));
         CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("fight-wo-");
         // OWNER_1 often has no inventory-write-off on staging (403); ADMIN is the Fight reader.
         Response page = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.INVENTORY_WRITE_OFF_GET_PAGE,
                 UserRole.ADMIN,
                 Map.of("storageId", scenario.crew().getId()));
-        if (page.statusCode() == 403) {
-            throw new SkipException(
-                    "GET /write-off page 403 as ADMIN — Fight write-off permission missing on this env");
-        }
         assertThat(page.statusCode()).isEqualTo(200);
         assertThat(page.jsonPath().getList("content")).isNotNull();
     }

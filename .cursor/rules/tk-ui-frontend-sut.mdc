@@ -68,6 +68,6 @@ Login Keycloak selectors and post-login `/production` — correct for typical pr
 
 ## erp-auto-test UI coverage
 
-Broad Playwright coverage across production, relocation, inventory, global plans, tech maps, users, defects, equipment — see `src/test/java/com/erp/tests/ui/` and suites `ui.xml` / `ui-dev.xml` / domain suites.
+Broad Playwright coverage across production, relocation, inventory, global plans, tech maps, users, defects, equipment — see `src/test/java/com/erp/tests/ui/` and `ui.xml` / domain suites.
 
 When adding UI tests: prefer `data-testid` in tk-ui first, then Page Objects in `com.erp.pages`.

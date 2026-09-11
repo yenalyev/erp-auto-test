@@ -92,6 +92,6 @@ Sidebar: група **Екіпажі** → вкладка **Ресурси Фа�
 | AC-03 | UI список + картка CRUD | `TC-UI-FAITA-001…004` |
 
 Автотести: `FaitaResourcesApiTest`, `FaitaResourcesUiTest`, `FaitaResourceFixture`.  
-Suite: `functional.xml`, `storage-regions.xml`, `regression.xml`, `ui-dev.xml`, `faita-resources.xml`.
+Suite: `functional.xml`, `storage-regions.xml`, `regression.xml`, `ui.xml`, `faita-resources.xml`.
 
 Якщо `GET /integrations/faita/resources` ≠ 200 — SkipException (немає FaitaResourceController на env).

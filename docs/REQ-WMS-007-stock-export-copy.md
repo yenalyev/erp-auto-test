@@ -133,10 +133,10 @@ UI: тогл вимкнений → файл без нулів; увімкнен
 | `InventoryUiTest` | `exportExcelWithAndWithoutZeroStockUi`, `copyRemaindersToClipboardUi` |
 | POM | `UnitManagementPage.setShowZeroStock` / `isShowZeroStockOn` |
 
-Прогін інкременту:
+Прогін підтримуваного набору Inventory (включає ці API/UI-перевірки):
 
 ```text
-mvn test -Denv=dev -Dsuite=next-wms-007-export-copy
+mvn test -Denv=dev -Dsuite=inventory
 ```
 
 Класи вже в `inventory.xml` / `regression.xml`.

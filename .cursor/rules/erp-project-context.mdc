@@ -43,7 +43,9 @@ BaseTest
 
 Suites: `src/test/resources/suites/` — run via `mvn test -Denv=dev -Dsuite=smoke|functional|ui|regression|...`
 
-Default pom: `env=dev`, `suite=dev-test` (only ProductionUITest).
+Default pom: `env=dev`, `suite=smoke` (login smoke + Bot Internal API SLA). Use `-Dsuite=regression` for the maintained API/UI regression set. Empty runs fail.
+
+Keep only reusable domain suites. For one-off reruns use `-Dtest=ClassName#methodName` instead of committing `next-*`, `*-verify`, or run-specific XML files. `-Dtest` bypasses suite XML listeners; use a maintained suite when TCM/Google Sheets reporting is needed.
 
 ## Coverage gaps (priority for new work)
 

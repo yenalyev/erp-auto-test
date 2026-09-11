@@ -17,7 +17,6 @@ import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -69,7 +68,7 @@ public class OrderFreeStockUiTest extends OrderUiTestBase {
         InventoryEditPage edit = new InventoryEditPage(page).open(gatheringStorageId);
         edit.attachScreenshot("TC-ORD-102 — booked hint");
         if (page.getByText("заброньовано").count() == 0) {
-            throw new SkipException("Booked hint not visible — session may be closed or resource not on form");
+            throw new AssertionError("Booked hint not visible — session may be closed or resource not on form");
         }
         assertThat(page.getByText("заброньовано").count()).isGreaterThan(0);
     }
@@ -137,9 +136,9 @@ public class OrderFreeStockUiTest extends OrderUiTestBase {
                 log.warn("pinGatheringOnHand attempt {} failed: {}", attempt + 1, e.getMessage());
             }
         }
-        throw new SkipException(
+        throw new AssertionError(
                 "Cannot pin gathering on-hand to " + onHandTarget
-                        + (last == null ? "" : ": " + last.getMessage()));
+                        + (last == null ? "" : ": " + last.getMessage()), last);
     }
 
     private Long elsewhereRecipientId() {

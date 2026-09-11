@@ -36,10 +36,9 @@ public class FaitaResourceFixture extends BaseFixture {
 
     @Step("API: probe GET /integrations/faita/resources")
     public boolean probeAvailable() {
-        Response probe = apiExecutor.execute(ApiEndpointDefinition.FAITA_RESOURCES_GET, UserRole.ADMIN);
-        boolean available = probe.statusCode() == 200;
-        log.info("FAITA integrations API probe: status={} available={}", probe.statusCode(), available);
-        return available;
+        return com.erp.utils.helpers.IntegrationPrerequisites.probe(
+                com.erp.utils.config.ConfigProvider.getConfig().faitaIntegrationEnabled(), "FAITA",
+                () -> apiExecutor.execute(ApiEndpointDefinition.FAITA_RESOURCES_GET, UserRole.ADMIN));
     }
 
     public String newExternalId(String prefix) {

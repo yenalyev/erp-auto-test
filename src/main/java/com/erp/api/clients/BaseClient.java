@@ -1,12 +1,8 @@
 package com.erp.api.clients;
 
 import com.erp.utils.config.ConfigProvider;
-import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
-import io.restassured.config.HttpClientConfig;
-import io.restassured.config.RestAssuredConfig;
-import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -33,25 +29,13 @@ public abstract class BaseClient {
     /**
      * Create default request specification
      */
-    private static LogDetail httpLogDetail() {
-        return ConfigProvider.verboseLogging() ? LogDetail.ALL : LogDetail.URI;
-    }
-
     private RequestSpecification createRequestSpec() {
-        int timeoutMs = ConfigProvider.getTimeout() * 1000;
-        RestAssuredConfig restConfig = RestAssuredConfig.config()
-                .httpClient(HttpClientConfig.httpClientConfig()
-                        .setParam("http.connection.timeout", timeoutMs)
-                        .setParam("http.socket.timeout", timeoutMs)
-                        .setParam("http.connection-manager.timeout", (long) timeoutMs));
-
         RequestSpecBuilder builder = new RequestSpecBuilder()
-                .setConfig(restConfig)
+                .setConfig(HttpClientSupport.config())
                 .setBaseUri(ConfigProvider.getBackendUrl())
                 .setContentType(ContentType.JSON)
                 .setAccept(ContentType.JSON)
-                .addFilter(new AllureRestAssured())
-                .log(httpLogDetail());
+                .addFilter(new SafeHttpDiagnosticsFilter());
 
         // ✅ Додаємо токен якщо він є
         if (authToken != null && !authToken.isEmpty()) {
@@ -65,9 +49,7 @@ public abstract class BaseClient {
      * Create default response specification
      */
     private ResponseSpecification createResponseSpec() {
-        return new ResponseSpecBuilder()
-                .log(httpLogDetail())
-                .build();
+        return new ResponseSpecBuilder().build();
     }
 
     /**
@@ -82,7 +64,6 @@ public abstract class BaseClient {
     // ✅ Всі методи залишаються такими ж
 
     protected Response get(String endpoint) {
-        log.info("GET request to: {}", endpoint);
         return given()
                 .spec(requestSpec)
                 .when()
@@ -94,7 +75,6 @@ public abstract class BaseClient {
     }
 
     protected Response get(String endpoint, Map<String, ?> pathParams) {
-        log.info("GET request to: {} with params: {}", endpoint, pathParams);
         return given()
                 .spec(requestSpec)
                 .pathParams(pathParams)
@@ -107,7 +87,6 @@ public abstract class BaseClient {
     }
 
     protected Response getWithQueryParams(String endpoint, Map<String, ?> queryParams) {
-        log.info("GET request to: {} with query params: {}", endpoint, queryParams);
         return given()
                 .spec(requestSpec)
                 .queryParams(queryParams)
@@ -120,7 +99,6 @@ public abstract class BaseClient {
     }
 
     protected Response post(String endpoint, Object body) {
-        log.info("POST request to: {} with body: {}", endpoint, body);
         return given()
                 .spec(requestSpec)
                 .body(body)
@@ -133,7 +111,6 @@ public abstract class BaseClient {
     }
 
     protected Response post(String endpoint) {
-        log.info("POST request to: {}", endpoint);
         return given()
                 .spec(requestSpec)
                 .when()
@@ -145,7 +122,6 @@ public abstract class BaseClient {
     }
 
     protected Response put(String endpoint, Object body) {
-        log.info("PUT request to: {} with body: {}", endpoint, body);
         return given()
                 .spec(requestSpec)
                 .body(body)
@@ -158,7 +134,6 @@ public abstract class BaseClient {
     }
 
     protected Response put(String endpoint, Map<String, ?> pathParams, Object body) {
-        log.info("PUT request to: {} with params: {} and body: {}", endpoint, pathParams, body);
         return given()
                 .spec(requestSpec)
                 .pathParams(pathParams)
@@ -172,7 +147,6 @@ public abstract class BaseClient {
     }
 
     protected Response patch(String endpoint, Object body) {
-        log.info("PATCH request to: {} with body: {}", endpoint, body);
         return given()
                 .spec(requestSpec)
                 .body(body)
@@ -185,7 +159,6 @@ public abstract class BaseClient {
     }
 
     protected Response delete(String endpoint) {
-        log.info("DELETE request to: {}", endpoint);
         return given()
                 .spec(requestSpec)
                 .when()
@@ -197,7 +170,6 @@ public abstract class BaseClient {
     }
 
     protected Response delete(String endpoint, Map<String, ?> pathParams) {
-        log.info("DELETE request to: {} with params: {}", endpoint, pathParams);
         return given()
                 .spec(requestSpec)
                 .pathParams(pathParams)

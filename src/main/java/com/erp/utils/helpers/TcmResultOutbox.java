@@ -1,219 +1,151 @@
 package com.erp.utils.helpers;
 
 import com.erp.dto.tcm.TcmImportResponse;
-import com.erp.utils.config.ConfigProvider;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
-/**
- * Durable JSONL outbox for TCM results. Survives listener/network failures so the runner can fallback-ship.
- */
+/** Durable results for one run; an explicit path must belong to one runner invocation. */
 @Slf4j
 public final class TcmResultOutbox {
-
-    private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Object LOCK = new Object();
+    private final String remoteRunId;
+    private final Path file;
 
-    private TcmResultOutbox() {
+    public TcmResultOutbox(String remoteRunId) {
+        this(remoteRunId, configuredFile(remoteRunId));
     }
 
-    public static Path resultsFile() {
+    public TcmResultOutbox(String remoteRunId, Path file) {
+        if (remoteRunId == null || remoteRunId.isBlank()) {
+            throw new IllegalArgumentException("remoteRunId must not be blank");
+        }
+        this.remoteRunId = remoteRunId;
+        this.file = Objects.requireNonNull(file).toAbsolutePath().normalize();
+    }
+
+    private static Path configuredFile(String id) {
         String configured = System.getProperty("tcm.results.file");
-        if (configured != null && !configured.isBlank()) {
-            return Path.of(configured.trim());
+        if (configured != null && !configured.isBlank()) return Path.of(configured.trim());
+        if (id == null || !id.matches("[A-Za-z0-9][A-Za-z0-9._-]*")) {
+            throw new IllegalArgumentException("remoteRunId must be a valid directory name");
         }
-        String remoteRunId = ConfigProvider.getTcmRemoteRunId();
-        String dirName = remoteRunId != null ? remoteRunId : "local";
-        return Path.of(System.getProperty("java.io.tmpdir"), "tcm-autotest", dirName, "tcm-results.jsonl");
+        return Path.of(System.getProperty("java.io.tmpdir"), "tcm-autotest", id, "tcm-results.jsonl");
     }
 
-    public static Path importOkMarker() {
-        return resultsFile().getParent().resolve("tcm-import.ok");
+    public Path resultsFile() { return file; }
+    public Path importOkMarker() { return file.getParent().resolve("tcm-import.ok"); }
+
+    /** Clear a stale delivery marker, preserving recoverable results. */
+    public void beginRun() {
+        synchronized (LOCK) {
+            if (Files.exists(importOkMarker()) && !hasImportOk()) {
+                try { Files.delete(importOkMarker()); }
+                catch (IOException e) {
+                    throw new IllegalStateException("Cannot clear stale TCM marker: " + importOkMarker(), e);
+                }
+            }
+        }
     }
 
-    public static void append(String testCaseId, String status, Long durationMs, String errorMessage, LocalDateTime executedAt) {
-        if (testCaseId == null || testCaseId.isBlank()) {
-            return;
-        }
-        Path file = resultsFile();
-        String escapedError = escapeJson(errorMessage);
-        String line = String.format(Locale.ROOT,
-                "{\"testCaseId\":\"%s\",\"status\":\"%s\",\"durationMs\":%s,\"errorMessage\":%s,\"executedAt\":\"%s\"}%n",
-                escapeJson(testCaseId.trim()),
-                escapeJson(status != null ? status : "NOT_RUN"),
-                durationMs != null ? durationMs : "null",
-                escapedError == null ? "null" : "\"" + escapedError + "\"",
-                executedAt != null ? executedAt.format(ISO) : LocalDateTime.now().format(ISO));
+    public void append(String testCaseId, String status, Long durationMs, String errorMessage, LocalDateTime executedAt) {
+        if (testCaseId == null || testCaseId.isBlank()) return;
+        Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("testCaseId", testCaseId.trim());
+        entry.put("status", status != null ? status : "NOT_RUN");
+        entry.put("durationMs", durationMs);
+        entry.put("errorMessage", errorMessage);
+        entry.put("executedAt", (executedAt != null ? executedAt : LocalDateTime.now()).toString());
         synchronized (LOCK) {
             try {
                 Files.createDirectories(file.getParent());
-                Files.writeString(file, line, StandardCharsets.UTF_8,
-                        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            } catch (IOException ex) {
-                log.warn("Failed to append TCM outbox {}: {}", file, ex.getMessage());
+                // Runner skips rows without testCaseId, then forwards result rows unchanged to TCM.
+                // Keep ownership metadata separate: the TCM result DTO rejects extra properties.
+                String rows = MAPPER.writeValueAsString(Map.of("remoteRunId", remoteRunId))
+                        + System.lineSeparator() + MAPPER.writeValueAsString(entry) + System.lineSeparator();
+                Files.writeString(file, rows,
+                        StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                log.warn("Failed to append TCM outbox {}: {}", file, e.getMessage());
             }
         }
     }
 
-    public static List<TcmApiClient.BufferedResult> readAll() {
-        Path file = resultsFile();
-        if (!Files.isRegularFile(file)) {
-            return List.of();
-        }
-        List<TcmApiClient.BufferedResult> results = new ArrayList<>();
-        try {
-            for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-                if (line == null || line.isBlank()) {
-                    continue;
-                }
-                String testCaseId = extractJsonString(line, "testCaseId");
-                if (testCaseId == null || testCaseId.isBlank()) {
-                    continue;
-                }
-                String status = extractJsonString(line, "status");
-                Long durationMs = extractJsonLong(line, "durationMs");
-                String errorMessage = extractJsonString(line, "errorMessage");
-                String executedAtRaw = extractJsonString(line, "executedAt");
-                LocalDateTime executedAt = LocalDateTime.now();
-                if (executedAtRaw != null && !executedAtRaw.isBlank()) {
+    /** Reject both foreign run IDs and legacy records without an ID. */
+    public List<TcmApiClient.BufferedResult> readAll() {
+        synchronized (LOCK) {
+            if (!Files.isRegularFile(file)) return List.of();
+            List<TcmApiClient.BufferedResult> results = new ArrayList<>();
+            try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+                String line;
+                String entryRunId = null;
+                while ((line = reader.readLine()) != null) {
+                    if (line.isBlank()) continue;
                     try {
-                        executedAt = LocalDateTime.parse(executedAtRaw);
-                    } catch (Exception ignored) {
-                        // keep now
+                        JsonNode entry = MAPPER.readTree(line);
+                        if (entry != null && entry.hasNonNull("remoteRunId") && !entry.hasNonNull("testCaseId")) {
+                            entryRunId = entry.path("remoteRunId").asText();
+                            continue;
+                        }
+                        String owner = entryRunId;
+                        entryRunId = null;
+                        if (entry == null || !remoteRunId.equals(owner)) continue;
+                        String id = entry.path("testCaseId").asText();
+                        if (id.isBlank()) continue;
+                        JsonNode duration = entry.get("durationMs");
+                        JsonNode error = entry.get("errorMessage");
+                        results.add(new TcmApiClient.BufferedResult(id,
+                                mapStatus(entry.path("status").asText()),
+                                duration != null && duration.isNumber() ? duration.longValue() : null,
+                                error != null && !error.isNull() ? error.asText() : null,
+                                LocalDateTime.parse(entry.path("executedAt").asText())));
+                    } catch (IOException | RuntimeException e) {
+                        entryRunId = null;
+                        // An interrupted append may leave an incomplete final line.
+                        log.warn("Ignoring malformed record in TCM outbox {}", file);
                     }
                 }
-                results.add(new TcmApiClient.BufferedResult(
-                        testCaseId,
-                        mapStatusToTestng(status),
-                        durationMs,
-                        errorMessage,
-                        executedAt));
+            } catch (IOException e) {
+                log.warn("Failed to read TCM outbox {}: {}", file, e.getMessage());
             }
-        } catch (IOException ex) {
-            log.warn("Failed to read TCM outbox {}: {}", file, ex.getMessage());
-        }
-        return results;
-    }
-
-    public static void writeImportOk(TcmImportResponse response, String source) {
-        Path marker = importOkMarker();
-        try {
-            Files.createDirectories(marker.getParent());
-            String body = "runId=" + (response != null ? response.getRunId() : "")
-                    + "\nmatched=" + (response != null ? response.getMatched() : 0)
-                    + "\nsource=" + (source != null ? source : "LISTENER")
-                    + "\n";
-            Files.writeString(marker, body, StandardCharsets.UTF_8);
-        } catch (IOException ex) {
-            log.warn("Failed to write TCM import OK marker {}: {}", marker, ex.getMessage());
+            return results;
         }
     }
 
-    public static boolean hasImportOk() {
-        return Files.isRegularFile(importOkMarker());
+    public void writeImportOk(TcmImportResponse response, String source) {
+        synchronized (LOCK) {
+            try {
+                Files.createDirectories(file.getParent());
+                Files.writeString(importOkMarker(), "remoteRunId=" + remoteRunId
+                        + "\nrunId=" + (response != null ? response.getRunId() : "")
+                        + "\nmatched=" + (response != null ? response.getMatched() : 0)
+                        + "\nsource=" + (source != null ? source : "LISTENER") + "\n", StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                log.warn("Failed to write TCM import marker {}: {}", importOkMarker(), e.getMessage());
+            }
+        }
     }
 
-    private static int mapStatusToTestng(String status) {
-        if (status == null) {
-            return org.testng.ITestResult.FAILURE;
+    public boolean hasImportOk() {
+        synchronized (LOCK) {
+            try {
+                return Files.isRegularFile(importOkMarker()) && Files.readAllLines(importOkMarker(), StandardCharsets.UTF_8)
+                        .contains("remoteRunId=" + remoteRunId);
+            } catch (IOException e) { return false; }
         }
-        return switch (status.trim().toUpperCase(Locale.ROOT)) {
+    }
+
+    private static int mapStatus(String status) {
+        return switch (status.toUpperCase(Locale.ROOT)) {
             case "PASS" -> org.testng.ITestResult.SUCCESS;
             case "SKIPPED" -> org.testng.ITestResult.SKIP;
             default -> org.testng.ITestResult.FAILURE;
         };
-    }
-
-    private static String escapeJson(String value) {
-        if (value == null) {
-            return null;
-        }
-        return value
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\r", "\\r")
-                .replace("\n", "\\n");
-    }
-
-    private static String extractJsonString(String json, String field) {
-        String key = "\"" + field + "\"";
-        int idx = json.indexOf(key);
-        if (idx < 0) {
-            return null;
-        }
-        int colon = json.indexOf(':', idx + key.length());
-        if (colon < 0) {
-            return null;
-        }
-        int i = colon + 1;
-        while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
-            i++;
-        }
-        if (i >= json.length()) {
-            return null;
-        }
-        if (json.startsWith("null", i)) {
-            return null;
-        }
-        if (json.charAt(i) != '"') {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-        i++;
-        while (i < json.length()) {
-            char c = json.charAt(i);
-            if (c == '\\' && i + 1 < json.length()) {
-                sb.append(json.charAt(i + 1));
-                i += 2;
-                continue;
-            }
-            if (c == '"') {
-                break;
-            }
-            sb.append(c);
-            i++;
-        }
-        return sb.toString();
-    }
-
-    private static Long extractJsonLong(String json, String field) {
-        String key = "\"" + field + "\"";
-        int idx = json.indexOf(key);
-        if (idx < 0) {
-            return null;
-        }
-        int colon = json.indexOf(':', idx + key.length());
-        if (colon < 0) {
-            return null;
-        }
-        int i = colon + 1;
-        while (i < json.length() && Character.isWhitespace(json.charAt(i))) {
-            i++;
-        }
-        if (i >= json.length() || json.startsWith("null", i)) {
-            return null;
-        }
-        int start = i;
-        while (i < json.length() && (Character.isDigit(json.charAt(i)) || json.charAt(i) == '-')) {
-            i++;
-        }
-        if (start == i) {
-            return null;
-        }
-        try {
-            return Long.parseLong(json.substring(start, i));
-        } catch (NumberFormatException ex) {
-            return null;
-        }
     }
 }

@@ -167,7 +167,7 @@ flowchart TD
 
 **Нюанс SUT (ресурси):** перевірка «отримувач підтверджує доставку» відсікає EXTERNAL (і crew ↔ fly-point). UNIT / CREW / FLY_POINT як новий отримувач **ресурсного** send цим чеком не блокуються. Для **обладнання** перенаправлення на UNIT блокується.
 
-Службовий сьют: `mvn test -Denv=dev -Dsuite=edit-rel-007-verify`
+Підтримуваний набір API/UI переміщень: `mvn test -Denv=dev -Dsuite=relocations`
 
 | AC | Кейси | Автотест |
 |----|--------|----------|

@@ -15,7 +15,7 @@
 
     <properties>
         <env>dev</env>
-        <suite>dev-test</suite>
+        <suite>smoke</suite>
         <!-- Java  -->
         <java.version>21</java.version>
         <maven.compiler.source>21</maven.compiler.source>
@@ -331,6 +331,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
+                    <failIfNoTests>true</failIfNoTests>
                     <suiteXmlFiles>
                         <suiteXmlFile>src/test/resources/suites/${suite}.xml</suiteXmlFile>
                     </suiteXmlFiles>

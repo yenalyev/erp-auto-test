@@ -2,7 +2,6 @@ package com.erp.utils.helpers;
 
 import io.restassured.response.Response;
 import lombok.experimental.UtilityClass;
-import org.testng.SkipException;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,7 +24,7 @@ public class ApiResponseHelper {
         }
         String trimmed = body.stripLeading();
         if (trimmed.startsWith("<")) {
-            throw new SkipException(buildMessage(action, response.statusCode(), response));
+            throw new IllegalStateException(buildMessage(action, response.statusCode(), response));
         }
     }
 

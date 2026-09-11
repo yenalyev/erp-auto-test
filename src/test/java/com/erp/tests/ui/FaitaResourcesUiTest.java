@@ -57,7 +57,7 @@ public class FaitaResourcesUiTest extends BaseUITest {
         selectedStorageId = ConfigProvider.getOwner1StorageId();
         faitaApiAvailable = faitaFixture.probeAvailable();
         if (!faitaApiAvailable) {
-            log.warn("GET /integrations/faita/resources ≠ 200 — FaitaResourcesUiTest буде skipped");
+            log.warn("faita.integration.enabled=false — FaitaResourcesUiTest буде skipped");
         }
     }
 
@@ -196,9 +196,7 @@ public class FaitaResourcesUiTest extends BaseUITest {
 
     private void requireFaitaApi() {
         if (!faitaApiAvailable) {
-            throw new SkipException(
-                    "FAITA integrations API недоступний на цьому env "
-                            + "(GET /api/v1/integrations/faita/resources ≠ 200).");
+            throw new SkipException("FAITA explicitly disabled: faita.integration.enabled=false");
         }
     }
 

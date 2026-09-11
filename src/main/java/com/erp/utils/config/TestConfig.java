@@ -11,6 +11,15 @@ import org.aeonbits.owner.Config;
 })
 public interface TestConfig extends Config {
 
+    @Key("fight.integration.enabled")
+    @DefaultValue("true")
+    boolean fightIntegrationEnabled();
+
+    @Key("faita.integration.enabled")
+    @DefaultValue("true")
+    boolean faitaIntegrationEnabled();
+
+
     // Frontend SPA URL (UI tests)
     @Key("base.url")
     @DefaultValue("http://localhost:8080")

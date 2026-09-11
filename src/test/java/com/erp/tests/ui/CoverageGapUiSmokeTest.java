@@ -12,7 +12,6 @@ import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -93,7 +92,7 @@ public class CoverageGapUiSmokeTest extends BaseUITest {
         sidebar.openGroup(AppSidebarPage.GROUP_EQUIPMENT);
         sidebar.openPageTab(AppSidebarPage.TAB_EMPLOYEES);
         if (!page.url().contains("/employees")) {
-            throw new SkipException("Employees tab not reachable for ADMIN");
+            throw new AssertionError("Employees tab not reachable for ADMIN");
         }
         assertThat(page.url()).contains("/employees");
     }

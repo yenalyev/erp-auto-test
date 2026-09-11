@@ -16,7 +16,6 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -50,7 +49,7 @@ public class OrderBookingUiTest extends OrderUiTestBase {
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
 
         if (!ordersPage.isBookingPanelVisible()) {
-            throw new SkipException("«Збір замовлення» panel not visible — check ORDER::MANAGE for ADMIN on requester storage");
+            throw new AssertionError("«Збір замовлення» panel not visible — check ORDER::MANAGE for ADMIN on requester storage");
         }
 
         assertThat(ordersPage.isBookingPanelVisible())
@@ -75,10 +74,10 @@ public class OrderBookingUiTest extends OrderUiTestBase {
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
 
         if (!ordersPage.isBookingPanelVisible()) {
-            throw new SkipException("Booking panel not visible — cannot verify send order button");
+            throw new AssertionError("Booking panel not visible — cannot verify send order button");
         }
         if (!ordersPage.isSendOrderEnabled()) {
-            throw new SkipException("«Відправити замовлення» not enabled after full API booking");
+            throw new AssertionError("«Відправити замовлення» not enabled after full API booking");
         }
 
         RelocationCreateOutputPage outputPage = ordersPage.clickSendOrder();
@@ -171,7 +170,7 @@ public class OrderBookingUiTest extends OrderUiTestBase {
         orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, ORDER_QTY);
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
         if (!ordersPage.isBookingPanelVisible()) {
-            throw new SkipException("Booking panel not visible");
+            throw new AssertionError("Booking panel not visible");
         }
         assertThat(ordersPage.isBookingNeedFreeTableVisible() || ordersPage.isReleaseBookingVisible()
                 || ordersPage.isBookingPanelVisible()).isTrue();
@@ -185,7 +184,7 @@ public class OrderBookingUiTest extends OrderUiTestBase {
         OrderResponse order = prepareManagedInProgressUi();
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
         if (!ordersPage.isBookingPanelVisible()) {
-            throw new SkipException("Booking panel not visible");
+            throw new AssertionError("Booking panel not visible");
         }
         assertThat(ordersPage.isSendOrderEnabled()).isFalse();
 
@@ -194,7 +193,7 @@ public class OrderBookingUiTest extends OrderUiTestBase {
                 orderFixture.getBookings(MANAGER, order.getId()).getFirst().getId(), true);
         ordersPage = new OrderListPage(page).openDeepLink(order.getId());
         if (!ordersPage.isSendOrderEnabled()) {
-            throw new SkipException("Send still disabled after full booking — UI may require extra prepare click");
+            throw new AssertionError("Send still disabled after full booking — UI may require extra prepare click");
         }
         assertThat(ordersPage.isSendOrderEnabled()).isTrue();
     }

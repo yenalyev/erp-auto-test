@@ -56,7 +56,7 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
     private static final double WRITE_OFF_AMOUNT = 4.0;
     private static final UserRole STOCK_READER = UserRole.ADMIN;
 
-    private static boolean faitaApiAvailable;
+    private boolean faitaApiAvailable;
 
     private String productExternalId;
     private String productExternalName;
@@ -75,18 +75,10 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupCrewApiBase")
     @Step("Підготовка ресурсів і FLIGHT reconciliations для FAITA implicit")
     public void setupFaitaImplicitTests() {
-        Response probe = apiExecutor.execute(ApiEndpointDefinition.FAITA_RESOURCES_GET, UserRole.ADMIN);
-        faitaApiAvailable = probe.statusCode() == 200;
-        log.info("FAITA integrations API probe: status={} available={}",
-                probe.statusCode(), faitaApiAvailable);
-        if (!faitaApiAvailable) {
-            log.warn("GET /integrations/faita/resources → {}. "
-                    + "Тести будуть skipped (ендпоінт відсутній на цьому env).",
-                    probe.statusCode());
-            return;
-        }
-
         faitaFixture = new FaitaResourceFixture(testContext, apiExecutor);
+        faitaApiAvailable = faitaFixture.probeAvailable();
+        if (!faitaApiAvailable) return;
+
         storageFixture.prepareContext();
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
@@ -289,10 +281,7 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
 
     private void requireFaitaApi() {
         if (!faitaApiAvailable) {
-            throw new SkipException(
-                    "FAITA integrations API недоступний на цьому env "
-                            + "(GET /api/v1/integrations/faita/resources ≠ 200). "
-                            + "Потрібен бекенд з FaitaResourceController (CPMA-629).");
+            throw new SkipException("FAITA explicitly disabled: faita.integration.enabled=false");
         }
     }
 

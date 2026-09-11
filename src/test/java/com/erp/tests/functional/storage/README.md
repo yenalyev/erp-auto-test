@@ -132,7 +132,7 @@ mvn test -Denv=dev -Dsuite=storage-regions
 mvn test -Denv=dev -Dtest=StorageResourceVisibilityTest
 ```
 
-**Передумова `StorageVisibilityTest`:** `@BeforeClass` тимчасово ставить `accessMode=REGIONS` для OWNER_2 (`owner2.storage.id`) і **purge** member/grants через `purgeViewerVisibilityScope`; `@AfterClass` відновлює accessMode.
+**Передумова `StorageVisibilityTest`:** `@BeforeClass` тимчасово ставить `accessMode=REGIONS` для OWNER_2 (`owner2.storage.id`) і **purge** member/grants лише для об’єктів поточного suite через `purgeViewerVisibilityScope`; `@AfterClass` відновлює accessMode.
 
 **Модель explicit grant:** `storage_location.storage_id` = видима локація, `location_storage_id` = viewer (підрозділ).
 

@@ -17,15 +17,18 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class TcmReportListener implements ITestListener, ISuiteListener {
 
     private final ThreadLocal<Long> startTime = new ThreadLocal<>();
-    private final List<TcmApiClient.BufferedResult> bufferedResults =
-            Collections.synchronizedList(new ArrayList<>());
-    private String suiteName;
-    private String remoteRunId;
+    private final Map<ISuite, SuiteRun> runs = new ConcurrentHashMap<>();
+
+    private record SuiteRun(String name, String remoteRunId, TcmResultOutbox outbox,
+                            List<TcmApiClient.BufferedResult> results) {
+    }
 
     @Override
     public void onStart(ISuite suite) {
@@ -33,10 +36,13 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
             log.info("TCM reporting is disabled");
             return;
         }
-        suiteName = suite.getName();
-        remoteRunId = TcmApiClient.resolveSuiteRemoteRunId(remoteRunId);
+        String remoteRunId = TcmApiClient.resolveSuiteRemoteRunId(null);
+        TcmResultOutbox outbox = new TcmResultOutbox(remoteRunId);
+        outbox.beginRun();
+        runs.put(suite, new SuiteRun(suite.getName(), remoteRunId, outbox,
+                Collections.synchronizedList(new ArrayList<>())));
         log.info("TCM listener initialized for suite: {} remoteRunId={} (outbox={})",
-                suiteName, remoteRunId, TcmResultOutbox.resultsFile());
+                suite.getName(), remoteRunId, outbox.resultsFile());
     }
 
     @Override
@@ -44,9 +50,16 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
         if (!ConfigProvider.isTcmReportingEnabled()) {
             return;
         }
-        List<TcmApiClient.BufferedResult> toSend = List.copyOf(bufferedResults);
+        SuiteRun run = runs.remove(suite);
+        if (run == null) {
+            throw new IllegalStateException("TCM suite was not initialized: " + suite.getName());
+        }
+        List<TcmApiClient.BufferedResult> toSend;
+        synchronized (run.results()) {
+            toSend = List.copyOf(run.results());
+        }
         if (toSend.isEmpty()) {
-            toSend = TcmResultOutbox.readAll();
+            toSend = run.outbox().readAll();
         }
         if (toSend.isEmpty()) {
             boolean scoped = TcmScopeContext.isActive()
@@ -64,14 +77,13 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
 
         try {
             TcmRunImportRequest request = TcmApiClient.buildRequest(
-                    suiteName != null ? suiteName : suite.getName(),
+                    run.name(),
                     toSend
             );
             request.setImportSource("LISTENER");
-            request.setRemoteRunId(TcmApiClient.resolveSuiteRemoteRunId(remoteRunId));
-            remoteRunId = request.getRemoteRunId();
+            request.setRemoteRunId(run.remoteRunId());
             TcmImportResponse response = TcmApiClient.submitRunWithRetry(request, 3);
-            TcmResultOutbox.writeImportOk(response, "LISTENER");
+            run.outbox().writeImportOk(response, "LISTENER");
             log.info("TCM import complete: runId={}, matched={}, skippedManual={}, unmatched={}",
                     response.getRunId(),
                     response.getMatched(),
@@ -80,8 +92,6 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
         } catch (Exception e) {
             log.error("Failed to send results to TCM: {}", e.getMessage(), e);
             throw new IllegalStateException("Failed to send results to TCM: " + e.getMessage(), e);
-        } finally {
-            bufferedResults.clear();
         }
     }
 
@@ -141,15 +151,19 @@ public class TcmReportListener implements ITestListener, ISuiteListener {
         }
 
         LocalDateTime executedAt = LocalDateTime.now();
+        SuiteRun run = runs.get(result.getTestContext().getSuite());
+        if (run == null) {
+            throw new IllegalStateException("TCM suite was not initialized for " + testCaseId);
+        }
         for (String id : TestCaseIdExtractor.getTestCaseIds(result)) {
-            bufferedResults.add(new TcmApiClient.BufferedResult(
+            run.results().add(new TcmApiClient.BufferedResult(
                     id,
                     status,
                     durationMs,
                     errorMessage,
                     executedAt
             ));
-            TcmResultOutbox.append(id, mapStatus(status), durationMs, errorMessage, executedAt);
+            run.outbox().append(id, mapStatus(status), durationMs, errorMessage, executedAt);
         }
     }
 

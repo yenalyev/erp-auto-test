@@ -17,13 +17,11 @@ import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.filter.log.LogDetail;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
+import com.erp.api.clients.HttpClientSupport;
+import com.erp.api.clients.SafeHttpDiagnosticsFilter;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import java.util.ArrayList;
@@ -55,9 +53,6 @@ public abstract class BaseTest {
     private static boolean useDocker;
     protected static SessionClient sessionClient;
     private static PlaywrightSessionProvider playwrightSessionProvider;
-
-    /** Set when {@link #globalSetup()} aborts (e.g. DB pre-flight); blocks {@link #baseTestClassSetup()}. */
-    private static volatile String suiteSkipReason;
 
     // Зберігаємо створені ресурси для cleanup
     protected List<String> createdItemIds = new ArrayList<>();
@@ -115,9 +110,10 @@ public abstract class BaseTest {
         // Ініціалізуємо ApiExecutor (використовує sessionClient для запитів та authService для кешування сесій)
         apiExecutor = new ApiExecutor(sessionClient, authService);
 
+        dbHelper = null;
         // Database Helper тільки якщо потрібен
         if (shouldInitializeDatabase()) {
-            initDatabaseOrSkip();
+            initDatabase();
         }
 
         // Отримуємо токен авторизації
@@ -126,8 +122,6 @@ public abstract class BaseTest {
 
         // Налаштовуємо RestAssured
         configureRestAssured();
-
-        sweepOrphanAutotestArtifactsQuietly("before suite", false);
 
         log.info("✅ Test suite setup completed");
     }
@@ -157,12 +151,7 @@ public abstract class BaseTest {
         log.info("✅ Test suite cleanup completed");
     }
 
-    /**
-     * Orphan autotest regions (and after-suite storages) from previous JVM crashes.
-     * Before suite: regions only — mass storage deactivate before tests skipped StorageRegionTest
-     * / SystemAllResourcesRegionTest (@BeforeClass) in run 76.
-     * Must run while Playwright session is still open.
-     */
+    /** Retry only this suite's registered artifacts while the authenticated session is open. */
     private void sweepOrphanAutotestArtifactsQuietly(String phase, boolean includeStorages) {
         if (sessionClient == null || authService == null) {
             log.warn("Skipping artifact sweep {} — auth is not ready", phase);
@@ -182,9 +171,6 @@ public abstract class BaseTest {
 
     @BeforeClass(alwaysRun = true)
     public void baseTestClassSetup() {
-        if (suiteSkipReason != null) {
-            throw new SkipException(suiteSkipReason);
-        }
         log.info("📦 Setting up test class: {}", this.getClass().getSimpleName());
         log.info("Initializing Base Test Context for: {}", this.getClass().getSimpleName());
 
@@ -244,45 +230,21 @@ public abstract class BaseTest {
         return isTestcontainersMode || ConfigProvider.useDatabase() || "local".equals(profile);
     }
 
-    /**
-     * Initializes the database connection and validates it with a ping.
-     * Soft-fail: if SSH/JDBC is unreachable, leave {@code dbHelper == null} and continue the suite.
-     * DB-seeded tests throw their own {@link SkipException}; non-DB tests still run.
-     */
-    private void initDatabaseOrSkip() {
+    /** A configured database is required; unavailable configured dependencies fail suite setup. */
+    private void initDatabase() {
         boolean sshMode = ConfigProvider.isSshEnabled();
-        String phase = sshMode ? "SSH tunnel" : "database";
-
-        log.info("Checking {} connectivity before running tests...", phase);
-
         try {
             dbHelper = new DatabaseHelper();
         } catch (Exception e) {
-            String hint = buildDbHint(sshMode, e);
-            String msg = String.format(
-                    "Database pre-flight soft-fail: cannot connect to the database%s.%n" +
-                    "Reason: %s%n%s%n" +
-                    "Continuing without DB — DB-seeded tests will SkipException. " +
-                    "Fix connectivity or set use.database=false / USE_DATABASE=false.",
-                    sshMode ? " via SSH tunnel" : "",
-                    e.getMessage(),
-                    hint
-            );
-            log.warn(msg);
             dbHelper = null;
-            return;
+            throw new IllegalStateException("Configured database is unavailable. " + buildDbHint(sshMode, e), e);
         }
-
         if (!dbHelper.ping()) {
-            String msg = "Database pre-flight soft-fail: reachable but SELECT 1 returned no response. "
-                    + "Continuing without DB — DB-seeded tests will SkipException.";
-            log.warn(msg);
             dbHelper.closeConnection();
             dbHelper = null;
-            return;
+            throw new IllegalStateException("Configured database pre-flight failed: SELECT 1 did not succeed");
         }
-
-        log.info("Database pre-flight check passed — connection is healthy");
+        log.info("Database pre-flight check passed");
     }
 
     private String buildDbHint(boolean sshMode, Exception cause) {
@@ -360,27 +322,20 @@ public abstract class BaseTest {
      */
     private void configureRestAssured() {
         RestAssured.baseURI = baseUrl;
+        RestAssured.config = HttpClientSupport.config();
+        RestAssured.replaceFiltersWith(new SafeHttpDiagnosticsFilter(false));
 
         RequestSpecBuilder builder = new RequestSpecBuilder()
                 .setBaseUri(baseUrl)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
-                .setRelaxedHTTPSValidation()
-                .log(LogDetail.ALL);
+                .setRelaxedHTTPSValidation();
 
         if (authToken != null) {
             builder.addHeader("Authorization", "Bearer " + authToken);
         }
 
         requestSpec = builder.build();
-
-        // ✅ Використовуємо ConfigProvider
-        if (ConfigProvider.verboseLogging()) {
-            RestAssured.filters(
-                    new RequestLoggingFilter(LogDetail.ALL),
-                    new ResponseLoggingFilter(LogDetail.ALL)
-            );
-        }
 
         log.info("✅ RestAssured configured");
     }
@@ -400,7 +355,6 @@ public abstract class BaseTest {
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
                 .setRelaxedHTTPSValidation()
-                .log(LogDetail.ALL)
                 .build();
 
         log.info("✅ Token updated in RequestSpec");

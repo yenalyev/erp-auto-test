@@ -9,7 +9,6 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -36,10 +35,10 @@ public class OrderCreateEditUiTest extends OrderUiTestBase {
         OrderListPage ordersPage = new OrderListPage(page).open();
 
         if (!ordersPage.isCreateButtonVisible()) {
-            throw new SkipException("Create order button not visible for 3bat on requester UNIT");
+            throw new AssertionError("Create order button not visible for 3bat on requester UNIT");
         }
         if (ordersPage.isCreateDisabled()) {
-            throw new SkipException("Create order button disabled — cannot open create dialog");
+            throw new AssertionError("Create order button disabled — cannot open create dialog");
         }
 
         ordersPage.clickCreateOrder();
@@ -59,7 +58,7 @@ public class OrderCreateEditUiTest extends OrderUiTestBase {
         OrderResponse order = orderFixture.createOrder(REQUESTER);
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
         if (!ordersPage.isSaveButtonVisible()) {
-            throw new SkipException("«Зберегти» not visible for NEW order — check order::update for requester");
+            throw new AssertionError("«Зберегти» not visible for NEW order — check order::update for requester");
         }
         assertThat(ordersPage.isSaveButtonVisible()).isTrue();
 

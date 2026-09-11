@@ -2,7 +2,6 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
-import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.data.factories.storage.StorageRegionDataFactory;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
@@ -37,14 +36,14 @@ public class StorageRegionFixture extends BaseFixture {
     /** Default GET /storages/regions page; do not use ALL_DATA_PAGE_SIZE here — ILIKE '%%' + huge size OOMs/timeouts. */
     private static final int REGION_LIST_PAGE_SIZE = 500;
 
-    private final Set<Long> regionsToCleanup = new LinkedHashSet<>();
+    private final Set<Long> regionsToCleanup = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public StorageRegionFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
     }
 
     public void trackForCleanup(Long regionId) {
-        if (regionId != null) {
+        if (apiExecutor.getArtifactRegistry().owns(TestArtifactRegistry.Kind.REGION, regionId)) {
             regionsToCleanup.add(regionId);
         }
     }
@@ -65,19 +64,25 @@ public class StorageRegionFixture extends BaseFixture {
             return;
         }
         for (Long regionId : List.copyOf(regionsToCleanup)) {
-            try {
-                Response response = apiExecutor.execute(
-                        ApiEndpointDefinition.STORAGE_REGION_DELETE, role, null, String.valueOf(regionId));
-                if (response.statusCode() == 200) {
-                    log.debug("Cleanup: deleted region id={}", regionId);
-                } else {
-                    log.warn("Cleanup: delete region id={} returned HTTP {}", regionId, response.statusCode());
-                }
-            } catch (Exception e) {
-                log.warn("Cleanup: failed to delete region id={}: {}", regionId, e.getMessage());
-            }
+            deleteOwnedRegion(role, regionId);
         }
-        regionsToCleanup.clear();
+    }
+
+    private boolean deleteOwnedRegion(UserRole role, Long regionId) {
+        if (!apiExecutor.getArtifactRegistry().owns(TestArtifactRegistry.Kind.REGION, regionId)) return false;
+        try {
+            Response response = apiExecutor.execute(
+                    ApiEndpointDefinition.STORAGE_REGION_DELETE, role, null, String.valueOf(regionId));
+            if (response.statusCode() == 200 || response.statusCode() == 204 || response.statusCode() == 404) {
+                untrackForCleanup(regionId);
+                apiExecutor.getArtifactRegistry().cleaned(TestArtifactRegistry.Kind.REGION, regionId);
+                return true;
+            }
+            log.warn("Cleanup: delete region {} returned HTTP {}; retained for retry", regionId, response.statusCode());
+        } catch (Exception e) {
+            log.warn("Cleanup: failed to delete region {}: {}; retained for retry", regionId, e.getMessage());
+        }
+        return false;
     }
 
     @Step("FIXTURE: видалити області видимості з префіксами імен {prefixes}")
@@ -100,12 +105,13 @@ public class StorageRegionFixture extends BaseFixture {
         }
     }
 
-    @Step("FIXTURE: видалити автотест-області видимості (маркер uniqueName)")
+    @Step("FIXTURE: видалити залишки областей поточного запуску")
     public int purgeAutotestNamedRegions(UserRole role) {
-        return purgeRegionsMatching(
-                role,
-                region -> StorageDataFactory.isAutotestUniqueName(region.getName()),
-                StorageDataFactory.UNIQUE_NAME_INFIX);
+        int deleted = 0;
+        for (Long id : apiExecutor.getArtifactRegistry().pendingIds(TestArtifactRegistry.Kind.REGION)) {
+            if (deleteOwnedRegion(role, id)) deleted++;
+        }
+        return deleted;
     }
 
     /**
@@ -120,22 +126,8 @@ public class StorageRegionFixture extends BaseFixture {
         for (int round = 0; round < 40; round++) {
             int deletedThisRound = 0;
             for (StorageRegionResponse region : findRegions(role, nameHint)) {
-                if (region == null || region.getId() == null || !match.test(region)) {
-                    continue;
-                }
-                try {
-                    Response response = apiExecutor.execute(
-                            ApiEndpointDefinition.STORAGE_REGION_DELETE, role, null, String.valueOf(region.getId()));
-                    if (response.statusCode() == 200) {
-                        untrackForCleanup(region.getId());
-                        deletedThisRound++;
-                        log.debug("Purge: deleted region id={} name={}", region.getId(), region.getName());
-                    } else {
-                        log.warn("Purge: delete region id={} returned HTTP {}", region.getId(), response.statusCode());
-                    }
-                } catch (Exception e) {
-                    log.warn("Purge: failed to delete region id={}: {}", region.getId(), e.getMessage());
-                }
+                if (region == null || !match.test(region)) continue;
+                if (deleteOwnedRegion(role, region.getId())) deletedThisRound++;
             }
             deleted += deletedThisRound;
             if (deletedThisRound == 0) {
@@ -299,12 +291,6 @@ public class StorageRegionFixture extends BaseFixture {
      */
     private static final int LOCATION_LINKS_PAGE_SIZE = 999_999_999;
 
-    /**
-     * After region purge, OWNER_2 /names extras should be a handful of explicit grants.
-     * A full catalog here means leftover region visibility — do not N+1 GET /locations.
-     */
-    private static final int EXPLICIT_GRANT_FULL_SCAN_CAP = 50;
-
     @Step("API: GET explicit/regional links для storage id={storageId}")
     public List<StorageLocationLinkResponse> getStorageLocationLinks(UserRole role, Long storageId) {
         Map<String, Object> params = Map.of("page", 0, "size", LOCATION_LINKS_PAGE_SIZE);
@@ -350,7 +336,7 @@ public class StorageRegionFixture extends BaseFixture {
         List<StorageLocationLinkResponse> links = getStorageLocationLinks(role, viewerStorageId);
         Set<Long> regionIds = new LinkedHashSet<>();
         for (StorageLocationLinkResponse link : links) {
-            if (link.getRegionId() != null) {
+            if (apiExecutor.getArtifactRegistry().owns(TestArtifactRegistry.Kind.REGION, link.getRegionId())) {
                 regionIds.add(link.getRegionId());
             }
         }
@@ -386,47 +372,15 @@ public class StorageRegionFixture extends BaseFixture {
         }
     }
 
-    /**
-     * Incoming explicit grants are not listed on GET /storages/{viewer}/locations.
-     * Do not walk OWNER_2 /names: after the /names page-size fix that is the full catalog
-     * whenever the viewer is still in a large region (N+1 GET /locations per storage).
-     */
+    /** Incoming grants are filtered by suite ownership before any revoke is attempted. */
     private Set<Long> collectExplicitGrantCandidates(Long viewerStorageId, StorageFixture storageFixture) {
         Set<Long> candidateIds = new LinkedHashSet<>();
-        List<StorageResponse> visibleNames = storageFixture.getNames(UserRole.OWNER_2, true, null);
-        List<StorageResponse> extras = visibleNames.stream()
-                .filter(storage -> storage.getId() != null && !Objects.equals(storage.getId(), viewerStorageId))
-                .toList();
-
-        if (extras.size() <= EXPLICIT_GRANT_FULL_SCAN_CAP) {
-            extras.stream().map(StorageResponse::getId).forEach(candidateIds::add);
-            return candidateIds;
-        }
-
-        log.warn("Purge: OWNER_2 still sees {} storages after region purge — "
-                        + "skipping full GET /locations scan, probing test-name leftovers only",
-                extras.size());
-        extras.stream()
-                .filter(StorageRegionFixture::looksLikeVisibilityTestStorage)
+        storageFixture.getNames(UserRole.OWNER_2, true, null).stream()
+                .filter(storage -> apiExecutor.getArtifactRegistry().owns(TestArtifactRegistry.Kind.STORAGE, storage.getId()))
+                .filter(storage -> !Objects.equals(storage.getId(), viewerStorageId))
                 .map(StorageResponse::getId)
                 .forEach(candidateIds::add);
-        if (candidateIds.size() > EXPLICIT_GRANT_FULL_SCAN_CAP) {
-            log.warn("Purge: capping explicit-grant candidates from {} to {}",
-                    candidateIds.size(), EXPLICIT_GRANT_FULL_SCAN_CAP);
-            Set<Long> capped = new LinkedHashSet<>();
-            for (Long id : candidateIds) {
-                capped.add(id);
-                if (capped.size() >= EXPLICIT_GRANT_FULL_SCAN_CAP) {
-                    break;
-                }
-            }
-            return capped;
-        }
         return candidateIds;
-    }
-
-    private static boolean looksLikeVisibilityTestStorage(StorageResponse storage) {
-        return StorageDataFactory.isAutotestUniqueName(storage.getName());
     }
 
     private void logRemainingViewerVisibility(Long viewerStorageId, StorageFixture storageFixture) {

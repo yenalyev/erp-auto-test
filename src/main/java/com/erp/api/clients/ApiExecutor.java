@@ -34,6 +34,10 @@ public class ApiExecutor {
     private final SessionClient apiClient;
     private final AuthService authService;
 
+    public com.erp.fixtures.TestArtifactRegistry getArtifactRegistry() {
+        return apiClient.getArtifactRegistry();
+    }
+
     private record RoleCredentials(String username, String password) {
     }
 
@@ -53,12 +57,15 @@ public class ApiExecutor {
 
         log.debug("Executing {} {} (Role: {})", endpoint.getHttpMethod(), path, role);
 
-        return executeWithSessionRetry(role, cookies -> apiClient.executeWithCookies(
+        Response response = executeWithSessionRetry(role, cookies -> apiClient.executeWithCookies(
                 endpoint.getHttpMethod(),
                 path,
                 requestBody,
                 cookies
         ));
+        getArtifactRegistry().observeCreation(endpoint, response);
+        getArtifactRegistry().observeMutation(endpoint, response, pathParams);
+        return response;
     }
 
     // --- Зручні перевантаження (Overloads) ---
@@ -97,13 +104,16 @@ public class ApiExecutor {
         log.debug("Executing {} {} with query {} (Role: {})",
                 endpoint.getHttpMethod(), path, queryParams, role);
 
-        return executeWithSessionRetry(role, cookies -> apiClient.executeWithCookies(
+        Response response = executeWithSessionRetry(role, cookies -> apiClient.executeWithCookies(
                 endpoint.getHttpMethod(),
                 path,
                 null,
                 cookies,
                 queryParams != null ? queryParams : Map.of()
         ));
+        getArtifactRegistry().observeCreation(endpoint, response);
+        getArtifactRegistry().observeMutation(endpoint, response, pathParams);
+        return response;
     }
 
     /**

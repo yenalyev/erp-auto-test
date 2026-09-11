@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class StorageFixture extends BaseFixture {
 
-    private final Set<Long> storagesToCleanup = new LinkedHashSet<>();
+    private final Set<Long> storagesToCleanup = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /**
      * Matches tk {@code StorageController} {@code ALL_DATA_PAGE_SIZE} so /names is not truncated.
@@ -165,7 +165,7 @@ public class StorageFixture extends BaseFixture {
     }
 
     public void trackForCleanup(Long storageId) {
-        if (storageId != null) {
+        if (apiExecutor.getArtifactRegistry().owns(TestArtifactRegistry.Kind.STORAGE, storageId)) {
             storagesToCleanup.add(storageId);
         }
     }
@@ -187,41 +187,22 @@ public class StorageFixture extends BaseFixture {
             return;
         }
         for (Long storageId : List.copyOf(storagesToCleanup)) {
-            if (!archiveStorage(role, storageId)) {
-                log.warn("Cleanup: failed to archive test storage id={}", storageId);
+            if (archiveStorage(role, storageId)) {
+                untrackForCleanup(storageId);
+            } else {
+                log.warn("Cleanup: failed to archive test storage id={}; retained for retry", storageId);
             }
         }
-        storagesToCleanup.clear();
     }
 
-    @Step("FIXTURE: деактивувати активні автотест-локації (маркер uniqueName)")
+    @Step("FIXTURE: деактивувати залишки локацій поточного запуску")
     public int deactivateAutotestStorages(UserRole role) {
-        List<StorageResponse> names = getNames(role, true, null);
         int archived = 0;
-        int failed = 0;
-        for (StorageResponse storage : names) {
-            if (storage == null || storage.getId() == null
-                    || !StorageDataFactory.isAutotestUniqueName(storage.getName())) {
-                continue;
+        for (Long id : apiExecutor.getArtifactRegistry().pendingIds(TestArtifactRegistry.Kind.STORAGE)) {
+            if (archiveStorage(role, id)) {
+                untrackForCleanup(id);
+                archived++;
             }
-            try {
-                if (archiveStorage(role, storage.getId())) {
-                    untrackForCleanup(storage.getId());
-                    archived++;
-                    log.debug("Sweep: archived storage id={} name={}", storage.getId(), storage.getName());
-                } else {
-                    failed++;
-                    log.debug("Sweep: archive storage id={} name={} failed after inventory clear",
-                            storage.getId(), storage.getName());
-                }
-            } catch (Exception e) {
-                failed++;
-                log.warn("Sweep: failed to archive storage id={}: {}", storage.getId(), e.getMessage());
-            }
-        }
-        if (archived > 0 || failed > 0) {
-            log.info("Sweep: archived {} autotest storages, {} still active after inventory + deactivate",
-                    archived, failed);
         }
         return archived;
     }
@@ -342,15 +323,24 @@ public class StorageFixture extends BaseFixture {
      */
     @Step("API: інвентаризація (zero stock) + архівація локації id={storageId}")
     public boolean archiveStorage(UserRole role, Long storageId) {
+        if (!apiExecutor.getArtifactRegistry().owns(TestArtifactRegistry.Kind.STORAGE, storageId)) {
+            log.warn("Refusing cleanup of storage {}: not created by this suite", storageId);
+            return false;
+        }
+        if (!apiExecutor.getArtifactRegistry().isPending(TestArtifactRegistry.Kind.STORAGE, storageId)) {
+            return true;
+        }
         try {
             new InventoryFixture(testContext, apiExecutor).clearStock(storageId);
         } catch (Exception e) {
             log.warn("Archive storage id={}: failed to clear stock: {}", storageId, e.getMessage());
+            return false;
         }
         try {
             Response response = deactivate(role, storageId);
             if (response.statusCode() == 200) {
                 log.debug("Archived storage id={}", storageId);
+                apiExecutor.getArtifactRegistry().cleaned(TestArtifactRegistry.Kind.STORAGE, storageId);
                 return true;
             }
             log.warn("Archive storage id={}: deactivate returned HTTP {}", storageId, response.statusCode());

@@ -28,7 +28,6 @@ import com.erp.utils.helpers.AllureHelper;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -187,9 +186,9 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
                     try {
                         seedStockViaInventory(owner1StorageId, resourceId, seedAmount);
                     } catch (RuntimeException inventoryFailed) {
-                        throw new SkipException(
+                        throw new AssertionError(
                                 "Не вдалось seed залишку на dev (ensureStock та inventory): "
-                                        + receiveFailed.getMessage());
+                                        + receiveFailed.getMessage(), inventoryFailed);
                     }
                 }
                 double stock = relocationFixture.getResourceStock(
@@ -278,8 +277,8 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
                     seedStockViaInventory(owner1StorageId, resourceId, seedAmount);
                     useNamedBatch[0] = false;
                 } catch (RuntimeException inventoryFailed) {
-                    throw new SkipException(
-                            "Не вдалось seed залишку на dev (receive та inventory): " + receiveFailed.getMessage());
+                    throw new AssertionError(
+                            "Не вдалось seed залишку на dev (receive та inventory): " + receiveFailed.getMessage(), inventoryFailed);
                 }
             }
         });
@@ -295,7 +294,7 @@ public class ResourceDeactivationTest extends BaseFunctionalTest {
                                 resourceId, sendAmount);
                 assertThat(relocation.getState()).isEqualTo(RelocationState.CREATED);
             } catch (RuntimeException e) {
-                throw new SkipException("Не вдалось створити переміщення на dev: " + e.getMessage());
+                throw new AssertionError("Не вдалось створити переміщення на dev: " + e.getMessage(), e);
             }
         });
 

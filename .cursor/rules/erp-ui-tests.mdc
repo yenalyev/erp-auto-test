@@ -61,12 +61,11 @@ API tests get sessions via `PlaywrightSessionProvider.getSession()`. UI tests us
 
 ```bash
 mvn test -Denv=dev -Dsuite=ui          # broad UI suite
-mvn test -Denv=dev -Dsuite=ui-dev      # login/logout, accountant, crew, users access
 mvn test -Denv=dev -Dsuite=production  # production journal UI
 mvn exec:java@install-chromium         # first-time browser install
 ```
 
-Default `suite=dev-test` in pom may be empty — pick an explicit suite above.
+Default `suite=smoke` in pom runs login smoke + Bot Internal API SLA. Pick `-Dsuite=ui` for broad UI coverage. Use `-Dtest=ClassName#methodName` for a one-off check without adding a temporary suite XML; suite XML listeners are not loaded with `-Dtest`.
 
 ## Adding a new UI test
 

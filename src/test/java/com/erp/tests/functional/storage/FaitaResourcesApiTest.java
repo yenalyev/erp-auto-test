@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Зіставлення FAITA→ERP (1→N) і заміна набору implicit resources.
- * GET /integrations/faita/resources має бути 200; інакше тести skip.
+ * GET /integrations/faita/resources має бути 200; skip лише за faita.integration.enabled=false.
  */
 @Slf4j
 @Epic("Integration")
@@ -51,7 +51,7 @@ public class FaitaResourcesApiTest extends StorageApiTestBase {
         resourceFixture.fetchSharedResourceCategory();
         faitaApiAvailable = faitaFixture.probeAvailable();
         if (!faitaApiAvailable) {
-            log.warn("GET /integrations/faita/resources ≠ 200 — FaitaResourcesApiTest буде skipped");
+            log.warn("faita.integration.enabled=false — FaitaResourcesApiTest буде skipped");
         }
     }
 
@@ -177,9 +177,7 @@ public class FaitaResourcesApiTest extends StorageApiTestBase {
 
     private void requireFaitaApi() {
         if (!faitaApiAvailable) {
-            throw new SkipException(
-                    "FAITA integrations API недоступний на цьому env "
-                            + "(GET /api/v1/integrations/faita/resources ≠ 200).");
+            throw new SkipException("FAITA explicitly disabled: faita.integration.enabled=false");
         }
     }
 }

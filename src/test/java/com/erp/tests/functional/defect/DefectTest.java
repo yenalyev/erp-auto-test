@@ -87,18 +87,8 @@ public class DefectTest extends BaseFunctionalTest {
     @BeforeMethod(alwaysRun = true)
     @Step("Поповнити запаси перед тестом (ізоляція)")
     public void ensureStockBeforeTest() {
-        // Any exception here becomes TestNG SKIP (config failure). Wrap with a clear
-        // message so TCM/Allure show the root cause instead of a silent cascade.
-        try {
-            fixture.getProductionFixture().ensureInputStockAtLeast(storageId, input1, input2, 500.0);
-            fixture.ensureStock(defectResourceId, 100.0);
-        } catch (SkipException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new SkipException(
-                    "DefectTest ensureStockBeforeTest failed (stock/session/API): " + e.getMessage(),
-                    e);
-        }
+        fixture.getProductionFixture().ensureInputStockAtLeast(storageId, input1, input2, 500.0);
+        fixture.ensureStock(defectResourceId, 100.0);
     }
 
     // =====================================================================

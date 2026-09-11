@@ -10,8 +10,8 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,14 +52,14 @@ public class OrderListUiTest extends OrderUiTestBase {
 
         AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
         if (!sidebar.isWorkspaceSelectorVisible()) {
-            throw new SkipException("Workspace selector not visible — cannot verify all-locations mode");
+            throw new AssertionError("Workspace selector not visible — cannot verify all-locations mode");
         }
 
         sidebar.selectAllLocations();
         OrderListPage ordersPage = new OrderListPage(page).open();
 
         if (!ordersPage.isCreateButtonVisible()) {
-            throw new SkipException("Create order button not visible for current role — skip all-locations check");
+            throw new AssertionError("Create order button not visible for current role in all-locations mode");
         }
 
         assertThat(ordersPage.isCreateDisabled())
@@ -139,7 +139,7 @@ public class OrderListUiTest extends OrderUiTestBase {
         orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, 5.0);
         OrderListPage ordersPage = new OrderListPage(page).open();
         if (!ordersPage.isPreparedProgressVisible()) {
-            throw new SkipException("«Підготовлено» badge not visible on current journal page");
+            throw new AssertionError("«Підготовлено» badge not visible on current journal page");
         }
         assertThat(ordersPage.isPreparedProgressVisible()).isTrue();
     }

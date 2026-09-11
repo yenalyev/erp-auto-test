@@ -1,0 +1,13 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Local framework checks only: no BaseTest, ERP, browser login, database or external reporting. -->
+<suite name="Framework infrastructure" parallel="none" verbose="1">
+    <test name="HTTP clients and TCM reporting">
+        <classes>
+            <class name="com.erp.tests.framework.TcmResultOutboxTest"/>
+            <class name="com.erp.tests.framework.HttpClientInfrastructureTest"/>
+            <class name="com.erp.tests.framework.TcmReportListenerTest"/>
+            <class name="com.erp.tests.framework.CleanupIsolationTest"/>
+            <class name="com.erp.tests.framework.IntegrationPrerequisitesTest"/>
+        </classes>
+    </test>
+</suite>

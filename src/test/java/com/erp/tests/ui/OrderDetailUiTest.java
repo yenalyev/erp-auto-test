@@ -9,7 +9,6 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -38,7 +37,7 @@ public class OrderDetailUiTest extends OrderUiTestBase {
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
 
         if (!ordersPage.isTakeToWorkVisible()) {
-            throw new SkipException("«Взяти в роботу» not visible — check ORDER::MANAGE permissions for ADMIN");
+            throw new AssertionError("«Взяти в роботу» not visible — check ORDER::MANAGE permissions for ADMIN");
         }
 
         assertThat(ordersPage.isTakeToWorkVisible())
@@ -67,7 +66,7 @@ public class OrderDetailUiTest extends OrderUiTestBase {
         OrderResponse order = prepareManagedInProgressUi();
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
         if (!ordersPage.isAvailabilityHintVisible() && !ordersPage.isBookingPanelVisible()) {
-            throw new SkipException("Availability hint not rendered on this card");
+            throw new AssertionError("Availability hint not rendered on this card");
         }
         assertThat(ordersPage.isAvailabilityHintVisible() || ordersPage.isBookingPanelVisible()).isTrue();
     }
@@ -81,7 +80,7 @@ public class OrderDetailUiTest extends OrderUiTestBase {
         String text = "ui-comment-" + order.getId();
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
         if (!ordersPage.isCommentComposerVisible()) {
-            throw new SkipException("Comment composer not visible");
+            throw new AssertionError("Comment composer not visible");
         }
         ordersPage.addComment(text);
         assertThat(page.getByText(text).count()).isGreaterThan(0);
@@ -97,7 +96,7 @@ public class OrderDetailUiTest extends OrderUiTestBase {
         reopenPageWithSession(GATHERER, gatheringStorageId);
         OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
         if (!ordersPage.isGathererEmptyBookingsVisible() && !ordersPage.isBookingPanelVisible()) {
-            throw new SkipException("Gatherer empty-bookings copy not visible");
+            throw new AssertionError("Gatherer empty-bookings copy not visible");
         }
         assertThat(ordersPage.isGathererEmptyBookingsVisible() || ordersPage.isBookingPanelVisible()).isTrue();
     }
