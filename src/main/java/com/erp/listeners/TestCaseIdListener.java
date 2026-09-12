@@ -1,5 +1,8 @@
 package com.erp.listeners;
 
+import com.erp.annotations.TestCaseId;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationProfile;
 import com.erp.utils.helpers.TestCaseIdExtractor;
 import io.qameta.allure.Allure;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +36,20 @@ public class TestCaseIdListener implements IInvokedMethodListener {
             Allure.tms("TestCase", testCaseId);
             Allure.label("testCaseId", testCaseId);
         }
+        TestCaseId metadata = testMethod.getAnnotation(TestCaseId.class);
+        for (BusinessRole role : metadata.roles()) {
+            Allure.label("businessRole", role.name());
+        }
+        for (LocationProfile profile : metadata.locationProfiles()) {
+            Allure.label("locationProfile", profile.name());
+        }
         log.info("🏷️  Test Case ID: {}", String.join(", ", ids));
+        if (metadata.roles().length > 0) {
+            log.info("👤 Business roles: {}", List.of(metadata.roles()));
+        }
+        if (metadata.locationProfiles().length > 0) {
+            log.info("📍 Location profiles: {}", List.of(metadata.locationProfiles()));
+        }
     }
 
     @Override

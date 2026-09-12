@@ -5,6 +5,8 @@
         <classes>
             <class name="com.erp.tests.framework.TcmResultOutboxTest"/>
             <class name="com.erp.tests.framework.HttpClientInfrastructureTest"/>
+            <class name="com.erp.tests.framework.BusinessRoleCatalogTest"/>
+            <class name="com.erp.tests.framework.LocationProfileCatalogTest"/>
             <class name="com.erp.tests.framework.TcmReportListenerTest"/>
             <class name="com.erp.tests.framework.CleanupIsolationTest"/>
             <class name="com.erp.tests.framework.IntegrationPrerequisitesTest"/>

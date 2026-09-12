@@ -1,0 +1,33 @@
+locationProfiles:
+  BATTALION_WARENHAUSE_UNIT:
+    unitType: UNIT
+    relation: INTERNAL
+    accessMode: FULL_ACCESS
+    parentProfile: BATTALION_UNIT
+    namePrefix: bat-war-komirnik-
+  BATTALION_UNIT:
+    unitType: UNIT
+    relation: INTERNAL
+    accessMode: FULL_ACCESS
+    parentPool: BATTALION_PARENT_UNITS
+    namePrefix: battalion-
+  TSUK_WARENHAUSE:
+    unitType: STORAGE
+    relation: INTERNAL
+    accessMode: FULL_ACCESS
+    parentPool: TSUK_PARENT_UNITS
+    namePrefix: tsuk-warenhause-
+  TSUK_PRODUCTION:
+    unitType: PRODUCTION
+    relation: INTERNAL
+    accessMode: FULL_ACCESS
+    parentPool: TSUK_PARENT_UNITS
+    namePrefix: tsuk-production-
+
+parentPools:
+  BATTALION_PARENT_UNITS:
+    candidates:
+      - 156
+  TSUK_PARENT_UNITS:
+    candidates:
+      - 2151

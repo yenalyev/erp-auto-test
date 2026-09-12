@@ -2,7 +2,9 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.BusinessRoleCatalog;
 import com.erp.data.factories.user.UserDataFactory;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.UserRole;
 import com.erp.models.request.UserRequest;
 import com.erp.models.response.OneTimeUserCredentialsResponse;
@@ -29,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 public class UserFixture extends BaseFixture {
@@ -295,44 +299,115 @@ public class UserFixture extends BaseFixture {
     }
 
     /**
-     * ADMIN {@code POST /users} → Keycloak user with Owner role and a single storage.
-     * Bootstraps a permanent password via Playwright UPDATE_PASSWORD.
+     * Creates a fresh user from a business persona and binds it to the exact locations supplied by
+     * the scenario. Keycloak role names are resolved centrally from {@code business-roles.yml}.
+     */
+    @Step("FIXTURE: створити актора {businessRole} на тестових локаціях")
+    public BusinessActor createBusinessActor(
+            PlaywrightSessionProvider playwright,
+            BusinessRole businessRole,
+            List<StorageResponse> storages) {
+        if (playwright == null) {
+            throw new IllegalStateException(
+                    "PlaywrightSessionProvider is required to bootstrap the business actor password");
+        }
+        if (storages == null || storages.isEmpty()) {
+            throw new IllegalArgumentException("At least one storage is required for business actor " + businessRole);
+        }
+        if (storages.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("Business actor storages cannot contain null values");
+        }
+
+        BusinessRoleCatalog.Definition definition = BusinessRoleCatalog.definition(businessRole);
+        List<RoleModelResponse> realmRoles = definition.keycloakRoles().stream()
+                .map(this::fetchRealmRole)
+                .toList();
+        List<SimpleEntityResponse> storageRefs = storages.stream()
+                .map(storage -> SimpleEntityResponse.builder()
+                        .id(storage.getId())
+                        .name(storage.getName())
+                        .build())
+                .toList();
+
+        String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String username = "autotest-" + businessRole.name().toLowerCase().replace('_', '-') + "-" + suffix;
+        String permanentPassword = "Autotest1!" + suffix;
+        UserRequest request = UserRequest.builder()
+                .username(username)
+                .firstName("Autotest")
+                .lastName(businessRole.name())
+                .rank("")
+                .enabled(true)
+                .storages(storageRefs)
+                .permissions(List.of())
+                .realmRoles(realmRoles)
+                .build();
+
+        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
+        validateSuccess(response, "Create business actor " + businessRole);
+        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
+        String userId = findUserIdByUsername(username);
+        trackForCleanup(userId);
+        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
+        UserModelResponse created = waitForUser(UserRole.ADMIN, userId);
+        assertExactBusinessActor(created, businessRole, definition, storageRefs);
+        log.info("Created business actor username={} businessRole={} keycloakRoles={} storageIds={}",
+                username,
+                businessRole,
+                definition.keycloakRoles(),
+                storageRefs.stream().map(SimpleEntityResponse::getId).toList());
+        return new BusinessActor(userId, username, permanentPassword, businessRole,
+                storageRefs.stream().map(SimpleEntityResponse::getId).toList());
+    }
+
+    private static void assertExactBusinessActor(
+            UserModelResponse created,
+            BusinessRole businessRole,
+            BusinessRoleCatalog.Definition definition,
+            List<SimpleEntityResponse> storageRefs) {
+        Set<String> expectedRoles = Set.copyOf(definition.keycloakRoles());
+        Set<String> actualRoles = created.getRealmRoles() == null
+                ? Set.of()
+                : created.getRealmRoles().stream().map(RoleModelResponse::getName).collect(java.util.stream.Collectors.toSet());
+        if (!actualRoles.equals(expectedRoles)) {
+            throw new IllegalStateException("Business actor " + businessRole + " role drift: expected="
+                    + expectedRoles + ", actual=" + actualRoles);
+        }
+
+        Set<Long> expectedStorages = storageRefs.stream()
+                .map(SimpleEntityResponse::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<Long> actualStorages = created.getStorages() == null
+                ? Set.of()
+                : created.getStorages().stream().map(SimpleEntityResponse::getId)
+                        .collect(java.util.stream.Collectors.toSet());
+        if (!actualStorages.equals(expectedStorages)) {
+            throw new IllegalStateException("Business actor " + businessRole + " storage drift: expected="
+                    + expectedStorages + ", actual=" + actualStorages);
+        }
+    }
+
+    public record BusinessActor(
+            String userId,
+            String username,
+            String password,
+            BusinessRole businessRole,
+            List<Long> storageIds) {
+    }
+
+    /**
+     * ADMIN {@code POST /users} → fresh business-unit owner with one exact storage.
+     * Retained as a compatibility facade for existing isolated visibility tests.
      */
     @Step("FIXTURE: створити restricted owner «{storage.name}»")
     public RestrictedOwnerUser createRestrictedOwner(
             PlaywrightSessionProvider playwright,
             StorageResponse storage) {
-        if (playwright == null) {
-            throw new IllegalStateException(
-                    "PlaywrightSessionProvider is required to bootstrap the isolated owner password");
-        }
-        long suffix = System.nanoTime();
-        String username = "visiso" + suffix;
-        String permanentPassword = "VisIso1!" + suffix;
-        RoleModelResponse ownerRole = fetchRealmRole(BUSINESS_UNIT_OWNER_ROLE_NAME);
-        UserRequest request = UserRequest.builder()
-                .username(username)
-                .firstName("Vis")
-                .lastName("Iso")
-                .rank("")
-                .enabled(true)
-                .storages(List.of(SimpleEntityResponse.builder()
-                        .id(storage.getId())
-                        .name(storage.getName())
-                        .build()))
-                .permissions(List.of())
-                .realmRoles(List.of(ownerRole))
-                .build();
-
-        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
-        validateSuccess(response, "Create isolated restricted owner");
-        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
-        String userId = findUserIdByUsername(username);
-        trackForCleanup(userId);
-        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
-        waitForUser(UserRole.ADMIN, userId);
-        log.info("Created isolated restricted owner username={} storageId={}", username, storage.getId());
-        return new RestrictedOwnerUser(userId, username, permanentPassword);
+        BusinessActor actor = createBusinessActor(
+                playwright,
+                BusinessRole.BUSINESS_UNIT_OWNER,
+                List.of(storage));
+        return new RestrictedOwnerUser(actor.userId(), actor.username(), actor.password());
     }
 
     /**
@@ -342,41 +417,14 @@ public class UserFixture extends BaseFixture {
     public RestrictedOwnerUser createMultiLocationOwner(
             PlaywrightSessionProvider playwright,
             List<StorageResponse> storages) {
-        if (playwright == null) {
-            throw new IllegalStateException(
-                    "PlaywrightSessionProvider is required to bootstrap the multi-location owner password");
-        }
         if (storages == null || storages.size() < 2) {
             throw new IllegalArgumentException("Need at least 2 storages for multi-location owner");
         }
-        long suffix = System.nanoTime();
-        String username = "mloc" + suffix;
-        String permanentPassword = "Mloc1!" + suffix;
-        RoleModelResponse ownerRole = fetchRealmRole(BUSINESS_UNIT_OWNER_ROLE_NAME);
-        List<SimpleEntityResponse> storageRefs = storages.stream()
-                .map(s -> SimpleEntityResponse.builder().id(s.getId()).name(s.getName()).build())
-                .toList();
-        UserRequest request = UserRequest.builder()
-                .username(username)
-                .firstName("Multi")
-                .lastName("Loc")
-                .rank("")
-                .enabled(true)
-                .storages(storageRefs)
-                .permissions(List.of())
-                .realmRoles(List.of(ownerRole))
-                .build();
-
-        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
-        validateSuccess(response, "Create multi-location owner");
-        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
-        String userId = findUserIdByUsername(username);
-        trackForCleanup(userId);
-        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
-        waitForUser(UserRole.ADMIN, userId);
-        log.info("Created multi-location owner username={} storageIds={}",
-                username, storageRefs.stream().map(SimpleEntityResponse::getId).toList());
-        return new RestrictedOwnerUser(userId, username, permanentPassword);
+        BusinessActor actor = createBusinessActor(
+                playwright,
+                BusinessRole.BUSINESS_UNIT_OWNER,
+                storages);
+        return new RestrictedOwnerUser(actor.userId(), actor.username(), actor.password());
     }
 
     public record RestrictedOwnerUser(String userId, String username, String password) {

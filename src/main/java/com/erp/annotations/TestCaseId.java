@@ -1,5 +1,8 @@
 package com.erp.annotations;
 
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationProfile;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -15,4 +18,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface TestCaseId {
     String[] value();
+
+    /** Business personas participating in the scenario; resolved through business-roles.yml. */
+    BusinessRole[] roles() default {};
+
+    /** Dynamic location templates used by the scenario; resolved through location-profiles.yml. */
+    LocationProfile[] locationProfiles() default {};
 }

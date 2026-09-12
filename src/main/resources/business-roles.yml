@@ -1,0 +1,14 @@
+businessRoles:
+  BUSINESS_UNIT_OWNER:
+    keycloakRoles:
+      - Business_Unit_Owner-ROLE
+  CREW_STOCK_READER:
+    keycloakRoles:
+      - Crew-Read-ROLE
+  CREW_INVENTORY_OPERATOR:
+    keycloakRoles:
+      - Crew-Write-ROLE
+  UNIT_KOMIRNIK:
+    keycloakRoles:
+      - Unit_Owner-ROLE
+      - Crew-Manager-ROLE
