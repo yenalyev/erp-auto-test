@@ -13,6 +13,7 @@ import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.request.RelocationOutputEditRequest;
+import com.erp.models.request.RelocationOutputRequest;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
@@ -460,5 +461,84 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
                 .as("order.requester.unit.name має резолвитись у UNIT")
                 .isEqualTo(UnitType.UNIT);
         return unit;
+    }
+
+    @Test(priority = 90)
+    @TestCaseId("TC-REL-090")
+    @Story("In-transit send can be edited one day after its document date")
+    @Description("""
+            Видача з датою вчора ще перебуває в одноденному вікні редагування.
+            Owner відправника може змінити її кількість, не змінюючи дату документа.
+            """)
+    public void testEditInTransitOneDayAfterIssueDate() {
+        LocalDate issueDate = LocalDate.now().minusDays(1);
+        String marker = "edit-one-day-" + System.currentTimeMillis();
+        RelocationResponse sent = createSendDated(UserRole.OWNER_1, issueDate, marker);
+        assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(sent.getDate()).isEqualTo(issueDate);
+
+        RelocationResponse updated = fixture.editSend(
+                UserRole.OWNER_1, sent.getId(), owner1Storage,
+                RelocationDataFactory.buildSendEditRequest(resourceId, 3.0, marker + "-edited")
+                        .toBuilder().date(issueDate).build());
+
+        assertThat(updated.getId()).isEqualTo(sent.getId());
+        assertThat(updated.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(updated.getDate()).isEqualTo(issueDate);
+        assertThat(updated.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(3.0));
+    }
+
+    @Test(priority = 91)
+    @TestCaseId("TC-REL-091")
+    @Story("In-transit send cannot be edited after the one-day limit")
+    @Description("""
+            Видача з датою позавчора вже поза одноденним вікном. Навіть якщо в PUT
+            передати сьогоднішню дату, API відхиляє правку без зміни видачі чи залишку.
+            """)
+    public void testEditInTransitTwoDaysAfterIssueDateReturns400() {
+        LocalDate issueDate = LocalDate.now().minusDays(2);
+        String marker = "edit-two-days-" + System.currentTimeMillis();
+        RelocationResponse sent = createSendDated(UserRole.ADMIN, issueDate, marker);
+        assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(sent.getDate()).isEqualTo(issueDate);
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+        ProductionStockAssertions.StockSnapshot senderBefore = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ДО простроченої правки");
+
+        Response response = fixture.editSendRaw(
+                UserRole.OWNER_1, sent.getId(), owner1Storage,
+                RelocationDataFactory.buildSendEditRequest(resourceId, 3.0, marker + "-edited")
+                        .toBuilder().date(LocalDate.now()).build());
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.jsonPath().getList("errors.field", String.class))
+                .as("Відмова має стосуватися дати видачі: %s", response.asString())
+                .contains("date");
+        assertThat(response.asString()).contains("1 дн");
+
+        RelocationResponse still = fixture.findInTransitById(
+                UserRole.ADMIN, owner1Storage, sent.getId());
+        assertThat(still).isNotNull();
+        assertThat(still.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(still.getDate()).isEqualTo(issueDate);
+        assertThat(still.getDescription()).isEqualTo(marker);
+        assertThat(still.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(8.0));
+        RelocationStockAssertions.assertUnchanged(
+                senderBefore,
+                RelocationStockAssertions.capture(
+                        apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ПІСЛЯ простроченої правки"),
+                owner1Storage, resourceId, "sender stock after rejected late edit");
+    }
+
+    private RelocationResponse createSendDated(UserRole role, LocalDate issueDate, String marker) {
+        RelocationOutputRequest request = RelocationDataFactory.buildSendRequest(
+                owner1Storage, owner2Storage, resourceId, 8.0, marker)
+                .toBuilder().date(issueDate).build();
+        Response response = fixture.sendRaw(role, request);
+        assertThat(response.statusCode())
+                .as("Видача з датою %s має створитися: %s", issueDate, response.asString())
+                .isBetween(200, 299);
+        return response.as(RelocationResponse.class);
     }
 }
