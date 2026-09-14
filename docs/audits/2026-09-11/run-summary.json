@@ -1,0 +1,62 @@
+[
+  {
+    "source": "TCM local connector",
+    "id": 88,
+    "scope": "AUTO TP REQ-PLN",
+    "environment": "staging",
+    "date": "2026-09-11T08:04:46.323455",
+    "status": "COMPLETED",
+    "items": 115,
+    "counts": {
+      "PASS": 77,
+      "SKIPPED": 32,
+      "FAIL": 6
+    },
+    "skipsWithoutReason": 32,
+    "startedAt": "2026-09-11T08:04:46.322875",
+    "completedAt": "2026-09-11T08:04:49.38505",
+    "firstExecuted": "2026-09-11T07:39:25.958159",
+    "lastExecuted": "2026-09-11T08:04:45.365983",
+    "version": null
+  },
+  {
+    "source": "TCM local connector",
+    "id": 85,
+    "scope": "AUTO TP CONSOLE",
+    "environment": "staging",
+    "date": "2026-09-02T18:10:11.066968",
+    "status": "COMPLETED",
+    "items": 1087,
+    "counts": {
+      "PASS": 858,
+      "FAIL": 96,
+      "SKIPPED": 133
+    },
+    "skipsWithoutReason": 133,
+    "startedAt": "2026-09-02T18:10:11.066053",
+    "completedAt": "2026-09-02T18:11:17.068284",
+    "firstExecuted": "2026-09-02T14:37:13.611935",
+    "lastExecuted": "2026-09-02T18:09:52.540679",
+    "version": null
+  },
+  {
+    "source": "TCM prod connector",
+    "id": 92,
+    "scope": "AUTO TP REQ-PLN",
+    "environment": "dev",
+    "date": "2026-09-10T16:29:26.163968",
+    "status": "COMPLETED",
+    "items": 107,
+    "counts": {
+      "PASS": 83,
+      "SKIPPED": 1,
+      "FAIL": 23
+    },
+    "skipsWithoutReason": 1,
+    "startedAt": "2026-09-10T16:29:26.163724",
+    "completedAt": "2026-09-10T16:29:30.461223",
+    "firstExecuted": "2026-09-10T16:07:15.171807",
+    "lastExecuted": "2026-09-10T16:29:18.303901",
+    "version": null
+  }
+]

@@ -1,0 +1,24 @@
+# Reviewed proposal only; not applied to running containers.
+# Layer over tcm/docker-compose.yml with --project-directory pointing to tcm.
+x-audit-logging: &audit-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    restart: unless-stopped
+    stop_grace_period: 60s
+    logging: *audit-logging
+
+  tcm:
+    stop_grace_period: 30s
+    logging: *audit-logging
+    # HTTP liveness only; /login does not prove DB readiness.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/login || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

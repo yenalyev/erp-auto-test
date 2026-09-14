@@ -1,0 +1,53 @@
+runner-validation.log
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.193 s -- in com.erp.runner.service.MavenExecutorLogSummaryTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.745 s -- in com.erp.runner.service.TcmFallbackImportServiceTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.439 s -- in com.erp.runner.web.RunControllerTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+
+tcm-validation.log
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.352 s -- in tcm.service.AutotestImportServiceTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.454 s -- in tcm.service.AutotestRunnerServiceTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.069 s -- in tcm.service.AutotestRunResolverTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.236 s -- in tcm.service.AutotestSuiteServiceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.605 s -- in tcm.service.LocalAutotestResultShipperTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.035 s -- in tcm.service.TestCaseAutomationServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in tcm.util.AutotestStatusAggregatorTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.029 s -- in tcm.util.ErpAutotestSuiteHintTest
+[INFO] Tests run: 39, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+
+autotest-unit-validation.log
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.067 s -- in com.erp.utils.auth.SessionUnauthorizedRetryTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+
+default-suite-validation.log
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.801 s -- in TestSuite
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+
+runner-probes.log
+[ERROR] Tests run: 3, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 6.438 s <<< FAILURE! -- in com.erp.runner.service.InfrastructureAuditProbeTest
+[ERROR] com.erp.runner.service.InfrastructureAuditProbeTest.databaseOptOutMustReachTestJvm -- Time elapsed: 2.850 s <<< FAILURE!
+	at com.erp.runner.service.InfrastructureAuditProbeTest.databaseOptOutMustReachTestJvm(InfrastructureAuditProbeTest.java:59)
+[ERROR] com.erp.runner.service.InfrastructureAuditProbeTest.cancellationDuringPreflightMustRemainCancelled -- Time elapsed: 0.305 s <<< FAILURE!
+	at com.erp.runner.service.InfrastructureAuditProbeTest.cancellationDuringPreflightMustRemainCancelled(InfrastructureAuditProbeTest.java:50)
+[ERROR] com.erp.runner.service.InfrastructureAuditProbeTest.successRequiresConfirmedImport -- Time elapsed: 3.135 s <<< FAILURE!
+	at com.erp.runner.service.InfrastructureAuditProbeTest.successRequiresConfirmedImport(InfrastructureAuditProbeTest.java:43)
+[ERROR]   InfrastructureAuditProbeTest.cancellationDuringPreflightMustRemainCancelled:50 Cancel during preflight was overwritten ==> expected: <CANCELLED> but was: <SUCCESS>
+[ERROR]   InfrastructureAuditProbeTest.databaseOptOutMustReachTestJvm:59 Configured database opt-out was ignored ==> expected: <true> but was: <false>
+[ERROR]   InfrastructureAuditProbeTest.successRequiresConfirmedImport:43 Unconfirmed TCM delivery must not report SUCCESS ==> expected: not equal but was: <SUCCESS>
+[ERROR] Tests run: 3, Failures: 3, Errors: 0, Skipped: 0
+[INFO] BUILD FAILURE
+
+tcm-probes.log
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.129 s <<< FAILURE! -- in tcm.util.InfrastructureAuditProbeTest
+[ERROR] tcm.util.InfrastructureAuditProbeTest.skippedReasonMustSurviveAggregation -- Time elapsed: 0.080 s <<< FAILURE!
+	at tcm.util.InfrastructureAuditProbeTest.skippedReasonMustSurviveAggregation(InfrastructureAuditProbeTest.java:15)
+[ERROR]   InfrastructureAuditProbeTest.skippedReasonMustSurviveAggregation:15 expected: <JDBC unavailable> but was: <null>
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
+[INFO] BUILD FAILURE
+
+outbox-probe.log
+TAB_OUTBOX_VALID_JSON=false; failure=JsonParseException

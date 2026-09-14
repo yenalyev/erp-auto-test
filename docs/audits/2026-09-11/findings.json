@@ -1,0 +1,434 @@
+[
+  {
+    "id": "A01",
+    "priority": "P1",
+    "area": "Безпека",
+    "title": "У запущених контейнерах використовуються відомі стандартні токени",
+    "evidence": "Read-only перевірка Docker env підтвердила стандартні значення TCM_AI_TOKEN, RUNNER_API_TOKEN і TCM_API_TOKEN. Порти TCM 8100, runner 8103 і PostgreSQL 5433 слухають 0.0.0.0 та IPv6. TCM також отримує стандартний bootstrap-пароль; це не доводить, що пароль існуючого адміністратора не змінено.",
+    "impact": "Клієнт із мережевим доступом і відомим токеном може користуватися відповідним API. Доступність із публічного інтернету та правила host firewall не перевірялися.",
+    "fix": "Замінити токени узгоджено в TCM, runner і MCP; прибрати стандартні значення з deployment-конфігурацій, вимагати явні секрети. Обмежити listen/network-доступ потрібними клієнтами; окремо перевірити bootstrap-акаунт.",
+    "check": "Запуск без секретів має завершуватися помилкою конфігурації; старий токен має отримувати 401.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/docker-compose.yml",
+        "line": 16,
+        "label": "docker-compose.yml:16"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/docker-compose.yml",
+        "line": 36,
+        "label": "docker-compose.yml:36"
+      }
+    ]
+  },
+  {
+    "id": "A02",
+    "priority": "P1",
+    "area": "Автотести",
+    "title": "Типовий запуск Maven успішний із нульовою кількістю тестів",
+    "evidence": "pom.xml обирає suite=dev-test, а dev-test.xml не містить test/classes. Контрольний запуск із вимкненим зовнішнім звітуванням дав Tests run: 0 та BUILD SUCCESS. README називає mvn clean test запуском усіх тестів і пропонує параметр suiteXmlFile, який не підставляється в заданий шлях POM.",
+    "impact": "Локальна або майбутня CI-перевірка може виглядати успішною без жодного тесту.",
+    "fix": "Обрати підтримуваний непорожній suite за замовчуванням, увімкнути failIfNoTests та виправити README на -Dsuite=<name>. Зробити перевірку XML-каталогу частиною build.",
+    "check": "Порожній suite завершується ненульовим exit code; задокументована команда справді запускає очікувані тести.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/pom.xml",
+        "line": 18,
+        "label": "pom.xml:18"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/test/resources/suites/dev-test.xml",
+        "line": 2,
+        "label": "dev-test.xml:2"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/pom.xml",
+        "line": 335,
+        "label": "pom.xml:335"
+      }
+    ]
+  },
+  {
+    "id": "A03",
+    "priority": "P1",
+    "area": "Ранер",
+    "title": "Черга та статуси запусків губляться після restart ранера",
+    "evidence": "RunRepository зберігає записи у ConcurrentHashMap, RunQueueService — у LinkedBlockingQueue. Відновлення із disk/DB відсутнє. TCM має збереження job у БД та rehydration, але воно не відновлює втрачені записи самого ранера.",
+    "impact": "Після restart queued-запуски втрачаються; TCM не може отримати статус попереднього remoteRunId. Незавершені outbox залишаються без автоматичного повторного відправлення.",
+    "fix": "Зберігати queue/run state у БД або журналі; на startup переводити перервані jobs у явний стан і відновлювати queue/outbox. Додати idempotency key для запиту запуску.",
+    "check": "Перезапустити окремий тестовий runner з queued та running jobs: жоден job не зникає, повторний submit не створює дубль.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/repository/RunRepository.java",
+        "line": 14,
+        "label": "RunRepository.java:14"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/RunQueueService.java",
+        "line": 31,
+        "label": "RunQueueService.java:31"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/AutotestJobRehydrator.java",
+        "line": 26,
+        "label": "AutotestJobRehydrator.java:26"
+      }
+    ]
+  },
+  {
+    "id": "A04",
+    "priority": "P1",
+    "area": "Ранер",
+    "title": "Завислий Maven блокує єдиний worker без обмеження часу",
+    "evidence": "MavenExecutor використовує process.waitFor() без timeout; чергу обробляє один worker. HTTP-таймаути окремих клієнтів не обмежують компіляцію, plugin, teardown або весь процес. Такий самий необмежений wait є у local-режимі TCM.",
+    "impact": "Один завислий прогін утримує всю чергу до ручного скасування. Queue не має обмеження місткості.",
+    "fix": "Додати configurable run deadline, watchdog за heartbeat/progress, kill дерева процесів та стан TIMED_OUT; обмежити queue і відхиляти надлишкові запити.",
+    "check": "Синтетичний завислий процес зупиняється після deadline; наступний queued job починається автоматично.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/MavenExecutor.java",
+        "line": 81,
+        "label": "MavenExecutor.java:81"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/RunQueueService.java",
+        "line": 147,
+        "label": "RunQueueService.java:147"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/AutotestRunnerService.java",
+        "line": 447,
+        "label": "AutotestRunnerService.java:447"
+      }
+    ]
+  },
+  {
+    "id": "A05",
+    "priority": "P1",
+    "area": "Ранер",
+    "title": "Скасування під час preflight губиться, а процес усе одно запускається",
+    "evidence": "cancel() встановлює CANCELLING, коли Process ще null. Після preflight execute() без перевірки cancellation запускає процес і переписує статус на RUNNING. Ізольований тест отримав SUCCESS замість очікуваного CANCELLED.",
+    "impact": "Користувач скасовує прогін, але тести можуть почати змінювати ERP. Це відтворено на бездіяльному локальному cmd-процесі, без виклику ERP.",
+    "fix": "Запровадити атомарні переходи стану/cancellation token; перевіряти його після кожної фази та перед process.start(), не перезаписувати terminal/cancelling state.",
+    "check": "Скасування у QUEUED, PREFLIGHT, MAVEN_START і RUNNING має припиняти запуск та завершувати job як CANCELLED.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/MavenExecutor.java",
+        "line": 58,
+        "label": "MavenExecutor.java:58"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/MavenExecutor.java",
+        "line": 75,
+        "label": "MavenExecutor.java:75"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/MavenExecutor.java",
+        "line": 159,
+        "label": "MavenExecutor.java:159"
+      }
+    ]
+  },
+  {
+    "id": "A06",
+    "priority": "P1",
+    "area": "Інтеграція",
+    "title": "Успішність імпорту визначається недостатньо надійними ознаками",
+    "evidence": "Runner ставить SUCCESS за exitCode=0 навіть коли ensureImported=false — це відтворено. Fallback приймає будь-який 2xx, listener пише OK-marker навіть при matched=0. TCM створює TestRun в REQUIRES_NEW перед імпортом items; findResultRun() та syncRemoteJob() вважають саму наявність рядка достатньою для completed.",
+    "impact": "Статуси runner, job і результатів можуть розійтися. При відкаті транзакції імпорту може лишитися IN_PROGRESS-запис, який UI прийме за імпортований прогін. Звичайний випадок повної відсутності TestRun TCM частково захищає через WAITING_IMPORT/grace period.",
+    "fix": "Розділити executionStatus та importStatus; підтверджувати commit, correlation ID, matched/expected і перелік unmatched. Вимагати успішний стан імпорту, а не лише існування TestRun чи marker. Помилку доставки не маскувати SUCCESS.",
+    "check": "Перевірити 2xx+matched=0, timeout після commit, rollback після створення run, частковий import і повторну доставку. Не дублювати run/items.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/MavenExecutor.java",
+        "line": 114,
+        "label": "MavenExecutor.java:114"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/TcmFallbackImportService.java",
+        "line": 147,
+        "label": "TcmFallbackImportService.java:147"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/AutotestRunResolver.java",
+        "line": 34,
+        "label": "AutotestRunResolver.java:34"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/AutotestRunnerService.java",
+        "line": 375,
+        "label": "AutotestRunnerService.java:375"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/AutotestRunnerService.java",
+        "line": 579,
+        "label": "AutotestRunnerService.java:579"
+      }
+    ]
+  },
+  {
+    "id": "A07",
+    "priority": "P1",
+    "area": "Безпека",
+    "title": "Allure-вкладення містять незамасковані session cookies",
+    "evidence": "У 10 із перших 20 HTML-вкладень у контейнері знайдено JSESSIONID із непорожнім незамаскованим значенням. Перевірка виводила тільки кількість; cookies не копіювалися до звіту. BaseClient і multipart-клієнт підключають стандартний AllureRestAssured. Redaction у RequestDiagnostics стосується іншої копії діагностики.",
+    "impact": "Особа з доступом до артефактів може прочитати облікові дані сесії. Чинність історичних cookies і можливість повторного використання не перевірялися.",
+    "fix": "Єдина санітизація Authorization, Cookie, Set-Cookie і секретних полів перед усіма log/Allure sinks; приватний доступ і retention для звітів. Перевірити збережені артефакти та відкликати сесії за потреби.",
+    "check": "Синтетичні token/cookie/password ніколи не потрапляють до Allure, Maven log або errorMessage, що надсилається до TCM.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/api/clients/BaseClient.java",
+        "line": 53,
+        "label": "BaseClient.java:53"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/api/clients/SessionClient.java",
+        "line": 102,
+        "label": "SessionClient.java:102"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/api/clients/RequestDiagnostics.java",
+        "line": 63,
+        "label": "RequestDiagnostics.java:63"
+      }
+    ]
+  },
+  {
+    "id": "A08",
+    "priority": "P2",
+    "area": "TCM",
+    "title": "TCM втрачає причини SKIPPED під час агрегації",
+    "evidence": "Listener передає skipReason, але AutotestStatusAggregator копіює errorMessage лише для FAIL/BLOCKED. Діагностичний unit-тест очікував JDBC unavailable, отримав null. У локальних run 85 і 88 відповідно всі 133 та 32 SKIPPED не мають actualResult/comment; у prod connector run 92 — 1 із 1.",
+    "impact": "У TCM неможливо відрізнити відсутні дані/права, проблеми JDBC, недоступний сервіс та пропуск через залежність. Звіт приховує причину неповного покриття.",
+    "fix": "Зберігати причину для SKIPPED/NOT_RUN і визначити детерміноване об’єднання кількох причин; додати категорію infrastructure/data/product/dependency.",
+    "check": "Після агрегації та import повідомлення SKIPPED доступне через API, UI та export.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/util/AutotestStatusAggregator.java",
+        "line": 70,
+        "label": "AutotestStatusAggregator.java:70"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/listeners/TcmReportListener.java",
+        "line": 108,
+        "label": "TcmReportListener.java:108"
+      }
+    ]
+  },
+  {
+    "id": "A09",
+    "priority": "P2",
+    "area": "Інтеграція",
+    "title": "Каталог automation ID у TCM розходиться з кодом",
+    "evidence": "Локальна БД: 1154 test cases, 1112 унікальних links. Код: 1148 унікальних @TestCaseId з урахуванням FQN-анотацій та локальних String-констант. Після trim+uppercase: 38 ID без явного link, 11 без link і без testId, 2 links без ID у коді: TC-UI-CREW-011 та TC-UI-HIST-EQ-007. Повні списки — coverage-comparison.json.",
+    "impact": "Feature/AC scope збирається тільки з automation links, тому частина наявних тестів не потрапляє до scoped-запусків. Import має fallback за testId, тож відсутність link не означає автоматично unmatched для всіх 38.",
+    "fix": "Узгодити links і код; затвердити alias-політику. Генерувати каталог із compiled annotations і перевіряти двобічну звірку в CI. Окремо перевіряти членство ID у підтримуваних suites.",
+    "check": "Немає непояснених відсутніх/застарілих ID; кожен automation link має виконуваний метод і підтримуваний suite.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/AutotestSuiteService.java",
+        "line": 176,
+        "label": "AutotestSuiteService.java:176"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/listeners/TcmScopeListener.java",
+        "line": 40,
+        "label": "TcmScopeListener.java:40"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/TestCaseAutomationService.java",
+        "line": 67,
+        "label": "TestCaseAutomationService.java:67"
+      }
+    ]
+  },
+  {
+    "id": "A10",
+    "priority": "P2",
+    "area": "Артефакти",
+    "title": "Allure-результати різних прогонів накопичуються в спільному каталозі",
+    "evidence": "У контейнері target/allure-results займає 15G за du -sh і містить 16347 result.json. Runner викликає mvn test без clean, видаляє лише TEST-TestSuite.xml. Allure пишеться в сталий target/allure-results; parser читає всі result.json. Run logs мають 56 каталогів; автоматичного видалення артефактів не знайдено.",
+    "impact": "Генерація Allure з цього каталогу змішує історичні результати; диск поступово заповнюється, зростає обсяг потенційно чутливих даних. Це не доводить змішування JSONL імпорту remote runs: їхні outbox мають окремі runId.",
+    "fix": "Окремі allure-results/surefire/workdir на runId, immutable manifest і report URL. Додати retention та disk-space threshold, зберігати останні/невдалі прогони за визначеною політикою.",
+    "check": "Два послідовні прогони мають непересічні каталоги; звіт другого не містить першого; retention видаляє тільки дозволені старі артефакти.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/test/resources/allure.properties",
+        "line": 1,
+        "label": "allure.properties:1"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/MavenExecutor.java",
+        "line": 199,
+        "label": "MavenExecutor.java:199"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/MavenExecutor.java",
+        "line": 215,
+        "label": "MavenExecutor.java:215"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/utils/parser/AllureResultsParser.java",
+        "line": 38,
+        "label": "AllureResultsParser.java:38"
+      }
+    ]
+  },
+  {
+    "id": "A11",
+    "priority": "P2",
+    "area": "Інтеграція",
+    "title": "Outbox пошкоджується керівними символами й може повторно використати старі локальні результати",
+    "evidence": "Ручний escapeJson не екранує TAB та інші control characters. Виклик реального TcmResultOutbox.append зі синтетичним TAB дав JSON, який Jackson відхиляє з JsonParseException. Fallback припиняє читання всього файла при одному невалідному рядку. Без remoteRunId усі локальні запуски пишуть до tmp/tcm-autotest/local, файл доповнюється й не очищується; listener читає його при порожньому buffer.",
+    "impact": "Після падіння JVM/network fallback може втратити весь прогін через один рядок. Порожній локальний scoped-run може підхопити результати попереднього запуску.",
+    "fix": "Використати Jackson JSONL, унікальний runId також для локальних запусків і окремий outbox; обробляти обірваний останній рядок з явною ознакою partial; перевіряти marker за correlation ID.",
+    "check": "Round-trip для TAB, CR/LF, backslash, Unicode; kill під час запису; порожній новий запуск не імпортує старі дані.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/utils/helpers/TcmResultOutbox.java",
+        "line": 137,
+        "label": "TcmResultOutbox.java:137"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/utils/helpers/TcmResultOutbox.java",
+        "line": 36,
+        "label": "TcmResultOutbox.java:36"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/listeners/TcmReportListener.java",
+        "line": 49,
+        "label": "TcmReportListener.java:49"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/TcmFallbackImportService.java",
+        "line": 94,
+        "label": "TcmFallbackImportService.java:94"
+      }
+    ]
+  },
+  {
+    "id": "A12",
+    "priority": "P2",
+    "area": "Ранер",
+    "title": "Налаштування USE_DATABASE=false не передається до автотестів",
+    "evidence": "RunnerProperties має useDatabase, application.properties читає USE_DATABASE, але buildCommand безумовно додає -Duse.database=true. Діагностичний тест із props.setUseDatabase(false) це підтвердив. Окремі UI-класи мають власну поведінку DB initialization, тому прапорець не означає, що кожен UI-тест відкриє JDBC.",
+    "impact": "API-only запуск несподівано може вимагати доступу до БД; оператор не може керувати цією залежністю через документовану конфігурацію.",
+    "fix": "Передавати properties.isUseDatabase(); DB-dependent suites або cases оголосити явно й перевіряти preflight тільки для них.",
+    "check": "У дочірньому JVM -Duse.database збігається з конфігурацією; non-DB suite працює без JDBC.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/service/MavenExecutor.java",
+        "line": 243,
+        "label": "MavenExecutor.java:243"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/resources/application.properties",
+        "line": 10,
+        "label": "application.properties:10"
+      }
+    ]
+  },
+  {
+    "id": "A13",
+    "priority": "P2",
+    "area": "Автотести",
+    "title": "Глобальний cleanup може видалити дані іншого активного прогону",
+    "evidence": "Suite sweep до/після тестів шукає всі локації/регіони за загальним шаблоном імен і працює від ADMIN. Маркера ownership за runId/lease/age немає. Послідовна queue захищає лише один instance ранера; IDE, CLI або другий runner на тому самому ERP не координуються.",
+    "impact": "Паралельний локальний і remote-запуск можуть деактивувати/очистити дані один одного, спричинивши нестабільні результати. Масові cleanup-виклики також додають навантаження на auth/ERP.",
+    "fix": "Тегувати кожен ресурс runId; видаляти тільки власні tracked ID. Orphan sweep винести в окремий процес із TTL та перевіркою відсутності активного owner; застосувати lock на shared environment.",
+    "check": "Два прогони в одному test environment не змінюють ресурси один одного; orphan sweep пропускає активний lease.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/fixtures/TestArtifactCleanup.java",
+        "line": 68,
+        "label": "TestArtifactCleanup.java:68"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/fixtures/StorageFixture.java",
+        "line": 198,
+        "label": "StorageFixture.java:198"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/data/factories/storage/StorageDataFactory.java",
+        "line": 56,
+        "label": "StorageDataFactory.java:56"
+      }
+    ]
+  },
+  {
+    "id": "A14",
+    "priority": "P1",
+    "area": "Інтеграція",
+    "title": "Scoped-запуск перестає фільтрувати тести, якщо звітування вимкнене",
+    "evidence": "TcmScopeListener.loadScopeIfNeeded() повертається при !isTcmReportingEnabled(). Ця умова спрацьовує також при порожньому API token або tcm.enabled=false. Потім intercept() повертає всі методи, якщо scope не активований, навіть коли CLI містить tcm.feature.id/ac.id.",
+    "impact": "Помилка конфігурації scoped-запуску може виконати весь обраний suite замість одного Feature/AC. Це особливо небезпечно для suite із записами в shared ERP. Сценарій підтверджений аналізом control flow, live-запуск не виконувався.",
+    "fix": "Відокремити selection scope від reporting; якщо scope явно заданий, але його неможливо завантажити, завершувати прогін до setup та API mutations.",
+    "check": "featureId/acId + missing token або disabled reporting не запускає жодного тесту та повертає зрозумілу configuration error.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/listeners/TcmScopeListener.java",
+        "line": 55,
+        "label": "TcmScopeListener.java:55"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/listeners/TcmScopeListener.java",
+        "line": 37,
+        "label": "TcmScopeListener.java:37"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/main/java/com/erp/utils/config/ConfigProvider.java",
+        "line": 214,
+        "label": "ConfigProvider.java:214"
+      }
+    ]
+  },
+  {
+    "id": "A15",
+    "priority": "P2",
+    "area": "TCM",
+    "title": "Час і версія TestRun не описують фактичне виконання тестів",
+    "evidence": "TestRun.startedAt заповнюється LocalDateTime.now() під час resolve/import; DTO durationMs агрегується, але не записується у TestRunItem. У локальному run 85 межі executedAt охоплюють приблизно 3 год 33 хв, тоді як startedAt→completedAt становить близько 66 с. У трьох перевірених runs version=null; runner не фіксує git SHA у RunRecord.",
+    "impact": "За TCM неможливо надійно оцінити тривалість прогону, порівняти performance або відтворити результат на точній ревізії. executedAt — час завершення окремих тестів, тому цей інтервал не є точною повною тривалістю.",
+    "fix": "Передавати actual started/finished timestamps з timezone, зберігати duration, test commit SHA, ERP build, JDK/browser/image digest та selected scope snapshot.",
+    "check": "Run manifest дозволяє відновити точну команду/ревізію без секретів; TCM показує execution duration окремо від import duration.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/AutotestRunResolver.java",
+        "line": 57,
+        "label": "AutotestRunResolver.java:57"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/tcm/src/main/java/tcm/service/AutotestImportService.java",
+        "line": 119,
+        "label": "AutotestImportService.java:119"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-test-runner/src/main/java/com/erp/runner/model/RunRecord.java",
+        "line": 13,
+        "label": "RunRecord.java:13"
+      }
+    ]
+  },
+  {
+    "id": "A16",
+    "priority": "P2",
+    "area": "Автотести",
+    "title": "Частина регресій перетворюється на SKIPPED, а RBAC matrix виключена з regression",
+    "evidence": "OrderListUiTest пропускає TC-ORD-UI-004, якщо не видно workspace selector або create button — тобто перевірюваний UI може зникнути, не спричинивши FAIL. regression.xml прямо зазначає, що RbacAccessMatrixTest parked. Є інші рольові тести, тому це не означає повну відсутність RBAC coverage.",
+    "impact": "Високий SKIPPED може приховувати регресії продукту. Завершений прогін або високий PASS не гарантує виконання критичних перевірок.",
+    "fix": "Розділити перевірку передумов і assertions продукту, вимагати FAIL для зниклого очікуваного UI. Для SKIPPED — причина, власник, термін і бюджет; повернути стабілізовану RBAC matrix до контрольованого suite.",
+    "check": "Видалення очікуваного елемента дає FAIL; обов’язкові case ID мають результат, а перевищення skip budget блокує gate.",
+    "refs": [
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/test/java/com/erp/tests/ui/OrderListUiTest.java",
+        "line": 61,
+        "label": "OrderListUiTest.java:61"
+      },
+      {
+        "path": "C:/Users/gigam/IdeaProjects/erp-auto-test/src/test/resources/suites/regression.xml",
+        "line": 20,
+        "label": "regression.xml:20"
+      }
+    ]
+  }
+]
