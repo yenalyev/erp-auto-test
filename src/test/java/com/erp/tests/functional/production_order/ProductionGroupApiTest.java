@@ -1,5 +1,6 @@
 package com.erp.tests.functional.production_order;
 
+import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.UserRole;
@@ -124,17 +125,24 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-003")
     public void groupCannotAcquireOwnStockThroughInventory() {
         InventoryFixture inventory = new InventoryFixture(testContext, apiExecutor);
         InventoryRequest request = InventoryRequest.builder()
                 .resources(List.of(new ResourceUsageRequest(resource, 1.0))).build();
-        inventory.openSession(group);
+        Response opening = inventory.putStatus(group, UserRole.ADMIN, true);
         Response response = null;
         try {
-            response = inventory.conductInventoryRaw(group, UserRole.ADMIN, request);
-            double stock = inventory.getResourceStock(group, resource, UserRole.ADMIN);
             org.assertj.core.api.SoftAssertions softly = new org.assertj.core.api.SoftAssertions();
-            softly.assertThat(response.statusCode()).as("Group stock write must be rejected").isEqualTo(400);
+            if (opening.statusCode() == 200) {
+                response = inventory.conductInventoryRaw(group, UserRole.ADMIN, request);
+                softly.assertThat(response.statusCode()).as("Inventory write on production group")
+                        .isBetween(400, 499);
+            } else {
+                softly.assertThat(opening.statusCode()).as("Opening inventory on production group")
+                        .isBetween(400, 499);
+            }
+            double stock = inventory.getResourceStock(group, resource, UserRole.ADMIN);
             softly.assertThat(stock).as("Production group must not own stock").isZero();
             softly.assertAll();
         } finally {
@@ -144,7 +152,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
                             .resources(List.of()).build()));
                 }
             } finally {
-                inventory.closeSession(group);
+                if (opening.statusCode() == 200) inventory.closeSession(group);
             }
         }
     }

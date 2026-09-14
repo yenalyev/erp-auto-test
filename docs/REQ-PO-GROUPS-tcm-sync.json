@@ -401,5 +401,38 @@
     ],
     "verification": "Feature documentation, new criterion and both new cases read back and matched; previous verification remains recorded above.",
     "executionResultsPublished": false
+  },
+  "inventoryRequirementAmendment": {
+    "verifiedAtUtc": "2026-09-14T11:27:36.696218+00:00",
+    "targets": [
+      "dev TCM",
+      "prod TCM"
+    ],
+    "updatedCriterion": "AC-02",
+    "verifiedTestCase": "TC-PG-003",
+    "apiAutomationId": "TC-PG-003",
+    "verification": "Read-back matched local feature documentation, AC-02 and TC-PG-003 fields, steps and API automation link in dev and prod TCM. Both features contain 13 criteria and 32 test cases.",
+    "executionResultsPublished": false
+  },
+  "targetedDevRecheck": {
+    "date": "2026-09-14",
+    "testCases": [
+      "TC-PG-003",
+      "TC-PG-031",
+      "TC-PG-032"
+    ],
+    "result": {
+      "fail": 3,
+      "errors": 0,
+      "skipped": 0
+    },
+    "evidence": "target/production-groups-targeted-20260914.log",
+    "tcmTargets": [
+      "dev TCM",
+      "prod TCM"
+    ],
+    "verification": "Updated feature documentation and three case descriptions read back and matched the local bundle. AC-02 and all three case steps and automation links also matched.",
+    "executionResultsPublished": false,
+    "verifiedAtUtc": "2026-09-14T11:27:36.696248+00:00"
   }
 }
