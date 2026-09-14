@@ -290,6 +290,47 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         assertThat(stock(owner.senderId())).isCloseTo(before, offset(0.01));
     }
 
+    @Test(dataProvider = "nonAdminIssuers")
+    @TestCaseId(value = "TC-REL-DATE-012",
+            roles = {BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.UNIT_KOMIRNIK})
+    @Description("Неадмін із правом редагування не може змінити дату видачі на завтра.")
+    public void nonAdminCannotEditSendToFutureDate(Actor actor) {
+        identify(actor);
+        assertCannotEditSendToFutureDate(actor, actor.role());
+    }
+
+    @Test
+    @TestCaseId("TC-REL-DATE-013")
+    @Description("Адміністратор також не може змінити дату видачі на завтра.")
+    public void adminCannotEditSendToFutureDate() {
+        assertCannotEditSendToFutureDate(owner, UserRole.ADMIN);
+    }
+
+    private void assertCannotEditSendToFutureDate(Actor actor, UserRole editingRole) {
+        LocalDate today = LocalDate.now();
+        RelocationResponse sent = send(UserRole.ADMIN, actor.senderId(), actor.recipientId(),
+                today, marker("edit-future"));
+        double beforeEdit = stock(actor.senderId());
+        try {
+            Response response = relocations.editSendRaw(editingRole, sent.getId(), actor.senderId(),
+                    editRequest(today.plusDays(1), marker("edited-future")));
+            RelocationResponse unchanged = relocations.findInTransitById(
+                    UserRole.ADMIN, actor.senderId(), sent.getId());
+            assertThat(unchanged).isNotNull();
+            assertThat(unchanged.getDate()).isEqualTo(today);
+            assertThat(unchanged.getDescription()).isEqualTo(sent.getDescription());
+            assertThat(unchanged.getItems().getFirst().getAmount())
+                    .isEqualByComparingTo(BigDecimal.valueOf(8));
+            assertThat(stock(actor.senderId())).isCloseTo(beforeEdit, offset(0.01));
+            assertInvalidDate(response);
+        } finally {
+            relocations.resolve(UserRole.ADMIN, sent.getId(), actor.recipientId(),
+                    RelocationState.CANCELLED);
+            relocations.resolve(UserRole.ADMIN, sent.getId(), actor.senderId(),
+                    RelocationState.RETURNED);
+        }
+    }
+
     private RelocationResponse send(UserRole role, Long senderId, Long recipientId,
                                     LocalDate issueDate, String description) {
         Response response = relocations.sendRaw(role, sendRequest(senderId, recipientId, issueDate, description));
