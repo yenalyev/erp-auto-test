@@ -45,15 +45,19 @@
       }
     },
     "totals": {
-      "type": "object",
-      "required": ["produced", "relocated", "used", "stockTotal", "stockInRoot"],
-      "additionalProperties": true,
-      "properties": {
-        "produced": { "type": "number" },
-        "relocated": { "type": "number" },
-        "used": { "type": "number" },
-        "stockTotal": { "type": "number" },
-        "stockInRoot": { "type": "number" }
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["unit", "produced", "relocated", "used", "stockTotal", "stockInRoot"],
+        "additionalProperties": true,
+        "properties": {
+          "unit": { "type": "string" },
+          "produced": { "type": "number" },
+          "relocated": { "type": "number" },
+          "used": { "type": "number" },
+          "stockTotal": { "type": "number" },
+          "stockInRoot": { "type": "number" }
+        }
       }
     }
   }

@@ -91,6 +91,7 @@
     <test name="Operation History UI">
         <classes>
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
+            <class name="com.erp.tests.ui.RelocationOperationHistoryCommentUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
             <class name="com.erp.tests.ui.EquipmentHistoryOnOperationsUiTest"/>
         </classes>

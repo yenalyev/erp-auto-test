@@ -25,6 +25,7 @@ import java.time.YearMonth;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,6 +42,7 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
             "produced", "relocated", "used", "stockTotal", "stockInRoot"};
 
     private ResourceFixture resourceFixture;
+    private List<ResourceResponse> resources;
     private long resourceId;
     private LocalDate lastMonthFrom;
     private LocalDate lastMonthTo;
@@ -49,7 +51,7 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setupPlanAnalytics() {
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
-        List<ResourceResponse> resources = resourceFixture.getPage(UserRole.ADMIN, true, null);
+        resources = resourceFixture.getPage(UserRole.ADMIN, true, null);
         assertThat(resources)
                 .as("Потрібен хоча б один активний ресурс для plan analytics")
                 .isNotEmpty();
@@ -71,7 +73,7 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
     @Description("""
             REQ-PLAN-ANL / AC-01.
             tk-ui PlanAnalyticsPage не шле rows без resourceIds/categoryIds.
-            GET /analytics/plan/rows без вибору має повернути порожній content і нульові totals
+            GET /analytics/plan/rows без вибору має повернути порожні content і totals
             (не агрегат по всьому каталогу). Anonymous — 401/403.
 
             Query: fromDate/toDate = попередній повний календарний місяць (пресет «Місяць»).
@@ -87,11 +89,9 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
         JsonPath json = ok.jsonPath();
         assertThat(json.getList("content")).as("content без вибору").isEmpty();
         assertThat(json.getInt("page.totalElements")).as("totalElements без вибору").isZero();
-        for (String key : METRIC_KEYS) {
-            assertThat(decimal(json, "totals." + key))
-                    .as("totals.%s без вибору", key)
-                    .isEqualByComparingTo(BigDecimal.ZERO);
-        }
+        assertThat(json.<Map<String, Object>>getList("totals"))
+                .as("totals без вибору")
+                .isEmpty();
 
         Response anon = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.PLAN_ANALYTIC_ROWS_GET,
@@ -127,12 +127,77 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
         assertNonNegativeMetrics(threeMonths.jsonPath());
 
         for (String key : List.of("produced", "relocated", "used")) {
-            BigDecimal monthValue = decimal(oneMonth.jsonPath(), "totals." + key);
-            BigDecimal quarterValue = decimal(threeMonths.jsonPath(), "totals." + key);
+            BigDecimal monthValue = singleResourceMetric(oneMonth.jsonPath(), key);
+            BigDecimal quarterValue = singleResourceMetric(threeMonths.jsonPath(), key);
             assertThat(quarterValue)
                     .as("%s за 3 місяці (%s) має бути ≥ за попередній місяць (%s)", key, quarterValue, monthValue)
                     .isGreaterThanOrEqualTo(monthValue);
         }
+    }
+
+    @Test(priority = 25)
+    @TestCaseId("TC-PLAN-ANL-004")
+    @Story("Totals by measurement unit")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            При виборі двох ресурсів з різними одиницями totals є масивом груп за unit.
+            Кожен з п'яти показників дорівнює сумі лише рядків із тією самою одиницею;
+            змішаний скалярний підсумок неприпустимий.
+            """)
+    public void totalsAreGroupedByMeasurementUnit() {
+        String firstUnit = resources.stream()
+                .filter(resource -> resource.getId() == resourceId)
+                .map(resource -> resource.getUnit() == null ? null : resource.getUnit().getName())
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Потрібна одиниця для вибраного ресурсу"));
+        List<ResourceResponse> candidates = resources.stream()
+                .filter(resource -> resource.getUnit() != null)
+                .filter(resource -> resource.getUnit().getName() != null)
+                .filter(resource -> !resource.getUnit().getName().equals(firstUnit))
+                .limit(100)
+                .toList();
+        assertThat(candidates).as("Потрібні ресурси з різними одиницями").isNotEmpty();
+        Response candidatesResponse = requestRows(
+                candidates.stream().map(ResourceResponse::getId).toList(), lastMonthFrom, lastMonthTo);
+        assertThat(candidatesResponse.statusCode())
+                .as("Пошук другого ресурсу: %s", candidatesResponse.asString()).isEqualTo(200);
+        List<Map<String, Object>> candidateRows = candidatesResponse.jsonPath().getList("content");
+        assertThat(candidateRows)
+                .as("Потрібен ресурс з іншою одиницею та даними за період")
+                .isNotEmpty();
+        long otherId = ((Number) candidateRows.getFirst().get("resourceId")).longValue();
+        String otherUnit = (String) candidateRows.getFirst().get("unit");
+
+        Response response = requestRows(List.of(resourceId, otherId), lastMonthFrom, lastMonthTo);
+        assertThat(response.statusCode()).as("mixed-unit rows: %s", response.asString()).isEqualTo(200);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.PLAN_ANALYTIC_ROWS_GET);
+        JsonPath json = response.jsonPath();
+        List<Map<String, Object>> rows = json.getList("content");
+        List<Map<String, Object>> totals = json.getList("totals");
+        assertThat(rows).as("Обидва вибрані ресурси мають бути в рядках").hasSize(2);
+        assertThat(rows.stream().map(row -> (String) row.get("unit")))
+                .containsExactlyInAnyOrder(firstUnit, otherUnit);
+        assertThat(totals).as("Одна група на кожну одиницю").hasSize(2);
+
+        Map<String, Map<String, BigDecimal>> expected = new HashMap<>();
+        for (Map<String, Object> row : rows) {
+            String unit = (String) row.get("unit");
+            Map<String, BigDecimal> metrics = expected.computeIfAbsent(unit, ignored -> new HashMap<>());
+            for (String key : METRIC_KEYS) {
+                metrics.merge(key, toDecimal(row.get(key)), BigDecimal::add);
+            }
+        }
+        for (Map<String, Object> total : totals) {
+            String unit = (String) total.get("unit");
+            assertThat(expected).as("Невідома одиниця totals: %s", unit).containsKey(unit);
+            for (String key : METRIC_KEYS) {
+                assertThat(toDecimal(total.get(key)))
+                        .as("totals[%s].%s дорівнює сумі рядків лише в цій одиниці", unit, key)
+                        .isEqualByComparingTo(expected.get(unit).get(key));
+            }
+        }
+        assertThat(totals.stream().map(total -> (String) total.get("unit")))
+                .doesNotHaveDuplicates();
     }
 
     @Test(priority = 30)
@@ -186,8 +251,12 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
     }
 
     private Response requestRows(long id, LocalDate from, LocalDate to) {
+        return requestRows(List.of(id), from, to);
+    }
+
+    private Response requestRows(List<Long> ids, LocalDate from, LocalDate to) {
         Map<String, Object> params = periodParams(from, to);
-        params.put("resourceIds", id);
+        params.put("resourceIds", ids);
         return apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.PLAN_ANALYTIC_ROWS_GET, UserRole.ADMIN, params);
     }
@@ -210,12 +279,10 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
                 continue;
             }
             JsonPath json = threeMonths.jsonPath();
-            boolean hasTotals = METRIC_KEYS.length > 0
-                    && METRIC_KEYS[0] != null
-                    && decimal(json, "totals.produced")
-                    .add(decimal(json, "totals.relocated"))
-                    .add(decimal(json, "totals.used"))
-                    .add(decimal(json, "totals.stockTotal"))
+            boolean hasTotals = singleResourceMetric(json, "produced")
+                    .add(singleResourceMetric(json, "relocated"))
+                    .add(singleResourceMetric(json, "used"))
+                    .add(singleResourceMetric(json, "stockTotal"))
                     .compareTo(BigDecimal.ZERO) > 0;
             if (hasTotals) {
                 return id;
@@ -225,15 +292,20 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
     }
 
     private static void assertNonNegativeMetrics(JsonPath json) {
-        for (String key : METRIC_KEYS) {
-            BigDecimal total = decimal(json, "totals." + key);
-            assertThat(total).as("totals.%s ≥ 0", key).isGreaterThanOrEqualTo(BigDecimal.ZERO);
+        List<Map<String, Object>> totals = json.getList("totals");
+        assertThat(totals).as("totals має бути масивом груп за unit").isNotNull();
+        for (Map<String, Object> total : totals) {
+            String unit = (String) total.get("unit");
+            assertThat(unit).as("unit у totals").isNotBlank();
+            for (String key : METRIC_KEYS) {
+                assertThat(toDecimal(total.get(key)))
+                        .as("totals[%s].%s ≥ 0", unit, key)
+                        .isGreaterThanOrEqualTo(BigDecimal.ZERO);
+            }
+            assertThat(toDecimal(total.get("stockInRoot")))
+                    .as("totals[%s].stockInRoot ≤ stockTotal", unit)
+                    .isLessThanOrEqualTo(toDecimal(total.get("stockTotal")));
         }
-        BigDecimal stockTotal = decimal(json, "totals.stockTotal");
-        BigDecimal stockInRoot = decimal(json, "totals.stockInRoot");
-        assertThat(stockInRoot)
-                .as("stockInRoot ≤ stockTotal")
-                .isLessThanOrEqualTo(stockTotal);
 
         List<Map<String, Object>> content = json.getList("content");
         if (content == null) {
@@ -251,8 +323,11 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
         }
     }
 
-    private static BigDecimal decimal(JsonPath json, String path) {
-        return toDecimal(json.get(path));
+    private static BigDecimal singleResourceMetric(JsonPath json, String key) {
+        List<Map<String, Object>> totals = json.getList("totals");
+        assertThat(totals).as("Один ресурс не може мати підсумки в кількох одиницях")
+                .hasSizeLessThanOrEqualTo(1);
+        return totals.isEmpty() ? BigDecimal.ZERO : toDecimal(totals.getFirst().get(key));
     }
 
     private static BigDecimal toDecimal(Object value) {

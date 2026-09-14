@@ -4,6 +4,7 @@ import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
@@ -94,7 +95,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 10)
-    @TestCaseId("TC-REL-VIS-001")
+    @TestCaseId(value = "TC-REL-VIS-001", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_001)
     @Severity(SeverityLevel.CRITICAL)
     public void testSendWithinVisibilityRegionSucceeds() {
@@ -121,7 +122,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 20)
-    @TestCaseId("TC-REL-VIS-002")
+    @TestCaseId(value = "TC-REL-VIS-002", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_002)
     @Severity(SeverityLevel.CRITICAL)
     public void testSendOutsideVisibilityRegionRejected() {
@@ -157,7 +158,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 30)
-    @TestCaseId("TC-REL-VIS-003")
+    @TestCaseId(value = "TC-REL-VIS-003", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_003)
     @Severity(SeverityLevel.CRITICAL)
     public void testResolveFinishedWithinVisibilityRegion() {
@@ -186,7 +187,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 40)
-    @TestCaseId("TC-REL-VIS-004")
+    @TestCaseId(value = "TC-REL-VIS-004", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_004)
     @Severity(SeverityLevel.CRITICAL)
     public void testResolveWithOutsiderStorageIdRejected() {
@@ -209,7 +210,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 45)
-    @TestCaseId("TC-REL-VIS-009")
+    @TestCaseId(value = "TC-REL-VIS-009", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_009)
     @Severity(SeverityLevel.CRITICAL)
     public void testSendToRegionsAliasDeliversToRecipientStorageAnchor() {
@@ -250,7 +251,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 50)
-    @TestCaseId("TC-REL-VIS-005")
+    @TestCaseId(value = "TC-REL-VIS-005", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_005)
     @Severity(SeverityLevel.CRITICAL)
     public void testRegionsAliasModeAllowsSendToInScopeLocation() {
@@ -273,7 +274,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 60)
-    @TestCaseId("TC-REL-VIS-007")
+    @TestCaseId(value = "TC-REL-VIS-007", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_007)
     @Severity(SeverityLevel.CRITICAL)
     public void testExplicitGrantAllowsSendToGrantedLocation() {
@@ -296,7 +297,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 70)
-    @TestCaseId("TC-REL-VIS-008")
+    @TestCaseId(value = "TC-REL-VIS-008", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_008)
     @Severity(SeverityLevel.NORMAL)
     public void testRevokeExplicitGrantBlocksSubsequentSend() {
@@ -341,7 +342,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 80)
-    @TestCaseId("TC-REL-VIS-010")
+    @TestCaseId(value = "TC-REL-VIS-010", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_010)
     @Severity(SeverityLevel.CRITICAL)
     public void testSendWithResourceInVisibilityScopeSucceeds() {
@@ -362,7 +363,7 @@ public class RelocationVisibilityTest extends StorageApiTestBase {
     }
 
     @Test(priority = 90)
-    @TestCaseId("TC-REL-VIS-011")
+    @TestCaseId(value = "TC-REL-VIS-011", roles = BusinessRole.BUSINESS_UNIT_OWNER)
     @Description(StorageRegionsAllureDescriptions.TC_REL_VIS_011)
     @Severity(SeverityLevel.CRITICAL)
     public void testSendWithResourceOutsideVisibilityScopeRejected() {

@@ -12,6 +12,7 @@
     <test name="Relocation API">
         <classes>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationOperationHistoryCommentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
@@ -31,6 +32,7 @@
     <test name="Relocation UI">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationOperationHistoryCommentUiTest"/>
             <class name="com.erp.tests.ui.CrewReturnUITest"/>
             <class name="com.erp.tests.ui.FlyPointToFlyPointIssuanceUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>

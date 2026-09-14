@@ -1,8 +1,11 @@
 package com.erp.tests.functional.storage;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.response.CrewResourceCategoryStockResponse;
 import com.erp.models.response.ResourceResponse;
@@ -17,6 +20,7 @@ import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Step;
 import io.qameta.allure.Story;
 import io.restassured.response.Response;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -42,7 +46,10 @@ public class CrewBattalionStocksRbacTest extends CrewApiTestBase {
     private static final double ISSUE_AMOUNT = 9.0;
 
     private UserFixture userFixture;
+    private LocationProfileFixture locationProfileFixture;
     private long battalionMemberStorageId;
+    private UserFixture.BusinessActor crewStockReader;
+    private UserFixture.BusinessActor crewInventoryOperator;
 
     private CrewRegionScenario scenario;
     private Long resourceId;
@@ -51,17 +58,55 @@ public class CrewBattalionStocksRbacTest extends CrewApiTestBase {
     private Long crewId;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupCrewApiBase")
-    @Step("Підготовка: Crew-Read / Crew-Write users + shared fixtures")
+    @Step("Підготовка: тестова локація + свіжі користувачі зі словника бізнес-ролей")
     public void setupCrewBattalionRbacTests() {
         userFixture = new UserFixture(testContext, apiExecutor);
-        battalionMemberStorageId = ConfigProvider.getUnitStorageId();
-        userFixture.ensureCrewBattalionUser(getPlaywrightSessionProvider(), UserRole.CREW_READ);
-        userFixture.ensureCrewBattalionUser(getPlaywrightSessionProvider(), UserRole.CREW_WRITE);
+        locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
+        var battalionLocation = locationProfileFixture
+                .create(LocationProfile.BATTALION_UNIT, 1)
+                .locations()
+                .getFirst();
+        battalionMemberStorageId = battalionLocation.getId();
+
+        crewStockReader = userFixture.createBusinessActor(
+                getPlaywrightSessionProvider(),
+                BusinessRole.CREW_STOCK_READER,
+                List.of(battalionLocation));
+        crewInventoryOperator = userFixture.createBusinessActor(
+                getPlaywrightSessionProvider(),
+                BusinessRole.CREW_INVENTORY_OPERATOR,
+                List.of(battalionLocation));
+        apiExecutor.setSessionForRole(
+                UserRole.CREW_READ, crewStockReader.username(), crewStockReader.password());
+        apiExecutor.setSessionForRole(
+                UserRole.CREW_WRITE, crewInventoryOperator.username(), crewInventoryOperator.password());
+
+        assertThat(userFixture.getMe(UserRole.CREW_READ).getAllowedStorageIds())
+                .containsExactlyInAnyOrder(battalionMemberStorageId);
+        assertThat(userFixture.getMe(UserRole.CREW_WRITE).getAllowedStorageIds())
+                .containsExactlyInAnyOrder(battalionMemberStorageId);
 
         storageFixture.prepareContext();
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
         relocationFixture.prepareContext();
+    }
+
+    @AfterClass(alwaysRun = true)
+    @Step("Cleanup: деактивувати тестових комірників і їхню локацію")
+    public void cleanupBusinessActors() {
+        if (crewStockReader != null) {
+            apiExecutor.evictSessionForRole(UserRole.CREW_READ);
+        }
+        if (crewInventoryOperator != null) {
+            apiExecutor.evictSessionForRole(UserRole.CREW_WRITE);
+        }
+        if (userFixture != null) {
+            userFixture.deactivateTrackedUsers();
+        }
+        if (locationProfileFixture != null) {
+            locationProfileFixture.cleanup();
+        }
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -84,7 +129,10 @@ public class CrewBattalionStocksRbacTest extends CrewApiTestBase {
     }
 
     @Test(priority = 10)
-    @TestCaseId("TC-CREW-RBAC-001")
+    @TestCaseId(
+            value = "TC-CREW-RBAC-001",
+            roles = BusinessRole.CREW_STOCK_READER,
+            locationProfiles = LocationProfile.BATTALION_UNIT)
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RBAC_001)
     @Severity(SeverityLevel.CRITICAL)
     public void crewReadUserGetsAccessibleCrewLocations() {
@@ -96,7 +144,10 @@ public class CrewBattalionStocksRbacTest extends CrewApiTestBase {
     }
 
     @Test(priority = 20)
-    @TestCaseId("TC-CREW-RBAC-002")
+    @TestCaseId(
+            value = "TC-CREW-RBAC-002",
+            roles = BusinessRole.CREW_STOCK_READER,
+            locationProfiles = LocationProfile.BATTALION_UNIT)
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RBAC_002)
     @Severity(SeverityLevel.CRITICAL)
     public void crewReadUserGetsHierarchyForOwnBattalion() {
@@ -108,7 +159,10 @@ public class CrewBattalionStocksRbacTest extends CrewApiTestBase {
     }
 
     @Test(priority = 30)
-    @TestCaseId("TC-CREW-RBAC-003")
+    @TestCaseId(
+            value = "TC-CREW-RBAC-003",
+            roles = BusinessRole.CREW_STOCK_READER,
+            locationProfiles = LocationProfile.BATTALION_UNIT)
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RBAC_003)
     @Severity(SeverityLevel.CRITICAL)
     public void crewReadUserSeesOwnBattalionCrewStocks() {
@@ -132,7 +186,10 @@ public class CrewBattalionStocksRbacTest extends CrewApiTestBase {
     }
 
     @Test(priority = 40)
-    @TestCaseId("TC-CREW-RBAC-004")
+    @TestCaseId(
+            value = "TC-CREW-RBAC-004",
+            roles = BusinessRole.CREW_STOCK_READER,
+            locationProfiles = LocationProfile.BATTALION_UNIT)
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RBAC_004)
     @Severity(SeverityLevel.CRITICAL)
     public void crewReadDeniedWhenNotCrewRegionMember() {
@@ -148,7 +205,10 @@ public class CrewBattalionStocksRbacTest extends CrewApiTestBase {
     }
 
     @Test(priority = 50)
-    @TestCaseId("TC-CREW-RBAC-010")
+    @TestCaseId(
+            value = "TC-CREW-RBAC-010",
+            roles = {BusinessRole.CREW_STOCK_READER, BusinessRole.CREW_INVENTORY_OPERATOR},
+            locationProfiles = LocationProfile.BATTALION_UNIT)
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RBAC_010)
     @Severity(SeverityLevel.CRITICAL)
     public void crewWriteCanOpenInventorySessionReadCannot() {
