@@ -8,6 +8,7 @@ package com.erp.enums;
  */
 public enum BusinessRole {
     BUSINESS_UNIT_OWNER,
+    BUSINESS_UNIT_AND_PROJECT_OWNER,
     CREW_STOCK_READER,
     CREW_INVENTORY_OPERATOR,
     UNIT_KOMIRNIK

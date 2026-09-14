@@ -2,6 +2,10 @@ businessRoles:
   BUSINESS_UNIT_OWNER:
     keycloakRoles:
       - Business_Unit_Owner-ROLE
+  BUSINESS_UNIT_AND_PROJECT_OWNER:
+    keycloakRoles:
+      - Business_Unit_Owner-ROLE
+      - Project-Production-ROLE
   CREW_STOCK_READER:
     keycloakRoles:
       - Crew-Read-ROLE

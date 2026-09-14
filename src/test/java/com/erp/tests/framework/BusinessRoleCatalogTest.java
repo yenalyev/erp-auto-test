@@ -32,6 +32,12 @@ public class BusinessRoleCatalogTest {
     }
 
     @Test
+    public void projectOwnerMappingIncludesBothRoles() {
+        assertThat(BusinessRoleCatalog.definition(BusinessRole.BUSINESS_UNIT_AND_PROJECT_OWNER).keycloakRoles())
+                .containsExactly("Business_Unit_Owner-ROLE", "Project-Production-ROLE");
+    }
+
+    @Test
     public void testCaseMetadataCarriesBusinessRoles() throws NoSuchMethodException {
         Method method = ExampleCase.class.getDeclaredMethod("warehouseOperation");
 
