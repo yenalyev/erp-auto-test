@@ -37,7 +37,8 @@ public class GlobalPlanWizardPage extends BasePage {
     private static final String RESOURCE_COMBO_PLACEHOLDER = "Оберіть зі списку...";
     private static final String AMOUNT_PLACEHOLDER = "Введіть кількість...";
     private static final String WIZARD_LOADING_TEXT = "Завантаження...";
-    private static final String STOCK_HINT_PREFIX = "В наявності";
+    public static final String STOCK_TOTAL_LABEL = "Залишок усього";
+    public static final String STOCK_ROOT_LABEL = "Залишок (Цукрарня)";
     private static final String CREATE_PATH = "/global-plans/create";
     private static final String PRODUCT_OUTPUT_ROW =
             "div.overflow-hidden.rounded-\\[6px\\].border.border-gray-200.px-4";
@@ -183,24 +184,30 @@ public class GlobalPlanWizardPage extends BasePage {
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
         option.click();
-        waitForStockHint();
+        waitForStockSummary();
         return this;
     }
 
-    public boolean isStockHintVisible() {
-        return stockHint().count() > 0 && stockHint().first().isVisible();
+    public boolean isStockSummaryVisible() {
+        return stockSummaryLabel(STOCK_TOTAL_LABEL).count() > 0
+                && stockSummaryLabel(STOCK_TOTAL_LABEL).first().isVisible()
+                && stockSummaryLabel(STOCK_ROOT_LABEL).count() > 0
+                && stockSummaryLabel(STOCK_ROOT_LABEL).first().isVisible();
     }
 
-    public String stockHintText() {
-        return isStockHintVisible() ? stockHint().first().innerText().trim() : "";
+    public String stockSummaryText(String label) {
+        return stockSummaryLabel(label).first().locator("xpath=parent::*").innerText().trim();
     }
 
-    private Locator stockHint() {
-        return page.getByText(STOCK_HINT_PREFIX);
+    private Locator stockSummaryLabel(String label) {
+        return page.getByText(label, new Page.GetByTextOptions().setExact(true));
     }
 
-    private GlobalPlanWizardPage waitForStockHint() {
-        stockHint().first().waitFor(new Locator.WaitForOptions()
+    private GlobalPlanWizardPage waitForStockSummary() {
+        stockSummaryLabel(STOCK_TOTAL_LABEL).first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        stockSummaryLabel(STOCK_ROOT_LABEL).first().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
         return this;

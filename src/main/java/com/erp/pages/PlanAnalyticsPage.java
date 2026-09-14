@@ -119,6 +119,34 @@ public class PlanAnalyticsPage extends BasePage {
         return this;
     }
 
+    @Step("Фільтр ресурсів: обрати кілька ресурсів")
+    public PlanAnalyticsPage selectResourcesByName(String... resourceNames) {
+        if (resourceNames == null || resourceNames.length < 2) {
+            throw new IllegalArgumentException("Потрібно вказати щонайменше два ресурси");
+        }
+        openResourcePicker();
+        Locator search = page.getByPlaceholder("Пошук...").last();
+        for (String resourceName : resourceNames) {
+            search.fill(resourceName);
+            Locator option = resourceOptions()
+                    .filter(new Locator.FilterOptions().setHasText(resourceName))
+                    .first();
+            option.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            option.click();
+        }
+        page.keyboard().press("Escape");
+        waitUntilTotalsOrEmptyTable();
+        return this;
+    }
+
+    public String totalCardText(String label) {
+        Locator title = page.getByText(label, new Page.GetByTextOptions().setExact(true)).first();
+        title.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return title.locator("xpath=parent::*").innerText();
+    }
+
     @Step("Розгорнути перший рядок таблиці")
     public PlanAnalyticsPage expandFirstRow() {
         Locator expand = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Розгорнути"))
