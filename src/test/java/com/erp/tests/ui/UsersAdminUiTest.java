@@ -1,9 +1,13 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.data.factories.user.UserDataFactory;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.response.RoleModelResponse;
+import com.erp.models.response.SimpleEntityResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.UserModelResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.ProductionPage;
@@ -153,6 +157,86 @@ public class UsersAdminUiTest extends BaseUITest {
 
         assertThat(usersPage.getFirstNameFieldValue()).contains(updatedFirstName);
         usersPage.attachScreenshot("TC-UI-USR-006 — edit user");
+    }
+
+    @Test
+    @TestCaseId("TC-UI-USR-010")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("ADMIN: видалення локації користувача, зокрема останньої, зберігається після Save і повторного відкриття")
+    public void removingUserLocationPersistsAfterSave() {
+        arrangedUser = arrangeUser(UI_USER_PREFIX + "remove-location-");
+        StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
+        long retainedId = ConfigProvider.getOwner1StorageId();
+        long removedId = ConfigProvider.getUnitStorageId();
+        assertThat(removedId).as("Two different locations required").isNotEqualTo(retainedId);
+        String retainedName = storageName(storageFixture, retainedId);
+        String removedName = storageName(storageFixture, removedId);
+
+        userFixture.updateUser(UserRole.ADMIN, arrangedUser.getId(),
+                UserDataFactory.fromExisting(arrangedUser).toBuilder()
+                        .storages(List.of(
+                                SimpleEntityResponse.builder().id(retainedId).name(retainedName).build(),
+                                SimpleEntityResponse.builder().id(removedId).name(removedName).build()))
+                        .build());
+        assertThat(userFixture.getUser(UserRole.ADMIN, arrangedUser.getId()).getStorages())
+                .extracting(SimpleEntityResponse::getId)
+                .contains(retainedId, removedId);
+
+        prepareAdminSession();
+        UsersAdminPage usersPage = new UsersAdminPage(page).open()
+                .searchByUsername(arrangedUser.getUsername())
+                .clickUsernameLink(arrangedUser.getUsername());
+        assertThat(usersPage.hasSelectedLocation(retainedName)).isTrue();
+        assertThat(usersPage.hasSelectedLocation(removedName)).isTrue();
+
+        usersPage.removeSelectedLocation(removedName);
+        assertThat(usersPage.hasSelectedLocation(removedName))
+                .as("Removed location disappears from the form before Save").isFalse();
+        assertThat(usersPage.hasSelectedLocation(retainedName))
+                .as("Other location stays selected").isTrue();
+        usersPage.attachScreenshot("TC-UI-USR-010 — location removed before Save");
+
+        usersPage.saveUser()
+                .searchByUsername(arrangedUser.getUsername())
+                .clickUsernameLink(arrangedUser.getUsername());
+        usersPage.attachScreenshot("TC-UI-USR-010 — user reopened after Save");
+        assertThat(usersPage.hasSelectedLocation(removedName))
+                .as("Removed location must remain absent after Save and reopen").isFalse();
+        assertThat(usersPage.hasSelectedLocation(retainedName)).isTrue();
+        UserModelResponse afterFirstRemoval = userFixture.getUser(UserRole.ADMIN, arrangedUser.getId());
+        assertThat(afterFirstRemoval.getStorages())
+                .extracting(SimpleEntityResponse::getId)
+                .as("Persisted user locations must exclude removed id=" + removedId)
+                .contains(retainedId)
+                .doesNotContain(removedId);
+        assertThat(afterFirstRemoval.getPermissions())
+                .doesNotContain("var_business_unit_id::" + removedId,
+                        "var_business_unit_id_ro::" + removedId);
+
+        usersPage.removeSelectedLocation(retainedName);
+        assertThat(usersPage.hasSelectedLocation(retainedName))
+                .as("Last location disappears from the form before Save").isFalse();
+        usersPage.attachScreenshot("TC-UI-USR-010 — last location removed before Save");
+        usersPage.saveUser()
+                .searchByUsername(arrangedUser.getUsername())
+                .clickUsernameLink(arrangedUser.getUsername());
+        usersPage.attachScreenshot("TC-UI-USR-010 — user reopened without locations");
+        assertThat(usersPage.hasSelectedLocation(retainedName))
+                .as("Last location must remain absent after Save and reopen").isFalse();
+        UserModelResponse afterLastRemoval = userFixture.getUser(UserRole.ADMIN, arrangedUser.getId());
+        assertThat(afterLastRemoval.getStorages())
+                .as("Persisted user must have no locations after removing the last one")
+                .isNullOrEmpty();
+        assertThat(afterLastRemoval.getPermissions() == null ? List.<String>of() : afterLastRemoval.getPermissions())
+                .doesNotContain("var_business_unit_id::" + retainedId,
+                        "var_business_unit_id_ro::" + retainedId);
+    }
+
+    private String storageName(StorageFixture storageFixture, long storageId) {
+        return storageFixture.getNames(UserRole.ADMIN, true, null, storageId).stream()
+                .map(StorageResponse::getName)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No location name for id=" + storageId));
     }
 
     @Test

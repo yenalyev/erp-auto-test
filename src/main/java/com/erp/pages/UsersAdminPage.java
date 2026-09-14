@@ -360,6 +360,30 @@ public class UsersAdminPage extends BasePage {
         return attr == null || attr.isBlank();
     }
 
+    /** Selected location text in the user form, scoped away from dropdown options. */
+    private Locator selectedLocationChip(String locationName) {
+        return page.locator("form").getByText(locationName,
+                new Locator.GetByTextOptions().setExact(true));
+    }
+
+    public boolean hasSelectedLocation(String locationName) {
+        return selectedLocationChip(locationName).count() > 0;
+    }
+
+    public UsersAdminPage removeSelectedLocation(String locationName) {
+        Locator chip = selectedLocationChip(locationName);
+        if (chip.count() != 1) {
+            throw new IllegalStateException("Expected one selected location chip for " + locationName
+                    + ", found " + chip.count());
+        }
+        chip.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Remove")).click();
+        page.waitForCondition(() -> !hasSelectedLocation(locationName),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        page.keyboard().press("Escape");
+        return this;
+    }
+
     public boolean isOnUsersListPath() {
         return currentUrl().contains(LIST_PATH) && !currentUrl().contains("/create");
     }
