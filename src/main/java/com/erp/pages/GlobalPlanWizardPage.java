@@ -173,6 +173,13 @@ public class GlobalPlanWizardPage extends BasePage {
 
     @Step("Tab 1: обрати перший доступний виріб (без збереження плану)")
     public GlobalPlanWizardPage selectFirstPlannableProduct() {
+        selectFirstPlannableProductWithoutWaiting();
+        waitForStockSummary();
+        return this;
+    }
+
+    /** Useful when a test deliberately holds or fails the insights request. */
+    public GlobalPlanWizardPage selectFirstPlannableProductWithoutWaiting() {
         Locator row = outputProductRows().last();
         Locator combo = row.getByPlaceholder(RESOURCE_COMBO_PLACEHOLDER);
         combo.waitFor(new Locator.WaitForOptions()
@@ -184,8 +191,49 @@ public class GlobalPlanWizardPage extends BasePage {
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
         option.click();
-        waitForStockSummary();
         return this;
+    }
+
+    public boolean isInsightsPeriodVisible() {
+        return page.getByText("Аналітика за період:", new Page.GetByTextOptions().setExact(true))
+                .count() > 0;
+    }
+
+    public GlobalPlanWizardPage selectInsightsPeriod(String label) {
+        page.locator("[data-slot='toggle-group'][aria-label='Період аналітики']")
+                .locator("[data-slot='toggle-group-item']")
+                .filter(new Locator.FilterOptions().setHasText(label))
+                .click();
+        return this;
+    }
+
+    public String insightsRangeText() {
+        return page.locator("[data-slot='toggle-group'][aria-label='Період аналітики']")
+                .locator("xpath=following-sibling::span[1]").innerText().trim();
+    }
+
+    public String insightsMetricValue(int rowIndex, String label) {
+        return insightsTile(rowIndex, label)
+                .locator("p.tabular-nums, button.tabular-nums").first().innerText().trim();
+    }
+
+    public String insightsMetricText(int rowIndex, String label) {
+        return insightsTile(rowIndex, label).innerText().trim();
+    }
+
+    public int insightsSkeletonCount(int rowIndex) {
+        return outputProductRows().nth(rowIndex).locator("[data-slot='skeleton']").count();
+    }
+
+    public GlobalPlanWizardPage openStockLocations(int rowIndex, String label) {
+        outputProductRows().nth(rowIndex).getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName(label + ": за локаціями")).click();
+        return this;
+    }
+
+    private Locator insightsTile(int rowIndex, String label) {
+        return outputProductRows().nth(rowIndex).locator("div.rounded-md.bg-gray-50")
+                .filter(new Locator.FilterOptions().setHasText(label)).first();
     }
 
     public boolean isStockSummaryVisible() {

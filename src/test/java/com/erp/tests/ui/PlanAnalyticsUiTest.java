@@ -10,8 +10,10 @@ import com.erp.pages.PlanAnalyticsPage;
 import com.erp.pages.components.DateRangePickerComponent;
 import com.erp.utils.config.ConfigProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.playwright.Route;
+import com.microsoft.playwright.Response;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -23,6 +25,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +40,7 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * UI: аналітика «Для плану» і підказка залишку при створенні глобального плану.
+ * UI: аналітика «Для плану» і показники на першому кроці глобального плану.
  */
 @Slf4j
 @Epic("Analytics")
@@ -135,32 +138,35 @@ public class PlanAnalyticsUiTest extends BaseUITest {
 
     @Test(priority = 20)
     @TestCaseId("TC-PLAN-ANL-UI-002")
-    @Story("Plan create product stocks")
+    @Story("Plan create product insights")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             REQ-PLAN-ANL / AC-04.
             Створення глобального плану, крок «Заплановано»: після вибору виробу
-            під рядком видно «Залишок усього» та «Залишок (Цукрарня)».
-            Детальні вироблено/видано/використано за місяць і 3 місяці
-            доступні на сторінці «Для плану».
+            під рядком видно всі п'ять показників «Для плану», значення збігаються
+            з реальною відповіддю rows для місяця, 3 місяців, півроку й року.
+            Нульові значення показуються як тире.
             План не зберігається.
             """)
-    public void creatingPlanShowsStocksForSelectedProduct() {
+    public void creatingPlanShowsInsightsForSelectedProduct() {
         GlobalPlanWizardPage wizard = new GlobalPlanWizardPage(page).openCreate();
         assertThat(wizard.isWizardHeadingVisible()).as("Візард глобального плану").isTrue();
         wizard.attachScreenshot("TC-PLAN-ANL-UI-002 — create form");
 
-        wizard.selectFirstPlannableProduct();
+        Response monthRows = page.waitForResponse(
+                response -> response.url().contains("/api/v1/analytics/plan/rows")
+                        && response.request().method().equals("GET"),
+                wizard::selectFirstPlannableProduct);
         wizard.attachScreenshot("TC-PLAN-ANL-UI-002 — product selected");
-        assertThat(wizard.isStockSummaryVisible())
-                .as("Під обраним виробом є обидва показники залишку")
-                .isTrue();
-        assertThat(wizard.stockSummaryText(GlobalPlanWizardPage.STOCK_TOTAL_LABEL))
-                .as("Загальний залишок")
-                .containsPattern("\\d");
-        assertThat(wizard.stockSummaryText(GlobalPlanWizardPage.STOCK_ROOT_LABEL))
-                .as("Залишок у Цукрарні")
-                .containsPattern("\\d");
+        assertThat(wizard.isInsightsPeriodVisible()).isTrue();
+        assertWizardMatchesRows(wizard, monthRows);
+        for (String period : List.of("3 місяці", "Півроку", "Рік")) {
+            Response rows = page.waitForResponse(
+                    response -> response.url().contains("/api/v1/analytics/plan/rows")
+                            && response.request().method().equals("GET"),
+                    () -> wizard.selectInsightsPeriod(period));
+            assertWizardMatchesRows(wizard, rows);
+        }
     }
 
     @Test(priority = 30)
@@ -230,6 +236,56 @@ public class PlanAnalyticsUiTest extends BaseUITest {
         }
         String name = resource.getUnit().getName();
         return name == null ? "" : name.trim();
+    }
+
+    private void assertWizardMatchesRows(GlobalPlanWizardPage wizard, Response response) {
+        assertThat(response.status()).as("GET plan/rows").isEqualTo(200);
+        Set<Long> ids = selectedResourceIds(response.url());
+        assertThat(ids).as("Фільтр rows містить один обраний виріб").hasSize(1);
+        long id = ids.iterator().next();
+        JsonNode body;
+        try {
+            body = JSON.readTree(response.text());
+        } catch (JsonProcessingException e) {
+            throw new AssertionError("Некоректна відповідь plan/rows", e);
+        }
+        JsonNode row = null;
+        for (JsonNode candidate : body.path("content")) {
+            if (candidate.path("resourceId").asLong() == id) {
+                row = candidate;
+                break;
+            }
+        }
+        for (int i = 0; i < METRIC_KEYS.size(); i++) {
+            String key = METRIC_KEYS.get(i);
+            String label = PlanAnalyticsPage.TOTAL_LABELS.get(i);
+            BigDecimal expected = row == null ? BigDecimal.ZERO : row.path(key).decimalValue();
+            page.waitForCondition(() -> {
+                try {
+                    return shownMatches(wizard.insightsMetricValue(0, label), expected);
+                } catch (RuntimeException e) {
+                    return false;
+                }
+            });
+            String shown = wizard.insightsMetricValue(0, label);
+            if (expected.signum() == 0) {
+                assertThat(shown).as(label).isEqualTo("—");
+            } else {
+                BigDecimal actual = new BigDecimal(shown.replaceAll("[\\p{Z}\\s]", "")
+                        .replace(',', '.'));
+                assertThat(actual).as(label).isEqualByComparingTo(expected);
+            }
+        }
+    }
+
+    private static boolean shownMatches(String shown, BigDecimal expected) {
+        if (expected.signum() == 0) return shown.equals("—");
+        try {
+            return new BigDecimal(shown.replaceAll("[\\p{Z}\\s]", "")
+                    .replace(',', '.')).compareTo(expected) == 0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private static Map<String, Object> analyticRow(ResourceResponse resource, int[] values) {

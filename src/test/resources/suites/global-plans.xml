@@ -30,6 +30,7 @@
         <classes>
             <class name="com.erp.tests.ui.GlobalPlansUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanCreateUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanInsightsUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAddOutputUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanRequirementsUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
