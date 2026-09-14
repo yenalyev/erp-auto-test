@@ -171,6 +171,33 @@ public class OperationHistoryPage extends BasePage {
         return rows.filter(new Locator.FilterOptions().setHasText(comment)).count() > 0;
     }
 
+    /** Match a resource operation and read its actual «Коментар» cell. */
+    public boolean resourceOperationHasComment(String resourceName, String operationLabel, String comment) {
+        Locator table = resourceTable();
+        Locator headers = table.locator("thead th");
+        int commentColumn = -1;
+        for (int i = 0; i < headers.count(); i++) {
+            if (headers.nth(i).innerText().trim().equalsIgnoreCase("Коментар")) {
+                commentColumn = i;
+                break;
+            }
+        }
+        if (commentColumn < 0) {
+            return false;
+        }
+        Locator rows = resourceOperationRows()
+                .filter(new Locator.FilterOptions().setHasText(resourceName.trim()))
+                .filter(new Locator.FilterOptions().setHasText(operationLabel));
+        for (int i = 0; i < rows.count(); i++) {
+            Locator cells = rows.nth(i).locator("td");
+            if (cells.count() > commentColumn
+                    && comment.equals(cells.nth(commentColumn).innerText().trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * True when the resource operations table has a data row with the resource name
      * and the given operation badge (e.g. «Використано»).
