@@ -18,6 +18,8 @@
       relocations, storage-regions, global-plans, technological-maps, defects,
       resource-viewer, ui, orders, bots, notifications.
       RBAC matrix (RbacAccessMatrixTest) parked — do not add back until YAML/schema/5xx are stable.
+      FabergeNeededResourcesDevProbeTest and FabergeMalutkaPlanProbeTest are dev-only diagnostics,
+      not maintained regression tests.
       Hierarchy inventory (TC-WMS-007-010+) is in Inventory API/UI.
       TC-CREW-FIGHT-* skip when Fight write-off probe fails (GET short-stats ≠ 200).
 -->
@@ -176,6 +178,7 @@
             <class name="com.erp.tests.functional.relocation.RelocationOperationHistoryCommentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
@@ -283,6 +286,7 @@
             <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
             <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
+            <class name="com.erp.tests.ui.BattalionRelocationEditUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>

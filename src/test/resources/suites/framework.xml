@@ -11,6 +11,7 @@
             <class name="com.erp.tests.framework.CleanupIsolationTest"/>
             <class name="com.erp.tests.framework.IntegrationPrerequisitesTest"/>
             <class name="com.erp.utils.config.DotEnvLoaderTest"/>
+            <class name="com.erp.tests.framework.RegressionSuiteCompletenessTest"/>
         </classes>
     </test>
 </suite>

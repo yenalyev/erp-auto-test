@@ -1,0 +1,19 @@
+---
+description: Keep every runnable ERP API/UI test in the master regression suite
+alwaysApply: true
+---
+
+# Regression suite completeness
+
+- Every new runnable ERP API or UI TestNG test class must be added to
+  `src/test/resources/suites/regression.xml` in the same change.
+- Adding a class to a domain suite such as `relocations.xml`, `inventory.xml`, or
+  `ui.xml` does not replace registration in `regression.xml`.
+- When adding methods to an existing class, verify that the class is already present in
+  `regression.xml`.
+- Keep the class in the matching domain section and preserve intentional execution order.
+- Before finishing test changes, compare runnable test classes with `regression.xml` and
+  run the `framework` suite; `RegressionSuiteCompletenessTest` must report no missing class.
+- Framework-only, diagnostic, intentionally parked, or quarantined tests may stay outside
+  regression only when the exclusion is documented next to the suite and explicitly noted
+  in the change summary.
