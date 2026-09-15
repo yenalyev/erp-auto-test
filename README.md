@@ -89,6 +89,18 @@ mvn test -Denv=dev "-Dtest=InventoryStockApiTest#exportExcelWithAndWithoutZeroSt
 
 `-Dtest` перевизначає вибір suite; listeners із suite XML у такому запуску не підключаються. Для TCM/Google Sheets використовуйте підтримувану suite.
 
+Контейнерний запуск збирається як immutable image і не потребує bind mount вихідного коду:
+
+```bash
+docker build -t erp-auto-test:local .
+docker run --rm erp-auto-test:local test -Denv=dev -Dsuite=framework -Dtcm.enabled=false -Dgoogle.sheets.enabled=false
+```
+
+`SSH_ENABLED`, `TCM_BASE_URL` і `TCM_API_TOKEN` можна передавати як environment variables;
+явні Maven `-D...` мають вищий пріоритет. Поточні tracked test resources містять
+environment-specific конфігурацію, тому локальний image вважайте чутливим і не
+публікуйте в registry, доки credentials не винесені в runtime secrets і не змінені.
+
 У [каталозі suite](src/test/resources/suites/) залишені основні й тематичні набори. Тимчасові `next-*`, `*-verify`, `*-rerun*`, набори конкретних прогонів, `ui-dev` та порожні `dev-test`/`rbac` видалено. Історія доступна в Git. Новий постійний XML додавайте для окремого повторюваного набору перевірок. Запуск без жодного тесту завершується помилкою.
 
 Генерація звіту Allure:

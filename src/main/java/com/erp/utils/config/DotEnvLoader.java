@@ -33,10 +33,17 @@ final class DotEnvLoader {
         mappings.put("GET_RELOCATIONS_DATA_URL", "bot.delivery.data.url");
         mappings.put("GET_STRUCTURE_DATA_URL", "bot.delivery.structure.url");
         mappings.put("USE_DATABASE", "use.database");
+        mappings.put("SSH_ENABLED", "ssh.enabled");
+        mappings.put("TCM_BASE_URL", "tcm.base.url");
+        mappings.put("TCM_API_TOKEN", "tcm.api.token");
         return Map.copyOf(mappings);
     }
 
     static void loadForProfile(String env) {
+        int environmentOverrides = applyEnvironmentOverrides(System.getenv());
+        if (environmentOverrides > 0) {
+            log.info("Loaded {} container environment overrides", environmentOverrides);
+        }
         Path file = resolveEnvFile(env);
         if (file == null) {
             return;
@@ -50,6 +57,19 @@ final class DotEnvLoader {
         } catch (IOException e) {
             log.warn("Failed to read {}: {}", file, e.getMessage());
         }
+    }
+
+    static int applyEnvironmentOverrides(Map<String, String> environment) {
+        int loaded = 0;
+        for (Map.Entry<String, String> mapping : ENV_TO_PROPERTY.entrySet()) {
+            String value = environment.get(mapping.getKey());
+            if (value == null || value.isBlank() || System.getProperty(mapping.getValue()) != null) {
+                continue;
+            }
+            System.setProperty(mapping.getValue(), value.trim());
+            loaded++;
+        }
+        return loaded;
     }
 
     private static Path resolveEnvFile(String env) {

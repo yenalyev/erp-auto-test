@@ -22,6 +22,8 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Runner overrides this per attempt so reports/artifacts survive container removal. -->
+        <test.output.directory>${project.basedir}/target</test.output.directory>
 
         <!-- Dependencies -->
         <rest-assured.version>5.5.0</rest-assured.version>
@@ -294,6 +296,7 @@
     </dependencies>
 
     <build>
+        <directory>${test.output.directory}</directory>
         <plugins>
             <!-- Maven Compiler Plugin -->
             <plugin>

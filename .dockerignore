@@ -1,0 +1,12 @@
+.git
+.idea
+.allure
+.env*
+!.env.dev.example
+!.env.staging.example
+target
+allure-results
+allure-report
+test-output
+*.log
+hs_err_pid*.log
