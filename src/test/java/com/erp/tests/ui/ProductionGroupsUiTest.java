@@ -102,7 +102,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
         planning.assertGenerationBlocked();
         long first = fixture.requestId(orderId, fixture.groupA.getId());
 
-        owner(fixture.ownerA, fixture.groupA.getId());
+        owner(fixture.groupA.getId());
         openRequestFromQueue(first);
         assertThat(page.getByText("Ваші локації:", new Page.GetByTextOptions().setExact(false)))
                 .containsText(fixture.memberA1.getName());
@@ -130,7 +130,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
         planning.step4(); planning.assertGenerationBlocked();
         planning.clickApi("Надіслати запити групам", "POST", "/production-orders/" + orderId + "/delegations");
         long second = fixture.requestId(orderId, fixture.groupB.getId());
-        owner(fixture.ownerB, fixture.groupB.getId());
+        owner(fixture.groupB.getId());
         openRequestFromQueue(second);
         assertThat(planning.item(fixture.output.getName())).hasCount(0);
         planning.assign(fixture.component.getName(), fixture.memberB.getName(), 10);
@@ -169,7 +169,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
     @Test
     public void staleAnswerShowsErrorAndKeepsEnteredAllocation() {
         long id = fixture.send(orderId);
-        owner(fixture.ownerA, fixture.groupA.getId());
+        owner(fixture.groupA.getId());
         openRequestFromQueue(id);
         planning.assign(fixture.output.getName(), fixture.memberA1.getName(), 10);
         fixture.changeSentPlan(orderId);
@@ -191,11 +191,11 @@ public class ProductionGroupsUiTest extends BaseUITest {
         long ownId = fixture.send(orderId);
         fixture.changeSentPlan(orderId);
         long foreignId = fixture.requestId(orderId, fixture.groupB.getId());
-        owner(fixture.ownerA, fixture.groupA.getId());
+        owner(fixture.groupA.getId());
         navigate("/production-delegations");
         assertThat(page.locator("a[href='/production-delegations/" + ownId + "']")).isVisible();
         assertThat(page.locator("a[href='/production-delegations/" + foreignId + "']")).hasCount(0);
-        owner(fixture.ownerB, fixture.groupB.getId());
+        owner(fixture.groupB.getId());
         navigate("/production-delegations");
         assertThat(page.locator("a[href='/production-delegations/" + foreignId + "']")).isVisible();
         assertThat(page.locator("a[href='/production-delegations/" + ownId + "']")).hasCount(0);
@@ -230,14 +230,14 @@ public class ProductionGroupsUiTest extends BaseUITest {
         page.reload();
         assertCounter("Виробничі замовлення", production - 1);
         // A private owner's queue has no unrelated concurrent requests on shared dev.
-        owner(fixture.ownerA, fixture.groupA.getId()); navigate("/production-delegations");
+        owner(fixture.groupA.getId()); navigate("/production-delegations");
         assertThat(page.getByText("Немає запитів до ваших груп", new Page.GetByTextOptions().setExact(false))).isVisible();
         assertCounter("Запити на виробництво", 0);
     }
 
     @Test
     public void locationCheckboxPersistsAndGroupIsNotADestination() {
-        StorageResponse location = fixture.newLocation();
+        StorageResponse location = fixture.newGroupCandidateWithChild();
         navigate("/storage"); navigate("/storage/update/" + location.getId());
         Locator flag = page.getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName("Група виробництва"));
         assertThat(flag).not().isChecked(); flag.check();
@@ -267,7 +267,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
         navigate("/production-orders");
         assertThat(orderRow())
                 .containsText("Запити груп 1/1");
-        owner(fixture.ownerA, fixture.groupA.getId()); navigate("/production-delegations");
+        owner(fixture.groupA.getId()); navigate("/production-delegations");
         assertThat(page.getByText("Немає запитів до ваших груп", new Page.GetByTextOptions().setExact(false))).isVisible();
         assertCounter("Запити на виробництво", 0);
     }
@@ -298,8 +298,9 @@ public class ProductionGroupsUiTest extends BaseUITest {
     }
     private void navigate(String path) { page.navigate(ConfigProvider.getBaseUrl() + path); }
     private void admin() { session(cachedSessionCookies(UserRole.ADMIN), fixture.target.getId()); }
-    private void owner(UserFixture.RestrictedOwnerUser owner, long group) {
-        session(authService.getSessionForUser(owner.username(), owner.password()), group);
+    private void owner(long group) {
+        UserFixture.BusinessActor manager = fixture.managerForGroup(group);
+        session(authService.getSessionForUser(manager.username(), manager.password()), group);
     }
     private void session(Map<String, String> cookies, long location) {
         if (page != null) page.close();

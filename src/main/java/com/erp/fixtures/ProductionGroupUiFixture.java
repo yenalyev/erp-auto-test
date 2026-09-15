@@ -3,6 +3,7 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.UserRole;
 import com.erp.models.request.*;
 import com.erp.models.response.*;
@@ -27,7 +28,8 @@ public class ProductionGroupUiFixture implements AutoCloseable {
     public StorageResponse target, groupA, groupB, memberA1, memberA2, memberB, outside;
     public ResourceResponse output, component;
     public long outputMap, componentMap;
-    public UserFixture.RestrictedOwnerUser ownerA, ownerB;
+    private UserFixture.BusinessActor ownerA, ownerB;
+    private PlaywrightSessionProvider provider;
 
     public ProductionGroupUiFixture(TestContext context, ApiExecutor api) {
         this.context = context;
@@ -39,6 +41,7 @@ public class ProductionGroupUiFixture implements AutoCloseable {
     }
 
     public void seed(PlaywrightSessionProvider provider) {
+        this.provider = provider;
         target = storages.createChildStorage(orders.resolveTargetStorageId(UserRole.ADMIN), "PGUI-target");
         groupA = group("PGUI-A"); groupB = group("PGUI-B");
         memberA1 = storages.createChildStorage(groupA.getId(), "PGUI-A1");
@@ -52,8 +55,22 @@ public class ProductionGroupUiFixture implements AutoCloseable {
         ResourceResponse raw = resource(resources, "PGUI-raw");
         outputMap = map(component, output, Set.of(memberA1.getId(), memberA2.getId(), outside.getId()));
         componentMap = map(raw, component, Set.of(memberB.getId()));
-        ownerA = users.createRestrictedOwner(provider, groupA);
-        ownerB = users.createRestrictedOwner(provider, groupB);
+    }
+
+    public UserFixture.BusinessActor managerForGroup(long groupId) {
+        if (groupId == groupA.getId()) {
+            if (ownerA == null) {
+                ownerA = users.createBusinessActor(provider, BusinessRole.PRODUCTION_GROUP_MANAGER, List.of(groupA));
+            }
+            return ownerA;
+        }
+        if (groupId == groupB.getId()) {
+            if (ownerB == null) {
+                ownerB = users.createBusinessActor(provider, BusinessRole.PRODUCTION_GROUP_MANAGER, List.of(groupB));
+            }
+            return ownerB;
+        }
+        throw new IllegalArgumentException("Unknown production group id: " + groupId);
     }
 
     private StorageResponse group(String prefix) {
@@ -74,7 +91,11 @@ public class ProductionGroupUiFixture implements AutoCloseable {
         long id = orders.create(UserRole.ADMIN, orders.buildCreateRequest(target.getId(), output.getId(), 10)).getId();
         orderIds.add(id); return id;
     }
-    public StorageResponse newLocation() { return storages.createChildStorage(target.getId(), "PGUI-form"); }
+    public StorageResponse newGroupCandidateWithChild() {
+        StorageResponse candidate = storages.createChildStorage(target.getId(), "PGUI-form");
+        storages.createChildStorage(candidate.getId(), "PGUI-form-member");
+        return candidate;
+    }
     public List<StorageResponse> receiveLocations() {
         StorageResponse group = storages.createStorage(StorageDataFactory.externalStorage(target.getId(), "PGUI-input-group")
                 .type(com.erp.enums.UnitType.UNIT).productionGroup(true).build());

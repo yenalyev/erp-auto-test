@@ -13,9 +13,10 @@ mvn test "-Dsuite=production-groups" "-Denv=dev" "-Dsuite.artifact.sweep=false" 
 
 The suite creates isolated locations, resources, technological maps and production
 orders through the API. It uses the configured ADMIN account. The RBAC scenario
-uses `Business_Unit_Owner-ROLE` bound to a production group (the former director
-role was consolidated into the business owner role). It creates two disposable
-users with that role; it does not change shared user accounts.
+creates two disposable production-group managers, each with
+`Business_Unit_Owner-ROLE`, bound only to
+the production-group location. The group has child production locations, but
+the manager is not granted direct access to them. Shared user accounts remain unchanged.
 Missing roles are failures, not skipped tests.
 
 Cleanup deletes NEW orders, cancels generated orders, and deactivates created
@@ -34,7 +35,9 @@ Browser coverage is in `ProductionGroupsUiTest` with a separate suite:
 mvn test "-Dsuite=production-groups-ui" "-Denv=dev" "-Dsuite.artifact.sweep=false" "-Dgoogle.sheets.enabled=false" "-Dtcm.enabled=false"
 ```
 
-UI tests create two disposable business owners in independent browser contexts.
+UI tests create two disposable production-group managers in independent browser contexts.
+Managers are created only when a role-dependent scenario needs them, so location
+checkbox and send/receive selector checks do not depend on manager creation.
 They cover the location checkbox and destination exclusion, partial delegation,
 queue isolation, two-group planning in rounds through task generation, stale-plan
 feedback with preserved input, explicit group-plan refresh, request progress and

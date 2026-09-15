@@ -38,6 +38,12 @@ public class BusinessRoleCatalogTest {
     }
 
     @Test
+    public void productionGroupManagerUsesBusinessOwnerRole() {
+        assertThat(BusinessRoleCatalog.definition(BusinessRole.PRODUCTION_GROUP_MANAGER).keycloakRoles())
+                .containsExactly("Business_Unit_Owner-ROLE");
+    }
+
+    @Test
     public void testCaseMetadataCarriesBusinessRoles() throws NoSuchMethodException {
         Method method = ExampleCase.class.getDeclaredMethod("warehouseOperation");
 

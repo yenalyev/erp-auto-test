@@ -2,7 +2,9 @@ package com.erp.tests.functional.production_order;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.BusinessRoleCatalog;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.*;
 import com.erp.models.request.*;
@@ -18,7 +20,7 @@ import java.util.*;
 import static com.erp.api.endpoints.ApiEndpointDefinition.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Isolated API lifecycle checks. ADMIN exercises business rules, not director RBAC. */
+/** Isolated API lifecycle checks. ADMIN exercises business rules, not group-owner RBAC. */
 @Feature("Production groups")
 public class ProductionGroupApiTest extends BaseFunctionalTest {
     private StorageFixture storages;
@@ -107,6 +109,8 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     @Test
     public void groupFlagPersistsAndGroupCannotBeTarget() {
         assertThat(storages.getById(UserRole.ADMIN, group).getProductionGroup()).isTrue();
+        assertThat(storages.getById(UserRole.ADMIN, member1).getParent().getId()).isEqualTo(group);
+        assertThat(storages.getById(UserRole.ADMIN, member2).getParent().getId()).isEqualTo(group);
         assertThat(ok(orders.getTargetLocationsRaw(UserRole.ADMIN)).jsonPath().getList("id", Long.class))
                 .doesNotContain(group);
         Response response = call(PRODUCTION_ORDER_POST_CREATE, createRequest.toBuilder().targetStorageId(group).build());
@@ -254,7 +258,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     public void changedPlanRejectsStaleAnswer() {
         long id = send(10);
         long base = version(id);
-        // The request key survives a changed plan; a loaded director must reload its version.
+        // The request key survives a changed plan; a group owner must reload its version.
         DecompositionRequest changed = plan(produce(outside, 2), delegate(8));
         addMaterialPlan(changed, 2);
         ok(call(PRODUCTION_ORDER_SEND_DELEGATIONS, changed, orderId));
@@ -268,17 +272,24 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
-    public void directorsAreScopedAndCannotEditPlannerOrder() {
+    @TestCaseId(value = "TC-PG-010", roles = BusinessRole.PRODUCTION_GROUP_MANAGER)
+    public void groupOwnersAreScopedAndCannotEditPlannerOrder() {
         long id = send(10);
         users = new UserFixture(testContext, apiExecutor);
         assertThat(users.listRealmRoles()).extracting(RoleModelResponse::getName)
-                .as("Group allocation uses the business owner role bound to a group location")
-                .contains(UserFixture.BUSINESS_UNIT_OWNER_ROLE_NAME);
+                .as("Group manager needs the business-owner role bound to a production-group location")
+                .containsAll(BusinessRoleCatalog.definition(BusinessRole.PRODUCTION_GROUP_MANAGER)
+                        .keycloakRoles());
         StorageResponse otherGroup = storages.createStorage(StorageDataFactory.childStorage(target, "PG-other-group")
                 .productionGroup(true).build());
-        UserFixture.RestrictedOwnerUser first = users.createRestrictedOwner(getPlaywrightSessionProvider(),
-                storages.getById(UserRole.ADMIN, group));
-        UserFixture.RestrictedOwnerUser second = users.createRestrictedOwner(getPlaywrightSessionProvider(), otherGroup);
+        StorageResponse otherMember = storages.createChildStorage(otherGroup.getId(), "PG-other-member");
+        UserFixture.BusinessActor first = users.createBusinessActor(getPlaywrightSessionProvider(),
+                BusinessRole.PRODUCTION_GROUP_MANAGER, List.of(storages.getById(UserRole.ADMIN, group)));
+        UserFixture.BusinessActor second = users.createBusinessActor(getPlaywrightSessionProvider(),
+                BusinessRole.PRODUCTION_GROUP_MANAGER, List.of(otherGroup));
+        assertThat(otherMember.getParent().getId()).isEqualTo(otherGroup.getId());
+        assertThat(first.storageIds()).containsExactly(group);
+        assertThat(second.storageIds()).containsExactly(otherGroup.getId());
         apiExecutor.setSessionForRole(UserRole.OWNER_1, first.username(), first.password());
         apiExecutor.setSessionForRole(UserRole.OWNER_2, second.username(), second.password());
         assertThat(ok(apiExecutor.execute(PRODUCTION_DELEGATION_QUEUE, UserRole.OWNER_1))

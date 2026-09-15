@@ -1,6 +1,7 @@
 package com.erp.tests.functional.relocation;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.data.LocationProfileCatalog;
 import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageRelation;
@@ -491,14 +492,21 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
 
     @Test(priority = 91)
     @TestCaseId("TC-REL-091")
-    @Story("In-transit send cannot be edited after the one-day limit")
+    @Story("One-day limit applies to direct children of the TSUK parent")
     @Description("""
-            Видача з датою позавчора вже поза одноденним вікном. Навіть якщо в PUT
-            передати сьогоднішню дату, API відхиляє правку без зміни видачі чи залишку.
+            Відправник є прямою дочірньою локацією TSUK. Видача з датою позавчора
+            вже поза одноденним вікном, і сьогоднішня дата в PUT її не розблоковує.
             """)
-    public void testEditInTransitTwoDaysAfterIssueDateReturns400() {
+    public void testEditInTransitTwoDaysAfterIssueDateReturns400ForTsukParent() {
         LocalDate issueDate = LocalDate.now().minusDays(2);
         String marker = "edit-two-days-" + System.currentTimeMillis();
+        Long tsukParentId = LocationProfileCatalog.parentPool("TSUK_PARENT_UNITS")
+                .candidates().getFirst();
+        StorageResponse sender = storageFixture.getById(UserRole.ADMIN, owner1Storage);
+        assertThat(sender.getParent()).isNotNull();
+        assertThat(sender.getParent().getId())
+                .as("TC-REL-091 requires direct TSUK parent")
+                .isEqualTo(tsukParentId);
         RelocationResponse sent = createSendDated(UserRole.ADMIN, issueDate, marker);
         assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
         assertThat(sent.getDate()).isEqualTo(issueDate);

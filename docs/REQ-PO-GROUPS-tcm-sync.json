@@ -434,5 +434,31 @@
     "verification": "Updated feature documentation and three case descriptions read back and matched the local bundle. AC-02 and all three case steps and automation links also matched.",
     "executionResultsPublished": false,
     "verifiedAtUtc": "2026-09-14T11:27:36.696248+00:00"
+  },
+  "productionGroupManagerAmendment": {
+    "verifiedAtUtc": "2026-09-14T13:13:20+00:00",
+    "targets": [
+      "dev TCM",
+      "prod TCM"
+    ],
+    "businessRole": "PRODUCTION_GROUP_MANAGER",
+    "keycloakRoles": [
+      "Business_Unit_Owner-ROLE"
+    ],
+    "locationBinding": "business-owner access to the production-group location only; no separate child-location access",
+    "updatedCriteria": [
+      "AC-01",
+      "AC-05",
+      "AC-10"
+    ],
+    "verifiedTestCases": [
+      "TC-PG-010",
+      "TC-PG-012",
+      "TC-PG-024"
+    ],
+    "apiAutomationId": "TC-PG-010",
+    "devProbe": "TC-PG-010 rerun on dev with Business_Unit_Owner-ROLE only: 1 PASS, 0 FAIL, 0 errors, 0 skipped. Two managers were bound only to their respective group locations; scoped queue, own request, and planner-order protection passed. Test data was cleaned up. UI queue scope rerun: 1 PASS, 0 FAIL; isolated data cleaned.",
+    "verification": "Feature description/documentation, AC-05, and role-sensitive TC-PG-010/012/024 were read back from dev and prod TCM and matched the local bundle, including TC-PG-010 steps and API automation link. Dev API role-scope and UI queue scenarios each passed 1/1; no TCM execution result was published.",
+    "executionResultsPublished": false
   }
 }

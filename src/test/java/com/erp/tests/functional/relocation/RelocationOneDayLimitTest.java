@@ -1,10 +1,15 @@
 package com.erp.tests.functional.relocation;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.data.LocationProfileCatalog;
 import com.erp.data.factories.relocation.RelocationDataFactory;
+import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.BusinessRole;
 import com.erp.enums.LocationProfile;
 import com.erp.enums.RelocationState;
+import com.erp.enums.StorageAccessMode;
+import com.erp.enums.StorageRelation;
+import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
@@ -14,11 +19,11 @@ import com.erp.fixtures.UserFixture;
 import com.erp.models.query.RelocationJournalQuery;
 import com.erp.models.request.RelocationOutputEditRequest;
 import com.erp.models.request.RelocationOutputRequest;
+import com.erp.models.request.StorageRequest;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -31,56 +36,87 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 
-/** Date-based write window for non-admin personas and the administrator exemption. */
+/** Date-based write window for every sender inside the configured TSUK hierarchy. */
 @Epic("Relocation")
-@Feature("One-day relocation write limit")
+@Feature("TSUK-hierarchy one-day relocation write limit")
 public class RelocationOneDayLimitTest extends BaseFunctionalTest {
 
-    private static final UserRole KEEPER_SLOT = UserRole.CREW_READ;
+    private static final String TSUK_PARENT_POOL = "TSUK_PARENT_UNITS";
+    private static final UserRole TSUK_PRODUCTION_SLOT = UserRole.OWNER_3;
+    private static final UserRole TSUK_WAREHOUSE_SLOT = UserRole.RESOURCE_VIEWER;
+    private static final UserRole OTHER_PARENT_SLOT = UserRole.CREW_READ;
+    private static final UserRole ROOT_SLOT = UserRole.CREW_WRITE;
     private RelocationFixture relocations;
     private StorageFixture storages;
+    private StorageFixture rootStorages;
     private LocationProfileFixture locationProfiles;
     private UserFixture users;
     private Long resourceId;
-    private Actor owner;
-    private Actor keeper;
+    private Long tsukParentId;
+    private Actor tsukProduction;
+    private Actor tsukWarehouse;
+    private Actor otherParent;
+    private Actor root;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void prepareActors() {
         relocations = new RelocationFixture(testContext, apiExecutor);
         storages = new StorageFixture(testContext, apiExecutor);
+        rootStorages = new StorageFixture(testContext, apiExecutor);
         locationProfiles = new LocationProfileFixture(testContext, apiExecutor);
         users = new UserFixture(testContext, apiExecutor);
         relocations.prepareContext();
         resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
 
-        long ownerStorage = ConfigProvider.getOwner1StorageId();
-        owner = new Actor(BusinessRole.BUSINESS_UNIT_OWNER, UserRole.OWNER_1,
-                ownerStorage, ConfigProvider.getOwner2StorageId(), null);
+        tsukParentId = LocationProfileCatalog.parentPool(TSUK_PARENT_POOL).candidates().getFirst();
+
+        var productionSet = locationProfiles.create(LocationProfile.TSUK_PRODUCTION, 1);
+        assertThat(productionSet.parent().getId()).isEqualTo(tsukParentId);
+        tsukProduction = createActor(BusinessRole.BUSINESS_UNIT_OWNER,
+                TSUK_PRODUCTION_SLOT, productionSet.locations().getFirst());
+        assertThat(tsukProduction.insideTsukHierarchy()).isTrue();
+
+        var warehouseSet = locationProfiles.create(LocationProfile.TSUK_WARENHAUSE, 1);
+        assertThat(warehouseSet.parent().getId()).isEqualTo(tsukParentId);
+        StorageResponse nestedTsukWarehouse = storages.createChildStorage(
+                warehouseSet.locations().getFirst().getId(), "rel-date-tsuk-descendant-");
+        assertThat(nestedTsukWarehouse.getParent().getId()).isNotEqualTo(tsukParentId);
+        tsukWarehouse = createActor(BusinessRole.UNIT_KOMIRNIK,
+                TSUK_WAREHOUSE_SLOT, nestedTsukWarehouse);
+        assertThat(tsukWarehouse.insideTsukHierarchy()).isTrue();
 
         StorageResponse keeperStorage = locationProfiles
                 .create(LocationProfile.BATTALION_WARENHAUSE_UNIT, 1).locations().getFirst();
-        StorageResponse keeperRecipient = storages.createChildStorage(
-                keeperStorage.getId(), "rel-date-recipient-");
-        StorageResponse keeperExternal = storages.createExternalChildStorage(
-                keeperStorage.getId(), "rel-date-keeper-external-");
-        UserFixture.BusinessActor keeperUser = users.createBusinessActor(
-                getPlaywrightSessionProvider(), BusinessRole.UNIT_KOMIRNIK, List.of(keeperStorage));
-        apiExecutor.setSessionForRole(KEEPER_SLOT, keeperUser.username(), keeperUser.password());
-        keeper = new Actor(BusinessRole.UNIT_KOMIRNIK, KEEPER_SLOT,
-                keeperStorage.getId(), keeperRecipient.getId(), keeperExternal.getId());
-        relocations.ensureStock(keeperStorage.getId(), resourceId, 200.0);
+        assertThat(keeperStorage.getParent()).isNotNull();
+        assertThat(keeperStorage.getParent().getId()).isNotEqualTo(tsukParentId);
+        otherParent = createActor(BusinessRole.UNIT_KOMIRNIK, OTHER_PARENT_SLOT, keeperStorage);
+        assertThat(otherParent.insideTsukHierarchy()).isFalse();
+
+        StorageResponse rootStorage = rootStorages.createStorage(StorageRequest.builder()
+                .name(StorageDataFactory.uniqueName("rel-date-root-"))
+                .type(UnitType.STORAGE)
+                .relation(StorageRelation.INTERNAL)
+                .accessMode(StorageAccessMode.FULL_ACCESS)
+                .build());
+        assertThat(rootStorage.getParent()).isNull();
+        root = createActor(BusinessRole.UNIT_KOMIRNIK, ROOT_SLOT, rootStorage);
+        assertThat(root.insideTsukHierarchy()).isFalse();
     }
 
     @AfterClass(alwaysRun = true)
     public void cleanupActors() {
-        apiExecutor.evictSessionForRole(KEEPER_SLOT);
+        for (UserRole slot : List.of(TSUK_PRODUCTION_SLOT, TSUK_WAREHOUSE_SLOT,
+                OTHER_PARENT_SLOT, ROOT_SLOT)) {
+            apiExecutor.evictSessionForRole(slot);
+        }
         if (users != null) users.deactivateTrackedUsers();
         if (storages != null && !TestArtifactCleanup.shouldSkipApiCleanup()) {
             storages.deactivateTrackedStorages(UserRole.ADMIN);
@@ -88,16 +124,29 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         if (locationProfiles != null && !TestArtifactCleanup.shouldSkipApiCleanup()) {
             locationProfiles.cleanup();
         }
+        if (rootStorages != null && !TestArtifactCleanup.shouldSkipApiCleanup()) {
+            rootStorages.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
-    @DataProvider(name = "nonAdminIssuers")
-    public Object[][] nonAdminIssuers() {
-        return new Object[][]{{owner}, {keeper}};
+    @DataProvider(name = "tsukActors")
+    public Object[][] tsukActors() {
+        return new Object[][]{{tsukProduction}, {tsukWarehouse}};
     }
 
-    @DataProvider(name = "nonAdminDeleters")
-    public Object[][] nonAdminDeleters() {
-        return new Object[][]{{keeper}};
+    @DataProvider(name = "unrestrictedActors")
+    public Object[][] unrestrictedActors() {
+        return new Object[][]{{otherParent}, {root}};
+    }
+
+    @DataProvider(name = "allNonAdminActors")
+    public Object[][] allNonAdminActors() {
+        return new Object[][]{{tsukProduction}, {tsukWarehouse}, {otherParent}, {root}};
+    }
+
+    @DataProvider(name = "unrestrictedDeleters")
+    public Object[][] unrestrictedDeleters() {
+        return new Object[][]{{otherParent}, {root}};
     }
 
     @DataProvider(name = "adminDates")
@@ -108,10 +157,10 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         };
     }
 
-    @Test(dataProvider = "nonAdminIssuers")
+    @Test(dataProvider = "tsukActors")
     @TestCaseId(value = "TC-REL-DATE-001",
             roles = {BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.UNIT_KOMIRNIK})
-    @Description("Неадмін із правом видачі може створити переміщення з датою вчора.")
+    @Description("Неадмін у TSUK-ієрархії може створити переміщення з датою вчора.")
     public void nonAdminCanCreateYesterday(Actor actor) {
         identify(actor);
         LocalDate yesterday = LocalDate.now().minusDays(1);
@@ -121,10 +170,10 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         assertThat(created.getDate()).isEqualTo(yesterday);
     }
 
-    @Test(dataProvider = "nonAdminIssuers")
+    @Test(dataProvider = "tsukActors")
     @TestCaseId(value = "TC-REL-DATE-002",
             roles = {BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.UNIT_KOMIRNIK})
-    @Description("Неадмін не може створити переміщення з датою позавчора; залишок не змінюється.")
+    @Description("Неадмін у TSUK-ієрархії не може створити переміщення з датою позавчора.")
     public void nonAdminCannotCreateTwoDaysAgo(Actor actor) {
         identify(actor);
         double before = stock(actor.senderId());
@@ -135,10 +184,10 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         assertThat(stock(actor.senderId())).isCloseTo(before, offset(0.01));
     }
 
-    @Test(dataProvider = "nonAdminIssuers")
+    @Test(dataProvider = "tsukActors")
     @TestCaseId(value = "TC-REL-DATE-003",
             roles = {BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.UNIT_KOMIRNIK})
-    @Description("Неадмін із правом на відправника може редагувати вчорашню видачу в дорозі.")
+    @Description("Неадмін у TSUK-ієрархії може редагувати вчорашню видачу в дорозі.")
     public void nonAdminCanEditYesterday(Actor actor) {
         identify(actor);
         LocalDate yesterday = LocalDate.now().minusDays(1);
@@ -153,10 +202,10 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
                 .isEqualByComparingTo(BigDecimal.valueOf(3));
     }
 
-    @Test(dataProvider = "nonAdminIssuers")
+    @Test(dataProvider = "tsukActors")
     @TestCaseId(value = "TC-REL-DATE-004",
             roles = {BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.UNIT_KOMIRNIK})
-    @Description("Неадмін не може редагувати видачу з датою позавчора, навіть задавши сьогоднішню дату.")
+    @Description("Неадмін у TSUK-ієрархії не розблоковує стару видачу сьогоднішньою датою.")
     public void nonAdminCannotEditTwoDaysAgo(Actor actor) {
         identify(actor);
         LocalDate issueDate = LocalDate.now().minusDays(2);
@@ -177,11 +226,12 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         assertThat(stock(actor.senderId())).isCloseTo(before, offset(0.01));
     }
 
-    @Test(dataProvider = "nonAdminDeleters")
+    @Test
     @TestCaseId(value = "TC-REL-DATE-005",
             roles = BusinessRole.UNIT_KOMIRNIK)
     @Description("Неадмін із правом на відправника видаляє завершену видачу з датою вчора.")
-    public void nonAdminCanDeleteYesterday(Actor actor) {
+    public void nonAdminCanDeleteYesterday() {
+        Actor actor = tsukWarehouse;
         identify(actor);
         double beforeSend = stock(actor.senderId());
         RelocationResponse sent = send(UserRole.ADMIN, actor.senderId(), actor.externalRecipientId(),
@@ -195,11 +245,12 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         assertThat(stock(actor.senderId())).isCloseTo(beforeSend, offset(0.01));
     }
 
-    @Test(dataProvider = "nonAdminDeleters")
+    @Test
     @TestCaseId(value = "TC-REL-DATE-006",
             roles = BusinessRole.UNIT_KOMIRNIK)
-    @Description("Неадмін не може видалити завершену видачу з датою позавчора.")
-    public void nonAdminCannotDeleteTwoDaysAgo(Actor actor) {
+    @Description("Неадмін на вкладеній локації TSUK не може видалити стару завершену видачу.")
+    public void nonAdminCannotDeleteTwoDaysAgo() {
+        Actor actor = tsukWarehouse;
         identify(actor);
         RelocationResponse sent = send(UserRole.ADMIN, actor.senderId(), actor.externalRecipientId(),
                 LocalDate.now().minusDays(2), marker("delete-expired"));
@@ -216,12 +267,90 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         assertThat(stock(actor.senderId())).isCloseTo(beforeDelete, offset(0.01));
     }
 
+    @Test(dataProvider = "unrestrictedActors")
+    @TestCaseId(value = "TC-REL-DATE-014", roles = BusinessRole.UNIT_KOMIRNIK)
+    @Description("Неадмін на локації з іншим parent або без parent створює давнє переміщення.")
+    public void nonTsukParentCanCreateOldRelocation(Actor actor) {
+        identify(actor);
+        assertOutsideTsukHierarchy(actor);
+        LocalDate oldDate = LocalDate.now().minusDays(30);
+
+        RelocationResponse created = send(actor.role(), actor.senderId(), actor.recipientId(),
+                oldDate, marker("unrestricted-create-old"));
+
+        assertThat(created.getDate()).isEqualTo(oldDate);
+        assertThat(created.getState()).isEqualTo(RelocationState.CREATED);
+    }
+
+    @Test(dataProvider = "unrestrictedActors")
+    @TestCaseId(value = "TC-REL-DATE-015", roles = BusinessRole.UNIT_KOMIRNIK)
+    @Description("Неадмін на локації з іншим parent або без parent редагує давнє переміщення.")
+    public void nonTsukParentCanEditOldRelocation(Actor actor) {
+        identify(actor);
+        assertOutsideTsukHierarchy(actor);
+        LocalDate oldDate = LocalDate.now().minusDays(30);
+        RelocationResponse sent = send(UserRole.ADMIN, actor.senderId(), actor.recipientId(),
+                oldDate, marker("unrestricted-edit-old"));
+        String changedDescription = marker("unrestricted-edited-old");
+
+        Response response = relocations.editSendRaw(actor.role(), sent.getId(), actor.senderId(),
+                editRequest(oldDate, changedDescription));
+        assertThat(response.statusCode()).as(response.asString()).isBetween(200, 299);
+        RelocationResponse updated = response.as(RelocationResponse.class);
+
+        assertThat(updated.getId()).isEqualTo(sent.getId());
+        assertThat(updated.getDate()).isEqualTo(oldDate);
+        assertThat(updated.getDescription()).isEqualTo(changedDescription);
+        assertThat(updated.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(3));
+    }
+
+    @Test(dataProvider = "unrestrictedDeleters")
+    @TestCaseId(value = "TC-REL-DATE-016", roles = BusinessRole.UNIT_KOMIRNIK)
+    @Description("Неадмін на локації з іншим parent або без parent видаляє давнє завершене переміщення.")
+    public void nonTsukParentCanDeleteOldRelocation(Actor actor) {
+        identify(actor);
+        assertOutsideTsukHierarchy(actor);
+        LocalDate oldDate = LocalDate.now().minusDays(30);
+        double beforeSend = stock(actor.senderId());
+        RelocationResponse sent = send(UserRole.ADMIN, actor.senderId(), actor.externalRecipientId(),
+                oldDate, marker("unrestricted-delete-old"));
+        assertThat(sent.getState()).isEqualTo(RelocationState.AUTO_FINISHED);
+
+        Response response = relocations.deleteRelocationRaw(actor.role(), sent.getId(), actor.senderId());
+
+        assertThat(response.statusCode()).as(response.asString()).isIn(200, 204);
+        assertThat(relocations.findHistoryByDescription(UserRole.ADMIN, actor.senderId(),
+                RelocationJournalQuery.Perspective.SENT, sent.getDescription())).isNull();
+        assertThat(stock(actor.senderId())).isCloseTo(beforeSend, offset(0.01));
+    }
+
+    @Test
+    @TestCaseId(value = "TC-REL-DATE-017",
+            roles = {BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.UNIT_KOMIRNIK},
+            locationProfiles = {LocationProfile.TSUK_PRODUCTION, LocationProfile.TSUK_WARENHAUSE})
+    @Description("Старе переміщення між локаціями TSUK-ієрархії можна прийняти.")
+    public void tsukRecipientCanAlwaysAcceptOldRelocation() {
+        LocalDate oldDate = LocalDate.now().minusDays(30);
+        RelocationResponse sent = send(UserRole.ADMIN,
+                tsukProduction.senderId(), tsukWarehouse.senderId(),
+                oldDate, marker("tsuk-accept-old"));
+        assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+
+        RelocationResponse accepted = relocations.resolve(
+                tsukWarehouse.role(), sent.getId(), tsukWarehouse.senderId(), RelocationState.FINISHED);
+
+        assertThat(accepted.getId()).isEqualTo(sent.getId());
+        assertThat(accepted.getDate()).isEqualTo(oldDate);
+        assertThat(accepted.getState()).isEqualTo(RelocationState.FINISHED);
+    }
+
     @Test(dataProvider = "adminDates")
     @TestCaseId("TC-REL-DATE-007")
     @Description("Адміністратор створює переміщення з датою вчора і позавчора.")
     public void adminCanCreateRegardlessOfDate(LocalDate issueDate) {
         Allure.parameter("issueDate", issueDate);
-        RelocationResponse created = send(UserRole.ADMIN, owner.senderId(), owner.recipientId(),
+        RelocationResponse created = send(UserRole.ADMIN, tsukProduction.senderId(), tsukProduction.recipientId(),
                 issueDate, marker("admin-create"));
         assertThat(created.getState()).isEqualTo(RelocationState.CREATED);
         assertThat(created.getDate()).isEqualTo(issueDate);
@@ -232,10 +361,10 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
     @Description("Адміністратор редагує переміщення з датою вчора і позавчора.")
     public void adminCanEditRegardlessOfDate(LocalDate issueDate) {
         Allure.parameter("issueDate", issueDate);
-        RelocationResponse sent = send(UserRole.ADMIN, owner.senderId(), owner.recipientId(),
+        RelocationResponse sent = send(UserRole.ADMIN, tsukProduction.senderId(), tsukProduction.recipientId(),
                 issueDate, marker("admin-edit"));
         String changedDescription = marker("admin-edited");
-        RelocationResponse updated = relocations.editSend(UserRole.ADMIN, sent.getId(), owner.senderId(),
+        RelocationResponse updated = relocations.editSend(UserRole.ADMIN, sent.getId(), tsukProduction.senderId(),
                 editRequest(issueDate, changedDescription));
         assertThat(updated.getId()).isEqualTo(sent.getId());
         assertThat(updated.getDate()).isEqualTo(issueDate);
@@ -250,19 +379,19 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
     @Description("Адміністратор видаляє завершене переміщення з датою вчора і позавчора.")
     public void adminCanDeleteRegardlessOfDate(LocalDate issueDate) {
         Allure.parameter("issueDate", issueDate);
-        double beforeSend = stock(keeper.senderId());
-        RelocationResponse sent = send(UserRole.ADMIN, keeper.senderId(), keeper.externalRecipientId(),
+        double beforeSend = stock(tsukWarehouse.senderId());
+        RelocationResponse sent = send(UserRole.ADMIN, tsukWarehouse.senderId(), tsukWarehouse.externalRecipientId(),
                 issueDate, marker("admin-delete"));
         assertThat(sent.getState()).isEqualTo(RelocationState.AUTO_FINISHED);
 
-        Response response = relocations.deleteRelocationRaw(UserRole.ADMIN, sent.getId(), keeper.senderId());
+        Response response = relocations.deleteRelocationRaw(UserRole.ADMIN, sent.getId(), tsukWarehouse.senderId());
         assertThat(response.statusCode()).as(response.asString()).isIn(200, 204);
-        assertThat(relocations.findHistoryByDescription(UserRole.ADMIN, keeper.senderId(),
+        assertThat(relocations.findHistoryByDescription(UserRole.ADMIN, tsukWarehouse.senderId(),
                 RelocationJournalQuery.Perspective.SENT, sent.getDescription())).isNull();
-        assertThat(stock(keeper.senderId())).isCloseTo(beforeSend, offset(0.01));
+        assertThat(stock(tsukWarehouse.senderId())).isCloseTo(beforeSend, offset(0.01));
     }
 
-    @Test(dataProvider = "nonAdminIssuers")
+    @Test(dataProvider = "allNonAdminActors")
     @TestCaseId(value = "TC-REL-DATE-010",
             roles = {BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.UNIT_KOMIRNIK})
     @Description("Неадмін із правом видачі не може створити переміщення з датою завтра.")
@@ -281,16 +410,16 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
     @TestCaseId("TC-REL-DATE-011")
     @Description("Адміністратор також не може створити переміщення з датою завтра.")
     public void adminCannotCreateFutureSend() {
-        double before = stock(owner.senderId());
+        double before = stock(tsukProduction.senderId());
         Response response = relocations.sendRaw(UserRole.ADMIN, sendRequest(
-                owner.senderId(), owner.recipientId(), LocalDate.now().plusDays(1),
+                tsukProduction.senderId(), tsukProduction.recipientId(), LocalDate.now().plusDays(1),
                 marker("admin-create-future")));
-        returnUnexpectedSend(response, owner.senderId(), owner.recipientId());
+        returnUnexpectedSend(response, tsukProduction.senderId(), tsukProduction.recipientId());
         assertInvalidDate(response);
-        assertThat(stock(owner.senderId())).isCloseTo(before, offset(0.01));
+        assertThat(stock(tsukProduction.senderId())).isCloseTo(before, offset(0.01));
     }
 
-    @Test(dataProvider = "nonAdminIssuers")
+    @Test(dataProvider = "allNonAdminActors")
     @TestCaseId(value = "TC-REL-DATE-012",
             roles = {BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.UNIT_KOMIRNIK})
     @Description("Неадмін із правом редагування не може змінити дату видачі на завтра.")
@@ -303,7 +432,7 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
     @TestCaseId("TC-REL-DATE-013")
     @Description("Адміністратор також не може змінити дату видачі на завтра.")
     public void adminCannotEditSendToFutureDate() {
-        assertCannotEditSendToFutureDate(owner, UserRole.ADMIN);
+        assertCannotEditSendToFutureDate(tsukProduction, UserRole.ADMIN);
     }
 
     private void assertCannotEditSendToFutureDate(Actor actor, UserRole editingRole) {
@@ -331,6 +460,36 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         }
     }
 
+    private Actor createActor(BusinessRole businessRole, UserRole slot, StorageResponse sender) {
+        boolean insideTsukHierarchy = hasTsukAncestor(sender);
+        String label = slot.name().toLowerCase().replace('_', '-');
+        StorageResponse recipient = storages.createChildStorage(
+                sender.getId(), "rel-date-" + label + "-recipient-");
+        StorageResponse externalRecipient = storages.createExternalChildStorage(
+                sender.getId(), "rel-date-" + label + "-external-");
+        UserFixture.BusinessActor user = users.createBusinessActor(
+                getPlaywrightSessionProvider(), businessRole, List.of(sender));
+        apiExecutor.setSessionForRole(slot, user.username(), user.password());
+        relocations.ensureStock(sender.getId(), resourceId, 200.0);
+        Long parentId = sender.getParent() == null ? null : sender.getParent().getId();
+        return new Actor(businessRole, slot, sender.getId(), recipient.getId(),
+                externalRecipient.getId(), parentId, insideTsukHierarchy);
+    }
+
+    private boolean hasTsukAncestor(StorageResponse sender) {
+        StorageResponse current = sender;
+        Set<Long> visitedParentIds = new HashSet<>();
+        while (current.getParent() != null) {
+            Long parentId = current.getParent().getId();
+            assertThat(visitedParentIds.add(parentId))
+                    .as("Ієрархія локацій не повинна містити цикл; повторний parentId=%s", parentId)
+                    .isTrue();
+            if (tsukParentId.equals(parentId)) return true;
+            current = storages.getById(UserRole.ADMIN, parentId);
+        }
+        return false;
+    }
+
     private RelocationResponse send(UserRole role, Long senderId, Long recipientId,
                                     LocalDate issueDate, String description) {
         Response response = relocations.sendRaw(role, sendRequest(senderId, recipientId, issueDate, description));
@@ -351,6 +510,13 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
 
     private double stock(Long storageId) {
         return relocations.getResourceStock(storageId, resourceId, UserRole.ADMIN);
+    }
+
+    private void assertOutsideTsukHierarchy(Actor actor) {
+        assertThat(actor.insideTsukHierarchy())
+                .as("У всьому ланцюжку предків senderId=%s не повинно бути TSUK id=%s",
+                        actor.senderId(), tsukParentId)
+                .isFalse();
     }
 
     private void assertDateLimit(Response response) {
@@ -377,6 +543,8 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
     private static void identify(Actor actor) {
         Allure.parameter("businessRole", actor.businessRole());
         Allure.parameter("senderId", actor.senderId());
+        Allure.parameter("parentId", actor.parentId());
+        Allure.parameter("insideTsukHierarchy", actor.insideTsukHierarchy());
     }
 
     private static String marker(String label) {
@@ -384,7 +552,8 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
     }
 
     private record Actor(BusinessRole businessRole, UserRole role, Long senderId,
-                         Long recipientId, Long externalRecipientId) {
+                         Long recipientId, Long externalRecipientId, Long parentId,
+                         boolean insideTsukHierarchy) {
         @Override
         public String toString() {
             return businessRole.name();

@@ -6,6 +6,9 @@ businessRoles:
     keycloakRoles:
       - Business_Unit_Owner-ROLE
       - Project-Production-ROLE
+  PRODUCTION_GROUP_MANAGER:
+    keycloakRoles:
+      - Business_Unit_Owner-ROLE
   CREW_STOCK_READER:
     keycloakRoles:
       - Crew-Read-ROLE
