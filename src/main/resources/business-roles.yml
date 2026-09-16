@@ -19,3 +19,6 @@ businessRoles:
     keycloakRoles:
       - Unit_Owner-ROLE
       - Crew-Manager-ROLE
+  ORDER_ADMIN:
+    keycloakRoles:
+      - Order_Admin-ROLE

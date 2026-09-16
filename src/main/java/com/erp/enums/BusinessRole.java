@@ -12,5 +12,7 @@ public enum BusinessRole {
     PRODUCTION_GROUP_MANAGER,
     CREW_STOCK_READER,
     CREW_INVENTORY_OPERATOR,
-    UNIT_KOMIRNIK
+    UNIT_KOMIRNIK,
+    /** Global order operator: manages orders, but does not create production orders. */
+    ORDER_ADMIN
 }

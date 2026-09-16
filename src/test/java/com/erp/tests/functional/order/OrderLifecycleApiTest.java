@@ -61,7 +61,7 @@ public class OrderLifecycleApiTest extends OrderApiTestBase {
         assertThat(response.statusCode()).isEqualTo(400);
 
         OrderResponse unchanged = orderFixture.getById(REQUESTER, order.getId());
-        assertThat(unchanged.getState()).isEqualTo(OrderState.IN_PROGRESS);
+        assertThat(unchanged.getState()).isEqualTo(OrderState.READY_TO_DELIVER);
     }
 
     @Test(priority = 13)
@@ -89,6 +89,43 @@ public class OrderLifecycleApiTest extends OrderApiTestBase {
         List<BookingResponse> bookings = orderFixture.getBookings(MANAGER, order.getId());
         assertThat(bookings).isNotEmpty();
         assertThat(bookings.getFirst().getState()).isEqualTo(BookingState.RELEASED);
+    }
+
+    @Test(priority = 14)
+    @TestCaseId("TC-ORD-028")
+    @Story("Ready to deliver")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Частково заброньоване замовлення Admin вручну переводить у READY_TO_DELIVER.")
+    public void testAdminMarksPartiallyBookedOrderReadyToDeliver() {
+        OrderResponse order = prepareManagedInProgress();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, 2.0);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.IN_PROGRESS);
+
+        OrderResponse ready = orderFixture.markReadyToDeliver(
+                MANAGER, order.getId(), requesterStorageId);
+
+        assertThat(ready.getState()).isEqualTo(OrderState.READY_TO_DELIVER);
+    }
+
+    @Test(priority = 14)
+    @TestCaseId("TC-ORD-029")
+    @Story("Ready to deliver validation")
+    @Description("Без жодної броні замовлення не можна перевести у статус «Готово до доставки».")
+    public void testReadyToDeliverWithoutBookingsReturns400() {
+        OrderResponse order = prepareManagedInProgress();
+
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_READY_TO_DELIVER,
+                MANAGER,
+                null,
+                order.getId(),
+                requesterStorageId);
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.body().asString()).contains("немає жодної броні");
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.IN_PROGRESS);
     }
 
     @Test(priority = 15)

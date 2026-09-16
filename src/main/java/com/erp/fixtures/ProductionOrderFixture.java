@@ -102,6 +102,25 @@ public class ProductionOrderFixture extends BaseFixture {
                 id);
     }
 
+    @Step("API: DELETE unlink warehouse order {orderId} from production-order {id}")
+    public Response unlinkOrderRaw(UserRole role, long id, long orderId) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_ORDER_DELETE_UNLINK_ORDER,
+                role,
+                null,
+                id,
+                orderId);
+    }
+
+    @Step("API: GET production orders linked to warehouse order {orderId}")
+    public Response getLinkedToOrderRaw(UserRole role, long orderId) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_GET_LINKED_PRODUCTION_ORDERS,
+                role,
+                null,
+                orderId);
+    }
+
     public long defaultTargetStorageId() {
         Long fromContext = testContext.get(ContextKey.OWNER_1_STORAGE_ID);
         if (fromContext != null) {

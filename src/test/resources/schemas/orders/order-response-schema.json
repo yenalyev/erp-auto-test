@@ -7,7 +7,7 @@
     "id": { "type": "integer" },
     "state": {
       "type": "string",
-      "enum": ["NEW", "IN_PROGRESS", "DONE", "CANCELLED"]
+      "enum": ["NEW", "IN_PROGRESS", "READY_TO_DELIVER", "DONE", "CANCELLED"]
     },
     "storage": { "type": "object" },
     "gatheringStorage": { "type": ["object", "null"] },

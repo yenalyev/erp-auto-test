@@ -44,6 +44,12 @@ public class BusinessRoleCatalogTest {
     }
 
     @Test
+    public void orderAdminMappingUsesExactDevRoleName() {
+        assertThat(BusinessRoleCatalog.definition(BusinessRole.ORDER_ADMIN).keycloakRoles())
+                .containsExactly("Order_Admin-ROLE");
+    }
+
+    @Test
     public void testCaseMetadataCarriesBusinessRoles() throws NoSuchMethodException {
         Method method = ExampleCase.class.getDeclaredMethod("warehouseOperation");
 

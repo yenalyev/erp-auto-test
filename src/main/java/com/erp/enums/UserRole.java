@@ -41,10 +41,16 @@ public enum UserRole {
      */
     ORDER_GATHERER,
     /**
-     * Owner of the requester UNIT (підрозділ) + unit-analytics reader.
+     * Owner of the requester UNIT ({@code Unit_Owner-ROLE}) + unit-analytics reader.
      * staging/dev: {@code user.unit-analyst.*} (e.g. {@code 3bat}).
      */
     UNIT_ANALYST,
+    /** Ephemeral actor bound by order RBAC tests to Keycloak {@code Order_Admin-ROLE}. */
+    ORDER_ADMIN,
+    /** Ephemeral keeper of a relocation-task source location. */
+    ORDER_SOURCE_KEEPER,
+    /** Ephemeral keeper of an isolated order gathering location. */
+    ORDER_ISOLATED_GATHERER,
     ANONYMOUS;
 
     public String getUsername() {
@@ -64,6 +70,9 @@ public enum UserRole {
             case LOCATION_MIXED  -> ConfigProvider.getLocationMixedUsername();
             case ORDER_GATHERER  -> ConfigProvider.getOrderGatheringUsername();
             case UNIT_ANALYST    -> ConfigProvider.getUnitAnalystUsername();
+            case ORDER_ADMIN     -> "order-admin";
+            case ORDER_SOURCE_KEEPER -> "order-source-keeper";
+            case ORDER_ISOLATED_GATHERER -> "order-isolated-gatherer";
             case ANONYMOUS       -> "";
         };
     }
@@ -85,6 +94,9 @@ public enum UserRole {
             case LOCATION_MIXED  -> ConfigProvider.getLocationMixedPassword();
             case ORDER_GATHERER  -> ConfigProvider.getOrderGatheringPassword();
             case UNIT_ANALYST    -> ConfigProvider.getUnitAnalystPassword();
+            case ORDER_ADMIN     -> "";
+            case ORDER_SOURCE_KEEPER -> "";
+            case ORDER_ISOLATED_GATHERER -> "";
             case ANONYMOUS       -> "";
         };
     }
@@ -92,7 +104,8 @@ public enum UserRole {
     /** Returns the primary storage ID that belongs to this role, as a String path param. */
     public String getStoreId() {
         return switch (this) {
-            case ADMIN, RESOURCE_VIEWER, ACCOUNTANT, LOGIST -> "all";
+            case ADMIN, RESOURCE_VIEWER, ACCOUNTANT, LOGIST, ORDER_ADMIN,
+                    ORDER_SOURCE_KEEPER, ORDER_ISOLATED_GATHERER -> "all";
             case OWNER_1, PROJECT_ADMIN, PROJECT_MANAGER, LOCATION_MIXED
                     -> String.valueOf(ConfigProvider.getOwner1StorageId());
             case OWNER_2       -> String.valueOf(ConfigProvider.getOwner2StorageId());

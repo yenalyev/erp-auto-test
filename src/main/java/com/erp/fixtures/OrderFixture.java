@@ -20,6 +20,7 @@ import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UserMeResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -69,8 +70,17 @@ public class OrderFixture extends BaseFixture {
         fetchSharedResourceCategory();
 
         Long requesterStorage = resolveRequesterUnitStorageId();
-        new UserFixture(testContext, apiExecutor).ensureExistingUserIsUnitOwner(
-                UserRole.UNIT_ANALYST.getUsername(), requesterStorage);
+        UserFixture userFixture = new UserFixture(testContext, apiExecutor);
+        userFixture.ensureExistingUserIsUnitOwner(UserRole.UNIT_ANALYST.getUsername(), requesterStorage);
+        UserMeResponse requester = userFixture.getMe(UserRole.UNIT_ANALYST);
+        if (!requester.hasOrderCreateOn(requesterStorage)) {
+            throw new IllegalStateException(
+                    "Order requester '" + requester.getUsername() + "' must have Unit_Owner-ROLE "
+                            + "with order::" + requesterStorage + "::create; roles=" + requester.getRoles()
+                            + ", orderPermissions=" + requester.getPermissions().stream()
+                            .filter(permission -> permission.startsWith("order::"))
+                            .toList());
+        }
         List<ResourceResponse> resources = loadRequesterVisibleResources(requesterStorage);
         if (resources.isEmpty()) {
             throw new IllegalStateException(
@@ -353,6 +363,19 @@ public class OrderFixture extends BaseFixture {
         return response.jsonPath().getList("", BookingResponse.class);
     }
 
+    @Step("API: PUT mark order {orderId} ready to deliver")
+    public OrderResponse markReadyToDeliver(UserRole role, Long orderId, Long requesterStorageId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_READY_TO_DELIVER,
+                role,
+                null,
+                orderId,
+                requesterStorageId);
+        validateSuccess(response, "Mark order ready to deliver");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.ORDER_PUT_READY_TO_DELIVER);
+        return response.as(OrderResponse.class);
+    }
+
     @Step("API: PUT mark order {orderId} done")
     public OrderResponse markDone(UserRole role, Long orderId, Long requesterStorageId) {
         Response response = apiExecutor.execute(
@@ -380,10 +403,10 @@ public class OrderFixture extends BaseFixture {
     }
 
     /**
-     * Cancels this suite's IN_PROGRESS orders on the given storages so ACTIVE booking holds
+     * Cancels this suite's open orders on the given storages so ACTIVE booking holds
      * do not pollute shared gathering stock between tests.
      */
-    @Step("Clear IN_PROGRESS orders (release holds) on storages {storageIds}")
+    @Step("Clear IN_PROGRESS/READY_TO_DELIVER orders (release holds) on storages {storageIds}")
     public void clearInProgressOrders(UserRole manager, Long... storageIds) {
         if (storageIds == null) {
             return;
@@ -402,7 +425,7 @@ public class OrderFixture extends BaseFixture {
                         manager,
                         Map.of(
                                 "storageIds", storageId,
-                                "states", "IN_PROGRESS",
+                                "states", List.of("IN_PROGRESS", "READY_TO_DELIVER"),
                                 "page", scanPage,
                                 "size", 100));
                 if (response.statusCode() != 200) {
@@ -436,8 +459,8 @@ public class OrderFixture extends BaseFixture {
                                     cancelResponse.body().asString());
                         } else {
                             cancelledOnStorage++;
-                            log.info("Cancelled IN_PROGRESS order {} (storage {}) to clear holds",
-                                    order.getId(), cancelStorageId);
+                            log.info("Cancelled open order {} (state={}, storage={}) to clear holds",
+                                    order.getId(), order.getState(), cancelStorageId);
                         }
                     } catch (Exception e) {
                         log.warn("Could not cancel order {}: {}", order.getId(), e.getMessage());

@@ -52,6 +52,9 @@ public class OrderBookingApiTest extends OrderApiTestBase {
         OrderResponse order = prepareManagedInProgress();
         BookingResponse booking = orderFixture.book(
                 MANAGER, order.getId(), requesterStorageId, resourceId, qty);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .as("повне бронювання автоматично переводить замовлення у готовність")
+                .isEqualTo(OrderState.READY_TO_DELIVER);
         orderFixture.setPrepared(MANAGER, order.getId(), booking.getId(), true);
 
         ProductionStockAssertions.StockSnapshot gatheringBefore = RelocationStockAssertions.capture(
@@ -369,6 +372,8 @@ public class OrderBookingApiTest extends OrderApiTestBase {
     public void testShipWithoutPreparedAllowed() {
         OrderResponse order = prepareManagedInProgress();
         orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.READY_TO_DELIVER);
 
         RelocationResponse shipment = orderFixture.shipOrder(
                 MANAGER, order.getId(), gatheringStorageId, requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
@@ -397,55 +402,65 @@ public class OrderBookingApiTest extends OrderApiTestBase {
 
     @Test(priority = 41)
     @TestCaseId("TC-ORD-093")
-    @Story("Ship validation")
+    @Story("Partial order shipment")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Admin POST /relocations/send + orderId: A менше qty лінії. \
-            UI на видачі за заявкою блокує кількість; цей тест б’є API з A=1 при заявці A=5. \
-            Очікування: 400 «менше, ніж замовлено», заявка В роботі, бронь ACTIVE, \
-            залишки на зборі й на 3bat без змін.""")
-    public void testShipUndersendReturns400() {
-        double undersendQty = 1.0;
+            Заявка A=5, заброньовано лише A=2. До ручного «Готово до доставки» send → 400. \
+            Після PUT /ready-to-deliver комірник може відправити A=2: заявка DONE, \
+            бронь FULFILLED, зі збору списано 2; на отримувачі до «Прийняти» без змін.""")
+    public void testPartialShipmentAllowedOnlyAfterReadyToDeliver() {
+        double partialQty = 2.0;
         Set<Long> tracked = trackedResource();
         if (sharedResources != null && sharedResources.size() >= 2) {
             tracked = Set.of(resourceId, secondResourceId());
         }
 
         OrderResponse order = prepareManagedInProgress();
-        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, partialQty);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.IN_PROGRESS);
 
         ProductionStockAssertions.StockSnapshot gatheringBefore = RelocationStockAssertions.capture(
-                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ДО undersend");
+                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ДО partial send");
         ProductionStockAssertions.StockSnapshot requesterBefore = RelocationStockAssertions.capture(
-                apiExecutor, requesterStorageId, MANAGER, tracked, "3bat ДО undersend");
+                apiExecutor, requesterStorageId, MANAGER, tracked, "3bat ДО partial send");
 
-        RelocationOutputRequest undersend = OrderDataFactory.buildShipRequest(
-                order.getId(), gatheringStorageId, requesterStorageId, resourceId, undersendQty);
-        Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, MANAGER, undersend);
-        assertThat(response.statusCode()).isEqualTo(400);
-        assertThat(response.body().asString()).contains("менше, ніж замовлено");
+        RelocationOutputRequest partialSend = OrderDataFactory.buildShipRequest(
+                order.getId(), gatheringStorageId, requesterStorageId, resourceId, partialQty);
+        Response notReady = apiExecutor.execute(
+                ApiEndpointDefinition.RELOCATION_POST_SEND, MANAGER, partialSend);
+        assertThat(notReady.statusCode()).isEqualTo(400);
+        assertThat(notReady.body().asString()).contains("готов");
 
-        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState()).isEqualTo(OrderState.IN_PROGRESS);
+        OrderResponse ready = orderFixture.markReadyToDeliver(
+                MANAGER, order.getId(), requesterStorageId);
+        assertThat(ready.getState()).isEqualTo(OrderState.READY_TO_DELIVER);
+
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.RELOCATION_POST_SEND, MANAGER, partialSend);
+        assertThat(response.statusCode()).as("body=%s", response.body().asString()).isEqualTo(200);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState()).isEqualTo(OrderState.DONE);
         assertThat(orderFixture.getBookings(MANAGER, order.getId()))
-                .anyMatch(booking -> booking.getState() == BookingState.ACTIVE);
-        assertThat(orderFixture.getBookings(MANAGER, order.getId()))
-                .noneMatch(booking -> booking.getState() == BookingState.FULFILLED);
+                .anyMatch(booking -> booking.getState() == BookingState.FULFILLED);
 
         ProductionStockAssertions.StockSnapshot gatheringAfter = RelocationStockAssertions.capture(
-                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ПІСЛЯ undersend");
+                apiExecutor, gatheringStorageId, MANAGER, tracked, "gathering ПІСЛЯ partial send");
         ProductionStockAssertions.StockSnapshot requesterAfter = RelocationStockAssertions.capture(
-                apiExecutor, requesterStorageId, MANAGER, tracked, "3bat ПІСЛЯ undersend");
-        Map<Long, Double> noDelta = new LinkedHashMap<>();
-        noDelta.put(resourceId, 0.0);
+                apiExecutor, requesterStorageId, MANAGER, tracked, "3bat ПІСЛЯ partial send");
+        Map<Long, Double> gatheringDelta = new LinkedHashMap<>();
+        gatheringDelta.put(resourceId, -partialQty);
+        Map<Long, Double> requesterDelta = new LinkedHashMap<>();
+        requesterDelta.put(resourceId, 0.0);
         if (tracked.size() > 1) {
-            noDelta.put(secondResourceId(), 0.0);
+            gatheringDelta.put(secondResourceId(), 0.0);
+            requesterDelta.put(secondResourceId(), 0.0);
         }
         RelocationStockAssertions.assertStockDelta(
-                gatheringBefore, gatheringAfter, gatheringStorageId, noDelta,
-                "undersend: збір без змін");
+                gatheringBefore, gatheringAfter, gatheringStorageId, gatheringDelta,
+                "partial send: списання фактично відправленої кількості");
         RelocationStockAssertions.assertStockDelta(
-                requesterBefore, requesterAfter, requesterStorageId, noDelta,
-                "undersend: 3bat без змін");
+                requesterBefore, requesterAfter, requesterStorageId, requesterDelta,
+                "partial send: на 3bat ще немає — чекаємо Прийняти");
     }
 
     @Test(priority = 42)
@@ -456,7 +471,7 @@ public class OrderBookingApiTest extends OrderApiTestBase {
             Admin POST /relocations/send + orderId з підставленими локаціями. \
             UI на видачі за заявкою блокує from/to; цей тест б’є API: \
             з 3bat на 3bat і з tyolki на tyolki. Очікування: 400 з текстами \
-            «локації збору» / «локації-замовнику», заявка В роботі, бронь ACTIVE, \
+            «локації збору» / «локації-замовнику», заявка «Готово до доставки», бронь ACTIVE, \
             залишки на зборі й на 3bat без змін.""")
     public void testShipWrongSenderOrRecipientReturns400() {
         Set<Long> tracked = trackedResource();
@@ -588,7 +603,7 @@ public class OrderBookingApiTest extends OrderApiTestBase {
             Admin POST /relocations/send + orderId: A покриває заявку + extra B без залишку на зборі. \
             UI B без стоку в списку немає; цей тест б’є API без batches. \
             fulfill() встигає DONE, apply() падає, транзакція відкочує. \
-            Очікування: 400, заявка В роботі, бронь ACTIVE, збір і 3bat без змін.""")
+            Очікування: 400, заявка «Готово до доставки», бронь ACTIVE, збір і 3bat без змін.""")
     public void testShipFailsAfterFulfillLeavesOrderOpen() {
         if (sharedResources == null || sharedResources.size() < 2) {
             throw new SkipException(
@@ -639,8 +654,9 @@ public class OrderBookingApiTest extends OrderApiTestBase {
     @Story("Fulfill RBAC")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            alkatras GET заявки 3bat → 403/404. 3bat POST send+orderId без manage → 403: \
-            заявка В роботі, бронь ACTIVE, збір і 3bat без дельти. \
+            alkatras GET заявки 3bat → 403/404. 3bat POST send+orderId без relocation::create \
+            на локації збору → 403: \
+            заявка «Готово до доставки», бронь ACTIVE, збір і 3bat без дельти. \
             Admin send → Виконано, relocation.orderId проставлений.""")
     public void testFulfillDeniedForUnitOwnerAllowedForAdmin() {
         Set<Long> tracked = trackedResource();
@@ -681,7 +697,8 @@ public class OrderBookingApiTest extends OrderApiTestBase {
     }
 
     private void assertOrderStillOpenWithActiveBooking(Long orderId) {
-        assertThat(orderFixture.getById(REQUESTER, orderId).getState()).isEqualTo(OrderState.IN_PROGRESS);
+        assertThat(orderFixture.getById(REQUESTER, orderId).getState())
+                .isEqualTo(OrderState.READY_TO_DELIVER);
         assertThat(orderFixture.getBookings(MANAGER, orderId))
                 .anyMatch(booking -> booking.getState() == BookingState.ACTIVE);
         assertThat(orderFixture.getBookings(MANAGER, orderId))

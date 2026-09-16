@@ -46,7 +46,9 @@ public class OrderBookingUiTest extends OrderUiTestBase {
     public void inProgressOrderShowsBookingPanel() {
         OrderResponse order = prepareManagedInProgressUi();
 
-        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        OrderListPage ordersPage = new OrderListPage(page)
+                .openDeepLink(order.getId())
+                .waitForBookingPanel();
 
         if (!ordersPage.isBookingPanelVisible()) {
             throw new AssertionError("«Збір замовлення» panel not visible — check ORDER::MANAGE for ADMIN on requester storage");
@@ -71,7 +73,9 @@ public class OrderBookingUiTest extends OrderUiTestBase {
                 MANAGER, order.getId(), requesterStorageId, resourceId, ORDER_QTY);
         orderFixture.setPrepared(MANAGER, order.getId(), booking.getId(), true);
 
-        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        OrderListPage ordersPage = new OrderListPage(page)
+                .openDeepLink(order.getId())
+                .waitForBookingPanel();
 
         if (!ordersPage.isBookingPanelVisible()) {
             throw new AssertionError("Booking panel not visible — cannot verify send order button");
@@ -168,7 +172,9 @@ public class OrderBookingUiTest extends OrderUiTestBase {
     public void bookingTableShowsNeedBookedFree() {
         OrderResponse order = prepareManagedInProgressUi();
         orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, ORDER_QTY);
-        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        OrderListPage ordersPage = new OrderListPage(page)
+                .openDeepLink(order.getId())
+                .waitForBookingPanel();
         if (!ordersPage.isBookingPanelVisible()) {
             throw new AssertionError("Booking panel not visible");
         }
@@ -178,23 +184,24 @@ public class OrderBookingUiTest extends OrderUiTestBase {
 
     @Test(priority = 6)
     @TestCaseId("TC-ORD-UI-022")
-    @Story("Send enabled only when fully booked")
-    @Description("«Відправити» активна лише при повному бронюванні.")
-    public void sendDisabledUntilFullyBooked() {
+    @Story("Ready-to-deliver gate")
+    @Description("При частковій броні «Відправити» недоступна до ручного «Готово до доставки».")
+    public void partialOrderCanBeSentOnlyAfterReadyConfirmation() {
         OrderResponse order = prepareManagedInProgressUi();
-        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, 2.0);
+        OrderListPage ordersPage = new OrderListPage(page)
+                .openDeepLink(order.getId())
+                .waitForBookingPanel();
         if (!ordersPage.isBookingPanelVisible()) {
             throw new AssertionError("Booking panel not visible");
         }
         assertThat(ordersPage.isSendOrderEnabled()).isFalse();
+        assertThat(ordersPage.isReadyToDeliverVisible())
+                .as("Для частково заброньованого замовлення доступне підтвердження готовності")
+                .isTrue();
 
-        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, ORDER_QTY);
-        orderFixture.setPrepared(MANAGER, order.getId(), 
-                orderFixture.getBookings(MANAGER, order.getId()).getFirst().getId(), true);
-        ordersPage = new OrderListPage(page).openDeepLink(order.getId());
-        if (!ordersPage.isSendOrderEnabled()) {
-            throw new AssertionError("Send still disabled after full booking — UI may require extra prepare click");
-        }
+        ordersPage.markReadyToDeliver();
+
         assertThat(ordersPage.isSendOrderEnabled()).isTrue();
     }
 }

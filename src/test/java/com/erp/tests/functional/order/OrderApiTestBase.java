@@ -31,13 +31,13 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
     protected static final double DEFAULT_ORDER_QTY = 5.0;
     protected static final double DEFAULT_SEED_STOCK = 200.0;
 
-    /** Підрозділ 3bat — create/see own orders ({@code order::create} on UNIT). */
+    /** Unit Owner підрозділу 3bat — create/see own orders ({@code order::create} on UNIT). */
     protected static final UserRole REQUESTER = UserRole.UNIT_ANALYST;
     /** alkatras — other unit; must not see 3bat orders. */
     protected static final UserRole OUTSIDER = UserRole.OWNER_1;
     /** Administrator — order::manage lifecycle (take-to-work, book, ship). */
     protected static final UserRole MANAGER = UserRole.ADMIN;
-    /** Owner of gathering storage — prepare bookings (order::update on gathering). */
+    /** Комірник gathering — prepare bookings and send READY orders from that location. */
     protected static final UserRole GATHERER = UserRole.ORDER_GATHERER;
 
     protected OrderFixture orderFixture;
@@ -126,14 +126,18 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
     }
 
     protected Double readGatheringBookedAmount() {
+        return readBookedAmount(gatheringStorageId);
+    }
+
+    protected Double readBookedAmount(Long storageId) {
         Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.STORAGE_INVENTORY_MULTI_GET,
                 MANAGER,
                 Map.of(
-                        "locations", gatheringStorageId,
+                        "locations", storageId,
                         "resourceIds", resourceId,
                         "size", 5));
-        assertThat(response.statusCode()).as("Read gathering bookedAmount").isEqualTo(200);
+        assertThat(response.statusCode()).as("Read bookedAmount on storage " + storageId).isEqualTo(200);
         List<MultiLocationStorageItemResponse> content =
                 response.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
         if (content == null || content.isEmpty() || content.getFirst().getLocations() == null) {
@@ -141,7 +145,7 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
         }
         return content.getFirst().getLocations().stream()
                 .filter(loc -> loc.getStorage() != null
-                        && gatheringStorageId.equals(loc.getStorage().getId()))
+                        && storageId.equals(loc.getStorage().getId()))
                 .map(StorageAmountResponse::getBookedAmount)
                 .filter(v -> v != null)
                 .findFirst()

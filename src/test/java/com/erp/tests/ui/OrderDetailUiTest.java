@@ -64,7 +64,9 @@ public class OrderDetailUiTest extends OrderUiTestBase {
     @Description("Availability hover (manage): «Наявність на локаціях» / заброньовано.")
     public void availabilityHintVisibleForManager() {
         OrderResponse order = prepareManagedInProgressUi();
-        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        OrderListPage ordersPage = new OrderListPage(page)
+                .openDeepLink(order.getId())
+                .waitForBookingPanel();
         if (!ordersPage.isAvailabilityHintVisible() && !ordersPage.isBookingPanelVisible()) {
             throw new AssertionError("Availability hint not rendered on this card");
         }

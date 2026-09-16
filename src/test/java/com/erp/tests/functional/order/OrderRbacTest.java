@@ -112,8 +112,8 @@ public class OrderRbacTest extends OrderApiTestBase {
     @Test(priority = 15)
     @TestCaseId("TC-ORD-RBAC-005")
     @Story("Gathering update without manage")
-    @Description("Gathering update: prepare; без manage — немає book/send.")
-    public void testGathererCanPrepareButCannotBookOrSend() {
+    @Description("Комірник gathering може prepare і send готового замовлення; не може book або сам ставити READY.")
+    public void testGathererCanPrepareAndSendReadyButCannotManage() {
         OrderResponse order = prepareManagedInProgress();
         Response bookDenied = apiExecutor.execute(
                 ApiEndpointDefinition.ORDER_POST_BOOKING,
@@ -123,16 +123,37 @@ public class OrderRbacTest extends OrderApiTestBase {
                 requesterStorageId);
         assertThat(bookDenied.statusCode()).isEqualTo(403);
 
+        double partialQty = 2.0;
         BookingResponse booking = orderFixture.book(
-                MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+                MANAGER, order.getId(), requesterStorageId, resourceId, partialQty);
         BookingResponse prepared = orderFixture.setPrepared(
                 GATHERER, order.getId(), booking.getId(), true);
         assertThat(prepared.isPrepared()).isTrue();
 
         RelocationOutputRequest send = OrderDataFactory.buildShipRequest(
-                order.getId(), gatheringStorageId, requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
-        Response sendDenied = apiExecutor.execute(
+                order.getId(), gatheringStorageId, requesterStorageId, resourceId, partialQty);
+        Response notReady = apiExecutor.execute(
                 ApiEndpointDefinition.RELOCATION_POST_SEND, GATHERER, send);
-        assertThat(sendDenied.statusCode()).isIn(400, 403);
+        assertThat(notReady.statusCode()).isEqualTo(400);
+        assertThat(notReady.body().asString()).contains("готов");
+
+        Response readyDenied = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_READY_TO_DELIVER,
+                GATHERER,
+                null,
+                order.getId(),
+                requesterStorageId);
+        assertThat(readyDenied.statusCode()).isEqualTo(403);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.IN_PROGRESS);
+
+        assertThat(orderFixture.markReadyToDeliver(MANAGER, order.getId(), requesterStorageId).getState())
+                .isEqualTo(OrderState.READY_TO_DELIVER);
+
+        Response sent = apiExecutor.execute(
+                ApiEndpointDefinition.RELOCATION_POST_SEND, GATHERER, send);
+        assertThat(sent.statusCode()).as("body=%s", sent.body().asString()).isEqualTo(200);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.DONE);
     }
 }

@@ -18,13 +18,13 @@ import java.util.Map;
 @Slf4j
 abstract class OrderUiTestBase extends BaseUITest {
 
-    /** Підрозділ 3bat — create/see own orders. */
+    /** Unit Owner підрозділу 3bat — create/see own orders. */
     protected static final UserRole REQUESTER = UserRole.UNIT_ANALYST;
     /** alkatras — other unit; must not see 3bat orders. */
     protected static final UserRole OUTSIDER = UserRole.OWNER_1;
     /** Administrator — order::manage lifecycle (take-to-work, book, send). */
     protected static final UserRole MANAGER = UserRole.ADMIN;
-    /** Owner of gathering storage — prepare bookings on gathering side. */
+    /** Комірник gathering — prepare bookings and send READY orders from that location. */
     protected static final UserRole GATHERER = UserRole.ORDER_GATHERER;
 
     protected OrderFixture orderFixture;
@@ -37,12 +37,6 @@ abstract class OrderUiTestBase extends BaseUITest {
     protected String resourceName;
     protected String requesterStorageName;
     protected String gatheringStorageName;
-
-    /** Need JDBC to upsert {@code order_availability_root_storage} when configured. */
-    @Override
-    protected boolean shouldInitializeDatabase() {
-        return ConfigProvider.useDatabase() || ConfigProvider.getOrderAvailabilityRootStorageId() > 0;
-    }
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -115,7 +109,7 @@ abstract class OrderUiTestBase extends BaseUITest {
         page.setDefaultNavigationTimeout(timeoutMs);
     }
 
-    /** 3bat session on requester UNIT — create / view own orders. */
+    /** Unit Owner 3bat session on requester UNIT — create / view own orders. */
     protected void loginAsOwner() {
         reopenPageWithSession(REQUESTER, requesterStorageId);
     }

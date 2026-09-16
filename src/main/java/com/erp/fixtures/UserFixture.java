@@ -40,6 +40,7 @@ public class UserFixture extends BaseFixture {
     public static final String ADMINISTRATOR_ROLE_NAME = "Administrator-ROLE";
     public static final String PROJECT_PRODUCTION_ROLE_NAME = "Project-Production-ROLE";
     public static final String BUSINESS_UNIT_OWNER_ROLE_NAME = "Business_Unit_Owner-ROLE";
+    public static final String UNIT_OWNER_ROLE_NAME = "Unit_Owner-ROLE";
     public static final String BUSINESS_UNIT_VIEWER_ROLE_NAME = "Business_Unit_Viewer-ROLE";
     public static final String BUSINESS_UNIT_RO_PREFIX = "var_business_unit_id_ro::";
     public static final String CREW_READ_ROLE_NAME = "Crew-Read-ROLE";
@@ -431,21 +432,24 @@ public class UserFixture extends BaseFixture {
     }
 
     /**
-     * Existing stand user (e.g. {@code 3bat}) gets {@link #BUSINESS_UNIT_OWNER_ROLE_NAME}
-     * and the requester UNIT without dropping other roles (unit-analytics).
+     * Existing stand user (e.g. {@code 3bat}) gets {@link #UNIT_OWNER_ROLE_NAME}
+     * and the requester UNIT without dropping other roles.
      * Does not create a new username.
      */
     @Step("FIXTURE: Ensure existing user «{username}» is Owner of UNIT {unitStorageId}")
     public UserModelResponse ensureExistingUserIsUnitOwner(String username, Long unitStorageId) {
-        UserModelResponse user = findUserByUsername(username).orElseThrow(() -> new IllegalStateException(
+        UserModelResponse listed = findUserByUsername(username).orElseThrow(() -> new IllegalStateException(
                 "User '" + username + "' must already exist on the stand — will not create a new account"));
-        boolean hasOwner = userHasRole(user, BUSINESS_UNIT_OWNER_ROLE_NAME);
+        // The paged users response may omit role/storage details. Merge from the full card so PUT
+        // does not accidentally wipe unrelated bindings.
+        UserModelResponse user = getUser(UserRole.ADMIN, listed.getId());
+        boolean hasOwner = userHasRole(user, UNIT_OWNER_ROLE_NAME);
         boolean hasUnit = userHasStorage(user, unitStorageId);
         if (hasOwner && hasUnit) {
-            log.info("User {} already has Owner role and UNIT {}", username, unitStorageId);
+            log.info("User {} already has Unit Owner role and UNIT {}", username, unitStorageId);
             return user;
         }
-        RoleModelResponse ownerRole = fetchRealmRole(BUSINESS_UNIT_OWNER_ROLE_NAME);
+        RoleModelResponse ownerRole = fetchRealmRole(UNIT_OWNER_ROLE_NAME);
         List<RoleModelResponse> roles = new ArrayList<>(
                 user.getRealmRoles() != null ? user.getRealmRoles() : List.of());
         if (!hasOwner) {
@@ -456,7 +460,7 @@ public class UserFixture extends BaseFixture {
         if (!hasUnit) {
             storages.add(SimpleEntityResponse.builder().id(unitStorageId).name("unit").build());
         }
-        log.info("Updating existing user {} — add Owner on UNIT {} (keep {} roles)",
+        log.info("Updating existing user {} — add Unit Owner on UNIT {} (keep {} roles)",
                 username, unitStorageId, roles.size());
         UserRequest update = UserDataFactory.fromExisting(user).toBuilder()
                 .enabled(true)

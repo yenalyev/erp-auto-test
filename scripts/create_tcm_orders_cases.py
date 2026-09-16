@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Create REQ-WMS-010 order test cases via TCM AI API."""
+"""Create REQ-ORD order test cases via TCM AI API."""
 from __future__ import annotations
 
 import json
@@ -9,7 +9,7 @@ import urllib.request
 BASE = "http://localhost:8100"
 PROJECT_ID = 1
 TOKEN = "dev-ai-token"
-FEATURE = "REQ-WMS-010"
+FEATURE = "REQ-ORD"
 HDR = {
     "X-TCM-Ai-Token": TOKEN,
     "Accept": "application/json",
@@ -42,6 +42,8 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-02", "TC-ORD-025", "cancel дозволений з update (без manage)", "HIGH", "MAJOR", "SECURITY"),
     ("AC-02", "TC-ORD-026", "Illegal transition (NEW→DONE, з DONE/CANCELLED) → 400", "HIGH", "MAJOR", "FUNCTIONAL"),
     ("AC-02", "TC-ORD-027", "take-to-work / mark-done вимагають manage на requester", "CRITICAL", "CRITICAL", "SECURITY"),
+    ("AC-02", "TC-ORD-028", "Часткова бронь: manage переводить IN_PROGRESS→READY_TO_DELIVER", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
+    ("AC-02", "TC-ORD-029", "ready-to-deliver без жодної броні → 400", "HIGH", "MAJOR", "FUNCTIONAL"),
     # AC-03
     ("AC-03", "TC-ORD-030", "GET page: default sort createdAt DESC, pagination", "HIGH", "MAJOR", "FUNCTIONAL"),
     ("AC-03", "TC-ORD-031", "Фільтр states (один і кілька)", "HIGH", "MAJOR", "FUNCTIONAL"),
@@ -87,10 +89,10 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-09", "TC-ORD-090", "Send+orderId: sender=gathering, recipient=requester → DONE+FULFILLED+stock", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-09", "TC-ORD-091", "relocation.orderId set; UI бейдж «Створено на основі замовлення №N»", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-09", "TC-ORD-092", "Overship + extra resources дозволені", "HIGH", "MAJOR", "FUNCTIONAL"),
-    ("AC-09", "TC-ORD-093", "Undersend / missing ordered resource → 400", "HIGH", "MAJOR", "FUNCTIONAL"),
+    ("AC-09", "TC-ORD-093", "Partial booking: send до READY → 400; після READY → DONE", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-09", "TC-ORD-094", "sender≠gathering / recipient≠requester → 400", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-09", "TC-ORD-095", "Relocation fail → order лишається відкритим (rollback)", "HIGH", "MAJOR", "FUNCTIONAL"),
-    ("AC-09", "TC-ORD-096", "Fulfill потребує manage на requester (canFulfillOrder)", "CRITICAL", "CRITICAL", "SECURITY"),
+    ("AC-09", "TC-ORD-096", "Requester без relocation::create на gathering не може відправити; Admin може", "CRITICAL", "CRITICAL", "SECURITY"),
     # AC-10
     ("AC-10", "TC-ORD-100", "Inventory bookedAmount; free = amount − booked", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-10", "TC-ORD-101", "UI «Вільна к-сть» + жовтий бейдж + тултіп Всього/Заброньовано/Вільно", "HIGH", "MAJOR", "UI"),
@@ -108,9 +110,14 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     # AC-11
     ("AC-11", "TC-ORD-RBAC-001", "create: 200 з create / 403 без", "CRITICAL", "CRITICAL", "SECURITY"),
     ("AC-11", "TC-ORD-RBAC-002", "update lines: лише update+NEW", "HIGH", "MAJOR", "SECURITY"),
-    ("AC-11", "TC-ORD-RBAC-003", "manage-only: take-to-work, mark-done, gathering, book, send", "CRITICAL", "CRITICAL", "SECURITY"),
+    ("AC-11", "TC-ORD-RBAC-003", "manage-only: take-to-work, mark-done, gathering, book, ready", "CRITICAL", "CRITICAL", "SECURITY"),
     ("AC-11", "TC-ORD-RBAC-004", "gathering read: list+get+bookings view; без update — немає prepare", "HIGH", "MAJOR", "SECURITY"),
-    ("AC-11", "TC-ORD-RBAC-005", "gathering update: prepare; без manage — немає book/send", "CRITICAL", "CRITICAL", "SECURITY"),
+    ("AC-11", "TC-ORD-RBAC-005", "Комірник: prepare+send READY; без manage — немає book/ready", "CRITICAL", "CRITICAL", "SECURITY"),
+    ("AC-11", "TC-ORD-ADMIN-001", "Order_Admin-ROLE: order manage + production read; без production create і relocation send", "CRITICAL", "CRITICAL", "SECURITY"),
+    ("AC-09", "TC-ORD-ADMIN-002", "Рольовий E2E: requester create → Order Admin partial ready → gatherer send → requester receive", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
+    ("AC-06", "TC-ORD-ADMIN-003", "Relocation task E2E: NEW→SHIPPED→DONE → auto-book → final send/receive", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
+    ("AC-06", "TC-ORD-ADMIN-005", "Relocation task: amount≤shortfall; cancel NEW releases source reservation", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
+    ("AC-11", "TC-ORD-ADMIN-004", "Global Admin creates PO; Order Admin links/unlinks it but cannot create PO", "CRITICAL", "CRITICAL", "SECURITY"),
     # AC-12 UI
     ("AC-12", "TC-ORD-UI-001", "Список: колонки Дата/Локація/Ресурси/Статус/Створив; empty state", "HIGH", "MAJOR", "UI"),
     ("AC-12", "TC-ORD-UI-002", "Фільтри: пошук ресурсу, Період, Статус multi, reset", "HIGH", "MAJOR", "UI"),
@@ -119,6 +126,8 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-12", "TC-ORD-UI-005", "Створити: lines editor, category hierarchy, validation toasts", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-006", "Редагувати NEW (update): Зберегти / після take-to-work edit зникає", "HIGH", "MAJOR", "UI"),
     ("AC-12", "TC-ORD-UI-007", "Sidebar «Замовлення» лише з order::view", "MEDIUM", "MINOR", "UI"),
+    ("AC-12", "TC-ORD-UI-008", "Селектор доставки: тільки активні UNIT/STORAGE/PRODUCTION; без CREW/FLY_POINT", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-12", "TC-ORD-UI-009", "Селектор зберігає явно обрану локацію доставки", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-010", "NEW+manage: «Взяти в роботу», «Скасувати»; confirm modal", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-011", "IN_PROGRESS+manage: «Позначити виконаним», booking panel", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-012", "DONE/CANCELLED: лише перегляд + comments", "HIGH", "MAJOR", "UI"),
@@ -129,7 +138,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-12", "TC-ORD-UI-017", "List accent жовтий/зелений + «Підготовлено X/Y»", "HIGH", "MAJOR", "UI"),
     ("AC-12", "TC-ORD-UI-020", "Панель збору: пошук локації, badges покриття, обрати", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-021", "Таблиця Потрібно/Заброньовано/Вільно; default max; зняти бронь", "CRITICAL", "CRITICAL", "UI"),
-    ("AC-12", "TC-ORD-UI-022", "«Відправити» активна лише при повному бронюванні", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-12", "TC-ORD-UI-022", "Часткова бронь: «Відправити» активна лише після «Готово до відправки»", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-023", "/relocation/create-output?orderId=N: фіксовані from/to/lines", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-024", "E2E: create→work→gather→book→prepare→send→DONE", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-025", "Relocation list badge orderId", "HIGH", "MAJOR", "UI"),
@@ -161,7 +170,7 @@ def main() -> int:
             "severity": sev,
             "status": "ACTIVE",
             "testType": ttype,
-            "tags": "orders,req-wms-010",
+            "tags": "orders,req-ord",
             "expectedResult": title,
             "steps": [
                 {"stepOrder": 1, "actionText": f"Виконати сценарій {tid}", "expectedText": title},

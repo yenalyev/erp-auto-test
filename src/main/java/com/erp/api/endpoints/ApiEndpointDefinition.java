@@ -90,6 +90,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    ORDER_PUT_READY_TO_DELIVER(
+            "/api/v1/orders/{id}/ready-to-deliver?storageId={storageId}",
+            Method.PUT,
+            "schemas/orders/order-response-schema.json",
+            "Mark order ready to deliver",
+            null,
+            new TypeReference<OrderResponse>() {},
+            null
+    ),
+
     ORDER_PUT_MARK_DONE(
             "/api/v1/orders/{id}/mark-done?storageId={storageId}",
             Method.PUT,
@@ -198,6 +208,86 @@ public enum ApiEndpointDefinition {
             new TypeReference<OrderCommentRequest>() {},
             new TypeReference<OrderCommentResponse>() {},
             "CREATE_ORDER_COMMENT"
+    ),
+
+    ORDER_GET_LINKED_PRODUCTION_ORDERS(
+            "/api/v1/orders/{id}/production-orders",
+            Method.GET,
+            null,
+            "Get production orders linked to an order",
+            null,
+            null,
+            null
+    ),
+
+    ORDER_GET_ATTACHABLE_PRODUCTION_ORDERS(
+            "/api/v1/orders/{id}/attachable-production-orders?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get production orders that can cover an order shortfall",
+            null,
+            null,
+            null
+    ),
+
+    ORDER_GET_SHORTFALL(
+            "/api/v1/orders/{id}/shortfall?storageId={storageId}",
+            Method.GET,
+            null,
+            "Get uncovered order quantities",
+            null,
+            null,
+            null
+    ),
+
+    ORDER_GET_RELOCATION_TASKS(
+            "/api/v1/orders/{id}/relocation-tasks",
+            Method.GET,
+            null,
+            "Get relocation tasks linked to an order",
+            null,
+            new TypeReference<List<OrderRelocationTaskResponse>>() {},
+            null
+    ),
+
+    ORDER_POST_RELOCATION_TASK(
+            "/api/v1/orders/{id}/relocation-tasks?storageId={storageId}",
+            Method.POST,
+            null,
+            "Create an order relocation task",
+            new TypeReference<OrderRelocationTaskRequest>() {},
+            new TypeReference<OrderRelocationTaskResponse>() {},
+            "CREATE_ORDER_RELOCATION_TASK"
+    ),
+
+    ORDER_PUT_CANCEL_RELOCATION_TASK(
+            "/api/v1/orders/{id}/relocation-tasks/{taskId}/cancel?storageId={storageId}",
+            Method.PUT,
+            null,
+            "Cancel an order relocation task",
+            null,
+            new TypeReference<OrderRelocationTaskResponse>() {},
+            null
+    ),
+
+    ORDER_GET_RELOCATION_TASKS_BY_STORAGES(
+            "/api/v1/orders/relocation-tasks",
+            Method.GET,
+            null,
+            "Get active order relocation tasks for source storages",
+            null,
+            new TypeReference<List<OrderRelocationTaskResponse>>() {},
+            null
+    ),
+
+    ORDER_GET_RELOCATION_TASKS_ACTIVE_COUNT(
+            "/api/v1/orders/relocation-tasks/active-count",
+            Method.GET,
+            null,
+            "Count active order relocation tasks for source storages",
+            null,
+            new TypeReference<Long>() {},
+            null
     ),
 
     // ========================================

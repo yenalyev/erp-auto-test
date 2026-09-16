@@ -8,6 +8,10 @@ import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
 /**
  * Page Object for the orders journal and detail/create dialogs.
  * URL: /orders
@@ -27,9 +31,14 @@ public class OrderListPage extends BasePage {
     private static final String CONFIRM_BUTTON = "Підтвердити";
     private static final String BOOKING_PANEL_TITLE = "Збір замовлення";
     private static final String SEND_ORDER_BUTTON = "Відправити замовлення";
+    private static final String READY_TO_DELIVER_BUTTON = "Готово до доставки";
     private static final String NEW_ORDER_DIALOG_TITLE = "Нове замовлення";
     private static final String CREATE_SUBMIT = "Створити";
     private static final String LINES_VALIDATION = "Додайте хоча б один ресурс";
+    private static final Pattern DELIVERY_STORAGE_PLACEHOLDER = Pattern.compile(
+            "Оберіть (склад|локацію)( доставки)?(?:\\.\\.\\.|…)?", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DELIVERY_STORAGE_LABEL = Pattern.compile(
+            "Куди доставити|Локація доставки|Склад доставки|Місце доставки", Pattern.CASE_INSENSITIVE);
     private static final String RESOURCE_COMBO_PLACEHOLDER = "Оберіть ресурс...";
     private static final String QUANTITY_PLACEHOLDER = "Кількість";
     private static final String COMMENT_PLACEHOLDER = "Додати коментар...";
@@ -192,6 +201,71 @@ public class OrderListPage extends BasePage {
         return orderDialog().getByText(LINES_VALIDATION).isVisible();
     }
 
+    public boolean isDeliveryStorageSelectorVisible() {
+        Locator control = deliveryStorageControl();
+        return control.count() > 0 && control.first().isVisible();
+    }
+
+    public OrderListPage openDeliveryStorageSelector() {
+        Locator control = deliveryStorageControl();
+        control.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        control.click();
+        waitForComboboxOptionsSettled();
+        return this;
+    }
+
+    public List<String> collectDeliveryStorageOptionLabels() {
+        waitForComboboxOptionsSettled();
+        Locator items = page.locator("[data-slot='combobox-item'], [cmdk-item], [role='option']");
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i < items.count(); i++) {
+            Locator item = items.nth(i);
+            if (!item.isVisible()) {
+                continue;
+            }
+            String label = item.innerText().trim();
+            if (!label.isBlank()) {
+                labels.add(label);
+            }
+        }
+        return labels;
+    }
+
+    public List<String> searchAndCollectDeliveryStorageOptions(String searchTerm) {
+        dismissComboboxOverlay();
+        Locator control = deliveryStorageControl();
+        control.click();
+        waitForComboboxOptionsSettled();
+        List<String> labels = collectDeliveryStorageOptionLabels();
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return labels;
+        }
+        String normalizedSearchTerm = searchTerm.toLowerCase();
+        return labels.stream()
+                .filter(label -> label.toLowerCase().contains(normalizedSearchTerm))
+                .toList();
+    }
+
+    public OrderListPage selectDeliveryStorageByName(String storageName) {
+        searchAndCollectDeliveryStorageOptions(storageName);
+        Locator matching = page.locator("[data-slot='combobox-item'], [cmdk-item], [role='option']")
+                .filter(new Locator.FilterOptions().setHasText(storageName));
+        if (matching.count() == 0) {
+            throw new AssertionError("Delivery location «" + storageName + "» is absent from selector");
+        }
+        matching.first().click();
+        return this;
+    }
+
+    public String getSelectedDeliveryStorageLabel() {
+        Locator control = deliveryStorageControl();
+        return "INPUT".equalsIgnoreCase(control.evaluate("element => element.tagName").toString())
+                ? control.inputValue().trim()
+                : control.innerText().trim();
+    }
+
     public OrderListPage fillCreateResourceLine(String resourceNamePart, String quantity) {
         Locator resourceInput = orderDialog().getByPlaceholder(RESOURCE_COMBO_PLACEHOLDER).first();
         String searchTerm = resourceNamePart.length() > 16
@@ -260,10 +334,33 @@ public class OrderListPage extends BasePage {
         return orderDialog().getByText(BOOKING_PANEL_TITLE).isVisible();
     }
 
+    /** Wait for the booking card's own asynchronous API requests to finish. */
+    public OrderListPage waitForBookingPanel() {
+        waitForConditionTolerant(this::isBookingPanelVisible, "order booking panel");
+        return this;
+    }
+
     public boolean isSendOrderEnabled() {
         Locator button = orderDialog()
                 .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(SEND_ORDER_BUTTON));
         return button.count() > 0 && button.isEnabled();
+    }
+
+    public boolean isReadyToDeliverVisible() {
+        Locator button = orderDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(READY_TO_DELIVER_BUTTON));
+        return button.count() > 0 && button.first().isVisible();
+    }
+
+    public OrderListPage markReadyToDeliver() {
+        orderDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(READY_TO_DELIVER_BUTTON))
+                .click();
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Продовжити"))
+                .click();
+        page.waitForCondition(this::isSendOrderEnabled,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
     }
 
     public RelocationCreateOutputPage clickSendOrder() {
@@ -353,6 +450,23 @@ public class OrderListPage extends BasePage {
 
     private Locator createOrderButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON));
+    }
+
+    private Locator deliveryStorageControl() {
+        Locator byPlaceholder = orderDialog().getByPlaceholder(DELIVERY_STORAGE_PLACEHOLDER);
+        if (byPlaceholder.count() > 0) {
+            return byPlaceholder.first();
+        }
+        Locator labelledField = orderDialog().locator("label")
+                .filter(new Locator.FilterOptions().setHasText(DELIVERY_STORAGE_LABEL));
+        if (labelledField.count() > 0) {
+            Locator labelledControl = labelledField.first()
+                    .locator("xpath=following::*[@data-slot='select-trigger' or @role='combobox'][1]");
+            if (labelledControl.count() > 0) {
+                return labelledControl;
+            }
+        }
+        return orderDialog().locator("[data-slot='select-trigger'], [role='combobox']").first();
     }
 
     private Locator journalTableWrapper() {
