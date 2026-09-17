@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 import urllib.error
 import urllib.request
 
-BASE = "http://localhost:8100"
+BASE = os.getenv("TCM_BASE_URL", "http://localhost:8100").rstrip("/")
 PROJECT_ID = 1
-TOKEN = "dev-ai-token"
+TOKEN = os.getenv("TCM_AI_TOKEN", "dev-ai-token")
 FEATURE = "REQ-ORD"
 HDR = {
     "X-TCM-Ai-Token": TOKEN,
@@ -142,7 +143,97 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-12", "TC-ORD-UI-023", "/relocation/create-output?orderId=N: фіксовані from/to/lines", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-024", "E2E: create→work→gather→book→prepare→send→DONE", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-025", "Relocation list badge orderId", "HIGH", "MAJOR", "UI"),
+    # AC-13 multi-actor browser journeys
+    ("AC-13", "TC-ORD-E2E-001", "UI E2E: повне замовлення з локального залишку", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-002", "UI E2E: часткова комплектація після підтвердження готовності", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-003", "UI E2E: поповнення збору запитом на переміщення", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-004", "UI E2E: виробничий дефіцит і виконання виробничого замовлення", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-005", "UI E2E: скасування зайвого запиту і часткова доставка", "HIGH", "MAJOR", "UI"),
+    ("AC-13", "TC-ORD-E2E-006", "UI E2E: локальна бронь і часткове поповнення переміщенням", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-007", "UI E2E: локальна бронь і завершене виробництво дефіциту", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-008", "UI E2E: часткова доставка при незавершеному виробництві", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-009", "UI E2E: автор редагує і видаляє нове замовлення", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-010", "UI E2E: адміністратор скасовує повністю заброньоване замовлення", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-13", "TC-ORD-E2E-011", "UI E2E: автор обмежений у роботі, адміністратор скасовує", "HIGH", "MAJOR", "UI"),
 ]
+
+
+E2E_STEPS: dict[str, list[dict[str, object]]] = {
+    "TC-ORD-E2E-001": [
+        {"stepOrder": 1, "actionText": "Під `Unit_Owner-ROLE` створити замовлення на 5 одиниць із потрібною локацією доставки.", "expectedText": "Замовлення створене у стані «Нове»; фізичні залишки не змінилися."},
+        {"stepOrder": 2, "actionText": "Під `Order_Admin-ROLE` відкрити замовлення, взяти в роботу та обрати локацію збору.", "expectedText": "Стан «В роботі»; доступна панель комплектації."},
+        {"stepOrder": 3, "actionText": "Забронювати всі 5 одиниць із локального залишку збору.", "expectedText": "Створена активна бронь; замовлення автоматично має стан «Готово до доставки»."},
+        {"stepOrder": 4, "actionText": "Перевірити дію відправлення під адміністратором замовлень.", "expectedText": "Адміністратор замовлень не може відправити ресурс замість комірника збору."},
+        {"stepOrder": 5, "actionText": "Під `Unit_Owner-ROLE` локації збору позначити бронь підготовленою та відправити замовлення.", "expectedText": "Створена кінцева видача з фіксованими відправником і отримувачем; замовлення «Виконано»."},
+        {"stepOrder": 6, "actionText": "Під `Unit_Owner-ROLE` локації доставки прийняти видачу.", "expectedText": "Переміщення завершене, ресурс оприбуткований на локації доставки, активних броней немає."},
+    ],
+    "TC-ORD-E2E-002": [
+        {"stepOrder": 1, "actionText": "Створити замовлення на 5 одиниць, маючи лише 2 одиниці на локації збору.", "expectedText": "Замовлення створене у стані «Нове»."},
+        {"stepOrder": 2, "actionText": "Під `Order_Admin-ROLE` взяти його в роботу, призначити збір і забронювати 2 одиниці.", "expectedText": "Замовлення лишається «В роботі»; відправлення недоступне; видно непокритий дефіцит 3."},
+        {"stepOrder": 3, "actionText": "Натиснути «Готово до доставки» та підтвердити часткове виконання.", "expectedText": "Стан «Готово до доставки» попри неповне покриття; адміністратор не отримує права на складську видачу."},
+        {"stepOrder": 4, "actionText": "Під комірником збору відправити лише 2 заброньовані одиниці без обов'язкової позначки «Підготовлено».", "expectedText": "Видача успішна, замовлення «Виконано», невиконана частина не блокує завершення."},
+        {"stepOrder": 5, "actionText": "Прийняти видачу на локації доставки та повторно відкрити замовлення.", "expectedText": "Ресурс прийнято; повторна відправка недоступна; броні `FULFILLED` або `RELEASED`."},
+    ],
+    "TC-ORD-E2E-003": [
+        {"stepOrder": 1, "actionText": "Створити замовлення на 5 одиниць при нульовому залишку на зборі та 5 одиницях на іншій локації.", "expectedText": "Замовлення створене; запас існує тільки на локації-джерелі."},
+        {"stepOrder": 2, "actionText": "Під `Order_Admin-ROLE` взяти замовлення в роботу, призначити збір і створити запит на переміщення 5 одиниць із джерела.", "expectedText": "Запит `NEW`; 5 одиниць зарезервовано на джерелі."},
+        {"stepOrder": 3, "actionText": "Під комірником джерела з `Unit_Owner-ROLE` відкрити пряму форму запиту `/relocation/create-output?relocationTaskId=…` і підтвердити видачу на збір.", "expectedText": "Task-форма доступна; загальний `/production-tasks` не потрібний для цієї ролі; запит `SHIPPED`, переміщення в дорозі."},
+        {"stepOrder": 4, "actionText": "Під комірником збору прийняти вхідне переміщення.", "expectedText": "Запит `DONE`; ресурс на зборі автоматично заброньований; замовлення «Готово до доставки»."},
+        {"stepOrder": 5, "actionText": "Підготувати та відправити замовлення зі збору, потім прийняти його замовником.", "expectedText": "Кінцева видача завершена, замовлення «Виконано», ресурс на локації доставки."},
+    ],
+    "TC-ORD-E2E-004": [
+        {"stepOrder": 1, "actionText": "Створити замовлення на вироблюваний ресурс без залишку; під `Order_Admin-ROLE` взяти його в роботу й призначити виробничу локацію збору.", "expectedText": "У панелі дефіциту ресурс доступний для виробництва."},
+        {"stepOrder": 2, "actionText": "Відкрити створення ВЗ під `Order_Admin-ROLE`.", "expectedText": "Адміністратор замовлень бачить дефіцит, але кнопка нового ВЗ недоступна."},
+        {"stepOrder": 3, "actionText": "Під глобальним Admin створити попередньо заповнене ВЗ із картки замовлення, розподілити та згенерувати завдання.", "expectedText": "ВЗ прив'язане до замовлення; завдання створене для потрібної виробничої локації."},
+        {"stepOrder": 4, "actionText": "Під виконавцем виробничої локації виконати згенероване завдання.", "expectedText": "Продукція оприбуткована на зборі та автоматично заброньована під замовлення; стан «Готово до доставки»."},
+        {"stepOrder": 5, "actionText": "Під комірником збору відправити замовлення, під замовником прийняти.", "expectedText": "Замовлення і пов'язане переміщення завершені, продукція на локації доставки."},
+    ],
+    "TC-ORD-E2E-005": [
+        {"stepOrder": 1, "actionText": "Створити замовлення на 5 одиниць: 2 на зборі, 3 на іншій локації.", "expectedText": "Замовлення створене у стані «Нове»."},
+        {"stepOrder": 2, "actionText": "Під `Order_Admin-ROLE` взяти в роботу, призначити збір, створити запит на 3 одиниці та забронювати локальні 2.", "expectedText": "Запит `NEW`, резерв джерела 3; активна локальна бронь 2; замовлення «В роботі»."},
+        {"stepOrder": 3, "actionText": "Скасувати ще не відправлений запит на переміщення.", "expectedText": "Запит `CANCELLED`; резерв джерела повністю звільнений."},
+        {"stepOrder": 4, "actionText": "Підтвердити «Готово до доставки» для локальних 2 одиниць.", "expectedText": "Замовлення готове до часткової доставки без активної зайвої залежності."},
+        {"stepOrder": 5, "actionText": "Відправити зі збору та прийняти на локації доставки.", "expectedText": "Часткова видача завершена; замовлення «Виконано»; активних броней і резерву скасованого запиту немає."},
+    ],
+    "TC-ORD-E2E-006": [
+        {"stepOrder": 1, "actionText": "Створити замовлення на 5 одиниць: 2 одиниці на зборі та 3 на іншій локації.", "expectedText": "Замовлення створене у стані «Нове»."},
+        {"stepOrder": 2, "actionText": "Взяти замовлення в роботу, обрати збір і забронювати локальні 2 одиниці.", "expectedText": "Активна локальна бронь дорівнює 2; дефіцит дорівнює 3."},
+        {"stepOrder": 3, "actionText": "Створити запит на переміщення 3 одиниць, відправити їх із джерела та прийняти на зборі.", "expectedText": "Запит `DONE`; загальна активна бронь автоматично зросла до 5."},
+        {"stepOrder": 4, "actionText": "Відправити повністю скомплектоване замовлення та прийняти його замовником.", "expectedText": "Видано 5 одиниць; замовлення «Виконано»."},
+    ],
+    "TC-ORD-E2E-007": [
+        {"stepOrder": 1, "actionText": "Створити замовлення на 5 вироблюваних одиниць при локальному залишку 2.", "expectedText": "Замовлення створене; доступні 2 одиниці та дефіцит 3."},
+        {"stepOrder": 2, "actionText": "Взяти замовлення в роботу, призначити виробничий збір і забронювати 2 одиниці.", "expectedText": "Активна бронь дорівнює 2."},
+        {"stepOrder": 3, "actionText": "Під Admin створити й згенерувати ВЗ на 3 одиниці, під виробником виконати задачу.", "expectedText": "ВЗ `DONE`; результат автоматично заброньований, загальна бронь дорівнює 5."},
+        {"stepOrder": 4, "actionText": "Відправити замовлення зі збору та прийняти на локації доставки.", "expectedText": "Замовлення повністю видане й має стан «Виконано»."},
+    ],
+    "TC-ORD-E2E-008": [
+        {"stepOrder": 1, "actionText": "Створити замовлення на 5 вироблюваних одиниць, призначити збір і забронювати локальні 2.", "expectedText": "Активна бронь дорівнює 2; дефіцит дорівнює 3."},
+        {"stepOrder": 2, "actionText": "Створити й згенерувати ВЗ на 3 одиниці, але не виконувати виробничу задачу.", "expectedText": "ВЗ не має стану `DONE`; активна бронь замовлення залишається 2."},
+        {"stepOrder": 3, "actionText": "Під адміністратором підтвердити часткову готовність, відправити 2 одиниці та прийняти їх.", "expectedText": "Замовлення «Виконано», а ВЗ залишається незавершеним."},
+    ],
+    "TC-ORD-E2E-009": [
+        {"stepOrder": 1, "actionText": "Під автором створити й повторно відкрити нове замовлення.", "expectedText": "Замовлення має стан «Нове»; доступна дія редагування."},
+        {"stepOrder": 2, "actionText": "Перевірити дію видалення/скасування та підтвердити її.", "expectedText": "Дія доступна автору; замовлення переходить у `CANCELLED`."},
+    ],
+    "TC-ORD-E2E-010": [
+        {"stepOrder": 1, "actionText": "Створити замовлення на 5 одиниць, взяти в роботу, обрати збір і повністю забронювати.", "expectedText": "Замовлення «Готово до доставки»; активна бронь дорівнює 5."},
+        {"stepOrder": 2, "actionText": "Під `Order_Admin-ROLE` скасувати замовлення.", "expectedText": "Замовлення `CANCELLED`; активна бронь повністю звільнена."},
+    ],
+    "TC-ORD-E2E-011": [
+        {"stepOrder": 1, "actionText": "Створити замовлення, взяти його в роботу та частково забронювати.", "expectedText": "Замовлення має стан «В роботі»."},
+        {"stepOrder": 2, "actionText": "Під автором повторно відкрити замовлення.", "expectedText": "Дії редагування і видалення/скасування автору недоступні."},
+        {"stepOrder": 3, "actionText": "Під `Order_Admin-ROLE` скасувати замовлення.", "expectedText": "Адміністратор бачить дію; замовлення переходить у `CANCELLED`."},
+    ],
+}
+
+AC_DEFINITIONS = {
+    "AC-13": (
+        "Наскрізні багаторольові UI-флоу замовлення: повне й часткове виконання, "
+        "поповнення зі сторонньої локації, виробничий дефіцит, скасування залежностей "
+        "та права автора й адміністратора на різних етапах життєвого циклу."
+    ),
+}
 
 
 def post(path: str, body: dict) -> dict:
@@ -159,8 +250,31 @@ def post(path: str, body: dict) -> dict:
 
 def main() -> int:
     ok = fail = skip = 0
-    for ac, tid, title, prio, sev, ttype in CASES:
-        is_ui = tid.startswith("TC-ORD-UI-") or tid in ("TC-ORD-101", "TC-ORD-102")
+    test_id_prefix = os.getenv("TCM_TEST_ID_PREFIX", "").strip()
+    selected_cases = [
+        case for case in CASES
+        if not test_id_prefix or case[1].startswith(test_id_prefix)
+    ]
+    required_ac_keys = {case[0] for case in selected_cases}
+    for ac_key, text in AC_DEFINITIONS.items():
+        if ac_key not in required_ac_keys:
+            continue
+        try:
+            created = post(
+                f"/api/ai/projects/{PROJECT_ID}/acceptance-criteria",
+                {"featureId": FEATURE, "acKey": ac_key, "text": text},
+            )
+            print("OK", created.get("acId") or ac_key, "->", created.get("id"))
+        except RuntimeError as e:
+            msg = str(e)
+            if "already" in msg.lower() or "exists" in msg.lower() or "вже існує" in msg.lower():
+                print("SKIP", ac_key, "already exists")
+            else:
+                raise
+    for ac, tid, title, prio, sev, ttype in selected_cases:
+        is_ui = (tid.startswith("TC-ORD-UI-")
+                 or tid.startswith("TC-ORD-E2E-")
+                 or tid in ("TC-ORD-101", "TC-ORD-102"))
         body = {
             "featureId": FEATURE,
             "acKey": ac,
@@ -172,9 +286,9 @@ def main() -> int:
             "testType": ttype,
             "tags": "orders,req-ord",
             "expectedResult": title,
-            "steps": [
+            "steps": E2E_STEPS.get(tid, [
                 {"stepOrder": 1, "actionText": f"Виконати сценарій {tid}", "expectedText": title},
-            ],
+            ]),
         }
         if is_ui:
             body["uiAutomationIds"] = [tid]
@@ -192,7 +306,7 @@ def main() -> int:
             else:
                 print("FAIL", tid, msg[:300])
                 fail += 1
-    print(f"done ok={ok} skip={skip} fail={fail} total={len(CASES)}")
+    print(f"done ok={ok} skip={skip} fail={fail} total={len(selected_cases)}")
     return 0 if fail == 0 else 1
 
 

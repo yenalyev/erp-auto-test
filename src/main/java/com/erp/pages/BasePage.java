@@ -8,6 +8,7 @@ import com.microsoft.playwright.Response;
 import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.WaitForSelectorState;
+import com.microsoft.playwright.options.WaitUntilState;
 import io.qameta.allure.Allure;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,7 +42,12 @@ public abstract class BasePage {
     public void navigateTo(String url, String label) {
         Allure.step("Перехід: " + label, () -> {
             log.info("Navigating to [{}]: {}", label, url);
-            page.navigate(url);
+            // Dev occasionally keeps non-critical assets open long enough for
+            // Playwright's default `load` wait to time out. Page objects have
+            // their own readiness gates, so DOMContentLoaded is the right
+            // navigation boundary here.
+            page.navigate(url, new Page.NavigateOptions()
+                    .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
             Allure.link(label, url);
             Allure.parameter("URL", url);
         });
@@ -50,7 +56,8 @@ public abstract class BasePage {
     /** Navigate to the given path without Allure reporting. */
     public void navigateTo(String path) {
         log.debug("Navigating to: {}", path);
-        page.navigate(path);
+        page.navigate(path, new Page.NavigateOptions()
+                .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
     }
 
     /**
@@ -156,12 +163,14 @@ public abstract class BasePage {
             if (options.count() > 0) {
                 return true;
             }
-            Locator empty = page.getByText("Не знайдено");
-            if (empty.count() > 0 && empty.isVisible()) {
+            Locator empty = page.getByText("Не знайдено",
+                    new Page.GetByTextOptions().setExact(true));
+            if (empty.count() > 0 && empty.first().isVisible()) {
                 return true;
             }
-            Locator emptyAlt = page.getByText("Нічого не знайдено");
-            return emptyAlt.count() > 0 && emptyAlt.isVisible();
+            Locator emptyAlt = page.getByText("Нічого не знайдено",
+                    new Page.GetByTextOptions().setExact(true));
+            return emptyAlt.count() > 0 && emptyAlt.first().isVisible();
         }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
     }
 

@@ -3,6 +3,7 @@ package com.erp.pages;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Response;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -197,6 +198,28 @@ public class OrderListPage extends BasePage {
         return this;
     }
 
+    /** Submit the create form and return the id from the detail dialog opened by the UI. */
+    public long submitCreateDialogAndGetOrderId() {
+        Locator submit = orderDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CREATE_SUBMIT));
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/orders") && "POST".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                submit::click);
+        requireSuccess(response, "Create order");
+
+        Locator heading = page.getByRole(AriaRole.HEADING,
+                new Page.GetByRoleOptions().setName(Pattern.compile("^Замовлення #\\d+$")));
+        heading.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        java.util.regex.Matcher matcher = Pattern.compile("#(\\d+)").matcher(heading.innerText());
+        if (!matcher.find()) {
+            throw new IllegalStateException("Created order id is absent from heading: " + heading.innerText());
+        }
+        return Long.parseLong(matcher.group(1));
+    }
+
     public boolean isCreateValidationVisible() {
         return orderDialog().getByText(LINES_VALIDATION).isVisible();
     }
@@ -259,6 +282,15 @@ public class OrderListPage extends BasePage {
         return this;
     }
 
+    /** Keep the auto-selected single location, otherwise choose the requested delivery location. */
+    public OrderListPage ensureDeliveryStorageSelected(String storageName) {
+        String selected = getSelectedDeliveryStorageLabel();
+        if (selected != null && selected.contains(storageName)) {
+            return this;
+        }
+        return selectDeliveryStorageByName(storageName);
+    }
+
     public String getSelectedDeliveryStorageLabel() {
         Locator control = deliveryStorageControl();
         return "INPUT".equalsIgnoreCase(control.evaluate("element => element.tagName").toString())
@@ -267,12 +299,27 @@ public class OrderListPage extends BasePage {
     }
 
     public OrderListPage fillCreateResourceLine(String resourceNamePart, String quantity) {
-        Locator resourceInput = orderDialog().getByPlaceholder(RESOURCE_COMBO_PLACEHOLDER).first();
+        // The shared Autocomplete is a <button role="combobox">.  Its visible
+        // placeholder is not exposed as an accessible name in every browser
+        // build used on dev, so match the actual trigger text as well.
+        Locator resourceTrigger = orderDialog().locator("button[role='combobox']")
+                .filter(new Locator.FilterOptions().setHasText(RESOURCE_COMBO_PLACEHOLDER));
+        if (resourceTrigger.count() == 0) {
+            resourceTrigger = orderDialog().locator("button[role='combobox']")
+                    .filter(new Locator.FilterOptions().setHasText("Оберіть ресурс"));
+        }
+        resourceTrigger.first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         String searchTerm = resourceNamePart.length() > 16
                 ? resourceNamePart.substring(0, 16)
                 : resourceNamePart;
-        resourceInput.click();
-        resourceInput.fill(searchTerm);
+        resourceTrigger.first().click();
+        Locator search = page.getByPlaceholder("Пошук...").last();
+        search.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        search.fill(searchTerm);
         waitForComboboxOptionsSettled();
         page.locator("[data-slot='combobox-item'], [cmdk-item], [role='option']")
                 .filter(new Locator.FilterOptions().setHasText(resourceNamePart))
@@ -310,10 +357,153 @@ public class OrderListPage extends BasePage {
         confirmActionModal().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        confirmActionModal()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CONFIRM_BUTTON))
-                .click();
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/take-to-work") && "PUT".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                () -> confirmActionModal()
+                        .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CONFIRM_BUTTON))
+                        .click());
+        requireSuccess(response, "Take order to work");
+        waitForBookingPanel();
         return this;
+    }
+
+    public OrderListPage selectGatheringStorage(String storageName) {
+        Locator dialog = orderDialog();
+        Locator candidate = dialog.locator("button")
+                .filter(new Locator.FilterOptions().setHasText(storageName))
+                .first();
+        candidate.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        candidate.click();
+        Locator submit = dialog.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Обрати локацію збору"));
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/gathering-storage") && "PUT".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                submit::click);
+        requireSuccess(response, "Select gathering storage");
+        // Label and value are rendered by separate siblings, so a regexp over
+        // their concatenated text does not match.  The selected value itself
+        // is repeated in the summary and booking panel.
+        dialog.getByText(storageName, new Locator.GetByTextOptions().setExact(true)).first()
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public OrderListPage bookResource(String resourceName, double amount) {
+        Locator row = bookingRowForResource(resourceName);
+        row.locator("input[type='number']").fill(formatAmount(amount));
+        Locator button = row.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Забронювати"));
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/bookings") && "POST".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                button::click);
+        requireSuccess(response, "Book order resource");
+        orderDialog().getByText("Активні броні",
+                        new Locator.GetByTextOptions().setExact(true))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public OrderListPage markBookingPrepared(String resourceName) {
+        Locator button = orderDialog().getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Підготовлено").setExact(true)).first();
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/prepared") && "PUT".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                button::click);
+        requireSuccess(response, "Mark booking prepared");
+        page.waitForCondition(this::isSendOrderEnabled,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public long createRelocationTask(String sourceStorageName, String resourceName, double amount) {
+        orderDialog().getByRole(AriaRole.BUTTON,
+                        new Locator.GetByRoleOptions().setName("Замовити переміщення"))
+                .click();
+        Locator taskDialog = page.getByRole(AriaRole.DIALOG)
+                .filter(new Locator.FilterOptions().setHas(
+                        page.getByRole(AriaRole.HEADING,
+                                new Page.GetByRoleOptions().setName("Запит на переміщення"))));
+        taskDialog.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        taskDialog.locator("button")
+                .filter(new Locator.FilterOptions().setHasText(sourceStorageName))
+                .first()
+                .click();
+        Locator resourceLabel = taskDialog.getByText(resourceName,
+                new Locator.GetByTextOptions().setExact(true));
+        Locator line = resourceLabel.first().locator("xpath=..");
+        line.locator("input[type='number']").fill(formatAmount(amount));
+        Locator submit = taskDialog.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Створити запит"));
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/relocation-tasks") && "POST".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                submit::click);
+        requireSuccess(response, "Create order relocation task");
+        java.util.regex.Matcher id = Pattern.compile("\\\"id\\\"\\s*:\\s*(\\d+)").matcher(response.text());
+        if (!id.find()) {
+            throw new IllegalStateException("Relocation task id is absent from response: " + response.text());
+        }
+        long taskId = Long.parseLong(id.group(1));
+        orderDialog().getByText("Запит №" + taskId)
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return taskId;
+    }
+
+    public OrderListPage cancelRelocationTask(long taskId) {
+        Locator taskCard = orderDialog().locator("div")
+                .filter(new Locator.FilterOptions().setHasText("Запит №" + taskId))
+                .filter(new Locator.FilterOptions().setHas(
+                        page.getByRole(AriaRole.BUTTON,
+                                new Page.GetByRoleOptions().setName("Скасувати").setExact(true))))
+                .last();
+        taskCard.getByRole(AriaRole.BUTTON,
+                        new Locator.GetByRoleOptions().setName("Скасувати").setExact(true))
+                .click();
+        Locator confirm = page.getByRole(AriaRole.ALERTDIALOG);
+        Locator cancel = confirm.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Скасувати запит"));
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/relocation-tasks/" + taskId + "/cancel")
+                        && "PUT".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                cancel::click);
+        requireSuccess(response, "Cancel order relocation task");
+        return this;
+    }
+
+    public OrderListPage openProductionShortfallDialog() {
+        orderDialog().getByRole(AriaRole.BUTTON,
+                        new Locator.GetByRoleOptions().setName("Замовити виробництво"))
+                .click();
+        page.getByRole(AriaRole.HEADING,
+                        new Page.GetByRoleOptions().setName("Виробництво нестачі"))
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isNewProductionOrderEnabled() {
+        Locator button = page.getByRole(AriaRole.DIALOG)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Нове ВЗ"));
+        return button.count() > 0 && button.isEnabled();
+    }
+
+    public ProductionOrderWizardPage clickNewProductionOrder() {
+        page.getByRole(AriaRole.DIALOG)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Нове ВЗ"))
+                .click();
+        return new ProductionOrderWizardPage(page).waitForCreateLoaded();
     }
 
     public OrderListPage clickCancelOrder() {
@@ -321,12 +511,20 @@ public class OrderListPage extends BasePage {
                 .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CANCEL_ORDER_BUTTON))
                 .first()
                 .click();
-        confirmActionModal().waitFor(new Locator.WaitForOptions()
+        Locator confirmation = confirmActionModal();
+        confirmation.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        confirmActionModal()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CONFIRM_BUTTON))
-                .click();
+        Locator confirmButton = confirmation
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CONFIRM_BUTTON));
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/orders/")
+                        && r.url().contains("/cancel")
+                        && "PUT".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                confirmButton::click);
+        requireSuccess(response, "Cancel order");
+        waitForOrderState("Скасовано");
         return this;
     }
 
@@ -356,11 +554,34 @@ public class OrderListPage extends BasePage {
         orderDialog()
                 .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(READY_TO_DELIVER_BUTTON))
                 .click();
-        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Продовжити"))
-                .click();
-        page.waitForCondition(this::isSendOrderEnabled,
+        Locator continueButton = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Продовжити"));
+        Response response = page.waitForResponse(
+                r -> r.url().contains("/ready-to-deliver") && "PUT".equals(r.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                continueButton::click);
+        requireSuccess(response, "Mark order ready to deliver");
+        waitForOrderState("Готово до доставки");
+        return this;
+    }
+
+    public OrderListPage waitForOrderState(String stateLabel) {
+        page.waitForCondition(
+                () -> isOrderStateVisible(stateLabel),
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
+    }
+
+    public boolean isOrderStateVisible(String stateLabel) {
+        Locator label = orderDialog().getByText(stateLabel,
+                new Locator.GetByTextOptions().setExact(true));
+        return label.count() > 0 && label.first().isVisible();
+    }
+
+    public boolean isSendOrderVisible() {
+        Locator button = orderDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(SEND_ORDER_BUTTON));
+        return button.count() > 0 && button.first().isVisible();
     }
 
     public RelocationCreateOutputPage clickSendOrder() {
@@ -407,6 +628,12 @@ public class OrderListPage extends BasePage {
                 && orderDialog().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Зберегти")).isVisible();
     }
 
+    public boolean isEditOrderVisible() {
+        Locator editButton = orderDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Редагувати"));
+        return editButton.count() > 0 && editButton.first().isVisible();
+    }
+
     public boolean isMarkDoneVisible() {
         return orderDialog()
                 .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Позначити виконаним"))
@@ -414,9 +641,9 @@ public class OrderListPage extends BasePage {
     }
 
     public boolean isCancelOrderVisible() {
-        return orderDialog()
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CANCEL_ORDER_BUTTON))
-                .count() > 0;
+        Locator cancelButton = orderDialog()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CANCEL_ORDER_BUTTON));
+        return cancelButton.count() > 0 && cancelButton.first().isVisible();
     }
 
     public boolean isCommentComposerVisible() {
@@ -450,6 +677,26 @@ public class OrderListPage extends BasePage {
 
     private Locator createOrderButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON));
+    }
+
+    private Locator bookingRowForResource(String resourceName) {
+        return orderDialog().locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(resourceName))
+                .filter(new Locator.FilterOptions().setHas(
+                        page.getByRole(AriaRole.BUTTON,
+                                new Page.GetByRoleOptions().setName("Забронювати"))))
+                .first();
+    }
+
+    private static String formatAmount(double amount) {
+        return amount == Math.rint(amount) ? String.valueOf((long) amount) : String.valueOf(amount);
+    }
+
+    private static void requireSuccess(Response response, String action) {
+        if (response.status() < 200 || response.status() >= 300) {
+            throw new IllegalStateException(action + " failed: HTTP " + response.status()
+                    + ", body=" + response.text());
+        }
     }
 
     private Locator deliveryStorageControl() {

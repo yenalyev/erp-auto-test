@@ -145,7 +145,9 @@ public class ProductionGroupUiFixture implements AutoCloseable {
         for (long id : List.copyOf(orderIds)) {
             String state = getOrder(id).jsonPath().getString("state");
             if ("NEW".equals(state)) ok(orders.deleteRaw(UserRole.ADMIN, id));
-            else if ("IN_PROGRESS".equals(state)) orders.cancel(UserRole.ADMIN, id);
+            else if ("IN_PROGRESS".equals(state) || "READY_TO_DELIVER".equals(state)) {
+                orders.cancel(UserRole.ADMIN, id);
+            }
             else assertThat(state).as("Cleanup order %s state", id).isEqualTo("CANCELLED");
             orderIds.remove(id);
         }

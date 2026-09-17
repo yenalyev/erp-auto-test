@@ -3,6 +3,7 @@ package com.erp.pages;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Response;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.SelectOption;
@@ -224,6 +225,26 @@ public class ProductionCreateFormPage extends BasePage {
     public ProductionCreateFormPage submit() {
         submitButton().click();
         page.waitForTimeout(1000);
+        return this;
+    }
+
+    public ProductionCreateFormPage waitUntilSubmitEnabled() {
+        page.waitForCondition(this::isSubmitEnabled,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public ProductionCreateFormPage submitExpectSuccess() {
+        Response response = page.waitForResponse(
+                r -> "POST".equals(r.request().method()) && r.url().contains("/productions"),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                submitButton()::click);
+        if (response.status() < 200 || response.status() >= 300) {
+            throw new IllegalStateException("Create production failed: HTTP " + response.status()
+                    + ", body=" + response.text());
+        }
+        page.waitForURL(url -> url.contains("/production") && !url.contains("createProduction"),
+                new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
 

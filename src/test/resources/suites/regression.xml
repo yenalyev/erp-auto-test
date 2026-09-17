@@ -341,6 +341,7 @@
             <class name="com.erp.tests.ui.OrderDetailUiTest"/>
             <class name="com.erp.tests.ui.OrderBookingUiTest"/>
             <class name="com.erp.tests.ui.OrderFreeStockUiTest"/>
+            <class name="com.erp.tests.ui.OrderEndToEndUiTest"/>
         </classes>
     </test>
 

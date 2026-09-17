@@ -14,6 +14,7 @@ import com.erp.enums.UserRole;
 import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.query.RelocationJournalQuery;
@@ -57,6 +58,7 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
     private RelocationFixture relocations;
     private StorageFixture storages;
     private StorageFixture rootStorages;
+    private StorageRegionFixture regions;
     private LocationProfileFixture locationProfiles;
     private UserFixture users;
     private Long resourceId;
@@ -65,12 +67,15 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
     private Actor tsukWarehouse;
     private Actor otherParent;
     private Actor root;
+    private StorageResponse flyPoint1;
+    private StorageResponse flyPoint2;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void prepareActors() {
         relocations = new RelocationFixture(testContext, apiExecutor);
         storages = new StorageFixture(testContext, apiExecutor);
         rootStorages = new StorageFixture(testContext, apiExecutor);
+        regions = new StorageRegionFixture(testContext, apiExecutor);
         locationProfiles = new LocationProfileFixture(testContext, apiExecutor);
         users = new UserFixture(testContext, apiExecutor);
         relocations.prepareContext();
@@ -89,9 +94,24 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         StorageResponse nestedTsukWarehouse = storages.createChildStorage(
                 warehouseSet.locations().getFirst().getId(), "rel-date-tsuk-descendant-");
         assertThat(nestedTsukWarehouse.getParent().getId()).isNotEqualTo(tsukParentId);
+        flyPoint1 = storages.createFlyPointStorage(
+                nestedTsukWarehouse.getId(), "rel-date-tsuk-fp1-");
+        flyPoint2 = storages.createFlyPointStorage(
+                nestedTsukWarehouse.getId(), "rel-date-tsuk-fp2-");
+        var flyPointRegion = regions.createRegion(
+                nestedTsukWarehouse, StorageAccessMode.CREWS, "rel-date-tsuk-fp-region-");
+        regions.addRegionMembers(flyPointRegion.getId(), nestedTsukWarehouse.getId());
+        regions.addRegionLocations(flyPointRegion.getId(),
+                nestedTsukWarehouse.getId(), flyPoint1.getId(), flyPoint2.getId());
         tsukWarehouse = createActor(BusinessRole.UNIT_KOMIRNIK,
                 TSUK_WAREHOUSE_SLOT, nestedTsukWarehouse);
         assertThat(tsukWarehouse.insideTsukHierarchy()).isTrue();
+        assertThat(UnitType.valueOf(flyPoint1.getType())).isEqualTo(UnitType.FLY_POINT);
+        assertThat(UnitType.valueOf(flyPoint2.getType())).isEqualTo(UnitType.FLY_POINT);
+        assertThat(hasTsukAncestor(flyPoint1)).isTrue();
+        assertThat(hasTsukAncestor(flyPoint2)).isTrue();
+        relocations.createSendAndFinishBySender(UserRole.ADMIN,
+                nestedTsukWarehouse.getId(), flyPoint1.getId(), resourceId, 100.0);
 
         StorageResponse keeperStorage = locationProfiles
                 .create(LocationProfile.BATTALION_WARENHAUSE_UNIT, 1).locations().getFirst();
@@ -118,9 +138,7 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
             apiExecutor.evictSessionForRole(slot);
         }
         if (users != null) users.deactivateTrackedUsers();
-        if (storages != null && !TestArtifactCleanup.shouldSkipApiCleanup()) {
-            storages.deactivateTrackedStorages(UserRole.ADMIN);
-        }
+        TestArtifactCleanup.cleanupRegionsAndStorages(regions, storages);
         if (locationProfiles != null && !TestArtifactCleanup.shouldSkipApiCleanup()) {
             locationProfiles.cleanup();
         }
@@ -435,6 +453,119 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         assertCannotEditSendToFutureDate(tsukProduction, UserRole.ADMIN);
     }
 
+    @Test
+    @TestCaseId(value = "TC-REL-DATE-018", roles = BusinessRole.UNIT_KOMIRNIK,
+            locationProfiles = LocationProfile.TSUK_WARENHAUSE)
+    @Description("Комірник створює переміщення FP1 → FP2 з датою вчора в TSUK-ієрархії.")
+    public void warehouseKeeperCanCreateYesterdayBetweenFlyPoints() {
+        identifyFlyPointTransfer();
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+
+        RelocationResponse created = send(tsukWarehouse.role(), flyPoint1.getId(), flyPoint2.getId(),
+                yesterday, marker("fp-create-yesterday"));
+
+        assertThat(created.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(created.getDate()).isEqualTo(yesterday);
+    }
+
+    @Test
+    @TestCaseId(value = "TC-REL-DATE-019", roles = BusinessRole.UNIT_KOMIRNIK,
+            locationProfiles = LocationProfile.TSUK_WARENHAUSE)
+    @Description("Комірник не може створити переміщення FP1 → FP2 з датою позавчора в TSUK-ієрархії.")
+    public void warehouseKeeperCannotCreateTwoDaysAgoBetweenFlyPoints() {
+        identifyFlyPointTransfer();
+        double before = stock(flyPoint1.getId());
+        Response response = relocations.sendRaw(tsukWarehouse.role(), sendRequest(
+                flyPoint1.getId(), flyPoint2.getId(), LocalDate.now().minusDays(2),
+                marker("fp-create-expired")));
+
+        assertDateLimit(response);
+        assertThat(stock(flyPoint1.getId())).isCloseTo(before, offset(0.01));
+    }
+
+    @Test
+    @TestCaseId(value = "TC-REL-DATE-020", roles = BusinessRole.UNIT_KOMIRNIK,
+            locationProfiles = LocationProfile.TSUK_WARENHAUSE)
+    @Description("Комірник редагує вчорашнє переміщення FP1 → FP2 у TSUK-ієрархії.")
+    public void warehouseKeeperCanEditYesterdayBetweenFlyPoints() {
+        identifyFlyPointTransfer();
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        RelocationResponse sent = send(UserRole.ADMIN, flyPoint1.getId(), flyPoint2.getId(),
+                yesterday, marker("fp-edit-yesterday"));
+        String changedDescription = marker("fp-edited-yesterday");
+
+        RelocationResponse updated = relocations.editSend(
+                tsukWarehouse.role(), sent.getId(), flyPoint1.getId(),
+                editRequest(yesterday, changedDescription));
+
+        assertThat(updated.getId()).isEqualTo(sent.getId());
+        assertThat(updated.getDate()).isEqualTo(yesterday);
+        assertThat(updated.getDescription()).isEqualTo(changedDescription);
+        assertThat(updated.getState()).isEqualTo(RelocationState.CREATED);
+        assertThat(updated.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(3));
+    }
+
+    @Test
+    @TestCaseId(value = "TC-REL-DATE-021", roles = BusinessRole.UNIT_KOMIRNIK,
+            locationProfiles = LocationProfile.TSUK_WARENHAUSE)
+    @Description("Комірник не може передатувати старе переміщення FP1 → FP2 на сьогодні.")
+    public void warehouseKeeperCannotEditTwoDaysAgoBetweenFlyPoints() {
+        identifyFlyPointTransfer();
+        LocalDate issueDate = LocalDate.now().minusDays(2);
+        RelocationResponse sent = send(UserRole.ADMIN, flyPoint1.getId(), flyPoint2.getId(),
+                issueDate, marker("fp-edit-expired"));
+        double before = stock(flyPoint1.getId());
+
+        Response response = relocations.editSendRaw(
+                tsukWarehouse.role(), sent.getId(), flyPoint1.getId(),
+                editRequest(LocalDate.now(), marker("fp-edited-late")));
+
+        assertDateLimit(response);
+        assertFlyPointRelocationUnchanged(sent, issueDate, before);
+    }
+
+    @Test
+    @TestCaseId(value = "TC-REL-DATE-022", roles = BusinessRole.UNIT_KOMIRNIK,
+            locationProfiles = LocationProfile.TSUK_WARENHAUSE)
+    @Description("Комірник не може створити переміщення FP1 → FP2 з датою завтра.")
+    public void warehouseKeeperCannotCreateFutureSendBetweenFlyPoints() {
+        identifyFlyPointTransfer();
+        double before = stock(flyPoint1.getId());
+        Response response = relocations.sendRaw(tsukWarehouse.role(), sendRequest(
+                flyPoint1.getId(), flyPoint2.getId(), LocalDate.now().plusDays(1),
+                marker("fp-create-future")));
+        returnUnexpectedSend(response, flyPoint1.getId(), flyPoint2.getId());
+
+        assertInvalidDate(response);
+        assertThat(stock(flyPoint1.getId())).isCloseTo(before, offset(0.01));
+    }
+
+    @Test
+    @TestCaseId(value = "TC-REL-DATE-023", roles = BusinessRole.UNIT_KOMIRNIK,
+            locationProfiles = LocationProfile.TSUK_WARENHAUSE)
+    @Description("Комірник не може змінити дату переміщення FP1 → FP2 на завтра.")
+    public void warehouseKeeperCannotEditSendToFutureDateBetweenFlyPoints() {
+        identifyFlyPointTransfer();
+        LocalDate today = LocalDate.now();
+        RelocationResponse sent = send(UserRole.ADMIN, flyPoint1.getId(), flyPoint2.getId(),
+                today, marker("fp-edit-future"));
+        double before = stock(flyPoint1.getId());
+        try {
+            Response response = relocations.editSendRaw(
+                    tsukWarehouse.role(), sent.getId(), flyPoint1.getId(),
+                    editRequest(today.plusDays(1), marker("fp-edited-future")));
+
+            assertInvalidDate(response);
+            assertFlyPointRelocationUnchanged(sent, today, before);
+        } finally {
+            relocations.resolve(UserRole.ADMIN, sent.getId(), flyPoint2.getId(),
+                    RelocationState.CANCELLED);
+            relocations.resolve(UserRole.ADMIN, sent.getId(), flyPoint1.getId(),
+                    RelocationState.RETURNED);
+        }
+    }
+
     private void assertCannotEditSendToFutureDate(Actor actor, UserRole editingRole) {
         LocalDate today = LocalDate.now();
         RelocationResponse sent = send(UserRole.ADMIN, actor.senderId(), actor.recipientId(),
@@ -458,6 +589,28 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
             relocations.resolve(UserRole.ADMIN, sent.getId(), actor.senderId(),
                     RelocationState.RETURNED);
         }
+    }
+
+    private void assertFlyPointRelocationUnchanged(
+            RelocationResponse sent, LocalDate expectedDate, double expectedStock) {
+        RelocationResponse unchanged = relocations.findInTransitById(
+                UserRole.ADMIN, flyPoint1.getId(), sent.getId());
+        assertThat(unchanged).isNotNull();
+        assertThat(unchanged.getDate()).isEqualTo(expectedDate);
+        assertThat(unchanged.getDescription()).isEqualTo(sent.getDescription());
+        assertThat(unchanged.getItems().getFirst().getAmount())
+                .isEqualByComparingTo(BigDecimal.valueOf(8));
+        assertThat(stock(flyPoint1.getId())).isCloseTo(expectedStock, offset(0.01));
+    }
+
+    private void identifyFlyPointTransfer() {
+        Allure.parameter("businessRole", tsukWarehouse.businessRole());
+        Allure.parameter("workspaceId", tsukWarehouse.senderId());
+        Allure.parameter("insideTsukHierarchy", true);
+        Allure.parameter("senderType", UnitType.FLY_POINT);
+        Allure.parameter("senderId", flyPoint1.getId());
+        Allure.parameter("recipientType", UnitType.FLY_POINT);
+        Allure.parameter("recipientId", flyPoint2.getId());
     }
 
     private Actor createActor(BusinessRole businessRole, UserRole slot, StorageResponse sender) {

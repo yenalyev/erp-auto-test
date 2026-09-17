@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class RelocationCreateOutputPage extends BasePage {
@@ -34,13 +35,28 @@ public class RelocationCreateOutputPage extends BasePage {
 
     public RelocationCreateOutputPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(TITLE))
-                .waitFor();
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(
+                        Pattern.compile("(?:" + TITLE
+                                + "|Переміщення за запитом №\\d+ для замовлення №\\d+)")))
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         page.getByText(RECIPIENT_LABEL)
                 .waitFor();
         recipientInput().waitFor();
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT))
                 .waitFor();
+        return this;
+    }
+
+    /** Relocation-task issuance has fixed sender/recipient and therefore no storage combobox. */
+    public RelocationCreateOutputPage waitForRelocationTaskLoaded() {
+        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(
+                        Pattern.compile("Переміщення за запитом №\\d+ для замовлення №\\d+")))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT))
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
 
@@ -334,15 +350,41 @@ public class RelocationCreateOutputPage extends BasePage {
 
     public RelocationPage confirmSend() {
         submitSendExpectSuccess();
-        page.waitForURL("**/relocations**", new Page.WaitForURLOptions().setTimeout(90_000));
+        // A regular issuance returns to the relocation journal, while an
+        // order-backed issuance returns to the orders journal.
+        page.waitForURL(Pattern.compile(".*/(?:relocations|orders)(?:\\?.*)?$"),
+                new Page.WaitForURLOptions().setTimeout(90_000));
         return new RelocationPage(page);
     }
 
+    /** Order relocation tasks return their source keeper to the shared task queue. */
+    public ProductionTasksPage confirmTaskSend() {
+        submitSendExpectSuccess();
+        page.waitForURL("**/production-tasks**", new Page.WaitForURLOptions().setTimeout(90_000));
+        return new ProductionTasksPage(page);
+    }
+
     public void submitSendExpectSuccess() {
+        boolean partialOrder = page.getByText("Замовлення не буде виконано повністю",
+                        new Page.GetByTextOptions().setExact(true))
+                .count() > 0;
         Response response = page.waitForResponse(
                 r -> r.url().contains("/relocations/send")
                         && "POST".equals(r.request().method()),
-                () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT)).click());
+                () -> {
+                    page.getByRole(AriaRole.BUTTON,
+                                    new Page.GetByRoleOptions().setName(SUBMIT))
+                            .click();
+                    if (partialOrder) {
+                        Locator confirm = page.getByRole(AriaRole.ALERTDIALOG);
+                        confirm.waitFor(new Locator.WaitForOptions()
+                                .setState(WaitForSelectorState.VISIBLE)
+                                .setTimeout(uiTimeoutMs()));
+                        confirm.getByRole(AriaRole.BUTTON,
+                                        new Locator.GetByRoleOptions().setName("Продовжити"))
+                                .click();
+                    }
+                });
         if (response.status() != 200) {
             attachScreenshot("POST /relocations/send failed — status " + response.status());
             throw new IllegalStateException("POST /relocations/send failed with status " + response.status());

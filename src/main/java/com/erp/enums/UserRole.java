@@ -51,6 +51,8 @@ public enum UserRole {
     ORDER_SOURCE_KEEPER,
     /** Ephemeral keeper of an isolated order gathering location. */
     ORDER_ISOLATED_GATHERER,
+    /** Ephemeral business-unit owner that executes production-order tasks for order E2E tests. */
+    ORDER_PRODUCTION_WORKER,
     ANONYMOUS;
 
     public String getUsername() {
@@ -73,6 +75,7 @@ public enum UserRole {
             case ORDER_ADMIN     -> "order-admin";
             case ORDER_SOURCE_KEEPER -> "order-source-keeper";
             case ORDER_ISOLATED_GATHERER -> "order-isolated-gatherer";
+            case ORDER_PRODUCTION_WORKER -> "order-production-worker";
             case ANONYMOUS       -> "";
         };
     }
@@ -97,6 +100,7 @@ public enum UserRole {
             case ORDER_ADMIN     -> "";
             case ORDER_SOURCE_KEEPER -> "";
             case ORDER_ISOLATED_GATHERER -> "";
+            case ORDER_PRODUCTION_WORKER -> "";
             case ANONYMOUS       -> "";
         };
     }
@@ -105,7 +109,8 @@ public enum UserRole {
     public String getStoreId() {
         return switch (this) {
             case ADMIN, RESOURCE_VIEWER, ACCOUNTANT, LOGIST, ORDER_ADMIN,
-                    ORDER_SOURCE_KEEPER, ORDER_ISOLATED_GATHERER -> "all";
+                    ORDER_SOURCE_KEEPER, ORDER_ISOLATED_GATHERER,
+                    ORDER_PRODUCTION_WORKER -> "all";
             case OWNER_1, PROJECT_ADMIN, PROJECT_MANAGER, LOCATION_MIXED
                     -> String.valueOf(ConfigProvider.getOwner1StorageId());
             case OWNER_2       -> String.valueOf(ConfigProvider.getOwner2StorageId());
