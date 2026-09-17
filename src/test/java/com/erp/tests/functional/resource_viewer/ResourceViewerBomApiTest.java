@@ -5,6 +5,7 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.ProductionFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
@@ -33,7 +34,11 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +70,7 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
     private ProductionFixture productionFixture;
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
+    private InventoryFixture inventoryFixture;
 
     private Long productionStorageId;
     private Long receiverUnitId;
@@ -78,10 +84,12 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         techMapFixture = productionFixture.getTechMapFixture();
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        inventoryFixture = new InventoryFixture(testContext, apiExecutor);
 
         techMapFixture.prepareContext();
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
+        inventoryFixture.prepareContext();
 
         productionStorageId = ConfigProvider.getOwner1StorageId();
         // Resource Viewer forces recipient UnitType.UNIT — owner2 storage may not be UNIT on env.
@@ -151,10 +159,12 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 List.of(new ResourceUsageRequest(alcohol.getId(), ALC_PER_UNIT)),
                 List.of(new ResourceUsageRequest(product.getId(), 1.0)));
 
-        ManufacturingItemResponse produced = produce(map, PRODUCE_AMOUNT);
-        RelocationResponse sent = relocateProduced(product.getId(), RELOCATE_AMOUNT, produced.getBatchNumber());
+        double producedAmount = 10.0;
+        double movedAmount = 4.0;
+        ManufacturingItemResponse produced = produce(map, producedAmount);
+        RelocationResponse sent = relocateProduced(product.getId(), movedAmount, produced.getBatchNumber());
 
-        double expected = RELOCATE_AMOUNT * ALC_PER_UNIT;
+        double expected = movedAmount * ALC_PER_UNIT;
         assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(), expected);
 
         ResourceRelocationViewerResponse row = findByRelocationId(
@@ -166,10 +176,10 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
 
     @Test(priority = 30)
     @TestCaseId("TC-RVW-BOM-003")
-    @Story("External finished good — tech map fallback")
+    @Story("External finished good remains atomic")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Product без локального production: seed batch ззовні → relocate isProduced=false → BOM з tech map")
-    public void testExternalFinishedGoodTechMapFallback() {
+    @Description("Зовнішній Product списується за FIFO без явного вибору партії і не розкладається за внутрішньою техкартою")
+    public void testExternalFinishedGoodRemainsAtomic() {
         String suffix = uniqueSuffix();
         ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-X-" + suffix);
         ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-X-" + suffix);
@@ -180,34 +190,35 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 List.of(new ResourceUsageRequest(product.getId(), 1.0)));
 
         String externalBatch = "EXT-BOM-" + suffix;
+        double receivedAmount = 10.0;
+        double movedAmount = 4.0;
         relocationFixture.seedBatchOnStorage(
-                productionStorageId, product.getId(), RELOCATE_AMOUNT + 10, externalBatch);
+                productionStorageId, product.getId(), receivedAmount, externalBatch);
 
-        RelocationResponse sent = relocationFixture.createSendWithBatch(
-                UserRole.ADMIN,
-                productionStorageId,
-                receiverUnitId,
-                product.getId(),
-                RELOCATE_AMOUNT,
-                externalBatch,
-                false);
+        RelocationResponse sent = relocationFixture.createSend(
+                UserRole.ADMIN, productionStorageId, receiverUnitId, product.getId(), movedAmount);
 
-        double expected = RELOCATE_AMOUNT * ALC_PER_UNIT;
-        List<ResourceRelocationViewerResponse> rows = fetchJournal(List.of(alcohol.getId()));
-        ResourceRelocationViewerResponse row = findByRelocationId(rows, sent.getId());
-        assertThat(row.getIsProduct()).isTrue();
-        assertThat(totallyUsageOf(row, alcohol.getId()))
-                .as("tech-map fallback must explode Alcohol for external Product batch")
-                .isCloseTo(expected, within(0.001));
-        assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(), expected);
+        assertThat(fetchJournal(List.of(alcohol.getId())).stream()
+                .map(ResourceRelocationViewerResponse::getRelocationId))
+                .as("зовнішній Product не повинен знаходитися через внутрішній компонент")
+                .doesNotContain(sent.getId());
+        assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(), 0.0);
+
+        List<ResourceRelocationViewerResponse> productRows = rowsForRelocation(
+                fetchJournal(List.of(product.getId())), sent.getId());
+        assertThat(productRows).hasSize(1);
+        ResourceRelocationViewerResponse productRow = productRows.getFirst();
+        assertThat(productRow.getProduct().getId()).isEqualTo(product.getId());
+        assertThat(productRow.getAmount().doubleValue()).isCloseTo(movedAmount, within(0.001));
+        assertThat(productRow.getIsProduct()).as("зовнішній готовий продукт є атомарним").isFalse();
     }
 
     @Test(priority = 40)
     @TestCaseId("TC-RVW-BOM-004")
-    @Story("Mixed produced + ready-made scale path")
+    @Story("Mixed produced and external origin")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Produce 5 + supplier 5 → relocate 10 з партіями; scale path: sum = 10×usage (не лише 5×)")
-    public void testMixedProducedAndReadyMadeScalePath() {
+    @Description("Produce 5 + supplier 5 → relocate 10; розкладається лише вироблена частина")
+    public void testMixedProducedAndExternalProductExplodesOnlyProducedPart() {
         String suffix = uniqueSuffix();
         ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-M-" + suffix);
         ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-M-" + suffix);
@@ -241,37 +252,23 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                                 .isProduced(false)
                                 .build()));
 
-        double expected = relocateTotal * ALC_PER_UNIT; // scale: not just PRODUCE_AMOUNT * usage
+        double expected = PRODUCE_AMOUNT * ALC_PER_UNIT;
         assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(), expected);
 
-        ResourceRelocationViewerResponse row = findByRelocationId(
+        List<ResourceRelocationViewerResponse> componentRows = rowsForRelocation(
                 fetchJournal(List.of(alcohol.getId())), sent.getId());
+        assertThat(componentRows).hasSize(1);
+        ResourceRelocationViewerResponse row = componentRows.getFirst();
         assertThat(totallyUsageOf(row, alcohol.getId())).isCloseTo(expected, within(0.001));
+
+        List<ResourceRelocationViewerResponse> productRows = rowsForRelocation(
+                fetchJournal(List.of(product.getId())), sent.getId());
+        assertThat(productRows).hasSize(1);
+        assertThat(productRows.getFirst().getAmount().doubleValue())
+                .isCloseTo(relocateTotal, within(0.001));
     }
 
     // ───────────────────────────── Depth ─────────────────────────────
-
-    @Test(priority = 50)
-    @TestCaseId("TC-RVW-BOM-010")
-    @Story("BOM depth 1")
-    @Severity(SeverityLevel.CRITICAL)
-    @Description("Alcohol → Product (depth 1)")
-    public void testBomDepth1() {
-        String suffix = uniqueSuffix();
-        ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-D10-" + suffix);
-        ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-D10-" + suffix);
-
-        TechnologicalMapResponse map = createMap(
-                "RVW-BOM-D10",
-                List.of(new ResourceUsageRequest(alcohol.getId(), ALC_PER_UNIT)),
-                List.of(new ResourceUsageRequest(product.getId(), 1.0)));
-
-        ManufacturingItemResponse produced = produce(map, PRODUCE_AMOUNT);
-        relocateProduced(product.getId(), RELOCATE_AMOUNT, produced.getBatchNumber());
-
-        assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(),
-                RELOCATE_AMOUNT * ALC_PER_UNIT);
-    }
 
     @Test(priority = 60)
     @TestCaseId("TC-RVW-BOM-011")
@@ -477,10 +474,10 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
 
     @Test(priority = 120)
     @TestCaseId("TC-RVW-BOM-031")
-    @Story("Item without batches — tech map fallback")
+    @Story("Inventory-created product uses historical tech map")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Видача Product без партій → resolveBatchWeights порожній → BOM з tech map на весь обсяг")
-    public void testItemWithoutBatchesFallsBackToTechMap() {
+    @Description("Інвентаризація створює службову партію «Без №»; FIFO-видача розкладається за картою, що існувала на дату переміщення")
+    public void testInventoryCreatedProductFallsBackToHistoricalTechMap() {
         String suffix = uniqueSuffix();
         ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-NB-" + suffix);
         ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-NB-" + suffix);
@@ -490,71 +487,120 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 List.of(new ResourceUsageRequest(alcohol.getId(), ALC_PER_UNIT)),
                 List.of(new ResourceUsageRequest(product.getId(), 1.0)));
 
-        relocationFixture.ensureStock(productionStorageId, product.getId(), STOCK_PAD, UserRole.ADMIN);
-        RelocationResponse sent = relocationFixture.createSend(
-                UserRole.ADMIN, productionStorageId, receiverUnitId, product.getId(), RELOCATE_AMOUNT);
+        createInventoryStock(product.getId(), 10.0);
+        double movedAmount = 4.0;
+        LocalDate movementDate = LocalDate.now();
+        RelocationResponse sent = sendWithoutBatchAndDate(product.getId(), movedAmount, movementDate);
 
-        double expected = RELOCATE_AMOUNT * ALC_PER_UNIT;
-        assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(), expected);
+        Map<String, Object> params = viewerParams(List.of(alcohol.getId()));
+        params.put("end", movementDate.plusDays(1).toString());
+        double expected = movedAmount * ALC_PER_UNIT;
+        assertAmount(fetchSumsWithParams(params), alcohol.getId(), expected);
 
         ResourceRelocationViewerResponse row = findByRelocationId(
-                fetchJournal(List.of(alcohol.getId())), sent.getId());
+                fetchJournalWithParams(params), sent.getId());
         assertThat(row.getIsProduct()).isTrue();
         assertThat(totallyUsageOf(row, alcohol.getId())).isCloseTo(expected, within(0.001));
     }
 
     @Test(priority = 130)
     @TestCaseId("TC-RVW-BOM-032")
-    @Story("Tech map version by relocation date")
+    @Story("Historical tech map version by relocation date")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Історичний вибір техкарти (на дату видачі). LocalDate → startOfDay UTC:
-            карти, створені «сьогодні», мають createdAt після startOfDay «сьогодні».
-            Тому: дата вчора (обидві карти ще «не існували») → fallback MIN(id)=V1 (usage 2);
-            дата завтра (обидві вже існували) → newest V2 (usage 5).
+            Інвентаризаційний залишок без виробничих фактів.
+            Для кожного переміщення використовується найновіша техкарта,
+            яка вже існувала на його дату; новіші карти не змінюють історію.
             """)
     public void testTechMapLookupByRelocationDate() {
+        requireDatabase("TC-RVW-BOM-032 потребує БД для керування історичними датами техкарт");
+
         String suffix = uniqueSuffix();
         ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-DT-" + suffix);
         ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-DT-" + suffix);
 
-        createMap(
+        createInventoryStock(product.getId(), 20.0);
+
+        TechnologicalMapResponse mapV1 = createMap(
                 "RVW-BOM-DT-V1",
                 List.of(new ResourceUsageRequest(alcohol.getId(), 2.0)),
                 List.of(new ResourceUsageRequest(product.getId(), 1.0)));
-        try {
-            Thread.sleep(1_200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
-        createMap(
+        TechnologicalMapResponse mapV2 = createMap(
                 "RVW-BOM-DT-V2",
                 List.of(new ResourceUsageRequest(alcohol.getId(), 5.0)),
                 List.of(new ResourceUsageRequest(product.getId(), 1.0)));
 
-        String pastBatch = "EXT-PAST-" + suffix;
-        String futureBatch = "EXT-FUT-" + suffix;
-        relocationFixture.seedBatchOnStorage(
-                productionStorageId, product.getId(), RELOCATE_AMOUNT + 5, pastBatch);
-        relocationFixture.seedBatchOnStorage(
-                productionStorageId, product.getId(), RELOCATE_AMOUNT + 5, futureBatch);
+        LocalDate mapV1Date = LocalDate.now().minusDays(20);
+        LocalDate firstMovementDate = LocalDate.now().minusDays(15);
+        LocalDate mapV2Date = LocalDate.now().minusDays(10);
+        LocalDate secondMovementDate = LocalDate.now().minusDays(5);
+        backdateTechMap(mapV1.getId(), mapV1Date);
+        backdateTechMap(mapV2.getId(), mapV2Date);
 
-        java.time.LocalDate yesterday = java.time.LocalDate.now().minusDays(1);
-        java.time.LocalDate tomorrow = java.time.LocalDate.now().plusDays(1);
+        double movedAmount = 4.0;
+        RelocationResponse sentV1 = sendWithoutBatchAndDate(
+                product.getId(), movedAmount, firstMovementDate);
+        RelocationResponse sentV2 = sendWithoutBatchAndDate(
+                product.getId(), movedAmount, secondMovementDate);
 
-        RelocationResponse sentPast = sendWithBatchAndDate(
-                product.getId(), RELOCATE_AMOUNT, pastBatch, yesterday);
-        RelocationResponse sentFuture = sendWithBatchAndDate(
-                product.getId(), RELOCATE_AMOUNT, futureBatch, tomorrow);
+        Map<String, Object> params = viewerParams(List.of(alcohol.getId()));
+        params.put("start", firstMovementDate.minusDays(1).toString());
+        params.put("end", secondMovementDate.plusDays(1).toString());
+        List<ResourceRelocationViewerResponse> rows = fetchJournalWithParams(params);
+        assertThat(totallyUsageOf(findByRelocationId(rows, sentV1.getId()), alcohol.getId()))
+                .as("перше переміщення використовує V1")
+                .isCloseTo(movedAmount * 2.0, within(0.001));
+        assertThat(totallyUsageOf(findByRelocationId(rows, sentV2.getId()), alcohol.getId()))
+                .as("друге переміщення використовує V2")
+                .isCloseTo(movedAmount * 5.0, within(0.001));
 
-        List<ResourceRelocationViewerResponse> rows = fetchJournal(List.of(alcohol.getId()));
-        assertThat(totallyUsageOf(findByRelocationId(rows, sentPast.getId()), alcohol.getId()))
-                .as("дата до createdAt обох карт → MIN(id)=V1, usage=2")
-                .isCloseTo(RELOCATE_AMOUNT * 2.0, within(0.001));
-        assertThat(totallyUsageOf(findByRelocationId(rows, sentFuture.getId()), alcohol.getId()))
-                .as("дата після createdAt обох карт → newest V2, usage=5")
-                .isCloseTo(RELOCATE_AMOUNT * 5.0, within(0.001));
+        createMap(
+                "RVW-BOM-DT-V3",
+                List.of(new ResourceUsageRequest(alcohol.getId(), 9.0)),
+                List.of(new ResourceUsageRequest(product.getId(), 1.0)));
+        Map<String, Object> afterNewMap = new HashMap<>(params);
+        afterNewMap.put("end", secondMovementDate.plusDays(2).toString());
+        List<ResourceRelocationViewerResponse> unchangedRows = fetchJournalWithParams(afterNewMap);
+        assertThat(totallyUsageOf(findByRelocationId(unchangedRows, sentV1.getId()), alcohol.getId()))
+                .isCloseTo(movedAmount * 2.0, within(0.001));
+        assertThat(totallyUsageOf(findByRelocationId(unchangedRows, sentV2.getId()), alcohol.getId()))
+                .isCloseTo(movedAmount * 5.0, within(0.001));
+    }
+
+    @Test(priority = 135)
+    @TestCaseId("TC-RVW-BOM-035")
+    @Story("Resource moved before its first tech map remains atomic")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Пізніше створена техкарта не застосовується до інвентаризаційного залишку, переміщеного до її появи")
+    public void testMovementBeforeFirstTechMapRemainsAtomic() {
+        String suffix = uniqueSuffix();
+        ResourceResponse component = resourceFixture.createUniqueResource("RVW-ALC-PRE-TM-" + suffix);
+        ResourceResponse resource = resourceFixture.createUniqueResource("RVW-P-PRE-TM-" + suffix);
+
+        double movedAmount = 5.0;
+        createInventoryStock(resource.getId(), movedAmount);
+        RelocationResponse sent = sendWithoutBatchAndDate(
+                resource.getId(), movedAmount, LocalDate.now());
+
+        createMap(
+                "RVW-BOM-AFTER-MOVE",
+                List.of(new ResourceUsageRequest(component.getId(), ALC_PER_UNIT)),
+                List.of(new ResourceUsageRequest(resource.getId(), 1.0)));
+
+        Map<String, Object> componentParams = viewerParams(List.of(component.getId()));
+        componentParams.put("end", LocalDate.now().plusDays(1).toString());
+        assertThat(fetchJournalWithParams(componentParams).stream()
+                .map(ResourceRelocationViewerResponse::getRelocationId))
+                .doesNotContain(sent.getId());
+        assertAmount(fetchSumsWithParams(componentParams), component.getId(), 0.0);
+
+        Map<String, Object> resourceParams = viewerParams(List.of(resource.getId()));
+        resourceParams.put("end", LocalDate.now().plusDays(1).toString());
+        List<ResourceRelocationViewerResponse> rows = rowsForRelocation(
+                fetchJournalWithParams(resourceParams), sent.getId());
+        assertThat(rows).hasSize(1);
+        assertThat(rows.getFirst().getAmount().doubleValue()).isCloseTo(movedAmount, within(0.001));
+        assertThat(rows.getFirst().getIsProduct()).as("до першої техкарти ресурс атомарний").isFalse();
     }
 
     @Test(priority = 140)
@@ -590,74 +636,6 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 .as("B з'являється один раз з usage=1 × amount")
                 .isCloseTo(RELOCATE_AMOUNT, within(0.001));
         assertAmount(fetchSums(List.of(resourceB.getId())), resourceB.getId(), RELOCATE_AMOUNT);
-    }
-
-    @Test(priority = 150)
-    @TestCaseId("TC-RVW-BOM-034")
-    @Story("Scale-down when batch amounts overshoot moved amount")
-    @Severity(SeverityLevel.NORMAL)
-    @Description("""
-            Legacy drift: сума партій (producedQty) > amount рядка видачі.
-            API зараз відхиляє такий mismatch; симулюємо через DB UPDATE amount вниз.
-            Очікування: sum alcohol = amount × usage (scale-down), не producedQty × usage.
-            """)
-    public void testScaleDownWhenProducedQtyExceedsMovedAmount() {
-        if (getDbHelper() == null) {
-            throw new SkipException(
-                    "TC-RVW-BOM-034 потребує БД для симуляції legacy amount < batch sum "
-                            + "(use.database=true або -Denv=local)");
-        }
-
-        String suffix = uniqueSuffix();
-        ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-SD-" + suffix);
-        ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-SD-" + suffix);
-
-        TechnologicalMapResponse map = createMap(
-                "RVW-BOM-SD",
-                List.of(new ResourceUsageRequest(alcohol.getId(), ALC_PER_UNIT)),
-                List.of(new ResourceUsageRequest(product.getId(), 1.0)));
-
-        ManufacturingItemResponse produced = produce(map, PRODUCE_AMOUNT);
-        RelocationResponse sent = relocateProduced(product.getId(), PRODUCE_AMOUNT, produced.getBatchNumber());
-
-        double driftedAmount = PRODUCE_AMOUNT / 2.0; // 2.5; batches still claim 5
-        shrinkRelocationItemAmount(sent.getId(), driftedAmount);
-
-        double expected = driftedAmount * ALC_PER_UNIT; // 5.0, not 10.0
-        // Unique end busts ResourceViewer BomKey soft-cache after DB mutate.
-        Map<String, Object> params = viewerParams(List.of(alcohol.getId()));
-        params.put("end", java.time.LocalDate.now().plusDays(1).toString());
-
-        assertAmount(fetchSumsWithParams(params), alcohol.getId(), expected);
-
-        ResourceRelocationViewerResponse row = findByRelocationId(
-                fetchJournalWithParams(params), sent.getId());
-        assertThat(totallyUsageOf(row, alcohol.getId()))
-                .as("scale-down: totallyUsage = driftedAmount × usage")
-                .isCloseTo(expected, within(0.001));
-        assertThat(row.getAmount().doubleValue())
-                .as("journal amount reflects drifted item amount")
-                .isCloseTo(driftedAmount, within(0.001));
-    }
-
-    private void shrinkRelocationItemAmount(Long relocationId, double newAmount) {
-        Allure.step(
-                "DB: UPDATE relocation_item.amount=" + newAmount + " WHERE relocation_id=" + relocationId,
-                () -> {
-                    String sql = "UPDATE relocation_item SET amount = ? WHERE relocation_id = ?";
-                    try (PreparedStatement ps = getDbHelper().getConnection().prepareStatement(sql)) {
-                        ps.setBigDecimal(1, BigDecimal.valueOf(newAmount));
-                        ps.setLong(2, relocationId);
-                        int updated = ps.executeUpdate();
-                        assertThat(updated)
-                                .as("має оновитись ≥1 рядок relocation_item для relocation=%s", relocationId)
-                                .isGreaterThanOrEqualTo(1);
-                    } catch (SQLException e) {
-                        throw new IllegalStateException(
-                                "Не вдалося зменшити amount relocation_item id="
-                                        + relocationId + ": " + e.getMessage(), e);
-                    }
-                });
     }
 
     // ───────────────────────────── Helpers ─────────────────────────────
@@ -707,12 +685,11 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                         true));
     }
 
-    private RelocationResponse sendWithBatchAndDate(
-            Long productId, double amount, String batchNumber, java.time.LocalDate date) {
-        return Allure.step("Видача партії " + batchNumber + " датою " + date, () -> {
+    private RelocationResponse sendWithoutBatchAndDate(
+            Long productId, double amount, LocalDate date) {
+        return Allure.step("FIFO-видача ресурсу " + productId + " датою " + date, () -> {
             var request = com.erp.data.factories.relocation.RelocationDataFactory
-                    .buildSendWithBatch(
-                            productionStorageId, receiverUnitId, productId, amount, batchNumber, false)
+                    .buildSendRequest(productionStorageId, receiverUnitId, productId, amount)
                     .toBuilder()
                     .date(date)
                     .build();
@@ -721,6 +698,75 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
             assertThat(response.statusCode()).isEqualTo(200);
             return response.as(RelocationResponse.class);
         });
+    }
+
+    private void createInventoryStock(Long resourceId, double amount) {
+        Allure.step("Інвентаризація: створити службовий залишок ресурсу " + resourceId, () -> {
+            inventoryFixture.ensureClosed(productionStorageId);
+            inventoryFixture.openSession(productionStorageId);
+            try {
+                inventoryFixture.setResourceAmount(
+                        productionStorageId, UserRole.ADMIN, resourceId, amount);
+            } finally {
+                inventoryFixture.closeSession(productionStorageId);
+            }
+            assertThat(inventoryFixture.getResourceStock(
+                    productionStorageId, resourceId, UserRole.ADMIN))
+                    .isCloseTo(amount, within(0.001));
+        });
+    }
+
+    private void requireDatabase(String reason) {
+        if (getDbHelper() == null) {
+            throw new SkipException(reason + " (use.database=true)");
+        }
+    }
+
+    private void backdateTechMap(Long mapId, LocalDate date) {
+        Allure.step("DB: встановити історичну дату техкарти " + mapId + " = " + date, () -> {
+            String metadataSql = """
+                    SELECT c.table_schema, c.table_name, c.column_name
+                    FROM information_schema.columns c
+                    WHERE c.column_name IN ('date_time', 'created_at')
+                      AND lower(c.table_name) LIKE '%technological%map%'
+                      AND EXISTS (
+                          SELECT 1 FROM information_schema.columns idc
+                          WHERE idc.table_schema = c.table_schema
+                            AND idc.table_name = c.table_name
+                            AND idc.column_name = 'id'
+                      )
+                    """;
+            int updated = 0;
+            try (PreparedStatement metadata = getDbHelper().getConnection().prepareStatement(metadataSql);
+                 ResultSet columns = metadata.executeQuery()) {
+                while (columns.next()) {
+                    String schema = columns.getString("table_schema");
+                    String table = columns.getString("table_name");
+                    String column = columns.getString("column_name");
+                    if (!safeIdentifier(schema) || !safeIdentifier(table) || !safeIdentifier(column)) {
+                        continue;
+                    }
+                    String updateSql = "UPDATE \"%s\".\"%s\" SET \"%s\" = ? WHERE id = ?"
+                            .formatted(schema, table, column);
+                    try (PreparedStatement update = getDbHelper().getConnection().prepareStatement(updateSql)) {
+                        LocalDateTime noon = date.atTime(12, 0);
+                        update.setTimestamp(1, Timestamp.valueOf(noon));
+                        update.setLong(2, mapId);
+                        updated += update.executeUpdate();
+                    }
+                }
+            } catch (SQLException e) {
+                throw new IllegalStateException(
+                        "Не вдалося змінити історичну дату техкарти id=" + mapId, e);
+            }
+            assertThat(updated)
+                    .as("має бути оновлено date_time/created_at для tech map id=%s", mapId)
+                    .isPositive();
+        });
+    }
+
+    private static boolean safeIdentifier(String value) {
+        return value != null && value.matches("[A-Za-z0-9_]+");
     }
 
     private List<ResourceRelocationSumViewerResponse> fetchSums(List<Long> resourceIds) {
@@ -788,6 +834,13 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError(
                         "Relocation " + relocationId + " not found in wolf journal"));
+    }
+
+    private static List<ResourceRelocationViewerResponse> rowsForRelocation(
+            List<ResourceRelocationViewerResponse> rows, Long relocationId) {
+        return rows.stream()
+                .filter(r -> relocationId.equals(r.getRelocationId()))
+                .toList();
     }
 
     private static double totallyUsageOf(ResourceRelocationViewerResponse row, Long resourceId) {

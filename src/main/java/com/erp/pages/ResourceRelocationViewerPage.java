@@ -1,12 +1,14 @@
 package com.erp.pages;
 
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class ResourceRelocationViewerPage extends BasePage {
     private static final String RESOURCE_FILTER_LABEL = "Ресурси для відстеження";
     private static final String CLEAR_BUTTON_TEXT = "Очистити";
     private static final String SEARCH_PLACEHOLDER = "Пошук...";
+    private static final String EXPORT_BUTTON_TEXT = "Експорт в Excel";
     private static final String AUTOCOMPLETE_OPTION_SELECTOR = "[cmdk-item], [role='option']";
 
     public ResourceRelocationViewerPage(Page page) {
@@ -45,6 +48,16 @@ public class ResourceRelocationViewerPage extends BasePage {
 
     public boolean isLoaded() {
         return page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(PAGE_TITLE)).isVisible();
+    }
+
+    public boolean areSearchControlsVisible() {
+        return categoryFilterTrigger().isVisible()
+                && resourceAutocompleteTrigger().isVisible()
+                && page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Шукати")).isVisible();
+    }
+
+    public boolean isJournalAreaVisible() {
+        return page.locator("table").count() > 0 || page.getByText("Нічого не знайдено.").count() > 0;
     }
 
     public ResourceRelocationViewerPage clearFilters() {
@@ -113,6 +126,36 @@ public class ResourceRelocationViewerPage extends BasePage {
 
     public boolean tableContainsText(String text) {
         return page.getByText(text, new Page.GetByTextOptions().setExact(false)).count() > 0;
+    }
+
+    public int journalRowCountContaining(String text) {
+        return journalRows().filter(new Locator.FilterOptions().setHasText(text)).count();
+    }
+
+    public boolean journalRowContainsAll(String anchorText, String... expectedTexts) {
+        Locator row = journalRows()
+                .filter(new Locator.FilterOptions().setHasText(anchorText))
+                .first();
+        if (row.count() == 0 || !row.isVisible()) {
+            return false;
+        }
+        String rowText = row.innerText();
+        for (String expectedText : expectedTexts) {
+            if (!rowText.contains(expectedText)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public ExportDownloadResult exportCurrentResult() {
+        Locator exportButton = page.getByRole(
+                AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName(EXPORT_BUTTON_TEXT));
+        Download download = page.waitForDownload(exportButton::click);
+        Path path = download.path();
+        long sizeBytes = path.toFile().length();
+        return new ExportDownloadResult(download.suggestedFilename(), sizeBytes, path);
     }
 
     public ResourceRelocationViewerPage selectCategory(String categoryName) {
@@ -192,6 +235,10 @@ public class ResourceRelocationViewerPage extends BasePage {
         return page.locator(AUTOCOMPLETE_OPTION_SELECTOR);
     }
 
+    private Locator journalRows() {
+        return page.locator("tbody tr");
+    }
+
     private static String extractSearchPrefix(String resourceName) {
         int underscore = resourceName.lastIndexOf('_');
         if (underscore > 0) {
@@ -199,4 +246,6 @@ public class ResourceRelocationViewerPage extends BasePage {
         }
         return resourceName.length() > 8 ? resourceName.substring(0, 8) : resourceName;
     }
+
+    public record ExportDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}
 }

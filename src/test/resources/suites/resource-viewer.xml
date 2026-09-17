@@ -17,12 +17,27 @@
 
     <test name="Resource Viewer API">
         <classes>
+            <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest">
+                <methods>
+                    <include name="testResourceViewerMyUnitsExcludesUnitType"/>
+                </methods>
+            </class>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationFilterTest"/>
-            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest">
+                <methods>
+                    <exclude name="testTechMapLookupByRelocationDate"/>
+                </methods>
+            </class>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerExportApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Resource Viewer UI">
+        <classes>
+            <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
         </classes>
     </test>
 </suite>

@@ -177,6 +177,62 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
                 .isFalse();
     }
 
+    @Test(priority = 15)
+    @TestCaseId("TC-RVW-API-018")
+    @Story("Category filter does not duplicate a relocation")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Product A contains Component B, and both belong to the same category
+            (business case: «Взуття»). Filtering the journal by that category must return
+            the Product A relocation exactly once, even though both the product and its
+            component match the tracking category.
+            """)
+    public void testCategoryFilterDoesNotDuplicateRelocationWhenProductAndComponentShareCategory() {
+        String suffix = uniqueSuffix();
+        ResourceResponse componentB = resourceFixture.createUniqueResource(
+                "RVW-CAT-DUP-B-" + suffix, categoryAId);
+        ResourceResponse productA = resourceFixture.createUniqueResource(
+                "RVW-CAT-DUP-A-" + suffix, categoryAId);
+
+        TechnologicalMapResponse map = createMap(
+                "RVW-FIL-CAT-DUP",
+                List.of(new ResourceUsageRequest(componentB.getId(), ALC_PER_UNIT)),
+                List.of(new ResourceUsageRequest(productA.getId(), 1.0)));
+        ManufacturingItemResponse produced = produce(map, PRODUCE_AMOUNT);
+        RelocationResponse sent = relocateProduced(
+                productA.getId(), RELOCATE_AMOUNT, produced.getBatchNumber());
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("categoryIds", List.of(categoryAId));
+        params.put("receiverIds", receiverUnitId);
+        params.put("page", 0);
+        params.put("size", 100);
+
+        List<ResourceRelocationViewerResponse> matchingRows = fetchJournal(params).stream()
+                .filter(row -> row.getProduct() != null)
+                .filter(row -> productA.getId().equals(row.getProduct().getId()))
+                .toList();
+
+        assertThat(matchingRows)
+                .as("переміщення унікального Продукту А (relocation id=%s) має з'явитися один раз, "
+                                + "коли Продукт А і Компонент Б належать categoryId=%s",
+                        sent.getId(), categoryAId)
+                .hasSize(1);
+
+        ResourceRelocationViewerResponse row = matchingRows.getFirst();
+        assertThat(row.getRelocationId()).isEqualTo(sent.getId());
+        assertThat(row.getProduct().getId()).isEqualTo(productA.getId());
+        assertThat(row.getIngredients())
+                .extracting(ResourceRelocationViewerResponse.ResourceIngredientResponse::getResourceId)
+                .contains(componentB.getId());
+        assertThat(totalUsageOf(row, componentB.getId()))
+                .as("єдиний рядок містить 10 одиниць Компонента Б")
+                .isCloseTo(RELOCATE_AMOUNT * ALC_PER_UNIT, within(0.001));
+        assertThat(amountOf(fetchSums(params), componentB.getId()))
+                .as("підсумок компонента не подвоюється через збіг продукту й компонента")
+                .isCloseTo(RELOCATE_AMOUNT * ALC_PER_UNIT, within(0.001));
+    }
+
     @Test(priority = 20)
     @TestCaseId("TC-RVW-API-011")
     @Story("supplier property AND filter")
@@ -250,11 +306,13 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
         noTracking.put("receiverIds", receiverUnitId);
         PagedResourceRelocationViewerResponse emptyTracking = fetchPage(noTracking);
         assertThat(emptyTracking.getContent()).isEmpty();
+        assertThat(emptyTracking.getSums()).isNullOrEmpty();
 
         Map<String, Object> noReceiver = new HashMap<>();
         noReceiver.put("resourceIds", List.of(1L));
         PagedResourceRelocationViewerResponse emptyReceiver = fetchPage(noReceiver);
         assertThat(emptyReceiver.getContent()).isEmpty();
+        assertThat(emptyReceiver.getSums()).isNullOrEmpty();
     }
 
     @Test(priority = 50)
@@ -283,6 +341,15 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
         assertThat(firstPage.getPage().getTotalElements()).isGreaterThanOrEqualTo(3);
         assertThat(firstPage.getPage().getTotalPages()).isGreaterThanOrEqualTo(3);
         assertThat(firstPage.getContent()).hasSize(1);
+
+        Map<String, Object> page1 = viewerParams(List.of(alcohol.getId()));
+        page1.put("page", 1);
+        page1.put("size", 1);
+        PagedResourceRelocationViewerResponse secondPage = fetchPage(page1);
+        assertThat(secondPage.getContent()).hasSize(1);
+        assertThat(secondPage.getContent().getFirst().getRelocationId())
+                .as("сусідні сторінки не повинні повторювати фізичне переміщення")
+                .isNotEqualTo(firstPage.getContent().getFirst().getRelocationId());
 
         Map<String, Object> all = viewerParams(List.of(alcohol.getId()));
         all.put("page", 0);
@@ -678,6 +745,18 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
         return sums.stream()
                 .filter(s -> resourceId.equals(s.getResourceId()))
                 .map(ResourceRelocationSumViewerResponse::getAmount)
+                .filter(a -> a != null)
+                .mapToDouble(BigDecimal::doubleValue)
+                .sum();
+    }
+
+    private static double totalUsageOf(ResourceRelocationViewerResponse row, Long resourceId) {
+        if (row.getIngredients() == null) {
+            return 0.0;
+        }
+        return row.getIngredients().stream()
+                .filter(i -> resourceId.equals(i.getResourceId()))
+                .map(ResourceRelocationViewerResponse.ResourceIngredientResponse::getTotallyUsage)
                 .filter(a -> a != null)
                 .mapToDouble(BigDecimal::doubleValue)
                 .sum();

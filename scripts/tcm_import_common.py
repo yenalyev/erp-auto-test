@@ -132,7 +132,9 @@ def write_xlsx_with_features(
             "priority", "status", "author", "treeDepth", "sortOrder",
         ])
         for row in features:
-            feat_sheet.append([*row, "ACTIVE", AUTHOR])
+            # Feature builders provide the six business fields first and the
+            # hierarchy fields last. Keep generated rows aligned with headers.
+            feat_sheet.append([*row[:6], "ACTIVE", AUTHOR, *row[6:]])
 
     if acceptance_criteria:
         ac_sheet = wb.create_sheet("AcceptanceCriteria")

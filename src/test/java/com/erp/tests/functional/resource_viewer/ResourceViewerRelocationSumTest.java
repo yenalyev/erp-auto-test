@@ -9,6 +9,7 @@ import com.erp.models.response.PagedResourceRelocationViewerResponse;
 import com.erp.models.response.ResourceRelocationSumViewerResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
+import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -31,6 +32,7 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
     private ResourceFixture resourceFixture;
     private RelocationFixture relocationFixture;
     private Long unitReceiverId;
+    private Long sourceStorageId;
 
     @BeforeClass(alwaysRun = true)
     public void setupResourceViewerTests() {
@@ -42,6 +44,7 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
         unitReceiverId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
+        sourceStorageId = ConfigProvider.getOwner1StorageId();
     }
 
     @Test(priority = 1)
@@ -51,13 +54,8 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
     @Description("""
             GET /resources-viewer/relocations → поле sums:
             сортування resourceName (ASC): цифри, латиниця, л/є/і/ї.
-            Обрані resourceIds без руху мають amount=0 (pre-seed) — щоб у «Сумарно переміщено»
-            було видно «Спирт — 0».
-
-            Відомий дефект (tk): якщо BOM порожній (немає matching relocations),
-            controller повертає empty() з sums=[] і не викликає buildSums pre-seed.
-            Очікувана поведінка: sums містить обрані resourceIds з amount=0.
-            Тест червоний до фіксу в tk; підтверджено ще раз у прогоні 34 (sums=[]).
+            Усі явно вибрані resourceIds присутні: ресурси з рухом мають фактичну кількість,
+            ресурси без руху — amount=0. Порядок вибору не впливає на сортування.
             """)
     public void testRelocationsSumSortedByResourceNameAsc() {
         ResourceResponse digits = Allure.step("Створити ресурс 111_rvw_* (ADMIN, цифри)", () ->
@@ -78,8 +76,17 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
                 resourceFixture.createUniqueResource("їжа_rvw_"));
 
         List<Long> expectedIds = List.of(
-                digits.getId(), aaa.getId(), mmm.getId(), zzz.getId(),
-                el.getId(), ye.getId(), ii.getId(), yi.getId());
+                yi.getId(), mmm.getId(), digits.getId(), ii.getId(),
+                zzz.getId(), el.getId(), aaa.getId(), ye.getId());
+
+        double aaaAmount = 2.0;
+        double yeAmount = 3.0;
+        relocationFixture.ensureStock(sourceStorageId, aaa.getId(), 10.0, UserRole.ADMIN);
+        relocationFixture.ensureStock(sourceStorageId, ye.getId(), 10.0, UserRole.ADMIN);
+        relocationFixture.createSend(
+                UserRole.ADMIN, sourceStorageId, unitReceiverId, aaa.getId(), aaaAmount);
+        relocationFixture.createSend(
+                UserRole.ADMIN, sourceStorageId, unitReceiverId, ye.getId(), yeAmount);
 
         Map<String, Object> params = new HashMap<>();
         params.put("resourceIds", expectedIds);
@@ -98,13 +105,17 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
         List<ResourceRelocationSumViewerResponse> items =
                 page.getSums() != null ? page.getSums() : List.of();
 
-        Allure.step("Pre-seed: усі 8 ресурсів у sums (навіть без руху, amount=0)", () -> {
+        Allure.step("Усі 8 вибраних ресурсів у sums: фактичні та нульові", () -> {
             assertThat(items).extracting(ResourceRelocationSumViewerResponse::getResourceId)
                     .containsAll(expectedIds);
             assertThat(items.stream()
                     .filter(s -> expectedIds.contains(s.getResourceId()))
+                    .filter(s -> !aaa.getId().equals(s.getResourceId()))
+                    .filter(s -> !ye.getId().equals(s.getResourceId()))
                     .map(ResourceRelocationSumViewerResponse::getAmount))
                     .allSatisfy(amount -> assertThat(amount).isEqualByComparingTo(java.math.BigDecimal.ZERO));
+            assertThat(amountOf(items, aaa.getId())).isEqualTo(aaaAmount);
+            assertThat(amountOf(items, ye.getId())).isEqualTo(yeAmount);
         });
 
         List<String> names = items.stream()
@@ -124,5 +135,13 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
             assertThat(names.get(6)).startsWith("іва_rvw_");
             assertThat(names.get(7)).startsWith("їжа_rvw_");
         });
+    }
+
+    private static double amountOf(List<ResourceRelocationSumViewerResponse> items, Long resourceId) {
+        return items.stream()
+                .filter(item -> resourceId.equals(item.getResourceId()))
+                .map(ResourceRelocationSumViewerResponse::getAmount)
+                .mapToDouble(java.math.BigDecimal::doubleValue)
+                .sum();
     }
 }

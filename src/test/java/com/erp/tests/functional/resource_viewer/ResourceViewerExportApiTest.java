@@ -14,9 +14,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,6 +42,8 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
     private Long productionStorageId;
     private Long receiverUnitId;
     private Long resourceId;
+    private String resourceName;
+    private String unrelatedResourceName;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     @Step("Підготовка даних для export resource-viewer")
@@ -49,9 +58,16 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
 
         ResourceResponse resource = resourceFixture.createUniqueResource("RVW-EXP-");
         resourceId = resource.getId();
+        resourceName = resource.getName();
         relocationFixture.ensureStock(productionStorageId, resourceId, 50.0);
         relocationFixture.createSend(
                 UserRole.ADMIN, productionStorageId, receiverUnitId, resourceId, SEND_AMOUNT);
+
+        ResourceResponse unrelated = resourceFixture.createUniqueResource("RVW-EXP-OTHER-");
+        unrelatedResourceName = unrelated.getName();
+        relocationFixture.ensureStock(productionStorageId, unrelated.getId(), 50.0);
+        relocationFixture.createSend(
+                UserRole.ADMIN, productionStorageId, receiverUnitId, unrelated.getId(), SEND_AMOUNT + 7.0);
         log.info("Export suite ready: resource={}, receiver={}", resourceId, receiverUnitId);
     }
 
@@ -61,8 +77,9 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             GET /api/v1/resources-viewer/export як wolf:
-            1) з resourceIds+receiverIds → 200, Content-Disposition *.xlsx, непорожнє тіло;
-            2) без tracking target → порожня відповідь (guard).
+            1) з resourceIds+receiverIds → 200, Content-Disposition *.xlsx;
+            2) файл містить лише дані поточного фільтра;
+            3) без tracking target або receiver → порожня відповідь (guard).
             """)
     public void testResourceViewerExportReturnsXlsxAndHonoursGuard() {
         Map<String, Object> validParams = new HashMap<>();
@@ -81,9 +98,16 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
                 .as("Content-Disposition має містити .xlsx")
                 .isNotBlank()
                 .containsIgnoringCase(".xlsx");
-        assertThat(export.asByteArray().length)
+        byte[] xlsx = export.asByteArray();
+        assertThat(xlsx.length)
                 .as("Тіло Excel-експорту не повинно бути порожнім")
                 .isPositive();
+        String workbookXml = unzipXmlText(xlsx);
+        assertThat(workbookXml)
+                .as("Excel містить відфільтрований ресурс")
+                .contains(resourceName)
+                .as("Excel не містить переміщення іншого ресурсу")
+                .doesNotContain(unrelatedResourceName);
 
         Map<String, Object> guardParams = new HashMap<>();
         guardParams.put("receiverIds", receiverUnitId);
@@ -98,5 +122,46 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
         assertThat(guarded.asByteArray().length)
                 .as("Guard без resourceIds/categoryIds → порожнє тіло")
                 .isZero();
+
+        Map<String, Object> noReceiverParams = new HashMap<>();
+        noReceiverParams.put("resourceIds", List.of(resourceId));
+        Response noReceiver = Allure.step("Export без receiver (guard)", () ->
+                apiExecutor.executeWithQueryParams(
+                        ApiEndpointDefinition.RESOURCE_VIEWER_EXPORT,
+                        UserRole.RESOURCE_VIEWER,
+                        noReceiverParams));
+        assertThat(noReceiver.statusCode()).isEqualTo(200);
+        assertThat(noReceiver.asByteArray()).isEmpty();
+    }
+
+    private static String unzipXmlText(byte[] xlsx) {
+        StringBuilder xml = new StringBuilder();
+        Path tempFile = null;
+        try {
+            tempFile = Files.createTempFile("resource-viewer-export-", ".xlsx");
+            Files.write(tempFile, xlsx);
+            try (ZipFile zip = new ZipFile(tempFile.toFile())) {
+                Enumeration<? extends ZipEntry> entries = zip.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = entries.nextElement();
+                    if (!entry.isDirectory() && entry.getName().endsWith(".xml")) {
+                        try (var entryStream = zip.getInputStream(entry)) {
+                            xml.append(new String(entryStream.readAllBytes(), StandardCharsets.UTF_8));
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Export is not a readable XLSX archive", e);
+        } finally {
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    log.warn("Cannot delete temporary Resource Viewer export {}: {}", tempFile, e.getMessage());
+                }
+            }
+        }
+        return xml.toString();
     }
 }

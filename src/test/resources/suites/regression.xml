@@ -11,9 +11,9 @@
       so alert teardown does not affect залишки tests on the same storage.
     - StorageRegionTest → Owner2ScopePreflightTest → StorageVisibilityTest → RelocationVisibility*
       (shared owner2 storage; preflight FAILS if OWNER_2 JWT has extra BUs).
-    - DB-seeded cases (TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-034) run when
-      use.database=true (staging default) and JDBC is reachable; otherwise they SkipException.
-      Isolated suite: mvn test -Dsuite=db-dependent -Denv=…
+    - DB-seeded cases (TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-032) are
+      isolated in the db-dependent suite; they require use.database=true and reachable JDBC.
+      Run: mvn test -Dsuite=db-dependent -Denv=…
     - Includes domain suites: smoke, functional subsets, inventory, production,
       relocations, storage-regions, global-plans, technological-maps, defects,
       resource-viewer, ui, orders, bots, notifications.
@@ -96,7 +96,11 @@
         <classes>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationFilterTest"/>
-            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest">
+                <methods>
+                    <exclude name="testTechMapLookupByRelocationDate"/>
+                </methods>
+            </class>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerExportApiTest"/>

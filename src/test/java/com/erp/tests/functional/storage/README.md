@@ -160,7 +160,7 @@ mvn test -Denv=dev -Dtest=StorageRegionTest,StorageVisibilityTest,StorageNamesEn
 mvn test -Denv=dev -Dsuite=db-dependent
 # staging: override JDBC — mvn test -Denv=staging -Dsuite=db-dependent -Duse.database=true
 ```
-Covers TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-034.
+Covers TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-032.
 
 **OWNER_2 scope preflight** (explains TC-STR-REG-020…052 class skip):
 ```bash

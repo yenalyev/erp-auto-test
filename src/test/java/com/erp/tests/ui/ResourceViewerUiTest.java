@@ -19,6 +19,7 @@ import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.ResourceRelocationViewerPage;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.UiDownloadAssertions;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -138,6 +139,12 @@ public class ResourceViewerUiTest extends BaseUITest {
                 "Відкрити журнал через URL",
                 () -> new ResourceRelocationViewerPage(page).open());
         assertThat(viewer.isLoaded()).isTrue();
+        assertThat(viewer.areSearchControlsVisible())
+                .as("на сторінці доступні фільтри та кнопка пошуку")
+                .isTrue();
+        assertThat(viewer.isJournalAreaVisible())
+                .as("на сторінці доступна область журналу")
+                .isTrue();
         viewer.attachScreenshot("TC-UI-RVW-001 — page loaded");
 
         AppSidebarPage sidebar = new AppSidebarPage(page);
@@ -185,9 +192,33 @@ public class ResourceViewerUiTest extends BaseUITest {
         });
 
         Allure.step("Таблиця містить Alcohol і Product", () -> {
-            assertThat(viewer.tableContainsText(alcohol.getName())).isTrue();
-            assertThat(viewer.tableContainsText(product.getName())).isTrue();
+            assertThat(viewer.journalRowCountContaining(product.getName()))
+                    .as("фізичне переміщення продукту показане рівно один раз")
+                    .isEqualTo(1);
+            assertThat(viewer.journalRowContainsAll(
+                    product.getName(), alcohol.getName(), "10"))
+                    .as("єдиний рядок містить продукт, компонент і 10 одиниць компонента")
+                    .isTrue();
         });
+    }
+
+    @Test(priority = 30)
+    @TestCaseId("TC-UI-RVW-003")
+    @Story("Excel export uses current Resource Viewer filters")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після пошуку за Компонентом Б та групою «Інші» UI завантажує непорожній XLSX для поточного результату")
+    public void resourceViewerExportsCurrentFilteredResult() {
+        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open();
+        viewer.clearFilters()
+                .selectResource(alcohol.getName())
+                .enableOthersReceivers()
+                .search();
+
+        ResourceRelocationViewerPage.ExportDownloadResult download = Allure.step(
+                "Завантажити Excel поточного результату",
+                viewer::exportCurrentResult);
+        UiDownloadAssertions.assertNonEmptyXlsx(
+                download.path(), download.sizeBytes(), "Resource Viewer Excel");
     }
 
     private void injectWolfSession() {

@@ -10,7 +10,7 @@
     mvn test -Denv=staging -Dsuite=db-dependent   # needs use.database=true override
 
   Covered:
-    TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-034
+    TC-DEF-030, TC-FAITA-IMPL-002, TC-FLY-WO-001, TC-RVW-BOM-032
 -->
 <suite name="DB-Dependent Test Suite" parallel="none" verbose="1">
 
@@ -43,7 +43,7 @@
             </class>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerBomApiTest">
                 <methods>
-                    <include name="testScaleDownWhenProducedQtyExceedsMovedAmount"/>
+                    <include name="testTechMapLookupByRelocationDate"/>
                 </methods>
             </class>
         </classes>

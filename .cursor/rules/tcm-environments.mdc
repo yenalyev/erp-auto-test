@@ -1,0 +1,13 @@
+---
+description: Маршрутизація локального та production TCM
+alwaysApply: true
+---
+
+# TCM environments
+
+- Production TCM: `http://tcm.lab`, project `1`. Для читання і змін використовуй MCP server `tcm-ai-prod`.
+- Local TCM: `http://localhost:18100`, project `1`, доки користувач окремо не повідомить про зміну endpoint.
+- MCP server `tcm-ai` можна використовувати для local TCM лише якщо його `TCM_BASE_URL` налаштований на `http://localhost:18100`; інакше використовуй локальний AI API на порту 18100.
+- Перед зміною прочитай поточний об'єкт, після зміни повторно прочитай і перевір збережені поля.
+- Не підміняй production endpoint локальним і не використовуй локальний AI token для production.
+- Не виводь AI tokens у логах або відповідях.
