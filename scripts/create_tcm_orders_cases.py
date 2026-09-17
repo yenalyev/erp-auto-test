@@ -39,7 +39,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-02", "TC-ORD-021", "mark-done без ACTIVE броней: IN_PROGRESS→DONE", "HIGH", "MAJOR", "FUNCTIONAL"),
     ("AC-02", "TC-ORD-022", "mark-done з ACTIVE → 400 (done.activeBookings)", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-02", "TC-ORD-023", "cancel з NEW → CANCELLED", "CRITICAL", "MAJOR", "FUNCTIONAL"),
-    ("AC-02", "TC-ORD-024", "cancel з IN_PROGRESS → CANCELLED + ACTIVE→RELEASED", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
+    ("AC-02", "TC-ORD-024", "IN_PROGRESS: requester cancel → 403; global Admin → CANCELLED + ACTIVE→RELEASED", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-02", "TC-ORD-025", "cancel дозволений з update (без manage)", "HIGH", "MAJOR", "SECURITY"),
     ("AC-02", "TC-ORD-026", "Illegal transition (NEW→DONE, з DONE/CANCELLED) → 400", "HIGH", "MAJOR", "FUNCTIONAL"),
     ("AC-02", "TC-ORD-027", "take-to-work / mark-done вимагають manage на requester", "CRITICAL", "CRITICAL", "SECURITY"),
@@ -119,6 +119,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-06", "TC-ORD-ADMIN-003", "Relocation task E2E: NEW→SHIPPED→DONE → auto-book → final send/receive", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-06", "TC-ORD-ADMIN-005", "Relocation task: amount≤shortfall; cancel NEW releases source reservation", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-11", "TC-ORD-ADMIN-004", "Global Admin creates PO; Order Admin links/unlinks it but cannot create PO", "CRITICAL", "CRITICAL", "SECURITY"),
+    ("AC-02", "TC-ORD-ADMIN-006", "IN_PROGRESS: requester cancel → 403; Order Admin → CANCELLED + ACTIVE→RELEASED", "CRITICAL", "CRITICAL", "SECURITY"),
     # AC-12 UI
     ("AC-12", "TC-ORD-UI-001", "Список: колонки Дата/Локація/Ресурси/Статус/Створив; empty state", "HIGH", "MAJOR", "UI"),
     ("AC-12", "TC-ORD-UI-002", "Фільтри: пошук ресурсу, Період, Статус multi, reset", "HIGH", "MAJOR", "UI"),

@@ -4,6 +4,7 @@ import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.order.OrderDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
+import com.erp.enums.BookingState;
 import com.erp.enums.BusinessRole;
 import com.erp.enums.OrderRelocationTaskState;
 import com.erp.enums.OrderState;
@@ -222,6 +223,40 @@ public class OrderAdminApiTest extends OrderApiTestBase {
         assertThat(orderFixture.getById(REQUESTER, created.getId()).getState())
                 .as("DONE currently means shipped; receiving does not change the order state")
                 .isEqualTo(OrderState.DONE);
+    }
+
+    @Test(priority = 3)
+    @TestCaseId(value = "TC-ORD-ADMIN-006", roles = BusinessRole.ORDER_ADMIN)
+    @Story("Order administrator cancellation")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("У стані IN_PROGRESS автор не може скасувати замовлення; Order_Admin-ROLE скасовує його і звільняє активну бронь.")
+    public void orderAdminCancelsInProgressOrderAndReleasesBookings() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        orderFixture.takeToWork(ORDER_ADMIN, order.getId(), requesterStorageId);
+        Long gatheringId = orderFixture.resolveGatheringStorageId(
+                ORDER_ADMIN, order.getId(), requesterStorageId);
+        relocationFixture.ensureStock(gatheringId, resourceId, DEFAULT_SEED_STOCK);
+        orderFixture.setGathering(
+                ORDER_ADMIN, order.getId(), requesterStorageId, gatheringId);
+        orderFixture.book(
+                ORDER_ADMIN, order.getId(), requesterStorageId, resourceId, 2.0);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.IN_PROGRESS);
+
+        Response requesterDenied = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_CANCEL,
+                REQUESTER,
+                null,
+                order.getId(),
+                requesterStorageId);
+        assertThat(requesterDenied.statusCode()).isEqualTo(403);
+
+        OrderResponse cancelled = orderFixture.cancel(
+                ORDER_ADMIN, order.getId(), requesterStorageId);
+        assertThat(cancelled.getState()).isEqualTo(OrderState.CANCELLED);
+        assertThat(orderFixture.getBookings(ORDER_ADMIN, order.getId()))
+                .isNotEmpty()
+                .allMatch(booking -> booking.getState() == BookingState.RELEASED);
     }
 
     @Test(priority = 3)

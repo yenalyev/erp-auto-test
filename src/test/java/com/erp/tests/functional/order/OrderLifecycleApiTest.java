@@ -77,13 +77,26 @@ public class OrderLifecycleApiTest extends OrderApiTestBase {
 
     @Test(priority = 14)
     @TestCaseId("TC-ORD-024")
-    @Story("Owner cancel")
+    @Story("Cancellation permissions")
     @Severity(SeverityLevel.CRITICAL)
-    public void testCancelInProgressReleasesBookings() {
+    @Description("У стані IN_PROGRESS автор не може скасувати замовлення; глобальний Admin скасовує його зі звільненням броней.")
+    public void testRequesterCannotCancelInProgressButGlobalAdminCan() {
         OrderResponse order = prepareManagedInProgress();
-        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, 2.0);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.IN_PROGRESS);
 
-        OrderResponse cancelled = orderFixture.cancel(REQUESTER, order.getId(), requesterStorageId);
+        Response requesterDenied = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_CANCEL,
+                REQUESTER,
+                null,
+                order.getId(),
+                requesterStorageId);
+        assertThat(requesterDenied.statusCode()).isEqualTo(403);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .isEqualTo(OrderState.IN_PROGRESS);
+
+        OrderResponse cancelled = orderFixture.cancel(MANAGER, order.getId(), requesterStorageId);
         assertThat(cancelled.getState()).isEqualTo(OrderState.CANCELLED);
 
         List<BookingResponse> bookings = orderFixture.getBookings(MANAGER, order.getId());

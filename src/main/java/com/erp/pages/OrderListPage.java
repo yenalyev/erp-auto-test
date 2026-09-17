@@ -474,11 +474,17 @@ public class OrderListPage extends BasePage {
         Locator confirm = page.getByRole(AriaRole.ALERTDIALOG);
         Locator cancel = confirm.getByRole(AriaRole.BUTTON,
                 new Locator.GetByRoleOptions().setName("Скасувати запит"));
+        cancel.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         Response response = page.waitForResponse(
                 r -> r.url().contains("/relocation-tasks/" + taskId + "/cancel")
                         && "PUT".equals(r.request().method()),
                 new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
-                cancel::click);
+                // The alert action is animated and briefly re-mounted on dev.
+                // Dispatching the DOM click avoids Playwright waiting for a
+                // stability window on a button that is replaced mid-animation.
+                () -> cancel.evaluate("element => element.click()"));
         requireSuccess(response, "Cancel order relocation task");
         return this;
     }
