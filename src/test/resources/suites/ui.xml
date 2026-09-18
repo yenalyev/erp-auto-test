@@ -111,6 +111,7 @@
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
             <class name="com.erp.tests.ui.AlertStorageTypeUiTest"/>
+            <class name="com.erp.tests.ui.FlyPointsUiTest"/>
         </classes>
     </test>
 

@@ -328,6 +328,7 @@
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.FaitaResourcesUiTest"/>
             <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
+            <class name="com.erp.tests.ui.FlyPointsUiTest"/>
             <class name="com.erp.tests.ui.CrewBattalionStocksUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>

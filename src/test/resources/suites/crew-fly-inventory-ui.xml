@@ -11,6 +11,7 @@
         <classes>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
+            <class name="com.erp.tests.ui.FlyPointsUiTest"/>
         </classes>
     </test>
 </suite>
