@@ -673,6 +673,7 @@ public class DefectTest extends BaseFunctionalTest {
         Allure.step("Створити несерійне виробництво «В роботі» з повною витратою batch1", () -> {
             nspFixture.createAs(
                     UserRole.OWNER_1,
+                    storageId,
                     NonSeriesProductionStatus.IN_PROGRESS,
                     NonSeriesProductionDataFactory.uniqueProductName(),
                     1.0,

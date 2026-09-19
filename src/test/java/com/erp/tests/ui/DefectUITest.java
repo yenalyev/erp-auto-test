@@ -292,6 +292,7 @@ public class DefectUITest extends BaseUITest {
         NonSeriesProductionFixture nspFixture = new NonSeriesProductionFixture(testContext, apiExecutor);
         nspFixture.createAs(
                 UserRole.OWNER_1,
+                storageId,
                 NonSeriesProductionStatus.IN_PROGRESS,
                 NonSeriesProductionDataFactory.uniqueProductName(),
                 1.0,

@@ -136,7 +136,17 @@ public class NonSeriesProductionFixture extends BaseFixture {
                                                 double productAmount,
                                                 Long resourceId,
                                                 double resourceAmountPerUnit) {
-        Long storageId = ConfigProvider.getOwner1StorageId();
+        return createAs(role, ConfigProvider.getOwner1StorageId(), status, product,
+                productAmount, resourceId, resourceAmountPerUnit);
+    }
+
+    public NonSeriesProductionResponse createAs(UserRole role,
+                                                Long storageId,
+                                                NonSeriesProductionStatus status,
+                                                String product,
+                                                double productAmount,
+                                                Long resourceId,
+                                                double resourceAmountPerUnit) {
         NonSeriesProductionRequest request = NonSeriesProductionDataFactory.buildCreateRequest(
                 storageId,
                 status,
