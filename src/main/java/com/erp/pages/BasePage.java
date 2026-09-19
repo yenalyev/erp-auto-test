@@ -194,7 +194,11 @@ public abstract class BasePage {
     private boolean comboboxOverlayVisible() {
         return isAnyVisible(page.locator("[data-slot='combobox-item']"))
                 || isAnyVisible(page.locator("[cmdk-item]"))
-                || isAnyVisible(page.getByRole(AriaRole.OPTION));
+                || isAnyVisible(page.getByRole(AriaRole.OPTION))
+                || isAnyVisible(page.getByText("Не знайдено",
+                        new Page.GetByTextOptions().setExact(true)))
+                || isAnyVisible(page.getByText("Нічого не знайдено",
+                        new Page.GetByTextOptions().setExact(true)));
     }
 
     private static boolean isAnyVisible(Locator locator) {
