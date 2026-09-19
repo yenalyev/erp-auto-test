@@ -5,12 +5,16 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.defect.DefectDataFactory;
 import com.erp.data.factories.non_series_production.NonSeriesProductionDataFactory;
 import com.erp.data.factories.production.ProductionDataFactory;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.DefectType;
 import com.erp.enums.NonSeriesProductionStatus;
 import com.erp.enums.RelocationState;
+import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.DefectFixture;
 import com.erp.fixtures.NonSeriesProductionFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.query.DefectQuery;
 import com.erp.models.request.DefectRequest;
 import com.erp.models.request.DefectWriteOffRequest;
@@ -19,6 +23,8 @@ import com.erp.models.response.DefectWriteOffResponse;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.StorageItemBatchResponse;
+import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UserMeResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
@@ -905,20 +911,68 @@ public class DefectTest extends BaseFunctionalTest {
 
     @Test(priority = 170)
     @TestCaseId("TC-DEF-017")
-    @Story("In-transit relocations are not valid relocation defect sources")
-    @Description("Брак типу RELOCATION за переміщенням у статусі CREATED має бути відхилений")
+    @Story("Recipient cannot create a defect before an inbound relocation is received")
+    @Description("""
+            Відправник надсилає ресурс іншому користувачу; переміщення має статус CREATED («В дорозі»).
+            Отримувач має доступ лише до власної локації. POST /defects з його сесією, storageId
+            отримувача та relocationId незавершеного переміщення має повернути 4xx, не створити брак
+            і не змінити залишок. Після підтвердження отримання те саме переміщення є допустимим
+            джерелом браку для отримувача.""")
     @Severity(SeverityLevel.NORMAL)
     public void testInTransitNotOfferedForDefect() {
+        StorageResponse receiver = fixture.getIsolatedStorageFixture().createStorage(
+                StorageDataFactory.childStorage(ConfigProvider.getOwner1StorageId(), "defect-api-recv-")
+                        .accessMode(StorageAccessMode.REGIONS)
+                        .build());
+        UserFixture.BusinessActor recipientActor = fixture.getIsolatedUserFixture().createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(receiver));
+
         Long resource = fixture.createFreshResource();
         fixture.createExternalReceipt(resource, 10.0, "transit-" + System.currentTimeMillis());
         RelocationResponse send = fixture.getRelocationFixture().createSend(
-                UserRole.OWNER_1, storageId, owner2Storage, resource, 5.0);
+                UserRole.OWNER_1, storageId, receiver.getId(), resource, 5.0);
         assertThat(send.getState()).isEqualTo(RelocationState.CREATED);
 
-        Response resp = fixture.createRaw(UserRole.OWNER_1,
-                DefectDataFactory.buildRelocationDefect(storageId, resource, send.getId(), 3.0, LocalDate.now()));
-        Allure.step("Брак за переміщенням CREATED відхилено", () ->
-                assertThat(resp.statusCode()).as("body=%s", safeBody(resp)).isGreaterThanOrEqualTo(400));
+        apiExecutor.setSessionForRole(UserRole.OWNER_2, recipientActor.username(), recipientActor.password());
+        try {
+            UserMeResponse recipient = new UserFixture(testContext, apiExecutor).getMe(UserRole.OWNER_2);
+            assertThat(recipient.getAllowedStorageIds())
+                    .as("отримувач має доступ до власної локації, але не до відправника")
+                    .contains(receiver.getId())
+                    .doesNotContain(storageId);
+
+            double stockBefore = fixture.getRelocationFixture().getResourceStock(
+                    receiver.getId(), resource, UserRole.OWNER_2);
+            DefectQuery receiverDefects = DefectQuery.builder()
+                    .storageId(receiver.getId()).pageSize(100).build();
+            int countBefore = fixture.listDefectsAs(UserRole.OWNER_2, receiverDefects).size();
+
+            Response resp = fixture.createRaw(UserRole.OWNER_2,
+                    DefectDataFactory.buildRelocationDefect(
+                            receiver.getId(), resource, send.getId(), 3.0, LocalDate.now()));
+            Allure.step("До отримання брак за переміщенням CREATED відхилено", () -> {
+                assertThat(resp.statusCode()).as("body=%s", safeBody(resp)).isBetween(400, 499);
+                assertThat(fixture.getRelocationFixture().getResourceStock(
+                        receiver.getId(), resource, UserRole.OWNER_2))
+                        .as("залишок отримувача не змінився")
+                        .isCloseTo(stockBefore, within(0.01));
+                assertThat(fixture.listDefectsAs(UserRole.OWNER_2, receiverDefects))
+                        .as("новий запис про брак не створено")
+                        .hasSize(countBefore);
+            });
+
+            RelocationResponse received = fixture.getRelocationFixture().resolve(
+                    UserRole.OWNER_2, send.getId(), receiver.getId(), RelocationState.FINISHED);
+            assertThat(received.getState()).isEqualTo(RelocationState.FINISHED);
+            Response afterReceipt = fixture.createRaw(UserRole.OWNER_2,
+                    DefectDataFactory.buildRelocationDefect(
+                            receiver.getId(), resource, send.getId(), 3.0, LocalDate.now()));
+            Allure.step("Після отримання той самий користувач може створити брак", () ->
+                    assertThat(afterReceipt.statusCode()).as("body=%s", safeBody(afterReceipt)).isEqualTo(200));
+        } finally {
+            apiExecutor.setSessionForRole(
+                    UserRole.OWNER_2, UserRole.OWNER_2.getUsername(), UserRole.OWNER_2.getPassword());
+        }
     }
 
     @Test(priority = 210)

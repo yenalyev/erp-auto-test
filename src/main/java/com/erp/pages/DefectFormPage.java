@@ -73,6 +73,18 @@ public class DefectFormPage extends BasePage {
         return this;
     }
 
+    public boolean isSenderOptionAvailable(String senderName) {
+        Locator input = page.getByPlaceholder(SENDER_PLACEHOLDER);
+        input.click();
+        input.fill(senderName);
+        waitForComboboxOptionsSettled();
+        boolean available = page.locator(COMBOBOX_ITEM_SELECTOR)
+                .filter(new Locator.FilterOptions().setHasText(senderName))
+                .count() > 0;
+        dismissComboboxOverlay();
+        return available;
+    }
+
     /**
      * Selects a resource by name. The STORAGE defect type renders a directly-visible
      * {@code ComboboxInput} (placeholder «Оберіть ресурс...»); other types (RELOCATION,
@@ -148,6 +160,13 @@ public class DefectFormPage extends BasePage {
     public int getSourceTableRowCount() {
         Locator wrapper = page.locator("table tbody").first();
         return wrapper.count() > 0 ? wrapper.locator("tr").count() : 0;
+    }
+
+    public DefectFormPage waitForNoRelocations() {
+        page.getByText("Немає переміщень — збереження недоступне",
+                        new Page.GetByTextOptions().setExact(true))
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
     }
 
     public boolean isSourceTableEmptyStateVisible(String emptyStateText) {

@@ -3,16 +3,22 @@ package com.erp.tests.ui;
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.defect.DefectDataFactory;
 import com.erp.data.factories.non_series_production.NonSeriesProductionDataFactory;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.NonSeriesProductionStatus;
+import com.erp.enums.RelocationState;
+import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.DefectFixture;
 import com.erp.fixtures.NonSeriesProductionFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.request.DefectWriteOffRequest;
 import com.erp.models.response.DefectResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.pages.DefectFormPage;
 import com.erp.pages.DefectsPage;
 import com.erp.utils.config.ConfigProvider;
@@ -30,6 +36,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,7 +69,6 @@ public class DefectUITest extends BaseUITest {
     private ResourceFixture resourceFixture;
     private StorageFixture storageFixture;
     private Long storageId;
-    private Long owner2StorageId;
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -76,7 +82,6 @@ public class DefectUITest extends BaseUITest {
         fixture.fetchSharedResourceCategory();
 
         storageId = fixture.getStorageId();
-        owner2StorageId = ConfigProvider.getOwner2StorageId();
     }
 
     @AfterClass(alwaysRun = true)
@@ -228,33 +233,56 @@ public class DefectUITest extends BaseUITest {
 
     @Test(priority = 60)
     @TestCaseId("TC-UI-DEF-006")
-    @Story("In-transit relocations never appear in the relocation defect picker")
+    @Story("Recipient cannot create a defect before an inbound relocation is received")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Відомий дефект бекенда: POST /defects приймає relocationId переміщення у статусі CREATED —
-            див. DefectTest.testInTransitNotOfferedForDefect. У звичайному UI-флоу це неможливо:
-            DefectFormPage фільтрує переміщення до RELOCATION_STATES_FOR_DEFECT
-            (FINISHED / AUTO_FINISHED / RETURNED) — переміщення CREATED ніколи не потрапляє у таблицю вибору.""")
+            Користувач відправника надсилає ресурс окремому отримувачу; переміщення залишається
+            у статусі CREATED («В дорозі»). Отримувач має доступ лише до власної локації й не може
+            вибрати відправника або зберегти брак за ще не отриманим переміщенням.
+            Додатково під Admin, який бачить відправника, перевіряється статусний фільтр:
+            CREATED не потрапляє до таблиці переміщень для браку. API-правило перевіряє TC-DEF-017.""")
     public void testInTransitRelocationNeverOfferedInPicker() {
+        StorageResponse sender = storageFixture.getById(UserRole.ADMIN, storageId);
+        StorageResponse receiver = fixture.getIsolatedStorageFixture().createStorage(
+                StorageDataFactory.childStorage(ConfigProvider.getOwner1StorageId(), "defect-recv-")
+                        .accessMode(StorageAccessMode.REGIONS)
+                        .build());
+        UserFixture.BusinessActor receiverActor = fixture.getIsolatedUserFixture().createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(receiver));
+
         ResourceResponse resource = resourceFixture.createUniqueResource("ui-def-transit-");
         Long resourceId = resource.getId();
         String resourceName = resource.getName().trim();
         fixture.createExternalReceipt(resourceId, 10.0, "ui-transit-" + System.currentTimeMillis());
-        fixture.getRelocationFixture().createSend(UserRole.OWNER_1, storageId, owner2StorageId, resourceId, 5.0);
+        RelocationResponse inTransit = fixture.getRelocationFixture().createSend(
+                UserRole.OWNER_1, storageId, receiver.getId(), resourceId, 5.0);
+        assertThat(inTransit.getState()).isEqualTo(RelocationState.CREATED);
 
-        String senderName = storageFixture.getById(UserRole.ADMIN, storageId).getName().trim();
+        String senderName = sender.getName().trim();
 
-        injectRoleSession(UserRole.OWNER_2, owner2StorageId);
+        injectSession(receiverActor.username(), receiverActor.password(), receiver.getId());
         DefectFormPage form = new DefectFormPage(page).open();
         form.selectType(DefectFormPage.TYPE_RELOCATION)
-                .selectResourceByName(resourceName)
-                .selectSenderByName(senderName);
-        page.waitForTimeout(500);
+                .selectResourceByName(resourceName);
+        assertThat(form.isSenderOptionAvailable(senderName))
+                .as("Отримувач без доступу до локації відправника не може вибрати її для браку")
+                .isFalse();
+        assertThat(form.isSubmitDisabled())
+                .as("Отримувач не може зберегти брак за переміщенням у дорозі")
+                .isTrue();
+        form.attachScreenshot("TC-UI-DEF-006 — recipient cannot defect in-transit relocation");
 
-        assertThat(form.getSourceTableRowCount())
-                .as("Переміщення CREATED (в дорозі) не повинно потрапляти у список для вибору")
+        injectRoleSession(UserRole.ADMIN, receiver.getId());
+        DefectFormPage adminForm = new DefectFormPage(page).open();
+        adminForm.selectType(DefectFormPage.TYPE_RELOCATION)
+                .selectResourceByName(resourceName)
+                .selectSenderByName(senderName)
+                .waitForNoRelocations();
+        assertThat(adminForm.getSourceTableRowCount())
+                .as("Навіть із доступом до відправника CREATED не можна вибрати як джерело браку")
                 .isZero();
-        form.attachScreenshot("TC-UI-DEF-006 — in-transit relocation absent from picker");
+        assertThat(adminForm.isSubmitDisabled()).isTrue();
+        adminForm.attachScreenshot("TC-UI-DEF-006 — in-transit relocation absent from picker");
     }
 
     @Test(priority = 70)
@@ -468,8 +496,12 @@ public class DefectUITest extends BaseUITest {
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
+        injectSession(role.getUsername(), role.getPassword(), selectedStorageId);
+    }
+
+    private void injectSession(String username, String password, long selectedStorageId) {
         Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(role.getUsername(), role.getPassword());
+                .getSession(username, password);
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
