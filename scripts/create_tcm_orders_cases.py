@@ -7,7 +7,7 @@ import os
 import urllib.error
 import urllib.request
 
-BASE = os.getenv("TCM_BASE_URL", "http://localhost:8100").rstrip("/")
+BASE = os.getenv("TCM_BASE_URL", "http://localhost:18100").rstrip("/")
 PROJECT_ID = 1
 TOKEN = os.getenv("TCM_AI_TOKEN", "dev-ai-token")
 FEATURE = "REQ-ORD"
@@ -117,7 +117,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-11", "TC-ORD-ADMIN-001", "Order_Admin-ROLE: order manage + production read; без production create і relocation send", "CRITICAL", "CRITICAL", "SECURITY"),
     ("AC-09", "TC-ORD-ADMIN-002", "Рольовий E2E: requester create → Order Admin partial ready → gatherer send → requester receive", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-06", "TC-ORD-ADMIN-003", "Relocation task E2E: NEW→SHIPPED→DONE → auto-book → final send/receive", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
-    ("AC-06", "TC-ORD-ADMIN-005", "Relocation task: amount≤shortfall; cancel NEW releases source reservation", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
+    ("AC-06", "TC-ORD-ADMIN-005", "Relocation task: amount≤order quantity regardless of gathering stock; cancel NEW releases source reservation", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-11", "TC-ORD-ADMIN-004", "Global Admin creates PO; Order Admin links/unlinks it but cannot create PO", "CRITICAL", "CRITICAL", "SECURITY"),
     ("AC-02", "TC-ORD-ADMIN-006", "IN_PROGRESS: requester cancel → 403; Order Admin → CANCELLED + ACTIVE→RELEASED", "CRITICAL", "CRITICAL", "SECURITY"),
     # AC-12 UI
@@ -190,10 +190,10 @@ E2E_STEPS: dict[str, list[dict[str, object]]] = {
         {"stepOrder": 5, "actionText": "Під комірником збору відправити замовлення, під замовником прийняти.", "expectedText": "Замовлення і пов'язане переміщення завершені, продукція на локації доставки."},
     ],
     "TC-ORD-E2E-005": [
-        {"stepOrder": 1, "actionText": "Створити замовлення на 5 одиниць: 2 на зборі, 3 на іншій локації.", "expectedText": "Замовлення створене у стані «Нове»."},
-        {"stepOrder": 2, "actionText": "Під `Order_Admin-ROLE` взяти в роботу, призначити збір, створити запит на 3 одиниці та забронювати локальні 2.", "expectedText": "Запит `NEW`, резерв джерела 3; активна локальна бронь 2; замовлення «В роботі»."},
+        {"stepOrder": 1, "actionText": "Створити замовлення на 5 одиниць: 2 на зборі, 5 на іншій локації.", "expectedText": "Замовлення створене у стані «Нове»."},
+        {"stepOrder": 2, "actionText": "Під `Order_Admin-ROLE` взяти в роботу, призначити збір і створити через UI запит на всі 5 одиниць.", "expectedText": "Попри 2 одиниці на зборі, запит `NEW` створений на 5; резерв джерела дорівнює 5."},
         {"stepOrder": 3, "actionText": "Скасувати ще не відправлений запит на переміщення.", "expectedText": "Запит `CANCELLED`; резерв джерела повністю звільнений."},
-        {"stepOrder": 4, "actionText": "Підтвердити «Готово до доставки» для локальних 2 одиниць.", "expectedText": "Замовлення готове до часткової доставки без активної зайвої залежності."},
+        {"stepOrder": 4, "actionText": "Забронювати локальні 2 одиниці та підтвердити «Готово до доставки».", "expectedText": "Замовлення готове до часткової доставки без активної зайвої залежності."},
         {"stepOrder": 5, "actionText": "Відправити зі збору та прийняти на локації доставки.", "expectedText": "Часткова видача завершена; замовлення «Виконано»; активних броней і резерву скасованого запиту немає."},
     ],
     "TC-ORD-E2E-006": [

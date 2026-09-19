@@ -47,7 +47,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("Orders")
-@Feature("Order_Admin-ROLE")
+@Feature("Замовлення: адміністратор")
 public class OrderAdminApiTest extends OrderApiTestBase {
 
     private static final UserRole ORDER_ADMIN = UserRole.ORDER_ADMIN;
@@ -93,7 +93,7 @@ public class OrderAdminApiTest extends OrderApiTestBase {
         sourceStorage = storageFixture.createChildStorage(availabilityRoot, "ord-rel-source-");
         relocationFixture.ensureStock(sourceStorage.getId(), resourceId, DEFAULT_SEED_STOCK);
         sourceKeeper = userFixture.createBusinessActor(
-                getPlaywrightSessionProvider(), BusinessRole.UNIT_KOMIRNIK, List.of(sourceStorage));
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(sourceStorage));
         apiExecutor.setSessionForRole(SOURCE_KEEPER, sourceKeeper.username(), sourceKeeper.password());
 
         isolatedGatheringStorage = storageFixture.createChildStorage(
@@ -102,7 +102,7 @@ public class OrderAdminApiTest extends OrderApiTestBase {
                 UserRole.ADMIN, isolatedGatheringStorage.getId());
         isolatedGatherer = userFixture.createBusinessActor(
                 getPlaywrightSessionProvider(),
-                BusinessRole.UNIT_KOMIRNIK,
+                BusinessRole.BUSINESS_UNIT_OWNER,
                 List.of(isolatedGatheringStorage));
         apiExecutor.setSessionForRole(
                 ISOLATED_GATHERER, isolatedGatherer.username(), isolatedGatherer.password());
@@ -151,26 +151,25 @@ public class OrderAdminApiTest extends OrderApiTestBase {
     @TestCaseId(value = "TC-ORD-ADMIN-001", roles = BusinessRole.ORDER_ADMIN)
     @Story("Order administrator permission boundary")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Order_Admin-ROLE керує всіма замовленнями, читає ВЗ, але не створює ВЗ і не відправляє зі складу.")
-    public void orderAdminPermissionsAreSeparatedFromGlobalAdminAndGatherer() {
+    @Description("Order Admin має базову роль керівника своєї локації та керує всіма замовленнями; чужа локація лишається поза scope.")
+    public void orderAdminCombinesLocationHeadWithOrderAdministration() {
         UserMeResponse me = userFixture.getMe(ORDER_ADMIN);
 
-        // /users/me exposes the normalized realm role; the catalog/creation request keeps
-        // the exact Keycloak role name Order_Admin-ROLE.
-        assertThat(me.getRoles()).contains("Order_Admin");
+        assertThat(me.getGrants()).extracting(grant -> grant.getName())
+                .contains("Керівник локації", "Замовлення: адміністратор");
         assertThat(me.getPermissions())
-                .contains("order::all::read", "order::all::update", "order::all::manage")
-                .contains("production-order::all::read")
-                .doesNotContain("production-order::all::create");
+                .contains("order::read", "order::update", "order::manage")
+                .contains("order::" + requesterStorageId + "::manage")
+                .contains("production-order::" + requesterStorageId + "::read");
 
-        Response productionList = productionOrderFixture.getPageRaw(ORDER_ADMIN, gatheringStorageId);
+        Response productionList = productionOrderFixture.getPageRaw(ORDER_ADMIN, requesterStorageId);
         assertThat(productionList.statusCode()).isEqualTo(200);
 
-        Response createProductionDenied = apiExecutor.execute(
+        Response createOnForeignLocationDenied = apiExecutor.execute(
                 ApiEndpointDefinition.PRODUCTION_ORDER_POST_CREATE,
                 ORDER_ADMIN,
                 productionOrderFixture.buildCreateRequest(gatheringStorageId, resourceId, 1.0));
-        assertThat(createProductionDenied.statusCode()).isEqualTo(403);
+        assertThat(createOnForeignLocationDenied.statusCode()).isEqualTo(403);
     }
 
     @Test(priority = 2)
@@ -229,7 +228,7 @@ public class OrderAdminApiTest extends OrderApiTestBase {
     @TestCaseId(value = "TC-ORD-ADMIN-006", roles = BusinessRole.ORDER_ADMIN)
     @Story("Order administrator cancellation")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("У стані IN_PROGRESS автор не може скасувати замовлення; Order_Admin-ROLE скасовує його і звільняє активну бронь.")
+    @Description("У стані IN_PROGRESS автор не може скасувати замовлення; адміністратор замовлень скасовує його і звільняє активну бронь.")
     public void orderAdminCancelsInProgressOrderAndReleasesBookings() {
         OrderResponse order = orderFixture.createOrder(REQUESTER);
         orderFixture.takeToWork(ORDER_ADMIN, order.getId(), requesterStorageId);
@@ -261,7 +260,7 @@ public class OrderAdminApiTest extends OrderApiTestBase {
 
     @Test(priority = 3)
     @TestCaseId(value = "TC-ORD-ADMIN-003", roles = {
-            BusinessRole.UNIT_KOMIRNIK, BusinessRole.ORDER_ADMIN})
+            BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})
     @Story("Cross-location order fulfillment")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Order Admin створює запит на переміщення; комірник джерела відправляє, збір приймає; після бронювання замовлення відправляється і приймається точкою.")
@@ -345,13 +344,15 @@ public class OrderAdminApiTest extends OrderApiTestBase {
 
     @Test(priority = 4)
     @TestCaseId(value = "TC-ORD-ADMIN-005", roles = BusinessRole.ORDER_ADMIN)
-    @Story("Relocation task cancellation")
+    @Story("Relocation task amount limit and cancellation")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Запит не може перевищувати дефіцит; скасування NEW-запиту звільняє резерв на локації-джерелі.")
-    public void relocationTaskCancellationReleasesSourceReservation() {
+    @Description("Максимальний запит дорівнює кількості в замовленні незалежно від залишку на зборі; скасування NEW-запиту звільняє резерв джерела.")
+    public void relocationTaskUsesOrderQuantityLimitAndCancellationReleasesReservation() {
         double quantity = 5.0;
-        double requested = 3.0;
+        double gatheringStock = 2.0;
         resetIsolatedGatheringStock();
+        inventoryFixture.resetResourceStock(
+                isolatedGatheringStorage.getId(), resourceId, gatheringStock, UserRole.ADMIN);
         OrderResponse order = orderFixture.createOrder(
                 REQUESTER, requesterStorageId, resourceId, quantity);
         orderFixture.takeToWork(ORDER_ADMIN, order.getId(), requesterStorageId);
@@ -360,19 +361,19 @@ public class OrderAdminApiTest extends OrderApiTestBase {
         relocationFixture.ensureStock(sourceStorage.getId(), resourceId, quantity);
         long orderLineId = order.getLines().getFirst().getId();
 
-        Response exceedsShortfall = relocationTaskFixture.createRaw(
+        Response exceedsOrderQuantity = relocationTaskFixture.createRaw(
                 ORDER_ADMIN,
                 order.getId(),
                 requesterStorageId,
                 relocationTaskFixture.request(sourceStorage.getId(), orderLineId, quantity + 1));
-        assertThat(exceedsShortfall.statusCode()).isEqualTo(400);
+        assertThat(exceedsOrderQuantity.statusCode()).isEqualTo(400);
 
         OrderRelocationTaskResponse task = relocationTaskFixture.create(
                 ORDER_ADMIN,
                 order.getId(),
                 requesterStorageId,
-                relocationTaskFixture.request(sourceStorage.getId(), orderLineId, requested));
-        assertThat(readBookedAmount(sourceStorage.getId())).isEqualTo(requested);
+                relocationTaskFixture.request(sourceStorage.getId(), orderLineId, quantity));
+        assertThat(readBookedAmount(sourceStorage.getId())).isEqualTo(quantity);
 
         OrderRelocationTaskResponse cancelled = relocationTaskFixture.cancel(
                 ORDER_ADMIN, order.getId(), task.getId(), requesterStorageId);
@@ -384,7 +385,7 @@ public class OrderAdminApiTest extends OrderApiTestBase {
     @TestCaseId(value = "TC-ORD-ADMIN-004", roles = BusinessRole.ORDER_ADMIN)
     @Story("Production shortage handoff")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Глобальний Admin створює ВЗ на локацію збору; Order Admin може прив'язати й відв'язати його від замовлення, але не може створити ВЗ.")
+    @Description("Глобальний Admin створює ВЗ на чужій локації збору; Order Admin може прив'язати й відв'язати його від замовлення.")
     public void orderAdminLinksProductionOrderCreatedByGlobalAdmin() {
         double quantity = 4.0;
         resetIsolatedGatheringStock();

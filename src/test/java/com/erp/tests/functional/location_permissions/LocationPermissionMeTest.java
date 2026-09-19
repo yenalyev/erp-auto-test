@@ -2,14 +2,13 @@ package com.erp.tests.functional.location_permissions;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
-import com.erp.data.factories.user.UserDataFactory;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.AccessFixture;
 import com.erp.fixtures.LocationPermissionSupport;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.UserFixture;
+import com.erp.models.access.GrantScopeKind;
 import com.erp.models.request.ManufacturingListRequest;
-import com.erp.models.request.UserRequest;
-import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.UserMeResponse;
 import com.erp.models.response.UserModelResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
@@ -24,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,12 +37,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LocationPermissionMeTest extends BaseFunctionalTest {
 
     private UserFixture userFixture;
+    private AccessFixture accessFixture;
     private StorageFixture storageFixture;
     private UserFixture.LocationPermissionIds ids;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void ensureMixedUser() {
         userFixture = new UserFixture(testContext, apiExecutor);
+        accessFixture = new AccessFixture(testContext, apiExecutor);
         storageFixture = new StorageFixture(testContext, apiExecutor);
         long ro2 = LocationPermissionSupport.resolveRo2StorageId(storageFixture);
         ids = userFixture.ensureLocationMixedUser(getPlaywrightSessionProvider(), ro2);
@@ -99,41 +99,29 @@ public class LocationPermissionMeTest extends BaseFunctionalTest {
     @TestCaseId("TC-LOC-ME-002")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            AC-05: для локації X одночасно var_business_unit_id::X (Локації) і
-            var_business_unit_id_ro::X (Дозволи) → повний доступ (full wins).
+            AC-05: для локації X одночасно grant ролей «Керівник локації» і
+            «Перегляд локації» → повний доступ (full wins).
             """)
     public void overlapFullAndRoOnSameLocationGivesFullAccess() {
         long overlapId = ids.fullA1();
-        String overlapRo = UserFixture.BUSINESS_UNIT_RO_PREFIX + overlapId;
         String username = UserRole.LOCATION_MIXED.getUsername();
 
         UserModelResponse listed = userFixture.findUserByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("LOCATION_MIXED missing"));
-        // Page search omits storages — load full card before PUT.
-        // Staging GET often returns storages=null while raw permissions still hold
-        // var_business_unit_id::*; PUT must re-send storages explicitly or full bindings are wiped.
         UserModelResponse user = userFixture.getUser(UserRole.ADMIN, listed.getId());
 
         try {
-            List<String> permissions = new ArrayList<>(
-                    user.getPermissions() != null ? user.getPermissions() : List.of());
-            if (!permissions.contains(overlapRo)) {
-                permissions.add(overlapRo);
-            }
-            UserRequest update = UserDataFactory.fromExisting(user).toBuilder()
-                    .storages(List.of(
-                            SimpleEntityResponse.builder().id(ids.fullA1()).name("full-a1").build(),
-                            SimpleEntityResponse.builder().id(ids.fullA2()).name("full-a2").build()))
-                    .permissions(permissions)
-                    .build();
-            userFixture.updateUser(UserRole.ADMIN, user.getId(), update);
+            accessFixture.ensureGrants(user.getId(), List.of(UserFixture.BUSINESS_UNIT_VIEWER_ROLE_NAME),
+                    List.of(), GrantScopeKind.LOCATION, overlapId);
             apiExecutor.clearSessionCache();
 
-            UserModelResponse afterSetup = userFixture.getUser(UserRole.ADMIN, user.getId());
-            String fullAttr = "var_business_unit_id::" + overlapId;
-            assertThat(afterSetup.getPermissions())
-                    .as("raw permissions must keep full + _ro for same location X")
-                    .contains(fullAttr, overlapRo);
+            assertThat(accessFixture.grants(user.getId(), false))
+                    .as("both full and viewer role grants must exist for the overlap location")
+                    .filteredOn(grant -> grant.getStorage() != null
+                            && overlapId == grant.getStorage().getId())
+                    .extracting(grant -> grant.getRole().getName())
+                    .contains(UserFixture.BUSINESS_UNIT_OWNER_ROLE_NAME,
+                            UserFixture.BUSINESS_UNIT_VIEWER_ROLE_NAME);
 
             UserMeResponse me = userFixture.getMe(UserRole.LOCATION_MIXED);
             assertThat(me.getAllowedStorageIds())

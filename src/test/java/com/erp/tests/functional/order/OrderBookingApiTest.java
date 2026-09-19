@@ -37,6 +37,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Feature("REQ-ORD Order booking and fulfillment")
 public class OrderBookingApiTest extends OrderApiTestBase {
 
+    @Override
+    protected int requiredResourceCount() {
+        return 3;
+    }
+
     @Test(priority = 5)
     @TestCaseId("TC-ORD-090")
     @Story("Happy path fulfillment")

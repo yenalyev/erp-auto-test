@@ -1,24 +1,21 @@
 businessRoles:
   BUSINESS_UNIT_OWNER:
-    keycloakRoles:
-      - Business_Unit_Owner-ROLE
+    accessRoles: []
   BUSINESS_UNIT_AND_PROJECT_OWNER:
-    keycloakRoles:
-      - Business_Unit_Owner-ROLE
-      - Project-Production-ROLE
-  PRODUCTION_GROUP_MANAGER:
-    keycloakRoles:
-      - Business_Unit_Owner-ROLE
+    accessRoles:
+      - "Проєктне виробництво: редактор"
+  PRODUCTION_GROUP_DIRECTOR:
+    permissionKeys:
+      - production-order.allocate
   CREW_STOCK_READER:
-    keycloakRoles:
-      - Crew-Read-ROLE
+    accessRoles:
+      - "Екіпажі: перегляд"
   CREW_INVENTORY_OPERATOR:
-    keycloakRoles:
-      - Crew-Write-ROLE
+    accessRoles:
+      - "Екіпажі: облік"
   UNIT_KOMIRNIK:
-    keycloakRoles:
-      - Unit_Owner-ROLE
-      - Crew-Manager-ROLE
+    accessRoles:
+      - "Екіпажі: перегляд"
   ORDER_ADMIN:
-    keycloakRoles:
-      - Order_Admin-ROLE
+    accessRoles:
+      - "Замовлення: адміністратор"

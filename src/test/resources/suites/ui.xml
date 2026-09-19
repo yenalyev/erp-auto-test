@@ -108,6 +108,7 @@
 
     <test name="Inventory UI">
         <classes>
+            <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
             <class name="com.erp.tests.ui.AlertStorageTypeUiTest"/>

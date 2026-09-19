@@ -6,11 +6,12 @@ import com.erp.data.BusinessRoleCatalog;
 import com.erp.data.factories.user.UserDataFactory;
 import com.erp.enums.BusinessRole;
 import com.erp.enums.UserRole;
+import com.erp.models.access.GrantScopeKind;
 import com.erp.models.request.UserRequest;
+import com.erp.models.response.AccessGrantResponse;
+import com.erp.models.response.AccessRoleResponse;
 import com.erp.models.response.OneTimeUserCredentialsResponse;
 import com.erp.models.response.PagedUserResponse;
-import com.erp.models.response.RoleModelResponse;
-import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.UserMeResponse;
 import com.erp.models.response.UserModelResponse;
@@ -18,7 +19,6 @@ import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.auth.PlaywrightSessionProvider;
 import com.erp.utils.config.ConfigProvider;
-import com.erp.utils.helpers.ApiResponseHelper;
 import com.erp.utils.helpers.PollUtils;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
@@ -27,223 +27,108 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class UserFixture extends BaseFixture {
 
-    public static final String ADMINISTRATOR_ROLE_NAME = "Administrator-ROLE";
-    public static final String PROJECT_PRODUCTION_ROLE_NAME = "Project-Production-ROLE";
-    public static final String BUSINESS_UNIT_OWNER_ROLE_NAME = "Business_Unit_Owner-ROLE";
-    public static final String UNIT_OWNER_ROLE_NAME = "Unit_Owner-ROLE";
-    public static final String BUSINESS_UNIT_VIEWER_ROLE_NAME = "Business_Unit_Viewer-ROLE";
-    public static final String BUSINESS_UNIT_RO_PREFIX = "var_business_unit_id_ro::";
-    public static final String CREW_READ_ROLE_NAME = "Crew-Read-ROLE";
-    public static final String CREW_WRITE_ROLE_NAME = "Crew-Write-ROLE";
+    public static final String ADMINISTRATOR_ROLE_NAME = "Адміністратор системи";
+    public static final String PROJECT_PRODUCTION_ROLE_NAME = "Проєктне виробництво: редактор";
+    public static final String BUSINESS_UNIT_OWNER_ROLE_NAME = BusinessRoleCatalog.DEFAULT_LOCATION_ROLE_NAME;
+    public static final String UNIT_OWNER_ROLE_NAME = BUSINESS_UNIT_OWNER_ROLE_NAME;
+    public static final String BUSINESS_UNIT_VIEWER_ROLE_NAME = "Перегляд локації";
+    public static final String CREW_READ_ROLE_NAME = "Екіпажі: перегляд";
+    public static final String CREW_WRITE_ROLE_NAME = "Екіпажі: облік";
     public static final int MIN_ROLES_FOR_LIST_OVERFLOW = 5;
     private static final int MAX_ROLES_FOR_LIST_OVERFLOW = 8;
 
     private final List<String> trackedUserIds = new ArrayList<>();
+    private final AccessFixture accessFixture;
 
     public UserFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
+        this.accessFixture = new AccessFixture(testContext, apiExecutor);
     }
 
     @Step("API: підготувати контекст користувача для RBAC matrix")
     public void prepareRbacUserContext() {
-        if (testContext.get(ContextKey.SHARED_USER_ID) != null) {
-            return;
-        }
+        if (testContext.get(ContextKey.SHARED_USER_ID) != null) return;
         testContext.set(ContextKey.SHARED_ROLE_NAME, ADMINISTRATOR_ROLE_NAME);
         UserModelResponse user = createTestUser("rbac-matrix-");
+        accessFixture.ensureGrants(user.getId(), List.of(ADMINISTRATOR_ROLE_NAME), List.of(),
+                GrantScopeKind.ALL, null);
         testContext.set(ContextKey.SHARED_USER_ID, user.getId());
-        testContext.set(ContextKey.SHARED_USER, user);
+        testContext.set(ContextKey.SHARED_USER, getUser(UserRole.ADMIN, user.getId()));
     }
 
-    /**
-     * Ensures staging/dev project-production users exist with {@link #PROJECT_PRODUCTION_ROLE_NAME}
-     * and owner1 storage. Creates via ADMIN {@code POST /users} when missing, then bootstraps
-     * the permanent password through Keycloak UPDATE_PASSWORD.
-     */
     @Step("FIXTURE: Ensure project-production users (projectprod / projectprodab)")
     public void ensureProjectProductionUsers(PlaywrightSessionProvider playwright) {
         Long storageId = ConfigProvider.getOwner1StorageId();
-        ensureUser(
-                playwright,
-                UserRole.PROJECT_ADMIN.getUsername(),
-                UserRole.PROJECT_ADMIN.getPassword(),
-                "Проектний",
-                "Адмін",
-                PROJECT_PRODUCTION_ROLE_NAME,
-                storageId);
-        ensureUser(
-                playwright,
-                UserRole.PROJECT_MANAGER.getUsername(),
-                UserRole.PROJECT_MANAGER.getPassword(),
-                "Проектний",
-                "Менеджер",
-                PROJECT_PRODUCTION_ROLE_NAME,
-                storageId);
+        ensureUser(playwright, UserRole.PROJECT_ADMIN.getUsername(), UserRole.PROJECT_ADMIN.getPassword(),
+                "Проектний", "Адмін", PROJECT_PRODUCTION_ROLE_NAME, storageId);
+        ensureUser(playwright, UserRole.PROJECT_MANAGER.getUsername(), UserRole.PROJECT_MANAGER.getPassword(),
+                "Проектний", "Менеджер", PROJECT_PRODUCTION_ROLE_NAME, storageId);
     }
 
-    /**
-     * Ensures {@link UserRole#LOCATION_MIXED} exists with 2 full + 2 RO business units
-     * (CPMA-644): Owner+Viewer roles, storages A1/A2, permissions {@code var_business_unit_id_ro::B*}.
-     *
-     * @return resolved storage ids (A1, A2 full; B1, B2 read-only)
-     */
     @Step("FIXTURE: Ensure LOCATION_MIXED user (full A1/A2 + RO B1/B2)")
-    public LocationPermissionIds ensureLocationMixedUser(PlaywrightSessionProvider playwright,
-                                                         long ro2StorageId) {
+    public LocationPermissionIds ensureLocationMixedUser(PlaywrightSessionProvider playwright, long ro2StorageId) {
         long a1 = ConfigProvider.getOwner1StorageId();
         long a2 = ConfigProvider.getUnitStorageId();
         long b1 = ConfigProvider.getOwner2StorageId();
         long b2 = ro2StorageId;
         if (b2 <= 0 || b2 == a1 || b2 == a2 || b2 == b1) {
-            throw new IllegalArgumentException(
-                    "ro2StorageId must be a positive id distinct from A1/A2/B1, got: " + b2);
+            throw new IllegalArgumentException("ro2StorageId must be distinct from A1/A2/B1, got: " + b2);
         }
 
         String username = UserRole.LOCATION_MIXED.getUsername();
-        String password = UserRole.LOCATION_MIXED.getPassword();
-        if (password == null || password.isBlank()) {
-            throw new IllegalStateException(
-                    "user.location-mixed.password is empty — set it in config / env before running LOCATION_MIXED tests");
+        String permanentPassword = UserRole.LOCATION_MIXED.getPassword();
+        UserModelResponse user = findUserByUsername(username).orElse(null);
+        if (user == null) {
+            user = createUserProfile(username, "Location", "Mixed", playwright, permanentPassword);
+        } else if (!user.isEnabled()) {
+            user = updateUser(UserRole.ADMIN, user.getId(),
+                    UserDataFactory.fromExisting(user).toBuilder().enabled(true).build());
         }
 
-        RoleModelResponse ownerRole = fetchRealmRole(BUSINESS_UNIT_OWNER_ROLE_NAME);
-        RoleModelResponse viewerRole = fetchRealmRole(BUSINESS_UNIT_VIEWER_ROLE_NAME);
-        List<SimpleEntityResponse> fullStorages = List.of(
-                SimpleEntityResponse.builder().id(a1).name("full-a1").build(),
-                SimpleEntityResponse.builder().id(a2).name("full-a2").build());
-        List<String> roPermissions = List.of(
-                BUSINESS_UNIT_RO_PREFIX + b1,
-                BUSINESS_UNIT_RO_PREFIX + b2);
-
-        Optional<UserModelResponse> existing = findUserByUsername(username);
-        if (existing.isPresent()) {
-            UserModelResponse user = existing.get();
-            if (!hasMixedLocationBinding(user, a1, a2, b1, b2)) {
-                log.info("Updating LOCATION_MIXED user {} with full=[{},{}] ro=[{},{}]",
-                        username, a1, a2, b1, b2);
-                UserRequest update = UserDataFactory.fromExisting(user).toBuilder()
-                        .enabled(true)
-                        .storages(fullStorages)
-                        .permissions(mergeNonUnitPermissions(user.getPermissions(), roPermissions))
-                        .realmRoles(List.of(ownerRole, viewerRole))
-                        .build();
-                updateUser(UserRole.ADMIN, user.getId(), update);
-                apiExecutor.clearSessionCache();
-            } else {
-                log.info("LOCATION_MIXED user {} already has expected location bindings", username);
-            }
-            return new LocationPermissionIds(a1, a2, b1, b2);
-        }
-
-        log.info("Creating LOCATION_MIXED user {} full=[{},{}] ro=[{},{}]", username, a1, a2, b1, b2);
-        UserRequest request = UserRequest.builder()
-                .username(username)
-                .firstName("Location")
-                .lastName("Mixed")
-                .rank("")
-                .enabled(true)
-                .storages(fullStorages)
-                .permissions(roPermissions)
-                .realmRoles(List.of(ownerRole, viewerRole))
-                .build();
-
-        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
-        validateSuccess(response, "Create LOCATION_MIXED user");
-        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
-        if (playwright == null) {
-            throw new IllegalStateException(
-                    "LOCATION_MIXED user created but PlaywrightSessionProvider is null — cannot bootstrap password");
-        }
-        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), password);
+        accessFixture.revokeAll(user.getId());
+        accessFixture.ensureGrants(user.getId(), List.of(BUSINESS_UNIT_OWNER_ROLE_NAME), List.of(),
+                GrantScopeKind.LOCATION, a1);
+        accessFixture.ensureGrants(user.getId(), List.of(BUSINESS_UNIT_OWNER_ROLE_NAME), List.of(),
+                GrantScopeKind.LOCATION, a2);
+        accessFixture.ensureGrants(user.getId(), List.of(BUSINESS_UNIT_VIEWER_ROLE_NAME), List.of(),
+                GrantScopeKind.LOCATION, b1);
+        accessFixture.ensureGrants(user.getId(), List.of(BUSINESS_UNIT_VIEWER_ROLE_NAME), List.of(),
+                GrantScopeKind.LOCATION, b2);
         apiExecutor.clearSessionCache();
         return new LocationPermissionIds(a1, a2, b1, b2);
     }
 
-    /**
-     * Ensures battalion warehouse keeper with {@link #CREW_READ_ROLE_NAME} or {@link #CREW_WRITE_ROLE_NAME}
-     * bound to {@code unit.storage.id} ({@code var_business_unit_id}).
-     */
     @Step("FIXTURE: Ensure CREW_READ / CREW_WRITE battalion user")
     public void ensureCrewBattalionUser(PlaywrightSessionProvider playwright, UserRole role) {
         if (role != UserRole.CREW_READ && role != UserRole.CREW_WRITE) {
             throw new IllegalArgumentException("Expected CREW_READ or CREW_WRITE, got: " + role);
         }
-        String roleName = role == UserRole.CREW_WRITE ? CREW_WRITE_ROLE_NAME : CREW_READ_ROLE_NAME;
-        long storageId = ConfigProvider.getUnitStorageId();
-        ensureUser(
-                playwright,
-                role.getUsername(),
-                role.getPassword(),
-                "Crew",
+        ensureUser(playwright, role.getUsername(), role.getPassword(), "Crew",
                 role == UserRole.CREW_WRITE ? "Write" : "Read",
-                roleName,
-                storageId);
+                role == UserRole.CREW_WRITE ? CREW_WRITE_ROLE_NAME : CREW_READ_ROLE_NAME,
+                ConfigProvider.getUnitStorageId());
         apiExecutor.clearSessionCache();
     }
 
-    private static boolean hasMixedLocationBinding(UserModelResponse user,
-                                                   long a1, long a2, long b1, long b2) {
-        boolean hasFull = userHasStorage(user, a1) && userHasStorage(user, a2);
-        List<String> permissions = user.getPermissions() != null ? user.getPermissions() : List.of();
-        boolean hasRo = permissions.contains(BUSINESS_UNIT_RO_PREFIX + b1)
-                && permissions.contains(BUSINESS_UNIT_RO_PREFIX + b2);
-        // No RO on full locations — overlap full+_ro is a separate scenario (TC-LOC-ME-002).
-        boolean noOverlapRoOnFull = !permissions.contains(BUSINESS_UNIT_RO_PREFIX + a1)
-                && !permissions.contains(BUSINESS_UNIT_RO_PREFIX + a2);
-        boolean hasRoles = userHasRole(user, BUSINESS_UNIT_OWNER_ROLE_NAME)
-                && userHasRole(user, BUSINESS_UNIT_VIEWER_ROLE_NAME);
-        return hasFull && hasRo && noOverlapRoOnFull && hasRoles;
-    }
-
-    /**
-     * Keep non-unit permission strings (drop raw {@code var_business_unit_id::*} and all
-     * {@code var_business_unit_id_ro::*}), then set required RO bindings exactly.
-     */
-    private static List<String> mergeNonUnitPermissions(List<String> existing, List<String> requiredRo) {
-        List<String> merged = new ArrayList<>();
-        if (existing != null) {
-            for (String p : existing) {
-                if (p != null
-                        && !p.startsWith("var_business_unit_id::")
-                        && !p.startsWith(BUSINESS_UNIT_RO_PREFIX)) {
-                    merged.add(p);
-                }
-            }
-        }
-        for (String ro : requiredRo) {
-            if (!merged.contains(ro)) {
-                merged.add(ro);
-            }
-        }
-        return merged;
-    }
-
-    /** Resolved MIXED_MULTI storage ids for LOCATION_MIXED persona. */
     public record LocationPermissionIds(long fullA1, long fullA2, long roB1, long roB2) {
-        public List<Long> allAllowed() {
-            return List.of(fullA1, fullA2, roB1, roB2);
-        }
-
-        public List<Long> fullIds() {
-            return List.of(fullA1, fullA2);
-        }
-
-        public List<Long> roIds() {
-            return List.of(roB1, roB2);
-        }
+        public List<Long> allAllowed() { return List.of(fullA1, fullA2, roB1, roB2); }
+        public List<Long> fullIds() { return List.of(fullA1, fullA2); }
+        public List<Long> roIds() { return List.of(roB1, roB2); }
     }
 
-    @Step("FIXTURE: Ensure user «{username}» with role {roleName}")
+    @Step("FIXTURE: Ensure user «{username}» with access role {roleName}")
     public UserModelResponse ensureUser(PlaywrightSessionProvider playwright,
                                         String username,
                                         String permanentPassword,
@@ -251,310 +136,190 @@ public class UserFixture extends BaseFixture {
                                         String lastName,
                                         String roleName,
                                         Long storageId) {
-        Optional<UserModelResponse> existing = findUserByUsername(username);
-        if (existing.isPresent()) {
-            UserModelResponse user = existing.get();
-            boolean needsUpdate = !userHasRole(user, roleName) || !userHasStorage(user, storageId);
-            if (needsUpdate) {
-                log.info("Updating existing user {} — assign role={} storage={}", username, roleName, storageId);
-                UserRequest update = UserDataFactory.fromExisting(user).toBuilder()
-                        .enabled(true)
-                        .realmRoles(List.of(fetchRealmRole(roleName)))
-                        .storages(List.of(SimpleEntityResponse.builder().id(storageId).name("owner1").build()))
-                        .build();
-                user = updateUser(UserRole.ADMIN, user.getId(), update);
-            } else {
-                log.info("User {} already present with role {} and storage {}", username, roleName, storageId);
-            }
-            return user;
+        UserModelResponse user = findUserByUsername(username).orElse(null);
+        if (user == null) {
+            user = createUserProfile(username, firstName, lastName, playwright, permanentPassword);
+        } else if (!user.isEnabled()) {
+            user = updateUser(UserRole.ADMIN, user.getId(),
+                    UserDataFactory.fromExisting(user).toBuilder().enabled(true).build());
         }
+        accessFixture.ensureGrants(user.getId(), locationActorRoles(List.of(roleName)), List.of(),
+                GrantScopeKind.LOCATION, storageId);
+        apiExecutor.clearSessionCache();
+        return getUser(UserRole.ADMIN, user.getId());
+    }
 
-        log.info("Creating user {} with role {} storage={}", username, roleName, storageId);
-        RoleModelResponse role = fetchRealmRole(roleName);
-        UserRequest request = UserRequest.builder()
-                .username(username)
-                .firstName(firstName)
-                .lastName(lastName)
-                .rank("")
-                .enabled(true)
-                .storages(List.of(SimpleEntityResponse.builder().id(storageId).name("owner1").build()))
-                .permissions(List.of())
-                .realmRoles(List.of(role))
-                .build();
+    @Step("FIXTURE: створити актора {businessRole} на тестових локаціях")
+    public BusinessActor createBusinessActor(PlaywrightSessionProvider playwright,
+                                             BusinessRole businessRole,
+                                             List<StorageResponse> storages) {
+        return createBusinessActor(playwright, businessRole, storages, List.of());
+    }
 
-        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
-        validateSuccess(response, "Create user " + username);
-        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
-        log.info("User created: username={}, one-time password issued — bootstrapping permanent password",
-                credentials.getUsername());
-
-        if (playwright == null) {
-            throw new IllegalStateException(
-                    "User " + username + " was created but PlaywrightSessionProvider is null — "
-                            + "cannot bootstrap permanent password. One-time password was issued by API.");
-        }
-        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
-
-        String userId = findUserIdByUsername(username);
-        return waitForUser(UserRole.ADMIN, userId);
+    public BusinessActor createBusinessActor(PlaywrightSessionProvider playwright,
+                                             BusinessRole businessRole,
+                                             List<StorageResponse> storages,
+                                             List<String> permissionKeys) {
+        return createBusinessActor(playwright, businessRole, storages, permissionKeys, true);
     }
 
     /**
-     * Creates a fresh user from a business persona and binds it to the exact locations supplied by
-     * the scenario. Keycloak role names are resolved centrally from {@code business-roles.yml}.
+     * Explicit escape hatch for permission-denied scenarios. Normal business actors must use
+     * {@link #createBusinessActor(PlaywrightSessionProvider, BusinessRole, List)}.
      */
-    @Step("FIXTURE: створити актора {businessRole} на тестових локаціях")
-    public BusinessActor createBusinessActor(
-            PlaywrightSessionProvider playwright,
-            BusinessRole businessRole,
-            List<StorageResponse> storages) {
+    public BusinessActor createLowPrivilegeBusinessActor(PlaywrightSessionProvider playwright,
+                                                         BusinessRole businessRole,
+                                                         List<StorageResponse> storages) {
+        return createBusinessActor(playwright, businessRole, storages, List.of(), false);
+    }
+
+    private BusinessActor createBusinessActor(PlaywrightSessionProvider playwright,
+                                              BusinessRole businessRole,
+                                              List<StorageResponse> storages,
+                                              List<String> permissionKeys,
+                                              boolean includeDefaultLocationRole) {
         if (playwright == null) {
-            throw new IllegalStateException(
-                    "PlaywrightSessionProvider is required to bootstrap the business actor password");
+            throw new IllegalStateException("PlaywrightSessionProvider is required to bootstrap actor password");
         }
-        if (storages == null || storages.isEmpty()) {
-            throw new IllegalArgumentException("At least one storage is required for business actor " + businessRole);
+        if (storages == null || storages.isEmpty() || storages.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("At least one non-null storage is required for " + businessRole);
         }
-        if (storages.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("Business actor storages cannot contain null values");
+        if (permissionKeys == null || permissionKeys.stream().anyMatch(key -> key == null || key.isBlank())) {
+            throw new IllegalArgumentException("Permission keys cannot be null or blank");
         }
 
         BusinessRoleCatalog.Definition definition = BusinessRoleCatalog.definition(businessRole);
-        List<RoleModelResponse> realmRoles = definition.keycloakRoles().stream()
-                .map(this::fetchRealmRole)
-                .toList();
-        List<SimpleEntityResponse> storageRefs = storages.stream()
-                .map(storage -> SimpleEntityResponse.builder()
-                        .id(storage.getId())
-                        .name(storage.getName())
-                        .build())
-                .toList();
-
+        List<String> accessRoles = includeDefaultLocationRole
+                ? BusinessRoleCatalog.effectiveAccessRoles(businessRole)
+                : definition.accessRoles();
+        LinkedHashSet<String> allPermissionKeys = new LinkedHashSet<>(definition.permissionKeys());
+        allPermissionKeys.addAll(permissionKeys);
         String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String username = "autotest-" + businessRole.name().toLowerCase().replace('_', '-') + "-" + suffix;
         String permanentPassword = "Autotest1!" + suffix;
-        UserRequest request = UserRequest.builder()
-                .username(username)
-                .firstName("Autotest")
-                .lastName(businessRole.name())
-                .rank("")
-                .enabled(true)
-                .storages(storageRefs)
-                .permissions(List.of())
-                .realmRoles(realmRoles)
-                .build();
+        UserModelResponse created = createUserProfile(username, "Autotest", businessRole.name(),
+                playwright, permanentPassword);
+        trackForCleanup(created.getId());
 
-        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
-        validateSuccess(response, "Create business actor " + businessRole);
-        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
-        String userId = findUserIdByUsername(username);
-        trackForCleanup(userId);
-        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
-        UserModelResponse created = waitForUser(UserRole.ADMIN, userId);
-        assertExactBusinessActor(created, businessRole, definition, storageRefs);
-        log.info("Created business actor username={} businessRole={} keycloakRoles={} storageIds={}",
-                username,
-                businessRole,
-                definition.keycloakRoles(),
-                storageRefs.stream().map(SimpleEntityResponse::getId).toList());
-        return new BusinessActor(userId, username, permanentPassword, businessRole,
-                storageRefs.stream().map(SimpleEntityResponse::getId).toList());
+        for (StorageResponse storage : storages) {
+            accessFixture.ensureGrants(created.getId(), accessRoles, List.copyOf(allPermissionKeys),
+                    GrantScopeKind.LOCATION, storage.getId());
+        }
+        assertBusinessActorAccess(created.getId(), businessRole, accessRoles, storages, allPermissionKeys);
+        List<Long> storageIds = storages.stream().map(StorageResponse::getId).toList();
+        log.info("Created business actor username={} businessRole={} accessRoles={} storageIds={}",
+                username, businessRole, accessRoles, storageIds);
+        return new BusinessActor(created.getId(), username, permanentPassword, businessRole, storageIds);
     }
 
-    private static void assertExactBusinessActor(
-            UserModelResponse created,
-            BusinessRole businessRole,
-            BusinessRoleCatalog.Definition definition,
-            List<SimpleEntityResponse> storageRefs) {
-        Set<String> expectedRoles = Set.copyOf(definition.keycloakRoles());
-        Set<String> actualRoles = created.getRealmRoles() == null
-                ? Set.of()
-                : created.getRealmRoles().stream().map(RoleModelResponse::getName).collect(java.util.stream.Collectors.toSet());
-        if (!actualRoles.equals(expectedRoles)) {
+    private void assertBusinessActorAccess(String userId,
+                                           BusinessRole businessRole,
+                                           List<String> expectedAccessRoles,
+                                           List<StorageResponse> storages,
+                                           Set<String> permissionKeys) {
+        List<AccessGrantResponse> grants = accessFixture.grants(userId, false);
+        Set<String> grantedRoleNames = grants.stream()
+                .filter(grant -> grant.getRole() != null)
+                .map(grant -> grant.getRole().getName())
+                .collect(Collectors.toSet());
+        if (!grantedRoleNames.containsAll(expectedAccessRoles)) {
             throw new IllegalStateException("Business actor " + businessRole + " role drift: expected="
-                    + expectedRoles + ", actual=" + actualRoles);
+                    + expectedAccessRoles + ", actual=" + grantedRoleNames);
         }
-
-        Set<Long> expectedStorages = storageRefs.stream()
-                .map(SimpleEntityResponse::getId)
-                .collect(java.util.stream.Collectors.toSet());
-        Set<Long> actualStorages = created.getStorages() == null
-                ? Set.of()
-                : created.getStorages().stream().map(SimpleEntityResponse::getId)
-                        .collect(java.util.stream.Collectors.toSet());
-        if (!actualStorages.equals(expectedStorages)) {
-            throw new IllegalStateException("Business actor " + businessRole + " storage drift: expected="
-                    + expectedStorages + ", actual=" + actualStorages);
+        for (StorageResponse storage : storages) {
+            for (String key : permissionKeys) {
+                if (!accessFixture.hasEffectivePermission(userId, key, storage.getId())) {
+                    throw new IllegalStateException("Business actor " + businessRole
+                            + " lacks effective permission " + key + " at storage " + storage.getId());
+                }
+            }
         }
     }
 
-    public record BusinessActor(
-            String userId,
-            String username,
-            String password,
-            BusinessRole businessRole,
-            List<Long> storageIds) {
-    }
+    public record BusinessActor(String userId, String username, String password,
+                                BusinessRole businessRole, List<Long> storageIds) { }
 
-    /**
-     * ADMIN {@code POST /users} → fresh business-unit owner with one exact storage.
-     * Retained as a compatibility facade for existing isolated visibility tests.
-     */
     @Step("FIXTURE: створити restricted owner «{storage.name}»")
-    public RestrictedOwnerUser createRestrictedOwner(
-            PlaywrightSessionProvider playwright,
-            StorageResponse storage) {
-        BusinessActor actor = createBusinessActor(
-                playwright,
-                BusinessRole.BUSINESS_UNIT_OWNER,
-                List.of(storage));
+    public RestrictedOwnerUser createRestrictedOwner(PlaywrightSessionProvider playwright,
+                                                     StorageResponse storage) {
+        BusinessActor actor = createBusinessActor(playwright, BusinessRole.BUSINESS_UNIT_OWNER, List.of(storage));
         return new RestrictedOwnerUser(actor.userId(), actor.username(), actor.password());
     }
 
-    /**
-     * ADMIN {@code POST /users} → Keycloak owner bound to several full-access storages.
-     */
     @Step("FIXTURE: створити multi-location owner на кількох локаціях")
-    public RestrictedOwnerUser createMultiLocationOwner(
-            PlaywrightSessionProvider playwright,
-            List<StorageResponse> storages) {
+    public RestrictedOwnerUser createMultiLocationOwner(PlaywrightSessionProvider playwright,
+                                                        List<StorageResponse> storages) {
         if (storages == null || storages.size() < 2) {
             throw new IllegalArgumentException("Need at least 2 storages for multi-location owner");
         }
-        BusinessActor actor = createBusinessActor(
-                playwright,
-                BusinessRole.BUSINESS_UNIT_OWNER,
-                storages);
+        BusinessActor actor = createBusinessActor(playwright, BusinessRole.BUSINESS_UNIT_OWNER, storages);
         return new RestrictedOwnerUser(actor.userId(), actor.username(), actor.password());
     }
 
-    public record RestrictedOwnerUser(String userId, String username, String password) {
-    }
+    public record RestrictedOwnerUser(String userId, String username, String password) { }
 
-    /**
-     * Existing stand user (e.g. {@code 3bat}) gets {@link #UNIT_OWNER_ROLE_NAME}
-     * and the requester UNIT without dropping other roles.
-     * Does not create a new username.
-     */
-    @Step("FIXTURE: Ensure existing user «{username}» is Owner of UNIT {unitStorageId}")
+    @Step("FIXTURE: Ensure existing user «{username}» is location head of {unitStorageId}")
     public UserModelResponse ensureExistingUserIsUnitOwner(String username, Long unitStorageId) {
-        UserModelResponse listed = findUserByUsername(username).orElseThrow(() -> new IllegalStateException(
+        UserModelResponse user = findUserByUsername(username).orElseThrow(() -> new IllegalStateException(
                 "User '" + username + "' must already exist on the stand — will not create a new account"));
-        // The paged users response may omit role/storage details. Merge from the full card so PUT
-        // does not accidentally wipe unrelated bindings.
-        UserModelResponse user = getUser(UserRole.ADMIN, listed.getId());
-        boolean hasOwner = userHasRole(user, UNIT_OWNER_ROLE_NAME);
-        boolean hasUnit = userHasStorage(user, unitStorageId);
-        if (hasOwner && hasUnit) {
-            log.info("User {} already has Unit Owner role and UNIT {}", username, unitStorageId);
-            return user;
-        }
-        RoleModelResponse ownerRole = fetchRealmRole(UNIT_OWNER_ROLE_NAME);
-        List<RoleModelResponse> roles = new ArrayList<>(
-                user.getRealmRoles() != null ? user.getRealmRoles() : List.of());
-        if (!hasOwner) {
-            roles.add(ownerRole);
-        }
-        List<SimpleEntityResponse> storages = new ArrayList<>(
-                user.getStorages() != null ? user.getStorages() : List.of());
-        if (!hasUnit) {
-            storages.add(SimpleEntityResponse.builder().id(unitStorageId).name("unit").build());
-        }
-        log.info("Updating existing user {} — add Unit Owner on UNIT {} (keep {} roles)",
-                username, unitStorageId, roles.size());
-        UserRequest update = UserDataFactory.fromExisting(user).toBuilder()
-                .enabled(true)
-                .realmRoles(roles)
-                .storages(storages)
-                .build();
-        UserModelResponse updated = updateUser(UserRole.ADMIN, user.getId(), update);
+        accessFixture.ensureGrants(user.getId(), List.of(UNIT_OWNER_ROLE_NAME), List.of(),
+                GrantScopeKind.LOCATION, unitStorageId);
         apiExecutor.clearSessionCache();
-        return updated;
+        return getUser(UserRole.ADMIN, user.getId());
     }
 
-    @Step("API: GET realm role «{roleName}»")
-    public RoleModelResponse fetchRealmRole(String roleName) {
-        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_GET_ROLE_BY_NAME, UserRole.ADMIN, roleName);
-        validateSuccess(response, "Get realm role " + roleName);
-        return response.as(RoleModelResponse.class);
-    }
+    @Step("API: GET access role «{roleName}»")
+    public AccessRoleResponse fetchRealmRole(String roleName) { return accessFixture.roleByName(roleName); }
+
+    @Step("API: GET /access/roles")
+    public List<AccessRoleResponse> listRealmRoles() { return accessFixture.listRoles(); }
 
     public Optional<UserModelResponse> findUserByUsername(String username) {
-        Response response = apiExecutor.executeWithQueryParams(
-                ApiEndpointDefinition.USER_GET_PAGE,
-                UserRole.ADMIN,
+        Response response = apiExecutor.executeWithQueryParams(ApiEndpointDefinition.USER_GET_PAGE, UserRole.ADMIN,
                 Map.of("username", username, "size", 20, "page", 0));
-        if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            return Optional.empty();
-        }
+        if (response.statusCode() < 200 || response.statusCode() >= 300) return Optional.empty();
         PagedUserResponse page = response.as(PagedUserResponse.class);
-        if (page.getContent() == null) {
-            return Optional.empty();
-        }
-        return page.getContent().stream()
-                .filter(u -> username.equalsIgnoreCase(u.getUsername()))
-                .findFirst();
+        return page.getContent() == null ? Optional.empty() : page.getContent().stream()
+                .filter(user -> username.equalsIgnoreCase(user.getUsername())).findFirst();
     }
 
-    private static boolean userHasRole(UserModelResponse user, String roleName) {
-        return user.getRealmRoles() != null
-                && user.getRealmRoles().stream().anyMatch(r -> roleName.equals(r.getName()));
-    }
-
-    private static boolean userHasStorage(UserModelResponse user, Long storageId) {
-        return user.getStorages() != null
-                && user.getStorages().stream().anyMatch(s -> storageId.equals(s.getId()));
-    }
-
+    /** Creates a profile without access grants for user-admin and access-lifecycle tests. */
     @Step("API: створити тестового користувача «{prefix}»")
     public UserModelResponse createTestUser(String prefix) {
         UserRequest request = UserDataFactory.createRandom(prefix);
         Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
         validateSuccess(response, "Create user");
         SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.USER_POST_CREATE);
-
         OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
-        log.info("User created: username={}", credentials.getUsername());
-
-        String userId = findUserIdByUsername(request.getUsername());
+        String userId = credentials.getUserId() != null
+                ? credentials.getUserId() : findUserIdByUsername(request.getUsername());
         UserModelResponse user = waitForUser(UserRole.ADMIN, userId);
         trackForCleanup(userId);
         return user;
     }
 
-    /**
-     * Test user with enough realm roles for the assigned-roles list / combobox to overflow.
-     */
-    @Step("API: створити користувача «{prefix}» з кількома ролями")
+    @Step("API: створити користувача «{prefix}» з кількома access roles")
     public UserModelResponse createTestUserWithManyRoles(String prefix) {
         UserModelResponse user = createTestUser(prefix);
-        List<RoleModelResponse> catalog = listRealmRoles().stream()
-                .filter(r -> r.getName() != null && !r.getName().isBlank())
-                .sorted(Comparator.comparing(RoleModelResponse::getName))
-                .toList();
-        if (catalog.size() < MIN_ROLES_FOR_LIST_OVERFLOW) {
-            throw new IllegalStateException(
-                    "Need ≥" + MIN_ROLES_FOR_LIST_OVERFLOW + " realm roles to cover roles-list overflow, got "
-                            + catalog.size());
+        LinkedHashSet<String> roles = listRealmRoles().stream()
+                .filter(role -> role.getName() != null && !role.getName().isBlank())
+                .sorted(Comparator.comparing(AccessRoleResponse::getName))
+                .map(AccessRoleResponse::getName)
+                .filter(roleName -> !BUSINESS_UNIT_OWNER_ROLE_NAME.equals(roleName))
+                .limit(MAX_ROLES_FOR_LIST_OVERFLOW - 1L)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        roles.add(BUSINESS_UNIT_OWNER_ROLE_NAME);
+        if (roles.size() < MIN_ROLES_FOR_LIST_OVERFLOW) {
+            throw new IllegalStateException("Need ≥" + MIN_ROLES_FOR_LIST_OVERFLOW
+                    + " access roles for overflow, got " + roles.size());
         }
-        List<RoleModelResponse> assigned = catalog.size() > MAX_ROLES_FOR_LIST_OVERFLOW
-                ? catalog.subList(0, MAX_ROLES_FOR_LIST_OVERFLOW)
-                : catalog;
-        UserRequest update = UserDataFactory.fromExisting(user).toBuilder()
-                .realmRoles(assigned)
-                .build();
-        updateUser(UserRole.ADMIN, user.getId(), update);
-        UserModelResponse reloaded = getUser(UserRole.ADMIN, user.getId());
-        log.info("User {} assigned {} roles", reloaded.getUsername(),
-                reloaded.getRealmRoles() == null ? 0 : reloaded.getRealmRoles().size());
-        return reloaded;
+        accessFixture.ensureGrants(user.getId(), List.copyOf(roles), List.of(), GrantScopeKind.LOCATION,
+                ConfigProvider.getOwner1StorageId());
+        return getUser(UserRole.ADMIN, user.getId());
     }
 
-    @Step("API: GET /users/roles")
-    public List<RoleModelResponse> listRealmRoles() {
-        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_GET_ROLES, UserRole.ADMIN);
-        validateSuccess(response, "List realm roles");
-        return ApiResponseHelper.parseList(response, RoleModelResponse.class, "List realm roles");
+    private static List<String> locationActorRoles(List<String> additionalRoles) {
+        return BusinessRoleCatalog.withDefaultLocationRole(additionalRoles);
     }
 
     @Step("API: отримати користувача {userId}")
@@ -571,21 +336,6 @@ public class UserFixture extends BaseFixture {
         return response.as(UserMeResponse.class);
     }
 
-    private UserModelResponse waitForUser(UserRole role, String userId) {
-        return PollUtils.waitUntil(
-                () -> {
-                    Response response = apiExecutor.execute(
-                            ApiEndpointDefinition.USER_GET_BY_ID, role, userId);
-                    if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                        return response.as(UserModelResponse.class);
-                    }
-                    return null;
-                },
-                Objects::nonNull,
-                10_000,
-                "Get user by id " + userId);
-    }
-
     @Step("API: оновити користувача {userId}")
     public UserModelResponse updateUser(UserRole role, String userId, UserRequest body) {
         Response response = apiExecutor.execute(ApiEndpointDefinition.USER_PUT_UPDATE, role, body, userId);
@@ -595,21 +345,16 @@ public class UserFixture extends BaseFixture {
 
     @Step("API: деактивувати користувача {userId}")
     public void deactivateUser(UserRole role, String userId) {
-        UserModelResponse existing = getUser(role, userId);
-        UserRequest body = UserDataFactory.deactivated(existing);
-        updateUser(role, userId, body);
+        if (role == UserRole.ADMIN) accessFixture.revokeAll(userId);
+        updateUser(role, userId, UserDataFactory.deactivated(getUser(role, userId)));
         untrackForCleanup(userId);
     }
 
     public void trackForCleanup(String userId) {
-        if (userId != null && !trackedUserIds.contains(userId)) {
-            trackedUserIds.add(userId);
-        }
+        if (userId != null && !trackedUserIds.contains(userId)) trackedUserIds.add(userId);
     }
 
-    public void untrackForCleanup(String userId) {
-        trackedUserIds.remove(userId);
-    }
+    public void untrackForCleanup(String userId) { trackedUserIds.remove(userId); }
 
     @Step("API: cleanup tracked test users")
     public void deactivateTrackedUsers() {
@@ -618,32 +363,43 @@ public class UserFixture extends BaseFixture {
             trackedUserIds.clear();
             return;
         }
-        List<String> ids = new ArrayList<>(trackedUserIds);
-        for (String userId : ids) {
-            try {
-                deactivateUser(UserRole.ADMIN, userId);
-            } catch (Exception e) {
-                log.warn("Failed to deactivate user {}: {}", userId, e.getMessage());
-            }
+        for (String userId : new ArrayList<>(trackedUserIds)) {
+            try { deactivateUser(UserRole.ADMIN, userId); }
+            catch (Exception e) { log.warn("Failed to deactivate user {}: {}", userId, e.getMessage()); }
         }
         trackedUserIds.clear();
     }
 
-    public void trackUserByUsername(String username) {
-        trackForCleanup(findUserIdByUsername(username));
-    }
+    public void trackUserByUsername(String username) { trackForCleanup(findUserIdByUsername(username)); }
 
     public String findUserIdByUsername(String username) {
-        Response response = apiExecutor.executeWithQueryParams(
-                ApiEndpointDefinition.USER_GET_PAGE,
-                UserRole.ADMIN,
-                Map.of("username", username, "size", 20, "page", 0));
-        validateSuccess(response, "Search user by username");
-        PagedUserResponse page = response.as(PagedUserResponse.class);
-        return page.getContent().stream()
-                .filter(u -> username.equals(u.getUsername()))
-                .map(UserModelResponse::getId)
-                .findFirst()
+        return findUserByUsername(username).map(UserModelResponse::getId)
                 .orElseThrow(() -> new IllegalStateException("User not found after create: " + username));
+    }
+
+    private UserModelResponse createUserProfile(String username,
+                                                String firstName,
+                                                String lastName,
+                                                PlaywrightSessionProvider playwright,
+                                                String permanentPassword) {
+        UserRequest request = UserRequest.builder().username(username).firstName(firstName).lastName(lastName)
+                .rank("").enabled(true).build();
+        Response response = apiExecutor.execute(ApiEndpointDefinition.USER_POST_CREATE, UserRole.ADMIN, request);
+        validateSuccess(response, "Create user " + username);
+        OneTimeUserCredentialsResponse credentials = response.as(OneTimeUserCredentialsResponse.class);
+        if (playwright == null) {
+            throw new IllegalStateException("User " + username + " created but password cannot be bootstrapped");
+        }
+        playwright.bootstrapPermanentPassword(username, credentials.getPassword(), permanentPassword);
+        String userId = credentials.getUserId() != null ? credentials.getUserId() : findUserIdByUsername(username);
+        return waitForUser(UserRole.ADMIN, userId);
+    }
+
+    private UserModelResponse waitForUser(UserRole role, String userId) {
+        return PollUtils.waitUntil(() -> {
+            Response response = apiExecutor.execute(ApiEndpointDefinition.USER_GET_BY_ID, role, userId);
+            return response.statusCode() >= 200 && response.statusCode() < 300
+                    ? response.as(UserModelResponse.class) : null;
+        }, Objects::nonNull, 10_000, "Get user by id " + userId);
     }
 }

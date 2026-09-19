@@ -83,13 +83,13 @@ public class UnitAnalyticsUiTest extends BaseUITest {
                 .distinct()
                 .sorted()
                 .toList();
-        log.info("3bat /users/me roles={} permCount={} analytics={} entities={}",
-                me.getRoles(), me.getPermissions().size(), analyticsPerms, entities);
+        log.info("3bat /users/me grants={} permCount={} analytics={} entities={}",
+                me.getGrants(), me.getPermissions().size(), analyticsPerms, entities);
         assertThat(hasUnitAnalyticsView(me.getPermissions()))
                 .as("3bat GET /users/me має містити unit-analytics::view "
                         + "(Keycloak роль perm_unit-analytics::view). "
                         + "roles=%s permCount=%d analyticsPerms=%s entities=%s",
-                        me.getRoles(), me.getPermissions().size(), analyticsPerms, entities)
+                        me.getGrants(), me.getPermissions().size(), analyticsPerms, entities)
                 .isTrue();
 
         UnitAnalyticsPage analytics = new UnitAnalyticsPage(page).open();

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
 
-BASE = "http://localhost:8100"
+BASE = os.getenv("TCM_BASE_URL", "http://localhost:18100").rstrip("/")
 PROJECT_ID = 1
 TOKEN = "dev-ai-token"
 HDR = {

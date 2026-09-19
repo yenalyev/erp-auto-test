@@ -38,6 +38,27 @@ public class ProductionGroupsUiTest extends BaseUITest {
         verifyRelocationLocations("Отримати", locations.get(0), locations.get(1), locations.get(2));
     }
 
+    @Test
+    @com.erp.annotations.TestCaseId("TC-PG-003")
+    public void productionGroupInventoryIsBlockedInUi() {
+        page.navigate(ConfigProvider.getBaseUrl() + "/inventory");
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+        page.evaluate("localStorage.setItem('selectedStorageId', '" + fixture.groupA.getId() + "');");
+        page.reload();
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+        Locator enabledInventoryActions = page.locator("button:enabled").filter(new Locator.FilterOptions()
+                .setHasText(Pattern.compile("^(Відкрити|Закрити|Провести) інвентаризацію$")));
+        assertThat(enabledInventoryActions).hasCount(0);
+        attachScreenshot("Production group inventory actions blocked");
+
+        page.navigate(ConfigProvider.getBaseUrl() + "/inventory/" + fixture.groupA.getId());
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
+        Locator enabledSave = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Зберегти").setExact(true)).and(page.locator(":enabled"));
+        assertThat(enabledSave).hasCount(0);
+        attachScreenshot("Production group direct inventory route blocked");
+    }
+
     private void verifyRelocationLocations(String action, StorageResponse groupLocation,
                                            StorageResponse member, StorageResponse outside) {
         // The regular send/receive forms each have one editable location selector;
@@ -89,6 +110,8 @@ public class ProductionGroupsUiTest extends BaseUITest {
     public void cleanupGroups() { if (fixture != null) fixture.close(); }
 
     @Test
+    @com.erp.annotations.TestCaseId({"TC-PG-007", "TC-PG-009", "TC-PG-011", "TC-PG-013",
+            "TC-PG-016", "TC-PG-017", "TC-PG-025"})
     public void twoGroupsPlanInRoundsAndPlannerGenerates() {
         planning.openOrder(orderId);
         planning.assign(fixture.output.getName(), fixture.groupA.getName(), 10);
@@ -145,6 +168,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
     }
 
     @Test
+    @com.erp.annotations.TestCaseId("TC-PG-006")
     public void partialDelegationOffersGroupInsteadOfMembers() {
         planning.openOrder(orderId);
         planning.openAssignment(fixture.output.getName());
@@ -167,6 +191,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
     }
 
     @Test
+    @com.erp.annotations.TestCaseId("TC-PG-018")
     public void staleAnswerShowsErrorAndKeepsEnteredAllocation() {
         long id = fixture.send(orderId);
         owner(fixture.groupA.getId());
@@ -187,6 +212,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
     }
 
     @Test
+    @com.erp.annotations.TestCaseId(value = "TC-PG-010", roles = com.erp.enums.BusinessRole.PRODUCTION_GROUP_DIRECTOR)
     public void queueIsScopedToGroupOwner() {
         long ownId = fixture.send(orderId);
         fixture.changeSentPlan(orderId);
@@ -202,6 +228,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
     }
 
     @Test
+    @com.erp.annotations.TestCaseId({"TC-PG-027", "TC-PG-028", "TC-PG-029"})
     public void progressAndCountersReflectOutstandingRequests() {
         fixture.send(orderId); fixture.changeSentPlan(orderId);
         navigate("/production-orders/" + orderId);
@@ -236,6 +263,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
     }
 
     @Test
+    @com.erp.annotations.TestCaseId({"TC-PG-001", "TC-PG-004"})
     public void locationCheckboxPersistsAndGroupIsNotADestination() {
         StorageResponse location = fixture.newGroupCandidateWithChild();
         navigate("/storage"); navigate("/storage/update/" + location.getId());
@@ -251,6 +279,7 @@ public class ProductionGroupsUiTest extends BaseUITest {
     }
 
     @Test
+    @com.erp.annotations.TestCaseId({"TC-PG-026", "TC-PG-027"})
     public void refreshLoadsGroupAnswerAndUpdatesProgress() {
         long requestId = fixture.send(orderId);
         planning.openOrder(orderId); planning.step4();
@@ -299,8 +328,8 @@ public class ProductionGroupsUiTest extends BaseUITest {
     private void navigate(String path) { page.navigate(ConfigProvider.getBaseUrl() + path); }
     private void admin() { session(cachedSessionCookies(UserRole.ADMIN), fixture.target.getId()); }
     private void owner(long group) {
-        UserFixture.BusinessActor manager = fixture.managerForGroup(group);
-        session(authService.getSessionForUser(manager.username(), manager.password()), group);
+        UserFixture.BusinessActor director = fixture.directorForGroup(group);
+        session(authService.getSessionForUser(director.username(), director.password()), group);
     }
     private void session(Map<String, String> cookies, long location) {
         if (page != null) page.close();

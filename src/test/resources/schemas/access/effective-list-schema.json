@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EffectivePermissionList",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "key": { "type": "string" },
+      "module": { "type": "string" },
+      "name": { "type": "string" },
+      "scopeKind": { "enum": ["LOCATION", "GLOBAL"] },
+      "granted": { "type": "boolean" },
+      "baseline": { "type": "boolean" },
+      "sources": { "type": "array" }
+    },
+    "required": ["key", "module", "name", "scopeKind", "granted", "baseline", "sources"],
+    "additionalProperties": true
+  }
+}

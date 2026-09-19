@@ -1,0 +1,1031 @@
+{
+  "completedAt": "2026-09-18",
+  "projectId": 1,
+  "result": "SUCCESS",
+  "summary": {
+    "total": 115,
+    "identical": 115,
+    "different": [],
+    "missing": [],
+    "errors": []
+  },
+  "actions": [
+    {
+      "featureId": "REQ-EDIT_REL",
+      "action": "dev_to_prod"
+    },
+    {
+      "featureId": "REQ-EDIT_REL-007",
+      "action": "merged_to_both",
+      "mergeNote": "Dev canonical documentation plus explicit REQ-WMS-006 journal/history visibility cross-reference."
+    },
+    {
+      "featureId": "REQ-MFG-001-CALC",
+      "action": "prod_to_dev"
+    },
+    {
+      "featureId": "REQ-ORD",
+      "action": "prod_to_dev"
+    },
+    {
+      "featureId": "REQ-RVW",
+      "action": "prod_to_dev"
+    },
+    {
+      "featureId": "REQ-RVW-BOM",
+      "action": "prod_to_dev"
+    },
+    {
+      "featureId": "REQ-RVW-FILTER",
+      "action": "prod_to_dev"
+    },
+    {
+      "featureId": "REQ-RVW-UI",
+      "action": "prod_to_dev"
+    },
+    {
+      "featureId": "REQ-PLAN-ANL",
+      "action": "created_in_prod",
+      "acceptanceCriteria": 7
+    },
+    {
+      "featureId": "REQ-WMS-001-001",
+      "action": "created_in_prod",
+      "acceptanceCriteria": 3
+    },
+    {
+      "featureId": "REQ-WMS-011",
+      "action": "created_in_prod",
+      "acceptanceCriteria": 8
+    }
+  ],
+  "createdFeatureVerification": [
+    {
+      "featureId": "REQ-PLAN-ANL",
+      "exact": {
+        "title": true,
+        "description": true,
+        "documentation": true,
+        "module": true,
+        "priority": true,
+        "status": true,
+        "parentFeatureId": true,
+        "treeDepth": true,
+        "acceptanceCriteria": true
+      },
+      "prodAcCount": 7
+    },
+    {
+      "featureId": "REQ-WMS-001-001",
+      "exact": {
+        "title": true,
+        "description": true,
+        "documentation": true,
+        "module": true,
+        "priority": true,
+        "status": true,
+        "parentFeatureId": true,
+        "treeDepth": true,
+        "acceptanceCriteria": true
+      },
+      "prodAcCount": 3
+    },
+    {
+      "featureId": "REQ-WMS-011",
+      "exact": {
+        "title": true,
+        "description": true,
+        "documentation": true,
+        "module": true,
+        "priority": true,
+        "status": true,
+        "parentFeatureId": true,
+        "treeDepth": true,
+        "acceptanceCriteria": true
+      },
+      "prodAcCount": 8
+    }
+  ],
+  "documentationComparison": [
+    {
+      "featureId": "REQ-ACC",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-ACC-001",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-ADM-USERS",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-ALERT",
+      "devLength": 1532,
+      "prodLength": 1532,
+      "devHash": "51fb381d9c8f986b6c19698e08bc4697b436d450b3b314fc7d35b0eaa79d67db",
+      "prodHash": "51fb381d9c8f986b6c19698e08bc4697b436d450b3b314fc7d35b0eaa79d67db",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-ANL",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-AUD",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-CREW",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-CREW-001",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-CREW-002",
+      "devLength": 5528,
+      "prodLength": 5528,
+      "devHash": "7d936f316f8c673eb42b82ffdf858a0ac3b6ab5657409d5f0cbe097493db42e6",
+      "prodHash": "7d936f316f8c673eb42b82ffdf858a0ac3b6ab5657409d5f0cbe097493db42e6",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-CREW-003",
+      "devLength": 27831,
+      "prodLength": 27831,
+      "devHash": "48ec4075b74599a05b7f826b75d82142316cad6bb25f4d451be1b1b51d0b2928",
+      "prodHash": "48ec4075b74599a05b7f826b75d82142316cad6bb25f4d451be1b1b51d0b2928",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEC-MAN-PLN",
+      "devLength": 2226,
+      "prodLength": 2226,
+      "devHash": "07f9c5150928cacdbcefc3cbde028603a3bfbb86a73c3bf438d39ac58aa024ae",
+      "prodHash": "07f9c5150928cacdbcefc3cbde028603a3bfbb86a73c3bf438d39ac58aa024ae",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF",
+      "devLength": 1125,
+      "prodLength": 1125,
+      "devHash": "fd9ad6d6066d3d9623fc0214acbd44d26126c6db85e04c8332f0a81e0706df38",
+      "prodHash": "fd9ad6d6066d3d9623fc0214acbd44d26126c6db85e04c8332f0a81e0706df38",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF-001",
+      "devLength": 1844,
+      "prodLength": 1844,
+      "devHash": "25e71e1b2baa98e953ce860d0f581c5c3e67f43d5fa2e893e72871d040fd32db",
+      "prodHash": "25e71e1b2baa98e953ce860d0f581c5c3e67f43d5fa2e893e72871d040fd32db",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF-002",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF-003",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF-004",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF-005",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF-006",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF-007",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DEF-008",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DICT",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-DICT-001",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EDIT_REL",
+      "devLength": 1636,
+      "prodLength": 1636,
+      "devHash": "b97a4c47c49e671e33abd8af40630914c03ea1acfc363c281932cfb0068c4e6e",
+      "prodHash": "b97a4c47c49e671e33abd8af40630914c03ea1acfc363c281932cfb0068c4e6e",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EDIT_REL-001",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EDIT_REL-002",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EDIT_REL-003",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EDIT_REL-004",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EDIT_REL-005",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EDIT_REL-006",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EDIT_REL-007",
+      "devLength": 14182,
+      "prodLength": 14182,
+      "devHash": "a4c3d455ba3032fa59828f26ce2f284069199b6a4c44e9f1fd4ccee5f44ffdf2",
+      "prodHash": "a4c3d455ba3032fa59828f26ce2f284069199b6a4c44e9f1fd4ccee5f44ffdf2",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EQU",
+      "devLength": 3010,
+      "prodLength": 3010,
+      "devHash": "b2daf95bc54c2c2464e1de07bc389c65043f19739fcd22ecef569639f9af5ff5",
+      "prodHash": "b2daf95bc54c2c2464e1de07bc389c65043f19739fcd22ecef569639f9af5ff5",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EQU-001",
+      "devLength": 1198,
+      "prodLength": 1198,
+      "devHash": "43f2da8b347fed93324c7ee3bddec2f3e0be45bd06c4d101088b2e9de8174f0b",
+      "prodHash": "43f2da8b347fed93324c7ee3bddec2f3e0be45bd06c4d101088b2e9de8174f0b",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EQU-002",
+      "devLength": 1035,
+      "prodLength": 1035,
+      "devHash": "588bf328b4c28d59f83d875f8cb37bbb6992daaef4063b2c3c8c17f02b19641f",
+      "prodHash": "588bf328b4c28d59f83d875f8cb37bbb6992daaef4063b2c3c8c17f02b19641f",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EQU-003",
+      "devLength": 1348,
+      "prodLength": 1348,
+      "devHash": "785b35eb6ccc48484c4f636b35a913331d8127f4b13279fdc47d1503135fd042",
+      "prodHash": "785b35eb6ccc48484c4f636b35a913331d8127f4b13279fdc47d1503135fd042",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EQU-004",
+      "devLength": 1740,
+      "prodLength": 1740,
+      "devHash": "08d105c1917b5464ff9723eb22ea55f3f5bc96740b6a0af705e25aee0b577d7a",
+      "prodHash": "08d105c1917b5464ff9723eb22ea55f3f5bc96740b6a0af705e25aee0b577d7a",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-EQU-CAT",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-FAITA-001",
+      "devLength": 1603,
+      "prodLength": 1603,
+      "devHash": "70a291eeff2f08315955cea7f3ff750e03b97dcb9a8be919aa6c69c3545f6e4b",
+      "prodHash": "70a291eeff2f08315955cea7f3ff750e03b97dcb9a8be919aa6c69c3545f6e4b",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-GLOBAL-PLAN",
+      "devLength": 551,
+      "prodLength": 551,
+      "devHash": "0f34d85cc6e01bf2e2eb107add1761d74722f8aacfffc8249e4897985f2a94e2",
+      "prodHash": "0f34d85cc6e01bf2e2eb107add1761d74722f8aacfffc8249e4897985f2a94e2",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-INTEGRATION",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-INTEGRATION-001",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-INTEGRATION-002",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-LOC-PERM",
+      "devLength": 269,
+      "prodLength": 269,
+      "devHash": "f82ddbf254c63e8d8895d561d02c1eff35214fae21abcc56dd173ca4f0305928",
+      "prodHash": "f82ddbf254c63e8d8895d561d02c1eff35214fae21abcc56dd173ca4f0305928",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MAN-PLN",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-001",
+      "devLength": 1525,
+      "prodLength": 1525,
+      "devHash": "6c2efc6805b032ac6cd7c66cb43fcdfcecfda2a1ee49323d9cf577a5017096d2",
+      "prodHash": "6c2efc6805b032ac6cd7c66cb43fcdfcecfda2a1ee49323d9cf577a5017096d2",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-001-01",
+      "devLength": 451,
+      "prodLength": 451,
+      "devHash": "5cf9071e2079cacda478883b7f6f747592ef20088fb32c27a3181b44b8073407",
+      "prodHash": "5cf9071e2079cacda478883b7f6f747592ef20088fb32c27a3181b44b8073407",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-001-02",
+      "devLength": 486,
+      "prodLength": 486,
+      "devHash": "4ad750e23700e636dddb228c4baa83a5c93058c6c4ff318217553cf7914df223",
+      "prodHash": "4ad750e23700e636dddb228c4baa83a5c93058c6c4ff318217553cf7914df223",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-001-03",
+      "devLength": 2378,
+      "prodLength": 2378,
+      "devHash": "00e62691ca4756e066c3bca4bfa8864c58b93a4ba9d2c773272930bbc5f52f0f",
+      "prodHash": "00e62691ca4756e066c3bca4bfa8864c58b93a4ba9d2c773272930bbc5f52f0f",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-001-04",
+      "devLength": 768,
+      "prodLength": 768,
+      "devHash": "7c00022a2d46c0e0ca5419d076e14a7d725a59a449f3cf7c1c0bce180ea3d936",
+      "prodHash": "7c00022a2d46c0e0ca5419d076e14a7d725a59a449f3cf7c1c0bce180ea3d936",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-001-ALT",
+      "devLength": 764,
+      "prodLength": 764,
+      "devHash": "b3fd9eb144dd6f060e294d8aa4a55fbccff1330d54ff446a3bed97baddd5b8c3",
+      "prodHash": "b3fd9eb144dd6f060e294d8aa4a55fbccff1330d54ff446a3bed97baddd5b8c3",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-001-CALC",
+      "devLength": 1766,
+      "prodLength": 1766,
+      "devHash": "0f9b2fce2b129d1a3bb41bb235848ae3215bd2aa2b52be804976fcbfdfbda490",
+      "prodHash": "0f9b2fce2b129d1a3bb41bb235848ae3215bd2aa2b52be804976fcbfdfbda490",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-001-TAG",
+      "devLength": 803,
+      "prodLength": 803,
+      "devHash": "68fb293109ed09f5c28182936199e8ab02264ae844cf051991e4db10166c394f",
+      "prodHash": "68fb293109ed09f5c28182936199e8ab02264ae844cf051991e4db10166c394f",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-002",
+      "devLength": 1071,
+      "prodLength": 1071,
+      "devHash": "c97a6e17220b4e5c79f6420ae25ab2af5998cbba38a81d9991ba78b2097e84d1",
+      "prodHash": "c97a6e17220b4e5c79f6420ae25ab2af5998cbba38a81d9991ba78b2097e84d1",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-002-01",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-002-02",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-003",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-004",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-AR",
+      "devLength": 2485,
+      "prodLength": 2485,
+      "devHash": "0da7b685b16abbba8b2cbae402ac322f76ba6c480621970690d737021b5f4939",
+      "prodHash": "0da7b685b16abbba8b2cbae402ac322f76ba6c480621970690d737021b5f4939",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-MFG-DIS",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-NON-SER-MAN",
+      "devLength": 511,
+      "prodLength": 511,
+      "devHash": "6498621b68e2ab623ce66644b69181a56fe3512d7aacef21d20acb0cd8b47f1f",
+      "prodHash": "6498621b68e2ab623ce66644b69181a56fe3512d7aacef21d20acb0cd8b47f1f",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-NOTIF",
+      "devLength": 223,
+      "prodLength": 223,
+      "devHash": "528d6b113f265b2e514af91bac867f15f780872404ef51fd98cd7b90a91abe44",
+      "prodHash": "528d6b113f265b2e514af91bac867f15f780872404ef51fd98cd7b90a91abe44",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-OPER-HIST",
+      "devLength": 2689,
+      "prodLength": 2689,
+      "devHash": "8b3d058af65123cde9293189bf9ecdce4b0c0341e045a61f19aacd66fb396b8c",
+      "prodHash": "8b3d058af65123cde9293189bf9ecdce4b0c0341e045a61f19aacd66fb396b8c",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-ORD",
+      "devLength": 28166,
+      "prodLength": 28166,
+      "devHash": "9d8365ce63089c7ba39bf81eb92cc1b0fbb07cb05833f41e70261206b15f9cf2",
+      "prodHash": "9d8365ce63089c7ba39bf81eb92cc1b0fbb07cb05833f41e70261206b15f9cf2",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PLAN-ANL",
+      "devLength": 680,
+      "prodLength": 680,
+      "devHash": "eec4832959fbc33d76968da28df57b0106098079f08a2ae2a77ff5c8fc254da5",
+      "prodHash": "eec4832959fbc33d76968da28df57b0106098079f08a2ae2a77ff5c8fc254da5",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PLN",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PLN-001",
+      "devLength": 665,
+      "prodLength": 665,
+      "devHash": "5a77c23f8b4fa9d743c210cb807f22aa8e4212e9fe616dbeee6e1d3ffe504b6c",
+      "prodHash": "5a77c23f8b4fa9d743c210cb807f22aa8e4212e9fe616dbeee6e1d3ffe504b6c",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PLN-002",
+      "devLength": 2067,
+      "prodLength": 2067,
+      "devHash": "ddc30343886e69e088a8f37e579d3c290b2eb471967f250eec8cc6f0b1f2c88f",
+      "prodHash": "ddc30343886e69e088a8f37e579d3c290b2eb471967f250eec8cc6f0b1f2c88f",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PO",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PO-GROUPS",
+      "devLength": 7420,
+      "prodLength": 7420,
+      "devHash": "91ffa74a797fbff9833cfbf7c0941f74af7ff101b1d5c8186b51ba5ccaf26f78",
+      "prodHash": "91ffa74a797fbff9833cfbf7c0941f74af7ff101b1d5c8186b51ba5ccaf26f78",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PRICE",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PROJ",
+      "devLength": 125,
+      "prodLength": 125,
+      "devHash": "520a7d8665e6b9ee43c621827333b5115fbba5a6b91a23019c3ec57c51a044fc",
+      "prodHash": "520a7d8665e6b9ee43c621827333b5115fbba5a6b91a23019c3ec57c51a044fc",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PROJ-001",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PROJ-002",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-PROJ-003",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-REGION",
+      "devLength": 7536,
+      "prodLength": 7536,
+      "devHash": "a18934fab9ce2739c66e5488f8d99b5c727da471371d1705e9752f99ac4f574a",
+      "prodHash": "a18934fab9ce2739c66e5488f8d99b5c727da471371d1705e9752f99ac4f574a",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-REGION-001",
+      "devLength": 174,
+      "prodLength": 174,
+      "devHash": "ba372ac72037ca07875d452a1f0fa6f4daf89d2ad5a152aeed2e404825322c6f",
+      "prodHash": "ba372ac72037ca07875d452a1f0fa6f4daf89d2ad5a152aeed2e404825322c6f",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-REGION-002",
+      "devLength": 200,
+      "prodLength": 200,
+      "devHash": "8d571e5f5567c7f27cb024c3b907289db8012c2a38277a351c92c22720a1770c",
+      "prodHash": "8d571e5f5567c7f27cb024c3b907289db8012c2a38277a351c92c22720a1770c",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RES",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RES-001",
+      "devLength": 1316,
+      "prodLength": 1316,
+      "devHash": "aa516d17a8339cdf08fbf6008c396891f092fd874b47bedfed403bbbd250bba1",
+      "prodHash": "aa516d17a8339cdf08fbf6008c396891f092fd874b47bedfed403bbbd250bba1",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RES-002",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RES-003",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RES-004",
+      "devLength": 713,
+      "prodLength": 713,
+      "devHash": "c845c987831c308bd6304515ccb031cfb12a4bca9121a1c77e15a14719161053",
+      "prodHash": "c845c987831c308bd6304515ccb031cfb12a4bca9121a1c77e15a14719161053",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RVW",
+      "devLength": 1872,
+      "prodLength": 1872,
+      "devHash": "9bf53143cb4236ef06c50376432b0883148b60abc52199801a9d12a1d29b319d",
+      "prodHash": "9bf53143cb4236ef06c50376432b0883148b60abc52199801a9d12a1d29b319d",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RVW-BOM",
+      "devLength": 2727,
+      "prodLength": 2727,
+      "devHash": "d4e9c1623ef1be704dc6c7a07290ef5bf33d4d21a24376d27728a46592272145",
+      "prodHash": "d4e9c1623ef1be704dc6c7a07290ef5bf33d4d21a24376d27728a46592272145",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RVW-FILTER",
+      "devLength": 1969,
+      "prodLength": 1969,
+      "devHash": "bdb1f308251c0fc119efe919cff9177b4fa6bd441c7b592496a48acdd567ec01",
+      "prodHash": "bdb1f308251c0fc119efe919cff9177b4fa6bd441c7b592496a48acdd567ec01",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-RVW-UI",
+      "devLength": 945,
+      "prodLength": 945,
+      "devHash": "29b0f815d44e7104aa939afd187c9c68a895670789d3a2568b1174b4af8be3e1",
+      "prodHash": "29b0f815d44e7104aa939afd187c9c68a895670789d3a2568b1174b4af8be3e1",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-SHIFT",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-STR",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-STR-001",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-STR-002",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-UA",
+      "devLength": 564,
+      "prodLength": 564,
+      "devHash": "9e15821a72e505ce82240c601ff271108ca71ffec7466a574cfc71a59e00611c",
+      "prodHash": "9e15821a72e505ce82240c601ff271108ca71ffec7466a574cfc71a59e00611c",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-UA-001",
+      "devLength": 254,
+      "prodLength": 254,
+      "devHash": "5fee4dd70b705ef3c40c9c10d6f61b3a12d46f7ab90961433cf00b52828eae78",
+      "prodHash": "5fee4dd70b705ef3c40c9c10d6f61b3a12d46f7ab90961433cf00b52828eae78",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-UA-002",
+      "devLength": 146,
+      "prodLength": 146,
+      "devHash": "aa06c58b12983ed0c5304c4a10226dce4782d6dee2c53b7bd165ea4096f102d6",
+      "prodHash": "aa06c58b12983ed0c5304c4a10226dce4782d6dee2c53b7bd165ea4096f102d6",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS",
+      "devLength": 500,
+      "prodLength": 500,
+      "devHash": "295e09d82e5ac1773a5acc3e779a6a3fe5de66520fa6610ddb261056cefe9b05",
+      "prodHash": "295e09d82e5ac1773a5acc3e779a6a3fe5de66520fa6610ddb261056cefe9b05",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001-001",
+      "devLength": 2184,
+      "prodLength": 2184,
+      "devHash": "853026c6589a115e7bd8dd2a54400aa2bebf7d7cdb809030b865b453fe436300",
+      "prodHash": "853026c6589a115e7bd8dd2a54400aa2bebf7d7cdb809030b865b453fe436300",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001-01",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001-01-01",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001-01-02",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001-01-03",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001-01-04",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001-01-05",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-001-02",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-002",
+      "devLength": 87,
+      "prodLength": 87,
+      "devHash": "0bf565b17774c461727b1163be561095350b8811acfabc3f08f681aa40226107",
+      "prodHash": "0bf565b17774c461727b1163be561095350b8811acfabc3f08f681aa40226107",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-003",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-004",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-005",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-006",
+      "devLength": 1547,
+      "prodLength": 1547,
+      "devHash": "ad1d5574ec6b53bba2643a3df89d3722e0ba10078b87187d2723cc4129fcedc2",
+      "prodHash": "ad1d5574ec6b53bba2643a3df89d3722e0ba10078b87187d2723cc4129fcedc2",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-007",
+      "devLength": 61,
+      "prodLength": 61,
+      "devHash": "80ac38bbb943da358f3461c3509d6be2c57d9064541ceabb33f09f9a016e44f2",
+      "prodHash": "80ac38bbb943da358f3461c3509d6be2c57d9064541ceabb33f09f9a016e44f2",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-008",
+      "devLength": 11053,
+      "prodLength": 11053,
+      "devHash": "4273a0e5c075635d21f731b5859984af30bdee4158e1b86e42b2f2f3043cc617",
+      "prodHash": "4273a0e5c075635d21f731b5859984af30bdee4158e1b86e42b2f2f3043cc617",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-009",
+      "devLength": 6059,
+      "prodLength": 6059,
+      "devHash": "597e4f842ae05605d3e5aa4776212e0bd7cb58eb10bab04cc6d18f9a7d32517a",
+      "prodHash": "597e4f842ae05605d3e5aa4776212e0bd7cb58eb10bab04cc6d18f9a7d32517a",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-010",
+      "devLength": 227,
+      "prodLength": 227,
+      "devHash": "550f60448a96d473ec2d71c2e34ae28e6753d92cc95a89a664621acf073ac886",
+      "prodHash": "550f60448a96d473ec2d71c2e34ae28e6753d92cc95a89a664621acf073ac886",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WMS-011",
+      "devLength": 109,
+      "prodLength": 109,
+      "devHash": "4f9d67142e486691c43d5c44dcf90f048d28e224cb29df616455074eb57ed90f",
+      "prodHash": "4f9d67142e486691c43d5c44dcf90f048d28e224cb29df616455074eb57ed90f",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WOLF",
+      "devLength": 0,
+      "prodLength": 0,
+      "devHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prodHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "identical"
+    },
+    {
+      "featureId": "REQ-WOLF-001",
+      "devLength": 195,
+      "prodLength": 195,
+      "devHash": "70c9ef3bfeae7217c1bfd5a283a419c9906140185d913074ee6f67383fc8b82e",
+      "prodHash": "70c9ef3bfeae7217c1bfd5a283a419c9906140185d913074ee6f67383fc8b82e",
+      "status": "identical"
+    }
+  ]
+}

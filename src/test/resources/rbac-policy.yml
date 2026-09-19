@@ -770,18 +770,31 @@ rules:
     bodyType: "UPDATE"
     description: "Оновити користувача Keycloak — лише ADMIN"
 
-  - endpointName: "USER_GET_ROLES"
+  - endpointName: "ACCESS_GET_CATALOG"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
     bodyType: null
-    description: "Список realm roles — лише ADMIN"
+    description: "Каталог canonical permissions — access manager або user viewer"
 
-  - endpointName: "USER_GET_ROLE_BY_NAME"
-    contextKey: "SHARED_ROLE_NAME"
+  - endpointName: "ACCESS_GET_ROLES"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
     bodyType: null
-    description: "Деталі ролі з дозволами — лише ADMIN"
+    description: "DB-backed access roles — access manager або user viewer"
+
+  - endpointName: "ACCESS_GET_USER_GRANTS"
+    contextKey: "SHARED_USER_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
+    bodyType: null
+    description: "Активні access grants користувача"
+
+  - endpointName: "ACCESS_GET_USER_EFFECTIVE"
+    contextKey: "SHARED_USER_ID"
+    allowedRoles: [ ADMIN ]
+    deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, CREW_MANAGER, RESOURCE_VIEWER, ANONYMOUS ]
+    bodyType: null
+    description: "Ефективні права користувача"
 
   # ========================================
   # FAITA / RESOURCE RECONCILIATION ENDPOINTS

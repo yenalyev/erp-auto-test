@@ -27,8 +27,8 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     private TechnologicalMapFixture maps;
     private ProductionOrderFixture orders;
     private UserFixture users;
-    private long target, group, member1, member2, outside, resource, material, mapId;
-    private long materialMapId;
+    private long target, group, member1, member2, outside, resource, replacementResource, material, mapId;
+    private long replacementMapId, materialMapId;
     private final List<Long> orderIds = new ArrayList<>();
     private final List<Long> resourceIds = new ArrayList<>();
     private ProductionOrderRequest createRequest;
@@ -50,6 +50,8 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
         resources.fetchSharedResourceCategory();
         resource = resources.createUniqueResource("PG-output").getId();
         resourceIds.add(resource);
+        replacementResource = resources.createUniqueResource("PG-output-replacement").getId();
+        resourceIds.add(replacementResource);
         material = resources.createUniqueResource("PG-material").getId();
         resourceIds.add(material);
         mapId = maps.createTechMapWithRequest(UserRole.ADMIN, TechnologicalMapRequest.builder()
@@ -57,6 +59,11 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
                 .storageIds(Set.of(member1, member2, outside))
                 .input(List.of(new ResourceUsageRequest(material, 1.0)))
                 .output(List.of(new ResourceUsageRequest(resource, 1.0))).build()).getId();
+        replacementMapId = maps.createTechMapWithRequest(UserRole.ADMIN, TechnologicalMapRequest.builder()
+                .name("PG-replacement-map-" + UUID.randomUUID()).type("PRODUCTION")
+                .storageIds(Set.of(member1, member2, outside))
+                .input(List.of(new ResourceUsageRequest(material, 1.0)))
+                .output(List.of(new ResourceUsageRequest(replacementResource, 1.0))).build()).getId();
         long raw = resources.createUniqueResource("PG-raw").getId();
         resourceIds.add(raw);
         materialMapId = maps.createTechMapWithRequest(UserRole.ADMIN, TechnologicalMapRequest.builder()
@@ -98,6 +105,11 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
                         ok(maps.deactivateTechMap(UserRole.ADMIN, mapId, location));
                     }
                 }
+                if (replacementMapId != 0) {
+                    for (long location : List.of(member1, member2, outside)) {
+                        ok(maps.deactivateTechMap(UserRole.ADMIN, replacementMapId, location));
+                    }
+                }
                 if (materialMapId != 0) ok(maps.deactivateTechMap(UserRole.ADMIN, materialMapId, outside));
                 for (long id : resourceIds) ok(call(RESOURCE_DEACTIVATE, null, id));
             } finally {
@@ -107,6 +119,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId({"TC-PG-001", "TC-PG-004"})
     public void groupFlagPersistsAndGroupCannotBeTarget() {
         assertThat(storages.getById(UserRole.ADMIN, group).getProductionGroup()).isTrue();
         assertThat(storages.getById(UserRole.ADMIN, member1).getParent().getId()).isEqualTo(group);
@@ -120,6 +133,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-005")
     public void decompositionReplacesMembersWithGroup() {
         Response response = ok(call(PRODUCTION_ORDER_POST_DECOMPOSE, plan(), orderId));
         assertThat(response.jsonPath().getList("blocks[0].items[0].groupOptions.id", Long.class)).contains(group);
@@ -162,6 +176,23 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-002")
+    public void decompositionUsesCurrentParentHierarchyAfterReparent() {
+        storages.reparent(UserRole.ADMIN, member1, target);
+        try {
+            Response response = ok(call(PRODUCTION_ORDER_POST_DECOMPOSE, plan(), orderId));
+            assertThat(response.jsonPath().getList("blocks[0].items[0].groupOptions.id", Long.class))
+                    .containsExactly(group);
+            assertThat(response.jsonPath().getList("blocks[0].items[0].options.storages.flatten().id", Long.class))
+                    .contains(member1, outside)
+                    .doesNotContain(member2, group);
+        } finally {
+            storages.reparent(UserRole.ADMIN, member1, group);
+        }
+    }
+
+    @Test
+    @TestCaseId({"TC-PG-007", "TC-PG-008"})
     public void resendSamePlanKeepsRequestAndVersion() {
         long requestId = send(10);
         long version = version(requestId);
@@ -177,6 +208,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-009")
     public void generateWhileWaitingIsRejectedWithoutTasks() {
         long id = send(10);
         assertThat(call(PRODUCTION_ORDER_POST_GENERATE, delegated(10), orderId).statusCode()).isEqualTo(400);
@@ -185,13 +217,23 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
         assertThat(snapshot().get("state")).isEqualTo("NEW");
     }
 
-    @DataProvider
-    public Object[][] invalidAnswers() {
-        return new Object[][] {{"partial"}, {"empty"}, {"outside"}, {"group"}};
-    }
+    @Test
+    @TestCaseId("TC-PG-013")
+    public void partialAnswerIsAtomic() { assertInvalidAnswerIsAtomic("partial"); }
 
-    @Test(dataProvider = "invalidAnswers")
-    public void invalidAnswerIsAtomic(String kind) {
+    @Test
+    @TestCaseId("TC-PG-014")
+    public void emptyAnswerIsAtomic() { assertInvalidAnswerIsAtomic("empty"); }
+
+    @Test
+    @TestCaseId("TC-PG-012")
+    public void outsideAnswerIsAtomic() { assertInvalidAnswerIsAtomic("outside"); }
+
+    @Test
+    @TestCaseId("TC-PG-015")
+    public void groupAnswerIsAtomic() { assertInvalidAnswerIsAtomic("group"); }
+
+    private void assertInvalidAnswerIsAtomic(String kind) {
         long id = send(10);
         Map<String, Object> before = snapshot();
         long base = version(id);
@@ -208,6 +250,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId({"TC-PG-011", "TC-PG-016", "TC-PG-017"})
     public void completeAnswerMergesIntoSameOrderAndLeavesMaterialsForPlanner() {
         long id = send(10);
         Response own = ok(call(PRODUCTION_DELEGATION_DECOMPOSE, plan(), id));
@@ -233,12 +276,20 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
                 .contains(material);
     }
 
-    @Test
-    public void dateAndDescriptionEditsKeepRequestAndAllowLoadedAnswer() {
+    @DataProvider
+    public Object[][] nonStructuralEdits() {
+        return new Object[][] {{"date"}, {"description"}};
+    }
+
+    @Test(dataProvider = "nonStructuralEdits")
+    @TestCaseId("TC-PG-019")
+    public void nonStructuralEditKeepsRequestAndAllowsLoadedAnswer(String field) {
         long id = send(10);
         long base = version(id);
-        ok(call(PRODUCTION_ORDER_PUT_UPDATE, createRequest.toBuilder()
-                .targetDate(createRequest.getTargetDate().plusDays(2)).description("PG edited description").build(), orderId));
+        ProductionOrderRequest update = "date".equals(field)
+                ? createRequest.toBuilder().targetDate(createRequest.getTargetDate().plusDays(2)).build()
+                : createRequest.toBuilder().description("PG edited description").build();
+        ok(call(PRODUCTION_ORDER_PUT_UPDATE, update, orderId));
         assertThat(requestIds()).containsExactly(id);
         assertThat(version(id)).isEqualTo(base);
         ok(answer(id, base, plan(produce(member1, 10))));
@@ -246,6 +297,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-020")
     public void outputEditWithdrawsRequests() {
         long id = send(10);
         ok(call(PRODUCTION_ORDER_PUT_UPDATE, orders.buildCreateRequest(target, resource, 11), orderId));
@@ -255,6 +307,22 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-030")
+    public void outputResourceReplacementWithdrawsRequests() {
+        long id = send(10);
+        ProductionOrderRequest replacement = orders.buildCreateRequest(target, replacementResource, 10);
+        ok(call(PRODUCTION_ORDER_PUT_UPDATE, replacement, orderId));
+        assertThat(requestIds()).isEmpty();
+        assertThat(ok(call(PRODUCTION_DELEGATION_QUEUE, null)).jsonPath().getList("id", Long.class))
+                .doesNotContain(id);
+        Response fetched = ok(call(PRODUCTION_ORDER_GET_BY_ID, null, orderId));
+        assertThat(fetched.jsonPath().getList("output.resource.id", Long.class))
+                .containsExactly(replacementResource);
+        assertThat(fetched.jsonPath().getObject("delegationProgress", Object.class)).isNull();
+    }
+
+    @Test
+    @TestCaseId("TC-PG-018")
     public void changedPlanRejectsStaleAnswer() {
         long id = send(10);
         long base = version(id);
@@ -272,24 +340,30 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
-    @TestCaseId(value = "TC-PG-010", roles = BusinessRole.PRODUCTION_GROUP_MANAGER)
+    @TestCaseId(value = {"TC-PG-010", "TC-PG-024"}, roles = BusinessRole.PRODUCTION_GROUP_DIRECTOR)
     public void groupOwnersAreScopedAndCannotEditPlannerOrder() {
         long id = send(10);
         users = new UserFixture(testContext, apiExecutor);
-        assertThat(users.listRealmRoles()).extracting(RoleModelResponse::getName)
-                .as("Group manager needs the business-owner role bound to a production-group location")
-                .containsAll(BusinessRoleCatalog.definition(BusinessRole.PRODUCTION_GROUP_MANAGER)
-                        .keycloakRoles());
+        assertThat(BusinessRoleCatalog.definition(BusinessRole.PRODUCTION_GROUP_DIRECTOR).permissionKeys())
+                .as("Production-group director must use the canonical allocation permission")
+                .contains("production-order.allocate");
         StorageResponse otherGroup = storages.createStorage(StorageDataFactory.childStorage(target, "PG-other-group")
                 .productionGroup(true).build());
         StorageResponse otherMember = storages.createChildStorage(otherGroup.getId(), "PG-other-member");
+        String firstPermission = allocationPermission(group);
+        String secondPermission = allocationPermission(otherGroup.getId());
         UserFixture.BusinessActor first = users.createBusinessActor(getPlaywrightSessionProvider(),
-                BusinessRole.PRODUCTION_GROUP_MANAGER, List.of(storages.getById(UserRole.ADMIN, group)));
+                BusinessRole.PRODUCTION_GROUP_DIRECTOR, List.of(storages.getById(UserRole.ADMIN, group)));
         UserFixture.BusinessActor second = users.createBusinessActor(getPlaywrightSessionProvider(),
-                BusinessRole.PRODUCTION_GROUP_MANAGER, List.of(otherGroup));
+                BusinessRole.PRODUCTION_GROUP_DIRECTOR, List.of(otherGroup));
         assertThat(otherMember.getParent().getId()).isEqualTo(otherGroup.getId());
         assertThat(first.storageIds()).containsExactly(group);
         assertThat(second.storageIds()).containsExactly(otherGroup.getId());
+        AccessFixture access = new AccessFixture(testContext, apiExecutor);
+        assertThat(access.hasEffectivePermission(first.userId(), firstPermission, group)).isTrue();
+        assertThat(access.hasEffectivePermission(first.userId(), firstPermission, otherGroup.getId())).isFalse();
+        assertThat(access.hasEffectivePermission(second.userId(), secondPermission, otherGroup.getId())).isTrue();
+        assertThat(access.hasEffectivePermission(second.userId(), secondPermission, group)).isFalse();
         apiExecutor.setSessionForRole(UserRole.OWNER_1, first.username(), first.password());
         apiExecutor.setSessionForRole(UserRole.OWNER_2, second.username(), second.password());
         assertThat(ok(apiExecutor.execute(PRODUCTION_DELEGATION_QUEUE, UserRole.OWNER_1))
@@ -321,6 +395,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-022")
     public void plannerCanWithdrawRequestsByDeletingOrder() {
         long id = send(10);
         ok(orders.deleteRaw(UserRole.ADMIN, orderId));
@@ -331,6 +406,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-021")
     public void targetEditWithdrawsRequests() {
         long id = send(10);
         ok(call(PRODUCTION_ORDER_PUT_UPDATE, createRequest.toBuilder().targetStorageId(outside).build(), orderId));
@@ -339,6 +415,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-025")
     public void plannerCompletesNextRoundAndGeneratesSameOrder() {
         long id = send(10);
         ok(answer(id, version(id), plan(produce(member1, 10))));
@@ -356,6 +433,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     }
 
     @Test
+    @TestCaseId("TC-PG-023")
     public void plannerCanOverwriteCompletedGroupAllocation() {
         long id = send(10);
         ok(answer(id, version(id), plan(produce(member1, 10))));
@@ -366,6 +444,10 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
         assertThat(fetched.jsonPath().getList("decomposition.blocks[0].items[0].assignments.storageId", Long.class))
                 .containsExactly(outside);
         assertThat(fetched.jsonPath().getObject("delegationProgress", Object.class)).isNull();
+    }
+
+    private String allocationPermission(long groupId) {
+        return "production-order.allocate";
     }
 
     private void addMaterialPlan(DecompositionRequest plan) {

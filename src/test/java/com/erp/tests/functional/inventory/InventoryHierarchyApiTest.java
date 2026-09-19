@@ -2,6 +2,7 @@ package com.erp.tests.functional.inventory;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
@@ -9,6 +10,7 @@ import com.erp.fixtures.ResourceFixture;
 import com.erp.models.response.MultiLocationStorageItemResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageAmountResponse;
+import com.erp.models.response.StorageItemBatchResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.InventorySessionStatus;
@@ -185,6 +187,44 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
         assertLocationAmount(row, leaf.getId(), LEAF_STOCK);
     }
 
+    @Test(priority = 50)
+    @TestCaseId("TC-WMS-007-022")
+    @Story("Admin sees resource batches from the selected storage and all descendants")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Arrange: один ресурс має окремі партії на parent, child і вкладеному leaf.
+            Act: ADMIN виконує GET /api/v1/storage-items/batches лише з storageId=parent
+            та resourceId спільного ресурсу.
+            Assert: відповідь містить партії parent і всіх дочірніх елементів, включно
+            з leaf, а кожна партія посилається на правильну локацію.
+            """)
+    public void adminSeesBatchesFromParentAndAllDescendants() {
+        StorageResponse parent = storageFixture.createUniqueStorage("hier-batch-p-");
+        StorageResponse child = storageFixture.createChildStorage(parent.getId(), "hier-batch-c-");
+        StorageResponse leaf = storageFixture.createChildStorage(child.getId(), "hier-batch-l-");
+        ResourceResponse resource = resourceFixture.createUniqueResource("hier-batch-res-");
+
+        String batchPrefix = RelocationDataFactory.uniqueBatchNumber();
+        String parentBatch = batchPrefix + "-parent";
+        String childBatch = batchPrefix + "-child";
+        String leafBatch = batchPrefix + "-leaf";
+        relocationFixture.seedBatchOnStorage(parent.getId(), resource.getId(), 3.0, parentBatch);
+        relocationFixture.seedBatchOnStorage(child.getId(), resource.getId(), 5.0, childBatch);
+        relocationFixture.seedBatchOnStorage(leaf.getId(), resource.getId(), 7.0, leafBatch);
+
+        List<StorageItemBatchResponse> batches = inventoryFixture.getBatchesByResource(
+                parent.getId(), resource.getId(), UserRole.ADMIN);
+
+        assertBatchAtStorage(batches, parentBatch, parent.getId(), 3.0);
+        assertBatchAtStorage(batches, childBatch, child.getId(), 5.0);
+        assertBatchAtStorage(batches, leafBatch, leaf.getId(), 7.0);
+        assertThat(batches)
+                .filteredOn(batch -> batch.getBatchNumber() != null
+                        && batch.getBatchNumber().startsWith(batchPrefix))
+                .extracting(StorageItemBatchResponse::getBatchNumber)
+                .containsExactlyInAnyOrder(parentBatch, childBatch, leafBatch);
+    }
+
     @Test(priority = 60)
     @TestCaseId("TC-WMS-007-016")
     @Story("Excel export is single-storage even when hierarchy view exists")
@@ -266,6 +306,26 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
                                 + " for resource=" + row.getResource().getId()));
         assertThat(loc.getAmount())
                 .as("amount on storage %s", storageId)
+                .isCloseTo(expectedAmount, within(0.01));
+    }
+
+    private static void assertBatchAtStorage(List<StorageItemBatchResponse> batches,
+                                             String batchNumber,
+                                             long storageId,
+                                             double expectedAmount) {
+        StorageItemBatchResponse batch = batches.stream()
+                .filter(candidate -> Objects.equals(batchNumber, candidate.getBatchNumber()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "Hierarchy batches missing batchNumber=" + batchNumber));
+        assertThat(batch.getStorage())
+                .as("Batch %s must expose its source storage", batchNumber)
+                .isNotNull();
+        assertThat(batch.getStorage().getId())
+                .as("storage.id for batch %s", batchNumber)
+                .isEqualTo(storageId);
+        assertThat(batch.getAmount())
+                .as("amount for batch %s", batchNumber)
                 .isCloseTo(expectedAmount, within(0.01));
     }
 }

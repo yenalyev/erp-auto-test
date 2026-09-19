@@ -3183,7 +3183,7 @@ public enum ApiEndpointDefinition {
     ),
 
     // ========================================
-    // USER MANAGEMENT ENDPOINTS (Keycloak admin)
+    // USER MANAGEMENT ENDPOINTS
     // ========================================
 
     USER_GET_ME(
@@ -3236,23 +3236,147 @@ public enum ApiEndpointDefinition {
             "UPDATE"
     ),
 
-    USER_GET_ROLES(
-            "/api/v1/users/roles",
+    // ========================================
+    // ACCESS MANAGEMENT ENDPOINTS (DB-backed roles and grants)
+    // ========================================
+
+    ACCESS_GET_CATALOG(
+            "/api/v1/access/catalog",
             Method.GET,
-            "schemas/users/role-list-schema.json",
-            "Get all realm roles",
+            "schemas/access/permission-list-schema.json",
+            "Get canonical permission catalog",
             null,
-            new TypeReference<List<RoleModelResponse>>() {},
+            new TypeReference<List<AccessPermissionResponse>>() {},
             null
     ),
 
-    USER_GET_ROLE_BY_NAME(
-            "/api/v1/users/roles/{roleName}",
+    ACCESS_GET_ROLES(
+            "/api/v1/access/roles",
             Method.GET,
-            "schemas/users/role-response-schema.json",
-            "Get realm role details with permissions",
+            "schemas/access/role-list-schema.json",
+            "Get access roles",
             null,
-            new TypeReference<RoleModelResponse>() {},
+            new TypeReference<List<AccessRoleResponse>>() {},
+            null
+    ),
+
+    ACCESS_GET_ROLE(
+            "/api/v1/access/roles/{id}",
+            Method.GET,
+            "schemas/access/role-response-schema.json",
+            "Get access role",
+            null,
+            new TypeReference<AccessRoleResponse>() {},
+            null
+    ),
+
+    ACCESS_POST_ROLE(
+            "/api/v1/access/roles",
+            Method.POST,
+            "schemas/access/role-response-schema.json",
+            "Create custom access role",
+            new TypeReference<AccessRoleRequest>() {},
+            new TypeReference<AccessRoleResponse>() {},
+            "CREATE_ACCESS_ROLE"
+    ),
+
+    ACCESS_PUT_ROLE(
+            "/api/v1/access/roles/{id}",
+            Method.PUT,
+            "schemas/access/role-response-schema.json",
+            "Update custom access role",
+            new TypeReference<AccessRoleRequest>() {},
+            new TypeReference<AccessRoleResponse>() {},
+            "UPDATE_ACCESS_ROLE"
+    ),
+
+    ACCESS_POST_CLONE_ROLE(
+            "/api/v1/access/roles/{id}/clone",
+            Method.POST,
+            "schemas/access/role-response-schema.json",
+            "Clone access role",
+            new TypeReference<AccessRoleCloneRequest>() {},
+            new TypeReference<AccessRoleResponse>() {},
+            "CLONE_ACCESS_ROLE"
+    ),
+
+    ACCESS_DELETE_ROLE(
+            "/api/v1/access/roles/{id}",
+            Method.DELETE,
+            null,
+            "Delete custom access role",
+            null,
+            new TypeReference<Void>() {},
+            "DELETE_ACCESS_ROLE"
+    ),
+
+    ACCESS_GET_ROLE_HOLDERS(
+            "/api/v1/access/roles/{id}/holders",
+            Method.GET,
+            "schemas/access/grant-list-schema.json",
+            "Get active holders of an access role",
+            null,
+            new TypeReference<List<AccessGrantResponse>>() {},
+            null
+    ),
+
+    ACCESS_GET_USER_GRANTS(
+            "/api/v1/access/users/{id}/grants",
+            Method.GET,
+            "schemas/access/grant-list-schema.json",
+            "Get user access grants",
+            null,
+            new TypeReference<List<AccessGrantResponse>>() {},
+            null
+    ),
+
+    ACCESS_POST_USER_GRANTS(
+            "/api/v1/access/users/{id}/grants",
+            Method.POST,
+            "schemas/access/grant-list-schema.json",
+            "Grant roles or permissions to user",
+            new TypeReference<AccessGrantRequest>() {},
+            new TypeReference<List<AccessGrantResponse>>() {},
+            "GRANT_ACCESS"
+    ),
+
+    ACCESS_PUT_GRANT_SCOPE(
+            "/api/v1/access/grants/{id}",
+            Method.PUT,
+            "schemas/access/grant-response-schema.json",
+            "Change access grant scope",
+            new TypeReference<AccessGrantScopeRequest>() {},
+            new TypeReference<AccessGrantResponse>() {},
+            "CHANGE_ACCESS_SCOPE"
+    ),
+
+    ACCESS_POST_REVOKE_GRANT(
+            "/api/v1/access/grants/{id}/revoke",
+            Method.POST,
+            "schemas/access/grant-response-schema.json",
+            "Revoke access grant",
+            new TypeReference<AccessRevokeRequest>() {},
+            new TypeReference<AccessGrantResponse>() {},
+            "REVOKE_ACCESS"
+    ),
+
+    ACCESS_GET_USER_EFFECTIVE(
+            "/api/v1/access/users/{id}/effective",
+            Method.GET,
+            "schemas/access/effective-list-schema.json",
+            "Get effective permissions for user",
+            null,
+            new TypeReference<List<EffectivePermissionResponse>>() {},
+            null
+    ),
+
+    ACCESS_GET_STORAGE_HOLDERS(
+            "/api/v1/access/storages/{id}/holders",
+            Method.GET,
+            "schemas/access/grant-list-schema.json",
+            "Get access grants covering storage",
+            null,
+            new TypeReference<List<AccessGrantResponse>>() {},
             null
     ),
 

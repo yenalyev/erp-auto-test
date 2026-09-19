@@ -75,8 +75,8 @@ public class OrderFixture extends BaseFixture {
         UserMeResponse requester = userFixture.getMe(UserRole.UNIT_ANALYST);
         if (!requester.hasOrderCreateOn(requesterStorage)) {
             throw new IllegalStateException(
-                    "Order requester '" + requester.getUsername() + "' must have Unit_Owner-ROLE "
-                            + "with order::" + requesterStorage + "::create; roles=" + requester.getRoles()
+                    "Order requester '" + requester.getUsername() + "' must have effective order.create "
+                            + "at storage " + requesterStorage + "; grants=" + requester.getGrants()
                             + ", orderPermissions=" + requester.getPermissions().stream()
                             .filter(permission -> permission.startsWith("order::"))
                             .toList());

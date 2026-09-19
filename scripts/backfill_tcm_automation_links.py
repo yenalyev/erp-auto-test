@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.parse
@@ -13,7 +14,7 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-BASE = "http://localhost:8100"
+BASE = os.getenv("TCM_BASE_URL", "http://localhost:18100").rstrip("/")
 TOKEN = "dev-ai-token"
 PROJECT_ID = 1
 DEFAULT_XLSX = Path(r"D:\auto_test\tcm-import-gap-232-missing.xlsx")

@@ -48,6 +48,7 @@
 
     <test name="Dictionary API">
         <classes>
+            <class name="com.erp.tests.functional.access.AccessManagementApiTest"/>
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
             <class name="com.erp.tests.functional.resource.ResourceImageApiTest"/>
@@ -204,6 +205,7 @@
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryCommentApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryBatchTechMapApiTest"/>
             <class name="com.erp.tests.functional.inventory.StorageRelationInventoryTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryMultiLocationExportApiTest"/>
@@ -212,6 +214,7 @@
 
     <test name="Orders API">
         <classes>
+            <class name="com.erp.tests.functional.order.OrderDynamicFixtureSmokeTest"/>
             <class name="com.erp.tests.functional.order.OrderCrudApiTest"/>
             <class name="com.erp.tests.functional.order.OrderLifecycleApiTest"/>
             <class name="com.erp.tests.functional.order.OrderListApiTest"/>
@@ -319,6 +322,7 @@
     <test name="UI Inventory">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>
             <class name="com.erp.tests.ui.InventoryMultiLocationExportUiTest"/>
             <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>

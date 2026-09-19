@@ -55,6 +55,8 @@ logs/
 # Allure
 allure-results/
 allure-report/
+.allure/
+__pycache__/
 
 # OS
 Thumbs.db

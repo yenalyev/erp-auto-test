@@ -7,8 +7,27 @@
     "properties": {
       "id": { "type": "integer" },
       "amount": { "type": "number" },
-      "batchNumber": { "type": "string" },
-      "isProduced": { "type": "boolean" }
+      "date": { "type": ["string", "null"], "format": "date-time" },
+      "batchNumber": { "type": ["string", "null"] },
+      "isProduced": { "type": "boolean" },
+      "techmap": {
+        "type": ["object", "null"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" }
+        },
+        "required": ["id", "name"],
+        "additionalProperties": true
+      },
+      "storage": {
+        "type": ["object", "null"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" }
+        },
+        "required": ["id", "name"],
+        "additionalProperties": true
+      }
     },
     "additionalProperties": true
   }

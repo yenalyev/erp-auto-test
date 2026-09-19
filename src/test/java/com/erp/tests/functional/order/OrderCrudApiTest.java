@@ -7,6 +7,7 @@ import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.OrderState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
+import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.OrderRequest;
 import com.erp.models.response.OrderResponse;
@@ -33,6 +34,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OrderCrudApiTest extends OrderApiTestBase {
 
     private InventoryFixture inventoryFixture;
+
+    @Override
+    protected int requiredResourceCount() {
+        return 2;
+    }
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupOrderApiTests")
     public void setupInventoryFixture() {
@@ -97,22 +103,20 @@ public class OrderCrudApiTest extends OrderApiTestBase {
 
     @Test(priority = 5)
     @TestCaseId("TC-ORD-005")
-    @Story("Create validation")
-    @Description("Resource without grant on a REGIONS requester location → 400.")
-    public void testCreateResourceNotAccessibleToLocationReturns400() {
+    @Story("Location-scoped create permission")
+    @Description("Керівник батьківського UNIT без окремого гранту на REGIONS-нащадку отримує 403.")
+    public void testCreateOnUnassignedRestrictedLocationReturns403() {
         StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
         try {
             var restricted = storageFixture.createStorage(
                     StorageDataFactory.restrictedStorage(requesterStorageId, "ord-005-").build());
-            ResourceResponse ungranted = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
-                    restricted.getId(), UserRole.ADMIN, "ord-005-res-");
             OrderRequest request = OrderDataFactory.buildOrderRequest(
-                    restricted.getId(), ungranted.getId(), 1.0);
+                    restricted.getId(), resourceId, 1.0);
             Response response = apiExecutor.execute(
                     ApiEndpointDefinition.ORDER_POST_CREATE, REQUESTER, request);
             assertThat(response.statusCode())
-                    .as("Ungranted resource on REGIONS location; body=%s", response.asString())
-                    .isEqualTo(400);
+                    .as("No create grant on REGIONS child; body=%s", response.asString())
+                    .isEqualTo(403);
         } finally {
             storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
         }
@@ -190,8 +194,12 @@ public class OrderCrudApiTest extends OrderApiTestBase {
     @Story("Create validation")
     @Description("FULL_ACCESS (Admin) може створити заявку з будь-яким активним ресурсом каталогу.")
     public void testAdminFullAccessAllowsAnyResource() {
-        ResourceResponse ungranted = inventoryFixture.pickResourceNotOnStorage(
-                requesterStorageId, UserRole.ADMIN, sharedResources);
+        ResourceResponse ungranted = new ResourceFixture(testContext, apiExecutor)
+                .getPage(UserRole.ADMIN, true, null).stream()
+                .filter(candidate -> candidate.getId() != null
+                        && sharedResources.stream().noneMatch(visible -> visible.getId().equals(candidate.getId())))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No active catalog resource outside requester set"));
         OrderRequest request = OrderDataFactory.buildOrderRequest(
                 requesterStorageId, ungranted.getId(), 1.0);
         Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);

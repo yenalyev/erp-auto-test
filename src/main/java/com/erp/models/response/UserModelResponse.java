@@ -22,10 +22,6 @@ public class UserModelResponse {
     private String rank;
     private boolean enabled;
     @Builder.Default
-    private List<SimpleEntityResponse> storages = new ArrayList<>();
-    @Builder.Default
-    private List<String> permissions = new ArrayList<>();
-    @Builder.Default
-    private List<RoleModelResponse> realmRoles = new ArrayList<>();
+    private List<AccessGrantSummaryResponse> grants = new ArrayList<>();
     private String createdTimestamp;
 }

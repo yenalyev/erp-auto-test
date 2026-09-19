@@ -11,6 +11,7 @@
 
     <test name="Order API">
         <classes>
+            <class name="com.erp.tests.functional.order.OrderDynamicFixtureSmokeTest"/>
             <class name="com.erp.tests.functional.order.OrderCrudApiTest"/>
             <class name="com.erp.tests.functional.order.OrderLifecycleApiTest"/>
             <class name="com.erp.tests.functional.order.OrderListApiTest"/>

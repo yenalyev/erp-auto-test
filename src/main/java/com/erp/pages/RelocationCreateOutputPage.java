@@ -103,11 +103,13 @@ public class RelocationCreateOutputPage extends BasePage {
                 .locator("xpath=following-sibling::p[1]");
         senderBlock.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         recipientBlock.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
-        if (expectedSenderName != null && !senderBlock.innerText().contains(expectedSenderName)) {
+        if (expectedSenderName != null
+                && !senderBlock.innerText().trim().contains(expectedSenderName.trim())) {
             throw new AssertionError("Expected fixed sender «" + expectedSenderName
                     + "», got «" + senderBlock.innerText().trim() + "»");
         }
-        if (expectedRecipientName != null && !recipientBlock.innerText().contains(expectedRecipientName)) {
+        if (expectedRecipientName != null
+                && !recipientBlock.innerText().trim().contains(expectedRecipientName.trim())) {
             throw new AssertionError("Expected fixed recipient «" + expectedRecipientName
                     + "», got «" + recipientBlock.innerText().trim() + "»");
         }

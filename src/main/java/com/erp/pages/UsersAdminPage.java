@@ -22,22 +22,22 @@ public class UsersAdminPage extends BasePage {
 
     public static final String LIST_PATH = "/users";
     public static final String CREATE_PATH = "/users/create";
-    public static final String PAGE_TITLE = "Довідники: Користувачі та ролі";
+    public static final String PAGE_TITLE = "Доступ: Користувачі";
     public static final String CREATE_PAGE_TITLE = "Новий користувач";
     public static final String USERS_TAB = "Користувачі";
     public static final String ROLES_TAB = "Ролі";
     public static final String NEW_USER_BUTTON = "Новий користувач";
-    public static final String SEARCH_PLACEHOLDER = "Пошук за логіном";
-    public static final String STORAGE_FILTER_PLACEHOLDER = "Всі локації...";
+    public static final String SEARCH_PLACEHOLDER = "Пошук за логіном або ім'ям";
+    public static final String STORAGE_FILTER_PLACEHOLDER = "Має доступ до локації…";
     public static final String CLEAR_FILTERS_BUTTON = "Очистити";
     public static final String CREATE_SUBMIT_BUTTON = "Створити";
     public static final String SAVE_BUTTON = "Зберегти";
-    public static final String DONE_BUTTON = "Готово";
+    public static final String DONE_BUTTON = "Надати доступ";
     public static final String CREDENTIALS_DIALOG_TITLE = "Користувача створено";
     public static final String LOADING_TEXT = "Завантаження...";
-    public static final String ADMINISTRATOR_ROLE = "Administrator-ROLE";
+    public static final String ADMINISTRATOR_ROLE = "Адміністратор системи";
 
-    private static final List<String> USER_TABLE_HEADERS = List.of("Логін", "Ім'я", "Прізвище", "Локації");
+    private static final List<String> USER_TABLE_HEADERS = List.of("Логін", "Ім'я · звання", "Доступ", "Область", "Статус");
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
     private static final Pattern ROLES_LABEL = Pattern.compile("^\\s*Ролі\\s*$");
     private static final Pattern ROLES_PLACEHOLDER = Pattern.compile("рол", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -194,7 +194,7 @@ public class UsersAdminPage extends BasePage {
     }
 
     public boolean isUsersTabVisible() {
-        return page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(USERS_TAB)).isVisible();
+        return isListPageLoaded();
     }
 
     public boolean isNewUserButtonVisible() {
@@ -280,35 +280,63 @@ public class UsersAdminPage extends BasePage {
 
     public UsersAdminPage dismissCredentialsDialog() {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(DONE_BUTTON)).click();
-        return waitForListLoaded();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Доступ").setExact(true))
+                .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
+        return open();
     }
 
     public UsersAdminPage openRolesTab() {
-        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(ROLES_TAB)).click();
-        waitForLoadingFinished();
+        navigateTo(ConfigProvider.getBaseUrl() + "/access/roles", "Доступ: Ролі");
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Доступ: Ролі"))
+                .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(uiTimeoutMs()));
         return this;
     }
 
     public UsersAdminPage clickRoleName(String roleName) {
-        page.locator("table tbody button").filter(new Locator.FilterOptions().setHasText(roleName)).first().click();
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Дозволи ролі «" + roleName + "»"))
+        page.locator("table tbody").getByRole(AriaRole.LINK,
+                new Locator.GetByRoleOptions().setName(roleName).setExact(true)).first().click();
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(roleName).setExact(true))
                 .waitFor(new Locator.WaitForOptions()
                         .setState(WaitForSelectorState.VISIBLE)
                         .setTimeout(uiTimeoutMs()));
-        waitForRolePermissionsLoaded();
         return this;
     }
 
     public List<String> getVisibleRolePermissions() {
         List<String> permissions = new ArrayList<>();
-        Locator items = page.locator("li");
-        for (int i = 0; i < items.count(); i++) {
-            String text = normalize(items.nth(i).innerText());
-            if (text.startsWith("perm_")) {
-                permissions.add(text);
+        Locator checkboxes = page.locator("[id^='role-permission-']");
+        for (int i = 0; i < checkboxes.count(); i++) {
+            Locator checkbox = checkboxes.nth(i);
+            if (checkbox.isChecked()) {
+                permissions.add(checkbox.getAttribute("id").replaceFirst("^role-permission-", ""));
             }
         }
         return permissions;
+    }
+
+    public UsersAdminPage openProfileTab() {
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Профіль").setExact(true)).click();
+        return this;
+    }
+
+    public UsersAdminPage openAccessTab() {
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Доступ").setExact(true)).click();
+        waitForLoadingFinished();
+        return this;
+    }
+
+    public UsersAdminPage openEffectiveAccessTab() {
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Ефективні права").setExact(true)).click();
+        waitForLoadingFinished();
+        return this;
+    }
+
+    public boolean isAccessGrantVisible(String grantName) {
+        Locator rows = page.locator("table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(grantName));
+        return rows.count() > 0 && rows.first().isVisible();
     }
 
     public UsersAdminPage clickUsernameLink(String username) {

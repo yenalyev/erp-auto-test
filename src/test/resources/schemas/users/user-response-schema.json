@@ -9,11 +9,15 @@
     "lastName": { "type": "string" },
     "rank": { "type": ["string", "null"] },
     "enabled": { "type": "boolean" },
-    "storages": { "type": "array" },
-    "permissions": { "type": "array", "items": { "type": "string" } },
-    "realmRoles": { "type": "array" },
+    "grants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "direct", "scopeKind"]
+      }
+    },
     "createdTimestamp": { "type": "string" }
   },
-  "required": ["id", "username"],
+  "required": ["id", "username", "enabled", "grants"],
   "additionalProperties": true
 }

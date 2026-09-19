@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * UI: Crew-Read-ROLE — sidebar «Аналітика Екіпажів» та залишки екіпажів батальйону.
+ * UI: «Керівник локації» + «Екіпажі: перегляд» — sidebar та залишки екіпажів батальйону.
  */
 @Slf4j
 @Epic("Inventory")

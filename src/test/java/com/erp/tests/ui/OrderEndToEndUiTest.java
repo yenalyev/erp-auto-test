@@ -90,6 +90,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setupEndToEndActors() {
+        requireOrderUiContext();
         userFixture = new UserFixture(testContext, apiExecutor);
         inventoryFixture = new InventoryFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
@@ -110,7 +111,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
         StorageResponse requester = storageFixture.getById(UserRole.ADMIN, requesterStorageId);
         orderAdmin = createActor(BusinessRole.ORDER_ADMIN, ORDER_ADMIN, requester);
         isolatedGatherer = createActor(
-                BusinessRole.UNIT_KOMIRNIK, ISOLATED_GATHERER, isolatedGatheringStorage);
+                BusinessRole.BUSINESS_UNIT_OWNER, ISOLATED_GATHERER, isolatedGatheringStorage);
     }
 
     @AfterMethod(alwaysRun = true)
@@ -181,7 +182,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
 
     @Test(priority = 10)
     @TestCaseId(value = "TC-ORD-E2E-001", roles = {
-            BusinessRole.UNIT_KOMIRNIK, BusinessRole.ORDER_ADMIN})
+            BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})
     @Story("Full order from local gathering stock")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Unit Owner створює замовлення через UI; Order Admin бере в роботу, обирає збір і повністю бронює; збір відправляє; замовник приймає.")
@@ -202,7 +203,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
 
     @Test(priority = 20)
     @TestCaseId(value = "TC-ORD-E2E-002", roles = {
-            BusinessRole.UNIT_KOMIRNIK, BusinessRole.ORDER_ADMIN})
+            BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})
     @Story("Partial fulfillment confirmed by order administrator")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Order Admin бронює частину, вручну підтверджує «Готово до доставки»; збір відправляє лише бронь; замовник приймає, повторна видача недоступна.")
@@ -228,7 +229,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
 
     @Test(priority = 30)
     @TestCaseId(value = "TC-ORD-E2E-003", roles = {
-            BusinessRole.UNIT_KOMIRNIK, BusinessRole.ORDER_ADMIN})
+            BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})
     @Story("Order supplied from another location")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Order Admin створює relocation task; комірник джерела відправляє; збір приймає й отримує autobook/READY; замовлення відправляється та приймається.")
@@ -266,7 +267,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
             BusinessRole.ORDER_ADMIN, BusinessRole.BUSINESS_UNIT_OWNER})
     @Story("Production shortfall handoff and fulfillment")
     @Severity(SeverityLevel.BLOCKER)
-    @Description("Order Admin виявляє виробничий дефіцит без права створити ВЗ; глобальний Admin створює та генерує ВЗ; виробник виконує задачу; результат autobook і відправляється замовнику.")
+    @Description("Order Admin виявляє виробничий дефіцит на чужій локації збору; глобальний Admin створює та генерує ВЗ; виробник виконує задачу; результат autobook і відправляється замовнику.")
     public void productionShortfallIsProducedAutoBookedAndDelivered() {
         ensureProductionScenario();
         double quantity = 2.0;
@@ -278,7 +279,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
         OrderListPage adminPage = takeToWorkAndChooseGathering(orderId)
                 .openProductionShortfallDialog();
         assertThat(adminPage.isNewProductionOrderEnabled())
-                .as("Order_Admin-ROLE reads production orders but cannot create them")
+                .as("Order Admin cannot create a production order outside its location-head scope")
                 .isFalse();
 
         switchActor(UserRole.ADMIN, null, requesterStorageId);
@@ -312,22 +313,22 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
 
     @Test(priority = 50)
     @TestCaseId(value = "TC-ORD-E2E-005", roles = {
-            BusinessRole.UNIT_KOMIRNIK, BusinessRole.ORDER_ADMIN})
+            BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})
     @Story("Partial completion after cancelling an unused dependency")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Order Admin створює NEW relocation task, бронює локальну частину, скасовує зайвий task зі звільненням резерву та завершує замовлення частковою видачею.")
+    @Description("За наявності 2 із 5 одиниць на зборі UI дозволяє запитати всі 5; після скасування task локальна частина бронюється і видається.")
     public void cancelledRelocationDependencyReleasesHoldBeforePartialDelivery() {
-        seedStock(resourceId, 2.0, 3.0);
+        seedStock(resourceId, 2.0, 5.0);
         long orderId = createOrderThroughUi(resourceName, 5.0);
         OrderListPage adminPage = takeToWorkAndChooseGathering(orderId);
-        long taskId = adminPage.createRelocationTask(sourceStorage.getName(), resourceName, 3.0);
-        assertThat(readBookedAmount(sourceStorage.getId(), resourceId)).isEqualTo(3.0);
+        long taskId = adminPage.createRelocationTask(sourceStorage.getName(), resourceName, 5.0);
+        assertThat(readBookedAmount(sourceStorage.getId(), resourceId)).isEqualTo(5.0);
 
-        adminPage.bookResource(resourceName, 2.0).cancelRelocationTask(taskId);
+        adminPage.cancelRelocationTask(taskId);
         assertThat(relocationTask(orderId, taskId).getState())
                 .isEqualTo(OrderRelocationTaskState.CANCELLED);
         assertThat(readBookedAmount(sourceStorage.getId(), resourceId)).isZero();
-        adminPage.markReadyToDeliver();
+        adminPage.bookResource(resourceName, 2.0).markReadyToDeliver();
 
         String marker = shipReadyOrderAsGatherer(orderId, resourceName, true, "cancel-task-partial");
         receiveAsRequesterAndAssertDone(orderId, marker);
@@ -335,7 +336,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
 
     @Test(priority = 60)
     @TestCaseId(value = "TC-ORD-E2E-006", roles = {
-            BusinessRole.UNIT_KOMIRNIK, BusinessRole.ORDER_ADMIN})
+            BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})
     @Story("Mixed local booking and relocation complete an order")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Order Admin бронює локальну частину та створює relocation task на решту; після переміщення вся кількість заброньована, видана й прийнята.")
@@ -442,7 +443,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
 
     @Test(priority = 100)
     @TestCaseId(value = "TC-ORD-E2E-010", roles = {
-            BusinessRole.UNIT_KOMIRNIK, BusinessRole.ORDER_ADMIN})
+            BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})
     @Story("Order administrator cancels a fully booked order")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Order Admin бере замовлення в роботу, повністю бронює з точки комплектації та скасовує його; активні броні звільняються.")
@@ -536,7 +537,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
     private void ensureSourceKeeper() {
         if (sourceKeeper == null) {
             sourceKeeper = createActor(
-                    BusinessRole.UNIT_KOMIRNIK, SOURCE_KEEPER, sourceStorage);
+                    BusinessRole.BUSINESS_UNIT_OWNER, SOURCE_KEEPER, sourceStorage);
         }
     }
 
@@ -678,7 +679,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
                         .setAcceptDownloads(true)
                         .setViewportSize(1600, 1100));
         Map<String, String> cookies = actor == null
-                ? cachedSessionCookies(role)
+                ? orderRoleSession(role)
                 : authService.getSessionForUser(actor.username(), actor.password());
         injectSessionCookies(cookies, sessionCookieDomain());
         browserContext.addInitScript(

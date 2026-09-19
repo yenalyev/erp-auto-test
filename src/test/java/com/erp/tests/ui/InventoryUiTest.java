@@ -436,6 +436,96 @@ public class InventoryUiTest extends BaseUITest {
                 "Ресурс має бути відсутній або з нульовою кількістю");
     }
 
+    @Test(priority = 105)
+    @TestCaseId("TC-WMS-003-019")
+    @Story("Quick resource search on inventory form")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Admin на формі проведення інвентаризації шукає ресурси за частиною назви.
+            Очікується: пошук нечутливий до регістру, показує лише відповідні рядки,
+            для відсутнього збігу відображається порожній стан, а очищення повертає всі рядки.
+            Зміна кількості у відфільтрованому рядку застосовується саме до вибраного ресурсу.
+            """)
+    public void quickSearchFiltersInventoryResourcesUi() {
+        ResourceResponse alpha = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                storageId, UserRole.ADMIN, "InvQuickAlpha_");
+        ResourceResponse beta = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                storageId, UserRole.ADMIN, "InvQuickBeta_");
+        trackStorageResourceForCleanup(alpha.getId());
+        trackStorageResourceForCleanup(beta.getId());
+
+        relocationFixture.ensureStock(storageId, alpha.getId(), 3.0);
+        relocationFixture.ensureStock(storageId, beta.getId(), 7.0);
+        StorageItemResponse alphaItem = inventoryFixture.requireItemForResourceWithRetry(
+                storageId, alpha.getId(), UserRole.ADMIN, 15_000);
+        StorageItemResponse betaItem = inventoryFixture.requireItemForResourceWithRetry(
+                storageId, beta.getId(), UserRole.ADMIN, 15_000);
+        String alphaName = alphaItem.getResource().getName().trim().replaceAll("\\s+", " ");
+        String betaName = betaItem.getResource().getName().trim().replaceAll("\\s+", " ");
+        double alphaBefore = alphaItem.getAmount();
+        double betaTarget = betaItem.getAmount() + 1.0;
+        String betaTargetInput = String.valueOf(betaTarget);
+        Allure.parameter("alphaResource", alphaName);
+        Allure.parameter("betaResource", betaName);
+        Allure.parameter("search", "INVQUICKBETA");
+
+        inventoryFixture.openSession(storageId);
+        InventoryEditPage edit = Allure.step("Відкрити форму проведення інвентаризації", () -> {
+            InventoryEditPage pageObj = new InventoryEditPage(page).open(storageId);
+            assertThat(pageObj.isResourceSearchVisible())
+                    .as("Поле швидкого пошуку «Назва…» має бути видимим")
+                    .isTrue();
+            pageObj.attachScreenshot("TC-WMS-003-019 — search field visible");
+            return pageObj;
+        });
+
+        Allure.step("Відфільтрувати рядки частиною назви без урахування регістру", () -> {
+            edit.searchResources("INVQUICKBETA");
+            assertThat(edit.isResourceListed(betaName))
+                    .as("Пошук має показати ресурс Beta")
+                    .isTrue();
+            assertThat(edit.isResourceListed(alphaName))
+                    .as("Пошук має приховати ресурс Alpha")
+                    .isFalse();
+            edit.attachScreenshot("TC-WMS-003-019 — matching resource filtered");
+        });
+
+        Allure.step("Змінити кількість саме у відфільтрованому рядку", () -> {
+            edit.updateAmountForResource(betaName, betaTargetInput);
+            assertThat(Double.parseDouble(edit.getResourceAmountInputValue(betaName)))
+                    .as("Нове значення має лишитися у рядку Beta")
+                    .isCloseTo(betaTarget, within(0.0001));
+        });
+
+        Allure.step("Показати порожній стан для запиту без збігів", () -> {
+            edit.searchResources("missing-inventory-resource-" + System.currentTimeMillis());
+            assertThat(edit.isNoSearchResultsVisible())
+                    .as("Для відсутнього ресурсу має відображатися «Нічого не знайдено»")
+                    .isTrue();
+            edit.attachScreenshot("TC-WMS-003-019 — no search results");
+        });
+
+        Allure.step("Очистити пошук і повернути повний список без втрати змін", () -> {
+            edit.clearResourceSearch();
+            assertThat(edit.isResourceListed(alphaName)).isTrue();
+            assertThat(edit.isResourceListed(betaName)).isTrue();
+            assertThat(Double.parseDouble(edit.getResourceAmountInputValue(betaName)))
+                    .as("Зміна Beta має зберегтися після очищення пошуку")
+                    .isCloseTo(betaTarget, within(0.0001));
+            edit.attachScreenshot("TC-WMS-003-019 — search cleared");
+        });
+
+        Allure.step("Зберегти та перевірити, що змінено правильний ресурс", () -> {
+            edit.saveChanges();
+            assertThat(inventoryFixture.getResourceStock(storageId, beta.getId(), UserRole.ADMIN))
+                    .as("Після пошуку має оновитися ресурс Beta")
+                    .isCloseTo(betaTarget, within(0.0001));
+            assertThat(inventoryFixture.getResourceStock(storageId, alpha.getId(), UserRole.ADMIN))
+                    .as("Ресурс Alpha не має змінитися")
+                    .isCloseTo(alphaBefore, within(0.0001));
+        });
+    }
+
     // --- REQ-WMS-007 stock ---
 
     @Test(priority = 110)

@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OneTimeUserCredentialsResponse {
+    private String userId;
     private String username;
     private String password;
 }

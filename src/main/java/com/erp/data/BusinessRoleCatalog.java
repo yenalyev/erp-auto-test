@@ -9,15 +9,16 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
-/** Loads the business role to Keycloak realm-role mapping used for test actors. */
+/** Loads additional DB-backed access roles and permissions for business personas. */
 public final class BusinessRoleCatalog {
 
     static final String RESOURCE_NAME = "business-roles.yml";
+    public static final String DEFAULT_LOCATION_ROLE_NAME = "Керівник локації";
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
     private static volatile Map<BusinessRole, Definition> cachedDefinitions;
 
@@ -70,18 +71,11 @@ public final class BusinessRoleCatalog {
             if (definition == null) {
                 throw new IllegalStateException("Missing mapping for business role " + role + " in " + RESOURCE_NAME);
             }
-            List<String> keycloakRoles = definition.keycloakRoles();
-            if (keycloakRoles == null || keycloakRoles.isEmpty()) {
-                throw new IllegalStateException("Business role " + role + " has no Keycloak roles");
-            }
-            if (keycloakRoles.stream().anyMatch(name -> name == null || name.isBlank())) {
-                throw new IllegalStateException("Business role " + role + " contains a blank Keycloak role");
-            }
-            Set<String> unique = new HashSet<>(keycloakRoles);
-            if (unique.size() != keycloakRoles.size()) {
-                throw new IllegalStateException("Business role " + role + " contains duplicate Keycloak roles");
-            }
-            validated.put(role, new Definition(List.copyOf(keycloakRoles)));
+            List<String> accessRoles = definition.accessRoles() == null ? List.of() : definition.accessRoles();
+            List<String> permissionKeys = definition.permissionKeys() == null ? List.of() : definition.permissionKeys();
+            validateValues(role, "access role", accessRoles);
+            validateValues(role, "permission key", permissionKeys);
+            validated.put(role, new Definition(List.copyOf(accessRoles), List.copyOf(permissionKeys)));
         }
         return Collections.unmodifiableMap(validated);
     }
@@ -89,6 +83,29 @@ public final class BusinessRoleCatalog {
     private record CatalogFile(Map<BusinessRole, Definition> businessRoles) {
     }
 
-    public record Definition(List<String> keycloakRoles) {
+    /** Resolves the complete role set for a regular non-admin actor. */
+    public static List<String> effectiveAccessRoles(BusinessRole businessRole) {
+        return withDefaultLocationRole(definition(businessRole).accessRoles());
+    }
+
+    public static List<String> withDefaultLocationRole(List<String> additionalRoles) {
+        Objects.requireNonNull(additionalRoles, "additionalRoles");
+        LinkedHashSet<String> roles = new LinkedHashSet<>();
+        roles.add(DEFAULT_LOCATION_ROLE_NAME);
+        roles.addAll(additionalRoles);
+        return List.copyOf(roles);
+    }
+
+    private static void validateValues(BusinessRole role, String label, List<String> values) {
+        if (values.stream().anyMatch(value -> value == null || value.isBlank())) {
+            throw new IllegalStateException("Business role " + role + " contains a blank " + label);
+        }
+        if (new HashSet<>(values).size() != values.size()) {
+            throw new IllegalStateException("Business role " + role + " contains duplicate " + label + "s");
+        }
+    }
+
+    /** Additional grants applied on top of the fixture's default location-head role. */
+    public record Definition(List<String> accessRoles, List<String> permissionKeys) {
     }
 }

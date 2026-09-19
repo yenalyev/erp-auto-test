@@ -145,7 +145,7 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String logistPassword();
 
-    /** Crew-Manager test user (dev: argument, Keycloak Crew-Manager-ROLE). */
+    /** Legacy crew-manager test user (dev: argument). */
     @Key("user.unit.username")
     @DefaultValue("argument")
     String crewManagerUsername();
@@ -154,7 +154,7 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String crewManagerPassword();
 
-    /** Battalion crew stocks viewer (Crew-Read-ROLE, {@code unit.storage.id}). */
+    /** Battalion head with «Екіпажі: перегляд» ({@code unit.storage.id}). */
     @Key("user.crew-read.username")
     @DefaultValue("crewread")
     String crewReadUsername();
@@ -163,7 +163,7 @@ public interface TestConfig extends Config {
     @DefaultValue("")
     String crewReadPassword();
 
-    /** Battalion crew stocks editor (Crew-Write-ROLE, {@code unit.storage.id}). */
+    /** Battalion head with «Екіпажі: облік» ({@code unit.storage.id}). */
     @Key("user.crew-write.username")
     @DefaultValue("crewwrite")
     String crewWriteUsername();
@@ -292,7 +292,7 @@ public interface TestConfig extends Config {
     boolean tcmEnabled();
 
     @Key("tcm.base.url")
-    @DefaultValue("http://localhost:8080")
+    @DefaultValue("https://tcm.lab")
     String tcmBaseUrl();
 
     @Key("tcm.api.token")

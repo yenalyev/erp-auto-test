@@ -155,7 +155,7 @@ public class ProjectProductionFixture extends BaseFixture {
         }
         throw new IllegalStateException(
                 "No project category to reuse and create failed (status=" + response.statusCode()
-                        + "). Seed an active category or grant Project-Production-ROLE create permission.");
+                        + "). Seed an active category or grant «Проєктне виробництво: редактор».");
     }
 
     private ProjectProductResponse createProductOrFail(Long categoryId) {
@@ -167,7 +167,7 @@ public class ProjectProductionFixture extends BaseFixture {
         throw new IllegalStateException(
                 "No project product to reuse for category " + categoryId
                         + " and create failed (status=" + response.statusCode()
-                        + "). Seed a product or grant Project-Production-ROLE create permission.");
+                        + "). Seed a product or grant «Проєктне виробництво: редактор».");
     }
 
     private List<ProjectCategoryResponse> listActiveCategories() {

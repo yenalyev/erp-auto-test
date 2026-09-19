@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Crew-Read-ROLE / Crew-Write-ROLE: перегляд залишків екіпажів свого батальйону
- * ({@code perm_crews-stocks::view} + CREWS region member = {@code unit.storage.id}).
+ * «Керівник локації» + «Екіпажі: перегляд/облік»: залишки екіпажів свого батальйону
+ * з перевіркою CREWS region membership.
  */
 @Epic("Master Data")
 @Feature("Storages")

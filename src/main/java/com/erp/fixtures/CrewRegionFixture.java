@@ -87,7 +87,7 @@ public class CrewRegionFixture extends BaseFixture {
 
     /**
      * Як {@link #prepareSingleCrewScenario}, але учасники області — явний список storage id
-     * (напр. {@code unit.storage.id} для Crew-Read-ROLE).
+     * (напр. LOCATION scope на батальйон для ролі «Екіпажі: перегляд»).
      */
     @Step("FIXTURE: область CREWS з одним екіпажем, members={memberStorageIds}")
     public CrewRegionScenario prepareSingleCrewScenarioForMembers(String namePrefix, Long... memberStorageIds) {

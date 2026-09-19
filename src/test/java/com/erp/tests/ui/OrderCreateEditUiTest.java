@@ -3,6 +3,7 @@ package com.erp.tests.ui;
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
+import com.erp.fixtures.StorageFixture;
 import com.erp.models.response.OrderResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.pages.OrderListPage;
@@ -116,17 +117,23 @@ public class OrderCreateEditUiTest extends OrderUiTestBase {
             Селектор зберігає явно обрану локацію доставки у формі.
             """)
     public void keepsExplicitlySelectedDeliveryStorage() {
-        StorageResponse destination = storageFixture.getById(MANAGER, gatheringStorageId);
-        assertThat(destination.getType())
-                .as("Локація комплектації для сценарію має бути складом")
-                .isEqualTo(UnitType.STORAGE.name());
-        loginAsAdmin();
-        OrderListPage ordersPage = new OrderListPage(page).open().clickCreateOrder();
-        ordersPage.selectDeliveryStorageByName(destination.getName());
+        StorageFixture destinations = new StorageFixture(testContext, apiExecutor);
+        try {
+            // The form is scoped to the current requester UNIT; a sibling under the
+            // availability root is not a valid delivery option for this workspace.
+            StorageResponse destination = destinations.createChildStorage(
+                    requesterStorageId, "ord-delivery-storage-");
+            assertThat(destination.getType()).isEqualTo(UnitType.STORAGE.name());
+            loginAsAdmin();
+            OrderListPage ordersPage = new OrderListPage(page).open().clickCreateOrder();
+            ordersPage.selectDeliveryStorageByName(destination.getName());
 
-        assertThat(ordersPage.getSelectedDeliveryStorageLabel())
-                .as("У формі має залишитися явно обрана локація доставки")
-                .contains(destination.getName());
+            assertThat(ordersPage.getSelectedDeliveryStorageLabel())
+                    .as("У формі має залишитися явно обрана локація доставки")
+                    .contains(destination.getName());
+        } finally {
+            destinations.deactivateTrackedStorages(MANAGER);
+        }
     }
 
     @Test(priority = 4)

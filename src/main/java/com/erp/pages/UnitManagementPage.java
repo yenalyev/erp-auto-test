@@ -30,14 +30,16 @@ import java.util.regex.Pattern;
 public class UnitManagementPage extends BasePage {
 
     private static final String PATH = "/inventory";
-    private static final String PAGE_TITLE_TEXT = "Управління запасами";
+    private static final Pattern PAGE_TITLE_PATTERN =
+            Pattern.compile("^(Управління запасами|Ресурси та залишки)");
     private static final String OPEN_INVENTORY_BUTTON_TEXT = "Відкрити інвентаризацію";
     private static final String CLOSE_INVENTORY_BUTTON_TEXT = "Закрити інвентаризацію";
     private static final String CONDUCT_INVENTORY_BUTTON_TEXT = "Провести інвентаризацію";
     private static final String EXPORT_TO_EXCEL_BUTTON_TEXT = "Експорт в Excel";
     private static final String COPY_BUTTON_TEXT = "Скопіювати";
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано";
-    private static final String SEARCH_PLACEHOLDER = "Пошук...";
+    private static final Pattern SEARCH_PLACEHOLDER_PATTERN =
+            Pattern.compile("^(Пошук\\.\\.\\.|Пошук по назві)$");
     /** Quantity column of the stock table — «Кількість» only labels the per-batch detail table. */
     private static final String AMOUNT_HEADER = "Вільна к-сть";
     private static final String LOCATION_HEADER = "Локація";
@@ -111,7 +113,7 @@ public class UnitManagementPage extends BasePage {
 
     public UnitManagementPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        page.getByText(PAGE_TITLE_TEXT)
+        page.getByText(PAGE_TITLE_PATTERN)
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
@@ -120,7 +122,7 @@ public class UnitManagementPage extends BasePage {
     public UnitManagementPage refreshInventoryTable() {
         waitForInventoryTableDuring(() -> page.reload());
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        page.getByText(PAGE_TITLE_TEXT)
+        page.getByText(PAGE_TITLE_PATTERN)
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
@@ -372,7 +374,7 @@ public class UnitManagementPage extends BasePage {
     }
 
     public UnitManagementPage search(String query) {
-        Locator searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER).first();
+        Locator searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER_PATTERN).first();
         waitForInventoryTableDuring(() -> searchInput.fill(query));
         return this;
     }
@@ -512,8 +514,91 @@ public class UnitManagementPage extends BasePage {
         Locator row = resourceRow(resourceName).first();
         row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         row.locator("button.text-blue-600, button[class*='text-blue-600']").first().click();
-        page.getByText("Партії ресурсу", new Page.GetByTextOptions().setExact(false))
+        batchDialogTitle()
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public UnitManagementPage waitForBatchNumber(String batchNumber) {
+        batchRow(batchNumber).waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public List<String> getBatchTableHeaders() {
+        return batchTable().locator("thead th").allInnerTexts().stream()
+                .map(UnitManagementPage::normalizedText)
+                .toList();
+    }
+
+    public boolean isTechMapHeaderImmediatelyAfterBatchNumber() {
+        List<String> headers = getBatchTableHeaders();
+        int batchNumberIndex = headers.indexOf("Номер партії");
+        return batchNumberIndex >= 0
+                && batchNumberIndex + 1 < headers.size()
+                && "Техкарта".equals(headers.get(batchNumberIndex + 1));
+    }
+
+    public String getBatchTechMapText(String batchNumber) {
+        return normalizedText(batchCell(batchNumber, "Техкарта").innerText());
+    }
+
+    /** Long names must use normal white-space so the cell can wrap instead of widening the dialog. */
+    public boolean isBatchTechMapNameWrappable(String batchNumber) {
+        Object whiteSpace = batchCell(batchNumber, "Техкарта")
+                .locator("div")
+                .evaluate("element => getComputedStyle(element).whiteSpace");
+        return "normal".equals(String.valueOf(whiteSpace));
+    }
+
+    public List<String> getVisibleBatchNumbers() {
+        int batchNumberIndex = batchColumnIndex("Номер партії");
+        Locator rows = batchDataRows();
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < rows.count(); i++) {
+            result.add(normalizedText(rows.nth(i).locator("td").nth(batchNumberIndex).innerText()));
+        }
+        return result;
+    }
+
+    public List<String> getTechMapChipTexts() {
+        return batchDialog().locator("button[data-slot='badge']").allInnerTexts().stream()
+                .map(UnitManagementPage::normalizedText)
+                .toList();
+    }
+
+    public boolean isTechMapChipVisible(String label) {
+        Locator chip = techMapChip(label);
+        return chip.count() > 0 && chip.first().isVisible();
+    }
+
+    public UnitManagementPage clickTechMapChip(String label) {
+        techMapChip(label).click();
+        return this;
+    }
+
+    public UnitManagementPage clickTechMapChipByName(String techMapName) {
+        techMapChipByName(techMapName).click();
+        return this;
+    }
+
+    public boolean isTechMapChipSelected(String label) {
+        Locator chip = techMapChip(label);
+        if (chip.count() == 0) {
+            return false;
+        }
+        String classes = chip.first().getAttribute("class");
+        return classes != null && classes.contains("ring-green-700");
+    }
+
+    public UnitManagementPage closeBatchDialog() {
+        batchDialog().getByRole(AriaRole.BUTTON,
+                        new Locator.GetByRoleOptions().setName("Закрити").setExact(true))
+                .click();
+        batchDialog().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.HIDDEN)
+                .setTimeout(uiTimeoutMs()));
         return this;
     }
 
@@ -579,8 +664,57 @@ public class UnitManagementPage extends BasePage {
     }
 
     public boolean isBatchDialogVisible() {
-        return page.getByText("Партії ресурсу", new Page.GetByTextOptions().setExact(false)).isVisible()
-                || page.getByText("Номер партії").isVisible();
+        Locator dialog = batchDialog();
+        return dialog.count() > 0 && dialog.first().isVisible();
+    }
+
+    private Locator batchDialog() {
+        return page.getByRole(AriaRole.DIALOG)
+                .filter(new Locator.FilterOptions().setHasText("Партії ресурсу"));
+    }
+
+    private Locator batchDialogTitle() {
+        return page.getByText("Партії ресурсу", new Page.GetByTextOptions().setExact(false));
+    }
+
+    private Locator batchTable() {
+        return batchDialog().locator("table");
+    }
+
+    private Locator batchDataRows() {
+        return batchTable().locator("tbody tr:has(td:nth-child(5))");
+    }
+
+    private Locator batchRow(String batchNumber) {
+        return batchDataRows().filter(new Locator.FilterOptions().setHasText(batchNumber)).first();
+    }
+
+    private Locator batchCell(String batchNumber, String header) {
+        return batchRow(batchNumber).locator("td").nth(batchColumnIndex(header));
+    }
+
+    private int batchColumnIndex(String header) {
+        List<String> headers = getBatchTableHeaders();
+        int index = headers.indexOf(header);
+        if (index < 0) {
+            throw new IllegalStateException("Column «" + header + "» not found in batch dialog: " + headers);
+        }
+        return index;
+    }
+
+    private Locator techMapChip(String label) {
+        return batchDialog().getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName(label).setExact(true));
+    }
+
+    private Locator techMapChipByName(String techMapName) {
+        return batchDialog().locator("button[data-slot='badge']")
+                .filter(new Locator.FilterOptions().setHasText(techMapName))
+                .first();
+    }
+
+    private static String normalizedText(String text) {
+        return text == null ? "" : text.trim().replaceAll("\\s+", " ");
     }
 
     public boolean hasStockRows() {

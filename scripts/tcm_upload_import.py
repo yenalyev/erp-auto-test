@@ -2,13 +2,14 @@
 """Upload and confirm TCM test-case import XLSX via web UI."""
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
 
 import requests
 
-BASE = "http://localhost:8100"
+BASE = os.getenv("TCM_BASE_URL", "http://localhost:18100").rstrip("/")
 PROJECT_ID = 1
 XLSX = Path(__file__).resolve().parent.parent / "docs" / "tcm-import-gap-20260702.xlsx"
 

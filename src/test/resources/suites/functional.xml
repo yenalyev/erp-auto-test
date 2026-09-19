@@ -11,6 +11,7 @@
 
     <test name="Functional Tests">
         <classes>
+            <class name="com.erp.tests.functional.access.AccessManagementApiTest"/>
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
             <class name="com.erp.tests.functional.resource.ResourceImageApiTest"/>

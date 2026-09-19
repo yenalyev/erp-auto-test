@@ -1,0 +1,940 @@
+{
+  "completedAt": "2026-09-18",
+  "projectId": 1,
+  "result": "SUCCESS",
+  "actions": {
+    "createdInDev": [
+      "TC-ORD-ADMIN-006",
+      "TC-ORD-E2E-006",
+      "TC-ORD-E2E-007",
+      "TC-ORD-E2E-008",
+      "TC-ORD-E2E-009",
+      "TC-ORD-E2E-010",
+      "TC-ORD-E2E-011",
+      "TC-RVW-API-018",
+      "TC-RVW-BOM-035",
+      "TC-UI-RVW-003"
+    ],
+    "createdInProd": [
+      "TC-GP-UI-INSIGHTS-005",
+      "TC-GP-UI-INSIGHTS-003",
+      "TC-GP-UI-INSIGHTS-002",
+      "TC-GP-UI-INSIGHTS-001",
+      "TC-GP-UI-INSIGHTS-004",
+      "TC-ORD-029",
+      "TC-ORD-028",
+      "TC-ORD-UI-008",
+      "TC-ORD-UI-009",
+      "TC-PLAN-ANL-UI-002",
+      "TC-PLAN-ANL-002",
+      "TC-PLAN-ANL-003",
+      "TC-PLAN-ANL-001",
+      "TC-PLAN-ANL-UI-001",
+      "TC-REL-DATE-004",
+      "TC-REL-DATE-013",
+      "TC-REL-DATE-005",
+      "TC-REL-DATE-018",
+      "TC-REL-DATE-001",
+      "TC-REL-DATE-008",
+      "TC-REL-DATE-007",
+      "TC-REL-DATE-002",
+      "TC-REL-DATE-011",
+      "TC-REL-DATE-012",
+      "TC-REL-DATE-010",
+      "TC-REL-DATE-003",
+      "TC-REL-DATE-020",
+      "TC-REL-DATE-006",
+      "TC-REL-DATE-009",
+      "TC-REL-DATE-019",
+      "TC-REL-DATE-022",
+      "TC-REL-DATE-021",
+      "TC-REL-DATE-023",
+      "TC-WMS-011-003",
+      "TC-WMS-011-004",
+      "TC-WMS-011-001",
+      "TC-WMS-011-002",
+      "TC-WMS-011-005"
+    ],
+    "updatedInDev": [
+      {
+        "testId": "TC-ORD-025",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "expectedResult",
+          "tags",
+          "steps"
+        ],
+        "devFeature": "REQ-ORD",
+        "devAc": "AC-02",
+        "prodFeature": "REQ-ORD",
+        "prodAc": "AC-02"
+      },
+      {
+        "testId": "TC-ORD-024",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "expectedResult",
+          "tags",
+          "steps"
+        ],
+        "devFeature": "REQ-ORD",
+        "devAc": "AC-02",
+        "prodFeature": "REQ-ORD",
+        "prodAc": "AC-02"
+      },
+      {
+        "testId": "TC-ORD-023",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "expectedResult",
+          "tags",
+          "steps"
+        ],
+        "devFeature": "REQ-ORD",
+        "devAc": "AC-02",
+        "prodFeature": "REQ-ORD",
+        "prodAc": "AC-02"
+      },
+      {
+        "testId": "TC-ORD-E2E-004",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "description",
+          "preconditions",
+          "expectedResult",
+          "tags"
+        ],
+        "devFeature": "REQ-ORD",
+        "devAc": "AC-13",
+        "prodFeature": "REQ-ORD",
+        "prodAc": "AC-13"
+      },
+      {
+        "testId": "TC-ORD-E2E-003",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "description",
+          "preconditions",
+          "expectedResult",
+          "tags",
+          "steps"
+        ],
+        "devFeature": "REQ-ORD",
+        "devAc": "AC-13",
+        "prodFeature": "REQ-ORD",
+        "prodAc": "AC-13"
+      },
+      {
+        "testId": "TC-ORD-E2E-002",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "description",
+          "preconditions",
+          "expectedResult",
+          "tags"
+        ],
+        "devFeature": "REQ-ORD",
+        "devAc": "AC-13",
+        "prodFeature": "REQ-ORD",
+        "prodAc": "AC-13"
+      },
+      {
+        "testId": "TC-ORD-E2E-005",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "description",
+          "preconditions",
+          "expectedResult",
+          "tags"
+        ],
+        "devFeature": "REQ-ORD",
+        "devAc": "AC-13",
+        "prodFeature": "REQ-ORD",
+        "prodAc": "AC-13"
+      },
+      {
+        "testId": "TC-ORD-E2E-001",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "description",
+          "preconditions",
+          "expectedResult",
+          "tags"
+        ],
+        "devFeature": "REQ-ORD",
+        "devAc": "AC-13",
+        "prodFeature": "REQ-ORD",
+        "prodAc": "AC-13"
+      },
+      {
+        "testId": "TC-RVW-001",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-03",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-08"
+      },
+      {
+        "testId": "TC-RVW-ALT-002",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-05",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-09"
+      },
+      {
+        "testId": "TC-RVW-ALT-001",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-05",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-09"
+      },
+      {
+        "testId": "TC-RVW-API-001",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RES-003",
+        "devAc": "AC-01",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-07"
+      },
+      {
+        "testId": "TC-RVW-API-002",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-01",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-07"
+      },
+      {
+        "testId": "TC-RVW-API-003",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-02",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-07"
+      },
+      {
+        "testId": "TC-RVW-API-010",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-06",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-01"
+      },
+      {
+        "testId": "TC-RVW-API-012",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-06",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-03"
+      },
+      {
+        "testId": "TC-RVW-API-011",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-06",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-02"
+      },
+      {
+        "testId": "TC-RVW-API-013",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-06",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-04"
+      },
+      {
+        "testId": "TC-RVW-API-014",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-06",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-05"
+      },
+      {
+        "testId": "TC-RVW-API-015",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-06",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-09"
+      },
+      {
+        "testId": "TC-RVW-API-016",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-06",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-10"
+      },
+      {
+        "testId": "TC-RVW-API-017",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-06",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-10"
+      },
+      {
+        "testId": "TC-RVW-BOM-011",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-05"
+      },
+      {
+        "testId": "TC-RVW-BOM-022",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-08"
+      },
+      {
+        "testId": "TC-RVW-BOM-004",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-04"
+      },
+      {
+        "testId": "TC-RVW-BOM-030",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-10"
+      },
+      {
+        "testId": "TC-RVW-BOM-020",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-06"
+      },
+      {
+        "testId": "TC-RVW-BOM-031",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-11"
+      },
+      {
+        "testId": "TC-RVW-BOM-034",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "status",
+          "expectedResult",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-14"
+      },
+      {
+        "testId": "TC-RVW-BOM-002",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-02"
+      },
+      {
+        "testId": "TC-RVW-BOM-003",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-03"
+      },
+      {
+        "testId": "TC-RVW-BOM-032",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-12"
+      },
+      {
+        "testId": "TC-RVW-API-020",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-07",
+        "prodFeature": "REQ-RVW-FILTER",
+        "prodAc": "AC-06"
+      },
+      {
+        "testId": "TC-RVW-BOM-001",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-01"
+      },
+      {
+        "testId": "TC-RVW-BOM-021",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-07"
+      },
+      {
+        "testId": "TC-RVW-BOM-012",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-05"
+      },
+      {
+        "testId": "TC-RVW-BOM-033",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-13"
+      },
+      {
+        "testId": "TC-RVW-BOM-010",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "status",
+          "expectedResult",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-RVW-BOM",
+        "prodAc": "AC-02"
+      },
+      {
+        "testId": "TC-TM-CALC-002",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "expectedResult",
+          "steps"
+        ],
+        "devFeature": "REQ-MFG-001-CALC",
+        "devAc": "AC-01",
+        "prodFeature": "REQ-MFG-001-CALC",
+        "prodAc": "AC-01"
+      },
+      {
+        "testId": "TC-TM-CALC-004",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "expectedResult",
+          "steps"
+        ],
+        "devFeature": "REQ-MFG-001-CALC",
+        "devAc": "AC-01",
+        "prodFeature": "REQ-MFG-001-CALC",
+        "prodAc": "AC-01"
+      },
+      {
+        "testId": "TC-TM-CALC-030",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "expectedResult",
+          "steps"
+        ],
+        "devFeature": "REQ-MFG-001-CALC",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-MFG-001-CALC",
+        "prodAc": "AC-04"
+      },
+      {
+        "testId": "TC-TM-CALC-033",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "expectedResult",
+          "steps"
+        ],
+        "devFeature": "REQ-MFG-001-CALC",
+        "devAc": "AC-04",
+        "prodFeature": "REQ-MFG-001-CALC",
+        "prodAc": "AC-04"
+      },
+      {
+        "testId": "TC-UI-RVW-002",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-07",
+        "prodFeature": "REQ-RVW-UI",
+        "prodAc": "AC-02"
+      },
+      {
+        "testId": "TC-UI-RES-AC-001",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "testType",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RES-003",
+        "devAc": "AC-02",
+        "prodFeature": "REQ-RVW-UI",
+        "prodAc": "AC-03"
+      },
+      {
+        "testId": "TC-UI-RVW-001",
+        "canonical": "prod",
+        "target": "dev",
+        "fields": [
+          "title",
+          "description",
+          "preconditions",
+          "testData",
+          "expectedResult",
+          "steps",
+          "featureId",
+          "acId"
+        ],
+        "devFeature": "REQ-RVW",
+        "devAc": "AC-07",
+        "prodFeature": "REQ-RVW-UI",
+        "prodAc": "AC-01"
+      }
+    ],
+    "updatedInProd": [],
+    "createdAcceptanceCriteria": [
+      {
+        "environment": "dev",
+        "featureId": "REQ-RVW-UI",
+        "acId": "AC-04"
+      },
+      {
+        "environment": "prod",
+        "featureId": "REQ-EDIT_REL",
+        "acId": "AC-08"
+      }
+    ]
+  },
+  "verification": {
+    "structural": {
+      "devCount": 310,
+      "prodCount": 310,
+      "missingInProd": [],
+      "missingInDev": [],
+      "metadataOrLinkDifferences": []
+    },
+    "fullContent": {
+      "devChecked": 55,
+      "prodChecked": 38,
+      "devDifferences": [],
+      "prodDifferences": [],
+      "success": true
+    },
+    "acceptanceCriteria": {
+      "rvwUiAc04": true,
+      "editRelAc08": true
+    },
+    "existingExecutionHistory": {
+      "checked": 45,
+      "differences": [],
+      "preserved": true
+    },
+    "perFeatureCounts": {
+      "dev": {
+        "REQ-ORD": 119,
+        "REQ-WMS-001-001": 6,
+        "REQ-PLAN-ANL": 10,
+        "REQ-RVW": 0,
+        "REQ-MFG-001-CALC": 20,
+        "REQ-EDIT_REL": 74,
+        "REQ-WMS-011": 5,
+        "REQ-RVW-BOM": 18,
+        "REQ-EDIT_REL-007": 40,
+        "REQ-RVW-FILTER": 14,
+        "REQ-RVW-UI": 4
+      },
+      "prod": {
+        "REQ-EDIT_REL": 74,
+        "REQ-EDIT_REL-007": 40,
+        "REQ-MFG-001-CALC": 20,
+        "REQ-ORD": 119,
+        "REQ-RVW": 0,
+        "REQ-RVW-BOM": 18,
+        "REQ-RVW-FILTER": 14,
+        "REQ-RVW-UI": 4,
+        "REQ-PLAN-ANL": 10,
+        "REQ-WMS-001-001": 6,
+        "REQ-WMS-011": 5
+      }
+    }
+  },
+  "note": "Execution results/history were intentionally not synchronized between environments."
+}

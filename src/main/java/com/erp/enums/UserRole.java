@@ -14,19 +14,19 @@ public enum UserRole {
      * staging/dev: {@code logist}.
      */
     LOGIST,
-    /** Dev/staging: argument — Crew-Manager-ROLE, UNIT storage ({@code unit.storage.id}). */
+    /** Dev/staging legacy crew-manager account (argument). */
     CREW_MANAGER,
-    /** Battalion warehouse keeper — Crew-Read-ROLE ({@code perm_crews-stocks::view}). */
+    /** Location head with additional «Екіпажі: перегляд» on the battalion. */
     CREW_READ,
-    /** Battalion warehouse keeper — Crew-Write-ROLE (read + crew inventory conduct). */
+    /** Location head with additional «Екіпажі: облік» on the battalion. */
     CREW_WRITE,
     /**
-     * Project production catalog admin ({@code Project-Production-ROLE}) —
+     * Location head with «Проєктне виробництво: редактор» —
      * staging/dev: {@code projectprod}, storage = owner1.
      */
     PROJECT_ADMIN,
     /**
-     * Project production manager ({@code Project-Production-ROLE}) —
+     * Location head with «Проєктне виробництво: редактор» —
      * staging/dev: {@code projectprodab}, storage = owner1.
      */
     PROJECT_MANAGER,
@@ -41,11 +41,11 @@ public enum UserRole {
      */
     ORDER_GATHERER,
     /**
-     * Owner of the requester UNIT ({@code Unit_Owner-ROLE}) + unit-analytics reader.
+     * Head of the requester UNIT («Керівник локації») + unit-analytics reader.
      * staging/dev: {@code user.unit-analyst.*} (e.g. {@code 3bat}).
      */
     UNIT_ANALYST,
-    /** Ephemeral actor bound by order RBAC tests to Keycloak {@code Order_Admin-ROLE}. */
+    /** Ephemeral location head with additional «Замовлення: адміністратор». */
     ORDER_ADMIN,
     /** Ephemeral keeper of a relocation-task source location. */
     ORDER_SOURCE_KEEPER,

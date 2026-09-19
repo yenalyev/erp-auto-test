@@ -20,6 +20,7 @@ public class InventoryEditPage extends BasePage {
 
     private static final String TITLE_PREFIX = "Інвентаризація";
     private static final String RESOURCE_COMBO_PLACEHOLDER = "Оберіть ресурс";
+    private static final String RESOURCE_SEARCH_PLACEHOLDER = "Назва…";
     private static final String SEARCH_PLACEHOLDER = "Пошук...";
     private static final String AUTOCOMPLETE_OPTION_SELECTOR = "[cmdk-item], [role='option']";
 
@@ -76,6 +77,23 @@ public class InventoryEditPage extends BasePage {
 
     public boolean isResourceListed(String resourceName) {
         return resourceRow(resourceName).count() > 0;
+    }
+
+    public boolean isResourceSearchVisible() {
+        return resourceSearchInput().isVisible();
+    }
+
+    public InventoryEditPage searchResources(String query) {
+        resourceSearchInput().fill(query);
+        return this;
+    }
+
+    public InventoryEditPage clearResourceSearch() {
+        return searchResources("");
+    }
+
+    public boolean isNoSearchResultsVisible() {
+        return page.getByText("Нічого не знайдено", new Page.GetByTextOptions().setExact(true)).isVisible();
     }
 
     public String getResourceAmountInputValue(String resourceName) {
@@ -225,6 +243,10 @@ public class InventoryEditPage extends BasePage {
 
     private Locator commentField() {
         return page.locator("#inventory-comment");
+    }
+
+    private Locator resourceSearchInput() {
+        return page.getByPlaceholder(RESOURCE_SEARCH_PLACEHOLDER, new Page.GetByPlaceholderOptions().setExact(true));
     }
 
     private Locator resourceRow(String resourceName) {

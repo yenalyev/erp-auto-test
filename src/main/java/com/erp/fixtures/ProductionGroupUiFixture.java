@@ -57,16 +57,16 @@ public class ProductionGroupUiFixture implements AutoCloseable {
         componentMap = map(raw, component, Set.of(memberB.getId()));
     }
 
-    public UserFixture.BusinessActor managerForGroup(long groupId) {
+    public UserFixture.BusinessActor directorForGroup(long groupId) {
         if (groupId == groupA.getId()) {
             if (ownerA == null) {
-                ownerA = users.createBusinessActor(provider, BusinessRole.PRODUCTION_GROUP_MANAGER, List.of(groupA));
+                ownerA = users.createBusinessActor(provider, BusinessRole.PRODUCTION_GROUP_DIRECTOR, List.of(groupA));
             }
             return ownerA;
         }
         if (groupId == groupB.getId()) {
             if (ownerB == null) {
-                ownerB = users.createBusinessActor(provider, BusinessRole.PRODUCTION_GROUP_MANAGER, List.of(groupB));
+                ownerB = users.createBusinessActor(provider, BusinessRole.PRODUCTION_GROUP_DIRECTOR, List.of(groupB));
             }
             return ownerB;
         }
@@ -96,6 +96,10 @@ public class ProductionGroupUiFixture implements AutoCloseable {
         storages.createChildStorage(candidate.getId(), "PGUI-form-member");
         return candidate;
     }
+    public static String allocationPermission(long ignoredGroupId) {
+        return "production-order.allocate";
+    }
+
     public List<StorageResponse> receiveLocations() {
         StorageResponse group = storages.createStorage(StorageDataFactory.externalStorage(target.getId(), "PGUI-input-group")
                 .type(com.erp.enums.UnitType.UNIT).productionGroup(true).build());

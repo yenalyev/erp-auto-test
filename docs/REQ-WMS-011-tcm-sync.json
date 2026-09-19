@@ -1,0 +1,59 @@
+{
+  "verifiedAtUtc": "2026-09-18 06:53:00 UTC",
+  "target": "local TCM",
+  "baseUrl": "http://localhost:18100",
+  "projectId": 1,
+  "featureId": "REQ-WMS-011",
+  "featureDbId": 116,
+  "parentFeatureId": "REQ-WMS",
+  "acceptanceCriteria": [
+    { "acId": "AC-01", "dbId": 521 },
+    { "acId": "AC-02", "dbId": 522 },
+    { "acId": "AC-03", "dbId": 523 },
+    { "acId": "AC-04", "dbId": 524 },
+    { "acId": "AC-05", "dbId": 525 },
+    { "acId": "AC-06", "dbId": 526 },
+    { "acId": "AC-07", "dbId": 527 },
+    { "acId": "AC-08", "dbId": 528 }
+  ],
+  "testCases": [
+    {
+      "testId": "TC-WMS-011-001",
+      "dbId": 1305,
+      "acId": "AC-02",
+      "apiAutomationIds": ["TC-WMS-011-001"],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-WMS-011-002",
+      "dbId": 1306,
+      "acId": "AC-01",
+      "apiAutomationIds": [],
+      "uiAutomationIds": ["TC-WMS-011-002"]
+    },
+    {
+      "testId": "TC-WMS-011-003",
+      "dbId": 1307,
+      "acId": "AC-05",
+      "apiAutomationIds": [],
+      "uiAutomationIds": ["TC-WMS-011-003"]
+    },
+    {
+      "testId": "TC-WMS-011-004",
+      "dbId": 1308,
+      "acId": "AC-03",
+      "apiAutomationIds": [],
+      "uiAutomationIds": ["TC-WMS-011-004"]
+    },
+    {
+      "testId": "TC-WMS-011-005",
+      "dbId": 1309,
+      "acId": "AC-08",
+      "apiAutomationIds": [],
+      "uiAutomationIds": ["TC-WMS-011-005"]
+    }
+  ],
+  "readBackVerified": true,
+  "executionResultsPublished": false,
+  "requirementsBundle": "docs/REQ-WMS-011-inventory-batch-techmaps.json"
+}

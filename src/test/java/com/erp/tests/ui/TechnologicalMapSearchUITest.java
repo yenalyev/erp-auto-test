@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 /**
  * UI coverage for tech-map list search by product (output) and raw material (input)
@@ -52,10 +53,13 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
     private ResourceResponse ingredientA;
     private ResourceResponse ingredientB;
     private ResourceResponse sharedOther;
+    private ResourceResponse alternativeDefault;
+    private ResourceResponse alternativeOther;
 
     /** Map A: ingredientA → productA. Map B: ingredientB → productB. */
     private TechnologicalMapResponse mapA;
     private TechnologicalMapResponse mapB;
+    private TechnologicalMapResponse mapWithAlternatives;
 
     private final List<TechnologicalMapResponse> createdMaps = new ArrayList<>();
 
@@ -74,9 +78,19 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
         ingredientA = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "ingA_" + suffix);
         ingredientB = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "ingB_" + suffix);
         sharedOther = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "other_" + suffix);
+        alternativeDefault = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "altDefault_" + suffix);
+        alternativeOther = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "altOther_" + suffix);
+        ResourceResponse alternativeProduct = resourceFixture.createUniqueResource(
+                RESOURCE_PREFIX + "altProduct_" + suffix);
 
         mapA = createProductionMap("ui-tm-mapA", ingredientA, sharedOther, productA);
         mapB = createProductionMap("ui-tm-mapB", ingredientB, sharedOther, productB);
+        TechnologicalMapRequest alternativeRequest = TechnologicalMapDataFactory
+                .createProductionMapWithAlternativeGroup(
+                        List.of(sharedOther, alternativeDefault, alternativeOther, alternativeProduct),
+                        storageId);
+        mapWithAlternatives = techMapFixture.createTechMapWithRequest(UserRole.ADMIN, alternativeRequest);
+        createdMaps.add(mapWithAlternatives);
     }
 
     @AfterClass(alwaysRun = true)
@@ -210,6 +224,52 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
         });
 
         log.info("TC-UI-TM-SRCH-002 PASSED — role={}, ingredient={}", role, ingredientTerm);
+    }
+
+    @Test(dataProvider = "adminAndOwnerRoles", priority = 30)
+    @TestCaseId("TC-UI-TM-SRCH-003")
+    @Story("Search tech maps by raw material from alternative groups")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            OWNER_1 / ADMIN відкриває /technological-maps на локації Owner1.
+            У полі «Пошук за сировиною» послідовно вводить унікальні назви default
+            і non-default ресурсів альтернативної групи. В обох випадках таблиця показує
+            техкарту, що містить ресурс в альтернативній групі, і не показує сторонні техкарти.
+            """)
+    public void searchTechMapsByAlternativeGroupIngredient(UserRole role) {
+        String expectedMapName = mapWithAlternatives.getName().trim();
+        String unexpectedMapName = mapA.getName().trim();
+
+        Allure.parameter("role", role.name());
+        Allure.parameter("defaultAlternative", alternativeDefault.getName());
+        Allure.parameter("nonDefaultAlternative", alternativeOther.getName());
+        Allure.parameter("expectedMap", expectedMapName);
+
+        TechnologicalMapsListPage listPage = openListAs(role);
+
+        assertSoftly(softly -> {
+            for (ResourceResponse alternative : List.of(alternativeDefault, alternativeOther)) {
+                String ingredientTerm = alternative.getName().trim();
+                Allure.step("Пошук за сировиною з альтернативної групи: " + ingredientTerm, () -> {
+                    listPage.filterByIngredient(ingredientTerm);
+                    listPage.attachScreenshot(
+                            "TC-UI-TM-SRCH-003 — " + ingredientTerm + " — " + role);
+
+                    softly.assertThat(listPage.isTechMapNameVisible(expectedMapName))
+                            .as("Техкарта з альтернативною сировиною %s має бути видима", ingredientTerm)
+                            .isTrue();
+                    softly.assertThat(listPage.isTechMapNameVisible(unexpectedMapName))
+                            .as("Техкарта без альтернативної сировини %s не повинна бути видима", ingredientTerm)
+                            .isFalse();
+                    softly.assertThat(listPage.getDisplayedTechMapNames())
+                            .as("Результат пошуку за унікальною альтернативною сировиною %s", ingredientTerm)
+                            .containsOnly(expectedMapName);
+                });
+            }
+        });
+
+        log.info("TC-UI-TM-SRCH-003 PASSED — role={}, alternatives=[{}, {}]",
+                role, alternativeDefault.getName(), alternativeOther.getName());
     }
 
     private TechnologicalMapsListPage openListAs(UserRole role) {

@@ -3,7 +3,7 @@
   REQ-FAITA-001 — зіставлення FAITA↔ERP + implicit CRUD (API + UI).
 
   Run:
-    mvn test -Denv=dev -Dsuite=faita-resources -Dtcm.feature.id=109 -Dtcm.base.url=http://localhost:8100
+    mvn test -Denv=dev -Dsuite=faita-resources -Dtcm.feature.id=109 -Dtcm.base.url=http://localhost:18100
 -->
 <suite name="FAITA Resources" parallel="none" verbose="1">
 

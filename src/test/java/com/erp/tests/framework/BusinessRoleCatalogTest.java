@@ -19,34 +19,55 @@ public class BusinessRoleCatalogTest {
 
         assertThat(definitions).containsOnlyKeys(BusinessRole.values());
         assertThat(definitions.values())
-                .allSatisfy(definition -> assertThat(definition.keycloakRoles())
-                        .isNotEmpty()
-                        .doesNotHaveDuplicates()
-                        .allSatisfy(role -> assertThat(role).isNotBlank()));
+                .allSatisfy(definition -> {
+                    assertThat(definition.accessRoles()).doesNotHaveDuplicates();
+                    assertThat(definition.permissionKeys()).doesNotHaveDuplicates();
+                });
+    }
+
+    @Test
+    public void businessUnitOwnerNeedsNoAdditionalGrant() {
+        BusinessRoleCatalog.Definition definition =
+                BusinessRoleCatalog.definition(BusinessRole.BUSINESS_UNIT_OWNER);
+
+        assertThat(definition.accessRoles()).isEmpty();
+        assertThat(definition.permissionKeys()).isEmpty();
     }
 
     @Test
     public void unitKomirnikMappingIsCentralized() {
-        assertThat(BusinessRoleCatalog.definition(BusinessRole.UNIT_KOMIRNIK).keycloakRoles())
-                .containsExactly("Unit_Owner-ROLE", "Crew-Manager-ROLE");
+        assertThat(BusinessRoleCatalog.definition(BusinessRole.UNIT_KOMIRNIK).accessRoles())
+                .containsExactly("Екіпажі: перегляд");
     }
 
     @Test
     public void projectOwnerMappingIncludesBothRoles() {
-        assertThat(BusinessRoleCatalog.definition(BusinessRole.BUSINESS_UNIT_AND_PROJECT_OWNER).keycloakRoles())
-                .containsExactly("Business_Unit_Owner-ROLE", "Project-Production-ROLE");
+        assertThat(BusinessRoleCatalog.definition(BusinessRole.BUSINESS_UNIT_AND_PROJECT_OWNER).accessRoles())
+                .containsExactly("Проєктне виробництво: редактор");
     }
 
     @Test
-    public void productionGroupManagerUsesBusinessOwnerRole() {
-        assertThat(BusinessRoleCatalog.definition(BusinessRole.PRODUCTION_GROUP_MANAGER).keycloakRoles())
-                .containsExactly("Business_Unit_Owner-ROLE");
+    public void regularActorsReceiveLocationHeadBeforeAdditionalRoles() {
+        assertThat(BusinessRoleCatalog.effectiveAccessRoles(BusinessRole.ORDER_ADMIN))
+                .containsExactly("Керівник локації", "Замовлення: адміністратор");
+        assertThat(BusinessRoleCatalog.effectiveAccessRoles(BusinessRole.CREW_STOCK_READER))
+                .containsExactly("Керівник локації", "Екіпажі: перегляд");
+        assertThat(BusinessRoleCatalog.effectiveAccessRoles(BusinessRole.CREW_INVENTORY_OPERATOR))
+                .containsExactly("Керівник локації", "Екіпажі: облік");
+        assertThat(BusinessRoleCatalog.effectiveAccessRoles(BusinessRole.BUSINESS_UNIT_OWNER))
+                .containsExactly("Керівник локації");
+    }
+
+    @Test
+    public void productionGroupDirectorUsesExactRole() {
+        assertThat(BusinessRoleCatalog.definition(BusinessRole.PRODUCTION_GROUP_DIRECTOR).permissionKeys())
+                .containsExactly("production-order.allocate");
     }
 
     @Test
     public void orderAdminMappingUsesExactDevRoleName() {
-        assertThat(BusinessRoleCatalog.definition(BusinessRole.ORDER_ADMIN).keycloakRoles())
-                .containsExactly("Order_Admin-ROLE");
+        assertThat(BusinessRoleCatalog.definition(BusinessRole.ORDER_ADMIN).accessRoles())
+                .containsExactly("Замовлення: адміністратор");
     }
 
     @Test

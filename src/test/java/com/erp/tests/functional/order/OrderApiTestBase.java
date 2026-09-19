@@ -3,20 +3,35 @@ package com.erp.tests.functional.order;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.enums.BookingState;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationProfile;
+import com.erp.enums.OrderState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.OrderFixture;
 import com.erp.fixtures.RelocationFixture;
+import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.TestArtifactCleanup;
+import com.erp.fixtures.TestArtifactRegistry;
+import com.erp.fixtures.UserFixture;
+import com.erp.models.response.BookingResponse;
 import com.erp.models.response.MultiLocationStorageItemResponse;
 import com.erp.models.response.OrderResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageAmountResponse;
+import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UserMeResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -31,13 +46,13 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
     protected static final double DEFAULT_ORDER_QTY = 5.0;
     protected static final double DEFAULT_SEED_STOCK = 200.0;
 
-    /** Unit Owner підрозділу 3bat — create/see own orders ({@code order::create} on UNIT). */
+    /** Fresh location head on the dynamically created requester UNIT. */
     protected static final UserRole REQUESTER = UserRole.UNIT_ANALYST;
-    /** alkatras — other unit; must not see 3bat orders. */
+    /** Existing foreign-unit user for negative visibility checks. */
     protected static final UserRole OUTSIDER = UserRole.OWNER_1;
-    /** Administrator — order::manage lifecycle (take-to-work, book, ship). */
+    /** System admin remains the technical manager for cross-module API scenarios. */
     protected static final UserRole MANAGER = UserRole.ADMIN;
-    /** Комірник gathering — prepare bookings and send READY orders from that location. */
+    /** Fresh location head on the dynamically created gathering STORAGE. */
     protected static final UserRole GATHERER = UserRole.ORDER_GATHERER;
 
     protected OrderFixture orderFixture;
@@ -45,33 +60,162 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
     protected InventoryFixture inventoryFixture;
     protected Long requesterStorageId;
     protected Long gatheringStorageId;
+    private Long primaryGatheringStorageId;
     protected Long resourceId;
     protected String resourceName;
     protected List<ResourceResponse> sharedResources;
+    private LocationProfileFixture locationProfiles;
+    private StorageFixture storageFixture;
+    private UserFixture userFixture;
+    private ResourceFixture resourceFixture;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setupOrderApiTests() {
         orderFixture = new OrderFixture(testContext, apiExecutor);
         relocationFixture = orderFixture.relocation();
         inventoryFixture = new InventoryFixture(testContext, apiExecutor);
+        locationProfiles = new LocationProfileFixture(testContext, apiExecutor);
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        userFixture = new UserFixture(testContext, apiExecutor);
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
         orderFixture.ensureAvailabilityRootConfig(getDbHelper());
-        orderFixture.prepareContext();
 
-        requesterStorageId = testContext.get(ContextKey.ORDER_REQUESTER_STORAGE_ID);
-        gatheringStorageId = ConfigProvider.getOrderGatheringStorageId();
-        resourceId = testContext.get(ContextKey.ORDER_RESOURCE_ID);
-        sharedResources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
-        resourceName = sharedResources.stream()
-                .filter(r -> resourceId.equals(r.getId()))
-                .map(ResourceResponse::getName)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Resource name not found for id " + resourceId));
+        long availabilityRootId = ConfigProvider.getOrderAvailabilityRootStorageId();
+        if (availabilityRootId <= 0) {
+            throw new IllegalStateException("Dynamic order gathering needs order.availability.root.storage.id");
+        }
+        StorageResponse createdRequester = locationProfiles.create(LocationProfile.BATTALION_UNIT, 1)
+                .locations().getFirst();
+        StorageResponse createdGathering = storageFixture.createOrderHubStorage(
+                availabilityRootId, "ord-api-gathering-");
+        StorageResponse requester = storageFixture.getById(UserRole.ADMIN, createdRequester.getId());
+        StorageResponse gathering = storageFixture.getById(UserRole.ADMIN, createdGathering.getId());
+        requesterStorageId = requester.getId();
+        gatheringStorageId = gathering.getId();
+        primaryGatheringStorageId = gatheringStorageId;
+        if (requester.getType() == null) {
+            Response rawStorage = apiExecutor.execute(
+                    ApiEndpointDefinition.STORAGE_GET_BY_ID,
+                    UserRole.ADMIN,
+                    null,
+                    String.valueOf(requesterStorageId));
+            throw new AssertionError("Requester UNIT type is missing from StorageResponse; raw GET body="
+                    + rawStorage.asString());
+        }
+        assertThat(requester.getType()).isEqualTo("UNIT");
+        assertThat(gathering.getOrderHub()).isTrue();
+
+        resourceFixture.fetchSharedUnit(1);
+        resourceFixture.fetchSharedResourceCategory();
+        sharedResources = resourceFixture.getPage(UserRole.ADMIN, true, null).stream()
+                .filter(resource -> resource.getId() != null && resource.getId() > 0
+                        && resource.getName() != null && !resource.getName().isBlank()
+                        && resource.getUnit() != null && resource.getCategory() != null)
+                .limit(requiredResourceCount())
+                .toList();
+        if (sharedResources.size() < requiredResourceCount()) {
+            throw new IllegalStateException("Need " + requiredResourceCount()
+                    + " active catalog resources, found " + sharedResources.size());
+        }
+        for (ResourceResponse resource : sharedResources) {
+            // A zero inventory row makes the resource selectable on the new UNIT.
+            relocationFixture.seedExactStock(requesterStorageId, resource.getId(), 1.0);
+            inventoryFixture.resetResourceStock(requesterStorageId, resource.getId(), 0.0, UserRole.ADMIN);
+        }
+        resourceId = sharedResources.getFirst().getId();
+        resourceName = sharedResources.getFirst().getName();
+        testContext.set(ContextKey.ORDER_REQUESTER_STORAGE_ID, requesterStorageId);
+        testContext.set(ContextKey.ORDER_GATHERING_STORAGE_ID, gatheringStorageId);
+        testContext.set(ContextKey.ORDER_RESOURCE_ID, resourceId);
+        testContext.set(ContextKey.SHARED_AVAILABLE_RESOURCES, sharedResources);
+        testContext.set(ContextKey.SHARED_RESOURCE_ID, resourceId);
+        testContext.set(ContextKey.SHARED_RESOURCE, sharedResources.getFirst());
+
+        UserFixture.BusinessActor requesterActor = userFixture.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(requester));
+        apiExecutor.setSessionForRole(REQUESTER, requesterActor.username(), requesterActor.password());
+        UserFixture.BusinessActor gathererActor = userFixture.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(gathering));
+        apiExecutor.setSessionForRole(GATHERER, gathererActor.username(), gathererActor.password());
+        UserMeResponse requesterMe = userFixture.getMe(REQUESTER);
+        assertThat(requesterMe.hasOrderCreateOn(requesterStorageId)).isTrue();
+        assertThat(resourceFixture.getPageForStorage(REQUESTER, requesterStorageId, resourceName))
+                .extracting(ResourceResponse::getId).contains(resourceId);
+        UserMeResponse gathererMe = userFixture.getMe(GATHERER);
+        assertThat(gathererMe.getGrants().stream()
+                .filter(grant -> grant.getStorage() != null
+                        && gatheringStorageId.equals(grant.getStorage().getId()))
+                .map(grant -> grant.getName()).toList())
+                .containsExactly("Керівник локації");
 
         SchemaRegistry.logSchemaCoverage();
     }
 
+    /** Most order cases need one resource; only multi-line cases request more. */
+    protected int requiredResourceCount() {
+        return 1;
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupDynamicOrderContext() {
+        if (TestArtifactCleanup.shouldSkipApiCleanup()) {
+            log.info("Skipping dynamic order context cleanup because API cleanup is disabled");
+            return;
+        }
+        cleanupCreatedOrders();
+        apiExecutor.evictSessionForRole(REQUESTER);
+        apiExecutor.evictSessionForRole(GATHERER);
+        if (userFixture != null) {
+            userFixture.deactivateTrackedUsers();
+        }
+        if (storageFixture != null && primaryGatheringStorageId != null
+                && !storageFixture.archiveStorage(UserRole.ADMIN, primaryGatheringStorageId)) {
+            log.warn("Could not archive dynamic gathering STORAGE {}", primaryGatheringStorageId);
+        }
+        if (locationProfiles != null) {
+            locationProfiles.cleanup();
+        }
+    }
+
+    private void cleanupCreatedOrders() {
+        if (orderFixture == null || requesterStorageId == null) {
+            return;
+        }
+        for (Long orderId : apiExecutor.getArtifactRegistry().pendingIds(TestArtifactRegistry.Kind.ORDER)) {
+            try {
+                Response response = apiExecutor.execute(
+                        ApiEndpointDefinition.ORDER_GET_BY_ID, MANAGER, null, orderId);
+                if (response.statusCode() != 200) {
+                    continue;
+                }
+                OrderResponse order = response.as(OrderResponse.class);
+                if (order.getStorage() == null
+                        || !requesterStorageId.equals(order.getStorage().getId())
+                        || order.getState() == OrderState.DONE
+                        || order.getState() == OrderState.CANCELLED) {
+                    continue;
+                }
+                for (BookingResponse booking : orderFixture.getBookings(MANAGER, orderId)) {
+                    if (booking.getId() != null && booking.getState() == BookingState.ACTIVE) {
+                        orderFixture.releaseBooking(MANAGER, orderId, booking.getId(), requesterStorageId);
+                    }
+                }
+                orderFixture.cancel(MANAGER, orderId, requesterStorageId);
+            } catch (RuntimeException e) {
+                log.warn("Could not clean dynamic order {}: {}", orderId, e.getMessage());
+            }
+        }
+    }
+
     @BeforeMethod(alwaysRun = true)
     public void ensureGatheringStock() {
+        if (primaryGatheringStorageId == null || requesterStorageId == null || resourceId == null) {
+            throw new SkipException("Dynamic order API context was not created; see @BeforeClass failure");
+        }
+        // Some cases deliberately switch the gathering location. Keep that choice local to the case:
+        // the shared gatherer actor only has a grant on the original STORAGE.
+        gatheringStorageId = primaryGatheringStorageId;
+        testContext.set(ContextKey.ORDER_GATHERING_STORAGE_ID, primaryGatheringStorageId);
         clearSharedGatheringHolds();
         relocationFixture.ensureStock(gatheringStorageId, resourceId, DEFAULT_SEED_STOCK);
     }

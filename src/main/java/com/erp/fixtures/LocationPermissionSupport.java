@@ -2,6 +2,7 @@ package com.erp.fixtures;
 
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
+import com.erp.enums.StorageRelation;
 import com.erp.models.response.StorageResponse;
 import com.erp.utils.config.ConfigProvider;
 import lombok.experimental.UtilityClass;
@@ -45,12 +46,14 @@ public class LocationPermissionSupport {
         return names.stream()
                 .filter(s -> s.getId() != null && !reserved.contains(s.getId()))
                 .filter(s -> s.getType() == null || isWorkspaceType(s.getType()))
+                .filter(LocationPermissionSupport::isInternal)
                 .filter(s -> !isTestArtifactName(s.getName()))
                 .map(StorageResponse::getId)
                 .findFirst()
                 .or(() -> names.stream()
                         .filter(s -> s.getId() != null && !reserved.contains(s.getId()))
                         .filter(s -> s.getType() == null || isWorkspaceType(s.getType()))
+                        .filter(LocationPermissionSupport::isInternal)
                         .map(StorageResponse::getId)
                         .findFirst())
                 .orElseThrow(() -> new IllegalStateException(
@@ -60,7 +63,7 @@ public class LocationPermissionSupport {
 
     private static boolean isWorkspaceVisible(StorageFixture storageFixture, long storageId) {
         StorageResponse storage = storageFixture.getById(UserRole.ADMIN, storageId);
-        return storage != null && isWorkspaceType(storage.getType());
+        return storage != null && isWorkspaceType(storage.getType()) && isInternal(storage);
     }
 
     private static boolean isWorkspaceType(String type) {
@@ -69,6 +72,11 @@ public class LocationPermissionSupport {
 
     private static boolean isTestArtifactName(String name) {
         return name != null && name.toLowerCase(Locale.ROOT).startsWith("ui-");
+    }
+
+    private static boolean isInternal(StorageResponse storage) {
+        return storage.getRelation() != null
+                && StorageRelation.INTERNAL.name().equalsIgnoreCase(storage.getRelation());
     }
 }
 

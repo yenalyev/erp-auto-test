@@ -1,13 +1,12 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
-import com.erp.data.factories.user.UserDataFactory;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.AccessFixture;
 import com.erp.fixtures.LocationPermissionSupport;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.UserFixture;
-import com.erp.models.request.UserRequest;
-import com.erp.models.response.SimpleEntityResponse;
+import com.erp.models.response.AccessGrantResponse;
 import com.erp.models.response.UserMeResponse;
 import com.erp.models.response.UserModelResponse;
 import com.erp.pages.UsersAdminPage;
@@ -38,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UsersLocationPermissionsUiTest extends BaseUITest {
 
     private UserFixture userFixture;
+    private AccessFixture accessFixture;
     private StorageFixture storageFixture;
     private UserFixture.LocationPermissionIds ids;
     private long ro2StorageId;
@@ -47,6 +47,7 @@ public class UsersLocationPermissionsUiTest extends BaseUITest {
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         userFixture = new UserFixture(testContext, apiExecutor);
+        accessFixture = new AccessFixture(testContext, apiExecutor);
         storageFixture = new StorageFixture(testContext, apiExecutor);
         ro2StorageId = LocationPermissionSupport.resolveRo2StorageId(storageFixture);
         ids = userFixture.ensureLocationMixedUser(getPlaywrightSessionProvider(), ro2StorageId);
@@ -78,11 +79,10 @@ public class UsersLocationPermissionsUiTest extends BaseUITest {
         UserModelResponse listed = userFixture.findUserByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("LOCATION_MIXED missing"));
         UserModelResponse user = userFixture.getUser(UserRole.ADMIN, listed.getId());
-        assertThat(user.getPermissions())
-                .as("User must retain RO bindings in admin GET")
-                .contains(
-                        UserFixture.BUSINESS_UNIT_RO_PREFIX + ids.roB1(),
-                        UserFixture.BUSINESS_UNIT_RO_PREFIX + ids.roB2());
+        assertThat(activeGrants(user.getId()))
+                .extracting(grant -> grant.getRole().getName())
+                .contains(UserFixture.BUSINESS_UNIT_OWNER_ROLE_NAME,
+                        UserFixture.BUSINESS_UNIT_VIEWER_ROLE_NAME);
 
         assertLocationBindingsIntact(userFixture.getMe(UserRole.LOCATION_MIXED));
     }
@@ -113,11 +113,9 @@ public class UsersLocationPermissionsUiTest extends BaseUITest {
 
             UserModelResponse user = loadUserByUsername(username);
             assertThat(user.getFirstName()).contains(updatedFirstName);
-            assertThat(user.getPermissions())
-                    .as("_ro bindings must survive UI Save")
-                    .contains(
-                            UserFixture.BUSINESS_UNIT_RO_PREFIX + ids.roB1(),
-                            UserFixture.BUSINESS_UNIT_RO_PREFIX + ids.roB2());
+            assertThat(activeGrants(user.getId()))
+                    .as("Access grants must survive profile Save")
+                    .hasSize(4);
         } finally {
             restoreLocationMixedBindings();
         }
@@ -150,17 +148,21 @@ public class UsersLocationPermissionsUiTest extends BaseUITest {
                     .searchByUsername(username)
                     .clickUsernameLink(username);
 
-            assertThat(usersPage.hasSelectedLocationChips())
-                    .as("Локації must show selected chips before Save (empty selector = wipe risk on Save)")
+            usersPage.openAccessTab();
+            assertThat(usersPage.isAccessGrantVisible(UserFixture.BUSINESS_UNIT_OWNER_ROLE_NAME))
+                    .as("Access tab must show the full-access role")
                     .isTrue();
+
+            usersPage.openProfileTab();
 
             usersPage.updateFirstName(updatedFirstName).saveUser()
                     .searchByUsername(username)
                     .clickUsernameLink(username);
 
             assertThat(usersPage.getFirstNameFieldValue()).contains(updatedFirstName);
-            assertThat(usersPage.hasSelectedLocationChips())
-                    .as("Локації must still show selected chips after Save+reopen")
+            usersPage.openAccessTab();
+            assertThat(usersPage.isAccessGrantVisible(UserFixture.BUSINESS_UNIT_VIEWER_ROLE_NAME))
+                    .as("Access tab must still show view-only grants after profile Save")
                     .isTrue();
             usersPage.attachScreenshot("TC-LOC-ADM-003 — after UI Save");
 
@@ -169,11 +171,7 @@ public class UsersLocationPermissionsUiTest extends BaseUITest {
             assertLocationBindingsIntact(meAfter);
 
             UserModelResponse user = loadUserByUsername(username);
-            assertThat(user.getPermissions())
-                    .as("_ro must remain in admin GET after UI Save")
-                    .contains(
-                            UserFixture.BUSINESS_UNIT_RO_PREFIX + ids.roB1(),
-                            UserFixture.BUSINESS_UNIT_RO_PREFIX + ids.roB2());
+            assertThat(activeGrants(user.getId())).hasSize(4);
         } finally {
             restoreLocationMixedBindings();
         }
@@ -207,23 +205,12 @@ public class UsersLocationPermissionsUiTest extends BaseUITest {
         return userFixture.getUser(UserRole.ADMIN, listed.getId());
     }
 
+    private List<AccessGrantResponse> activeGrants(String userId) {
+        return accessFixture.grants(userId, false);
+    }
+
     private void restoreLocationMixedBindings() {
         try {
-            UserModelResponse user = loadUserByUsername(UserRole.LOCATION_MIXED.getUsername());
-            UserRequest restore = UserDataFactory.fromExisting(user).toBuilder()
-                    .firstName("Location")
-                    .storages(List.of(
-                            SimpleEntityResponse.builder().id(ids.fullA1()).name("full-a1").build(),
-                            SimpleEntityResponse.builder().id(ids.fullA2()).name("full-a2").build()))
-                    .permissions(List.of(
-                            UserFixture.BUSINESS_UNIT_RO_PREFIX + ids.roB1(),
-                            UserFixture.BUSINESS_UNIT_RO_PREFIX + ids.roB2()))
-                    .realmRoles(List.of(
-                            userFixture.fetchRealmRole(UserFixture.BUSINESS_UNIT_OWNER_ROLE_NAME),
-                            userFixture.fetchRealmRole(UserFixture.BUSINESS_UNIT_VIEWER_ROLE_NAME)))
-                    .build();
-            userFixture.updateUser(UserRole.ADMIN, user.getId(), restore);
-            apiExecutor.clearSessionCache();
             ids = userFixture.ensureLocationMixedUser(getPlaywrightSessionProvider(), ro2StorageId);
         } catch (Exception e) {
             log.warn("Failed to restore LOCATION_MIXED bindings: {}", e.getMessage());

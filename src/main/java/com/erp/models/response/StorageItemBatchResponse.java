@@ -19,4 +19,6 @@ public class StorageItemBatchResponse {
     private Instant date;
     private String batchNumber;
     private Boolean isProduced;
+    private SimpleEntityResponse techmap;
+    private SimpleEntityResponse storage;
 }

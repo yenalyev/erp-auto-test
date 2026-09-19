@@ -15,6 +15,7 @@ import com.erp.pages.ResourcesListPage;
 import com.erp.tests.functional.storage.RestrictedUnitResourceSetup;
 import com.erp.tests.functional.storage.StorageRegionsAllureDescriptions;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.data.DataUtils;
 import com.erp.utils.helpers.PollUtils;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +74,61 @@ public class UnitResourceDictionaryUiTest extends BaseUITest {
     @AfterClass(alwaysRun = true)
     public void cleanupClassArtifacts() {
         TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
+    }
+
+    @Test
+    @TestCaseId("TC-UI-RES-PROP-001")
+    @Story("Search by properties")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Словник ресурсів дозволяє додати фільтр за властивістю та вибрати значення,
+            отримане з categoryPropertyOptions. Після вибору показуються лише ресурси
+            з відповідною парою назва властивості / значення.
+            """)
+    public void resourceDictionaryFiltersBySelectedPropertyValue() {
+        String resourcePrefix = RESOURCE_PREFIX + "prop-" + DataUtils.getUniqueSuffix() + "-";
+        ResourceResponse matching = resourceFixture.createUniqueResourceWithSupplier(
+                resourcePrefix + "match-", "Інші");
+        ResourceResponse nonMatching = resourceFixture.createUniqueResourceWithSupplier(
+                resourcePrefix + "other-", "МОУ");
+        String matchingName = normalizeResourceName(matching.getName());
+        String nonMatchingName = normalizeResourceName(nonMatching.getName());
+
+        StorageResponse parent = storageFixture.resolveParentUnit();
+        StorageResponse unit = storageFixture.createStorage(
+                StorageDataFactory.unitStorage(parent.getId(), SCENARIO_PREFIX + "prop-filter-")
+                        .accessMode(StorageAccessMode.FULL_ACCESS)
+                        .build());
+
+        injectRoleSession(UserRole.ADMIN, unit.getId());
+        ResourcesListPage listPage = new ResourcesListPage(page).open(unit.getId());
+
+        Allure.step("UI: обидва тестові ресурси доступні до застосування property-фільтра", () -> {
+            listPage.searchByName(resourcePrefix);
+            PollUtils.waitUntilTrue(
+                    () -> listPage.isResourceVisible(matchingName)
+                            && listPage.isResourceVisible(nonMatchingName),
+                    10_000,
+                    "Both supplier variants visible before property filtering");
+            assertThat(listPage.isPropertyFilterVisible())
+                    .as("Кнопка додавання фільтра за властивістю має бути видимою")
+                    .isTrue();
+        });
+
+        Allure.step("UI: Постачальник=Інші фільтрує словник", () -> {
+            listPage.selectPropertyValue("Постачальник", "Інші");
+            PollUtils.waitUntilTrue(
+                    () -> listPage.isResourceVisible(matchingName),
+                    10_000,
+                    "Resource with matching supplier visible after property filtering");
+            assertThat(listPage.isResourceVisible(matchingName))
+                    .as("Ресурс із Постачальник=Інші має залишитися у таблиці")
+                    .isTrue();
+            assertThat(listPage.isResourceVisible(nonMatchingName))
+                    .as("Ресурс із Постачальник=МОУ має бути відфільтрований")
+                    .isFalse();
+            listPage.attachScreenshot("TC-UI-RES-PROP-001 — property value filter");
+        });
     }
 
     @Test

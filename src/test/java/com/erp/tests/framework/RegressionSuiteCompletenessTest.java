@@ -19,7 +19,7 @@ public class RegressionSuiteCompletenessTest {
     private static final Pattern PUBLIC_CLASS = Pattern.compile(
             "(?m)^public\\s+(?:final\\s+)?class\\s+(\\w+)");
     private static final Pattern TEST_METHOD = Pattern.compile("@Test(?:\\s|\\()");
-    private static final Pattern SUITE_CLASS = Pattern.compile("<class\\s+name=\"([^\"]+)\"\\s*/>");
+    private static final Pattern SUITE_CLASS = Pattern.compile("<class\\s+name=\"([^\"]+)\"\\s*(?:/?>)");
 
     private static final Set<String> DOCUMENTED_EXCEPTIONS = Set.of(
             "com.erp.tests.functional.statistics.FabergeMalutkaPlanProbeTest",

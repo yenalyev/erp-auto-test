@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AccessGrantResponse",
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer" },
+    "userId": { "type": "string" },
+    "username": { "type": "string" },
+    "role": { "type": ["object", "null"] },
+    "permissionKey": { "type": ["string", "null"] },
+    "name": { "type": "string" },
+    "targetScopeKind": { "enum": ["LOCATION", "GLOBAL"] },
+    "scopeKind": { "enum": ["ALL", "LOCATION", "SUBTREE"] },
+    "storage": { "type": ["object", "null"] },
+    "storagePath": { "type": ["string", "null"] },
+    "coveredCount": { "type": ["integer", "null"] },
+    "comment": { "type": ["string", "null"] },
+    "createdBy": { "type": ["string", "null"] },
+    "createdAt": { "type": ["string", "null"] },
+    "revokedAt": { "type": ["string", "null"] },
+    "revokedBy": { "type": ["string", "null"] }
+  },
+  "required": ["id", "userId", "username", "name", "targetScopeKind", "scopeKind"],
+  "additionalProperties": true
+}

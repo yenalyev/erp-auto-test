@@ -16,6 +16,7 @@ import com.erp.models.response.ResourceHistoryGroupResponse;
 import com.erp.models.response.ResourceHistoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
+import com.erp.models.response.StorageItemBatchResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.TestContext;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
@@ -576,5 +577,18 @@ public class InventoryFixture extends BaseFixture {
                 role,
                 String.valueOf(storageId),
                 storageItemId);
+    }
+
+    @Step("API: Партії resourceId={resourceId} на складі {storageId}")
+    public List<StorageItemBatchResponse> getBatchesByResource(long storageId,
+                                                               long resourceId,
+                                                               UserRole role) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_ITEM_BATCHES_GET_BY_RESOURCE,
+                role,
+                Map.of("storageId", storageId, "resourceId", resourceId));
+        validateSuccess(response, "GET storage-item batches by resource");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_ITEM_BATCHES_GET_BY_RESOURCE);
+        return DatabaseIntegrityValidator.extractList(response, StorageItemBatchResponse.class);
     }
 }
