@@ -58,8 +58,8 @@ public class FabergeMalutkaPlanProbeTest extends BaseFunctionalTest {
         List<StorageResponse> candidates = findMalutkaCandidates();
         append("Storages matching '%s': %d%n".formatted(STORAGE_QUERY, candidates.size()));
         for (StorageResponse s : candidates) {
-            append("  id=%d name=%s alias=%s type=%s parent=%s%n".formatted(
-                    s.getId(), s.getName(), s.getAlias(), s.getType(),
+            append("  id=%d name=%s alias=%s kind=%s features=%s parent=%s%n".formatted(
+                    s.getId(), s.getName(), s.getAlias(), s.getKind(), s.getFeatures(),
                     s.getParent() != null ? s.getParent().getName() : "-"));
         }
 

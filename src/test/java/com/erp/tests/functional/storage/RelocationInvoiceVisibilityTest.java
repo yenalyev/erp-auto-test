@@ -3,6 +3,8 @@ package com.erp.tests.functional.storage;
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.RelocationState;
+import com.erp.enums.LocationFeature;
+import com.erp.enums.StorageKind;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
@@ -93,9 +95,13 @@ public class RelocationInvoiceVisibilityTest extends StorageApiTestBase {
         Allure.parameter("senderStorageId", scenario.senderId());
 
         StorageResponse senderStorage = storageFixture.getById(UserRole.ADMIN, scenario.senderId());
-        assertThat(UnitType.valueOf(senderStorage.getType()))
-                .as("відправник має бути type=%s", senderType)
-                .isEqualTo(senderType);
+        assertThat(senderStorage.getKind()).isEqualTo(StorageKind.LOCATION);
+        assertThat(senderStorage.getFeatures()).contains(LocationFeature.RELOCATIONS);
+        if (senderType == UnitType.PRODUCTION) {
+            assertThat(senderStorage.getFeatures()).contains(LocationFeature.PRODUCE);
+        } else {
+            assertThat(senderStorage.getFeatures()).doesNotContain(LocationFeature.PRODUCE);
+        }
 
         Allure.step("API: дочекатись async-файлу накладної (/invoice/{id}/exists)", () ->
                 invoiceFixture.waitUntilExistsAttempts(

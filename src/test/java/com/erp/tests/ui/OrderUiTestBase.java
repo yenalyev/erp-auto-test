@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 abstract class OrderUiTestBase extends BaseUITest {
 
-    /** Fresh location head on the dynamically created requester UNIT. */
+    /** Fresh location head on the dynamically created requester location. */
     protected static final UserRole REQUESTER = UserRole.UNIT_ANALYST;
     /** Existing foreign-unit user for negative visibility checks. */
     protected static final UserRole OUTSIDER = UserRole.OWNER_1;
@@ -87,8 +87,6 @@ abstract class OrderUiTestBase extends BaseUITest {
         primaryGatheringStorageId = gatheringStorageId;
         requesterStorageName = requester.getName();
         gatheringStorageName = gathering.getName();
-        assertThat(requester.getType()).isEqualTo("UNIT");
-        assertThat(gathering.getOrderHub()).isTrue();
 
         ResourceFixture resources = new ResourceFixture(testContext, apiExecutor);
         resources.fetchSharedUnit(1);

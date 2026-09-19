@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.sql.PreparedStatement;
@@ -71,9 +72,9 @@ public class DefectTest extends BaseFunctionalTest {
     @Step("Підготовка середовища для тестів браку")
     public void setupDefectTests() {
         fixture = new DefectFixture(testContext, apiExecutor);
-        fixture.prepareContext();
+        fixture.prepareIsolatedContext(getPlaywrightSessionProvider());
 
-        storageId = ConfigProvider.getOwner1StorageId();
+        storageId = fixture.getStorageId();
         owner2Storage = ConfigProvider.getOwner2StorageId();
         defectResourceId = fixture.defectResourceId();
 
@@ -82,6 +83,13 @@ public class DefectTest extends BaseFunctionalTest {
         input2 = inputs.get(1);
 
         SchemaRegistry.logSchemaCoverage();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupDefectContext() {
+        if (fixture != null) {
+            fixture.cleanupIsolatedContext();
+        }
     }
 
     @BeforeMethod(alwaysRun = true)

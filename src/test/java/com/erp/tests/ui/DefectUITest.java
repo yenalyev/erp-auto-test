@@ -27,6 +27,7 @@ import io.qameta.allure.Story;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.Map;
@@ -70,12 +71,19 @@ public class DefectUITest extends BaseUITest {
         fixture = new DefectFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         storageFixture = new StorageFixture(testContext, apiExecutor);
-        fixture.prepareContext();
+        fixture.prepareIsolatedContext(getPlaywrightSessionProvider());
         fixture.fetchSharedUnit(3);
         fixture.fetchSharedResourceCategory();
 
-        storageId = ConfigProvider.getOwner1StorageId();
+        storageId = fixture.getStorageId();
         owner2StorageId = ConfigProvider.getOwner2StorageId();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupDefectContext() {
+        if (fixture != null) {
+            fixture.cleanupIsolatedContext();
+        }
     }
 
     @BeforeMethod(alwaysRun = true)

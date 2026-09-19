@@ -6,10 +6,11 @@ import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.BusinessRole;
 import com.erp.enums.LocationProfile;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
-import com.erp.enums.UnitType;
+import com.erp.enums.StorageKind;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
@@ -106,8 +107,8 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         tsukWarehouse = createActor(BusinessRole.UNIT_KOMIRNIK,
                 TSUK_WAREHOUSE_SLOT, nestedTsukWarehouse);
         assertThat(tsukWarehouse.insideTsukHierarchy()).isTrue();
-        assertThat(UnitType.valueOf(flyPoint1.getType())).isEqualTo(UnitType.FLY_POINT);
-        assertThat(UnitType.valueOf(flyPoint2.getType())).isEqualTo(UnitType.FLY_POINT);
+        assertThat(flyPoint1.getKind()).isEqualTo(StorageKind.FLY_POINT);
+        assertThat(flyPoint2.getKind()).isEqualTo(StorageKind.FLY_POINT);
         assertThat(hasTsukAncestor(flyPoint1)).isTrue();
         assertThat(hasTsukAncestor(flyPoint2)).isTrue();
         relocations.createSendAndFinishBySender(UserRole.ADMIN,
@@ -122,7 +123,8 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
 
         StorageResponse rootStorage = rootStorages.createStorage(StorageRequest.builder()
                 .name(StorageDataFactory.uniqueName("rel-date-root-"))
-                .type(UnitType.STORAGE)
+                .kind(StorageKind.LOCATION)
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
                 .relation(StorageRelation.INTERNAL)
                 .accessMode(StorageAccessMode.FULL_ACCESS)
                 .build());
@@ -607,9 +609,9 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         Allure.parameter("businessRole", tsukWarehouse.businessRole());
         Allure.parameter("workspaceId", tsukWarehouse.senderId());
         Allure.parameter("insideTsukHierarchy", true);
-        Allure.parameter("senderType", UnitType.FLY_POINT);
+        Allure.parameter("senderKind", StorageKind.FLY_POINT);
         Allure.parameter("senderId", flyPoint1.getId());
-        Allure.parameter("recipientType", UnitType.FLY_POINT);
+        Allure.parameter("recipientKind", StorageKind.FLY_POINT);
         Allure.parameter("recipientId", flyPoint2.getId());
     }
 

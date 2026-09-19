@@ -3,6 +3,7 @@ package com.erp.tests.ui;
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
+import com.erp.enums.StorageKind;
 import com.erp.fixtures.StorageFixture;
 import com.erp.models.response.OrderResponse;
 import com.erp.models.response.StorageResponse;
@@ -94,13 +95,13 @@ public class OrderCreateEditUiTest extends OrderUiTestBase {
 
             for (StorageResponse allowed : List.of(unit, storage, production)) {
                 assertThat(initialOptions)
-                        .as("%s має бути доступна в selector", allowed.getType())
+                        .as("%s має бути доступна в selector", allowed.getKind())
                         .anyMatch(label -> label.contains(allowed.getName()));
             }
 
             for (StorageResponse forbidden : List.of(crew, flyPoint)) {
                 assertThat(initialOptions)
-                        .as("%s не повинна з'являтися у selector", forbidden.getType())
+                        .as("%s не повинна з'являтися у selector", forbidden.getKind())
                         .noneMatch(label -> label.contains(forbidden.getName()));
             }
         } finally {
@@ -123,7 +124,7 @@ public class OrderCreateEditUiTest extends OrderUiTestBase {
             // availability root is not a valid delivery option for this workspace.
             StorageResponse destination = destinations.createChildStorage(
                     requesterStorageId, "ord-delivery-storage-");
-            assertThat(destination.getType()).isEqualTo(UnitType.STORAGE.name());
+            assertThat(destination.getKind()).isEqualTo(StorageKind.LOCATION);
             loginAsAdmin();
             OrderListPage ordersPage = new OrderListPage(page).open().clickCreateOrder();
             ordersPage.selectDeliveryStorageByName(destination.getName());

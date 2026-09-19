@@ -16,6 +16,7 @@ import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
+import com.erp.enums.LocationFeature;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -41,6 +42,11 @@ public class RelocationFixture extends BaseFixture {
 
     @Step("FIXTURE: Підготовка середовища для тестів переміщень")
     public void prepareContext() {
+        prepareContext(ConfigProvider.getOwner1StorageId());
+    }
+
+    /** Uses an isolated owner location while preserving the default setup for other suites. */
+    public void prepareContext(Long owner1Storage) {
         if (testContext.get(ContextKey.RELOCATION_RESOURCE_ID) != null) {
             return;
         }
@@ -48,7 +54,6 @@ public class RelocationFixture extends BaseFixture {
         fetchSharedResourceCategory();
         setupSharedResourceList(3);
 
-        Long owner1Storage = ConfigProvider.getOwner1StorageId();
         Long owner2Storage = ConfigProvider.getOwner2StorageId();
         testContext.set(ContextKey.OWNER_1_STORAGE_ID, owner1Storage);
         testContext.set(ContextKey.OWNER_2_STORAGE_ID, owner2Storage);
@@ -727,7 +732,7 @@ public class RelocationFixture extends BaseFixture {
         Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, role);
         List<StorageResponse> storages = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
         return storages.stream()
-                .filter(s -> "UNIT".equalsIgnoreCase(s.getType()))
+                .filter(s -> s.getFeatures() != null && s.getFeatures().contains(LocationFeature.ORDERS))
                 .map(StorageResponse::getId)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No UNIT storage found for relocation tests"));

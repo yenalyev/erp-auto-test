@@ -2,6 +2,7 @@ package com.erp.tests.functional;
 
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.models.request.StorageRequest;
 import com.erp.tests.BaseTest;
 import com.erp.utils.helpers.AllureHelper;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
@@ -12,6 +13,7 @@ import org.testng.annotations.BeforeClass;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -39,6 +41,12 @@ public abstract class BaseFunctionalTest extends BaseTest {
         for (Field field : fields) {
             field.setAccessible(true);
             try {
+                // The current location API models capabilities through kind/features;
+                // these legacy request fields are not echoed by the response.
+                if (request instanceof StorageRequest
+                        && Set.of("orderHub", "productionGroup").contains(field.getName())) {
+                    continue;
+                }
                 Object expectedValue = field.get(request);
                 if (expectedValue == null) {
                     continue;
@@ -57,7 +65,7 @@ public abstract class BaseFunctionalTest extends BaseTest {
                 if (expectedValue instanceof Enum<?> enumValue) {
                     assertThat(actualValue)
                             .as("Поле '" + field.getName() + "' не збігається")
-                            .isEqualTo(enumValue.name());
+                            .isEqualTo(actualValue instanceof Enum<?> ? enumValue : enumValue.name());
                 } else {
                     assertThat(actualValue)
                             .as("Поле '" + field.getName() + "' не збігається")

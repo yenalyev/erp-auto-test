@@ -2,7 +2,6 @@ package com.erp.api.clients;
 
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.http.BotInventoryApiTrustSslSupport;
-import io.qameta.allure.Step;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -25,7 +24,6 @@ public class BotInternalApiClient {
 
     public record TimedResponse(long elapsedMs, int statusCode, byte[] body) {}
 
-    @Step("Bot internal API GET: {requestUrl}")
     public TimedResponse get(String requestUrl, String bearerToken) {
         int connectMs = ConfigProvider.getBotApiConnectTimeoutMs();
         int readMs = ConfigProvider.getBotApiReadTimeoutMs();

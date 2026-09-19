@@ -1,24 +1,28 @@
 locationProfiles:
   BATTALION_WARENHAUSE_UNIT:
-    unitType: UNIT
+    kind: LOCATION
+    features: [RELOCATIONS, EQUIPMENT]
     relation: INTERNAL
     accessMode: FULL_ACCESS
     parentProfile: BATTALION_UNIT
     namePrefix: bat-war-komirnik-
   BATTALION_UNIT:
-    unitType: UNIT
+    kind: LOCATION
+    features: [RELOCATIONS, ORDERS]
     relation: INTERNAL
     accessMode: FULL_ACCESS
     parentPool: BATTALION_PARENT_UNITS
     namePrefix: battalion-
   TSUK_WARENHAUSE:
-    unitType: STORAGE
+    kind: LOCATION
+    features: [RELOCATIONS, EQUIPMENT]
     relation: INTERNAL
     accessMode: FULL_ACCESS
     parentPool: TSUK_PARENT_UNITS
     namePrefix: tsuk-warenhause-
   TSUK_PRODUCTION:
-    unitType: PRODUCTION
+    kind: LOCATION
+    features: [RELOCATIONS, PRODUCE, EQUIPMENT]
     relation: INTERNAL
     accessMode: FULL_ACCESS
     parentPool: TSUK_PARENT_UNITS

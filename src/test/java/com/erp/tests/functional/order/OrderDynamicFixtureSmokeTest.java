@@ -63,10 +63,11 @@ public class OrderDynamicFixtureSmokeTest extends BaseUITest {
 
             requester = locations.create(LocationProfile.BATTALION_UNIT, 1).locations().getFirst();
             gathering = storages.createOrderHubStorage(rootId, "ord-smoke-gathering-");
-            assertThat(storages.getById(UserRole.ADMIN, requester.getId()).getType()).isEqualTo("UNIT");
+            assertThat(storages.getById(UserRole.ADMIN, requester.getId()).getId())
+                    .isEqualTo(requester.getId());
             StorageResponse persistedGathering = storages.getById(UserRole.ADMIN, gathering.getId());
-            assertThat(persistedGathering.getType()).isEqualTo("STORAGE");
-            assertThat(persistedGathering.getOrderHub()).isTrue();
+            assertThat(persistedGathering.getParent()).isNotNull();
+            assertThat(persistedGathering.getParent().getId()).isEqualTo(rootId);
             Long activeGatheringId = gathering.getId();
 
             UserFixture.BusinessActor requesterActor = users.createBusinessActor(

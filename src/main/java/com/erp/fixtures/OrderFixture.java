@@ -4,6 +4,7 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.order.OrderDataFactory;
 import com.erp.enums.BookingState;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.UserRole;
 import com.erp.models.request.BookingRequest;
 import com.erp.models.request.GatheringStorageRequest;
@@ -676,7 +677,7 @@ public class OrderFixture extends BaseFixture {
         String normalizedHint = normalizeUnitHint(hint);
         var matching = units.stream()
                 .filter(storage -> storage.getId() != null)
-                .filter(storage -> storage.getType() == null || "UNIT".equalsIgnoreCase(storage.getType()))
+                .filter(storage -> storage.getFeatures() == null || supportsOrders(storage))
                 .filter(storage -> matchesUnitHint(storage, normalizedHint))
                 .map(StorageResponse::getId)
                 .findFirst();
@@ -688,7 +689,7 @@ public class OrderFixture extends BaseFixture {
         }
         return units.stream()
                 .filter(storage -> storage.getId() != null)
-                .filter(storage -> storage.getType() == null || "UNIT".equalsIgnoreCase(storage.getType()))
+                .filter(storage -> storage.getFeatures() == null || supportsOrders(storage))
                 .map(StorageResponse::getId)
                 .findFirst()
                 .orElse(null);
@@ -700,6 +701,10 @@ public class OrderFixture extends BaseFixture {
         }
         return normalizeUnitHint(storage.getName()).contains(hint)
                 || normalizeUnitHint(storage.getAlias()).contains(hint);
+    }
+
+    private static boolean supportsOrders(StorageResponse storage) {
+        return storage.getFeatures() != null && storage.getFeatures().contains(LocationFeature.ORDERS);
     }
 
     private static String normalizeUnitHint(String value) {
@@ -715,7 +720,7 @@ public class OrderFixture extends BaseFixture {
     private Long requireUnitStorageId(StorageFixture storageFixture, Long storageId) {
         StorageResponse current = storageFixture.getById(UserRole.ADMIN, storageId);
         for (int depth = 0; depth < 8 && current != null; depth++) {
-            if ("UNIT".equalsIgnoreCase(current.getType())) {
+            if (supportsOrders(current)) {
                 log.info("Order requester UNIT id={} name={}", current.getId(), current.getName());
                 return current.getId();
             }

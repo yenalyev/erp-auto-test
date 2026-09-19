@@ -3,8 +3,8 @@ package com.erp.tests.functional.storage;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageRelation;
-import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.models.request.StorageRequest;
 import com.erp.models.response.StorageResponse;
@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,8 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Story("Storage Relation INTERNAL / EXTERNAL")
 public class StorageRelationTest extends StorageApiTestBase {
 
-    private static final List<UnitType> RELATION_TEST_TYPES = List.of(
-            UnitType.STORAGE, UnitType.UNIT, UnitType.PRODUCTION);
+    private static final List<Set<LocationFeature>> RELATION_TEST_FEATURES = List.of(
+            Set.of(LocationFeature.RELOCATIONS),
+            Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT),
+            Set.of(LocationFeature.RELOCATIONS, LocationFeature.CREWS));
 
     @BeforeClass(alwaysRun = true)
     @Step("Підготовка середовища для тестів relation")
@@ -44,7 +47,7 @@ public class StorageRelationTest extends StorageApiTestBase {
     @TestCaseId("TC-STR-013")
     @Description("""
             Що перевіряємо: POST створює локацію з relation=EXTERNAL (default форми створення в UI).
-            Тестові дані: дочірня локація type=STORAGE, parentId=owner1/parent unit, accessMode=FULL_ACCESS,
+            Тестові дані: дочірня локація kind=LOCATION, parentId=owner1/parent unit, accessMode=FULL_ACCESS,
             унікальне ім'я з префіксом ext-. Очікування: HTTP 200, relation=EXTERNAL у response та GET by id.
             Cleanup: локація в cleanup-черзі, архівується після тесту (StorageApiTestBase).
             """)
@@ -57,7 +60,8 @@ public class StorageRelationTest extends StorageApiTestBase {
 
         Allure.step("STEP 2: Валідація relation та схеми GET", () -> {
             assertThat(created.getRelation()).isEqualTo(StorageRelation.EXTERNAL.name());
-            assertThat(created.getType()).isEqualTo(UnitType.STORAGE.name());
+            assertThat(created.getKind()).isEqualTo(requestBody.getKind());
+            assertThat(created.getFeatures()).containsExactlyInAnyOrderElementsOf(requestBody.getFeatures());
             assertThat(created.getParent()).isNotNull();
             assertThat(created.getParent().getId()).isEqualTo(parent.getId());
             assertThat(created.getActive()).isTrue();
@@ -72,7 +76,7 @@ public class StorageRelationTest extends StorageApiTestBase {
     @TestCaseId("TC-STR-014")
     @Description("""
             Що перевіряємо: односторонній перехід EXTERNAL→INTERNAL дозволений при PUT (імітація confirm у UI).
-            Тестові дані: спочатку create EXTERNAL type=STORAGE, потім PUT з relation=INTERNAL, решта полів без змін.
+            Тестові дані: спочатку create EXTERNAL kind=LOCATION, потім PUT з relation=INTERNAL, решта полів без змін.
             Очікування: HTTP 200, GET підтверджує relation=INTERNAL.
             """)
     @Severity(SeverityLevel.NORMAL)
@@ -95,7 +99,7 @@ public class StorageRelationTest extends StorageApiTestBase {
     @Test(priority = 30)
     @TestCaseId("TC-STR-015")
     @Description("""
-            Що перевіряємо: query-параметр relation=INTERNAL на GET /storages фільтрує за відношенням, не за type.
+            Що перевіряємо: query-параметр relation=INTERNAL на GET /storages фільтрує за відношенням.
             Тестові дані: пара child STORAGE — INTERNAL (int-filter-) та EXTERNAL (ext-filter-) під тим самим parent.
             Очікування: INTERNAL id є у відповіді ?relation=INTERNAL, EXTERNAL id — відсутній.
             """)
@@ -168,34 +172,39 @@ public class StorageRelationTest extends StorageApiTestBase {
     @Test(priority = 60)
     @TestCaseId("TC-STR-018")
     @Description("""
-            Що перевіряємо: поведінка relation (INTERNAL/EXTERNAL) не залежить від UnitType.
-            Тестові дані: для кожного type з {STORAGE, UNIT, PRODUCTION} створюємо пару child під одним parent:
-            INTERNAL (typ-<type>-int-) та EXTERNAL (typ-<type>-ext-). CREW/SUPPLIER не тестуємо — інша бізнес-семантика.
-            Очікування для кожного type: relation у GET збігається з заданим; INTERNAL є лише у ?relation=INTERNAL;
+            Що перевіряємо: поведінка relation (INTERNAL/EXTERNAL) не залежить від набору функцій локації.
+            Тестові дані: для наборів функцій, дозволених зовнішнім локаціям, створюємо пару child:
+            INTERNAL та EXTERNAL під одним parent.
+            Очікування для кожного набору: relation у GET збігається з заданим; INTERNAL є лише у ?relation=INTERNAL;
             EXTERNAL — лише у ?relation=EXTERNAL; перехресна присутність відсутня.
             """)
     @Severity(SeverityLevel.CRITICAL)
-    public void testRelationBehaviorIndependentOfUnitType() {
+    public void testRelationBehaviorIndependentOfLocationFeatures() {
         StorageResponse parent = storageFixture.resolveParentUnit();
 
-        for (UnitType type : RELATION_TEST_TYPES) {
-            String typeKey = type.name().toLowerCase();
-            StorageResponse internalLoc = storageFixture.createChildStorage(
-                    parent.getId(), "typ-" + typeKey + "-int-", type, StorageRelation.INTERNAL);
-            StorageResponse externalLoc = storageFixture.createChildStorage(
-                    parent.getId(), "typ-" + typeKey + "-ext-", type, StorageRelation.EXTERNAL);
+        for (Set<LocationFeature> features : RELATION_TEST_FEATURES) {
+            String featureKey = features.contains(LocationFeature.CREWS) ? "crews"
+                    : features.contains(LocationFeature.EQUIPMENT) ? "equipment" : "relocations";
+            StorageResponse internalLoc = storageFixture.createStorage(StorageDataFactory
+                    .childStorage(parent.getId(), "feature-" + featureKey + "-int-")
+                    .features(features).relation(StorageRelation.INTERNAL).build());
+            StorageResponse externalLoc = storageFixture.createStorage(StorageDataFactory
+                    .childStorage(parent.getId(), "feature-" + featureKey + "-ext-")
+                    .features(features).relation(StorageRelation.EXTERNAL).build());
 
-            Allure.step("Assert relation round-trip for type=" + type, () -> {
+            Allure.step("Assert relation round-trip for features=" + featureKey, () -> {
                 StorageResponse internalFetched = storageFixture.getById(UserRole.ADMIN, internalLoc.getId());
                 StorageResponse externalFetched = storageFixture.getById(UserRole.ADMIN, externalLoc.getId());
 
-                assertThat(internalFetched.getType()).isEqualTo(type.name());
-                assertThat(externalFetched.getType()).isEqualTo(type.name());
+                assertThat(internalFetched.getKind()).isEqualTo(internalLoc.getKind());
+                assertThat(externalFetched.getKind()).isEqualTo(externalLoc.getKind());
+                assertThat(internalFetched.getFeatures()).containsExactlyInAnyOrderElementsOf(features);
+                assertThat(externalFetched.getFeatures()).containsExactlyInAnyOrderElementsOf(features);
                 assertThat(internalFetched.getRelation()).isEqualTo(StorageRelation.INTERNAL.name());
                 assertThat(externalFetched.getRelation()).isEqualTo(StorageRelation.EXTERNAL.name());
             });
 
-            Allure.step("Assert list filters for type=" + type, () -> {
+            Allure.step("Assert list filters for features=" + featureKey, () -> {
                 List<Long> internalIds = storageFixture.getPageContent(
                                 UserRole.ADMIN, Map.of(
                                         "relation", StorageRelation.INTERNAL.name(),
@@ -208,16 +217,16 @@ public class StorageRelationTest extends StorageApiTestBase {
                         .stream().map(StorageResponse::getId).toList();
 
                 assertThat(internalIds)
-                        .as("INTERNAL filter for type=%s", type)
+                        .as("INTERNAL filter for features=%s", featureKey)
                         .contains(internalLoc.getId())
                         .doesNotContain(externalLoc.getId());
                 assertThat(externalIds)
-                        .as("EXTERNAL filter for type=%s", type)
+                        .as("EXTERNAL filter for features=%s", featureKey)
                         .contains(externalLoc.getId())
                         .doesNotContain(internalLoc.getId());
             });
 
-            Allure.step("Assert /names filter for type=" + type, () -> {
+            Allure.step("Assert /names filter for features=" + featureKey, () -> {
                 List<Long> externalNameIds = storageFixture.getNames(
                                 UserRole.ADMIN, true, StorageRelation.EXTERNAL, null, null, externalLoc.getId())
                         .stream().map(StorageResponse::getId).toList();
@@ -226,10 +235,10 @@ public class StorageRelationTest extends StorageApiTestBase {
                         .stream().map(StorageResponse::getId).toList();
 
                 assertThat(externalNameIds)
-                        .as("EXTERNAL names for type=%s", type)
+                        .as("EXTERNAL names for features=%s", featureKey)
                         .contains(externalLoc.getId());
                 assertThat(internalInExternalNames)
-                        .as("INTERNAL must be absent from EXTERNAL names for type=%s", type)
+                        .as("INTERNAL must be absent from EXTERNAL names for features=%s", featureKey)
                         .doesNotContain(internalLoc.getId());
             });
         }

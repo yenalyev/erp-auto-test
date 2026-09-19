@@ -73,6 +73,17 @@ public class RelocationStockSeeder {
 
     public static Long resolveSupplierStorageId(ApiExecutor apiExecutor, UserRole role) {
         Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_SUPPLIER, role);
+        if (response.statusCode() == 403 && role != UserRole.ADMIN) {
+            // Supplier discovery is fixture setup. Some business roles cannot list
+            // suppliers, even when the test operation itself is permitted.
+            response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_SUPPLIER, UserRole.ADMIN);
+        }
+        if (response.statusCode() != 200) {
+            throw new IllegalStateException("Cannot resolve supplier location as " + role
+                    + " (HTTP " + response.statusCode() + "): "
+                    + response.getBody().asString().substring(
+                            0, Math.min(200, response.getBody().asString().length())));
+        }
         List<StorageResponse> storages = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
         return storages.stream()
                 .filter(s -> s != null && s.getId() != null)

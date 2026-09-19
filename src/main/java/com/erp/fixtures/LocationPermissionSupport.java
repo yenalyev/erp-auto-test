@@ -1,6 +1,6 @@
 package com.erp.fixtures;
 
-import com.erp.enums.UnitType;
+import com.erp.enums.StorageKind;
 import com.erp.enums.UserRole;
 import com.erp.enums.StorageRelation;
 import com.erp.models.response.StorageResponse;
@@ -18,14 +18,9 @@ import java.util.Set;
 @UtilityClass
 public class LocationPermissionSupport {
 
-    private static final Set<String> WORKSPACE_TYPES = Set.of(
-            UnitType.UNIT.name(),
-            UnitType.STORAGE.name(),
-            UnitType.PRODUCTION.name());
-
     /**
      * Resolves B2 (second RO location): config {@code location-mixed.ro2.storage.id} when &gt; 0,
-     * otherwise first admin UNIT/STORAGE/PRODUCTION not equal to A1/A2/B1.
+     * otherwise first admin LOCATION not equal to A1/A2/B1.
      * Skips CREW/FLY_POINT (they are not in the sidebar workspace tree) and {@code ui-*} test artifacts.
      */
     public static long resolveRo2StorageId(StorageFixture storageFixture) {
@@ -41,33 +36,33 @@ public class LocationPermissionSupport {
 
         List<StorageResponse> names = storageFixture.getNames(
                 UserRole.ADMIN, true, null,
-                List.of(UnitType.UNIT, UnitType.STORAGE, UnitType.PRODUCTION),
+                null,
                 null, null);
         return names.stream()
                 .filter(s -> s.getId() != null && !reserved.contains(s.getId()))
-                .filter(s -> s.getType() == null || isWorkspaceType(s.getType()))
+                .filter(LocationPermissionSupport::isWorkspaceLocation)
                 .filter(LocationPermissionSupport::isInternal)
                 .filter(s -> !isTestArtifactName(s.getName()))
                 .map(StorageResponse::getId)
                 .findFirst()
                 .or(() -> names.stream()
                         .filter(s -> s.getId() != null && !reserved.contains(s.getId()))
-                        .filter(s -> s.getType() == null || isWorkspaceType(s.getType()))
+                        .filter(LocationPermissionSupport::isWorkspaceLocation)
                         .filter(LocationPermissionSupport::isInternal)
                         .map(StorageResponse::getId)
                         .findFirst())
                 .orElseThrow(() -> new IllegalStateException(
                         "Cannot resolve location-mixed RO2 storage id — set location-mixed.ro2.storage.id "
-                                + "to a UNIT/STORAGE/PRODUCTION visible in the workspace picker"));
+                                + "to a LOCATION visible in the workspace picker"));
     }
 
     private static boolean isWorkspaceVisible(StorageFixture storageFixture, long storageId) {
         StorageResponse storage = storageFixture.getById(UserRole.ADMIN, storageId);
-        return storage != null && isWorkspaceType(storage.getType()) && isInternal(storage);
+        return isWorkspaceLocation(storage) && isInternal(storage);
     }
 
-    private static boolean isWorkspaceType(String type) {
-        return type != null && WORKSPACE_TYPES.contains(type);
+    private static boolean isWorkspaceLocation(StorageResponse storage) {
+        return storage != null && storage.getKind() == StorageKind.LOCATION;
     }
 
     private static boolean isTestArtifactName(String name) {

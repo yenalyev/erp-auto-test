@@ -1,10 +1,12 @@
 package com.erp.models.request;
 
 import com.erp.enums.MilUnitType;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageAccessMode;
+import com.erp.enums.StorageKind;
 import com.erp.enums.StorageRelation;
-import com.erp.enums.UnitType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,7 +21,8 @@ public class StorageRequest {
     private String name;
     private String alias;
     private Long parentId;
-    private UnitType type;
+    private StorageKind kind;
+    private Set<LocationFeature> features;
     private MilUnitType milUnitType;
     private Integer milUnitNumber;
     private StorageRelation relation;

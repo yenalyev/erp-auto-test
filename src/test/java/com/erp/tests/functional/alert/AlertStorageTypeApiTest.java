@@ -1,6 +1,8 @@
 package com.erp.tests.functional.alert;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.LocationFeature;
+import com.erp.enums.StorageKind;
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.AlertFixture;
@@ -61,7 +63,7 @@ public class AlertStorageTypeApiTest extends CrewApiTestBase {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Регресія: на UNIT GET /alerts/storage/{id} / UI /alerts/{id} не показують пороги.
-            Для кожного Storage.type — POST alert, GET by storage, GET inventory:
+            Для кожного набору kind/features — POST alert, GET by storage, GET inventory:
             рядок з порогом (weight=100) вище рядка без алерту (weight=0), навіть якщо
             за назвою він пізніше. SUPPLIER не входить.
             """)
@@ -72,7 +74,23 @@ public class AlertStorageTypeApiTest extends CrewApiTestBase {
                 parentId, type, AlertFixture.DEFAULT_LIMIT);
 
         assertThat(seed.alert().getId()).as("POST alert id").isNotNull();
-        assertThat(UnitType.valueOf(seed.storage().getType())).isEqualTo(type);
+        switch (type) {
+            case CREW -> assertThat(seed.storage().getKind()).isEqualTo(StorageKind.CREW);
+            case FLY_POINT -> assertThat(seed.storage().getKind()).isEqualTo(StorageKind.FLY_POINT);
+            case UNIT -> {
+                assertThat(seed.storage().getKind()).isEqualTo(StorageKind.LOCATION);
+                assertThat(seed.storage().getFeatures()).contains(LocationFeature.ORDERS);
+            }
+            case PRODUCTION -> {
+                assertThat(seed.storage().getKind()).isEqualTo(StorageKind.LOCATION);
+                assertThat(seed.storage().getFeatures()).contains(LocationFeature.PRODUCE);
+            }
+            case STORAGE -> {
+                assertThat(seed.storage().getKind()).isEqualTo(StorageKind.LOCATION);
+                assertThat(seed.storage().getFeatures()).contains(LocationFeature.EQUIPMENT);
+            }
+            default -> throw new IllegalArgumentException("Unsupported location profile: " + type);
+        }
 
         StorageAlertResponse byStorage = alertFixture.getByStorageId(seed.storage().getId(), UserRole.ADMIN);
         assertThat(byStorage)

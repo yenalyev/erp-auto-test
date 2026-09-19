@@ -4,6 +4,7 @@ import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.RelocationState;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.ProductionFixture;
@@ -629,7 +630,7 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
         Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, UserRole.ADMIN);
         List<StorageResponse> storages = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
         return storages.stream()
-                .filter(s -> "UNIT".equalsIgnoreCase(s.getType()))
+                .filter(s -> s.getFeatures() != null && s.getFeatures().contains(LocationFeature.ORDERS))
                 .filter(s -> Boolean.TRUE.equals(s.getActive()) || s.getActive() == null)
                 .map(StorageResponse::getId)
                 .filter(id -> !excluded.contains(id))
@@ -669,7 +670,7 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
         Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, UserRole.ADMIN);
         List<StorageResponse> units = DatabaseIntegrityValidator.extractList(response, StorageResponse.class)
                 .stream()
-                .filter(s -> "UNIT".equalsIgnoreCase(s.getType()))
+                .filter(s -> s.getFeatures() != null && s.getFeatures().contains(LocationFeature.ORDERS))
                 .filter(s -> Boolean.TRUE.equals(s.getActive()) || s.getActive() == null)
                 .limit(12)
                 .toList();

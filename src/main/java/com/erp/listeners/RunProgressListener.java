@@ -9,12 +9,14 @@ import org.testng.ISuiteListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.ITestNGMethod;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,6 +33,7 @@ public class RunProgressListener implements ITestListener, ISuiteListener {
     private final AtomicInteger passed = new AtomicInteger();
     private final AtomicInteger failed = new AtomicInteger();
     private final AtomicInteger skipped = new AtomicInteger();
+    private final ConcurrentHashMap<ITestNGMethod, AtomicInteger> startedByMethod = new ConcurrentHashMap<>();
 
     private volatile Path progressFile;
     private volatile String currentTest;
@@ -43,7 +46,10 @@ public class RunProgressListener implements ITestListener, ISuiteListener {
             return;
         }
         log.info("Run progress file: {}", progressFile);
-        total.set(0);
+        startedByMethod.clear();
+        total.set(suite.getAllMethods().stream()
+                .mapToInt(method -> Math.max(1, method.getInvocationCount()))
+                .sum());
         writeProgress();
     }
 
@@ -52,7 +58,8 @@ public class RunProgressListener implements ITestListener, ISuiteListener {
         if (progressFile == null) {
             return;
         }
-        total.addAndGet(context.getAllTestMethods().length);
+        // The suite total already includes later <test> contexts. Counting each
+        // context only when it starts made the UI exceed 100% between contexts.
         writeProgress();
     }
 
@@ -62,6 +69,13 @@ public class RunProgressListener implements ITestListener, ISuiteListener {
             return;
         }
         currentTest = result.getMethod().getMethodName();
+        ITestNGMethod method = result.getMethod();
+        int started = startedByMethod.computeIfAbsent(method, ignored -> new AtomicInteger())
+                .incrementAndGet();
+        if (started > Math.max(1, method.getInvocationCount())) {
+            // Data providers and retries can execute more times than the static suite plan.
+            total.incrementAndGet();
+        }
         currentTestCaseId = TestCaseIdExtractor.getTestCaseId(result);
         if ("NO_ID".equals(currentTestCaseId)) {
             currentTestCaseId = null;

@@ -163,7 +163,7 @@ public class RelocationSendRecipientUiTest extends BaseUITest {
     }
 
     /**
-     * Фільтр як у {@code useRelocationCreateOutput.ts}: без SUPPLIER і без поточного sender.
+     * Фільтр як у {@code useRelocationCreateOutput.ts}: без поточного sender.
      * Дедуплікація за id — очікувана поведінка після union областей видимості.
      */
     private static Set<String> expectedSendFormRecipientNames(
@@ -171,9 +171,6 @@ public class RelocationSendRecipientUiTest extends BaseUITest {
         Map<Long, String> uniqueById = new LinkedHashMap<>();
         for (StorageResponse storage : apiNames) {
             if (storage.getId() == null || storage.getId().equals(senderStorageId)) {
-                continue;
-            }
-            if ("SUPPLIER".equals(storage.getType())) {
                 continue;
             }
             uniqueById.putIfAbsent(storage.getId(), storage.getName());

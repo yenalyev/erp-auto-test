@@ -4,6 +4,7 @@ import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture;
+import com.erp.enums.LocationFeature;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
@@ -261,11 +262,11 @@ public class AccountantCabinetUITest extends BaseUITest {
     @Story("Accountant workspace without UNIT")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Після логіну accountant: my-units API не містить UNIT-локацій.
+            Після логіну accountant: my-units API не містить локацій з функцією ORDERS.
 
             Відкритий product gap (прогін 34): GET /storages/my-units для accountant повертає
-            UNIT-локації, тому тест червоний. Потрібне рішення продукту, який контракт правильний:
-            або бекенд має відфільтровувати UNIT для цієї ролі, або вимога застаріла і тест треба
+            локації підрозділів, тому тест червоний. Потрібне рішення продукту, який контракт правильний:
+            або бекенд має відфільтровувати ORDERS для цієї ролі, або вимога застаріла і тест треба
             переписати. До рішення тест не адаптуємо — інакше він перестане ловити регресію.""")
     public void accountantWorkspaceExcludesUnitLocations() {
         loginAsAccountant();
@@ -273,8 +274,10 @@ public class AccountantCabinetUITest extends BaseUITest {
         var apiResponse = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_MY_UNITS, UserRole.ACCOUNTANT);
         assertThat(apiResponse.statusCode()).isEqualTo(200);
         List<StorageResponse> units = DatabaseIntegrityValidator.extractList(apiResponse, StorageResponse.class);
-        assertThat(units.stream().filter(s -> "UNIT".equalsIgnoreCase(s.getType())).toList())
-                .as("API my-units для accountant не повинен містити UNIT")
+        assertThat(units.stream()
+                .filter(s -> s.getFeatures() != null && s.getFeatures().contains(LocationFeature.ORDERS))
+                .toList())
+                .as("API my-units для accountant не повинен містити ORDERS")
                 .isEmpty();
     }
 

@@ -35,7 +35,7 @@ public class StorageTest extends StorageApiTestBase {
     @Test(priority = 10)
     @TestCaseId("TC-STR-001")
     @Story("Create Storage")
-    @Description("Успішне створення дочірньої локації з parentId, type=STORAGE, relation=INTERNAL")
+    @Description("Успішне створення дочірньої локації з parentId, kind=LOCATION, relation=INTERNAL")
     @Severity(SeverityLevel.CRITICAL)
     public void testCreateStorage() {
         StorageResponse parent = storageFixture.resolveParentUnit();
@@ -71,7 +71,7 @@ public class StorageTest extends StorageApiTestBase {
     @TestCaseId("TC-STR-002")
     @Story("Update Storage")
     @Description("""
-            PUT з усіма полями StorageRequest. Змінюємо name, alias, parentId, type,
+            PUT з усіма полями StorageRequest. Змінюємо name, alias, parentId,
             identifierNumber, accessMode, nameForInvoices. relation — без змін.
             """)
     @Severity(SeverityLevel.CRITICAL)
@@ -111,7 +111,8 @@ public class StorageTest extends StorageApiTestBase {
             StorageResponse updated = response.as(StorageResponse.class);
             assertThat(updated.getName()).isEqualTo(updateBody.getName());
             assertThat(updated.getAlias()).isEqualTo(updateBody.getAlias());
-            assertThat(updated.getType()).isEqualTo(updateBody.getType().name());
+            assertThat(updated.getKind()).isEqualTo(updateBody.getKind());
+            assertThat(updated.getFeatures()).containsExactlyInAnyOrderElementsOf(updateBody.getFeatures());
             assertThat(updated.getParent().getId()).isEqualTo(updateBody.getParentId());
             assertThat(updated.getIdentifierNumber()).isEqualTo(updateBody.getIdentifierNumber());
             assertThat(updated.getAccessMode()).isEqualTo(updateBody.getAccessMode().name());

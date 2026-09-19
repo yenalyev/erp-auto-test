@@ -3,8 +3,10 @@ package com.erp.tests.functional.relocation;
 import com.erp.annotations.TestCaseId;
 import com.erp.data.LocationProfileCatalog;
 import com.erp.data.factories.relocation.RelocationDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageRelation;
+import com.erp.enums.StorageKind;
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.OrderFixture;
@@ -360,9 +362,13 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
         Allure.parameter("senderType", senderType.name());
         StorageResponse parent = storageFixture.resolveParentUnit();
         StorageResponse sender = createTypedSender(parent.getId(), senderType);
-        assertThat(UnitType.valueOf(sender.getType()))
-                .as("відправник має бути type=%s", senderType)
-                .isEqualTo(senderType);
+        assertThat(sender.getKind()).isEqualTo(StorageKind.LOCATION);
+        assertThat(sender.getFeatures()).contains(LocationFeature.RELOCATIONS);
+        if (senderType == UnitType.PRODUCTION) {
+            assertThat(sender.getFeatures()).contains(LocationFeature.PRODUCE);
+        } else {
+            assertThat(sender.getFeatures()).doesNotContain(LocationFeature.PRODUCE);
+        }
 
         StorageResponse recipient = storageFixture.createChildStorage(parent.getId(), "rel-it-type-rcv-");
         fixture.createExternalReceive(
@@ -426,8 +432,9 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
             UnitType recipientType) {
         Allure.parameter("senderType", UnitType.UNIT.name());
         Allure.parameter("recipientType", recipientType.name());
-        assertThat(UnitType.valueOf(unit.getType())).isEqualTo(UnitType.UNIT);
-        assertThat(UnitType.valueOf(recipient.getType())).isEqualTo(recipientType);
+        assertThat(unit.getFeatures()).contains(LocationFeature.ORDERS);
+        assertThat(recipient.getKind()).isEqualTo(
+                recipientType == UnitType.CREW ? StorageKind.CREW : StorageKind.FLY_POINT);
 
         fixture.createExternalReceive(
                 UserRole.ADMIN, unit.getId(), resourceId, 20.0,
@@ -458,9 +465,9 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
         Allure.parameter("requesterUnitId", unit.getId());
         Allure.parameter("requesterUnitName", unit.getName());
         Allure.parameter("unitHint", ConfigProvider.getOrderRequesterUnitName());
-        assertThat(UnitType.valueOf(unit.getType()))
-                .as("order.requester.unit.name має резолвитись у UNIT")
-                .isEqualTo(UnitType.UNIT);
+        assertThat(unit.getFeatures())
+                .as("order.requester.unit.name має резолвитись у локацію з ORDERS")
+                .contains(LocationFeature.ORDERS);
         return unit;
     }
 

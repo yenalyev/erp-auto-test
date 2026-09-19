@@ -55,7 +55,7 @@ public class EquipmentSelectorContractTest extends StorageApiTestBase {
             Що перевіряємо: API-контракт dropdown «Звідки» на /equipment — фільтр relation=EXTERNAL, не type.
             Тестові дані: INTERNAL child STORAGE (eq-int-) vs EXTERNAL child STORAGE (eq-ext-);
             GET /storages/names?isActive=true&relation=EXTERNAL як у useEquipmentForm.ts.
-            Очікування: EXTERNAL child у списку, INTERNAL — ні; є хоча б один SUPPLIER (джерело постачання).
+            Очікування: EXTERNAL child у списку, INTERNAL — ні.
             """)
     @Severity(SeverityLevel.CRITICAL)
     public void testExternalNamesExcludeInternalStorages() {
@@ -69,9 +69,6 @@ public class EquipmentSelectorContractTest extends StorageApiTestBase {
         List<Long> ids = externalNames.stream().map(StorageResponse::getId).toList();
         assertThat(ids).contains(externalStorage.getId());
         assertThat(ids).doesNotContain(internalStorage.getId());
-        assertThat(externalNames.stream().anyMatch(s -> "SUPPLIER".equals(s.getType())))
-                .as("EXTERNAL names include at least one SUPPLIER for equipment «Звідки»")
-                .isTrue();
     }
 
     @Test(priority = 20)

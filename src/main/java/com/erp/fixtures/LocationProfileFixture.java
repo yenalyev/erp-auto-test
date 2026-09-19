@@ -50,10 +50,10 @@ public class LocationProfileFixture extends BaseFixture {
         return StorageRequest.builder()
                 .name(StorageDataFactory.uniqueName(definition.namePrefix()))
                 .parentId(parentId)
-                .type(definition.unitType())
+                .kind(definition.kind())
+                .features(definition.features())
                 .relation(definition.relation())
                 .accessMode(definition.accessMode())
-                // milUnitType is deliberately omitted for BATTALION_UNIT.
                 .build();
     }
 

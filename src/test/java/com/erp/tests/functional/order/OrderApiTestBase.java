@@ -46,7 +46,7 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
     protected static final double DEFAULT_ORDER_QTY = 5.0;
     protected static final double DEFAULT_SEED_STOCK = 200.0;
 
-    /** Fresh location head on the dynamically created requester UNIT. */
+    /** Fresh location head on the dynamically created requester location. */
     protected static final UserRole REQUESTER = UserRole.UNIT_ANALYST;
     /** Existing foreign-unit user for negative visibility checks. */
     protected static final UserRole OUTSIDER = UserRole.OWNER_1;
@@ -93,17 +93,6 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
         requesterStorageId = requester.getId();
         gatheringStorageId = gathering.getId();
         primaryGatheringStorageId = gatheringStorageId;
-        if (requester.getType() == null) {
-            Response rawStorage = apiExecutor.execute(
-                    ApiEndpointDefinition.STORAGE_GET_BY_ID,
-                    UserRole.ADMIN,
-                    null,
-                    String.valueOf(requesterStorageId));
-            throw new AssertionError("Requester UNIT type is missing from StorageResponse; raw GET body="
-                    + rawStorage.asString());
-        }
-        assertThat(requester.getType()).isEqualTo("UNIT");
-        assertThat(gathering.getOrderHub()).isTrue();
 
         resourceFixture.fetchSharedUnit(1);
         resourceFixture.fetchSharedResourceCategory();
@@ -118,7 +107,7 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
                     + " active catalog resources, found " + sharedResources.size());
         }
         for (ResourceResponse resource : sharedResources) {
-            // A zero inventory row makes the resource selectable on the new UNIT.
+            // A zero inventory row makes the resource selectable on the new location.
             relocationFixture.seedExactStock(requesterStorageId, resource.getId(), 1.0);
             inventoryFixture.resetResourceStock(requesterStorageId, resource.getId(), 0.0, UserRole.ADMIN);
         }

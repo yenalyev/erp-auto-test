@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.erp.enums.UserRole;
 import com.erp.utils.config.ConfigProvider;
-import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -50,7 +49,6 @@ public class AuthService {
         log.debug("   Client ID: {}", clientId);
     }
 
-    @Step("Get access token for user: {username}")
     public String getAccessToken(String username, String password) {
         String cacheKey = username + ":" + password;
 
@@ -82,7 +80,6 @@ public class AuthService {
      * Отримати сесійні куки для користувача з кешуванням
      * Використовується для тестування endpoints, які працюють через session
      */
-    @Step("Get session cookies for user: {username}")
     public Map<String, String> getSessionForUser(String username, String password) {
         return getSessionForUser(username, password, "/");
     }
@@ -90,7 +87,6 @@ public class AuthService {
     /**
      * Отримати сесійні куки для користувача з кешуванням та вказаним targetRoute
      */
-    @Step("Get session cookies for user: {username}, target: {targetRoute}")
     public Map<String, String> getSessionForUser(String username, String password, String targetRoute) {
         String cacheKey = username + ":" + password;
 
@@ -144,7 +140,6 @@ public class AuthService {
         }
     }
 
-    @Step("Full browser login flow for user: {username}")
     public Map<String, String> loginViaBrowserFlow(String username, String password, String targetRoute) {
         log.info("🚀 Starting browser-like login flow. Target: {}", targetRoute);
 
@@ -575,7 +570,6 @@ public class AuthService {
      * Новий browser login flow через /login?redirectUri=...
      * Використовується після оновлення API
      */
-    @Step("Browser login with redirect URI for user: {username}")
     public Map<String, String> loginWithRedirectUri(String username, String password, String targetUrl) {
         if (playwrightSessionProvider != null) {
             log.info("🎭 Delegating login to Playwright (headless browser) for user: {}", username);

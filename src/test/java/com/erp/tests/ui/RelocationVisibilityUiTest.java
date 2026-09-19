@@ -418,9 +418,6 @@ public class RelocationVisibilityUiTest extends BaseUITest {
             if (storage.getId() == null || storage.getId().equals(senderStorageId)) {
                 continue;
             }
-            if ("SUPPLIER".equals(storage.getType())) {
-                continue;
-            }
             uniqueById.putIfAbsent(storage.getId(), storage.getName());
         }
         return new HashSet<>(uniqueById.values());

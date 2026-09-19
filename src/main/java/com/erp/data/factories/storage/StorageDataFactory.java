@@ -2,7 +2,9 @@ package com.erp.data.factories.storage;
 
 import com.erp.data.FakerProvider;
 import com.erp.enums.MilUnitType;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageAccessMode;
+import com.erp.enums.StorageKind;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
 import com.erp.models.request.StorageRequest;
@@ -10,6 +12,7 @@ import com.erp.models.response.StorageResponse;
 import com.erp.utils.data.DataUtils;
 import lombok.NonNull;
 
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class StorageDataFactory {
@@ -69,7 +72,8 @@ public class StorageDataFactory {
     public static StorageRequest.StorageRequestBuilder childStorage(@NonNull Long parentId) {
         return StorageRequest.builder()
                 .name(FakerProvider.ukrainian().company().name())
-                .type(UnitType.STORAGE)
+                .kind(StorageKind.LOCATION)
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
                 .parentId(parentId)
                 .relation(StorageRelation.INTERNAL)
                 .accessMode(StorageAccessMode.FULL_ACCESS);
@@ -129,7 +133,8 @@ public class StorageDataFactory {
             @NonNull StorageRelation relation) {
         return StorageRequest.builder()
                 .name(uniqueName(namePrefix))
-                .type(type)
+                .kind(kindFor(type))
+                .features(featuresFor(type))
                 .parentId(parentId)
                 .relation(relation)
                 .accessMode(StorageAccessMode.FULL_ACCESS);
@@ -148,11 +153,8 @@ public class StorageDataFactory {
         if (existing.getParent() != null) {
             builder.parentId(existing.getParent().getId());
         }
-        if (existing.getType() != null) {
-            builder.type(UnitType.valueOf(existing.getType()));
-        } else {
-            builder.type(UnitType.STORAGE);
-        }
+        builder.kind(existing.getKind() != null ? existing.getKind() : StorageKind.LOCATION);
+        builder.features(existing.getFeatures() != null ? existing.getFeatures() : Set.of());
         if (existing.getRelation() != null) {
             builder.relation(StorageRelation.valueOf(existing.getRelation()));
         } else {
@@ -197,19 +199,35 @@ public class StorageDataFactory {
         StorageRelation unchangedRelation = existing.getRelation() != null
                 ? StorageRelation.valueOf(existing.getRelation())
                 : StorageRelation.INTERNAL;
-        UnitType newType = existing.getType() != null
-                ? UnitType.valueOf(existing.getType())
-                : UnitType.STORAGE;
-
         return StorageRequest.builder()
                 .name(uniqueName("upd-"))
                 .alias(shortAlias())
                 .parentId(newParentId)
-                .type(newType)
+                .kind(existing.getKind() != null ? existing.getKind() : StorageKind.LOCATION)
+                .features(existing.getFeatures() != null ? existing.getFeatures() : Set.of())
                 .relation(unchangedRelation)
                 .identifierNumber("111")
                 .accessMode(StorageAccessMode.REGIONS)
                 .nameForInvoices("Inv-" + shortAlias())
                 .build();
+    }
+
+    private static StorageKind kindFor(UnitType legacyType) {
+        return switch (legacyType) {
+            case CREW -> StorageKind.CREW;
+            case FLY_POINT -> StorageKind.FLY_POINT;
+            default -> StorageKind.LOCATION;
+        };
+    }
+
+    private static Set<LocationFeature> featuresFor(UnitType legacyType) {
+        return switch (legacyType) {
+            case UNIT -> Set.of(LocationFeature.RELOCATIONS, LocationFeature.ORDERS);
+            case PRODUCTION -> Set.of(LocationFeature.RELOCATIONS, LocationFeature.PRODUCE,
+                    LocationFeature.EQUIPMENT);
+            case STORAGE -> Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT);
+            case CREW, FLY_POINT -> Set.of();
+            case SUPPLIER -> Set.of();
+        };
     }
 }

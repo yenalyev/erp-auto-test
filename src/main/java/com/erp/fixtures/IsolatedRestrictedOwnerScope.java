@@ -148,8 +148,9 @@ public class IsolatedRestrictedOwnerScope {
         boundRoles.add(role);
         boundOwners.put(role, owner);
         waitUntilAllowedStorageIds(role, Set.of(unit.getId()));
-        log.info("Isolated owner {} role={} bound to {} id={} name={} accessMode={}",
-                owner.username(), role, unit.getType(), unit.getId(), unit.getName(), unit.getAccessMode());
+        log.info("Isolated owner {} role={} bound to kind={} features={} id={} name={} accessMode={}",
+                owner.username(), role, unit.getKind(), unit.getFeatures(), unit.getId(),
+                unit.getName(), unit.getAccessMode());
         return unit.getId();
     }
 

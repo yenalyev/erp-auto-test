@@ -1,9 +1,10 @@
 package com.erp.data;
 
 import com.erp.enums.LocationProfile;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageAccessMode;
+import com.erp.enums.StorageKind;
 import com.erp.enums.StorageRelation;
-import com.erp.enums.UnitType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Loads reusable location templates and their parent location pools. */
 public final class LocationProfileCatalog {
@@ -77,7 +79,7 @@ public final class LocationProfileCatalog {
             if (definition == null) {
                 throw new IllegalStateException("Missing location profile " + profile + " in " + RESOURCE_NAME);
             }
-            if (definition.unitType() == null || definition.relation() == null
+            if (definition.kind() == null || definition.features() == null || definition.relation() == null
                     || definition.accessMode() == null) {
                 throw new IllegalStateException("Location profile " + profile + " has incomplete location fields");
             }
@@ -134,9 +136,10 @@ public final class LocationProfileCatalog {
             Map<String, ParentPool> parentPools) {
     }
 
-    /** milUnitType is intentionally absent: profiles only set fields declared here. */
+    /** Profiles use the current kind/features contract instead of legacy unit types. */
     public record Definition(
-            UnitType unitType,
+            StorageKind kind,
+            Set<LocationFeature> features,
             StorageRelation relation,
             StorageAccessMode accessMode,
             String parentPool,

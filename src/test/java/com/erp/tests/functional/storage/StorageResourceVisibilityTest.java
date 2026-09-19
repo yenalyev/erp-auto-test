@@ -5,6 +5,7 @@ import com.erp.data.factories.inventory.InventoryDataFactory;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.RelocationState;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
@@ -647,7 +648,7 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
 
         RestrictedUnitResourceSetup.Setup setup = RestrictedUnitResourceSetup.createUnit(
                 storageFixture, regionFixture, "res-unit-type-");
-        assertThat(setup.unit().getType()).isEqualTo(UnitType.UNIT.name());
+        assertThat(setup.unit().getFeatures()).contains(LocationFeature.ORDERS);
 
         regionFixture.addRegionResources(setup.region().getId(), granted.getId());
 

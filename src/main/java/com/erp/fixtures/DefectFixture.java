@@ -4,6 +4,7 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.ResourceDataFactory;
 import com.erp.data.factories.relocation.RelocationDataFactory;
+import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.models.query.DefectQuery;
 import com.erp.models.request.DefectRequest;
 import com.erp.models.request.DefectWriteOffRequest;
@@ -15,12 +16,17 @@ import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
+import com.erp.models.response.UserMeResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.auth.PlaywrightSessionProvider;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationFeature;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
@@ -29,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
  * FIXTURE for defect ("Брак") tests. Composes {@link ProductionFixture} (production-type defects)
@@ -41,6 +48,8 @@ public class DefectFixture extends BaseFixture {
     private final ProductionFixture productionFixture;
     private final RelocationFixture relocationFixture;
     private Long storageId;
+    private StorageFixture isolatedStorageFixture;
+    private UserFixture isolatedUserFixture;
 
     public DefectFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
@@ -51,13 +60,53 @@ public class DefectFixture extends BaseFixture {
 
     @Step("FIXTURE: Підготовка середовища для тестів браку")
     public void prepareContext() {
-        this.storageId = ConfigProvider.getOwner1StorageId();
+        prepareContext(ConfigProvider.getOwner1StorageId());
+    }
+
+    /** Creates a location and a scoped business actor without changing an existing test account. */
+    @Step("FIXTURE: ізольована локація та власник для тестів браку")
+    public void prepareIsolatedContext(PlaywrightSessionProvider playwright) {
+        if (isolatedStorageFixture != null) {
+            throw new IllegalStateException("Isolated defect context has already been initialized");
+        }
+        isolatedStorageFixture = new StorageFixture(testContext, apiExecutor);
+        isolatedUserFixture = new UserFixture(testContext, apiExecutor);
+        StorageResponse location = isolatedStorageFixture.createStorage(
+                StorageDataFactory.childStorage(ConfigProvider.getOwner1StorageId(), "defect-")
+                        .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.PRODUCE,
+                                LocationFeature.EQUIPMENT))
+                        .build());
+        UserFixture.BusinessActor actor = isolatedUserFixture.createBusinessActor(
+                playwright, BusinessRole.BUSINESS_UNIT_OWNER, List.of(location));
+        apiExecutor.setSessionForRole(UserRole.OWNER_1, actor.username(), actor.password());
+        prepareContext(location.getId());
+    }
+
+    @Step("FIXTURE: прибрати ізольовані артефакти тестів браку")
+    public void cleanupIsolatedContext() {
+        if (TestArtifactCleanup.shouldSkipApiCleanup()) {
+            return;
+        }
+        try {
+            if (isolatedStorageFixture != null) {
+                isolatedStorageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+            }
+        } finally {
+            if (isolatedUserFixture != null) {
+                isolatedUserFixture.deactivateTrackedUsers();
+            }
+        }
+    }
+
+    private void prepareContext(Long locationId) {
+        this.storageId = locationId;
+        verifyOwner1LocationAccess();
         if (testContext.get(ContextKey.DEFECT_RESOURCE_ID) != null) {
             return;
         }
 
-        relocationFixture.prepareContext();
-        productionFixture.prepareContext();
+        relocationFixture.prepareContext(storageId);
+        productionFixture.prepareContext(storageId);
 
         // Non-produced, stocked resource used for STORAGE / RELOCATION defects and RBAC create body.
         Long resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
@@ -65,6 +114,20 @@ public class DefectFixture extends BaseFixture {
 
         log.info("Defect fixture ready: storage={}, defectResource={}, outputResource={}",
                 storageId, resourceId, testContext.get(ContextKey.PRODUCTION_OUTPUT_RESOURCE_ID));
+    }
+
+    private void verifyOwner1LocationAccess() {
+        UserMeResponse owner = new UserFixture(testContext, apiExecutor).getMe(UserRole.OWNER_1);
+        boolean hasOwnerGrant = owner.getGrants() != null && owner.getGrants().stream()
+                .anyMatch(grant -> UserFixture.BUSINESS_UNIT_OWNER_ROLE_NAME.equals(grant.getName())
+                        && grant.getStorage() != null
+                        && storageId.equals(grant.getStorage().getId()));
+        if (!hasOwnerGrant || !owner.hasMutateOn(storageId)) {
+            throw new IllegalStateException("Defect fixture requires OWNER_1 (" + owner.getUsername()
+                    + ") to have '" + UserFixture.BUSINESS_UNIT_OWNER_ROLE_NAME
+                    + "' on location " + storageId + ". GET /users/me allowedStorageIds="
+                    + owner.getAllowedStorageIds() + ". Check the active test actor's location grant.");
+        }
     }
 
     // --- Context accessors -------------------------------------------------

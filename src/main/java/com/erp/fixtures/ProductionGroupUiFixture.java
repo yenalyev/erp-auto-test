@@ -102,11 +102,11 @@ public class ProductionGroupUiFixture implements AutoCloseable {
 
     public List<StorageResponse> receiveLocations() {
         StorageResponse group = storages.createStorage(StorageDataFactory.externalStorage(target.getId(), "PGUI-input-group")
-                .type(com.erp.enums.UnitType.UNIT).productionGroup(true).build());
+                .productionGroup(true).build());
         StorageResponse member = storages.createStorage(StorageDataFactory.externalStorage(group.getId(), "PGUI-input-member")
-                .type(com.erp.enums.UnitType.UNIT).build());
+                .build());
         StorageResponse outside = storages.createStorage(StorageDataFactory.externalStorage(target.getId(), "PGUI-input-outside")
-                .type(com.erp.enums.UnitType.UNIT).build());
+                .build());
         return List.of(group, member, outside);
     }
     public long send(long orderId) {

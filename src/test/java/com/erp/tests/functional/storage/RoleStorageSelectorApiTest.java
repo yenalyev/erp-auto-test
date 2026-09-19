@@ -3,6 +3,7 @@ package com.erp.tests.functional.storage;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.enums.LocationFeature;
 import com.erp.models.response.StorageResponse;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import io.qameta.allure.*;
@@ -33,38 +34,36 @@ public class RoleStorageSelectorApiTest extends CrewApiTestBase {
     @Test(priority = 10)
     @TestCaseId("TC-ACC-API-001")
     @Description("""
-            ACCOUNTANT: GET /storages/names/my-units не містить локацій type=UNIT.
-            Очікуваний результат: лише STORAGE / PRODUCTION (операційні локації).
+            ACCOUNTANT: GET /storages/names/my-units не містить локацій з функцією ORDERS.
             """)
     @Severity(SeverityLevel.CRITICAL)
-    public void testAccountantMyUnitsExcludesUnitType() {
-        assertNoUnitTypeInMyUnits(UserRole.ACCOUNTANT);
+    public void testAccountantMyUnitsExcludesOrdersLocations() {
+        assertNoOrdersLocationsInMyUnits(UserRole.ACCOUNTANT);
     }
 
     @Test(priority = 20)
     @TestCaseId("TC-RVW-API-001")
     @Description("""
-            RESOURCE_VIEWER: GET /storages/names/my-units не містить локацій type=UNIT.
-            Очікуваний результат: лише STORAGE / PRODUCTION.
+            RESOURCE_VIEWER: GET /storages/names/my-units не містить локацій з функцією ORDERS.
             """)
     @Severity(SeverityLevel.CRITICAL)
-    public void testResourceViewerMyUnitsExcludesUnitType() {
-        assertNoUnitTypeInMyUnits(UserRole.RESOURCE_VIEWER);
+    public void testResourceViewerMyUnitsExcludesOrdersLocations() {
+        assertNoOrdersLocationsInMyUnits(UserRole.RESOURCE_VIEWER);
     }
 
-    private void assertNoUnitTypeInMyUnits(UserRole role) {
+    private void assertNoOrdersLocationsInMyUnits(UserRole role) {
         Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_MY_UNITS, role);
         assertThat(response.statusCode()).isEqualTo(200);
 
         List<StorageResponse> units = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
         assertThat(units).isNotEmpty();
 
-        List<StorageResponse> unitTypeLocations = units.stream()
-                .filter(s -> s.getType() != null && "UNIT".equalsIgnoreCase(s.getType()))
+        List<StorageResponse> ordersLocations = units.stream()
+                .filter(s -> s.getFeatures() != null && s.getFeatures().contains(LocationFeature.ORDERS))
                 .toList();
 
-        assertThat(unitTypeLocations)
-                .as("Роль %s не повинна бачити UNIT у my-units", role)
+        assertThat(ordersLocations)
+                .as("Роль %s не повинна бачити локації з ORDERS у my-units", role)
                 .isEmpty();
     }
 }

@@ -45,6 +45,11 @@ public class ProductionFixture extends BaseFixture {
 
     @Step("FIXTURE: Підготовка середовища для тестів виробництва")
     public void prepareContext() {
+        prepareContext(ConfigProvider.getOwner1StorageId());
+    }
+
+    /** Uses an isolated owner location while preserving the default setup for other suites. */
+    public void prepareContext(Long storageId) {
         if (testContext.get(ContextKey.PRODUCTION_TECH_MAP) != null) {
             return;
         }
@@ -54,7 +59,6 @@ public class ProductionFixture extends BaseFixture {
         resourceFixture.fetchSharedUnit(1);
         resourceFixture.fetchSharedResourceCategory();
 
-        Long storageId = ConfigProvider.getOwner1StorageId();
         String suffix = String.valueOf(System.currentTimeMillis());
         ResourceResponse input1 = resourceFixture.createUniqueResource("PRD-IN1-" + suffix);
         ResourceResponse input2 = resourceFixture.createUniqueResource("PRD-IN2-" + suffix);
