@@ -1,11 +1,14 @@
 package com.erp.tests.functional.resource_viewer;
 
+import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.ProductionFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
@@ -20,7 +23,6 @@ import com.erp.models.response.ResourceRelocationSumViewerResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -49,6 +51,7 @@ import static org.assertj.core.api.Assertions.within;
 @Slf4j
 @Epic("Resource Viewer")
 @Feature("BOM — alternative groups")
+@DynamicResourceViewer
 public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
 
     private static final double FIXED_AMOUNT = 1.0;
@@ -62,6 +65,7 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
     private ProductionFixture productionFixture;
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
+    private LocationProfileFixture locationProfileFixture;
 
     private Long productionStorageId;
     private Long receiverUnitId;
@@ -74,14 +78,18 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
         techMapFixture = productionFixture.getTechMapFixture();
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
 
         techMapFixture.prepareContext();
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
 
-        productionStorageId = ConfigProvider.getOwner1StorageId();
-        // Resource Viewer forces recipient UnitType.UNIT — owner2 storage may not be UNIT on env.
-        receiverUnitId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
+        productionStorageId = locationProfileFixture
+                .create(LocationProfile.TSUK_PRODUCTION, 1)
+                .locations().getFirst().getId();
+        receiverUnitId = locationProfileFixture
+                .create(LocationProfile.BATTALION_UNIT, 1)
+                .locations().getFirst().getId();
         techMapFixture.setMode(productionStorageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
         SchemaRegistry.logSchemaCoverage();
         log.info("RVW alt-group storages: production={}, receiverUnit={}",
@@ -92,11 +100,14 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
     public void teardown() {
         if (techMap != null && techMapFixture != null && productionStorageId != null) {
             try {
-                techMapFixture.deactivateTechMap(UserRole.OWNER_1, techMap.getId(), productionStorageId);
+                techMapFixture.deactivateTechMap(UserRole.ADMIN, techMap.getId(), productionStorageId);
             } catch (RuntimeException e) {
                 log.warn("Tech map deactivate failed: {}", e.getMessage());
             }
             techMapFixture.setMode(productionStorageId, StorageTechnologicalMapMode.READ_ONLY);
+        }
+        if (locationProfileFixture != null) {
+            locationProfileFixture.cleanup();
         }
     }
 

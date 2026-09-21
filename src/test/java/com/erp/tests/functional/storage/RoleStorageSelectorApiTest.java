@@ -1,5 +1,6 @@
 package com.erp.tests.functional.storage;
 
+import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("Authentication & Authorization")
 @Feature("Storages")
 @Story("My Units Selector")
+@DynamicResourceViewer
 public class RoleStorageSelectorApiTest extends CrewApiTestBase {
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupCrewApiBase")
@@ -44,11 +46,16 @@ public class RoleStorageSelectorApiTest extends CrewApiTestBase {
     @Test(priority = 20)
     @TestCaseId("TC-RVW-API-001")
     @Description("""
-            RESOURCE_VIEWER: GET /storages/names/my-units не містить локацій з функцією ORDERS.
+            Глобальна роль RESOURCE_VIEWER не має location grants і не використовує
+            GET /storages/names/my-units; endpoint повертає 403, а viewer працює через
+            глобальний доступ до власних endpoint-ів.
             """)
     @Severity(SeverityLevel.CRITICAL)
-    public void testResourceViewerMyUnitsExcludesOrdersLocations() {
-        assertNoOrdersLocationsInMyUnits(UserRole.RESOURCE_VIEWER);
+    public void testResourceViewerGlobalRoleDoesNotRequireMyUnitsAccess() {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_GET_MY_UNITS,
+                UserRole.RESOURCE_VIEWER);
+        assertThat(response.statusCode()).isEqualTo(403);
     }
 
     private void assertNoOrdersLocationsInMyUnits(UserRole role) {

@@ -24,6 +24,7 @@ import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -262,6 +263,47 @@ public class ProductionFixture extends BaseFixture {
         return created.getFirst();
     }
 
+    /**
+     * Creates a production record while overriding the recorded per-unit usage of selected fixed inputs.
+     * The technological map and alternative selections stay unchanged, so several records may legally
+     * report into the same product batch while retaining different factual expenses.
+     */
+    @Step("API: створити виробництво з фактичними витратами input, партія «{batchNumber}»")
+    public ManufacturingItemResponse createAsWithInputAmounts(
+            UserRole role,
+            Long storageId,
+            TechnologicalMapResponse techMap,
+            double amount,
+            String batchNumber,
+            Map<Long, Double> inputAmounts) {
+        var request = ProductionDataFactory.buildCreateRequest(
+                techMap, amount, java.time.LocalDate.now(), batchNumber);
+        var item = request.getItems().getFirst();
+        Map<Long, Double> unmatched = new LinkedHashMap<>(inputAmounts);
+        for (var input : item.getInputs()) {
+            Double override = unmatched.remove(input.getResourceId());
+            if (override != null) {
+                input.setAmount(BigDecimal.valueOf(override));
+            }
+        }
+        if (!unmatched.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Input overrides are not fixed inputs of tech map " + techMap.getId() + ": " + unmatched.keySet());
+        }
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_POST_CREATE,
+                role,
+                request,
+                String.valueOf(storageId));
+        validateSuccess(response, "Create production with input overrides, batch=" + batchNumber);
+        List<ManufacturingItemResponse> created = response.jsonPath()
+                .getList("", ManufacturingItemResponse.class);
+        if (created == null || created.isEmpty()) {
+            throw new IllegalStateException("Empty create production response");
+        }
+        return created.getFirst();
+    }
+
     @Step("API: оновити виробництво id={productionId} — новий обсяг {amount} од., партія «{batchNumber}»")
     public ManufacturingItemResponse updateAs(UserRole role,
                                               Long productionId,
@@ -372,7 +414,7 @@ public class ProductionFixture extends BaseFixture {
 
     @Step("API: Отримати залишок ресурсу {resourceId} на складі {storageId}")
     public double getResourceStock(Long storageId, Long resourceId) {
-        return ProductionStockAssertions.resourceStockExact(apiExecutor, storageId, UserRole.OWNER_1, resourceId);
+        return ProductionStockAssertions.resourceStockExact(apiExecutor, storageId, UserRole.ADMIN, resourceId);
     }
 
     private void topUpIfNeeded(Long storageId, Long resourceId, double minimum) {

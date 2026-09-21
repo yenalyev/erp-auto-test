@@ -6,6 +6,7 @@ import com.erp.data.BusinessRoleCatalog;
 import com.erp.data.factories.user.UserDataFactory;
 import com.erp.enums.BusinessRole;
 import com.erp.enums.UserRole;
+import com.erp.models.access.AccessScopeKind;
 import com.erp.models.access.GrantScopeKind;
 import com.erp.models.request.UserRequest;
 import com.erp.models.response.AccessGrantResponse;
@@ -163,6 +164,50 @@ public class UserFixture extends BaseFixture {
         return createBusinessActor(playwright, businessRole, storages, permissionKeys, true);
     }
 
+    /** Creates an actor whose access roles are global and therefore require no location grants. */
+    @Step("FIXTURE: створити глобального бізнес-актора {businessRole}")
+    public BusinessActor createGlobalBusinessActor(
+            PlaywrightSessionProvider playwright,
+            BusinessRole businessRole) {
+        if (playwright == null) {
+            throw new IllegalStateException("PlaywrightSessionProvider is required to bootstrap actor password");
+        }
+        BusinessRoleCatalog.Definition definition = BusinessRoleCatalog.definition(businessRole);
+        if (definition.accessRoles().isEmpty()) {
+            throw new IllegalStateException("Global business actor requires at least one access role: " + businessRole);
+        }
+        List<AccessRoleResponse> resolvedRoles = definition.accessRoles().stream()
+                .map(accessFixture::roleByName)
+                .toList();
+        List<String> nonGlobalRoles = resolvedRoles.stream()
+                .filter(role -> role.getScopeKind() != AccessScopeKind.GLOBAL)
+                .map(AccessRoleResponse::getName)
+                .toList();
+        if (!nonGlobalRoles.isEmpty()) {
+            throw new IllegalStateException(
+                    "Global business actor contains non-global access roles: " + nonGlobalRoles);
+        }
+
+        String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String username = "autotest-" + businessRole.name().toLowerCase().replace('_', '-') + "-" + suffix;
+        String permanentPassword = "Autotest1!" + suffix;
+        UserModelResponse created = createUserProfile(
+                username, "Autotest", businessRole.name(), playwright, permanentPassword);
+        trackForCleanup(created.getId());
+
+        accessFixture.ensureGrants(
+                created.getId(), definition.accessRoles(), definition.permissionKeys(), GrantScopeKind.ALL, null);
+        LinkedHashSet<String> expectedPermissionKeys = resolvedRoles.stream()
+                .flatMap(role -> Optional.ofNullable(role.getPermissionKeys()).orElse(List.of()).stream())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        expectedPermissionKeys.addAll(definition.permissionKeys());
+        assertBusinessActorAccess(
+                created.getId(), businessRole, definition.accessRoles(), List.of(), expectedPermissionKeys);
+        log.info("Created global business actor username={} businessRole={} accessRoles={}",
+                username, businessRole, definition.accessRoles());
+        return new BusinessActor(created.getId(), username, permanentPassword, businessRole, List.of());
+    }
+
     /**
      * Explicit escape hatch for permission-denied scenarios. Normal business actors must use
      * {@link #createBusinessActor(PlaywrightSessionProvider, BusinessRole, List)}.
@@ -231,6 +276,14 @@ public class UserFixture extends BaseFixture {
                 if (!accessFixture.hasEffectivePermission(userId, key, storage.getId())) {
                     throw new IllegalStateException("Business actor " + businessRole
                             + " lacks effective permission " + key + " at storage " + storage.getId());
+                }
+            }
+        }
+        if (storages.isEmpty()) {
+            for (String key : permissionKeys) {
+                if (!accessFixture.hasEffectivePermission(userId, key, null)) {
+                    throw new IllegalStateException("Global business actor " + businessRole
+                            + " lacks effective permission " + key);
                 }
             }
         }

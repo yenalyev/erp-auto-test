@@ -15,5 +15,7 @@ public enum BusinessRole {
     CREW_INVENTORY_OPERATOR,
     UNIT_KOMIRNIK,
     /** Order operator with location-head access on its assigned locations. */
-    ORDER_ADMIN
+    ORDER_ADMIN,
+    /** Global read-only actor for the Resource Viewer journal and export. */
+    RESOURCE_VIEWER
 }

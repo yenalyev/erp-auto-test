@@ -1,10 +1,13 @@
 package com.erp.tests.ui;
 
+import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.ProductionFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
@@ -23,6 +26,7 @@ import com.erp.utils.helpers.UiDownloadAssertions;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,11 +41,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * UI coverage for Resource Viewer (wolf) — sidebar smoke + journal search/sum.
+ * UI coverage for a dynamically created Resource Viewer — sidebar smoke + journal search/sum.
  */
 @Slf4j
 @Epic("Resource Viewer")
 @Feature("UI — Відстеження ресурсів")
+@DynamicResourceViewer
 public class ResourceViewerUiTest extends BaseUITest {
 
     private static final String SIDEBAR_LABEL = "Відстеження ресурсів";
@@ -54,9 +59,11 @@ public class ResourceViewerUiTest extends BaseUITest {
     private ProductionFixture productionFixture;
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
+    private LocationProfileFixture locationProfileFixture;
 
     private Long productionStorageId;
     private Long receiverUnitId;
+    private String receiverUnitName;
     private TechnologicalMapResponse techMap;
     private ResourceResponse alcohol;
     private ResourceResponse product;
@@ -71,17 +78,26 @@ public class ResourceViewerUiTest extends BaseUITest {
         techMapFixture = productionFixture.getTechMapFixture();
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
 
         techMapFixture.prepareContext();
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
 
-        productionStorageId = ConfigProvider.getOwner1StorageId();
-        receiverUnitId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
+        productionStorageId = locationProfileFixture
+                .create(LocationProfile.TSUK_PRODUCTION, 1)
+                .locations().getFirst().getId();
+        var receiver = locationProfileFixture
+                .create(LocationProfile.BATTALION_UNIT, 1)
+                .locations().getFirst();
+        receiverUnitId = receiver.getId();
+        receiverUnitName = receiver.getName();
         techMapFixture.setMode(productionStorageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
 
         String suffix = String.valueOf(System.currentTimeMillis());
-        alcohol = resourceFixture.createUniqueResource("UI-RVW-ALC-" + suffix);
+        alcohol = resourceFixture.createUniqueResource(
+                "UI-RVW-ALC-" + suffix,
+                resolveTrackingCategoryId());
         product = resourceFixture.createUniqueResource("UI-RVW-P-" + suffix);
 
         TechnologicalMapRequest request = TechnologicalMapDataFactory
@@ -106,7 +122,7 @@ public class ResourceViewerUiTest extends BaseUITest {
                 true);
         expectedAlcoholSum = RELOCATE_AMOUNT * ALC_PER_UNIT;
 
-        injectWolfSession();
+        injectResourceViewerSession();
         browserContext.addInitScript("localStorage.removeItem('resourceRelocationFilters');");
     }
 
@@ -114,7 +130,7 @@ public class ResourceViewerUiTest extends BaseUITest {
     public void teardown() {
         if (techMap != null && techMapFixture != null && productionStorageId != null) {
             try {
-                techMapFixture.deactivateTechMap(UserRole.OWNER_1, techMap.getId(), productionStorageId);
+                techMapFixture.deactivateTechMap(UserRole.ADMIN, techMap.getId(), productionStorageId);
             } catch (RuntimeException e) {
                 log.warn("Tech map deactivate failed: {}", e.getMessage());
             }
@@ -124,14 +140,17 @@ public class ResourceViewerUiTest extends BaseUITest {
                 log.warn("Restore READ_ONLY failed: {}", e.getMessage());
             }
         }
+        if (locationProfileFixture != null) {
+            locationProfileFixture.cleanup();
+        }
     }
 
     @Test(priority = 10)
     @TestCaseId("TC-UI-RVW-001")
-    @Story("Sidebar smoke for wolf")
+    @Story("Sidebar smoke for Resource Viewer")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            RESOURCE_VIEWER (wolf): у sidebar видимий пункт «Відстеження ресурсів»;
+            Динамічний RESOURCE_VIEWER: у sidebar видимий пункт «Відстеження ресурсів»;
             сторінка /resources-viewer/relocation відкривається з h1 журналу.
             """)
     public void resourceViewerSidebarAndPageOpen() {
@@ -148,10 +167,10 @@ public class ResourceViewerUiTest extends BaseUITest {
         viewer.attachScreenshot("TC-UI-RVW-001 — page loaded");
 
         AppSidebarPage sidebar = new AppSidebarPage(page);
-        Allure.step("Перевірити sidebar wolf", () -> {
+        Allure.step("Перевірити sidebar Resource Viewer", () -> {
             assertThat(sidebar.isSidebarVisible()).isTrue();
             assertThat(sidebar.isNavItemVisible(SIDEBAR_LABEL))
-                    .as("Wolf має бачити «Відстеження ресурсів»")
+                    .as("Resource Viewer має бачити «Відстеження ресурсів»")
                     .isTrue();
         });
     }
@@ -161,7 +180,7 @@ public class ResourceViewerUiTest extends BaseUITest {
     @Story("Search shows table and summary matching API")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Після вибору Alcohol + «Інші» + Шукати:
+            Після вибору Alcohol + конкретного зовнішнього отримувача + Шукати:
             картка «Сумарно переміщено» збігається з sums з GET /relocations;
             у таблиці видно назви Alcohol / Product.
             """)
@@ -175,7 +194,7 @@ public class ResourceViewerUiTest extends BaseUITest {
                     ResourceRelocationViewerPage pageObject = new ResourceRelocationViewerPage(page).open();
                     pageObject.clearFilters();
                     pageObject.selectResource(alcohol.getName());
-                    pageObject.enableOthersReceivers();
+                    pageObject.selectReceiver(receiverUnitName);
                     pageObject.search();
                     return pageObject;
                 });
@@ -206,12 +225,12 @@ public class ResourceViewerUiTest extends BaseUITest {
     @TestCaseId("TC-UI-RVW-003")
     @Story("Excel export uses current Resource Viewer filters")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Після пошуку за Компонентом Б та групою «Інші» UI завантажує непорожній XLSX для поточного результату")
+    @Description("Після пошуку за Компонентом Б і конкретним зовнішнім отримувачем UI завантажує непорожній XLSX")
     public void resourceViewerExportsCurrentFilteredResult() {
         ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open();
         viewer.clearFilters()
                 .selectResource(alcohol.getName())
-                .enableOthersReceivers()
+                .selectReceiver(receiverUnitName)
                 .search();
 
         ResourceRelocationViewerPage.ExportDownloadResult download = Allure.step(
@@ -221,15 +240,16 @@ public class ResourceViewerUiTest extends BaseUITest {
                 download.path(), download.sizeBytes(), "Resource Viewer Excel");
     }
 
-    private void injectWolfSession() {
-        log.info("Injecting RESOURCE_VIEWER (wolf) session for UI tests");
+    private void injectResourceViewerSession() {
+        var actor = dynamicResourceViewerActor();
+        log.info("Injecting dynamic RESOURCE_VIEWER session for UI tests: {}", actor.username());
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(
                 getPlaywrightSessionProvider().getSession(
-                        UserRole.RESOURCE_VIEWER.getUsername(),
-                        UserRole.RESOURCE_VIEWER.getPassword()),
+                        actor.username(),
+                        actor.password()),
                 domain);
     }
 
@@ -251,5 +271,33 @@ public class ResourceViewerUiTest extends BaseUITest {
                 .filter(a -> a != null)
                 .mapToDouble(BigDecimal::doubleValue)
                 .sum();
+    }
+
+    private Long resolveTrackingCategoryId() {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.APP_CONFIG_GET_ALL,
+                UserRole.ADMIN);
+        List<Map<String, Object>> entries = response.jsonPath().getList("");
+        if (entries != null) {
+            for (Map<String, Object> entry : entries) {
+                if (!"resource_tracking_categories".equals(entry.get("name"))) {
+                    continue;
+                }
+                Object value = entry.get("value");
+                if (!(value instanceof List<?> options)) {
+                    continue;
+                }
+                for (Object option : options) {
+                    if (!(option instanceof Map<?, ?> optionMap)) {
+                        continue;
+                    }
+                    Object values = optionMap.get("values");
+                    if (values instanceof List<?> ids && !ids.isEmpty() && ids.getFirst() != null) {
+                        return Long.parseLong(String.valueOf(ids.getFirst()));
+                    }
+                }
+            }
+        }
+        throw new SkipException("На env не налаштовано resource_tracking_categories для UI fixture");
     }
 }

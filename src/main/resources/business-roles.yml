@@ -19,3 +19,6 @@ businessRoles:
   ORDER_ADMIN:
     accessRoles:
       - "Замовлення: адміністратор"
+  RESOURCE_VIEWER:
+    accessRoles:
+      - "Відстеження ресурсів"

@@ -1,16 +1,19 @@
 package com.erp.tests.functional.resource_viewer;
 
+import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.models.response.ResourceResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -33,12 +36,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @Epic("Resource Viewer")
 @Feature("Export")
+@DynamicResourceViewer
 public class ResourceViewerExportApiTest extends BaseFunctionalTest {
 
     private static final double SEND_AMOUNT = 3.0;
 
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
+    private LocationProfileFixture locationProfileFixture;
     private Long productionStorageId;
     private Long receiverUnitId;
     private Long resourceId;
@@ -50,11 +55,16 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
     public void setupExportSuite() {
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
 
-        productionStorageId = ConfigProvider.getOwner1StorageId();
-        receiverUnitId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
+        productionStorageId = locationProfileFixture
+                .create(LocationProfile.TSUK_PRODUCTION, 1)
+                .locations().getFirst().getId();
+        receiverUnitId = locationProfileFixture
+                .create(LocationProfile.BATTALION_UNIT, 1)
+                .locations().getFirst().getId();
 
         ResourceResponse resource = resourceFixture.createUniqueResource("RVW-EXP-");
         resourceId = resource.getId();
@@ -69,6 +79,13 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
         relocationFixture.createSend(
                 UserRole.ADMIN, productionStorageId, receiverUnitId, unrelated.getId(), SEND_AMOUNT + 7.0);
         log.info("Export suite ready: resource={}, receiver={}", resourceId, receiverUnitId);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupLocations() {
+        if (locationProfileFixture != null) {
+            locationProfileFixture.cleanup();
+        }
     }
 
     @Test(priority = 10)

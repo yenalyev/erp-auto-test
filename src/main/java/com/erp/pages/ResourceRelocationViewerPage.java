@@ -22,6 +22,7 @@ public class ResourceRelocationViewerPage extends BasePage {
     private static final String PATH = "/resources-viewer/relocation";
     private static final String PAGE_TITLE = "Журнал переміщень ресурсів";
     private static final String CATEGORY_LABEL = "Категорії";
+    private static final String RECEIVER_FILTER_LABEL = "Отримувачі";
     private static final String RESOURCE_FILTER_LABEL = "Ресурси для відстеження";
     private static final String CLEAR_BUTTON_TEXT = "Очистити";
     private static final String SEARCH_PLACEHOLDER = "Пошук...";
@@ -73,13 +74,23 @@ public class ResourceRelocationViewerPage extends BasePage {
         resourceAutocompleteTrigger().click();
         Locator searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER).last();
         String searchToken = extractSearchPrefix(resourceName);
-        page.waitForResponse(
-                response -> response.url().contains("/resources/autocomplete")
-                        && response.status() == 200,
-                () -> searchInput.fill(searchToken));
+        searchInput.fill(searchToken);
         waitForAutocompleteOptionsSettled();
         popoverOptions()
                 .filter(new Locator.FilterOptions().setHasText(resourceName))
+                .first()
+                .click();
+        page.keyboard().press("Escape");
+        return this;
+    }
+
+    public ResourceRelocationViewerPage selectReceiver(String receiverName) {
+        receiverAutocompleteTrigger().click();
+        Locator searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER).last();
+        searchInput.fill(extractSearchPrefix(receiverName));
+        waitForAutocompleteOptionsSettled();
+        popoverOptions()
+                .filter(new Locator.FilterOptions().setHasText(receiverName))
                 .first()
                 .click();
         page.keyboard().press("Escape");
@@ -170,10 +181,7 @@ public class ResourceRelocationViewerPage extends BasePage {
     public List<String> searchResourcesAndCollectOptionNames(String searchToken) {
         resourceAutocompleteTrigger().click();
         Locator searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER).last();
-        page.waitForResponse(
-                response -> response.url().contains("/resources/autocomplete")
-                        && response.status() == 200,
-                () -> searchInput.fill(searchToken));
+        searchInput.fill(searchToken);
 
         waitForAutocompleteOptionsSettled();
         return readAutocompleteOptionNames();
@@ -231,6 +239,13 @@ public class ResourceRelocationViewerPage extends BasePage {
                 .first();
     }
 
+    private Locator receiverAutocompleteTrigger() {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText(RECEIVER_FILTER_LABEL))
+                .locator("xpath=following::button[@role='combobox'][1]")
+                .first();
+    }
+
     private Locator popoverOptions() {
         return page.locator(AUTOCOMPLETE_OPTION_SELECTOR);
     }
@@ -240,7 +255,7 @@ public class ResourceRelocationViewerPage extends BasePage {
     }
 
     private static String extractSearchPrefix(String resourceName) {
-        int underscore = resourceName.lastIndexOf('_');
+        int underscore = resourceName.indexOf('_');
         if (underscore > 0) {
             return resourceName.substring(0, underscore);
         }

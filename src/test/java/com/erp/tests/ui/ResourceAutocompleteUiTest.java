@@ -1,5 +1,6 @@
 package com.erp.tests.ui;
 
+import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("Master Data")
 @Feature("Resources")
 @Story("Autocomplete UI")
+@DynamicResourceViewer
 public class ResourceAutocompleteUiTest extends BaseUITest {
 
     private static final String SEARCH_PREFIX = "ui_ac_cat_";
@@ -59,14 +61,15 @@ public class ResourceAutocompleteUiTest extends BaseUITest {
         resourceInCategoryA = resourceFixture.createUniqueResource(SEARCH_PREFIX, pair.categoryA().getId());
         resourceInCategoryB = resourceFixture.createUniqueResource(SEARCH_PREFIX, pair.categoryB().getId());
 
-        log.info("Injecting RESOURCE_VIEWER session for autocomplete UI test");
+        var actor = dynamicResourceViewerActor();
+        log.info("Injecting dynamic RESOURCE_VIEWER session for autocomplete UI test: {}", actor.username());
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(
                 getPlaywrightSessionProvider().getSession(
-                        UserRole.RESOURCE_VIEWER.getUsername(),
-                        UserRole.RESOURCE_VIEWER.getPassword()),
+                        actor.username(),
+                        actor.password()),
                 domain);
         browserContext.addInitScript("localStorage.removeItem('resourceRelocationFilters');");
     }

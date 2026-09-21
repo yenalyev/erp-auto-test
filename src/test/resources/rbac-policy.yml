@@ -726,13 +726,13 @@ rules:
     allowedRoles: [ ADMIN, RESOURCE_VIEWER ]
     deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, ANONYMOUS ]
     bodyType: null
-    description: "Журнал+sums resource-viewer: тільки ADMIN і RESOURCE_VIEWER (wolf)"
+    description: "Журнал+sums resource-viewer: тільки ADMIN і глобальний RESOURCE_VIEWER"
 
   - endpointName: "RESOURCE_VIEWER_EXPORT"
     allowedRoles: [ ADMIN, RESOURCE_VIEWER ]
     deniedRoles: [ OWNER_1, OWNER_2, OWNER_3, ACCOUNTANT, ANONYMOUS ]
     bodyType: null
-    description: "Excel-експорт resource-viewer: тільки ADMIN і RESOURCE_VIEWER (wolf)"
+    description: "Excel-експорт resource-viewer: тільки ADMIN і глобальний RESOURCE_VIEWER"
 
   # ========================================
   # USER MANAGEMENT ENDPOINTS (admin-only)

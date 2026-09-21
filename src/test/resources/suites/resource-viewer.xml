@@ -19,7 +19,7 @@
         <classes>
             <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest">
                 <methods>
-                    <include name="testResourceViewerMyUnitsExcludesUnitType"/>
+                    <include name="testResourceViewerGlobalRoleDoesNotRequireMyUnitsAccess"/>
                 </methods>
             </class>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerRelocationSumTest"/>

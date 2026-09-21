@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Generate TCM import XLSX for Resource Viewer (wolf) — BOM decomposer + filters + UI.
+Generate TCM import XLSX for a dynamically created Resource Viewer — BOM decomposer + filters + UI.
 
 Covers:
   - existing automated TC-RVW-BOM-*, TC-RVW-ALT-*, TC-RVW-001, TC-RVW-API-001..003, TC-UI-RES-AC-001
-  - new automated TC-RVW-BOM-030..034, TC-RVW-API-010..018, TC-RVW-API-020, TC-UI-RVW-001/002
+  - new automated TC-RVW-BOM-030..035, TC-RVW-API-010..018, TC-RVW-API-020, TC-UI-RVW-001/002
 """
 from __future__ import annotations
 
@@ -23,10 +23,10 @@ FEAT_RVW_FLT = "REQ-RVW-FILTER"
 FEAT_RVW_UI = "REQ-RVW-UI"
 
 ROLE_RVW = "ResourceViewer"
-PRE_WOLF = "@ResourceViewer (wolf) залогінений. Середовище dev/staging."
+PRE_RVW = "Динамічний @ResourceViewer з глобальною роллю «Відстеження ресурсів» залогінений. Середовище dev/staging."
 PRE_ADMIN_BOM = (
-    f"{PRE_WOLF} @Admin підготував техкарти PRODUCTION + stock на OWNER_1 storage; "
-    "receiver = UNIT storage."
+    f"{PRE_RVW} @Admin підготував tech maps PRODUCTION і stock на дочірній локації "
+    "TSUK_PARENT_UNITS; receiver — локація поза TSUK_PARENT_UNITS."
 )
 
 
@@ -39,7 +39,7 @@ def mk(
     *,
     priority: str = "HIGH",
     severity: str = "MAJOR",
-    preconditions: str = PRE_WOLF,
+    preconditions: str = PRE_RVW,
     expected_result: str = "",
     tags: str = "resource-viewer,api",
     role_name: str = ROLE_RVW,
@@ -75,9 +75,9 @@ def features() -> list[tuple]:
          "RES", "CRITICAL", "1", "0"),
         (FEAT_RVW_BOM, FEAT_RVW, "Розрахунок компонентів продукту",
          "Для переміщеного продукту система визначає фактично використані компоненти за виробничими даними, "
-         "масштабує їх до кількості переміщення та проходить вкладені рецептури. Якщо виробничих фактів "
-         "немає і зовнішнє походження продукту не підтверджене, технологічна карта використовується як "
-         "резервне джерело; без технологічної карти продукт вважається атомарним.",
+         "масштабує їх до кількості переміщення та проходить вкладені рецептури. Кількість без виробничого "
+         "факту — зокрема підтверджена зовнішня або інвентаризаційна — розкладається за найновішою tech map, "
+         "що існувала на момент переміщення; без такої карти ресурс вважається атомарним.",
          "RES", "CRITICAL", "2", "0"),
         (FEAT_RVW_FLT, FEAT_RVW, "Фільтрація, журнал і підсумки",
          "Фільтри визначають ресурси спостереження, одержувачів, постачальника та період. "
@@ -103,12 +103,12 @@ def acceptance_criteria() -> list[tuple]:
          "Для продукту власного виробництва витрата кожного компонента визначається за фактичними "
          "виробничими даними та масштабується до кількості переміщення.", "1"),
         (FEAT_RVW_BOM, "AC-03",
-         "Якщо підтверджено, що готовий продукт отримано ззовні, він вважається атомарним: "
-         "система не розкладає його за внутрішньою технологічною картою та не зараховує її компоненти.", "2"),
+         "Якщо підтверджено, що готовий продукт отримано ззовні, система розкладає його за алгоритмом "
+         "інвентаризаційного залишку без партії; для alternative group використовується default-компонент.", "2"),
         (FEAT_RVW_BOM, "AC-04",
          "Якщо переміщення складається з виробленої та отриманої готовою кількості продукту, "
-         "система розкладає лише частину з підтвердженим власним виробництвом; отримана ззовні частина "
-         "залишається атомарною.", "3"),
+         "вироблена частина розкладається за фактичними даними виробництва, а отримана ззовні — "
+         "за алгоритмом інвентаризаційного залишку без партії.", "3"),
         (FEAT_RVW_BOM, "AC-05",
          "Система розкладає продукт щонайменше на три рівні вкладеності та множить норми "
          "використання на кожному рівні.", "4"),
@@ -124,19 +124,21 @@ def acceptance_criteria() -> list[tuple]:
          "незалежно від того, чи є він стандартним варіантом рецептури.", "8"),
         (FEAT_RVW_BOM, "AC-10",
          "Якщо одну партію створено кількома виробництвами з різними витратами, "
-         "система використовує зважену середню витрату компонента.", "9"),
+         "система використовує дані останнього запису виробництва.", "9"),
         (FEAT_RVW_BOM, "AC-11",
-         "Якщо для продукту немає партії та фактичних виробничих даних, а його зовнішнє походження "
-         "не підтверджене, система визначає склад за останньою активною технологічною картою. Якщо активної "
-         "карти немає, використовується остання наявна карта; якщо карт немає, продукт вважається атомарним.", "10"),
+         "Для інвентаризаційного залишку без підтвердженого походження система використовує найновішу "
+         "активну або архівну tech map, що вже існувала на момент переміщення; alternative group використовує default.", "10"),
         (FEAT_RVW_BOM, "AC-12",
-         "Під час fallback система вибирає найновішу карту за версією; якщо версії однакові — "
-         "за dateTime, а потім за id. Активні карти мають пріоритет над неактивними.", "11"),
+         "Створення нової карти, деактивація старої або зміна поточної активної карти після переміщення "
+         "не змінює історичний склад цього переміщення.", "11"),
         (FEAT_RVW_BOM, "AC-13",
-         "Циклічне посилання між рецептурами зупиняється без зациклення та повторного підрахунку компонента.", "12"),
+         "Циклічне посилання A-B-C-A зупиняється як A-B-C без зациклення та повторного підрахунку A.", "12"),
         (FEAT_RVW_BOM, "AC-14",
          "Якщо історичні дані партій перевищують фактичну кількість переміщення, "
          "витрата масштабується до кількості переміщення.", "13"),
+        (FEAT_RVW_BOM, "AC-15",
+         "Якщо на момент переміщення не існувало жодної tech map, ресурс залишається атомарним; "
+         "карта, створена пізніше, на нього не впливає.", "14"),
         (FEAT_RVW_FLT, "AC-01",
          "Категорія є самостійною ціллю відстеження: ресурси категорії шукаються як прямі "
          "переміщення та як компоненти продуктів без обов'язкового вибору окремих ресурсів.", "0"),
@@ -153,8 +155,8 @@ def acceptance_criteria() -> list[tuple]:
          "Excel-експорт містить результат за тими самими критеріями, що й журнал; "
          "для порожнього обов'язкового контексту тіло експорту порожнє.", "5"),
         (FEAT_RVW_FLT, "AC-07",
-         "До результату входять передачі зі складу або виробництва до підрозділу; "
-         "передачі між підрозділами, зокрема до екіпажу, виключаються.", "6"),
+         "До результату входять переміщення з дочірньої структури TSUK_PARENT_UNITS до структури, "
+         "яка не належить TSUK_PARENT_UNITS; передачі між підрозділами, зокрема до екіпажу, виключаються.", "6"),
         (FEAT_RVW_FLT, "AC-08",
          "Підсумки ресурсів сортуються за назвою за зростанням.", "7"),
         (FEAT_RVW_FLT, "AC-09",
@@ -184,7 +186,7 @@ def bom_cases() -> list[Case]:
            severity="CRITICAL", preconditions=PRE_ADMIN_BOM,
            steps=[
                ("Створити Alcohol; ensureStock; POST send STORAGE→UNIT", "relocationId"),
-               ("GET /resources-viewer/relocations/sum як wolf", "amount = sendAmount"),
+               ("GET /resources-viewer/relocations/sum як Resource Viewer", "amount = sendAmount"),
                ("GET journal", "рядок isProduct=false; totallyUsage = sendAmount"),
            ]),
         mk("TC-RVW-BOM-002", FEAT_RVW_BOM, "AC-02",
@@ -193,23 +195,25 @@ def bom_cases() -> list[Case]:
            severity="CRITICAL", preconditions=PRE_ADMIN_BOM,
            steps=[
                ("Tech map Product←Alcohol@2; produce; send batch isProduced=true", "setup"),
-               ("GET sum/journal як wolf", "Alcohol amount = relocate×2; isProduct=true"),
+               ("GET sum/journal як Resource Viewer", "Alcohol amount = relocate×2; isProduct=true"),
            ]),
         mk("TC-RVW-BOM-003", FEAT_RVW_BOM, "AC-03",
-           "BOM — external FG, tech map fallback",
-           "Партія без локального production → BOM з техкарти.",
+           "BOM — external FG за історичною tech map",
+           "Підтверджена зовнішня партія розкладається за найновішою tech map, яка існувала на момент переміщення; для alternative group береться default.",
            severity="CRITICAL", preconditions=PRE_ADMIN_BOM,
            steps=[
-               ("Tech map; seed external batch; send isProduced=false", "setup"),
-               ("GET journal/sum", "Alcohol = relocate × usage з tech map"),
+               ("Створити tech map з fixed input і default/non-default alternatives", "Tech map існує до переміщення"),
+               ("Seed external batch; send isProduced=false", "relocationId"),
+               ("GET journal/sum", "Fixed і default alternative розраховані; non-default = 0"),
            ]),
         mk("TC-RVW-BOM-004", FEAT_RVW_BOM, "AC-04",
-           "BOM — mixed produced + ready-made scale",
-           "Produce 5 + supplier 5 → relocate 10; sum = 10×usage (scale path).",
+           "BOM — mixed produced + external незалежні алгоритми",
+           "Produced-частина розкладається за фактичними inputs виробництва, external-частина — за історичною tech map з default alternative.",
            preconditions=PRE_ADMIN_BOM,
            steps=[
-               ("Produce 5 + seed 5; send 10 з двома партіями", "relocationId"),
-               ("GET sum", "Alcohol = 10 × usage"),
+               ("Produce 5 з non-default alternative; seed external 5", "Дві партії різного походження"),
+               ("Send 10 з produced=true та produced=false batches", "relocationId"),
+               ("GET journal/sum", "Produced використовує non-default; external використовує default; fixed враховано для всіх 10"),
            ]),
         mk("TC-RVW-BOM-010", FEAT_RVW_BOM, "AC-05",
            "BOM — depth 1",
@@ -258,12 +262,12 @@ def bom_cases() -> list[Case]:
                ("GET sum для default alt resource", "amount коректний"),
            ]),
         mk("TC-RVW-BOM-030", FEAT_RVW_BOM, "AC-10",
-           "BOM — blending двох production в один batch",
-           "Один batch number, різні рецепти → зважене середнє, не сума.",
+           "BOM — останнє production для shared batch",
+           "Один batch number і кілька production records з різними фактичними витратами → використовується останній запис.",
            severity="CRITICAL", preconditions=PRE_ADMIN_BOM,
            steps=[
-               ("Produce 4@usage2 + 6@usage4 з shared batch", "setup"),
-               ("Relocate 10; GET sum", "Alcohol = 32 (per-unit 3.2)"),
+               ("За однією tech map створити 4@usage2, потім 6@usage4 з shared batch", "Два валідні production records"),
+               ("Relocate 10; GET sum", "Alcohol = 40 за останнім usage4"),
            ]),
         mk("TC-RVW-BOM-031", FEAT_RVW_BOM, "AC-11",
            "BOM — item без партій → tech map",
@@ -275,19 +279,20 @@ def bom_cases() -> list[Case]:
            ]),
         mk("TC-RVW-BOM-032", FEAT_RVW_BOM, "AC-12",
            "BOM — версія техкарти на дату видачі (історична)",
-           "LocalDate=startOfDay UTC: дата до createdAt → MIN(id)=V1; дата після обох → newest V2.",
+           "Для інвентаризаційного залишку використовується найновіша карта, що вже існувала на момент переміщення; майбутня карта історію не змінює.",
            severity="CRITICAL", preconditions=PRE_ADMIN_BOM,
            steps=[
-               ("Дві техкарти V1@2 потім V2@5; external sends date=yesterday і tomorrow", "2 relocationId"),
-               ("GET journal", "past×2; future×5"),
+               ("Backdate V1@2 і V2@5; виконати переміщення між датами карт та після V2", "2 relocationId"),
+               ("GET journal", "Перше переміщення = amount×2; друге = amount×5"),
+               ("Деактивувати V1/V2, створити V3@9 після переміщень; повторити GET", "Обидва історичні склади не змінилися"),
            ]),
         mk("TC-RVW-BOM-033", FEAT_RVW_BOM, "AC-13",
            "BOM — цикл рецептів не infinite",
-           "A←B←A: expand зупиняється на path; B один раз.",
+           "A←B←C←A: expand повертає A-B-C, зупиняється перед повторним A і не дублює компоненти.",
            preconditions=PRE_ADMIN_BOM,
            steps=[
-               ("Дві циклічні tech maps; send A без production", "relocationId"),
-               ("GET journal resourceIds=[B]", "totallyUsage = amount; без дубля"),
+               ("Три циклічні tech maps; send A без production", "relocationId"),
+               ("GET journal resourceIds=[A,B,C]", "Ingredients містять A, B і C по одному разу; повторного A немає"),
            ]),
         mk("TC-RVW-BOM-034", FEAT_RVW_BOM, "AC-14",
            "BOM — scale-down (legacy producedQty > amount)",
@@ -297,6 +302,15 @@ def bom_cases() -> list[Case]:
            steps=[
                ("Produce+relocate Product; UPDATE amount вниз", "drift"),
                ("GET sum/journal Alcohol", "amount×usage; не повний producedQty×usage"),
+           ]),
+        mk("TC-RVW-BOM-035", FEAT_RVW_BOM, "AC-15",
+           "BOM — до першої tech map ресурс атомарний",
+           "Якщо на момент переміщення не існувало жодної tech map, пізніше створена карта не змінює історичний склад.",
+           severity="CRITICAL", preconditions=PRE_ADMIN_BOM,
+           steps=[
+               ("Створити inventory stock Product і перемістити його до появи tech map", "relocationId"),
+               ("Після переміщення створити tech map Product←Component", "Tech map створена пізніше"),
+               ("GET journal/sum", "Component відсутній; Product лишається атомарним, isProduct=false"),
            ]),
     ]
 
@@ -315,11 +329,11 @@ def filter_cases() -> list[Case]:
                 "До фіксу: sums=[]; після фіксу: 111→…→їжа, нулі"),
            ]),
         mk("TC-RVW-API-001", FEAT_RVW, "AC-01",
-           "API — my-units без UNIT для ResourceViewer",
-           "Селектор my-units: лише STORAGE/PRODUCTION.",
+           "API — глобальному ResourceViewer не потрібен my-units",
+           "Глобальна роль не має location grants; /my-units недоступний, viewer endpoints доступні.",
            severity="CRITICAL", tags="resource-viewer,api,my-units",
            steps=[
-               ("GET /storages/names/my-units як wolf", "HTTP 200"),
+               ("GET /storages/names/my-units як Resource Viewer", "HTTP 403 без location grants"),
                ("Жоден type=UNIT", "OK"),
            ]),
         mk("TC-RVW-API-002", FEAT_RVW_FLT, "AC-07",
@@ -328,7 +342,7 @@ def filter_cases() -> list[Case]:
            severity="CRITICAL",
            steps=[
                ("ADMIN: send STORAGE/PRODUCTION→UNIT і UNIT→UNIT", "2 relocationId"),
-               ("GET /resources-viewer/relocations як wolf (receiverIds=UNIT)", "HTTP 200"),
+               ("GET /resources-viewer/relocations як Resource Viewer (receiverIds=UNIT)", "HTTP 200"),
                ("Перевірити content", "Є STORAGE/PRODUCTION→UNIT; немає UNIT→UNIT"),
            ]),
         mk("TC-RVW-API-003", FEAT_RVW_FLT, "AC-07",
@@ -336,7 +350,7 @@ def filter_cases() -> list[Case]:
            "UNIT→CREW не в sums з GET /relocations.",
            steps=[
                ("Send UNIT→CREW tracked resource (ADMIN arrange)", "relocation"),
-               ("GET /relocations як wolf → sums", "amount=0"),
+               ("GET /relocations як Resource Viewer → sums", "amount=0"),
            ]),
         mk("TC-RVW-API-010", FEAT_RVW_FLT, "AC-01",
            "API — categoryIds як tracking target",
@@ -442,11 +456,11 @@ def ui_cases() -> list[Case]:
                ("Очистити; пошук знову", "є A і B"),
            ]),
         mk("TC-UI-RVW-001", FEAT_RVW_UI, "AC-01",
-           "UI — wolf sidebar «Відстеження ресурсів»",
-           "Після логіну wolf бачить пункт sidebar і відкриває журнал.",
+           "UI — Resource Viewer sidebar «Відстеження ресурсів»",
+           "Після логіну динамічний Resource Viewer бачить пункт sidebar і відкриває журнал.",
            severity="CRITICAL", tags="resource-viewer,ui,smoke", layer="UI",
            steps=[
-               ("Увійти як wolf", "SPA завантажено"),
+               ("Увійти як динамічний Resource Viewer", "SPA завантажено"),
                ("Перевірити sidebar: «Відстеження ресурсів» видимий", "link visible"),
                ("Відкрити /resources-viewer/relocation", "h1 «Журнал переміщень ресурсів»"),
            ]),
@@ -456,7 +470,7 @@ def ui_cases() -> list[Case]:
            severity="CRITICAL", tags="resource-viewer,ui", layer="UI",
            preconditions=PRE_ADMIN_BOM + " Видано Product зі Alcohol (self-produced).",
            steps=[
-               ("Відкрити viewer; обрати Alcohol; увімкнути «Інші»; Шукати", "Дані завантажені"),
+               ("Відкрити viewer; обрати Alcohol і конкретного зовнішнього отримувача; Шукати", "Дані завантажені"),
                ("Перевірити «Сумарно переміщено»", "amount ≈ API sum"),
                ("Перевірити таблицю", "є product і ingredient рядки для Alcohol"),
            ]),

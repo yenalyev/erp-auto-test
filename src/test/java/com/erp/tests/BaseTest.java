@@ -3,8 +3,12 @@ package com.erp.tests;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.clients.SessionClient;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.annotations.DynamicResourceViewer;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.GlobalBusinessActorScope;
 import com.erp.fixtures.TestArtifactCleanup;
+import com.erp.fixtures.UserFixture;
 import com.erp.services.CleanupService;
 import com.erp.test_context.GlobalTestContext;
 import com.erp.test_context.TestContext;
@@ -45,6 +49,7 @@ public abstract class BaseTest {
     protected static AuthService authService;
     protected static CleanupService cleanupService;
     protected static DatabaseHelper dbHelper;
+    private GlobalBusinessActorScope dynamicResourceViewerScope;
 
     private static String baseUrl;
     private static String authToken;
@@ -180,13 +185,38 @@ public abstract class BaseTest {
 
         // 2. Ініціалізуємо Executor саме з цим контекстом
         this.apiExecutor = new ApiExecutor(sessionClient, authService);
+
+        if (getClass().isAnnotationPresent(DynamicResourceViewer.class)) {
+            dynamicResourceViewerScope = new GlobalBusinessActorScope(
+                    testContext, apiExecutor, getPlaywrightSessionProvider());
+            try {
+                dynamicResourceViewerScope.acquire(
+                        UserRole.RESOURCE_VIEWER, BusinessRole.RESOURCE_VIEWER);
+            } catch (RuntimeException e) {
+                dynamicResourceViewerScope.release();
+                dynamicResourceViewerScope = null;
+                throw e;
+            }
+        }
     }
 
 
 
     @AfterClass(alwaysRun = true)
     public void classTeardown() {
+        if (dynamicResourceViewerScope != null) {
+            dynamicResourceViewerScope.release();
+            dynamicResourceViewerScope = null;
+        }
         log.info("🧹 Cleaning up test class: {}", this.getClass().getSimpleName());
+    }
+
+    protected UserFixture.BusinessActor dynamicResourceViewerActor() {
+        if (dynamicResourceViewerScope == null) {
+            throw new IllegalStateException(
+                    "Test class must be annotated with @DynamicResourceViewer");
+        }
+        return dynamicResourceViewerScope.actor();
     }
 
     @BeforeMethod(alwaysRun = true)

@@ -1,19 +1,22 @@
 package com.erp.tests.functional.resource_viewer;
 
+import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.models.response.PagedResourceRelocationViewerResponse;
 import com.erp.models.response.ResourceRelocationSumViewerResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -27,10 +30,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @Epic("Resource Viewer")
 @Feature("Relocation resources sum")
+@DynamicResourceViewer
 public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
 
     private ResourceFixture resourceFixture;
     private RelocationFixture relocationFixture;
+    private LocationProfileFixture locationProfileFixture;
     private Long unitReceiverId;
     private Long sourceStorageId;
 
@@ -41,10 +46,22 @@ public class ResourceViewerRelocationSumTest extends BaseFunctionalTest {
         }
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
+        locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
-        unitReceiverId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
-        sourceStorageId = ConfigProvider.getOwner1StorageId();
+        sourceStorageId = locationProfileFixture
+                .create(LocationProfile.TSUK_WARENHAUSE, 1)
+                .locations().getFirst().getId();
+        unitReceiverId = locationProfileFixture
+                .create(LocationProfile.BATTALION_UNIT, 1)
+                .locations().getFirst().getId();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupLocations() {
+        if (locationProfileFixture != null) {
+            locationProfileFixture.cleanup();
+        }
     }
 
     @Test(priority = 1)

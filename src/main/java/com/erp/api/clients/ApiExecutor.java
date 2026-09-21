@@ -141,6 +141,16 @@ public class ApiExecutor {
         roleSessionCache.put(role, authService.getSessionForUser(username, password));
     }
 
+    /** Removes an ephemeral credential override so subsequent calls use the configured role user again. */
+    public void restoreDefaultSessionForRole(UserRole role) {
+        RoleCredentials overridden = roleCredentials.remove(role);
+        roleSessionCache.remove(role);
+        if (overridden != null) {
+            authService.invalidateSession(overridden.username(), overridden.password());
+            log.info("🔐 Restored configured credentials for role {}", role);
+        }
+    }
+
     public void evictSessionForRole(UserRole role) {
         RoleCredentials creds = credentialsFor(role);
         roleSessionCache.remove(role);

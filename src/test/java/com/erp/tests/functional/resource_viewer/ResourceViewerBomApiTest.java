@@ -1,11 +1,15 @@
 package com.erp.tests.functional.resource_viewer;
 
+import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.ProductionFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
@@ -21,7 +25,6 @@ import com.erp.models.response.ResourceRelocationViewerResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -56,6 +59,7 @@ import static org.assertj.core.api.Assertions.within;
 @Slf4j
 @Epic("Resource Viewer")
 @Feature("BOM decomposer")
+@DynamicResourceViewer
 public class ResourceViewerBomApiTest extends BaseFunctionalTest {
 
     private static final double ALC_PER_UNIT = 2.0;
@@ -71,6 +75,7 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
     private InventoryFixture inventoryFixture;
+    private LocationProfileFixture locationProfileFixture;
 
     private Long productionStorageId;
     private Long receiverUnitId;
@@ -85,25 +90,30 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         inventoryFixture = new InventoryFixture(testContext, apiExecutor);
+        locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
 
         techMapFixture.prepareContext();
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
         inventoryFixture.prepareContext();
 
-        productionStorageId = ConfigProvider.getOwner1StorageId();
-        // Resource Viewer forces recipient UnitType.UNIT — owner2 storage may not be UNIT on env.
-        receiverUnitId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
+        productionStorageId = locationProfileFixture
+                .create(LocationProfile.TSUK_PRODUCTION, 1)
+                .locations().getFirst().getId();
+        receiverUnitId = locationProfileFixture
+                .create(LocationProfile.BATTALION_UNIT, 1)
+                .locations().getFirst().getId();
         techMapFixture.setMode(productionStorageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
         SchemaRegistry.logSchemaCoverage();
-        log.info("BOM suite storages: production={}, receiverUnit={}", productionStorageId, receiverUnitId);
+        log.info("BOM suite route: TSUK child production={} -> outside UNIT={}",
+                productionStorageId, receiverUnitId);
     }
 
     @AfterClass(alwaysRun = true)
     public void teardown() {
         for (TechnologicalMapResponse map : createdMaps) {
             try {
-                techMapFixture.deactivateTechMap(UserRole.OWNER_1, map.getId(), productionStorageId);
+                techMapFixture.deactivateTechMap(UserRole.ADMIN, map.getId(), productionStorageId);
             } catch (RuntimeException e) {
                 log.warn("Tech map deactivate failed id={}: {}", map.getId(), e.getMessage());
             }
@@ -115,6 +125,9 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 log.warn("Restore READ_ONLY mode failed for storage {}: {}",
                         productionStorageId, e.getMessage());
             }
+        }
+        if (locationProfileFixture != null) {
+            locationProfileFixture.cleanup();
         }
     }
 
@@ -176,18 +189,17 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
 
     @Test(priority = 30)
     @TestCaseId("TC-RVW-BOM-003")
-    @Story("External finished good remains atomic")
+    @Story("External finished good uses the historical tech-map fallback")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Зовнішній Product списується за FIFO без явного вибору партії і не розкладається за внутрішньою техкартою")
-    public void testExternalFinishedGoodRemainsAtomic() {
+    @Description("Підтверджена зовнішня партія розкладається за найновішою картою на момент переміщення; alternative group використовує default")
+    public void testExternalFinishedGoodUsesHistoricalTechMapFallback() {
         String suffix = uniqueSuffix();
-        ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-X-" + suffix);
+        ResourceResponse fixed = resourceFixture.createUniqueResource("RVW-FIX-X-" + suffix);
+        ResourceResponse defaultAlt = resourceFixture.createUniqueResource("RVW-DEF-X-" + suffix);
+        ResourceResponse otherAlt = resourceFixture.createUniqueResource("RVW-OTH-X-" + suffix);
         ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-X-" + suffix);
 
-        createMap(
-                "RVW-BOM-EXT",
-                List.of(new ResourceUsageRequest(alcohol.getId(), ALC_PER_UNIT)),
-                List.of(new ResourceUsageRequest(product.getId(), 1.0)));
+        createMapWithAlternativeGroup("RVW-BOM-EXT", fixed, defaultAlt, otherAlt, product);
 
         String externalBatch = "EXT-BOM-" + suffix;
         double receivedAmount = 10.0;
@@ -195,14 +207,15 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         relocationFixture.seedBatchOnStorage(
                 productionStorageId, product.getId(), receivedAmount, externalBatch);
 
-        RelocationResponse sent = relocationFixture.createSend(
-                UserRole.ADMIN, productionStorageId, receiverUnitId, product.getId(), movedAmount);
+        RelocationResponse sent = relocationFixture.createSendWithBatch(
+                UserRole.ADMIN, productionStorageId, receiverUnitId, product.getId(), movedAmount,
+                externalBatch, false);
 
-        assertThat(fetchJournal(List.of(alcohol.getId())).stream()
-                .map(ResourceRelocationViewerResponse::getRelocationId))
-                .as("зовнішній Product не повинен знаходитися через внутрішній компонент")
-                .doesNotContain(sent.getId());
-        assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(), 0.0);
+        List<ResourceRelocationSumViewerResponse> sums = fetchSums(
+                List.of(fixed.getId(), defaultAlt.getId(), otherAlt.getId()));
+        assertAmount(sums, fixed.getId(), movedAmount);
+        assertAmount(sums, defaultAlt.getId(), movedAmount * 2.0);
+        assertAmount(sums, otherAlt.getId(), 0.0);
 
         List<ResourceRelocationViewerResponse> productRows = rowsForRelocation(
                 fetchJournal(List.of(product.getId())), sent.getId());
@@ -210,25 +223,34 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         ResourceRelocationViewerResponse productRow = productRows.getFirst();
         assertThat(productRow.getProduct().getId()).isEqualTo(product.getId());
         assertThat(productRow.getAmount().doubleValue()).isCloseTo(movedAmount, within(0.001));
-        assertThat(productRow.getIsProduct()).as("зовнішній готовий продукт є атомарним").isFalse();
+        assertThat(productRow.getIsProduct())
+                .as("рядок кореневого ресурсу не є ingredient/product decomposition row")
+                .isFalse();
     }
 
     @Test(priority = 40)
     @TestCaseId("TC-RVW-BOM-004")
     @Story("Mixed produced and external origin")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Produce 5 + supplier 5 → relocate 10; розкладається лише вироблена частина")
-    public void testMixedProducedAndExternalProductExplodesOnlyProducedPart() {
+    @Description("Produced-частина використовує фактичну alternative, зовнішня — default alternative історичної карти")
+    public void testMixedProducedAndExternalProductUseIndependentAlgorithms() {
         String suffix = uniqueSuffix();
-        ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-M-" + suffix);
+        ResourceResponse fixed = resourceFixture.createUniqueResource("RVW-FIX-M-" + suffix);
+        ResourceResponse defaultAlt = resourceFixture.createUniqueResource("RVW-DEF-M-" + suffix);
+        ResourceResponse otherAlt = resourceFixture.createUniqueResource("RVW-OTH-M-" + suffix);
         ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-M-" + suffix);
 
-        TechnologicalMapResponse map = createMap(
-                "RVW-BOM-MIX",
-                List.of(new ResourceUsageRequest(alcohol.getId(), ALC_PER_UNIT)),
-                List.of(new ResourceUsageRequest(product.getId(), 1.0)));
+        TechnologicalMapResponse map = createMapWithAlternativeGroup(
+                "RVW-BOM-MIX", fixed, defaultAlt, otherAlt, product);
 
-        ManufacturingItemResponse produced = produce(map, PRODUCE_AMOUNT);
+        productionFixture.ensureStockForTechMapInputs(productionStorageId, map, STOCK_PAD);
+        Long groupId = map.getGroups().getFirst().getId();
+        ManufacturingItemResponse produced = productionFixture.createAsWithAlternatives(
+                UserRole.ADMIN,
+                productionStorageId,
+                map,
+                PRODUCE_AMOUNT,
+                ProductionDataFactory.alternativeInputsChoosing(map, groupId, otherAlt.getId()));
         String externalBatch = "EXT-" + suffix;
         relocationFixture.seedBatchOnStorage(
                 productionStorageId, product.getId(), RELOCATE_AMOUNT, externalBatch);
@@ -252,14 +274,21 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                                 .isProduced(false)
                                 .build()));
 
-        double expected = PRODUCE_AMOUNT * ALC_PER_UNIT;
-        assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(), expected);
+        List<ResourceRelocationSumViewerResponse> sums = fetchSums(
+                List.of(fixed.getId(), defaultAlt.getId(), otherAlt.getId()));
+        assertAmount(sums, fixed.getId(), relocateTotal);
+        assertAmount(sums, defaultAlt.getId(), RELOCATE_AMOUNT * 2.0);
+        assertAmount(sums, otherAlt.getId(), PRODUCE_AMOUNT * 3.0);
 
         List<ResourceRelocationViewerResponse> componentRows = rowsForRelocation(
-                fetchJournal(List.of(alcohol.getId())), sent.getId());
+                fetchJournal(List.of(fixed.getId(), defaultAlt.getId(), otherAlt.getId())), sent.getId());
         assertThat(componentRows).hasSize(1);
         ResourceRelocationViewerResponse row = componentRows.getFirst();
-        assertThat(totallyUsageOf(row, alcohol.getId())).isCloseTo(expected, within(0.001));
+        assertThat(totallyUsageOf(row, fixed.getId())).isCloseTo(relocateTotal, within(0.001));
+        assertThat(totallyUsageOf(row, defaultAlt.getId()))
+                .isCloseTo(RELOCATE_AMOUNT * 2.0, within(0.001));
+        assertThat(totallyUsageOf(row, otherAlt.getId()))
+                .isCloseTo(PRODUCE_AMOUNT * 3.0, within(0.001));
 
         List<ResourceRelocationViewerResponse> productRows = rowsForRelocation(
                 fetchJournal(List.of(product.getId())), sent.getId());
@@ -433,38 +462,38 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
 
     @Test(priority = 110)
     @TestCaseId("TC-RVW-BOM-030")
-    @Story("Blend multiple productions into one batch")
+    @Story("Latest production record wins for a shared batch")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Два виробництва одного Product з однаковим batch number і різними рецептами
-            (Alcohol@2 на 4 од. + Alcohol@4 на 6 од.) → per-unit = зважене середнє 3.2,
-            не сума рецептів. sum = relocate × 3.2.
+            Два записи виробництва одного Product за тією самою техкартою і з однаковим batch number,
+            але різними фактичними витратами Alcohol@2 та Alcohol@4.
+            Декомпозер використовує лише останній запис: sum = relocate × 4.
             """)
-    public void testBlendedBatchRecipesWeightedAverage() {
+    public void testSharedBatchUsesLatestProductionRecord() {
         String suffix = uniqueSuffix();
         ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-BL-" + suffix);
         ResourceResponse product = resourceFixture.createUniqueResource("RVW-P-BL-" + suffix);
 
-        TechnologicalMapResponse mapLow = createMap(
-                "RVW-BOM-BL-LO",
+        TechnologicalMapResponse map = createMap(
+                "RVW-BOM-BL",
                 List.of(new ResourceUsageRequest(alcohol.getId(), 2.0)),
                 List.of(new ResourceUsageRequest(product.getId(), 1.0)));
-        TechnologicalMapResponse mapHigh = createMap(
-                "RVW-BOM-BL-HI",
-                List.of(new ResourceUsageRequest(alcohol.getId(), 4.0)),
-                List.of(new ResourceUsageRequest(product.getId(), 1.0)));
 
-        String sharedBatch = "BL-" + java.time.LocalDate.now();
+        String sharedBatch = "BL-" + suffix;
         double qtyLow = 4.0;
         double qtyHigh = 6.0;
-        produceWithBatch(mapLow, qtyLow, sharedBatch);
-        produceWithBatch(mapHigh, qtyHigh, sharedBatch);
+        productionFixture.ensureStockForTechMapInputs(productionStorageId, map, STOCK_PAD);
+        productionFixture.createAsWithInputAmounts(
+                UserRole.ADMIN, productionStorageId, map, qtyLow, sharedBatch,
+                Map.of(alcohol.getId(), 2.0));
+        productionFixture.createAsWithInputAmounts(
+                UserRole.ADMIN, productionStorageId, map, qtyHigh, sharedBatch,
+                Map.of(alcohol.getId(), 4.0));
 
         double relocateTotal = qtyLow + qtyHigh;
         RelocationResponse sent = relocateProduced(product.getId(), relocateTotal, sharedBatch);
 
-        double expectedPerUnit = (qtyLow * 2.0 + qtyHigh * 4.0) / relocateTotal; // 3.2
-        double expected = relocateTotal * expectedPerUnit;
+        double expected = relocateTotal * 4.0;
         assertAmount(fetchSums(List.of(alcohol.getId())), alcohol.getId(), expected);
 
         ResourceRelocationViewerResponse row = findByRelocationId(
@@ -554,6 +583,8 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 .as("друге переміщення використовує V2")
                 .isCloseTo(movedAmount * 5.0, within(0.001));
 
+        techMapFixture.deactivateTechMap(UserRole.ADMIN, mapV1.getId(), productionStorageId);
+        techMapFixture.deactivateTechMap(UserRole.ADMIN, mapV2.getId(), productionStorageId);
         createMap(
                 "RVW-BOM-DT-V3",
                 List.of(new ResourceUsageRequest(alcohol.getId(), 9.0)),
@@ -562,8 +593,10 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         afterNewMap.put("end", secondMovementDate.plusDays(2).toString());
         List<ResourceRelocationViewerResponse> unchangedRows = fetchJournalWithParams(afterNewMap);
         assertThat(totallyUsageOf(findByRelocationId(unchangedRows, sentV1.getId()), alcohol.getId()))
+                .as("архівація V1/V2 і створення V3 не змінюють перше історичне переміщення")
                 .isCloseTo(movedAmount * 2.0, within(0.001));
         assertThat(totallyUsageOf(findByRelocationId(unchangedRows, sentV2.getId()), alcohol.getId()))
+                .as("архівація V1/V2 і створення V3 не змінюють друге історичне переміщення")
                 .isCloseTo(movedAmount * 5.0, within(0.001));
     }
 
@@ -608,13 +641,14 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
     @Story("Recipe cycle does not hang or double-count")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Цикл техкарт A←B←A: видача A без production → expand зупиняється на path,
-            ingredient B враховується один раз (не infinite / не дубль).
+            Цикл техкарт A←B←C←A: видача A без production → expand повертає A-B-C,
+            зупиняється перед повторним A та не дублює жоден компонент.
             """)
     public void testRecipeCycleDoesNotInfiniteExpand() {
         String suffix = uniqueSuffix();
         ResourceResponse resourceA = resourceFixture.createUniqueResource("RVW-CYC-A-" + suffix);
         ResourceResponse resourceB = resourceFixture.createUniqueResource("RVW-CYC-B-" + suffix);
+        ResourceResponse resourceC = resourceFixture.createUniqueResource("RVW-CYC-C-" + suffix);
 
         createMap(
                 "RVW-BOM-CYC-A",
@@ -622,20 +656,39 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 List.of(new ResourceUsageRequest(resourceA.getId(), 1.0)));
         createMap(
                 "RVW-BOM-CYC-B",
-                List.of(new ResourceUsageRequest(resourceA.getId(), 1.0)),
+                List.of(new ResourceUsageRequest(resourceC.getId(), 1.0)),
                 List.of(new ResourceUsageRequest(resourceB.getId(), 1.0)));
+        createMap(
+                "RVW-BOM-CYC-C",
+                List.of(new ResourceUsageRequest(resourceA.getId(), 1.0)),
+                List.of(new ResourceUsageRequest(resourceC.getId(), 1.0)));
 
         relocationFixture.ensureStock(productionStorageId, resourceA.getId(), STOCK_PAD, UserRole.ADMIN);
         RelocationResponse sent = relocationFixture.createSend(
                 UserRole.ADMIN, productionStorageId, receiverUnitId, resourceA.getId(), RELOCATE_AMOUNT);
 
-        List<ResourceRelocationViewerResponse> rows = fetchJournal(List.of(resourceB.getId()));
+        List<ResourceRelocationViewerResponse> rows = fetchJournal(
+                List.of(resourceA.getId(), resourceB.getId(), resourceC.getId()));
         ResourceRelocationViewerResponse row = findByRelocationId(rows, sent.getId());
         assertThat(row.getIsProduct()).isTrue();
+        assertThat(row.getIngredients())
+                .extracting(ResourceRelocationViewerResponse.ResourceIngredientResponse::getResourceId)
+                .as("цикл A-B-C-A повертає A-B-C по одному разу")
+                .containsExactlyInAnyOrder(resourceA.getId(), resourceB.getId(), resourceC.getId());
         assertThat(totallyUsageOf(row, resourceB.getId()))
                 .as("B з'являється один раз з usage=1 × amount")
                 .isCloseTo(RELOCATE_AMOUNT, within(0.001));
-        assertAmount(fetchSums(List.of(resourceB.getId())), resourceB.getId(), RELOCATE_AMOUNT);
+        assertThat(totallyUsageOf(row, resourceC.getId()))
+                .as("C з'являється один раз з usage=1 × amount")
+                .isCloseTo(RELOCATE_AMOUNT, within(0.001));
+        assertThat(totallyUsageOf(row, resourceA.getId()))
+                .as("кореневий A присутній у циклі один раз")
+                .isCloseTo(RELOCATE_AMOUNT, within(0.001));
+        List<ResourceRelocationSumViewerResponse> sums = fetchSums(
+                List.of(resourceA.getId(), resourceB.getId(), resourceC.getId()));
+        assertAmount(sums, resourceA.getId(), RELOCATE_AMOUNT * 2.0);
+        assertAmount(sums, resourceB.getId(), RELOCATE_AMOUNT);
+        assertAmount(sums, resourceC.getId(), RELOCATE_AMOUNT);
     }
 
     // ───────────────────────────── Helpers ─────────────────────────────
@@ -654,6 +707,31 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         return map;
     }
 
+    private TechnologicalMapResponse createMapWithAlternativeGroup(
+            String namePrefix,
+            ResourceResponse fixed,
+            ResourceResponse defaultAlt,
+            ResourceResponse otherAlt,
+            ResourceResponse product) {
+        var group = TechnologicalMapDataFactory.alternativeGroup(
+                namePrefix + "-ALT",
+                TechnologicalMapDataFactory.alternativeResource(defaultAlt.getId(), 2.0, true),
+                TechnologicalMapDataFactory.alternativeResource(otherAlt.getId(), 3.0, false));
+        TechnologicalMapRequest request = TechnologicalMapDataFactory
+                .createProductionMapWithStorages(
+                        namePrefix,
+                        List.of(new ResourceUsageRequest(fixed.getId(), 1.0)),
+                        List.of(new ResourceUsageRequest(product.getId(), 1.0)),
+                        Set.of(productionStorageId))
+                .groups(List.of(group))
+                .build();
+        TechnologicalMapResponse map = Allure.step(
+                "Створити техкарту " + namePrefix + " з default alternative",
+                () -> techMapFixture.createTechMapWithRequest(UserRole.ADMIN, request));
+        createdMaps.add(map);
+        return map;
+    }
+
     private ManufacturingItemResponse produce(TechnologicalMapResponse map, double amount) {
         return Allure.step("Виробництво " + amount + " за TM " + map.getId(), () -> {
             productionFixture.ensureStockForTechMapInputs(productionStorageId, map, STOCK_PAD);
@@ -661,15 +739,6 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                     UserRole.ADMIN, productionStorageId, map, amount);
             assertThat(created.getBatchNumber()).isNotBlank();
             return created;
-        });
-    }
-
-    private ManufacturingItemResponse produceWithBatch(
-            TechnologicalMapResponse map, double amount, String batchNumber) {
-        return Allure.step("Виробництво " + amount + " партія " + batchNumber, () -> {
-            productionFixture.ensureStockForTechMapInputs(productionStorageId, map, STOCK_PAD);
-            return productionFixture.createAs(
-                    UserRole.ADMIN, productionStorageId, map, amount, batchNumber);
         });
     }
 

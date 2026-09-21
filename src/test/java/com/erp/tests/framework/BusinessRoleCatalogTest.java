@@ -71,6 +71,15 @@ public class BusinessRoleCatalogTest {
     }
 
     @Test
+    public void resourceViewerMappingUsesGlobalTrackerRoleOnly() {
+        BusinessRoleCatalog.Definition definition =
+                BusinessRoleCatalog.definition(BusinessRole.RESOURCE_VIEWER);
+
+        assertThat(definition.accessRoles()).containsExactly("Відстеження ресурсів");
+        assertThat(definition.permissionKeys()).isEmpty();
+    }
+
+    @Test
     public void testCaseMetadataCarriesBusinessRoles() throws NoSuchMethodException {
         Method method = ExampleCase.class.getDeclaredMethod("warehouseOperation");
 

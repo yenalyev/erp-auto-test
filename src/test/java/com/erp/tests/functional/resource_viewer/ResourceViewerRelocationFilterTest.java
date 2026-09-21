@@ -1,25 +1,30 @@
 package com.erp.tests.functional.resource_viewer;
 
+import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
-import com.erp.enums.StorageRelation;
-import com.erp.enums.UnitType;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.StorageRegionFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.response.PagedResourceRelocationViewerResponse;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceRelocationSumViewerResponse;
 import com.erp.models.response.ResourceRelocationViewerResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
-import com.erp.tests.functional.storage.StorageApiTestBase;
+import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -34,7 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @Epic("Resource Viewer")
 @Feature("Relocation journal filter")
-public class ResourceViewerRelocationFilterTest extends StorageApiTestBase {
+@DynamicResourceViewer
+public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
 
     private static final String RESOURCE_PREFIX = "rvw-rel-";
     private static final double SEND_AMOUNT = 6.0;
@@ -42,6 +48,9 @@ public class ResourceViewerRelocationFilterTest extends StorageApiTestBase {
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
     private CrewRegionFixture crewFixture;
+    private StorageFixture storageFixture;
+    private StorageRegionFixture regionFixture;
+    private LocationProfileFixture locationProfileFixture;
 
     private Long storageSourceId;
     private Long productionSourceId;
@@ -51,11 +60,14 @@ public class ResourceViewerRelocationFilterTest extends StorageApiTestBase {
     private StorageResponse flyPoint;
     private CrewRegionScenario crewScenario;
 
-    @BeforeClass(alwaysRun = true, dependsOnMethods = "setupStorageApiBase")
+    @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setupResourceViewerRelocationFilterTests() {
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        regionFixture = new StorageRegionFixture(testContext, apiExecutor);
         crewFixture = new CrewRegionFixture(testContext, apiExecutor, storageFixture, regionFixture);
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
 
         storageFixture.prepareContext();
         resourceFixture.fetchSharedUnit(3);
@@ -63,22 +75,23 @@ public class ResourceViewerRelocationFilterTest extends StorageApiTestBase {
         relocationFixture.prepareContext();
 
         // Viewer journal: sender ∈ {STORAGE, PRODUCTION}, recipient type=UNIT only.
-        unitReceiverId = relocationFixture.resolveUnitStorageId(UserRole.ADMIN);
-
-        Long parentId = storageFixture.resolveParentUnit().getId();
-        storageSourceId = storageFixture.createChildStorage(
-                parentId, "rvw-src-st-", UnitType.STORAGE, StorageRelation.INTERNAL).getId();
-        productionSourceId = storageFixture.createChildStorage(
-                parentId, "rvw-src-pr-", UnitType.PRODUCTION, StorageRelation.INTERNAL).getId();
+        storageSourceId = locationProfileFixture
+                .create(LocationProfile.TSUK_WARENHAUSE, 1)
+                .locations().getFirst().getId();
+        productionSourceId = locationProfileFixture
+                .create(LocationProfile.TSUK_PRODUCTION, 1)
+                .locations().getFirst().getId();
+        unitReceiverId = locationProfileFixture
+                .create(LocationProfile.BATTALION_UNIT, 1)
+                .locations().getFirst().getId();
 
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
 
         crewScenario = crewFixture.prepareSingleCrewScenario("rvw-crew-");
-        Long unitParentId = crewScenario.unit().getParent() != null
-                ? crewScenario.unit().getParent().getId()
-                : storageFixture.resolveParentUnit().getId();
-        secondUnit = storageFixture.createUnitStorage(unitParentId, "rvw-u2-");
+        secondUnit = locationProfileFixture
+                .create(LocationProfile.BATTALION_UNIT, 1)
+                .locations().getFirst();
         flyPoint = storageFixture.createFlyPointStorage(crewScenario.unit().getId(), "rvw-fp-");
 
         relocationFixture.ensureStock(storageSourceId, resourceId, 100.0, UserRole.ADMIN);
@@ -87,6 +100,14 @@ public class ResourceViewerRelocationFilterTest extends StorageApiTestBase {
         SchemaRegistry.logSchemaCoverage();
         log.info("RVW filter sources: storage={}, production={}, unitReceiver={}",
                 storageSourceId, productionSourceId, unitReceiverId);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupLocations() {
+        TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
+        if (locationProfileFixture != null) {
+            locationProfileFixture.cleanup();
+        }
     }
 
     @Test(priority = 10)
