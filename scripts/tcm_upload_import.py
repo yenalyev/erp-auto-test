@@ -137,7 +137,7 @@ def resolve_missing_cross_features(session: requests.Session, html: str) -> int:
         if not token:
             continue
         resp = session.post(
-            f"{BASE}/projects/{PROJECT_ID}/import/test-cases/resolve/cross-feature/create",
+            f"{BASE}/projects/{PROJECT_ID}/import/test-cases/resolve/create-cross-feature",
             data={"_csrf": token, "rowNumber": str(row_num), "slug": slug},
             allow_redirects=True,
             timeout=60,
