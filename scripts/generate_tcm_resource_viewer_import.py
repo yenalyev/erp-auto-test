@@ -4,7 +4,7 @@ Generate TCM import XLSX for a dynamically created Resource Viewer — BOM decom
 
 Covers:
   - existing automated TC-RVW-BOM-*, TC-RVW-ALT-*, TC-RVW-001, TC-RVW-API-001..003, TC-UI-RES-AC-001
-  - new automated TC-RVW-BOM-030..035, TC-RVW-API-010..018, TC-RVW-API-020, TC-UI-RVW-001/002
+  - new automated TC-RVW-BOM-030..036, TC-RVW-API-010..018, TC-RVW-API-020, TC-UI-RVW-001/002
 """
 from __future__ import annotations
 
@@ -311,6 +311,17 @@ def bom_cases() -> list[Case]:
                ("Створити inventory stock Product і перемістити його до появи tech map", "relocationId"),
                ("Після переміщення створити tech map Product←Component", "Tech map створена пізніше"),
                ("GET journal/sum", "Component відсутній; Product лишається атомарним, isProduct=false"),
+           ]),
+        mk("TC-RVW-BOM-036", FEAT_RVW_BOM, "AC-15",
+           "BOM — зовнішня партія до першої tech map атомарна",
+           "Зовнішньо отримана партія, переміщена до появи першої tech map, лишається атомарною; "
+           "пізніше створена карта не змінює історичний склад.",
+           severity="CRITICAL", preconditions=PRE_ADMIN_BOM,
+           steps=[
+               ("Отримати Product зовнішньою партією та перемістити її до появи tech map", "relocationId; isProduced=false"),
+               ("Після переміщення створити tech map Product←Component", "Tech map створена пізніше"),
+               ("GET journal/sum за Component", "Relocation відсутній; Component amount=0"),
+               ("GET journal за Product", "Один атомарний рядок Product, isProduct=false"),
            ]),
     ]
 

@@ -611,29 +611,79 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         ResourceResponse resource = resourceFixture.createUniqueResource("RVW-P-PRE-TM-" + suffix);
 
         double movedAmount = 5.0;
+        LocalDate movementDate = LocalDate.now().minusDays(1);
         createInventoryStock(resource.getId(), movedAmount);
         RelocationResponse sent = sendWithoutBatchAndDate(
-                resource.getId(), movedAmount, LocalDate.now());
+                resource.getId(), movedAmount, movementDate);
 
-        createMap(
+        TechnologicalMapResponse map = createMap(
                 "RVW-BOM-AFTER-MOVE",
                 List.of(new ResourceUsageRequest(component.getId(), ALC_PER_UNIT)),
                 List.of(new ResourceUsageRequest(resource.getId(), 1.0)));
+        assertThat(sent.getDate()).as("business date переміщення").isEqualTo(movementDate);
+        assertThat(map.getDateTime())
+                .as("техкарта має бути створена після історичного переміщення")
+                .isAfter(sent.getCreatedAt());
 
         Map<String, Object> componentParams = viewerParams(List.of(component.getId()));
-        componentParams.put("end", LocalDate.now().plusDays(1).toString());
+        componentParams.put("end", movementDate.plusDays(2).toString());
         assertThat(fetchJournalWithParams(componentParams).stream()
                 .map(ResourceRelocationViewerResponse::getRelocationId))
                 .doesNotContain(sent.getId());
         assertAmount(fetchSumsWithParams(componentParams), component.getId(), 0.0);
 
         Map<String, Object> resourceParams = viewerParams(List.of(resource.getId()));
-        resourceParams.put("end", LocalDate.now().plusDays(1).toString());
+        resourceParams.put("end", movementDate.plusDays(2).toString());
         List<ResourceRelocationViewerResponse> rows = rowsForRelocation(
                 fetchJournalWithParams(resourceParams), sent.getId());
         assertThat(rows).hasSize(1);
         assertThat(rows.getFirst().getAmount().doubleValue()).isCloseTo(movedAmount, within(0.001));
         assertThat(rows.getFirst().getIsProduct()).as("до першої техкарти ресурс атомарний").isFalse();
+    }
+
+    @Test(priority = 137)
+    @TestCaseId("TC-RVW-BOM-036")
+    @Story("External batch moved before its first tech map remains atomic")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Пізніше створена техкарта не застосовується до зовнішньо отриманої партії, переміщеної до її появи")
+    public void testExternalBatchMovedBeforeFirstTechMapRemainsAtomic() {
+        String suffix = uniqueSuffix();
+        ResourceResponse component = resourceFixture.createUniqueResource("RVW-ALC-EXT-PRE-TM-" + suffix);
+        ResourceResponse resource = resourceFixture.createUniqueResource("RVW-P-EXT-PRE-TM-" + suffix);
+
+        double movedAmount = 5.0;
+        String externalBatch = "EXT-PRE-TM-" + suffix;
+        LocalDate movementDate = LocalDate.now().minusDays(1);
+        relocationFixture.seedBatchOnStorage(
+                productionStorageId, resource.getId(), movedAmount, externalBatch);
+        RelocationResponse sent = sendExternalBatchWithDate(
+                resource.getId(), movedAmount, externalBatch, movementDate);
+
+        TechnologicalMapResponse map = createMap(
+                "RVW-BOM-EXT-AFTER-MOVE",
+                List.of(new ResourceUsageRequest(component.getId(), ALC_PER_UNIT)),
+                List.of(new ResourceUsageRequest(resource.getId(), 1.0)));
+        assertThat(sent.getDate()).as("business date переміщення").isEqualTo(movementDate);
+        assertThat(map.getDateTime())
+                .as("техкарта має бути створена після історичного переміщення зовнішньої партії")
+                .isAfter(sent.getCreatedAt());
+
+        Map<String, Object> componentParams = viewerParams(List.of(component.getId()));
+        componentParams.put("end", movementDate.plusDays(2).toString());
+        assertThat(fetchJournalWithParams(componentParams).stream()
+                .map(ResourceRelocationViewerResponse::getRelocationId))
+                .doesNotContain(sent.getId());
+        assertAmount(fetchSumsWithParams(componentParams), component.getId(), 0.0);
+
+        Map<String, Object> resourceParams = viewerParams(List.of(resource.getId()));
+        resourceParams.put("end", movementDate.plusDays(2).toString());
+        List<ResourceRelocationViewerResponse> rows = rowsForRelocation(
+                fetchJournalWithParams(resourceParams), sent.getId());
+        assertThat(rows).hasSize(1);
+        assertThat(rows.getFirst().getAmount().doubleValue()).isCloseTo(movedAmount, within(0.001));
+        assertThat(rows.getFirst().getIsProduct())
+                .as("до першої техкарти зовнішня партія ресурсу атомарна")
+                .isFalse();
     }
 
     @Test(priority = 140)
@@ -759,6 +809,27 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         return Allure.step("FIFO-видача ресурсу " + productId + " датою " + date, () -> {
             var request = com.erp.data.factories.relocation.RelocationDataFactory
                     .buildSendRequest(productionStorageId, receiverUnitId, productId, amount)
+                    .toBuilder()
+                    .date(date)
+                    .build();
+            Response response = apiExecutor.execute(
+                    ApiEndpointDefinition.RELOCATION_POST_SEND, UserRole.ADMIN, request);
+            assertThat(response.statusCode()).isEqualTo(200);
+            return response.as(RelocationResponse.class);
+        });
+    }
+
+    private RelocationResponse sendExternalBatchWithDate(
+            Long productId, double amount, String batchNumber, LocalDate date) {
+        return Allure.step("Видача зовнішньої партії " + batchNumber + " датою " + date, () -> {
+            var request = com.erp.data.factories.relocation.RelocationDataFactory
+                    .buildSendWithBatch(
+                            productionStorageId,
+                            receiverUnitId,
+                            productId,
+                            amount,
+                            batchNumber,
+                            false)
                     .toBuilder()
                     .date(date)
                     .build();
