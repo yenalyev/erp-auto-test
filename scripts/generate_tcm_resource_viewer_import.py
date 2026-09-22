@@ -4,7 +4,7 @@ Generate TCM import XLSX for a dynamically created Resource Viewer — BOM decom
 
 Covers:
   - existing automated TC-RVW-BOM-*, TC-RVW-ALT-*, TC-RVW-001, TC-RVW-API-001..003, TC-UI-RES-AC-001
-  - automated TC-RVW-BOM-030..036, TC-RVW-API-010..021, TC-UI-RVW-001..005
+  - automated TC-RVW-BOM-030..037, TC-RVW-API-010..023, TC-UI-RVW-001..005
 """
 from __future__ import annotations
 
@@ -95,8 +95,8 @@ def features() -> list[tuple]:
 def acceptance_criteria() -> list[tuple]:
     rows = [
         (FEAT_RVW, "AC-01",
-         "Користувач із правом Resource Viewer має доступ до журналу, підсумків та експорту; "
-         "селектор джерел містить склади й виробництва, але не підрозділи типу UNIT.", "0"),
+         "Глобальний Resource Viewer має доступ до журналу, підсумків та експорту "
+         "без location grants і без залежності від legacy storage types.", "0"),
         (FEAT_RVW_BOM, "AC-01",
          "Якщо передано сам відстежуваний ресурс, журнал позначає його як не-продукт, "
          "а підсумок дорівнює фактичній кількості переміщення.", "0"),
@@ -140,6 +140,9 @@ def acceptance_criteria() -> list[tuple]:
         (FEAT_RVW_BOM, "AC-15",
          "Якщо на момент переміщення не існувало жодної tech map, ресурс залишається атомарним; "
          "карта, створена пізніше, на нього не впливає.", "14"),
+        (FEAT_RVW_BOM, "AC-16",
+         "BOM розкладається лише для переміщень, які перетинають reporting boundary: "
+         "з дерева TSUK_PARENT_UNITS до зовнішньої структури. Kind і features локацій на рішення не впливають.", "15"),
         (FEAT_RVW_FLT, "AC-01",
          "Категорія є самостійною ціллю відстеження: ресурси категорії шукаються як прямі "
          "переміщення та як компоненти продуктів без обов'язкового вибору окремих ресурсів.", "0"),
@@ -157,7 +160,8 @@ def acceptance_criteria() -> list[tuple]:
          "для порожнього обов'язкового контексту тіло експорту порожнє.", "5"),
         (FEAT_RVW_FLT, "AC-07",
          "До результату входять переміщення з дочірньої структури TSUK_PARENT_UNITS до структури, "
-         "яка не належить TSUK_PARENT_UNITS; передачі між підрозділами, зокрема до екіпажу, виключаються.", "6"),
+         "яка не належить TSUK_PARENT_UNITS. Перевіряється весь parent-chain; kind, features і legacy storage type "
+         "відправника та одержувача на рішення не впливають.", "6"),
         (FEAT_RVW_FLT, "AC-08",
          "Підсумки ресурсів сортуються за назвою за зростанням.", "7"),
         (FEAT_RVW_FLT, "AC-09",
@@ -196,12 +200,22 @@ def acceptance_criteria() -> list[tuple]:
 
 def bom_cases() -> list[Case]:
     return [
+        mk("TC-RVW-BOM-037", FEAT_RVW_BOM, "AC-16",
+           "BOM — reporting boundary не залежить від capabilities локації",
+           "Unit-like LOCATION усередині TSUK розкладається; warehouse-like LOCATION поза TSUK — ні.",
+           severity="BLOCKER", preconditions=PRE_ADMIN_BOM,
+           steps=[
+               ("Створити Product←Component@2 та два джерела з протилежними features",
+                "Unit-like source в TSUK; warehouse-like source поза TSUK"),
+               ("Видати Product з обох джерел одному зовнішньому одержувачу", "2 relocationId"),
+               ("GET journal/sums за Component", "Є лише TSUK relocation; Component = amount×2"),
+           ]),
         mk("TC-RVW-BOM-001", FEAT_RVW_BOM, "AC-01",
            "BOM — пряма видача tracked Alcohol",
-           "Пряма видача Alcohol STORAGE→UNIT: journal isProduct=false; sum == sendAmount.",
+           "Пряма видача Alcohol з TSUK до зовнішньої структури: journal isProduct=false; sum == sendAmount.",
            severity="CRITICAL", preconditions=PRE_ADMIN_BOM,
            steps=[
-               ("Створити Alcohol; ensureStock; POST send STORAGE→UNIT", "relocationId"),
+               ("Створити Alcohol; ensureStock; POST send з TSUK до зовнішньої структури", "relocationId"),
                ("GET /resources-viewer/relocations/sum як Resource Viewer", "amount = sendAmount"),
                ("GET journal", "рядок isProduct=false; totallyUsage = sendAmount"),
            ]),
@@ -361,23 +375,46 @@ def filter_cases() -> list[Case]:
            severity="CRITICAL", tags="resource-viewer,api,my-units",
            steps=[
                ("GET /storages/names/my-units як Resource Viewer", "HTTP 403 без location grants"),
-               ("Жоден type=UNIT", "OK"),
+               ("GET viewer endpoints з обов'язковими фільтрами", "HTTP 200 без my-units"),
            ]),
         mk("TC-RVW-API-002", FEAT_RVW_FLT, "AC-07",
-           "API — journal лише STORAGE/PRODUCTION→UNIT",
-           "У журналі видно STORAGE/PRODUCTION→UNIT; UNIT→UNIT приховано.",
+           "API — journal відбирає перетин reporting boundary",
+           "У журналі видно переміщення з TSUK назовні; подальше переміщення між зовнішніми локаціями приховано.",
            severity="CRITICAL",
            steps=[
-               ("ADMIN: send STORAGE/PRODUCTION→UNIT і UNIT→UNIT", "2 relocationId"),
-               ("GET /resources-viewer/relocations як Resource Viewer (receiverIds=UNIT)", "HTTP 200"),
-               ("Перевірити content", "Є STORAGE/PRODUCTION→UNIT; немає UNIT→UNIT"),
+               ("ADMIN: send з warehouse/production profiles в TSUK назовні і між зовнішніми локаціями", "3 relocationId"),
+               ("GET /resources-viewer/relocations як Resource Viewer", "HTTP 200"),
+               ("Перевірити content і sums", "Є два TSUK→outside; outside→outside відсутнє"),
            ]),
         mk("TC-RVW-API-003", FEAT_RVW_FLT, "AC-07",
-           "API — UNIT→CREW excluded from sums",
-           "UNIT→CREW не в sums з GET /relocations.",
+           "API — downstream relocation поза TSUK excluded from sums",
+           "Подальша передача до CREW/FLY_POINT поза reporting boundary не входить до sums.",
            steps=[
-               ("Send UNIT→CREW tracked resource (ADMIN arrange)", "relocation"),
+               ("Send зовнішня location→CREW/FLY_POINT (ADMIN arrange)", "relocation"),
                ("GET /relocations як Resource Viewer → sums", "amount=0"),
+           ]),
+        mk("TC-RVW-API-022", FEAT_RVW_FLT, "AC-07",
+           "API — ієрархія має пріоритет над capabilities локації",
+           "Unit-like LOCATION у TSUK і її вкладений нащадок входять до journal; "
+           "warehouse-like LOCATION поза TSUK та внутрішній TSUK route виключаються.",
+           severity="BLOCKER",
+           expected_result=(
+               "Journal містить лише direct і nested TSUK→outside relocation; sums дорівнює "
+               "сумі цих двох переміщень незалежно від features."
+           ),
+           steps=[
+               ("Створити direct і nested unit-like sources в TSUK", "features=[RELOCATIONS, ORDERS]"),
+               ("Створити warehouse-like source поза TSUK і unit-like receiver в TSUK", "Контрприклади готові"),
+               ("Виконати чотири relocation і GET journal/sums", "Включено лише 2 TSUK→outside"),
+           ]),
+        mk("TC-RVW-API-023", FEAT_RVW_FLT, "AC-06",
+           "API — Excel export використовує reporting boundary",
+           "Export містить unit-like source з TSUK і не містить warehouse-like source поза TSUK.",
+           severity="CRITICAL",
+           steps=[
+               ("Видати один ресурс із unit-like source в TSUK та warehouse-like source поза TSUK", "2 relocationId"),
+               ("GET /resources-viewer/export з resourceIds+receiverIds", "XLSX справний"),
+               ("Перевірити XML workbook", "Є TSUK source; outside source відсутнє"),
            ]),
         mk("TC-RVW-API-010", FEAT_RVW_FLT, "AC-01",
            "API — categoryIds як tracking target",
@@ -423,7 +460,7 @@ def filter_cases() -> list[Case]:
            "Якщо RETURNED (API/DB): з UI states зникає.",
            severity="CRITICAL",
            steps=[
-               ("ADMIN send STORAGE→UNIT; GET UI states", "рядок і sum>0"),
+               ("ADMIN send з TSUK до зовнішньої location; GET UI states", "рядок і sum>0"),
                ("GET states=CANCELLED|RETURNED", "немає relocationId"),
                ("(опц.) RETURNED; GET UI states + end bust-cache", "немає рядка; sum≈0"),
            ]),
@@ -566,7 +603,7 @@ def main() -> None:
         OUTPUT,
         features=features(),
         acceptance_criteria=acceptance_criteria(),
-        meta_extra=[("source", "erp-auto-test resource-viewer business rules + tests 2026-09-17")],
+        meta_extra=[("source", "erp-auto-test resource-viewer business rules + tests 2026-09-22")],
     )
     print(f"Wrote {len(cases)} test cases to {OUTPUT}")
     for c in cases:

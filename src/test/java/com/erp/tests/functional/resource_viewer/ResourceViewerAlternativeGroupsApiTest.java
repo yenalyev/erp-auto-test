@@ -130,7 +130,7 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
             **Сценарій:**
             1. Техкарта F + {D default@2, E@3} → P.
             2. ADMIN виробляє P з вибором non-default E.
-            3. Видача P (партія виробництва) STORAGE→UNIT.
+            3. Видача P (партія виробництва) з дерева TSUK до зовнішньої структури.
             4. GET /resources-viewer/relocations як wolf (resourceIds=F,D,E) → читати sums.
             
             **Очікування:** E = relocate × 3; D = 0; F = relocate × 1.

@@ -4,7 +4,9 @@ import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.production.ProductionDataFactory;
+import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.LocationProfile;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
@@ -13,6 +15,7 @@ import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.ProductionFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.request.RelocationItemBatchRequest;
 import com.erp.models.request.ResourceUsageRequest;
@@ -23,6 +26,7 @@ import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceRelocationSumViewerResponse;
 import com.erp.models.response.ResourceRelocationViewerResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.validators.SchemaRegistry;
@@ -76,8 +80,10 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
     private ResourceFixture resourceFixture;
     private InventoryFixture inventoryFixture;
     private LocationProfileFixture locationProfileFixture;
+    private StorageFixture storageFixture;
 
     private Long productionStorageId;
+    private Long tsukParentId;
     private Long receiverUnitId;
 
     private final List<TechnologicalMapResponse> createdMaps = new ArrayList<>();
@@ -91,15 +97,16 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         inventoryFixture = new InventoryFixture(testContext, apiExecutor);
         locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
+        storageFixture = new StorageFixture(testContext, apiExecutor);
 
         techMapFixture.prepareContext();
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
         inventoryFixture.prepareContext();
 
-        productionStorageId = locationProfileFixture
-                .create(LocationProfile.TSUK_PRODUCTION, 1)
-                .locations().getFirst().getId();
+        var productionSet = locationProfileFixture.create(LocationProfile.TSUK_PRODUCTION, 1);
+        productionStorageId = productionSet.locations().getFirst().getId();
+        tsukParentId = productionSet.parent().getId();
         receiverUnitId = locationProfileFixture
                 .create(LocationProfile.BATTALION_UNIT, 1)
                 .locations().getFirst().getId();
@@ -126,6 +133,9 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                         productionStorageId, e.getMessage());
             }
         }
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
         if (locationProfileFixture != null) {
             locationProfileFixture.cleanup();
         }
@@ -133,11 +143,65 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
 
     // ───────────────────────────── Origin ─────────────────────────────
 
+    @Test(priority = 5)
+    @TestCaseId("TC-RVW-BOM-037")
+    @Story("BOM route eligibility does not depend on location capabilities")
+    @Severity(SeverityLevel.BLOCKER)
+    @Description("""
+            Один продукт і один BOM переміщуються з двох джерел:
+            unit-like LOCATION усередині TSUK та warehouse-like LOCATION поза TSUK.
+            Journal і sums мають розкласти лише перше переміщення.
+            """)
+    public void testBomUsesHierarchyBoundaryRegardlessOfLocationCapabilities() {
+        String suffix = uniqueSuffix();
+        ResourceResponse component = resourceFixture.createUniqueResource("RVW-BOM-HIER-C-" + suffix);
+        ResourceResponse product = resourceFixture.createUniqueResource("RVW-BOM-HIER-P-" + suffix);
+        createMap(
+                "RVW-BOM-HIER",
+                List.of(new ResourceUsageRequest(component.getId(), ALC_PER_UNIT)),
+                List.of(new ResourceUsageRequest(product.getId(), 1.0)));
+
+        StorageResponse allowedUnitLikeSource = storageFixture.createStorage(
+                StorageDataFactory.childStorage(tsukParentId, "rvw-bom-tsuk-unit-like-")
+                        .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.ORDERS))
+                        .build());
+        StorageResponse outsideWarehouseLikeSource = locationProfileFixture
+                .create(LocationProfile.BATTALION_WARENHAUSE_UNIT, 1)
+                .locations().getFirst();
+
+        double movedAmount = 4.0;
+        relocationFixture.ensureStock(
+                allowedUnitLikeSource.getId(), product.getId(), 20.0, UserRole.ADMIN);
+        relocationFixture.ensureStock(
+                outsideWarehouseLikeSource.getId(), product.getId(), 20.0, UserRole.ADMIN);
+        RelocationResponse allowed = relocationFixture.createSend(
+                UserRole.ADMIN,
+                allowedUnitLikeSource.getId(),
+                receiverUnitId,
+                product.getId(),
+                movedAmount);
+        RelocationResponse excluded = relocationFixture.createSend(
+                UserRole.ADMIN,
+                outsideWarehouseLikeSource.getId(),
+                receiverUnitId,
+                product.getId(),
+                movedAmount);
+
+        List<ResourceRelocationViewerResponse> rows = fetchJournal(List.of(component.getId()));
+        assertThat(rows.stream().map(ResourceRelocationViewerResponse::getRelocationId))
+                .as("BOM journal uses hierarchy instead of unit-like/warehouse-like capabilities")
+                .contains(allowed.getId())
+                .doesNotContain(excluded.getId());
+        assertThat(totallyUsageOf(findByRelocationId(rows, allowed.getId()), component.getId()))
+                .isCloseTo(movedAmount * ALC_PER_UNIT, within(0.001));
+        assertAmount(fetchSums(List.of(component.getId())), component.getId(), movedAmount * ALC_PER_UNIT);
+    }
+
     @Test(priority = 10)
     @TestCaseId("TC-RVW-BOM-001")
     @Story("Direct issue of tracked resource")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Пряма видача Alcohol STORAGE→UNIT: journal isProduct=false; sum == sendAmount")
+    @Description("Пряма видача Alcohol з TSUK до зовнішньої структури: journal isProduct=false; sum == sendAmount")
     public void testDirectIssueOfTrackedResource() {
         String suffix = uniqueSuffix();
         ResourceResponse alcohol = resourceFixture.createUniqueResource("RVW-ALC-D1-" + suffix);

@@ -3,12 +3,16 @@ package com.erp.tests.functional.resource_viewer;
 import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.LocationProfile;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -25,6 +29,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -44,7 +49,9 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
     private RelocationFixture relocationFixture;
     private ResourceFixture resourceFixture;
     private LocationProfileFixture locationProfileFixture;
+    private StorageFixture storageFixture;
     private Long productionStorageId;
+    private Long tsukParentId;
     private Long receiverUnitId;
     private Long resourceId;
     private String resourceName;
@@ -56,12 +63,13 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         locationProfileFixture = new LocationProfileFixture(testContext, apiExecutor);
+        storageFixture = new StorageFixture(testContext, apiExecutor);
         resourceFixture.prepareContext();
         relocationFixture.prepareContext();
 
-        productionStorageId = locationProfileFixture
-                .create(LocationProfile.TSUK_PRODUCTION, 1)
-                .locations().getFirst().getId();
+        var productionSet = locationProfileFixture.create(LocationProfile.TSUK_PRODUCTION, 1);
+        productionStorageId = productionSet.locations().getFirst().getId();
+        tsukParentId = productionSet.parent().getId();
         receiverUnitId = locationProfileFixture
                 .create(LocationProfile.BATTALION_UNIT, 1)
                 .locations().getFirst().getId();
@@ -83,6 +91,9 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
 
     @AfterClass(alwaysRun = true)
     public void cleanupLocations() {
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
         if (locationProfileFixture != null) {
             locationProfileFixture.cleanup();
         }
@@ -149,6 +160,54 @@ public class ResourceViewerExportApiTest extends BaseFunctionalTest {
                         noReceiverParams));
         assertThat(noReceiver.statusCode()).isEqualTo(200);
         assertThat(noReceiver.asByteArray()).isEmpty();
+    }
+
+    @Test(priority = 20)
+    @TestCaseId("TC-RVW-API-023")
+    @Story("Excel export uses the hierarchy boundary instead of location capabilities")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Export має містити переміщення з unit-like LOCATION усередині TSUK
+            і виключати переміщення з warehouse-like LOCATION поза TSUK.
+            """)
+    public void testExportUsesHierarchyBoundaryRegardlessOfLocationCapabilities() {
+        ResourceResponse tracked = resourceFixture.createUniqueResource("RVW-EXP-HIER-");
+        StorageResponse allowedUnitLikeSource = storageFixture.createStorage(
+                StorageDataFactory.childStorage(tsukParentId, "rvw-exp-tsuk-unit-like-")
+                        .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.ORDERS))
+                        .build());
+        StorageResponse outsideWarehouseLikeSource = locationProfileFixture
+                .create(LocationProfile.BATTALION_WARENHAUSE_UNIT, 1)
+                .locations().getFirst();
+
+        relocationFixture.ensureStock(allowedUnitLikeSource.getId(), tracked.getId(), 20.0);
+        relocationFixture.ensureStock(outsideWarehouseLikeSource.getId(), tracked.getId(), 20.0);
+        relocationFixture.createSend(
+                UserRole.ADMIN,
+                allowedUnitLikeSource.getId(),
+                receiverUnitId,
+                tracked.getId(),
+                SEND_AMOUNT);
+        relocationFixture.createSend(
+                UserRole.ADMIN,
+                outsideWarehouseLikeSource.getId(),
+                receiverUnitId,
+                tracked.getId(),
+                SEND_AMOUNT + 4.0);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("resourceIds", List.of(tracked.getId()));
+        params.put("receiverIds", receiverUnitId);
+        Response export = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RESOURCE_VIEWER_EXPORT,
+                UserRole.RESOURCE_VIEWER,
+                params);
+
+        assertThat(export.statusCode()).isEqualTo(200);
+        String workbookXml = unzipXmlText(export.asByteArray());
+        assertThat(workbookXml)
+                .contains(tracked.getName(), allowedUnitLikeSource.getName())
+                .doesNotContain(outsideWarehouseLikeSource.getName());
     }
 
     private static String unzipXmlText(byte[] xlsx) {

@@ -3,6 +3,8 @@ package com.erp.tests.functional.resource_viewer;
 import com.erp.annotations.DynamicResourceViewer;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.LocationProfile;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture;
@@ -54,6 +56,7 @@ public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
 
     private Long storageSourceId;
     private Long productionSourceId;
+    private Long tsukParentId;
     private Long unitReceiverId;
     private Long resourceId;
     private StorageResponse secondUnit;
@@ -74,10 +77,9 @@ public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
         resourceFixture.fetchSharedResourceCategory();
         relocationFixture.prepareContext();
 
-        // Viewer journal: sender ∈ {STORAGE, PRODUCTION}, recipient type=UNIT only.
-        storageSourceId = locationProfileFixture
-                .create(LocationProfile.TSUK_WARENHAUSE, 1)
-                .locations().getFirst().getId();
+        var warehouseSet = locationProfileFixture.create(LocationProfile.TSUK_WARENHAUSE, 1);
+        storageSourceId = warehouseSet.locations().getFirst().getId();
+        tsukParentId = warehouseSet.parent().getId();
         productionSourceId = locationProfileFixture
                 .create(LocationProfile.TSUK_PRODUCTION, 1)
                 .locations().getFirst().getId();
@@ -112,11 +114,11 @@ public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
 
     @Test(priority = 10)
     @TestCaseId("TC-RVW-API-002")
-    @Story("Journal only STORAGE/PRODUCTION → UNIT")
+    @Story("Journal follows the reporting hierarchy boundary")
     @Description("""
-            У GET /resources-viewer/relocations потрапляють лише переміщення
-            sender type ∈ {STORAGE, PRODUCTION} → recipient type=UNIT.
-            STORAGE/PRODUCTION→UNIT — видно; UNIT→UNIT — приховано.
+            У GET /resources-viewer/relocations входять переміщення з дозволеного
+            дерева TSUK до зовнішньої структури. Подальше переміщення між
+            зовнішніми локаціями не входить до звіту.
             """)
     @Severity(SeverityLevel.CRITICAL)
     public void testResourceViewerRelocationsSenderFilter() {
@@ -144,10 +146,10 @@ public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
                 .collect(Collectors.toSet());
 
         assertThat(relocationIds)
-                .as("STORAGE/PRODUCTION→UNIT має бути у журналі resource-viewer")
+                .as("переміщення з TSUK до зовнішньої структури мають бути у journal")
                 .contains(storageToUnit.getId(), productionToUnit.getId());
         assertThat(relocationIds)
-                .as("UNIT→UNIT не повинен бути у журналі (sender не STORAGE/PRODUCTION)")
+                .as("подальше переміщення між зовнішніми локаціями не входить до journal")
                 .doesNotContain(unitToUnit.getId());
 
         double total = page.getSums() == null ? 0.0 : page.getSums().stream()
@@ -157,14 +159,117 @@ public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
                 .mapToDouble(Number::doubleValue)
                 .sum();
         assertThat(total)
-                .as("підсумок містить лише STORAGE→UNIT і PRODUCTION→UNIT")
+                .as("підсумок містить лише переміщення, що перетнули reporting boundary")
                 .isEqualTo(SEND_AMOUNT * 2);
+    }
+
+    @Test(priority = 15)
+    @TestCaseId("TC-RVW-API-022")
+    @Story("Hierarchy wins over location capabilities")
+    @Description("""
+            Контрприклад до legacy type-based логіки:
+            - локації з unit-like features усередині TSUK, уключно з вкладеним нащадком,
+              мають потрапити до journal при видачі назовні;
+            - warehouse-like локація поза TSUK не має потрапити до journal;
+            - видача всередині TSUK не перетинає reporting boundary.
+            """)
+    @Severity(SeverityLevel.BLOCKER)
+    public void testHierarchyDeterminesVisibilityRegardlessOfLocationCapabilities() {
+        StorageResponse allowedUnitLikeSource = createLocation(
+                tsukParentId,
+                "rvw-tsuk-unit-like-",
+                Set.of(LocationFeature.RELOCATIONS, LocationFeature.ORDERS));
+        StorageResponse allowedNestedUnitLikeSource = createLocation(
+                allowedUnitLikeSource.getId(),
+                "rvw-tsuk-nested-unit-like-",
+                Set.of(LocationFeature.RELOCATIONS, LocationFeature.ORDERS));
+        StorageResponse internalUnitLikeReceiver = createLocation(
+                tsukParentId,
+                "rvw-tsuk-internal-receiver-",
+                Set.of(LocationFeature.RELOCATIONS, LocationFeature.ORDERS));
+        StorageResponse outsideWarehouseLikeSource = createLocation(
+                unitReceiverId,
+                "rvw-outside-warehouse-like-",
+                Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT));
+
+        ResourceResponse isolated = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "hierarchy-");
+        for (Long sourceId : List.of(
+                allowedUnitLikeSource.getId(),
+                allowedNestedUnitLikeSource.getId(),
+                outsideWarehouseLikeSource.getId(),
+                storageSourceId)) {
+            relocationFixture.ensureStock(sourceId, isolated.getId(), 50.0, UserRole.ADMIN);
+        }
+
+        RelocationResponse allowedDirect = relocationFixture.createSend(
+                UserRole.ADMIN,
+                allowedUnitLikeSource.getId(),
+                unitReceiverId,
+                isolated.getId(),
+                2.0);
+        RelocationResponse allowedNested = relocationFixture.createSend(
+                UserRole.ADMIN,
+                allowedNestedUnitLikeSource.getId(),
+                unitReceiverId,
+                isolated.getId(),
+                3.0);
+        RelocationResponse excludedOutsideSource = relocationFixture.createSend(
+                UserRole.ADMIN,
+                outsideWarehouseLikeSource.getId(),
+                secondUnit.getId(),
+                isolated.getId(),
+                5.0);
+        RelocationResponse excludedInternalRoute = relocationFixture.createSend(
+                UserRole.ADMIN,
+                storageSourceId,
+                internalUnitLikeReceiver.getId(),
+                isolated.getId(),
+                7.0);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("resourceIds", List.of(isolated.getId()));
+        params.put("receiverIds", List.of(
+                unitReceiverId,
+                secondUnit.getId(),
+                internalUnitLikeReceiver.getId()));
+        params.put("page", 0);
+        params.put("size", 100);
+
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.RESOURCE_VIEWER_RELOCATIONS_GET,
+                UserRole.RESOURCE_VIEWER,
+                params);
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.RESOURCE_VIEWER_RELOCATIONS_GET);
+        PagedResourceRelocationViewerResponse page = response.as(PagedResourceRelocationViewerResponse.class);
+        Set<Long> relocationIds = (page.getContent() == null
+                ? List.<ResourceRelocationViewerResponse>of()
+                : page.getContent()).stream()
+                .map(ResourceRelocationViewerResponse::getRelocationId)
+                .collect(Collectors.toSet());
+
+        assertThat(relocationIds)
+                .as("TSUK ancestry, including nested ancestry, includes unit-like sources")
+                .contains(allowedDirect.getId(), allowedNested.getId())
+                .as("capabilities cannot include an outside source or an internal TSUK route")
+                .doesNotContain(excludedOutsideSource.getId(), excludedInternalRoute.getId());
+
+        double total = page.getSums() == null ? 0.0 : page.getSums().stream()
+                .filter(sum -> isolated.getId().equals(sum.getResourceId()))
+                .map(ResourceRelocationSumViewerResponse::getAmount)
+                .filter(java.util.Objects::nonNull)
+                .mapToDouble(Number::doubleValue)
+                .sum();
+        assertThat(total)
+                .as("sums use the same hierarchy boundary as journal")
+                .isEqualTo(5.0);
     }
 
     @Test(priority = 20)
     @TestCaseId("TC-RVW-API-003")
-    @Story("UNIT→CREW/FLY_POINT excluded from journal and sum")
-    @Description("Подальші передачі UNIT→CREW і UNIT→FLY_POINT не додаються до Resource Viewer; історична STORAGE→UNIT залишається")
+    @Story("Downstream relocations outside TSUK are excluded from journal and sum")
+    @Description("Подальші передачі зовнішньої локації до CREW і FLY_POINT не додаються до Resource Viewer; історичне переміщення з TSUK назовні залишається")
     @Severity(SeverityLevel.NORMAL)
     public void testUnitToCrewExcludedFromRelocationSum() {
         ResourceResponse isolated = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "crew-");
@@ -218,7 +323,7 @@ public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
                 .sum();
 
         assertThat(total)
-                .as("UNIT→CREW/FLY_POINT не змінюють історичний підсумок STORAGE→UNIT")
+                .as("подальші outside→CREW/FLY_POINT не змінюють історичний підсумок TSUK→outside")
                 .isEqualTo(initialAmount);
     }
 
@@ -227,5 +332,15 @@ public class ResourceViewerRelocationFilterTest extends BaseFunctionalTest {
         params.put("resourceIds", List.of(resourceId));
         params.put("receiverIds", unitReceiverId);
         return params;
+    }
+
+    private StorageResponse createLocation(
+            Long parentId,
+            String namePrefix,
+            Set<LocationFeature> features) {
+        return storageFixture.createStorage(
+                StorageDataFactory.childStorage(parentId, namePrefix)
+                        .features(features)
+                        .build());
     }
 }
