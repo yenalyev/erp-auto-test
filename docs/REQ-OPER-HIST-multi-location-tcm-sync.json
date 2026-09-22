@@ -1,0 +1,53 @@
+{
+  "syncedAt": "2026-09-22",
+  "projectId": 1,
+  "targets": [
+    "dev TCM",
+    "prod TCM"
+  ],
+  "feature": {
+    "featureId": "REQ-OPER-HIST",
+    "title": "Історія операцій",
+    "documentationChange": {
+      "heading": "Обмеження історії обладнання за доступними локаціями (AC-17)",
+      "contract": [
+        "У режимі «Всі локації» multi-location owner бачить історію обладнання по всіх своїх allowedStorageIds.",
+        "Назва, інвентарний номер та операція обладнання зі сторонньої локації не повертаються GET /api/v1/equipment/history і не відображаються в таблиці /history.",
+        "Перевірка має підтверджувати дані з обох дозволених локацій A/B та відсутність контрольної локації C; порожня таблиця не вважається успіхом."
+      ],
+      "automation": "EquipmentHistoryOnOperationsUiTest#multiLocationOwnerAllLocationsShowsEquipmentOnlyFromAllowedStorages",
+      "devVerification": "2026-09-22: 1 test, 0 failures, 0 errors, 0 skipped",
+      "productionExecutionNote": "Оновлення prod TCM синхронізує документацію і test case; тест на production ERP не виконувався."
+    }
+  },
+  "acceptanceCriterion": {
+    "acId": "AC-17",
+    "text": "У режимі «Всі локації» multi-location owner бачить історію обладнання по всіх своїх allowedStorageIds і не отримує в API або UI дані обладнання зі сторонніх локацій."
+  },
+  "testCase": {
+    "testId": "TC-UI-HIST-EQ-008",
+    "title": "UI — multi-location owner у «Всі локації» бачить обладнання лише своїх локацій",
+    "featureId": "REQ-OPER-HIST",
+    "acId": "AC-17",
+    "priority": "CRITICAL",
+    "severity": "CRITICAL",
+    "status": "ACTIVE",
+    "testType": "UI",
+    "uiAutomationIds": [
+      "TC-UI-HIST-EQ-008"
+    ],
+    "stepCount": 5
+  },
+  "preserved": {
+    "testId": "TC-UI-HIST-EQ-007",
+    "title": "UI — видалення відправлення обладнання прибирає рядок з Історії операцій",
+    "reason": "Це окремий чинний сценарій AC-14; нове покриття не повинно змінювати його семантику."
+  },
+  "readBackVerification": {
+    "documentationEqual": true,
+    "documentationLength": 3948,
+    "documentationSha256": "bde8ddcd1bab2c883d65bc3fbd208cffb12e775c0425403600fb91a157ea6302",
+    "caseContentEqual": true,
+    "oldCasePreserved": true
+  }
+}

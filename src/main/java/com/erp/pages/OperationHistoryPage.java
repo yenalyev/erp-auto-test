@@ -116,6 +116,13 @@ public class OperationHistoryPage extends BasePage {
                 || page.locator("body").innerText().contains(text);
     }
 
+    /** True when an equipment operation row contains the exact test marker (usually inventory number). */
+    public boolean equipmentTableContains(String equipmentText) {
+        Locator rows = page.locator("[data-slot='table'] tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(equipmentText));
+        return rows.count() > 0;
+    }
+
     /**
      * True when the equipment operations table has a row that identifies the unit
      * and shows the given operation badge (e.g. «Відправлено»).

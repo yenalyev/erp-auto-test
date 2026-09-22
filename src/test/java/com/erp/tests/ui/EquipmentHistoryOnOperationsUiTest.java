@@ -7,14 +7,19 @@ import com.erp.enums.UserRole;
 import com.erp.fixtures.EquipmentFixture;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.EquipmentResponse;
 import com.erp.models.response.InventorySessionStatus;
 import com.erp.models.response.RelocationResponse;
+import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UserMeResponse;
 import com.erp.pages.OperationHistoryPage;
 import com.erp.pages.RelocationPage;
 import com.erp.pages.RelocationUpdateOutputPage;
 import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Response;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterMethod;
@@ -354,6 +359,118 @@ public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
                     .as("Після видалення отримання інв.№ в історії не має бути")
                     .isFalse();
         });
+    }
+
+    @Test
+    @TestCaseId("TC-UI-HIST-EQ-008")
+    @Story("Multi-location owner sees equipment history only for permitted locations")
+    @Severity(SeverityLevel.BLOCKER)
+    @Description("""
+            Ephemeral owner має доступ до двох STORAGE-локацій A і B та відкриває
+            «Історія операцій» у режимі «Всі локації».
+            Обладнання з A і B має бути присутнє у відповіді API та таблиці;
+            обладнання зі сторонньої локації C не повинно потрапляти ні в payload,
+            ні в UI.
+            """)
+    public void multiLocationOwnerAllLocationsShowsEquipmentOnlyFromAllowedStorages() {
+        StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
+        UserFixture userFixture = new UserFixture(testContext, apiExecutor);
+
+        try {
+            StorageResponse storageA = storageFixture.createUniqueStorage("hist-eq-mloc-a-");
+            StorageResponse storageB = storageFixture.createUniqueStorage("hist-eq-mloc-b-");
+            long forbiddenStorageId = owner1StorageId;
+
+            EquipmentResponse equipmentA = Allure.step("API: створити обладнання на дозволеній локації A", () ->
+                    equipmentFixture.createEquipmentOnStorage(
+                            UserRole.ADMIN, storageA.getId(), categoryId));
+            EquipmentResponse equipmentB = Allure.step("API: створити обладнання на дозволеній локації B", () ->
+                    equipmentFixture.createEquipmentOnStorage(
+                            UserRole.ADMIN, storageB.getId(), categoryId));
+            EquipmentResponse forbiddenEquipment = Allure.step(
+                    "API: створити контрольне обладнання на сторонній локації C", () ->
+                            equipmentFixture.createEquipmentOnStorage(
+                                    UserRole.ADMIN, forbiddenStorageId, categoryId));
+
+            UserFixture.RestrictedOwnerUser owner = userFixture.createMultiLocationOwner(
+                    getPlaywrightSessionProvider(),
+                    java.util.List.of(storageA, storageB));
+            apiExecutor.setSessionForRole(UserRole.OWNER_3, owner.username(), owner.password());
+
+            UserMeResponse me = userFixture.getMe(UserRole.OWNER_3);
+            assertThat(me.getAllowedStorageIds())
+                    .as("Multi-location owner має доступ до обох ізольованих локацій")
+                    .contains(storageA.getId(), storageB.getId());
+            assertThat(me.getAllowedStorageIds())
+                    .as("Стороння локація не повинна входити в allowedStorageIds")
+                    .doesNotContain(forbiddenStorageId);
+
+            Allure.parameter("ownerUsername", owner.username());
+            Allure.parameter("allowedStorageA", storageA.getId());
+            Allure.parameter("allowedStorageB", storageB.getId());
+            Allure.parameter("forbiddenStorageC", forbiddenStorageId);
+            Allure.parameter("equipmentA", equipmentA.getInventoryNumber());
+            Allure.parameter("equipmentB", equipmentB.getInventoryNumber());
+            Allure.parameter("forbiddenEquipment", forbiddenEquipment.getInventoryNumber());
+
+            injectSessionCookies(
+                    getPlaywrightSessionProvider().getSession(
+                            owner.username(), owner.password()),
+                    sessionCookieDomain());
+            injectAllLocationsView();
+
+            OperationHistoryPage historyPage = new OperationHistoryPage(page);
+            Response equipmentHistoryResponse = Allure.step(
+                    "UI: відкрити /history у режимі «Всі локації»", () ->
+                            page.waitForResponse(
+                                    response -> response.url().contains("/api/v1/equipment/history")
+                                            && "GET".equals(response.request().method())
+                                            && response.status() == 200,
+                                    historyPage::open));
+
+            String payload = equipmentHistoryResponse.text();
+            Allure.addAttachment("GET equipment history — all locations", "application/json", payload);
+
+            Allure.step("Перевірити location scope у відповіді API", () -> {
+                assertThat(payload)
+                        .as("API history має містити обладнання з дозволеної локації A")
+                        .contains(equipmentA.getInventoryNumber());
+                assertThat(payload)
+                        .as("API history має містити обладнання з дозволеної локації B")
+                        .contains(equipmentB.getInventoryNumber());
+                assertThat(payload)
+                        .as("API history не повинна розкривати обладнання зі сторонньої локації C")
+                        .doesNotContain(forbiddenEquipment.getInventoryNumber());
+            });
+
+            Allure.step("Перевірити location scope у таблиці обладнання", () -> {
+                page.waitForCondition(() ->
+                        historyPage.equipmentTableContains(equipmentA.getInventoryNumber())
+                                && historyPage.equipmentTableContains(equipmentB.getInventoryNumber()));
+                historyPage.attachScreenshot("TC-UI-HIST-EQ-008 — multi-owner all locations");
+
+                assertThat(historyPage.equipmentTableContains(equipmentA.getInventoryNumber()))
+                        .as("Таблиця має містити обладнання з дозволеної локації A")
+                        .isTrue();
+                assertThat(historyPage.equipmentTableContains(equipmentB.getInventoryNumber()))
+                        .as("Таблиця має містити обладнання з дозволеної локації B")
+                        .isTrue();
+                assertThat(historyPage.equipmentTableContains(forbiddenEquipment.getInventoryNumber()))
+                        .as("Таблиця не повинна містити обладнання зі сторонньої локації C")
+                        .isFalse();
+            });
+        } finally {
+            try {
+                apiExecutor.evictSessionForRole(UserRole.OWNER_3);
+            } catch (RuntimeException e) {
+                log.warn("Could not evict ephemeral multi-owner session: {}", e.getMessage());
+            }
+            try {
+                userFixture.deactivateTrackedUsers();
+            } finally {
+                storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+            }
+        }
     }
 
     private void reopenWithSession(UserRole role, long selectedStorageId) {
