@@ -32,6 +32,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,8 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
     private static final double PRODUCE_AMOUNT = 5.0;
     private static final double RELOCATE_AMOUNT = 5.0;
     private static final double TOLERANCE = 0.001;
+
+    private final List<TechnologicalMapResponse> createdTechMaps = new ArrayList<>();
 
     private TechnologicalMapFixture techMapFixture;
     private ProductionFixture productionFixture;
@@ -98,11 +102,15 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
 
     @AfterClass(alwaysRun = true)
     public void teardown() {
-        if (techMap != null && techMapFixture != null && productionStorageId != null) {
-            try {
-                techMapFixture.deactivateTechMap(UserRole.ADMIN, techMap.getId(), productionStorageId);
-            } catch (RuntimeException e) {
-                log.warn("Tech map deactivate failed: {}", e.getMessage());
+        if (techMapFixture != null && productionStorageId != null) {
+            List<TechnologicalMapResponse> reverse = new ArrayList<>(createdTechMaps);
+            Collections.reverse(reverse);
+            for (TechnologicalMapResponse createdMap : reverse) {
+                try {
+                    techMapFixture.deactivateTechMap(UserRole.ADMIN, createdMap.getId(), productionStorageId);
+                } catch (RuntimeException e) {
+                    log.warn("Tech map {} deactivate failed: {}", createdMap.getId(), e.getMessage());
+                }
             }
             techMapFixture.setMode(productionStorageId, StorageTechnologicalMapMode.READ_ONLY);
         }
@@ -137,7 +145,7 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
         ResourceResponse otherAlt = resourceFixture.createUniqueResource("RVW-ALT-E-" + suffix);
         ResourceResponse fixed = resourceFixture.createUniqueResource("RVW-ALT-F-" + suffix);
 
-        techMap = Allure.step("Arrange: техкарта F + {D default, E}", () -> {
+        techMap = trackMap(Allure.step("Arrange: техкарта F + {D default, E}", () -> {
             var group = TechnologicalMapDataFactory.alternativeGroup(
                     "Клей",
                     TechnologicalMapDataFactory.alternativeResource(
@@ -153,7 +161,7 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
                     .groups(List.of(group))
                     .build();
             return techMapFixture.createTechMapWithRequest(UserRole.ADMIN, request);
-        });
+        }));
 
         Long groupId = techMap.getGroups().getFirst().getId();
 
@@ -238,7 +246,7 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
         ResourceResponse otherAlt = resourceFixture.createUniqueResource("RVW-ALT2-E-" + suffix);
         ResourceResponse fixed = resourceFixture.createUniqueResource("RVW-ALT2-F-" + suffix);
 
-        techMap = Allure.step("Arrange: техкарта F + {D default, E}", () -> {
+        techMap = trackMap(Allure.step("Arrange: техкарта F + {D default, E}", () -> {
             var group = TechnologicalMapDataFactory.alternativeGroup(
                     "Клей",
                     TechnologicalMapDataFactory.alternativeResource(
@@ -254,7 +262,7 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
                     .groups(List.of(group))
                     .build();
             return techMapFixture.createTechMapWithRequest(UserRole.ADMIN, request);
-        });
+        }));
 
         ManufacturingItemResponse produced = Allure.step("Виробництво P з default D", () -> {
             productionFixture.ensureStockForTechMapInputs(productionStorageId, techMap, 200.0);
@@ -292,5 +300,80 @@ public class ResourceViewerAlternativeGroupsApiTest extends BaseFunctionalTest {
                     .as("non-default E not used")
                     .isCloseTo(0.0, within(TOLERANCE));
         });
+    }
+
+    @Test(priority = 12)
+    @TestCaseId("TC-RVW-ALT-003")
+    @Story("Every unit of a homogeneous batch uses one alternative recipe")
+    @Severity(SeverityLevel.BLOCKER)
+    @Description("""
+            Два production records однієї партії мають ту саму ТК та однаковий вибір
+            non-default alternative. Видача суми обох записів декомпозується за одним
+            фактичним рецептом партії: E = relocate × 3; D = 0; F = relocate × 1.
+            """)
+    public void testHomogeneousMultiRecordBatchDecomposesByOneRecipe() {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        ResourceResponse product = resourceFixture.createUniqueResource("RVW-BATCH-P-" + suffix);
+        ResourceResponse defaultAlt = resourceFixture.createUniqueResource("RVW-BATCH-D-" + suffix);
+        ResourceResponse otherAlt = resourceFixture.createUniqueResource("RVW-BATCH-E-" + suffix);
+        ResourceResponse fixed = resourceFixture.createUniqueResource("RVW-BATCH-F-" + suffix);
+
+        techMap = trackMap(Allure.step("Arrange: batch tech map F + {D default, E}", () -> {
+            var group = TechnologicalMapDataFactory.alternativeGroup(
+                    "Клей",
+                    TechnologicalMapDataFactory.alternativeResource(
+                            defaultAlt.getId(), DEFAULT_ALT_AMOUNT, true),
+                    TechnologicalMapDataFactory.alternativeResource(
+                            otherAlt.getId(), OTHER_ALT_AMOUNT, false));
+            TechnologicalMapRequest request = TechnologicalMapDataFactory
+                    .createProductionMapWithStorages(
+                            "RVW-BATCH-M",
+                            List.of(new ResourceUsageRequest(fixed.getId(), FIXED_AMOUNT)),
+                            List.of(new ResourceUsageRequest(product.getId(), 1.0)),
+                            Set.of(productionStorageId))
+                    .groups(List.of(group))
+                    .build();
+            return techMapFixture.createTechMapWithRequest(UserRole.ADMIN, request);
+        }));
+
+        Long groupId = techMap.getGroups().getFirst().getId();
+        String sharedBatch = ProductionDataFactory.uniqueBatchNumber();
+        double firstAmount = 2.0;
+        double secondAmount = 3.0;
+        productionFixture.ensureStockForTechMapInputs(productionStorageId, techMap, 200.0);
+        List<AlternativeInputRequest> choice = ProductionDataFactory.alternativeInputsChoosing(
+                techMap, groupId, otherAlt.getId());
+
+        ManufacturingItemResponse first = productionFixture.createAsWithAlternatives(
+                UserRole.ADMIN, productionStorageId, techMap, firstAmount, sharedBatch, choice);
+        ManufacturingItemResponse second = productionFixture.createAsWithAlternatives(
+                UserRole.ADMIN, productionStorageId, techMap, secondAmount, sharedBatch, choice);
+        assertThat(first.getBatchNumber()).isEqualTo(sharedBatch);
+        assertThat(second.getBatchNumber()).isEqualTo(sharedBatch);
+
+        double relocatedAmount = firstAmount + secondAmount;
+        RelocationResponse sent = relocationFixture.createSendWithBatch(
+                UserRole.ADMIN,
+                productionStorageId,
+                receiverUnitId,
+                product.getId(),
+                relocatedAmount,
+                sharedBatch,
+                true);
+        assertThat(sent.getId()).isNotNull();
+
+        List<ResourceRelocationSumViewerResponse> sums = fetchSums(
+                List.of(fixed.getId(), defaultAlt.getId(), otherAlt.getId()));
+        assertThat(amountOf(sums, fixed.getId()))
+                .isCloseTo(relocatedAmount * FIXED_AMOUNT, within(TOLERANCE));
+        assertThat(amountOf(sums, otherAlt.getId()))
+                .isCloseTo(relocatedAmount * OTHER_ALT_AMOUNT, within(TOLERANCE));
+        assertThat(amountOf(sums, defaultAlt.getId()))
+                .isCloseTo(0.0, within(TOLERANCE));
+    }
+
+    private TechnologicalMapResponse trackMap(TechnologicalMapResponse createdMap) {
+        createdTechMaps.add(createdMap);
+        return createdMap;
     }
 }

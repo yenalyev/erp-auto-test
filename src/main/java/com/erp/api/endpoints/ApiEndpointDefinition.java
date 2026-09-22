@@ -1513,6 +1513,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    PRODUCTION_GET_BATCH_RECIPE(
+            "/api/v1/productions/batch-recipe?storageId={storageId}&productId={productId}&batchNumber={batchNumber}",
+            Method.GET,
+            null,
+            "Get recipe fixed by a production batch",
+            null,
+            new TypeReference<BatchRecipeResponse>() {},
+            null
+    ),
+
     PRODUCTION_POST_CREATE(
             "/api/v1/productions/{storageId}",
             Method.POST,

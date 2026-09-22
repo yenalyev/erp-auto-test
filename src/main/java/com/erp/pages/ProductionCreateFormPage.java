@@ -23,6 +23,7 @@ public class ProductionCreateFormPage extends BasePage {
     private static final String PRODUCT_LABEL = "Оберіть продукт...";
     private static final String TECH_MAP_LABEL = "Тех. карта";
     private static final String AMOUNT_LABEL = "Кількість";
+    private static final String BATCH_LABEL = "Номер партії";
     private static final String SHIFT_LABEL = "Зміна";
     private static final String EMPTY_ALT_OPTION = "Оберіть ресурс...";
     private static final String COMBOBOX_ITEM_SELECTOR = "[data-slot='combobox-item']";
@@ -87,7 +88,8 @@ public class ProductionCreateFormPage extends BasePage {
                 .first()
                 .click();
 
-        // After productId is set, techMapList loads; single-map products auto-select and stay disabled.
+        // After productId is set, techMapList loads. A single map is auto-selected; with multiple maps
+        // the placeholder remains selected, so the populated options are the readiness signal.
         page.waitForCondition(
                 () -> {
                     Locator select = techMapSelect();
@@ -95,7 +97,8 @@ public class ProductionCreateFormPage extends BasePage {
                         return false;
                     }
                     String value = select.first().inputValue();
-                    return value != null && !value.isBlank();
+                    return value != null && !value.isBlank()
+                            || select.first().locator("option").count() > 1;
                 },
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
@@ -154,6 +157,52 @@ public class ProductionCreateFormPage extends BasePage {
     public ProductionCreateFormPage fillAmount(String amount) {
         amountInput().first().fill(amount);
         return this;
+    }
+
+    public ProductionCreateFormPage fillBatchNumber(String batchNumber) {
+        Locator input = batchNumberInput();
+        input.fill(batchNumber);
+        return this;
+    }
+
+    public ProductionCreateFormPage waitForBatchRecipeLock(String batchNumber) {
+        page.waitForCondition(
+                () -> getBatchRecipeHint().contains(batchNumber) && isTechMapDisabled(),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public ProductionCreateFormPage waitForBatchRecipeUnlock() {
+        page.waitForCondition(
+                () -> getBatchRecipeHint().isBlank() && !isTechMapDisabled(),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isTechMapDisabled() {
+        Locator select = techMapSelect().first();
+        return select.count() == 0 || select.isDisabled();
+    }
+
+    public String getSelectedTechMapLabel() {
+        return techMapSelect().first().locator("option:checked").innerText().trim();
+    }
+
+    public String getBatchRecipeHint() {
+        Locator hint = page.locator("p")
+                .filter(new Locator.FilterOptions().setHasText("Техкарту визначено партією"));
+        return hint.count() > 0 && hint.first().isVisible() ? hint.first().innerText().trim() : "";
+    }
+
+    public boolean isAlternativeSelectionDisabled(String groupName) {
+        return alternativeSelectForGroup(groupName).isDisabled();
+    }
+
+    private Locator batchNumberInput() {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText(BATCH_LABEL))
+                .locator("xpath=following-sibling::input[1]")
+                .first();
     }
 
     public boolean isAlternativeResourcesSectionVisible() {

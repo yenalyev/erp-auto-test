@@ -126,6 +126,7 @@
             <class name="com.erp.tests.functional.production.ProductionJournalFilterApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
+            <class name="com.erp.tests.functional.production.ProductionBatchRecipeConsistencyTest"/>
             <class name="com.erp.tests.functional.production_order.ProductionOrderApiTest"/>
             <class name="com.erp.tests.functional.production_order.ProductionGroupApiTest"/>
             <class name="com.erp.tests.functional.disassemble.DisassembleCrudApiTest"/>
@@ -259,6 +260,7 @@
     <test name="UI Production">
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
+            <class name="com.erp.tests.ui.ProductionBatchRecipeConsistencyUiTest"/>
             <class name="com.erp.tests.ui.ProductionGroupsUiTest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalDatePickerUiTest"/>

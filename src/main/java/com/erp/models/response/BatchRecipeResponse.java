@@ -1,4 +1,4 @@
-package com.erp.models.request;
+package com.erp.models.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -10,14 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ManufacturingListRequest {
-
-    private ShiftSnapshotRequest shift;
+public class BatchRecipeResponse {
+    private Long techMapId;
+    private String techMapName;
+    private Long techMapVersion;
 
     @Builder.Default
-    private List<ManufacturingItemRequest> items = new ArrayList<>();
+    private List<BatchAlternativeSelectionResponse> selections = new ArrayList<>();
 }

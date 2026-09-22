@@ -130,6 +130,7 @@
     <test name="Production Journal UI">
         <classes>
             <class name="com.erp.tests.ui.ProductionJournalDatePickerUiTest"/>
+            <class name="com.erp.tests.ui.ProductionBatchRecipeConsistencyUiTest"/>
         </classes>
     </test>
 

@@ -6,18 +6,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalTime;
 
 @Data
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ManufacturingListRequest {
-
-    private ShiftSnapshotRequest shift;
-
-    @Builder.Default
-    private List<ManufacturingItemRequest> items = new ArrayList<>();
+public class ShiftSnapshotRequest {
+    private Long shiftId;
+    private String name;
+    private Integer workerQty;
+    private LocalTime timeStart;
+    private LocalTime timeEnd;
 }

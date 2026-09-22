@@ -25,5 +25,6 @@ public class ManufacturingItemResponse {
     private LocalDate date;
     private String batchNumber;
     private LocalTime time;
+    private ShiftSnapshotResponse shift;
     private String notes;
 }

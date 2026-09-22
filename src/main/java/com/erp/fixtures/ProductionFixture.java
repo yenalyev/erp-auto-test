@@ -10,6 +10,7 @@ import com.erp.models.request.UpdateNotesRequest;
 import com.erp.enums.UserRole;
 import com.erp.models.query.ProductionJournalQuery;
 import com.erp.models.response.ManufacturingItemResponse;
+import com.erp.models.response.BatchRecipeResponse;
 import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
@@ -231,6 +232,22 @@ public class ProductionFixture extends BaseFixture {
         return techMapFixture;
     }
 
+    @Step("API: GET recipe партії «{batchNumber}» для продукту {productId}")
+    public BatchRecipeResponse getBatchRecipe(UserRole role,
+                                              Long storageId,
+                                              Long productId,
+                                              String batchNumber) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_GET_BATCH_RECIPE,
+                role,
+                null,
+                storageId,
+                productId,
+                batchNumber);
+        validateSuccess(response, "Get batch recipe for batch=" + batchNumber);
+        return response.as(BatchRecipeResponse.class);
+    }
+
     @Step("API: створити виробництво — {amount} од., партія «{batchNumber}»")
     public ManufacturingItemResponse createAs(UserRole role,
                                               Long storageId,
@@ -384,9 +401,21 @@ public class ProductionFixture extends BaseFixture {
             TechnologicalMapResponse techMap,
             double amount,
             List<com.erp.models.request.AlternativeInputRequest> alternativeInputs) {
+        return createAsWithAlternatives(role, storageId, techMap, amount,
+                ProductionDataFactory.uniqueBatchNumber(), alternativeInputs);
+    }
+
+    @Step("API: створити виробництво з явним вибором alternativeInputs, партія «{batchNumber}»")
+    public ManufacturingItemResponse createAsWithAlternatives(
+            UserRole role,
+            Long storageId,
+            TechnologicalMapResponse techMap,
+            double amount,
+            String batchNumber,
+            List<com.erp.models.request.AlternativeInputRequest> alternativeInputs) {
         var request = ProductionDataFactory.buildCreateRequest(
                 techMap, amount, java.time.LocalDate.now(),
-                ProductionDataFactory.uniqueBatchNumber(), alternativeInputs);
+                batchNumber, alternativeInputs);
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.PRODUCTION_POST_CREATE,
                 role,
@@ -399,6 +428,19 @@ public class ProductionFixture extends BaseFixture {
             throw new IllegalStateException("Empty create production response");
         }
         return created.getFirst();
+    }
+
+    @Step("API: PUT production (raw request) id={productionId}")
+    public Response updateRaw(UserRole role,
+                              Long productionId,
+                              Long storageId,
+                              com.erp.models.request.ManufacturingListRequest request) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_PUT_UPDATE,
+                role,
+                request,
+                productionId,
+                storageId);
     }
 
     @Step("API: спроба створити виробництво (очікується помилка валідації)")
