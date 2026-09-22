@@ -6,7 +6,11 @@
     "resourceId": { "type": "integer" },
     "resourceName": { "type": ["string", "null"] },
     "shortName": { "type": ["string", "null"] },
-    "amount": { "type": "number" }
+    "amount": { "type": "number" },
+    "groupedFrom": {
+      "type": ["array", "null"],
+      "items": { "type": "string" }
+    }
   },
   "required": ["resourceId", "amount"],
   "additionalProperties": true

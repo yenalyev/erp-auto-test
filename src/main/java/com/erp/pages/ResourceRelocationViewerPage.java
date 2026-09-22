@@ -10,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Page Object for resource tracking journal.
@@ -105,6 +107,49 @@ public class ResourceRelocationViewerPage extends BasePage {
         return this;
     }
 
+    public boolean isLowestComponentGroupingEnabled() {
+        return !groupByLowestComponentsCheckbox().isDisabled();
+    }
+
+    public boolean isLowestComponentGroupingChecked() {
+        return groupByLowestComponentsCheckbox().isChecked();
+    }
+
+    public ResourceRelocationViewerPage setLowestComponentGrouping(boolean enabled) {
+        Locator checkbox = groupByLowestComponentsCheckbox();
+        if (enabled != checkbox.isChecked()) {
+            checkbox.setChecked(enabled);
+        }
+        return this;
+    }
+
+    public ResourceRelocationViewerPage restoreCategoryFilter(
+            Long categoryId,
+            Long receiverId,
+            String receiverName) {
+        return restoreTrackingFilters(
+                List.of(categoryId.intValue()),
+                List.of(),
+                receiverId,
+                receiverName);
+    }
+
+    public ResourceRelocationViewerPage restoreResourceFilters(
+            Map<Long, String> resources,
+            Long receiverId,
+            String receiverName) {
+        List<Map<String, Object>> selectedResources = resources.entrySet().stream()
+                .map(entry -> Map.<String, Object>of(
+                        "id", entry.getKey().intValue(),
+                        "name", entry.getValue()))
+                .toList();
+        return restoreTrackingFilters(
+                List.of(),
+                selectedResources,
+                receiverId,
+                receiverName);
+    }
+
     public ResourceRelocationViewerPage search() {
         page.waitForResponse(
                 response -> response.url().contains("/resources-viewer/relocations")
@@ -143,6 +188,13 @@ public class ResourceRelocationViewerPage extends BasePage {
         return journalRows().filter(new Locator.FilterOptions().setHasText(text)).count();
     }
 
+    public ResourceRelocationViewerPage waitForJournalRowCount(String text, int expectedCount) {
+        page.waitForCondition(
+                () -> journalRowCountContaining(text) == expectedCount,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     public boolean journalRowContainsAll(String anchorText, String... expectedTexts) {
         Locator row = journalRows()
                 .filter(new Locator.FilterOptions().setHasText(anchorText))
@@ -157,6 +209,21 @@ public class ResourceRelocationViewerPage extends BasePage {
             }
         }
         return true;
+    }
+
+    public boolean journalRowHasGroupedMark(String anchorText) {
+        return groupedMarkCountInRows(anchorText) > 0;
+    }
+
+    public int groupedMarkCountInRows(String anchorText) {
+        Locator rows = journalRows().filter(new Locator.FilterOptions().setHasText(anchorText));
+        int marks = 0;
+        for (int i = 0; i < rows.count(); i++) {
+            marks += rows.nth(i)
+                    .getByText("Згруповано", new Locator.GetByTextOptions().setExact(true))
+                    .count();
+        }
+        return marks;
     }
 
     public ExportDownloadResult exportCurrentResult() {
@@ -252,6 +319,32 @@ public class ResourceRelocationViewerPage extends BasePage {
 
     private Locator journalRows() {
         return page.locator("tbody tr");
+    }
+
+    private ResourceRelocationViewerPage restoreTrackingFilters(
+            List<Integer> categoryIds,
+            List<Map<String, Object>> resources,
+            Long receiverId,
+            String receiverName) {
+        Map<String, Object> filters = new HashMap<>();
+        filters.put("selectedCategories", categoryIds);
+        filters.put("selectedResources", resources);
+        filters.put("selectedReceivers", List.of(Map.of(
+                "label", receiverName,
+                "value", receiverId.toString())));
+        filters.put("isPm414", false);
+        filters.put("isSbsWithoutPm414", false);
+        filters.put("isOthers", false);
+        filters.put("groupByLowestComponents", true);
+        page.evaluate(
+                "filters => localStorage.setItem('resourceRelocationFilters', JSON.stringify(filters))",
+                filters);
+        page.reload();
+        return waitForLoaded();
+    }
+
+    private Locator groupByLowestComponentsCheckbox() {
+        return page.locator("#groupByLowest");
     }
 
     private static String extractSearchPrefix(String resourceName) {

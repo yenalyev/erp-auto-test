@@ -221,8 +221,7 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
         params.put("size", 100);
 
         List<ResourceRelocationViewerResponse> matchingRows = fetchJournal(params).stream()
-                .filter(row -> row.getProduct() != null)
-                .filter(row -> productA.getId().equals(row.getProduct().getId()))
+                .filter(row -> sent.getId().equals(row.getRelocationId()))
                 .toList();
 
         assertThat(matchingRows)
@@ -236,13 +235,134 @@ public class ResourceViewerFilterApiTest extends BaseFunctionalTest {
         assertThat(row.getProduct().getId()).isEqualTo(productA.getId());
         assertThat(row.getIngredients())
                 .extracting(ResourceRelocationViewerResponse.ResourceIngredientResponse::getResourceId)
-                .contains(componentB.getId());
+                .containsExactly(componentB.getId());
+        assertThat(row.getIngredients().getFirst().getGroupedFrom())
+                .as("найнижчий компонент пояснює, що в нього згорнуто готовий виріб")
+                .containsExactly(productA.getName());
         assertThat(totalUsageOf(row, componentB.getId()))
                 .as("єдиний рядок містить 10 одиниць Компонента Б")
                 .isCloseTo(RELOCATE_AMOUNT * ALC_PER_UNIT, within(0.001));
-        assertThat(amountOf(fetchSums(params), componentB.getId()))
+        List<ResourceRelocationSumViewerResponse> sums = fetchSums(params);
+        assertThat(amountOf(sums, componentB.getId()))
                 .as("підсумок компонента не подвоюється через збіг продукту й компонента")
                 .isCloseTo(RELOCATE_AMOUNT * ALC_PER_UNIT, within(0.001));
+        assertThat(sums.stream()
+                .filter(sum -> componentB.getId().equals(sum.getResourceId()))
+                .findFirst()
+                .orElseThrow()
+                .getGroupedFrom())
+                .containsExactly(productA.getName());
+    }
+
+    @Test(priority = 16)
+    @TestCaseId("TC-RVW-API-019")
+    @Story("Explicit product and semi-finished resource keep both decompositions")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Якщо користувач явно вибрав готовий виріб A і його напівфабрикат Б,
+            category-only grouping не застосовується: один relocation повертає окрему
+            декомпозицію A через Б та окремий self-рядок Б/А для явного ресурсу A.
+            """)
+    public void testExplicitProductAndSemiFinishedResourceKeepBothDecompositions() {
+        String suffix = uniqueSuffix();
+        ResourceResponse semiFinishedB = resourceFixture.createUniqueResource(
+                "RVW-EXPLICIT-SEMI-B-" + suffix, categoryBId);
+        ResourceResponse finalProductA = resourceFixture.createUniqueResource(
+                "RVW-EXPLICIT-FINAL-A-" + suffix, categoryBId);
+
+        TechnologicalMapResponse map = createMap(
+                "RVW-FIL-EXPLICIT",
+                List.of(new ResourceUsageRequest(semiFinishedB.getId(), ALC_PER_UNIT)),
+                List.of(new ResourceUsageRequest(finalProductA.getId(), 1.0)));
+        ManufacturingItemResponse produced = produce(map, PRODUCE_AMOUNT);
+        RelocationResponse sent = relocateProduced(
+                finalProductA.getId(), RELOCATE_AMOUNT, produced.getBatchNumber());
+
+        Map<String, Object> params = viewerParams(List.of(finalProductA.getId(), semiFinishedB.getId()));
+        params.put("page", 0);
+        params.put("size", 100);
+
+        List<ResourceRelocationViewerResponse> rows = fetchJournal(params).stream()
+                .filter(row -> sent.getId().equals(row.getRelocationId()))
+                .toList();
+
+        assertThat(rows)
+                .as("явно вибрані готовий виріб і напівфабрикат мають обидва логічні представлення")
+                .hasSize(2);
+        assertThat(rows).anySatisfy(row -> {
+            assertThat(row.getIsProduct()).isTrue();
+            assertThat(row.getIngredients())
+                    .extracting(ResourceRelocationViewerResponse.ResourceIngredientResponse::getResourceId)
+                    .containsExactly(semiFinishedB.getId());
+        });
+        assertThat(rows).anySatisfy(row -> {
+            assertThat(row.getIsProduct()).isFalse();
+            assertThat(row.getIngredients())
+                    .extracting(ResourceRelocationViewerResponse.ResourceIngredientResponse::getResourceId)
+                    .containsExactly(finalProductA.getId());
+        });
+        assertThat(rows)
+                .flatExtracting(ResourceRelocationViewerResponse::getIngredients)
+                .allSatisfy(ingredient -> assertThat(ingredient.getGroupedFrom()).isEmpty());
+
+        List<ResourceRelocationSumViewerResponse> sums = fetchSums(params);
+        assertThat(amountOf(sums, finalProductA.getId()))
+                .isCloseTo(RELOCATE_AMOUNT, within(0.001));
+        assertThat(amountOf(sums, semiFinishedB.getId()))
+                .isCloseTo(RELOCATE_AMOUNT * ALC_PER_UNIT, within(0.001));
+        assertThat(sums.stream()
+                .filter(sum -> finalProductA.getId().equals(sum.getResourceId())
+                        || semiFinishedB.getId().equals(sum.getResourceId()))
+                .toList())
+                .allSatisfy(sum -> assertThat(sum.getGroupedFrom()).isEmpty());
+    }
+
+    @Test(priority = 17)
+    @TestCaseId("TC-RVW-API-021")
+    @Story("Category grouping direction")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Для category-only пошуку groupByLowestComponents=false зберігає найвищий
+            рівень A, згортає компонент Б та не створює другого рядка relocation.
+            """)
+    public void testCategoryGroupingCanKeepHighestComponentWithoutDuplicateRelocation() {
+        String suffix = uniqueSuffix();
+        ResourceResponse componentB = resourceFixture.createUniqueResource(
+                "RVW-HIGHEST-B-" + suffix, categoryBId);
+        ResourceResponse productA = resourceFixture.createUniqueResource(
+                "RVW-HIGHEST-A-" + suffix, categoryBId);
+
+        TechnologicalMapResponse map = createMap(
+                "RVW-FIL-HIGHEST",
+                List.of(new ResourceUsageRequest(componentB.getId(), ALC_PER_UNIT)),
+                List.of(new ResourceUsageRequest(productA.getId(), 1.0)));
+        ManufacturingItemResponse produced = produce(map, PRODUCE_AMOUNT);
+        RelocationResponse sent = relocateProduced(
+                productA.getId(), RELOCATE_AMOUNT, produced.getBatchNumber());
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("categoryIds", List.of(categoryBId));
+        params.put("receiverIds", receiverUnitId);
+        params.put("groupByLowestComponents", false);
+        params.put("page", 0);
+        params.put("size", 100);
+
+        List<ResourceRelocationViewerResponse> rows = fetchJournal(params).stream()
+                .filter(row -> sent.getId().equals(row.getRelocationId()))
+                .toList();
+        assertThat(rows).hasSize(1);
+        ResourceRelocationViewerResponse row = rows.getFirst();
+        assertThat(row.getIsProduct()).isFalse();
+        assertThat(row.getIngredients())
+                .extracting(ResourceRelocationViewerResponse.ResourceIngredientResponse::getResourceId)
+                .containsExactly(productA.getId());
+        assertThat(row.getIngredients().getFirst().getGroupedFrom())
+                .containsExactly(componentB.getName());
+
+        List<ResourceRelocationSumViewerResponse> sums = fetchSums(params);
+        assertThat(amountOf(sums, productA.getId())).isCloseTo(RELOCATE_AMOUNT, within(0.001));
+        assertThat(sums.stream().map(ResourceRelocationSumViewerResponse::getResourceId))
+                .doesNotContain(componentB.getId());
     }
 
     @Test(priority = 20)

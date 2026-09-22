@@ -42,5 +42,7 @@ public class ResourceRelocationViewerResponse {
         private BigDecimal usage;
         private BigDecimal totallyUsage;
         private String unit;
+        @Builder.Default
+        private List<String> groupedFrom = new ArrayList<>();
     }
 }

@@ -21,7 +21,11 @@
           "name": { "type": ["string", "null"] },
           "usage": { "type": ["number", "null"] },
           "totallyUsage": { "type": ["number", "null"] },
-          "unit": { "type": ["string", "null"] }
+          "unit": { "type": ["string", "null"] },
+          "groupedFrom": {
+            "type": ["array", "null"],
+            "items": { "type": "string" }
+          }
         },
         "required": ["resourceId"],
         "additionalProperties": true

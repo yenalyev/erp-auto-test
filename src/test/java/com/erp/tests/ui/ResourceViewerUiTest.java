@@ -67,6 +67,7 @@ public class ResourceViewerUiTest extends BaseUITest {
     private TechnologicalMapResponse techMap;
     private ResourceResponse alcohol;
     private ResourceResponse product;
+    private Long trackingCategoryId;
     private double expectedAlcoholSum;
 
     @BeforeClass(alwaysRun = true)
@@ -95,10 +96,13 @@ public class ResourceViewerUiTest extends BaseUITest {
         techMapFixture.setMode(productionStorageId, StorageTechnologicalMapMode.EDIT_ALLOWED);
 
         String suffix = String.valueOf(System.currentTimeMillis());
+        trackingCategoryId = resolveTrackingCategoryId();
         alcohol = resourceFixture.createUniqueResource(
                 "UI-RVW-ALC-" + suffix,
-                resolveTrackingCategoryId());
-        product = resourceFixture.createUniqueResource("UI-RVW-P-" + suffix);
+                trackingCategoryId);
+        product = resourceFixture.createUniqueResource(
+                "UI-RVW-P-" + suffix,
+                trackingCategoryId);
 
         TechnologicalMapRequest request = TechnologicalMapDataFactory
                 .createProductionMapWithStorages(
@@ -123,7 +127,6 @@ public class ResourceViewerUiTest extends BaseUITest {
         expectedAlcoholSum = RELOCATE_AMOUNT * ALC_PER_UNIT;
 
         injectResourceViewerSession();
-        browserContext.addInitScript("localStorage.removeItem('resourceRelocationFilters');");
     }
 
     @AfterClass(alwaysRun = true)
@@ -191,11 +194,12 @@ public class ResourceViewerUiTest extends BaseUITest {
         ResourceRelocationViewerPage viewer = Allure.step(
                 "Відкрити viewer і виконати пошук",
                 () -> {
-                    ResourceRelocationViewerPage pageObject = new ResourceRelocationViewerPage(page).open();
-                    pageObject.clearFilters();
-                    pageObject.selectResource(alcohol.getName());
-                    pageObject.selectReceiver(receiverUnitName);
-                    pageObject.search();
+                    ResourceRelocationViewerPage pageObject = new ResourceRelocationViewerPage(page).open()
+                            .restoreResourceFilters(
+                                    Map.of(alcohol.getId(), alcohol.getName()),
+                                    receiverUnitId,
+                                    receiverUnitName);
+                    pageObject.waitForJournalRowCount(product.getName(), 1);
                     return pageObject;
                 });
 
@@ -227,17 +231,80 @@ public class ResourceViewerUiTest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Після пошуку за Компонентом Б і конкретним зовнішнім отримувачем UI завантажує непорожній XLSX")
     public void resourceViewerExportsCurrentFilteredResult() {
-        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open();
-        viewer.clearFilters()
-                .selectResource(alcohol.getName())
-                .selectReceiver(receiverUnitName)
-                .search();
+        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open()
+                .restoreResourceFilters(
+                        Map.of(alcohol.getId(), alcohol.getName()),
+                        receiverUnitId,
+                        receiverUnitName)
+                .waitForJournalRowCount(product.getName(), 1);
 
         ResourceRelocationViewerPage.ExportDownloadResult download = Allure.step(
                 "Завантажити Excel поточного результату",
                 viewer::exportCurrentResult);
         UiDownloadAssertions.assertNonEmptyXlsx(
                 download.path(), download.sizeBytes(), "Resource Viewer Excel");
+    }
+
+    @Test(priority = 40)
+    @TestCaseId("TC-UI-RVW-004")
+    @Story("Category-only grouping removes duplicate movement rows")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Для пошуку лише за категорією перемикач групування доступний і ввімкнений
+            за замовчуванням; готовий виріб та його компонент зі спільної категорії
+            дають один рядок фізичного переміщення з позначкою «Згруповано».
+            """)
+    public void categoryOnlySearchGroupsProductAndComponentIntoOneMovementRow() {
+        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open()
+                .restoreCategoryFilter(trackingCategoryId, receiverUnitId, receiverUnitName);
+
+        assertThat(viewer.isLowestComponentGroupingEnabled()).isTrue();
+        assertThat(viewer.isLowestComponentGroupingChecked()).isTrue();
+
+        viewer.waitForJournalRowCount(product.getName(), 1);
+        viewer.attachScreenshot("TC-UI-RVW-004 — category grouping");
+
+        assertThat(viewer.journalRowCountContaining(product.getName()))
+                .as("category-only пошук не дублює фізичне переміщення")
+                .isEqualTo(1);
+        assertThat(viewer.journalRowContainsAll(product.getName(), alcohol.getName()))
+                .isTrue();
+        assertThat(viewer.journalRowHasGroupedMark(product.getName()))
+                .as("UI пояснює, що один з рівнів BOM було згорнуто")
+                .isTrue();
+    }
+
+    @Test(priority = 50)
+    @TestCaseId("TC-UI-RVW-005")
+    @Story("Explicit product and semi-finished selection shows both decompositions")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Якщо явно вибрані готовий виріб і його напівфабрикат, перемикач category-only
+            grouping вимкнений, а таблиця показує обидва логічні представлення relocation.
+            """)
+    public void explicitProductAndComponentSelectionShowsBothDecompositions() {
+        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open()
+                .restoreResourceFilters(
+                        Map.of(
+                                product.getId(), product.getName(),
+                                alcohol.getId(), alcohol.getName()),
+                        receiverUnitId,
+                        receiverUnitName);
+
+        assertThat(viewer.isLowestComponentGroupingEnabled())
+                .as("явний вибір ресурсів вимикає category-only grouping")
+                .isFalse();
+
+        viewer.waitForJournalRowCount(product.getName(), 2);
+        viewer.attachScreenshot("TC-UI-RVW-005 — explicit product and component");
+
+        assertThat(viewer.journalRowCountContaining(product.getName()))
+                .as("декомпозиція готового виробу та явно вибраний рівень показані окремо")
+                .isEqualTo(2);
+        assertThat(viewer.tableContainsText(alcohol.getName())).isTrue();
+        assertThat(viewer.groupedMarkCountInRows(product.getName()))
+                .as("явно вибрані рівні не позначаються як згорнуті")
+                .isZero();
     }
 
     private void injectResourceViewerSession() {
@@ -300,4 +367,5 @@ public class ResourceViewerUiTest extends BaseUITest {
         }
         throw new SkipException("На env не налаштовано resource_tracking_categories для UI fixture");
     }
+
 }

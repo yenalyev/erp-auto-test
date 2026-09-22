@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -18,4 +20,6 @@ public class ResourceRelocationSumViewerResponse {
     private String resourceName;
     private String shortName;
     private BigDecimal amount;
+    @Builder.Default
+    private List<String> groupedFrom = new ArrayList<>();
 }
