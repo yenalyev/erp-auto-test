@@ -31,6 +31,7 @@ public class OrderListPage extends BasePage {
     private static final String CANCEL_ORDER_BUTTON = "Скасувати";
     private static final String CONFIRM_BUTTON = "Підтвердити";
     private static final String BOOKING_PANEL_TITLE = "Збір замовлення";
+    private static final String BOOK_ALL_BUTTON = "Забронювати все";
     private static final String SEND_ORDER_BUTTON = "Відправити замовлення";
     private static final String READY_TO_DELIVER_BUTTON = "Готово до доставки";
     private static final String NEW_ORDER_DIALOG_TITLE = "Нове замовлення";
@@ -412,6 +413,31 @@ public class OrderListPage extends BasePage {
         return this;
     }
 
+    public boolean isBookAllVisible() {
+        Locator button = bookAllButton();
+        return button.count() > 0 && button.first().isVisible();
+    }
+
+    public boolean isBookAllEnabled() {
+        Locator button = bookAllButton();
+        return button.count() > 0 && button.first().isVisible() && button.first().isEnabled();
+    }
+
+    public OrderListPage scrollBookAllIntoView() {
+        bookAllButton().scrollIntoViewIfNeeded();
+        return this;
+    }
+
+    /** Book every currently uncovered order line using the bulk UI action. */
+    public OrderListPage bookAllResources() {
+        Locator button = bookAllButton();
+        button.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        button.click();
+        return this;
+    }
+
     public OrderListPage markBookingPrepared(String resourceName) {
         Locator button = orderDialog().getByRole(AriaRole.BUTTON,
                 new Locator.GetByRoleOptions().setName("Підготовлено").setExact(true)).first();
@@ -715,6 +741,11 @@ public class OrderListPage extends BasePage {
 
     private Locator createOrderButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON));
+    }
+
+    private Locator bookAllButton() {
+        return orderDialog().getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName(BOOK_ALL_BUTTON).setExact(true));
     }
 
     private Locator bookingRowForResource(String resourceName) {

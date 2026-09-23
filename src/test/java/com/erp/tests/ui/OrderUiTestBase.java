@@ -54,6 +54,7 @@ abstract class OrderUiTestBase extends BaseUITest {
     protected long gatheringStorageId;
     protected Long resourceId;
     protected String resourceName;
+    protected List<ResourceResponse> sharedResources;
     protected String requesterStorageName;
     protected String gatheringStorageName;
     private Long primaryGatheringStorageId;
@@ -91,21 +92,29 @@ abstract class OrderUiTestBase extends BaseUITest {
         ResourceFixture resources = new ResourceFixture(testContext, apiExecutor);
         resources.fetchSharedUnit(1);
         resources.fetchSharedResourceCategory();
-        ResourceResponse resource = resources.getPage(UserRole.ADMIN, true, null).stream()
+        sharedResources = resources.getPage(UserRole.ADMIN, true, null).stream()
                 .filter(candidate -> candidate.getId() != null && candidate.getId() > 0
                         && candidate.getName() != null && !candidate.getName().isBlank()
                         && candidate.getUnit() != null && candidate.getCategory() != null)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No active catalog resource for UI order fixture"));
+                .limit(requiredResourceCount())
+                .toList();
+        if (sharedResources.size() < requiredResourceCount()) {
+            throw new IllegalStateException("Need " + requiredResourceCount()
+                    + " active catalog resources for UI order fixture, found " + sharedResources.size());
+        }
+        ResourceResponse resource = sharedResources.getFirst();
         resourceId = resource.getId();
         resourceName = resource.getName();
-        relocationFixture.seedExactStock(requesterStorageId, resourceId, 1.0);
-        new InventoryFixture(testContext, apiExecutor)
-                .resetResourceStock(requesterStorageId, resourceId, 0.0, UserRole.ADMIN);
+        InventoryFixture inventory = new InventoryFixture(testContext, apiExecutor);
+        for (ResourceResponse availableResource : sharedResources) {
+            relocationFixture.seedExactStock(requesterStorageId, availableResource.getId(), 1.0);
+            inventory.resetResourceStock(
+                    requesterStorageId, availableResource.getId(), 0.0, UserRole.ADMIN);
+        }
         testContext.set(ContextKey.ORDER_REQUESTER_STORAGE_ID, requesterStorageId);
         testContext.set(ContextKey.ORDER_GATHERING_STORAGE_ID, gatheringStorageId);
         testContext.set(ContextKey.ORDER_RESOURCE_ID, resourceId);
-        testContext.set(ContextKey.SHARED_AVAILABLE_RESOURCES, List.of(resource));
+        testContext.set(ContextKey.SHARED_AVAILABLE_RESOURCES, sharedResources);
         testContext.set(ContextKey.SHARED_RESOURCE_ID, resourceId);
         testContext.set(ContextKey.SHARED_RESOURCE, resource);
 
@@ -125,6 +134,11 @@ abstract class OrderUiTestBase extends BaseUITest {
                         && gatheringStorageId == grant.getStorage().getId())
                 .map(grant -> grant.getName()).toList())
                 .containsExactly("Керівник локації");
+    }
+
+    /** Most UI order classes need one catalog resource; multi-line cases override this. */
+    protected int requiredResourceCount() {
+        return 1;
     }
 
     @AfterClass(alwaysRun = true)
@@ -256,6 +270,33 @@ abstract class OrderUiTestBase extends BaseUITest {
     /** Admin session in «Всі локації» workspace. */
     protected void loginAsAdminAllLocations() {
         reopenPageWithSession(MANAGER, null);
+    }
+
+    /** Fresh location head on the assigned gathering storage. */
+    protected void loginAsGatherer() {
+        reopenPageWithSession(GATHERER, gatheringStorageId);
+    }
+
+    /** Reopen the browser with a dynamically created actor instead of an enum-backed account. */
+    protected void loginAsActor(UserFixture.BusinessActor actor, long selectedStorageId) {
+        if (page != null) {
+            try {
+                page.close();
+            } catch (Exception e) {
+                log.debug("Could not close page before actor reinject: {}", e.getMessage());
+            }
+        }
+        Map<String, String> cookies = authService.getSessionForUser(actor.username(), actor.password());
+        String domain = ConfigProvider.getBaseUrl()
+                .replaceFirst("https?://", "")
+                .split("/")[0];
+        injectSessionCookies(cookies, domain);
+        browserContext.addInitScript(
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        page = browserContext.newPage();
+        int timeoutMs = ConfigProvider.getUiTimeoutSeconds() * 1000;
+        page.setDefaultTimeout(timeoutMs);
+        page.setDefaultNavigationTimeout(timeoutMs);
     }
 
     protected void syncGatheringFromContext() {
