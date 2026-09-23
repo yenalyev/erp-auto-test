@@ -21,4 +21,5 @@ public class ExecutionFilterRequest {
     private Boolean includeProduced;
     private Boolean includeStock;
     private List<Long> resourceIds;
+    private List<Long> categoryIds;
 }

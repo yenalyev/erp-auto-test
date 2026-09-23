@@ -24,6 +24,7 @@ public class ProjectProductionFormPage extends BasePage {
     private static final String FINISH_BUTTON = "Завершити проєкт";
     private static final String SERIAL_PLACEHOLDER = "Серійний номер...";
     private static final String CATEGORY_PLACEHOLDER = "Оберіть категорію...";
+    private static final String MODEL_PLACEHOLDER = "Оберіть модель...";
     private static final String RESOURCE_PLACEHOLDER = "Оберіть ресурс...";
     private static final String AUTOCOMPLETE_SEARCH_PLACEHOLDER = "Пошук...";
 
@@ -86,12 +87,35 @@ public class ProjectProductionFormPage extends BasePage {
         return this;
     }
 
-    public ProjectProductionFormPage selectProduct(String productName) {
-        page.locator("[data-slot='select-trigger']").first().click();
-        page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(productName))
+    public ProjectProductionFormPage selectModel(String modelName) {
+        Locator input = page.getByPlaceholder(MODEL_PLACEHOLDER);
+        input.click();
+        input.fill(modelName);
+        page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(modelName))
                 .first()
                 .click();
         return this;
+    }
+
+    public boolean isCategorySelectionDisabled() {
+        return page.getByPlaceholder(CATEGORY_PLACEHOLDER).isDisabled();
+    }
+
+    public boolean isModelSelectionDisabled() {
+        return page.getByPlaceholder(MODEL_PLACEHOLDER).isDisabled();
+    }
+
+    public boolean isEquipmentSelectionDisabled() {
+        Locator field = page.getByText("Виріб для модифікації", new Page.GetByTextOptions().setExact(false))
+                .first()
+                .locator("..");
+        return field.getByRole(AriaRole.COMBOBOX).first().isDisabled();
+    }
+
+    public boolean isNewModelActionVisible() {
+        Locator action = page.getByRole(
+                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Нова модель").setExact(true));
+        return action.count() > 0 && action.first().isVisible();
     }
 
     public ProjectProductionFormPage fillSerialNumber(String serialNumber) {

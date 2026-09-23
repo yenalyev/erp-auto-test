@@ -296,25 +296,37 @@ public class EquipmentFixture extends BaseFixture {
     }
 
     public void changeEquipmentStatus(UserRole role, Long equipmentId, EquipmentStatus status) {
+        Response response = changeEquipmentStatusRaw(role, equipmentId, status);
+        validateSuccess(response, "Change equipment status");
+    }
+
+    public Response changeEquipmentStatusRaw(UserRole role, Long equipmentId, EquipmentStatus status) {
         EquipmentStatusUpdateRequest request = EquipmentStatusUpdateRequest.builder()
                 .status(status)
                 .build();
-        Response response = apiExecutor.execute(
-                ApiEndpointDefinition.EQUIPMENT_PUT_STATUS, role, request, equipmentId);
-        validateSuccess(response, "Change equipment status");
+        return apiExecutor.execute(ApiEndpointDefinition.EQUIPMENT_PUT_STATUS, role, request, equipmentId);
     }
 
     @Step("API: закріпити обладнання {equipmentId} за співробітником {assigneeId}")
     public EquipmentResponse assignEquipment(UserRole role, Long equipmentId, Long assigneeId) {
+        Response response = assignEquipmentRaw(role, equipmentId, assigneeId);
+        validateSuccess(response, "Assign equipment");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.EQUIPMENT_POST_ASSIGNMENT);
+        return response.as(EquipmentResponse.class);
+    }
+
+    public Response assignEquipmentRaw(UserRole role, Long equipmentId, Long assigneeId) {
         EquipmentAssignmentRequest request = EquipmentAssignmentRequest.builder()
                 .assigneeId(assigneeId)
                 .note("erp-auto-test assignment")
                 .build();
-        Response response = apiExecutor.execute(
+        return apiExecutor.execute(
                 ApiEndpointDefinition.EQUIPMENT_POST_ASSIGNMENT, role, request, equipmentId);
-        validateSuccess(response, "Assign equipment");
-        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.EQUIPMENT_POST_ASSIGNMENT);
-        return response.as(EquipmentResponse.class);
+    }
+
+    public Response returnAssignmentRaw(UserRole role, Long equipmentId) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.EQUIPMENT_PUT_ASSIGNMENT_RETURN, role, null, equipmentId);
     }
 
     @Step("API: grouped equipment для storage {storageId}, assigneeId={assigneeId}")

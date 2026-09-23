@@ -40,6 +40,7 @@
         <testcontainers.version>1.20.4</testcontainers.version>
         <postgresql.version>42.7.4</postgresql.version>
         <playwright.version>1.50.0</playwright.version>
+        <poi.version>5.4.0</poi.version>
 
         <!-- Plugins -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -189,6 +190,12 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
         </dependency>
 
         <!-- JWT -->

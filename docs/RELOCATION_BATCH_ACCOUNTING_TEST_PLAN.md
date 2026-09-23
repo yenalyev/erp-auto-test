@@ -3,6 +3,7 @@
 Документація нової функціональності для продукту, QA та автоматизації.
 Функціональний контур: ресурсні переміщення, форма зовнішнього отримання
 `/relocation/create-input` та API створення отримання.
+TCM: **REQ-EDIT_REL-008** (модуль `EDIT_REL`, батько `REQ-EDIT_REL`).
 
 Статус: **продуктові правила уточнено; API/UI автотести додано, знайдені
 невідповідності реалізації мають залишатися видимими як падіння цільових тестів**.
@@ -402,52 +403,69 @@ mvn test -Denv=dev -Dsuite=ui
 1. DTO request/response та JSON Schema знають `accResourceId` і `paidAmount`.
 2. `RelocationDataFactory` уміє будувати бухгалтерську партію і multi-row
    отримання.
-3. `RelocationBatchAccountingTest` покриває `TC-REL-ACC-001`, `002`, `003`,
-   `004`, `006`, `012` і `014`: збереження полів, два рядки одного ресурсу,
-   унікальність після trim/case normalization, різні ресурси, опціональність,
-   нуль, від'ємне значення та scale понад 2. Негативні сценарії також перевіряють
-   незмінність залишку.
+3. `RelocationBatchAccountingTest` покриває всі API-сценарії
+   `TC-REL-ACC-001…019`: persistence, multi-row, normalized uniqueness,
+   опціональність, межі суми й назви, atomicity, delete rollback, edit,
+   RBAC, legacy compatibility, журнал, інвентаризацію та експорти. Негативні
+   сценарії перевіряють незмінність залишку та одразу видаляють запис, якщо dev
+   помилково прийняв невалідний запит.
 4. `RelocationCreateInputPage` має операції для вибору ресурсу, додавання рядка,
    суми, бухгалтерської назви, duplicate error і загальної вартості.
-5. `RelocationBatchAccountingUiTest` покриває `TC-REL-ACC-UI-001…004`: наявність
-   полів, крок `0.01`, два рядки одного ресурсу, блокування дубліката та підсумок
-   для `0.00`/додатної суми.
+5. `RelocationBatchAccountingUiTest` покриває `TC-REL-ACC-UI-001…004` та
+   `TC-REL-ACC-020`: наявність і локалізацію полів, крок `0.01`, формат суми,
+   два рядки одного ресурсу, блокування дубліката та підсумок для
+   `0.00`/додатної суми.
 6. Нові класи підключені до `relocations.xml`, `regression.xml` та `ui.xml`.
 
-Ще не автоматизовано: видалення multi-row отримання, concurrent race для unique
-constraint, повна матриця RBAC, legacy-дані, експорт/накладна та спеціальні
-символи/дуже довгі назви. Вони залишаються manual/regression backlog за
-сценаріями `TC-REL-ACC-005`, `007…011`, `013`, `015…020`.
+У TCM автоматизовано **24 із 24** кейсів: 19 API та 5 UI; manual-кейсів у feature
+не залишилося. Окремий конкурентний stress/race тест unique constraint не входить
+до цих 24 функціональних кейсів і може бути доданий пізніше як non-blocking
+розширення.
 
 ### Результати прогону на dev — 23.09.2026
 
 Команди:
 
 ```bash
-mvn -o test -Dtest=RelocationBatchAccountingTest -Denv=dev \
+mvn -o surefire:test -Dtest=RelocationBatchAccountingTest \
+  -Dsurefire.suiteXmlFiles= -Denv=dev \
   -Dsuite.artifact.sweep=false -Dgoogle.sheets.enabled=false -Dtcm.enabled=false
-mvn -o test -Dtest=RelocationBatchAccountingUiTest -Denv=dev \
+mvn -o surefire:test -Dtest=RelocationBatchAccountingUiTest \
+  -Dsurefire.suiteXmlFiles= -Denv=dev \
   -Dsuite.artifact.sweep=false -Dgoogle.sheets.enabled=false -Dtcm.enabled=false
 ```
 
-API: **5 із 8 пройшли, 3 впали**.
+API: **12 із 19 виконань пройшли, 7 впали**. Один pagination false negative у
+`TC-REL-ACC-019` виправлено в тесті; точковий повторний прогін пройшов.
 
-- `TC-REL-ACC-001`, `002`, `004`, `006` та перевірка нульової суми з
-  `TC-REL-ACC-012` пройшли: поля зберігаються, різні назви одного ресурсу й
-  одна назва для різних ресурсів підтримуються, поля опціональні, `0.00`
-  приймається.
+- Пройшли `TC-REL-ACC-001`, `002`, `004`, `005`, `006`, `008`, `010`, `011`,
+  `015`, `017`, `018`, `019` та перевірка нульової суми з `TC-REL-ACC-012`:
+  persistence, різні назви одного ресурсу, одна назва для різних ресурсів і
+  relocation, optional/null, delete rollback, atomic amount validation, RBAC,
+  legacy compatibility, журнал, інвентаризація та експорти працюють.
 - `TC-REL-ACC-003` / `014`: backend створив relocation (`HTTP 200`) для одного
   ресурсу з назвами, однаковими після `trim` і без урахування регістру; очікувався
   validation error `400`.
+- `TC-REL-ACC-007`: backend прийняв два безіменні рядки одного ресурсу й змінив
+  залишок; очікувався duplicate validation error `400` без зміни stock.
+- `TC-REL-ACC-009`: невалідна сума другого ресурсу повертає `500` замість
+  контрольованого `400`; залишки обох ресурсів не змінилися.
 - `TC-REL-ACC-012`, від'ємне значення: backend повернув `500 Something went
   wrong`; очікувався контрольований validation error `400` без server error.
 - `TC-REL-ACC-012`, три десяткові знаки: backend прийняв `paidAmount=0.001` і
   створив relocation; очікувалося відхилення.
+- `TC-REL-ACC-013`: створення reconciliation з довгою Unicode-назвою та
+  спеціальними символами повернуло `500`; за узгодженим контрактом назва не має
+  обмеження довжини.
+- `TC-REL-ACC-016`: звичайне редагування description видалило `accResourceId`
+  і `paidAmount` з партії; атрибути мають зберігатися.
 
-UI: **1 із 3 пройшов, 2 впали**.
+UI: **2 із 4 виконань пройшли, 2 впали** (3 із 5 TCM-кейсів пройшли).
 
 - `TC-REL-ACC-UI-002/003` пройшов: два рядки одного ресурсу доступні, повторна
   бухгалтерська назва показує помилку та блокує submit.
+- `TC-REL-ACC-020` пройшов: українські placeholders і значення `1234.50`
+  відображаються без втрати формату, пошук бухгалтерської назви доступний.
 - `TC-REL-ACC-UI-001`: поле суми має `step="any"` замість очікуваного `0.01`.
 - `TC-REL-ACC-UI-004`: після введення `0.00` блок «Загальна вартість» не
   з'явився.

@@ -93,12 +93,11 @@ public enum ContextKey {
     SHARED_ROLE_NAME("sharedRoleName", String.class),
     /** FAITA external product id for implicit-resources PUT / RBAC. */
     FAITA_EXTERNAL_ID("faitaExternalId", String.class),
-    /** Project category id shared across project-production tests. */
-    PROJECT_CATEGORY_ID("projectCategoryId", Long.class),
-    PROJECT_CATEGORY_NAME("projectCategoryName", String.class),
-    /** Project product id shared across project-production tests. */
-    PROJECT_PRODUCT_ID("projectProductId", Long.class),
-    PROJECT_PRODUCT_NAME("projectProductName", String.class),
+    /** Equipment category/model shared across project-production tests. */
+    PROJECT_EQUIPMENT_CATEGORY_ID("projectEquipmentCategoryId", Long.class),
+    PROJECT_EQUIPMENT_CATEGORY_NAME("projectEquipmentCategoryName", String.class),
+    PROJECT_EQUIPMENT_MODEL_ID("projectEquipmentModelId", Long.class),
+    PROJECT_EQUIPMENT_MODEL_NAME("projectEquipmentModelName", String.class),
     /** Resource id seeded with stock for project-production stage resource usage. */
     PROJECT_RESOURCE_ID("projectResourceId", Long.class),
     PROJECT_RESOURCE_NAME("projectResourceName", String.class),

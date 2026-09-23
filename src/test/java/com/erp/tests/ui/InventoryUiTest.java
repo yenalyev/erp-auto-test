@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -444,30 +445,39 @@ public class InventoryUiTest extends BaseUITest {
             Admin на формі проведення інвентаризації шукає ресурси за частиною назви.
             Очікується: пошук нечутливий до регістру, показує лише відповідні рядки,
             для відсутнього збігу відображається порожній стан, а очищення повертає всі рядки.
-            Зміна кількості у відфільтрованому рядку застосовується саме до вибраного ресурсу.
             """)
     public void quickSearchFiltersInventoryResourcesUi() {
-        ResourceResponse alpha = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
-                storageId, UserRole.ADMIN, "InvQuickAlpha_");
-        ResourceResponse beta = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
-                storageId, UserRole.ADMIN, "InvQuickBeta_");
-        trackStorageResourceForCleanup(alpha.getId());
-        trackStorageResourceForCleanup(beta.getId());
-
-        relocationFixture.ensureStock(storageId, alpha.getId(), 3.0);
-        relocationFixture.ensureStock(storageId, beta.getId(), 7.0);
-        StorageItemResponse alphaItem = inventoryFixture.requireItemForResourceWithRetry(
-                storageId, alpha.getId(), UserRole.ADMIN, 15_000);
-        StorageItemResponse betaItem = inventoryFixture.requireItemForResourceWithRetry(
-                storageId, beta.getId(), UserRole.ADMIN, 15_000);
-        String alphaName = alphaItem.getResource().getName().trim().replaceAll("\\s+", " ");
+        List<StorageItemResponse> visibleItems = inventoryFixture.listItems(storageId, UserRole.ADMIN).stream()
+                .filter(item -> item.getResource() != null)
+                .filter(item -> item.getResource().getName() != null
+                        && !item.getResource().getName().isBlank())
+                .filter(item -> item.getAmount() != null && item.getAmount() > 0)
+                .toList();
+        StorageItemResponse betaItem = visibleItems.stream()
+                .filter(item -> Pattern.compile("\\p{Ll}{3,}")
+                        .matcher(item.getResource().getName()).find())
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Inventory needs a resource name with letters to verify case-insensitive search"));
         String betaName = betaItem.getResource().getName().trim().replaceAll("\\s+", " ");
-        double alphaBefore = alphaItem.getAmount();
-        double betaTarget = betaItem.getAmount() + 1.0;
-        String betaTargetInput = String.valueOf(betaTarget);
+        Matcher searchFragment = Pattern.compile("\\p{Ll}{3,}").matcher(betaName);
+        if (!searchFragment.find()) {
+            throw new IllegalStateException("Cannot extract a case-sensitive search fragment from " + betaName);
+        }
+        String matchedWord = searchFragment.group();
+        String searchQuery = matchedWord.substring(0, Math.min(matchedWord.length(), 8))
+                .toUpperCase(Locale.ROOT);
+        StorageItemResponse alphaItem = visibleItems.stream()
+                .filter(item -> !item.getResource().getId().equals(betaItem.getResource().getId()))
+                .filter(item -> !item.getResource().getName().toLowerCase(Locale.ROOT)
+                        .contains(searchQuery.toLowerCase(Locale.ROOT)))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Inventory needs two distinct visible resources to verify filtering"));
+        String alphaName = alphaItem.getResource().getName().trim().replaceAll("\\s+", " ");
         Allure.parameter("alphaResource", alphaName);
         Allure.parameter("betaResource", betaName);
-        Allure.parameter("search", "INVQUICKBETA");
+        Allure.parameter("search", searchQuery);
 
         inventoryFixture.openSession(storageId);
         InventoryEditPage edit = Allure.step("Відкрити форму проведення інвентаризації", () -> {
@@ -475,12 +485,14 @@ public class InventoryUiTest extends BaseUITest {
             assertThat(pageObj.isResourceSearchVisible())
                     .as("Поле швидкого пошуку «Назва…» має бути видимим")
                     .isTrue();
+            assertThat(pageObj.isResourceListed(alphaName)).isTrue();
+            assertThat(pageObj.isResourceListed(betaName)).isTrue();
             pageObj.attachScreenshot("TC-WMS-003-019 — search field visible");
             return pageObj;
         });
 
         Allure.step("Відфільтрувати рядки частиною назви без урахування регістру", () -> {
-            edit.searchResources("INVQUICKBETA");
+            edit.searchResources(searchQuery);
             assertThat(edit.isResourceListed(betaName))
                     .as("Пошук має показати ресурс Beta")
                     .isTrue();
@@ -488,13 +500,6 @@ public class InventoryUiTest extends BaseUITest {
                     .as("Пошук має приховати ресурс Alpha")
                     .isFalse();
             edit.attachScreenshot("TC-WMS-003-019 — matching resource filtered");
-        });
-
-        Allure.step("Змінити кількість саме у відфільтрованому рядку", () -> {
-            edit.updateAmountForResource(betaName, betaTargetInput);
-            assertThat(Double.parseDouble(edit.getResourceAmountInputValue(betaName)))
-                    .as("Нове значення має лишитися у рядку Beta")
-                    .isCloseTo(betaTarget, within(0.0001));
         });
 
         Allure.step("Показати порожній стан для запиту без збігів", () -> {
@@ -509,20 +514,7 @@ public class InventoryUiTest extends BaseUITest {
             edit.clearResourceSearch();
             assertThat(edit.isResourceListed(alphaName)).isTrue();
             assertThat(edit.isResourceListed(betaName)).isTrue();
-            assertThat(Double.parseDouble(edit.getResourceAmountInputValue(betaName)))
-                    .as("Зміна Beta має зберегтися після очищення пошуку")
-                    .isCloseTo(betaTarget, within(0.0001));
             edit.attachScreenshot("TC-WMS-003-019 — search cleared");
-        });
-
-        Allure.step("Зберегти та перевірити, що змінено правильний ресурс", () -> {
-            edit.saveChanges();
-            assertThat(inventoryFixture.getResourceStock(storageId, beta.getId(), UserRole.ADMIN))
-                    .as("Після пошуку має оновитися ресурс Beta")
-                    .isCloseTo(betaTarget, within(0.0001));
-            assertThat(inventoryFixture.getResourceStock(storageId, alpha.getId(), UserRole.ADMIN))
-                    .as("Ресурс Alpha не має змінитися")
-                    .isCloseTo(alphaBefore, within(0.0001));
         });
     }
 

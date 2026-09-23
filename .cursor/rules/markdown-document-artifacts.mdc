@@ -1,5 +1,5 @@
 ---
-description: Store text documents and analytical artifacts in Markdown, not TSX or Canvas
+description: Use Markdown for text artifacts; use Canvas only when explicitly requested by the user
 alwaysApply: true
 ---
 
@@ -8,6 +8,7 @@ alwaysApply: true
 - Reports and report-style deliverables must be created only as `.md` files.
 - Always create textual artifacts as `.md` files: plans, reports, audits, reviews, test matrices, specifications, notes, and documentation.
 - Never use Canvas, `.canvas.tsx`, `.tsx`, HTML, or another executable UI format to display or deliver a report, plan, audit, review, test matrix, or structured analysis.
+- Use Canvas only when the user explicitly requests Canvas in the current task. Do not infer permission from the artifact's size, complexity, roadmap structure, tables, visual potential, or analytical nature.
 - Use Markdown headings, lists, tables, links, and Mermaid diagrams when richer structure is useful.
 - Use `.tsx` only when the requested deliverable is actual React/application code, not a text document.
-- If the user explicitly requests another format, follow that explicit request.
+- If the user explicitly requests another format, follow that explicit request for the current task only.

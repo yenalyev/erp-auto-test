@@ -3,9 +3,7 @@ package com.erp.data.factories.project_production;
 import com.erp.data.FakerProvider;
 import com.erp.enums.ProjectProductionState;
 import com.erp.enums.ProjectProductionType;
-import com.erp.models.request.ProjectCategoryRequest;
-import com.erp.models.request.ProjectProductPropertyRequest;
-import com.erp.models.request.ProjectProductRequest;
+import com.erp.models.request.ProjectProductionParameterRequest;
 import com.erp.models.request.ProjectProductionRequest;
 import com.erp.models.request.ProjectProductionStageRequest;
 import com.erp.models.request.ProjectProductionStageResourceUsageRequest;
@@ -22,8 +20,7 @@ import java.util.UUID;
 
 /**
  * Test data builders for the Project Production domain
- * ({@code /api/v1/project-production}, {@code /api/v1/project-production-template},
- * {@code /api/v1/project-category}, {@code /api/v1/project-product}).
+ * ({@code /api/v1/project-production}, {@code /api/v1/project-production-template}).
  * <p>
  * Mirrors {@code NonSeriesProductionDataFactory} conventions: unique names/serial numbers
  * via {@link UUID}, builder-based request assembly, small composable helpers for stages
@@ -47,12 +44,8 @@ public class ProjectProductionDataFactory {
         return "SN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    public static String uniqueCategoryName() {
-        return "PP-CAT-" + UUID.randomUUID().toString().substring(0, 8);
-    }
-
-    public static String uniqueProductName() {
-        return "PP-PROD-" + UUID.randomUUID().toString().substring(0, 8);
+    public static String uniqueModelName() {
+        return "PP-MODEL-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
     public static String uniqueTemplateName() {
@@ -112,8 +105,8 @@ public class ProjectProductionDataFactory {
     // ═══════════════════════════════════════════════════════════════
 
     public static ProjectProductionRequest buildCreateRequest(Long storageId,
-                                                               Long categoryId,
-                                                               Long productId,
+                                                               Long equipmentCategoryId,
+                                                               Long equipmentModelId,
                                                                ProjectProductionState state,
                                                                ProjectProductionType type,
                                                                List<ProjectProductionStageRequest> stages) {
@@ -127,23 +120,23 @@ public class ProjectProductionDataFactory {
                 .serialNumber(uniqueSerialNumber())
                 .description("erp-auto-test project production")
                 .storageId(storageId)
-                .projectCategoryId(categoryId)
-                .projectProductId(productId)
+                .equipmentCategoryId(equipmentCategoryId)
+                .equipmentModelId(equipmentModelId)
                 .projectProductionStages(stages != null ? stages : List.of())
                 .build();
     }
 
     /** Convenience: single stage with a single resource usage (needed == used, i.e. fully consumed). */
     public static ProjectProductionRequest buildCreateRequestWithStage(Long storageId,
-                                                                       Long categoryId,
-                                                                       Long productId,
+                                                                       Long equipmentCategoryId,
+                                                                       Long equipmentModelId,
                                                                        Long resourceId,
                                                                        double resourceAmountNeeded,
                                                                        double resourceAmountUsed) {
         return buildCreateRequest(
                 storageId,
-                categoryId,
-                productId,
+                equipmentCategoryId,
+                equipmentModelId,
                 ProjectProductionState.IN_PROGRESS,
                 ProjectProductionType.CREATION,
                 List.of(singleResourceStage(resourceId, resourceAmountNeeded, resourceAmountUsed)));
@@ -169,8 +162,15 @@ public class ProjectProductionDataFactory {
                 .serialNumber(source.getSerialNumber())
                 .description(source.getDescription())
                 .storageId(source.getStorage() != null ? source.getStorage().getId() : null)
-                .projectCategoryId(source.getProjectCategory() != null ? source.getProjectCategory().getId() : null)
-                .projectProductId(source.getProjectProduct() != null ? source.getProjectProduct().getId() : null)
+                .equipmentCategoryId(source.getEquipmentCategory() != null ? source.getEquipmentCategory().getId() : null)
+                .equipmentModelId(source.getEquipmentModel() != null ? source.getEquipmentModel().getId() : null)
+                .equipmentId(source.getEquipment() != null ? source.getEquipment().getId() : null)
+                .parameters(source.getParameters() == null ? null : source.getParameters().stream()
+                        .map(parameter -> ProjectProductionParameterRequest.builder()
+                                .name(parameter.getName())
+                                .value(parameter.getValue())
+                                .build())
+                        .toList())
                 .projectProductionStages(stages)
                 .build();
     }
@@ -204,50 +204,31 @@ public class ProjectProductionDataFactory {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // TEMPLATE / CATEGORY / PRODUCT REQUEST BUILDERS
+    // TEMPLATE REQUEST BUILDERS
     // ═══════════════════════════════════════════════════════════════
 
     public static ProjectProductionTemplateRequest buildTemplateCreateRequest(Long storageId,
-                                                                               Long categoryId,
-                                                                               Long productId,
+                                                                               Long equipmentCategoryId,
+                                                                               Long equipmentModelId,
+                                                                               List<ProjectProductionStageRequest> stages) {
+        return buildTemplateCreateRequest(storageId, equipmentCategoryId, equipmentModelId,
+                ProjectProductionType.CREATION, stages);
+    }
+
+    public static ProjectProductionTemplateRequest buildTemplateCreateRequest(Long storageId,
+                                                                               Long equipmentCategoryId,
+                                                                               Long equipmentModelId,
+                                                                               ProjectProductionType type,
                                                                                List<ProjectProductionStageRequest> stages) {
         return ProjectProductionTemplateRequest.builder()
                 .name(uniqueTemplateName())
                 .state(ProjectProductionState.CREATED)
-                .type(ProjectProductionType.CREATION)
+                .type(type != null ? type : ProjectProductionType.CREATION)
                 .description("erp-auto-test project production template")
                 .storageId(storageId)
-                .projectCategoryId(categoryId)
-                .projectProductId(productId)
+                .equipmentCategoryId(equipmentCategoryId)
+                .equipmentModelId(equipmentModelId)
                 .projectProductionStages(stages != null ? stages : List.of())
-                .build();
-    }
-
-    public static ProjectCategoryRequest buildCategoryCreateRequest() {
-        return buildCategoryCreateRequest(uniqueCategoryName());
-    }
-
-    public static ProjectCategoryRequest buildCategoryCreateRequest(String name) {
-        return ProjectCategoryRequest.builder()
-                .name(name)
-                .description("erp-auto-test project category")
-                .build();
-    }
-
-    public static ProjectProductRequest buildProductCreateRequest(Long categoryId) {
-        return buildProductCreateRequest(categoryId, uniqueProductName());
-    }
-
-    public static ProjectProductRequest buildProductCreateRequest(Long categoryId, String name) {
-        return ProjectProductRequest.builder()
-                .projectCategoryId(categoryId)
-                .name(name)
-                .description("erp-auto-test project product")
-                .properties(List.of(
-                        ProjectProductPropertyRequest.builder()
-                                .name("erp-auto-test-property")
-                                .value("erp-auto-test-value")
-                                .build()))
                 .build();
     }
 }

@@ -466,35 +466,17 @@ rules:
     bodyType: "CREATE_PROJECT_PRODUCTION_TEMPLATE"
     description: "Створити шаблон проєктного виробництва OWNER_1 — тільки OWNER_1"
 
-  - endpointName: "PROJECT_CATEGORY_GET_PAGE"
+  - endpointName: "PROJECT_PRODUCTION_EQUIPMENT_CATEGORIES_GET"
     allowedRoles: [ ADMIN, OWNER_1 ]
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
-    description: "Список проєктних категорій (глобальний довідник): ADMIN та OWNER_1 — так, ANONYMOUS — ні"
+    description: "Категорії обладнання для проєктного виробництва"
 
-  - endpointName: "PROJECT_CATEGORY_GET_ALL_ACTIVE"
+  - endpointName: "PROJECT_PRODUCTION_EQUIPMENT_MODELS_GET"
     allowedRoles: [ ADMIN, OWNER_1 ]
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
-    description: "Активні проєктні категорії: ADMIN та OWNER_1 — так, ANONYMOUS — ні"
-
-  - endpointName: "PROJECT_CATEGORY_POST_CREATE"
-    allowedRoles: [ ADMIN ]
-    deniedRoles: [ ANONYMOUS ]
-    bodyType: "CREATE_PROJECT_CATEGORY"
-    description: "Створити проєктну категорію (project-product-type::create — глобальний permission): ADMIN — так, ANONYMOUS — ні. OWNER_1 не перевіряється тут — доступ до цього глобального permission залежить від Keycloak realm (fixture має fallback ADMIN)"
-
-  - endpointName: "PROJECT_PRODUCT_GET_PAGE"
-    allowedRoles: [ ADMIN, OWNER_1 ]
-    deniedRoles: [ ANONYMOUS ]
-    bodyType: null
-    description: "Список проєктних продуктів (глобальний довідник): ADMIN та OWNER_1 — так, ANONYMOUS — ні"
-
-  - endpointName: "PROJECT_PRODUCT_POST_CREATE"
-    allowedRoles: [ ADMIN ]
-    deniedRoles: [ ANONYMOUS ]
-    bodyType: "CREATE_PROJECT_PRODUCT"
-    description: "Створити проєктний продукт (project-product-type::create — глобальний permission): ADMIN — так, ANONYMOUS — ні. OWNER_1 не перевіряється тут — доступ до цього глобального permission залежить від Keycloak realm (fixture має fallback ADMIN)"
+    description: "Моделі обладнання для проєктного виробництва"
 
   - endpointName: "STORAGE_INVENTORY_GET"
     contextKey: "OWNER_1_STORAGE_ID"

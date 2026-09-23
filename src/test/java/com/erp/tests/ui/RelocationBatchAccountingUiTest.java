@@ -137,6 +137,24 @@ public class RelocationBatchAccountingUiTest extends BaseUITest {
         form.attachScreenshot("TC-REL-ACC-UI-004 — total cost");
     }
 
+    @Test(priority = 40)
+    @TestCaseId("TC-REL-ACC-020")
+    @Story("Accounting controls use Ukrainian labels and stable decimal format")
+    public void accountingLabelsAndDecimalInputFormatAreLocalized() {
+        RelocationCreateInputPage form = openReceiveForm()
+                .selectResourceByName(resourceName)
+                .fillQuantity(0, "1")
+                .fillPaidAmount(0, "1234.50");
+
+        assertThat(form.paidAmountPlaceholder(0)).isEqualTo("Оплачено");
+        assertThat(form.paidAmountValue(0)).isEqualTo("1234.50");
+        form.openAccountingSelect(0);
+        assertThat(form.isAccountingSearchPlaceholderVisible())
+                .as("Поле вибору бухгалтерської назви має український placeholder")
+                .isTrue();
+        form.attachScreenshot("TC-REL-ACC-020 — localized accounting controls");
+    }
+
     private RelocationCreateInputPage openReceiveForm() {
         return new RelocationPage(page).open().clickReceive();
     }

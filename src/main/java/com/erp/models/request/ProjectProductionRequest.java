@@ -31,12 +31,11 @@ public class ProjectProductionRequest {
     private String serialNumber;
     private String description;
     private Long storageId;
-    private Long projectCategoryId;
-    private Long projectProductId;
-    @Builder.Default
-    private List<Long> equipments = new ArrayList<>();
+    private Long equipmentCategoryId;
+    private Long equipmentModelId;
+    private String equipmentModelName;
+    private Long equipmentId;
     @Builder.Default
     private List<ProjectProductionStageRequest> projectProductionStages = new ArrayList<>();
-    @Builder.Default
-    private List<ProjectProductPropertyRequest> specificProperties = new ArrayList<>();
+    private List<ProjectProductionParameterRequest> parameters;
 }

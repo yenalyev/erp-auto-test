@@ -29,12 +29,13 @@ public class ProjectProductionResponse {
     private String serialNumber;
     private String description;
     private SimpleEntityResponse storage;
-    private SimpleEntityResponse projectCategory;
-    private SimpleEntityResponse projectProduct;
+    private SimpleEntityResponse equipmentCategory;
+    private SimpleEntityResponse equipmentModel;
+    private ProjectProductionEquipmentResponse equipment;
     @Builder.Default
     private List<ProjectProductionStageResponse> projectProductionStages = new ArrayList<>();
     @Builder.Default
-    private List<ProjectProductPropertyResponse> specificProperties = new ArrayList<>();
+    private List<ProjectProductionParameterResponse> parameters = new ArrayList<>();
     @Builder.Default
-    private List<SimpleEntityResponse> equipments = new ArrayList<>();
+    private List<ProjectProductionFileResponse> files = new ArrayList<>();
 }

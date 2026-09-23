@@ -7,10 +7,12 @@ import com.erp.enums.BusinessRole;
 import com.erp.enums.ProjectProductionState;
 import com.erp.enums.ProjectProductionType;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.EquipmentFixture;
 import com.erp.fixtures.ProjectProductionFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.UserFixture;
+import com.erp.models.response.EquipmentResponse;
 import com.erp.models.response.ProjectProductionResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.pages.OperationHistoryPage;
@@ -18,6 +20,7 @@ import com.erp.pages.AppSidebarPage;
 import com.erp.pages.ProjectProductionListPage;
 import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Response;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -29,6 +32,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.assertj.core.api.SoftAssertions;
 
 import java.util.Map;
 import java.util.List;
@@ -42,11 +46,11 @@ import static org.assertj.core.api.Assertions.within;
 public class ProjectProductionHistoryUiTest extends BaseUITest {
 
     private ProjectProductionFixture productionFixture;
+    private EquipmentFixture equipmentFixture;
     private ResourceFixture resourceFixture;
     private UserFixture userFixture;
     private long storageId;
     private Long productionId;
-    private Long productId;
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -54,6 +58,7 @@ public class ProjectProductionHistoryUiTest extends BaseUITest {
         super.baseTestClassSetup();
         productionFixture = new ProjectProductionFixture(testContext, apiExecutor);
         productionFixture.prepareContext();
+        equipmentFixture = new EquipmentFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         resourceFixture.fetchSharedUnit(5);
         resourceFixture.fetchSharedResourceCategory();
@@ -77,58 +82,45 @@ public class ProjectProductionHistoryUiTest extends BaseUITest {
     }
 
     @AfterMethod(alwaysRun = true)
-    public void cleanupProductionAndProduct() {
+    public void cleanupProduction() {
         if (productionId != null) {
             try {
                 ProjectProductionResponse production = productionFixture.getById(productionId, storageId);
                 if (production.getState() == ProjectProductionState.DONE) {
-                    productionFixture.cancelFinishedAs(UserRole.PROJECT_MANAGER, productionId, storageId);
+                    productionFixture.cancelFinishedAs(UserRole.ADMIN, productionId, storageId);
                 }
-                productionFixture.deleteAs(UserRole.PROJECT_MANAGER, productionId, storageId, null);
+                productionFixture.deleteAs(UserRole.ADMIN, productionId, storageId, null);
             } catch (Exception e) {
                 log.warn("Could not clean up project production {}: {}", productionId, e.getMessage());
             } finally {
                 productionId = null;
             }
         }
-        if (productId != null) {
-            try {
-                productionFixture.deleteProduct(UserRole.PROJECT_ADMIN, productId);
-            } catch (Exception e) {
-                log.warn("Could not deactivate project product {}: {}", productId, e.getMessage());
-            } finally {
-                productId = null;
-            }
-        }
     }
 
     @Test
     @TestCaseId(value = "TC-UI-PROJ-HIST-001", roles = BusinessRole.BUSINESS_UNIT_AND_PROJECT_OWNER)
-    @Story("Project production usage and output in history card and table")
-    @Description("Після списання сировини та завершення виробництва кожен ресурс видно у своїй картці й рядку таблиці історії операцій")
+    @Story("Resource input and equipment output in operation history")
+    @Description("Сировина відображається як USED, а створене обладнання — як equipment PRODUCED")
     @Severity(SeverityLevel.CRITICAL)
-    public void usedAndProducedResourcesAppearInCardsAndTable() {
+    public void usedResourceAndProducedEquipmentAppearInHistory() {
         ResourceResponse input = resourceFixture.createUniqueResource("PP-HIST-INPUT");
-        RelocationStockSeeder.receiveFromSupplier(apiExecutor, UserRole.OWNER_1, storageId,
+        RelocationStockSeeder.receiveFromSupplier(apiExecutor, UserRole.ADMIN, storageId,
                 Map.of(input.getId(), 10.0));
 
-        var product = productionFixture.createProduct(UserRole.PROJECT_ADMIN,
-                ProjectProductionDataFactory.buildProductCreateRequest(
-                        testContext.get(ContextKey.PROJECT_CATEGORY_ID)));
-        productId = product.getId();
-
-        ProjectProductionResponse production = productionFixture.createAs(UserRole.PROJECT_MANAGER,
+        ProjectProductionResponse production = productionFixture.createAs(UserRole.ADMIN,
                 ProjectProductionDataFactory.buildCreateRequest(
                         storageId,
-                        testContext.get(ContextKey.PROJECT_CATEGORY_ID),
-                        productId,
+                        testContext.get(ContextKey.PROJECT_EQUIPMENT_CATEGORY_ID),
+                        testContext.get(ContextKey.PROJECT_EQUIPMENT_MODEL_ID),
                         ProjectProductionState.IN_PROGRESS,
                         ProjectProductionType.CREATION,
                         null));
         productionId = production.getId();
-        productionFixture.addStage(UserRole.PROJECT_MANAGER, productionId, storageId,
+        productionFixture.addStage(UserRole.ADMIN, productionId, storageId,
                 ProjectProductionDataFactory.singleResourceStage(input.getId(), 2.0, 2.0));
-        productionFixture.finishAs(UserRole.PROJECT_MANAGER, productionId, storageId);
+        productionFixture.finishAs(UserRole.ADMIN, productionId, storageId);
+        ProjectProductionResponse finished = productionFixture.getById(productionId, storageId);
 
         ProjectProductionListPage projectList = new ProjectProductionListPage(page).open()
                 .clearPeriodFilter()
@@ -137,7 +129,17 @@ public class ProjectProductionHistoryUiTest extends BaseUITest {
                 .as("Користувач із комбінованою роллю бачить проєкт у журналі виробництва")
                 .isTrue();
 
-        OperationHistoryPage history = new OperationHistoryPage(page).open();
+        OperationHistoryPage history = new OperationHistoryPage(page);
+        Response equipmentHistoryResponse = page.waitForResponse(
+                response -> response.url().contains("/api/v1/equipment/history")
+                        && "GET".equals(response.request().method())
+                        && response.status() == 200,
+                history::open);
+        String equipmentHistoryPayload = equipmentHistoryResponse.text();
+        io.qameta.allure.Allure.addAttachment(
+                "GET equipment history — project production output",
+                "application/json",
+                equipmentHistoryPayload);
         assertThat(history.isLoaded()).isTrue();
         assertThat(new AppSidebarPage(page).isNavItemVisible(AppSidebarPage.GROUP_PROJECT_PRODUCTION))
                 .as("Користувач із комбінованою роллю бачить проєктне виробництво в меню")
@@ -148,17 +150,68 @@ public class ProjectProductionHistoryUiTest extends BaseUITest {
         assertThat(history.tableHasResourceOperation(input.getName(), "Використано"))
                 .as("Таблиця містить рядок «Використано» для сировини")
                 .isTrue();
-        assertThat(history.getSummaryCardAmountForResource("Вироблено", product.getName()))
-                .as("Картка «Вироблено» містить готовий продукт")
-                .isCloseTo(1.0, within(0.01));
-        assertThat(history.tableHasResourceOperation(product.getName(), "Вироблено"))
-                .as("Таблиця містить рядок «Вироблено» для готового продукту")
+        String equipmentInventoryNumber = finished.getEquipment().getInventoryNumber();
+        String equipmentModelName = finished.getEquipment().getModelName();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(equipmentHistoryPayload)
+                    .as("GET /equipment/history містить створене проєктом обладнання")
+                    .contains(equipmentInventoryNumber);
+            softly.assertThat(history.equipmentTableContains(equipmentInventoryNumber)
+                            || history.equipmentTableContains(equipmentModelName))
+                    .as("Equipment-таблиця містить створене проєктом обладнання")
+                    .isTrue();
+            softly.assertThat(history.equipmentTableHasOperation(
+                            equipmentInventoryNumber, "Виготовлено")
+                            || history.equipmentTableHasOperation(equipmentModelName, "Виготовлено"))
+                    .as("Створене проєктом обладнання має UI-операцію «Виготовлено»")
+                    .isTrue();
+        });
+
+        history.filterBySummaryCard("Використано", input.getName());
+        assertThat(history.tableHasResourceOperation(input.getName(), "Використано")).isTrue();
+        history.attachScreenshot("TC-UI-PROJ-HIST-001 — картки та таблиця");
+    }
+
+    @Test
+    @TestCaseId(value = "TC-UI-PROJ-HIST-002", roles = BusinessRole.BUSINESS_UNIT_AND_PROJECT_OWNER)
+    @Story("Resource used by equipment modification in operation history")
+    @Description("Ресурс із MODIFICATION відображається в картці та таблиці «Використано»")
+    @Severity(SeverityLevel.CRITICAL)
+    public void resourceUsedByModificationAppearsInHistory() {
+        ResourceResponse input = resourceFixture.createUniqueResource("PP-MOD-HIST-INPUT");
+        RelocationStockSeeder.receiveFromSupplier(apiExecutor, UserRole.ADMIN, storageId,
+                Map.of(input.getId(), 10.0));
+        long categoryId = testContext.get(ContextKey.PROJECT_EQUIPMENT_CATEGORY_ID);
+        EquipmentResponse equipment = equipmentFixture.createEquipmentOnStorage(
+                UserRole.ADMIN, storageId, categoryId);
+        long equipmentModelId = productionFixture.findEquipmentModelId(equipment.getName());
+
+        ProjectProductionResponse modification = productionFixture.createAs(UserRole.ADMIN,
+                ProjectProductionDataFactory.buildCreateRequest(
+                                storageId,
+                                categoryId,
+                                equipmentModelId,
+                                ProjectProductionState.IN_PROGRESS,
+                                ProjectProductionType.MODIFICATION,
+                                null)
+                        .toBuilder()
+                        .serialNumber(null)
+                        .equipmentId(equipment.getId())
+                        .build());
+        productionId = modification.getId();
+        productionFixture.addStage(UserRole.ADMIN, productionId, storageId,
+                ProjectProductionDataFactory.singleResourceStage(input.getId(), 3.0, 3.0));
+
+        OperationHistoryPage history = new OperationHistoryPage(page).open();
+        assertThat(history.getSummaryCardAmountForResource("Використано", input.getName()))
+                .as("Картка «Використано» містить ресурс модифікації")
+                .isCloseTo(3.0, within(0.01));
+        assertThat(history.tableHasResourceOperation(input.getName(), "Використано"))
+                .as("Таблиця містить USED для ресурсу модифікації")
                 .isTrue();
 
         history.filterBySummaryCard("Використано", input.getName());
         assertThat(history.tableHasResourceOperation(input.getName(), "Використано")).isTrue();
-        history.filterBySummaryCard("Вироблено", product.getName());
-        assertThat(history.tableHasResourceOperation(product.getName(), "Вироблено")).isTrue();
-        history.attachScreenshot("TC-UI-PROJ-HIST-001 — картки та таблиця");
+        history.attachScreenshot("TC-UI-PROJ-HIST-002 — ресурс модифікації використано");
     }
 }

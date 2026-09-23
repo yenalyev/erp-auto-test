@@ -6,18 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 @Data
-@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProjectCategoryResponse {
-    private Long id;
+public class ProjectProductionParameterResponse {
     private String name;
-    private String description;
-    private Boolean active;
-    private String createdBy;
-    private Instant createdAt;
+    private String value;
 }

@@ -1,0 +1,681 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "features": {
+    "created": [
+      "REQ-PROJ-004",
+      "REQ-PROJ-005",
+      "REQ-PROJ-006"
+    ],
+    "updated": [
+      "REQ-PROJ",
+      "REQ-PROJ-001",
+      "REQ-PROJ-002",
+      "REQ-PROJ-003",
+      "REQ-OPER-HIST"
+    ]
+  },
+  "acceptanceCriteria": {
+    "created": [
+      "REQ-PROJ-001/AC-10",
+      "REQ-PROJ-002/AC-04",
+      "REQ-PROJ-002/AC-05",
+      "REQ-PROJ-002/AC-06",
+      "REQ-PROJ-004/AC-01",
+      "REQ-PROJ-004/AC-02",
+      "REQ-PROJ-004/AC-03",
+      "REQ-PROJ-004/AC-04",
+      "REQ-PROJ-004/AC-05",
+      "REQ-PROJ-005/AC-01",
+      "REQ-PROJ-005/AC-02",
+      "REQ-PROJ-005/AC-03",
+      "REQ-PROJ-005/AC-04",
+      "REQ-PROJ-005/AC-05",
+      "REQ-PROJ-005/AC-06",
+      "REQ-PROJ-005/AC-07",
+      "REQ-PROJ-006/AC-01",
+      "REQ-PROJ-006/AC-02",
+      "REQ-PROJ-006/AC-03",
+      "REQ-PROJ-006/AC-04",
+      "REQ-PROJ-006/AC-05",
+      "REQ-PROJ-006/AC-06",
+      "REQ-PROJ-006/AC-07",
+      "REQ-OPER-HIST/AC-18",
+      "REQ-OPER-HIST/AC-19"
+    ],
+    "updated": [
+      "REQ-PROJ/AC-01",
+      "REQ-PROJ-001/AC-01",
+      "REQ-PROJ-001/AC-02",
+      "REQ-PROJ-001/AC-03",
+      "REQ-PROJ-001/AC-04",
+      "REQ-PROJ-001/AC-05",
+      "REQ-PROJ-001/AC-06",
+      "REQ-PROJ-001/AC-07",
+      "REQ-PROJ-001/AC-08",
+      "REQ-PROJ-001/AC-09",
+      "REQ-PROJ-002/AC-01",
+      "REQ-PROJ-002/AC-02",
+      "REQ-PROJ-002/AC-03",
+      "REQ-OPER-HIST/AC-07"
+    ]
+  },
+  "testCases": {
+    "created": [
+      "TC-PROJ-VAL-001",
+      "TC-PROJ-TPL-004",
+      "TC-PROJ-TPL-005",
+      "TC-PROJ-TPL-006",
+      "TC-PROJ-MOD-001",
+      "TC-PROJ-MOD-006",
+      "TC-PROJ-MOD-007",
+      "TC-PROJ-MOD-008",
+      "TC-PROJ-MOD-009",
+      "TC-UI-PROJ-MOD-001",
+      "TC-PROJ-MOD-002",
+      "TC-PROJ-MOD-003",
+      "TC-PROJ-MOD-004",
+      "TC-PROJ-MOD-005",
+      "TC-PROJ-RES-001",
+      "TC-PROJ-RES-002",
+      "TC-PROJ-RES-003",
+      "TC-PROJ-HIST-001",
+      "TC-PROJ-HIST-003",
+      "TC-PROJ-HIST-002",
+      "TC-UI-PROJ-HIST-001",
+      "TC-UI-PROJ-HIST-002",
+      "TC-PROJ-RET-001",
+      "TC-PROJ-RET-002",
+      "TC-PROJ-RET-003",
+      "TC-PROJ-RET-004",
+      "TC-PROJ-RET-005",
+      "TC-PROJ-RET-006",
+      "TC-PROJ-RET-007",
+      "TC-PROJ-RET-008",
+      "TC-PROJ-RET-009",
+      "TC-PROJ-RET-010",
+      "TC-PROJ-RET-011",
+      "TC-PROJ-RET-012",
+      "TC-PROJ-RET-013",
+      "TC-UI-PROJ-RET-001",
+      "TC-UI-PROJ-RET-002",
+      "TC-UI-PROJ-RET-003"
+    ],
+    "updated": [
+      "TC-PROJ-001",
+      "TC-PROJ-002",
+      "TC-PROJ-003",
+      "TC-PROJ-004",
+      "TC-PROJ-005",
+      "TC-PROJ-006",
+      "TC-PROJ-007",
+      "TC-PROJ-009",
+      "TC-PROJ-TPL-001",
+      "TC-PROJ-TPL-002",
+      "TC-PROJ-TPL-003",
+      "TC-UI-PROJ-001",
+      "TC-UI-PROJ-002",
+      "TC-UI-PROJ-003",
+      "TC-UI-PROJ-005"
+    ],
+    "deprecated": [
+      "TC-PROJ-008",
+      "TC-PROJ-CAT-001",
+      "TC-PROJ-CAT-002",
+      "TC-UI-PROJ-004"
+    ]
+  },
+  "verification": {
+    "features": {
+      "REQ-PROJ": {
+        "title": "Проєктне виробництво",
+        "status": "ACTIVE",
+        "requiredAcPresent": true,
+        "acCount": 1,
+        "documentationSha256": "5dcb192de70e6a192b0e82d0e082c3c230ebe42f64610623b523e667b6de0330"
+      },
+      "REQ-PROJ-001": {
+        "title": "Виготовлення обладнання",
+        "status": "ACTIVE",
+        "requiredAcPresent": true,
+        "acCount": 10,
+        "documentationSha256": "4acb12864380a9dcc109f15f2ea3ff473d284d79ae806e0590cfdf0ebe3626b1"
+      },
+      "REQ-PROJ-002": {
+        "title": "Шаблони проєктного виробництва",
+        "status": "ACTIVE",
+        "requiredAcPresent": true,
+        "acCount": 6,
+        "documentationSha256": "a93ac97c2654c327d220b2fe6c6c6579a521e0e18107e82c37d97afc13a668d9"
+      },
+      "REQ-PROJ-003": {
+        "title": "[DEPRECATED] Каталог категорій і продуктів проєктного виробництва",
+        "status": "DEPRECATED",
+        "requiredAcPresent": true,
+        "acCount": 2,
+        "documentationSha256": "7958d3e7fa64a90c4f0196fc8ae513498680f38c0442b5630cfb660f570e2c3c"
+      },
+      "REQ-PROJ-004": {
+        "title": "Модифікація обладнання",
+        "status": "ACTIVE",
+        "requiredAcPresent": true,
+        "acCount": 5,
+        "documentationSha256": "f101e81bc373c62794d897c5395e22c86d16f433849f3c261ff8a949139181c5"
+      },
+      "REQ-PROJ-005": {
+        "title": "Резервування обладнання для модифікації",
+        "status": "ACTIVE",
+        "requiredAcPresent": true,
+        "acCount": 7,
+        "documentationSha256": "55603e2d403168f9a756ec74809bd0868b92cfdbfa2fa1162a3f03d54caa9c8f"
+      },
+      "REQ-PROJ-006": {
+        "title": "Повернення ресурсів проєктного виробництва",
+        "status": "ACTIVE",
+        "requiredAcPresent": true,
+        "acCount": 7,
+        "documentationSha256": "cf081fb376de12f3625caf271a8f8332e66acf85d02998345a13b861d633230e"
+      },
+      "REQ-OPER-HIST": {
+        "title": "Історія операцій",
+        "status": "ACTIVE",
+        "requiredAcPresent": true,
+        "acCount": 19,
+        "documentationSha256": "c36d1546bd8d216be3beb65295a0cbd9e1fbb77b77244fd4bd3ec8d680689c0c"
+      }
+    },
+    "testCases": {
+      "TC-PROJ-001": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-002": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-003": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-004": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-005": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-006": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-007": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-007"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-009": {
+        "featureId": "REQ-PROJ",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-009"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-VAL-001": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-10",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-VAL-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-TPL-001": {
+        "featureId": "REQ-PROJ-002",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-TPL-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-TPL-002": {
+        "featureId": "REQ-PROJ-002",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-TPL-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-TPL-003": {
+        "featureId": "REQ-PROJ-002",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-TPL-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-TPL-004": {
+        "featureId": "REQ-PROJ-002",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-TPL-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-TPL-005": {
+        "featureId": "REQ-PROJ-002",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-TPL-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-TPL-006": {
+        "featureId": "REQ-PROJ-002",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-001": {
+        "featureId": "REQ-PROJ-004",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-MOD-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-006": {
+        "featureId": "REQ-PROJ-004",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-MOD-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-007": {
+        "featureId": "REQ-PROJ-004",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-MOD-007"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-008": {
+        "featureId": "REQ-PROJ-004",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-009": {
+        "featureId": "REQ-PROJ-004",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-MOD-001": {
+        "featureId": "REQ-PROJ-004",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PROJ-MOD-001"
+        ],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-002": {
+        "featureId": "REQ-PROJ-005",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-MOD-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-003": {
+        "featureId": "REQ-PROJ-005",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-MOD-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-004": {
+        "featureId": "REQ-PROJ-005",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-MOD-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-MOD-005": {
+        "featureId": "REQ-PROJ-005",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-MOD-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RES-001": {
+        "featureId": "REQ-PROJ-005",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RES-002": {
+        "featureId": "REQ-PROJ-005",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RES-003": {
+        "featureId": "REQ-PROJ-005",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-HIST-001": {
+        "featureId": "REQ-OPER-HIST",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-HIST-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-HIST-003": {
+        "featureId": "REQ-OPER-HIST",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-HIST-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-HIST-002": {
+        "featureId": "REQ-OPER-HIST",
+        "acId": "AC-18",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-HIST-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-HIST-001": {
+        "featureId": "REQ-OPER-HIST",
+        "acId": "AC-18",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PROJ-HIST-001"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-HIST-002": {
+        "featureId": "REQ-OPER-HIST",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PROJ-HIST-002"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-001": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PROJ-001"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-002": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PROJ-002"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-003": {
+        "featureId": "REQ-PROJ-002",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PROJ-003"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-005": {
+        "featureId": "REQ-PROJ",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PROJ-005"
+        ],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-001": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-002": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-003": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-004": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-005": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-006": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-007": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-008": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-009": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-010": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-011": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-012": {
+        "featureId": "REQ-OPER-HIST",
+        "acId": "AC-19",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PROJ-RET-013": {
+        "featureId": "REQ-OPER-HIST",
+        "acId": "AC-19",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-RET-001": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-RET-002": {
+        "featureId": "REQ-PROJ-006",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UI-PROJ-RET-003": {
+        "featureId": "REQ-OPER-HIST",
+        "acId": "AC-19",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      }
+    },
+    "allCasesPresent": true,
+    "managedCaseCount": 53,
+    "automatedCaseCount": 31,
+    "manualCaseCount": 22
+  },
+  "completedAt": "2026-09-22T15:35:22.138882+00:00",
+  "result": "SUCCESS"
+}

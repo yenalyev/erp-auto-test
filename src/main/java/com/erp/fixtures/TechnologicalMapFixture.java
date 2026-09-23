@@ -425,8 +425,14 @@ public class TechnologicalMapFixture extends BaseFixture {
     @Step("Створити ізольовану production техкарту {namePrefix} для локації {storageId} (output unitId={outputUnitId})")
     public IsolatedTechMapContext createIsolatedProductionTechMap(UserRole role, Long storageId, String namePrefix,
                                                                    Long outputUnitId) {
-        String suffix = String.valueOf(System.currentTimeMillis());
         Long categoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        return createIsolatedProductionTechMap(role, storageId, namePrefix, outputUnitId, categoryId);
+    }
+
+    @Step("Створити ізольовану production техкарту {namePrefix} для локації {storageId} (unitId={outputUnitId}, categoryId={categoryId})")
+    public IsolatedTechMapContext createIsolatedProductionTechMap(UserRole role, Long storageId, String namePrefix,
+                                                                   Long outputUnitId, Long categoryId) {
+        String suffix = String.valueOf(System.currentTimeMillis());
         ResourceResponse in1 = resourceFixture.createUniqueResource("TM-IN1-" + suffix);
         ResourceResponse in2 = resourceFixture.createUniqueResource("TM-IN2-" + suffix);
         ResourceResponse product = outputUnitId != null

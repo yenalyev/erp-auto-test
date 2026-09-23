@@ -1,0 +1,262 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-API-PLANEXEC-001",
+      "TC-API-PLANEXEC-002",
+      "TC-API-PLANEXEC-003",
+      "TC-API-PLANEXEC-004",
+      "TC-API-RES-007",
+      "TC-UI-PLANEXEC-014",
+      "TC-UI-PLANEXEC-015",
+      "TC-UI-PLANEXEC-016",
+      "TC-UI-PLANEXEC-017",
+      "TC-UI-PLANEXEC-018",
+      "TC-UI-PLANEXEC-019",
+      "TC-UI-PLANEXEC-020",
+      "TC-UI-PLANEXEC-021",
+      "TC-UI-PLANEXEC-023",
+      "TC-UI-PLANEXEC-022",
+      "TC-UI-PLANEXEC-024",
+      "TC-UI-PLANEXEC-025",
+      "TC-UI-PLANEXEC-026",
+      "TC-UI-PLANEXEC-027",
+      "TC-UI-PLANEXEC-028"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+    "parentFeatureId": null,
+    "status": "ACTIVE",
+    "documentationLength": 25159,
+    "documentationSha256": "080b315718f9b80d91510c7a91cda50e81f0095c9e3a237e68cce9bf37915af0",
+    "sourceDocumentationSha256": "080b315718f9b80d91510c7a91cda50e81f0095c9e3a237e68cce9bf37915af0",
+    "requiredAcPresent": true,
+    "managedAcCount": 6,
+    "managedCaseCount": 20,
+    "automatedCaseCount": 20,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-API-PLANEXEC-001": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-API-PLANEXEC-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-API-PLANEXEC-002": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-API-PLANEXEC-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-API-PLANEXEC-003": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-API-PLANEXEC-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-API-PLANEXEC-004": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-API-PLANEXEC-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-API-RES-007": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-API-RES-007"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-014": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-014"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-015": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-015"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-016": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-016"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-017": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-017"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-018": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-018"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-019": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-019"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-020": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-020"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-021": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-021"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-023": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-023"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-022": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-022"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-024": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-024"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-025": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-025"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-026": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-026"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-027": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-027"
+        ],
+        "stepCount": 2
+      },
+      "TC-UI-PLANEXEC-028": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-028"
+        ],
+        "stepCount": 2
+      }
+    }
+  },
+  "completedAt": "2026-09-23T11:08:34.923770+00:00",
+  "result": "SUCCESS"
+}

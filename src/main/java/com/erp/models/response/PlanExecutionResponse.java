@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -14,12 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProjectProductResponse {
-    private Long id;
-    private SimpleEntityResponse projectCategory;
-    private String name;
-    private String description;
-    private Boolean active;
-    @Builder.Default
-    private List<ProjectProductPropertyResponse> properties = new ArrayList<>();
+public class PlanExecutionResponse {
+    private List<PlanExecutionRowResponse> resourcePlanExecutionList;
+    private TotalPlanExecutionResponse totalPlanExecution;
 }

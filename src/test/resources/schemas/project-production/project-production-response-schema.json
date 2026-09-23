@@ -20,25 +20,34 @@
         "name": { "type": "string" }
       }
     },
-    "projectCategory": {
+    "equipmentCategory": {
       "type": ["object", "null"],
       "properties": {
         "id": { "type": "integer" },
         "name": { "type": "string" }
       }
     },
-    "projectProduct": {
+    "equipmentModel": {
       "type": ["object", "null"],
       "properties": {
         "id": { "type": "integer" },
         "name": { "type": "string" }
+      }
+    },
+    "equipment": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "modelName": { "type": ["string", "null"] },
+        "serialNumber": { "type": ["string", "null"] },
+        "inventoryNumber": { "type": ["string", "null"] }
       }
     },
     "projectProductionStages": {
       "type": "array",
       "items": { "$ref": "project-production-stage-response-schema.json" }
     },
-    "specificProperties": {
+    "parameters": {
       "type": "array",
       "items": {
         "type": "object",
@@ -48,13 +57,14 @@
         }
       }
     },
-    "equipments": {
+    "files": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
           "id": { "type": "integer" },
-          "name": { "type": "string" }
+          "fileNameOriginal": { "type": ["string", "null"] },
+          "extension": { "type": ["string", "null"] }
         }
       }
     }

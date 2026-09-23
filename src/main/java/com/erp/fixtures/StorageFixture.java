@@ -214,6 +214,15 @@ public class StorageFixture extends BaseFixture {
         return createStorage(request);
     }
 
+    /** Isolated child location that can host production tech maps. */
+    @Step("API: створити дочірню production-локацію parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createProductionStorage(Long parentId, String namePrefix) {
+        StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix)
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT, LocationFeature.PRODUCE))
+                .build();
+        return createStorage(request);
+    }
+
     /** CPMA-711: gathering candidate — STORAGE + {@code orderHub=true}. */
     @Step("API: створити orderHub STORAGE parentId={parentId}, prefix={namePrefix}")
     public StorageResponse createOrderHubStorage(Long parentId, String namePrefix) {

@@ -1513,6 +1513,56 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    RESOURCE_CATEGORY_CREATE(
+            "/api/v1/resources/categories",
+            Method.POST,
+            null,
+            "Create resource category",
+            new TypeReference<ResourceCategoryRequest>() {},
+            new TypeReference<ResourceCategoryResponse>() {},
+            "CREATE_RESOURCE_CATEGORY"
+    ),
+
+    RESOURCE_CATEGORY_UPDATE(
+            "/api/v1/resources/categories/{id}",
+            Method.PUT,
+            null,
+            "Update resource category",
+            new TypeReference<ResourceCategoryRequest>() {},
+            new TypeReference<ResourceCategoryResponse>() {},
+            "UPDATE_RESOURCE_CATEGORY"
+    ),
+
+    RESOURCE_CATEGORY_DELETE(
+            "/api/v1/resources/categories/{id}",
+            Method.DELETE,
+            null,
+            "Delete resource category",
+            null,
+            null,
+            "DELETE_RESOURCE_CATEGORY"
+    ),
+
+    STATISTIC_POST_EXECUTION(
+            "/api/v1/statistics/execution?storageId={id}",
+            Method.POST,
+            "schemas/statistics/plan-execution-response-schema.json",
+            "Get plan execution",
+            new TypeReference<ExecutionFilterRequest>() {},
+            new TypeReference<PlanExecutionResponse>() {},
+            null
+    ),
+
+    STATISTIC_POST_EXECUTION_EXPORT(
+            "/api/v1/statistics/execution-export?storageId={id}",
+            Method.POST,
+            null,
+            "Export plan execution to XLSX",
+            new TypeReference<ExecutionFilterRequest>() {},
+            null,
+            null
+    ),
+
     PRODUCTION_GET_BATCH_RECIPE(
             "/api/v1/productions/batch-recipe?storageId={storageId}&productId={productId}&batchNumber={batchNumber}",
             Method.GET,
@@ -1837,14 +1887,43 @@ public enum ApiEndpointDefinition {
             "CREATE_PROJECT_PRODUCTION_TEMPLATE_FROM_PRODUCTION"
     ),
 
-    /** Finished project production batches (serial numbers) for a given product/category name. */
-    PROJECT_PRODUCTION_PRODUCTS_GET(
-            "/api/v1/project-production/products?storageId={storageId}&category={category}",
+    PROJECT_PRODUCTION_EQUIPMENT_CATEGORIES_GET(
+            "/api/v1/project-production/equipment-categories",
             Method.GET,
             null,
-            "Get finished project production instances (batches) by category/product name",
+            "Get equipment categories available to project production",
             null,
-            new TypeReference<List<ProjectProductInstanceResponse>>() {},
+            new TypeReference<List<EquipmentCategoryResponse>>() {},
+            null
+    ),
+
+    PROJECT_PRODUCTION_EQUIPMENT_MODELS_GET(
+            "/api/v1/project-production/equipment-models",
+            Method.GET,
+            null,
+            "Get equipment models available to project production",
+            null,
+            new TypeReference<List<SimpleEntityResponse>>() {},
+            null
+    ),
+
+    PROJECT_PRODUCTION_EQUIPMENTS_GET(
+            "/api/v1/project-production/equipments?storageId={storageId}&categoryId={categoryId}&modelId={modelId}",
+            Method.GET,
+            null,
+            "Get available equipment for modification",
+            null,
+            new TypeReference<List<ProjectProductionEquipmentResponse>>() {},
+            null
+    ),
+
+    PROJECT_PRODUCTION_PARAMETERS_GET(
+            "/api/v1/project-production/parameters?storageId={storageId}&equipmentId={equipmentId}",
+            Method.GET,
+            null,
+            "Get parameters of equipment selected for modification",
+            null,
+            new TypeReference<List<ProjectProductionParameterResponse>>() {},
             null
     ),
 
@@ -1940,154 +2019,6 @@ public enum ApiEndpointDefinition {
             null,
             new TypeReference<ProjectProductionResponse>() {},
             "CREATE_PROJECT_PRODUCTION_FROM_TEMPLATE"
-    ),
-
-    // ========================================
-    // PROJECT CATEGORY ENDPOINTS
-    // ========================================
-
-    PROJECT_CATEGORY_GET_PAGE(
-            "/api/v1/project-category",
-            Method.GET,
-            "schemas/project-production/project-category-response-list-schema.json",
-            "Get project category page",
-            null,
-            new TypeReference<List<ProjectCategoryResponse>>() {},
-            null
-    ),
-
-    PROJECT_CATEGORY_GET_ALL_ACTIVE(
-            "/api/v1/project-category/all",
-            Method.GET,
-            "schemas/project-production/project-category-response-list-schema.json",
-            "Get all active project categories",
-            null,
-            new TypeReference<List<ProjectCategoryResponse>>() {},
-            null
-    ),
-
-    PROJECT_CATEGORY_GET_BY_ID(
-            "/api/v1/project-category/{id}",
-            Method.GET,
-            "schemas/project-production/project-category-response-schema.json",
-            "Get project category by id",
-            null,
-            new TypeReference<ProjectCategoryResponse>() {},
-            null
-    ),
-
-    PROJECT_CATEGORY_POST_CREATE(
-            "/api/v1/project-category",
-            Method.POST,
-            "schemas/project-production/project-category-response-schema.json",
-            "Create project category",
-            new TypeReference<ProjectCategoryRequest>() {},
-            new TypeReference<ProjectCategoryResponse>() {},
-            "CREATE_PROJECT_CATEGORY"
-    ),
-
-    PROJECT_CATEGORY_PUT_UPDATE(
-            "/api/v1/project-category/{id}",
-            Method.PUT,
-            "schemas/project-production/project-category-response-schema.json",
-            "Update project category",
-            new TypeReference<ProjectCategoryRequest>() {},
-            new TypeReference<ProjectCategoryResponse>() {},
-            "UPDATE_PROJECT_CATEGORY"
-    ),
-
-    PROJECT_CATEGORY_DELETE(
-            "/api/v1/project-category/{id}",
-            Method.DELETE,
-            null,
-            "Delete (deactivate) project category",
-            null,
-            null,
-            "DELETE_PROJECT_CATEGORY"
-    ),
-
-    PROJECT_CATEGORY_PUT_RESTORE(
-            "/api/v1/project-category/{id}/restore",
-            Method.PUT,
-            null,
-            "Restore (reactivate) project category",
-            null,
-            null,
-            "RESTORE_PROJECT_CATEGORY"
-    ),
-
-    // ========================================
-    // PROJECT PRODUCT ENDPOINTS
-    // ========================================
-
-    PROJECT_PRODUCT_GET_PAGE(
-            "/api/v1/project-product",
-            Method.GET,
-            "schemas/project-production/project-product-response-list-schema.json",
-            "Get project product page",
-            null,
-            new TypeReference<List<ProjectProductResponse>>() {},
-            null
-    ),
-
-    PROJECT_PRODUCT_GET_ALL_BY_CATEGORY(
-            "/api/v1/project-product/all?projectCategoryId={categoryId}",
-            Method.GET,
-            "schemas/project-production/project-product-response-list-schema.json",
-            "Get project products filtered by category",
-            null,
-            new TypeReference<List<ProjectProductResponse>>() {},
-            null
-    ),
-
-    PROJECT_PRODUCT_GET_BY_ID(
-            "/api/v1/project-product/{id}",
-            Method.GET,
-            "schemas/project-production/project-product-response-schema.json",
-            "Get project product by id",
-            null,
-            new TypeReference<ProjectProductResponse>() {},
-            null
-    ),
-
-    PROJECT_PRODUCT_POST_CREATE(
-            "/api/v1/project-product",
-            Method.POST,
-            "schemas/project-production/project-product-response-schema.json",
-            "Create project product",
-            new TypeReference<ProjectProductRequest>() {},
-            new TypeReference<ProjectProductResponse>() {},
-            "CREATE_PROJECT_PRODUCT"
-    ),
-
-    PROJECT_PRODUCT_PUT_UPDATE(
-            "/api/v1/project-product/{id}",
-            Method.PUT,
-            "schemas/project-production/project-product-response-schema.json",
-            "Update project product",
-            new TypeReference<ProjectProductRequest>() {},
-            new TypeReference<ProjectProductResponse>() {},
-            "UPDATE_PROJECT_PRODUCT"
-    ),
-
-    PROJECT_PRODUCT_DELETE(
-            "/api/v1/project-product/{id}",
-            Method.DELETE,
-            null,
-            "Delete (deactivate) project product",
-            null,
-            null,
-            "DELETE_PROJECT_PRODUCT"
-    ),
-
-    PROJECT_PRODUCT_PUT_RESTORE(
-            "/api/v1/project-product/{id}/restore",
-            Method.PUT,
-            null,
-            "Restore (reactivate) project product",
-            null,
-            null,
-            "RESTORE_PROJECT_PRODUCT"
     ),
 
     // ========================================
@@ -2738,7 +2669,7 @@ public enum ApiEndpointDefinition {
             null,
             "Get operation and assignment history for one equipment unit",
             null,
-            null,
+            new TypeReference<List<EquipmentHistoryResponse>>() {},
             null
     ),
 
@@ -3257,6 +3188,16 @@ public enum ApiEndpointDefinition {
             "Get canonical permission catalog",
             null,
             new TypeReference<List<AccessPermissionResponse>>() {},
+            null
+    ),
+
+    EQUIPMENT_PUT_ASSIGNMENT_RETURN(
+            "/api/v1/equipment/{id}/assignments/return",
+            Method.PUT,
+            "schemas/equipment/equipment-response-schema.json",
+            "Return assigned equipment",
+            null,
+            new TypeReference<EquipmentResponse>() {},
             null
     ),
 

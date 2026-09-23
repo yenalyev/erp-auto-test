@@ -2,8 +2,13 @@ businessRoles:
   BUSINESS_UNIT_OWNER:
     accessRoles: []
   BUSINESS_UNIT_AND_PROJECT_OWNER:
-    accessRoles:
-      - "Проєктне виробництво: редактор"
+    permissionKeys:
+      - project-production.read
+      - project-production.create
+      - project-production.update
+      - project-production.delete
+      - project-production-template.read
+      - project-production-template.manage
   PRODUCTION_GROUP_DIRECTOR:
     permissionKeys:
       - production-order.allocate

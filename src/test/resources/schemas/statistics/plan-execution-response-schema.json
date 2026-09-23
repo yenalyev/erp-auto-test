@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["resourcePlanExecutionList", "totalPlanExecution"],
+  "properties": {
+    "resourcePlanExecutionList": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["resource", "resourceCategory", "unit", "totalProduced", "planGoal", "storageRemainder"],
+        "properties": {
+          "resource": { "$ref": "#/definitions/entity" },
+          "resourceCategory": { "$ref": "#/definitions/entity" },
+          "unit": { "$ref": "#/definitions/entity" },
+          "producedByDay": { "type": ["array", "null"] },
+          "totalProduced": { "type": ["number", "null"] },
+          "planGoal": { "type": ["number", "null"] },
+          "planExecutionPercentage": { "type": ["number", "null"] },
+          "storageRemainder": { "type": ["number", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "totalPlanExecution": { "type": "object" }
+  },
+  "definitions": {
+    "entity": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": ["integer", "null"] },
+        "name": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

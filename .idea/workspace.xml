@@ -6,13 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="d1bb3826-6f4d-4330-8374-dd5cfe6c6117" name="Changes" comment="add resource tests">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/config/ConfigProvider.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/AllureHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/utils/helpers/AllureHelper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/measurement_unit/MeasurementUnitTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/measurement_unit/MeasurementUnitTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/resource/ResourceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/resource/ResourceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/config/config-dev.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/config-dev.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/config/debug.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/debug.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/resources/suites/functional.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/suites/functional.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/generate_tcm_resource_viewer_import.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/generate_tcm_resource_viewer_import.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ResourceRelocationSumViewerResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ResourceRelocationSumViewerResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ResourceRelocationViewerResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/models/response/ResourceRelocationViewerResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/erp/pages/ResourceRelocationViewerPage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/erp/pages/ResourceRelocationViewerPage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/resource_viewer/ResourceViewerFilterApiTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/functional/resource_viewer/ResourceViewerFilterApiTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/ui/InventoryUiTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/ui/InventoryUiTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/erp/tests/ui/ResourceViewerUiTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/erp/tests/ui/ResourceViewerUiTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/config/dev.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/dev.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/config/staging.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/config/staging.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/schemas/resource-viewer/resource-relocation-sum-item-schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/schemas/resource-viewer/resource-relocation-sum-item-schema.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/schemas/resource-viewer/resource-relocation-viewer-item-schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/resources/schemas/resource-viewer/resource-relocation-viewer-item-schema.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,6 +72,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Maven.erp-test [-Dsuite=global-plan-insights...].executor&quot;: &quot;Run&quot;,
     &quot;Maven.erp-test [allure:serve].executor&quot;: &quot;Run&quot;,
     &quot;Maven.erp-test [clean,install,-DskipTests].executor&quot;: &quot;Run&quot;,
     &quot;Maven.erp-test [clean,install,-U].executor&quot;: &quot;Run&quot;,
@@ -77,12 +82,13 @@
     &quot;Maven.erp-test [clean,test].executor&quot;: &quot;Run&quot;,
     &quot;Maven.erp-test [clean].executor&quot;: &quot;Run&quot;,
     &quot;Maven.erp-test [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.erp-test [test,-Denv=dev...].executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;TestNG.AuthTest.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;change__data__management&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
@@ -109,16 +115,28 @@
       <command value="mvn clean install" />
       <command value="mvn clean test " />
       <command value="mvn clean test -Denv=debug" />
-      <command value="mvn clean" />
       <command value="mvn clean install -U" />
       <command value="mvn clean test -Denv=debug -Dsuite=smoke" />
       <command value="mvn clean install -DskipTests" />
       <command value="mvn clean test -Denv=debug -Dsuite=test-dev" />
       <command value="mvn clean test -Denv=debug -Dsuite=functional" />
+      <command value="mvn -Dsuite=global-plan-insights test" />
+      <command value="mvn clean" />
+      <command value="mvn test -Denv=dev -Dtest=RelocationOneDayLimitTest" />
       <command value="mvn allure:serve" />
+      <command value="mvn test -Denv=dev -Dsuite=resource-viewer -Dtcm.enabled=false -Dgoogle.sheets.enabled=false" />
     </option>
   </component>
   <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
     <configuration default="true" type="JetRunConfigurationType">
       <method v="2">
         <option name="Make" enabled="true" />
@@ -151,6 +169,8 @@
       <workItem from="1768820163218" duration="1678000" />
       <workItem from="1770051338873" duration="9788000" />
       <workItem from="1771331266972" duration="645000" />
+      <workItem from="1789633897534" duration="6842000" />
+      <workItem from="1789983257911" duration="3476000" />
     </task>
     <task id="LOCAL-00001" summary="git commit -m &quot;feat: Initial project setup&#10;&#10;- Maven project structure (Java 8)&#10;- Core dependencies (RestAssured, TestNG, Allure, Lombok)&#10;- BaseClient &#10;- Configuration layer (TestConfig, properties)&#10;- Logging and test suite setup&quot;">
       <created>1766953268129</created>

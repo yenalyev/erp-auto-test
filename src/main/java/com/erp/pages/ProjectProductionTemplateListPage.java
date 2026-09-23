@@ -46,6 +46,13 @@ public class ProjectProductionTemplateListPage extends BasePage {
         ready.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
+        waitForConditionTolerant(
+                () -> {
+                    Locator loading = page.getByText("Завантаження...",
+                            new Page.GetByTextOptions().setExact(true));
+                    return loading.count() == 0 || !loading.first().isVisible();
+                },
+                "project production templates loading indicator is hidden");
         return this;
     }
 
@@ -65,8 +72,11 @@ public class ProjectProductionTemplateListPage extends BasePage {
     }
 
     public boolean hasTemplateNamed(String templateName) {
-        return page.locator("table tbody tr")
-                .filter(new Locator.FilterOptions().setHasText(templateName))
-                .count() > 0;
+        Locator row = page.locator("table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(templateName));
+        waitForConditionTolerant(
+                () -> row.count() > 0 && row.first().isVisible(),
+                "project production template row is visible: " + templateName);
+        return row.count() > 0 && row.first().isVisible();
     }
 }

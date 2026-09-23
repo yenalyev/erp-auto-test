@@ -6,6 +6,7 @@ public enum LocationFeature {
     ORDERS,
     PRODUCE,
     EQUIPMENT,
+    TASKS,
     CREWS,
     ORDER_HUB,
     PRODUCTION_GROUP

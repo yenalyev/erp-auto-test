@@ -19,10 +19,10 @@ public class ProjectProductionRequestBodyFactory {
             if (resourceId == null) {
                 throw new IllegalStateException("PROJECT_RESOURCE_ID required for project production create body generation");
             }
-            Long categoryId = context.get(ContextKey.PROJECT_CATEGORY_ID);
-            Long productId = context.get(ContextKey.PROJECT_PRODUCT_ID);
+            Long categoryId = context.get(ContextKey.PROJECT_EQUIPMENT_CATEGORY_ID);
+            Long modelId = context.get(ContextKey.PROJECT_EQUIPMENT_MODEL_ID);
             return ProjectProductionDataFactory.buildCreateRequestWithStage(
-                    ConfigProvider.getOwner1StorageId(), categoryId, productId, resourceId, 1.0, 0.0);
+                    ConfigProvider.getOwner1StorageId(), categoryId, modelId, resourceId, 1.0, 0.0);
         });
 
         register(ApiEndpointDefinition.PROJECT_PRODUCTION_PUT_UPDATE, context -> {
@@ -30,28 +30,17 @@ public class ProjectProductionRequestBodyFactory {
             if (resourceId == null) {
                 throw new IllegalStateException("PROJECT_RESOURCE_ID required for project production update body generation");
             }
-            Long categoryId = context.get(ContextKey.PROJECT_CATEGORY_ID);
-            Long productId = context.get(ContextKey.PROJECT_PRODUCT_ID);
+            Long categoryId = context.get(ContextKey.PROJECT_EQUIPMENT_CATEGORY_ID);
+            Long modelId = context.get(ContextKey.PROJECT_EQUIPMENT_MODEL_ID);
             return ProjectProductionDataFactory.buildCreateRequestWithStage(
-                    ConfigProvider.getOwner1StorageId(), categoryId, productId, resourceId, 1.0, 0.0);
+                    ConfigProvider.getOwner1StorageId(), categoryId, modelId, resourceId, 1.0, 0.0);
         });
 
         register(ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_POST_CREATE, context -> {
-            Long categoryId = context.get(ContextKey.PROJECT_CATEGORY_ID);
-            Long productId = context.get(ContextKey.PROJECT_PRODUCT_ID);
+            Long categoryId = context.get(ContextKey.PROJECT_EQUIPMENT_CATEGORY_ID);
+            Long modelId = context.get(ContextKey.PROJECT_EQUIPMENT_MODEL_ID);
             return ProjectProductionDataFactory.buildTemplateCreateRequest(
-                    ConfigProvider.getOwner1StorageId(), categoryId, productId, null);
-        });
-
-        register(ApiEndpointDefinition.PROJECT_CATEGORY_POST_CREATE,
-                context -> ProjectProductionDataFactory.buildCategoryCreateRequest());
-
-        register(ApiEndpointDefinition.PROJECT_PRODUCT_POST_CREATE, context -> {
-            Long categoryId = context.get(ContextKey.PROJECT_CATEGORY_ID);
-            if (categoryId == null) {
-                throw new IllegalStateException("PROJECT_CATEGORY_ID required for project product create body generation");
-            }
-            return ProjectProductionDataFactory.buildProductCreateRequest(categoryId);
+                    ConfigProvider.getOwner1StorageId(), categoryId, modelId, null);
         });
     }
 }

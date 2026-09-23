@@ -41,7 +41,13 @@ import java.util.stream.Collectors;
 public class UserFixture extends BaseFixture {
 
     public static final String ADMINISTRATOR_ROLE_NAME = "Адміністратор системи";
-    public static final String PROJECT_PRODUCTION_ROLE_NAME = "Проєктне виробництво: редактор";
+    public static final List<String> PROJECT_PRODUCTION_PERMISSION_KEYS = List.of(
+            "project-production.read",
+            "project-production.create",
+            "project-production.update",
+            "project-production.delete",
+            "project-production-template.read",
+            "project-production-template.manage");
     public static final String BUSINESS_UNIT_OWNER_ROLE_NAME = BusinessRoleCatalog.DEFAULT_LOCATION_ROLE_NAME;
     public static final String UNIT_OWNER_ROLE_NAME = BUSINESS_UNIT_OWNER_ROLE_NAME;
     public static final String BUSINESS_UNIT_VIEWER_ROLE_NAME = "Перегляд локації";
@@ -69,13 +75,32 @@ public class UserFixture extends BaseFixture {
         testContext.set(ContextKey.SHARED_USER, getUser(UserRole.ADMIN, user.getId()));
     }
 
-    @Step("FIXTURE: Ensure project-production users (projectprod / projectprodab)")
+    @Step("FIXTURE: Ensure project-production users with granular permissions")
     public void ensureProjectProductionUsers(PlaywrightSessionProvider playwright) {
         Long storageId = ConfigProvider.getOwner1StorageId();
-        ensureUser(playwright, UserRole.PROJECT_ADMIN.getUsername(), UserRole.PROJECT_ADMIN.getPassword(),
-                "Проектний", "Адмін", PROJECT_PRODUCTION_ROLE_NAME, storageId);
-        ensureUser(playwright, UserRole.PROJECT_MANAGER.getUsername(), UserRole.PROJECT_MANAGER.getPassword(),
-                "Проектний", "Менеджер", PROJECT_PRODUCTION_ROLE_NAME, storageId);
+        ensureProjectProductionUser(playwright, UserRole.PROJECT_ADMIN,
+                "Проектний", "Адмін", storageId);
+        ensureProjectProductionUser(playwright, UserRole.PROJECT_MANAGER,
+                "Проектний", "Менеджер", storageId);
+    }
+
+    private UserModelResponse ensureProjectProductionUser(PlaywrightSessionProvider playwright,
+                                                           UserRole role,
+                                                           String firstName,
+                                                           String lastName,
+                                                           Long storageId) {
+        String username = role.getUsername();
+        UserModelResponse user = findUserByUsername(username).orElse(null);
+        if (user == null) {
+            user = createUserProfile(username, firstName, lastName, playwright, role.getPassword());
+        } else if (!user.isEnabled()) {
+            user = updateUser(UserRole.ADMIN, user.getId(),
+                    UserDataFactory.fromExisting(user).toBuilder().enabled(true).build());
+        }
+        accessFixture.ensureGrants(user.getId(), locationActorRoles(List.of()),
+                PROJECT_PRODUCTION_PERMISSION_KEYS, GrantScopeKind.LOCATION, storageId);
+        apiExecutor.clearSessionCache();
+        return getUser(UserRole.ADMIN, user.getId());
     }
 
     @Step("FIXTURE: Ensure LOCATION_MIXED user (full A1/A2 + RO B1/B2)")

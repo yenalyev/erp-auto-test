@@ -1,15 +1,23 @@
 package com.erp.pages;
 
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
@@ -36,6 +44,7 @@ public class PlanExecutionPage extends BasePage {
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано зроблене";
     private static final String PRODUCED_GOAL_LABEL = "Зроблено / Ціль";
     private static final String OUT_OF_PLAN_TEXT = "Поза планом";
+    private static final String EXPORT_BUTTON_TEXT = "Експорт в Excel";
 
     /** tk-ui CPMA-587: filter toggle on the «Виконання» tab (product requirement: «Тільки обрані»). */
     private static final String FAVOURITES_ONLY_BUTTON_TEXT = "Лише обрані";
@@ -496,6 +505,10 @@ public class PlanExecutionPage extends BasePage {
         return productRow(productName).count() > 0 && productRow(productName).first().isVisible();
     }
 
+    public int getProductRowCount(String productName) {
+        return productRow(productName).count();
+    }
+
     /** «Ціль» cell text for the given product row, or {@code GOAL_PLACEHOLDER} ("—") when no plan targets it. */
     public String getGoalCellText(String productName) {
         return cellText(productName, columnIndexByHeader(GOAL_HEADER));
@@ -557,6 +570,95 @@ public class PlanExecutionPage extends BasePage {
                 .first();
         String text = row.locator("td").nth(columnIndexByHeader(table, PRODUCED_HEADER)).innerText();
         return text != null ? text.trim().replaceAll("\\s+", " ") : "";
+    }
+
+    public int getOutOfPlanProductRowCount(String productName) {
+        return outOfPlanTable().locator("tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(productName)).count();
+    }
+
+    /** Text of the aggregate row in the expanded «Поза планом» table. */
+    public String getOutOfPlanFooterText() {
+        Locator footer = outOfPlanTable().locator("tfoot");
+        footer.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(uiTimeoutMs()));
+        return footer.innerText().trim().replaceAll("\\s+", " ");
+    }
+
+    /** Applies one or more values in the execution-page category multiselect. */
+    public PlanExecutionPage selectExecutionCategories(String... categoryNames) {
+        Locator input = page.getByPlaceholder("Категорії").first();
+        for (String categoryName : categoryNames) {
+            input.click();
+            page.waitForResponse(
+                    r -> r.url().contains("/statistics/execution") && "POST".equals(r.request().method()),
+                    () -> page.getByRole(AriaRole.OPTION,
+                            new Page.GetByRoleOptions().setName(categoryName).setExact(true)).click());
+        }
+        return waitForExecutionDataSettled();
+    }
+
+    public PlanExecutionPage searchExecutionProduct(String value) {
+        page.getByPlaceholder("Пошук продукту").fill(value);
+        return this;
+    }
+
+    /** Captures the real XLSX payload even when the blob download event is not emitted by Chromium. */
+    public ExportDownloadResult clickExportToExcelAndDownload() {
+        List<Download> downloads = Collections.synchronizedList(new ArrayList<>());
+        Consumer<Download> listener = downloads::add;
+        page.onDownload(listener);
+        try {
+            com.microsoft.playwright.Response response = page.waitForResponse(
+                    r -> r.url().contains("/statistics/execution-export"),
+                    () -> page.getByRole(AriaRole.BUTTON,
+                            new Page.GetByRoleOptions().setName(EXPORT_BUTTON_TEXT)).click());
+            try {
+                page.waitForCondition(() -> !downloads.isEmpty(),
+                        new Page.WaitForConditionOptions().setTimeout(1_500));
+            } catch (PlaywrightException ignored) {
+                // Blob downloads are often delivered only as a fetch response.
+            }
+            if (!downloads.isEmpty()) {
+                Download download = downloads.getFirst();
+                Path path = download.path();
+                return new ExportDownloadResult(download.suggestedFilename(), path.toFile().length(), path);
+            }
+            byte[] body = response.body();
+            Path path = Files.createTempFile("erp-plan-execution-", ".xlsx");
+            Files.write(path, body);
+            return new ExportDownloadResult("plan-execution.xlsx", body.length, path);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot persist plan-execution export", e);
+        } finally {
+            page.offDownload(listener);
+        }
+    }
+
+    /** Clicks export and verifies the UI error path does not emit a browser download. */
+    public boolean clickExportAndWaitForErrorWithoutDownload() {
+        List<Download> downloads = Collections.synchronizedList(new ArrayList<>());
+        Consumer<Download> listener = downloads::add;
+        page.onDownload(listener);
+        try {
+            page.getByRole(AriaRole.BUTTON,
+                    new Page.GetByRoleOptions().setName(EXPORT_BUTTON_TEXT)).click();
+            page.getByText("Не вдалося експортувати файл")
+                    .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(uiTimeoutMs()));
+            try {
+                page.waitForCondition(() -> !downloads.isEmpty(),
+                        new Page.WaitForConditionOptions().setTimeout(1_000));
+            } catch (PlaywrightException ignored) {
+                // Expected: failed request must not create a download.
+            }
+            return downloads.isEmpty();
+        } finally {
+            page.offDownload(listener);
+        }
+    }
+
+    public boolean isExportButtonEnabled() {
+        return page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName(EXPORT_BUTTON_TEXT)).isEnabled();
     }
 
     /** True when the «Скопіювати» button is visible on the «Виконання» tab. */
@@ -666,6 +768,41 @@ public class PlanExecutionPage extends BasePage {
         return waitForManageDialogReady();
     }
 
+    /** Uses «Обрати все» / «Зняти все» for the resources currently visible under dialog filters. */
+    public PlanExecutionPage clickManageDialogBulkAction(String action) {
+        manageFavouritesDialog().getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Керування обраним")).click();
+        page.getByRole(AriaRole.MENUITEM,
+                new Page.GetByRoleOptions().setName(action).setExact(true)).click();
+        return this;
+    }
+
+    public String getManageDialogSaveButtonText() {
+        return manageFavouritesDialog().getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName(Pattern.compile("^" + MANAGE_FAVOURITES_SAVE_PREFIX)))
+                .innerText().trim();
+    }
+
+    /** Switches the resource-state filter between «Активні» and «Архівні». */
+    public PlanExecutionPage selectManageDialogResourceState(String state) {
+        Locator trigger = manageFavouritesDialog().getByRole(AriaRole.COMBOBOX)
+                .filter(new Locator.FilterOptions().setHasText(Pattern.compile("Активні|Архівні")))
+                .first();
+        trigger.click();
+        page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(state).setExact(true)).click();
+        return waitForManageDialogReady();
+    }
+
+    public PlanExecutionPage selectManageDialogCategory(String categoryName) {
+        Locator input = manageFavouritesDialog().getByPlaceholder("Категорії").first();
+        input.click();
+        page.waitForResponse(
+                r -> r.url().contains("/resources/with-technological-map") && "GET".equals(r.request().method()),
+                () -> page.getByRole(AriaRole.OPTION,
+                        new Page.GetByRoleOptions().setName(categoryName).setExact(true)).click());
+        return waitForManageDialogReady();
+    }
+
     /**
      * Filters the manage-dialog resource table by name (placeholder «Фільтр за назвою») and waits
      * until a matching row is visible.
@@ -690,6 +827,16 @@ public class PlanExecutionPage extends BasePage {
     public PlanExecutionPage typeManageDialogNameFilter(String nameFragment) {
         manageFavouritesDialog().getByPlaceholder("Фільтр за назвою").fill(nameFragment);
         return this;
+    }
+
+    /** Name filter variant for negative/archived searches where an empty result is a valid settled state. */
+    public PlanExecutionPage filterManageDialogByNameAllowEmpty(String nameFragment) {
+        Locator input = manageFavouritesDialog().getByPlaceholder("Фільтр за назвою");
+        page.waitForResponse(
+                r -> r.url().contains("/resources/with-technological-map")
+                        && "GET".equals(r.request().method()),
+                () -> input.fill(nameFragment));
+        return waitForManageDialogReady();
     }
 
     public boolean isManageFavouritesDialogVisible() {
@@ -986,4 +1133,6 @@ public class PlanExecutionPage extends BasePage {
                 .locator("xpath=..")
                 .first();
     }
+
+    public record ExportDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}
 }

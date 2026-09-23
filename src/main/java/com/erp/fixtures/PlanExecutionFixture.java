@@ -13,6 +13,8 @@ import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceUsageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
+import com.erp.models.request.ExecutionFilterRequest;
+import com.erp.models.response.PlanExecutionResponse;
 import com.erp.test_context.TestContext;
 import com.erp.utils.helpers.ApiResponseHelper;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
@@ -116,6 +118,30 @@ public class PlanExecutionFixture extends BaseFixture {
     public TechnologicalMapFixture.IsolatedTechMapContext createIsolatedProduct(Long storageId, Long outputUnitId) {
         return techMapFixture.createIsolatedProductionTechMap(
                 UserRole.ADMIN, storageId, "TM-PlanExec", outputUnitId);
+    }
+
+    /** Creates an isolated product in an explicitly selected category. */
+    @Step("Створити ізольований продукт (unitId={outputUnitId}, categoryId={categoryId}) на сховищі {storageId}")
+    public TechnologicalMapFixture.IsolatedTechMapContext createIsolatedProduct(
+            Long storageId, Long outputUnitId, Long categoryId) {
+        return techMapFixture.createIsolatedProductionTechMap(
+                UserRole.ADMIN, storageId, "TM-PlanExec", outputUnitId, categoryId);
+    }
+
+    @Step("API: отримати виконання плану для сховища {storageId}")
+    public PlanExecutionResponse getExecution(Long storageId, ExecutionFilterRequest filter) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STATISTIC_POST_EXECUTION, UserRole.ADMIN, filter, storageId);
+        validateSuccess(response, "Get plan execution for storage " + storageId);
+        return response.as(PlanExecutionResponse.class);
+    }
+
+    @Step("API: експортувати виконання плану для сховища {storageId}")
+    public byte[] exportExecution(Long storageId, ExecutionFilterRequest filter) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STATISTIC_POST_EXECUTION_EXPORT, UserRole.ADMIN, filter, storageId);
+        validateSuccess(response, "Export plan execution for storage " + storageId);
+        return response.asByteArray();
     }
 
     /** Creates the storage's current-month plan with a single output target for {@code resourceId}. */

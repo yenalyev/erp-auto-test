@@ -26,8 +26,10 @@ public class ProjectProductionTemplateResponse {
     private ProjectProductionType type;
     private String description;
     private SimpleEntityResponse storage;
-    private SimpleEntityResponse projectCategory;
-    private SimpleEntityResponse projectProduct;
+    private SimpleEntityResponse equipmentCategory;
+    private SimpleEntityResponse equipmentModel;
     @Builder.Default
     private List<ProjectProductionStageTemplateResponse> projectProductionStageTemplates = new ArrayList<>();
+    @Builder.Default
+    private List<ProjectProductionFileResponse> files = new ArrayList<>();
 }

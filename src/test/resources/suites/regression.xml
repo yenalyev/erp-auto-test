@@ -150,9 +150,9 @@
     <test name="Project Production API">
         <classes>
             <class name="com.erp.tests.functional.project_production.ProjectProductionTest"/>
+            <class name="com.erp.tests.functional.project_production.ProjectProductionModificationTest"/>
             <class name="com.erp.tests.functional.project_production.ProjectProductionOperationHistoryTest"/>
             <class name="com.erp.tests.functional.project_production.ProjectProductionTemplateTest"/>
-            <class name="com.erp.tests.functional.project_production.ProjectCatalogTest"/>
         </classes>
     </test>
 

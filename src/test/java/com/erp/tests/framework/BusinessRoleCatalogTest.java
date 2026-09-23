@@ -41,9 +41,18 @@ public class BusinessRoleCatalogTest {
     }
 
     @Test
-    public void projectOwnerMappingIncludesBothRoles() {
-        assertThat(BusinessRoleCatalog.definition(BusinessRole.BUSINESS_UNIT_AND_PROJECT_OWNER).accessRoles())
-                .containsExactly("Проєктне виробництво: редактор");
+    public void projectOwnerMappingUsesGranularPermissions() {
+        BusinessRoleCatalog.Definition definition =
+                BusinessRoleCatalog.definition(BusinessRole.BUSINESS_UNIT_AND_PROJECT_OWNER);
+
+        assertThat(definition.accessRoles()).isEmpty();
+        assertThat(definition.permissionKeys()).containsExactly(
+                "project-production.read",
+                "project-production.create",
+                "project-production.update",
+                "project-production.delete",
+                "project-production-template.read",
+                "project-production-template.manage");
     }
 
     @Test

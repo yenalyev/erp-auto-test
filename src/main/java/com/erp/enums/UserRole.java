@@ -20,15 +20,9 @@ public enum UserRole {
     CREW_READ,
     /** Location head with additional «Екіпажі: облік» on the battalion. */
     CREW_WRITE,
-    /**
-     * Location head with «Проєктне виробництво: редактор» —
-     * staging/dev: {@code projectprod}, storage = owner1.
-     */
+    /** Project-production actor with granular permissions on owner1; staging/dev: {@code projectprod}. */
     PROJECT_ADMIN,
-    /**
-     * Location head with «Проєктне виробництво: редактор» —
-     * staging/dev: {@code projectprodab}, storage = owner1.
-     */
+    /** Second project-production actor with granular permissions on owner1; staging/dev: {@code projectprodab}. */
     PROJECT_MANAGER,
     /**
      * Mixed full + view-only locations (CPMA-644):

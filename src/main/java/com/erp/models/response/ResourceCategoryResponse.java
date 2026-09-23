@@ -14,4 +14,5 @@ import lombok.NoArgsConstructor;
 public class ResourceCategoryResponse {
     private Long id;
     private String name;
+    private SimpleEntityResponse parent;
 }

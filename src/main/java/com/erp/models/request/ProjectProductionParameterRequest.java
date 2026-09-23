@@ -6,15 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Mirrors backend {@code org.pm.tk.dto.request.projectproduction.ProjectCategoryRequest}.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProjectCategoryRequest {
+public class ProjectProductionParameterRequest {
     private String name;
-    private String description;
+    private String value;
 }

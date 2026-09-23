@@ -1,0 +1,307 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06",
+      "AC-07"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-REL-ACC-001",
+      "TC-REL-ACC-002",
+      "TC-REL-ACC-003",
+      "TC-REL-ACC-004",
+      "TC-REL-ACC-005",
+      "TC-REL-ACC-006",
+      "TC-REL-ACC-007",
+      "TC-REL-ACC-008",
+      "TC-REL-ACC-009",
+      "TC-REL-ACC-010",
+      "TC-REL-ACC-011",
+      "TC-REL-ACC-012",
+      "TC-REL-ACC-013",
+      "TC-REL-ACC-014",
+      "TC-REL-ACC-015",
+      "TC-REL-ACC-016",
+      "TC-REL-ACC-017",
+      "TC-REL-ACC-UI-001",
+      "TC-REL-ACC-UI-002",
+      "TC-REL-ACC-UI-003",
+      "TC-REL-ACC-UI-004",
+      "TC-REL-ACC-018",
+      "TC-REL-ACC-019",
+      "TC-REL-ACC-020"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-EDIT_REL-008",
+    "parentFeatureId": "REQ-EDIT_REL",
+    "status": "ACTIVE",
+    "documentationLength": 21286,
+    "documentationSha256": "e42aa750e29eeaa274fc54785b7f7c9e64b3d7105729bcd28a840bd345059882",
+    "sourceDocumentationSha256": "e42aa750e29eeaa274fc54785b7f7c9e64b3d7105729bcd28a840bd345059882",
+    "requiredAcPresent": true,
+    "managedAcCount": 7,
+    "managedCaseCount": 24,
+    "automatedCaseCount": 24,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-REL-ACC-001": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-002": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-003": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-004": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-005": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-006": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-007": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-007"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-008": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-008"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-009": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-009"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-010": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-010"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-011": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-011"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-012": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-012"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-013": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-013"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-014": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-014"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-015": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-015"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-016": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-016"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-017": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-017"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-UI-001": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-ACC-UI-001"
+        ],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-UI-002": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-ACC-UI-002"
+        ],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-UI-003": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-ACC-UI-003"
+        ],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-UI-004": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-ACC-UI-004"
+        ],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-018": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-018"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-019": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-ACC-019"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-ACC-020": {
+        "featureId": "REQ-EDIT_REL-008",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-ACC-020"
+        ],
+        "stepCount": 2
+      }
+    }
+  },
+  "completedAt": "2026-09-23T08:41:13.079590+00:00",
+  "result": "SUCCESS"
+}

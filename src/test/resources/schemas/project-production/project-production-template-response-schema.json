@@ -18,14 +18,14 @@
         "name": { "type": "string" }
       }
     },
-    "projectCategory": {
+    "equipmentCategory": {
       "type": ["object", "null"],
       "properties": {
         "id": { "type": "integer" },
         "name": { "type": "string" }
       }
     },
-    "projectProduct": {
+    "equipmentModel": {
       "type": ["object", "null"],
       "properties": {
         "id": { "type": "integer" },
@@ -35,6 +35,17 @@
     "projectProductionStageTemplates": {
       "type": "array",
       "items": { "$ref": "project-production-stage-template-response-schema.json" }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "fileNameOriginal": { "type": ["string", "null"] },
+          "extension": { "type": ["string", "null"] }
+        }
+      }
     }
   },
   "additionalProperties": true

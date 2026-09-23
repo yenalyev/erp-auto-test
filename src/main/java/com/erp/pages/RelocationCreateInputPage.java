@@ -90,8 +90,26 @@ public class RelocationCreateInputPage extends BasePage {
         return paidAmountInput(rowIndex).getAttribute("step");
     }
 
+    public String paidAmountPlaceholder(int rowIndex) {
+        return paidAmountInput(rowIndex).getAttribute("placeholder");
+    }
+
+    public String paidAmountValue(int rowIndex) {
+        return paidAmountInput(rowIndex).inputValue();
+    }
+
     public boolean isAccountingSelectVisible(int rowIndex) {
         return accountingSelect(rowIndex).isVisible();
+    }
+
+    public RelocationCreateInputPage openAccountingSelect(int rowIndex) {
+        accountingSelect(rowIndex).click();
+        return this;
+    }
+
+    public boolean isAccountingSearchPlaceholderVisible() {
+        Locator search = page.getByPlaceholder(ACCOUNTING_SEARCH_PLACEHOLDER);
+        return search.count() > 0 && search.last().isVisible();
     }
 
     public RelocationCreateInputPage selectAccountingName(int rowIndex, String accountingName) {

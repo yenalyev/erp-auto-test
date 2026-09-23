@@ -1,6 +1,7 @@
 package com.erp.tests.functional.project_production;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.project_production.ProjectProductionDataFactory;
 import com.erp.enums.ProjectProductionState;
 import com.erp.enums.ProjectProductionType;
@@ -28,36 +29,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Epic("Project Production")
-@Feature("Project Production Templates API")
+@Feature("Equipment-oriented project production templates")
 public class ProjectProductionTemplateTest extends BaseFunctionalTest {
 
     private ProjectProductionFixture fixture;
     private Long storageId;
     private Long resourceId;
     private Long categoryId;
-    private Long productId;
-
+    private Long modelId;
     private final List<Long> createdTemplateIds = new ArrayList<>();
     private final List<Long> createdProductionIds = new ArrayList<>();
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
-    @Step("Підготовка середовища для тестів шаблонів проєктного виробництва")
     public void setupTemplateTest() {
         fixture = new ProjectProductionFixture(testContext, apiExecutor);
         fixture.prepareContext();
-
         storageId = ConfigProvider.getOwner1StorageId();
         resourceId = testContext.get(ContextKey.PROJECT_RESOURCE_ID);
-        categoryId = testContext.get(ContextKey.PROJECT_CATEGORY_ID);
-        productId = testContext.get(ContextKey.PROJECT_PRODUCT_ID);
+        categoryId = testContext.get(ContextKey.PROJECT_EQUIPMENT_CATEGORY_ID);
+        modelId = testContext.get(ContextKey.PROJECT_EQUIPMENT_MODEL_ID);
     }
 
     @AfterMethod(alwaysRun = true)
-    @Step("Очистити створені шаблони та виробництва")
     public void cleanup() {
         for (Long id : createdProductionIds) {
             try {
-                fixture.deleteAs(UserRole.PROJECT_MANAGER, id, storageId, null);
+                ProjectProductionResponse production = fixture.getById(id, storageId);
+                if (production.getState() == ProjectProductionState.DONE) {
+                    fixture.cancelFinishedAs(UserRole.ADMIN, id, storageId);
+                }
+                fixture.deleteAs(UserRole.ADMIN, id, storageId, null);
             } catch (Exception e) {
                 log.warn("Could not delete project production {}: {}", id, e.getMessage());
             }
@@ -66,12 +67,8 @@ public class ProjectProductionTemplateTest extends BaseFunctionalTest {
 
         for (Long id : createdTemplateIds) {
             try {
-                Response response = apiExecutor.execute(
-                        com.erp.api.endpoints.ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_DELETE,
-                        UserRole.PROJECT_MANAGER, null, id, storageId);
-                if (response.statusCode() >= 400) {
-                    log.warn("Could not delete template {} (status={})", id, response.statusCode());
-                }
+                apiExecutor.execute(ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_DELETE,
+                        UserRole.ADMIN, null, id, storageId);
             } catch (Exception e) {
                 log.warn("Could not delete template {}: {}", id, e.getMessage());
             }
@@ -82,102 +79,124 @@ public class ProjectProductionTemplateTest extends BaseFunctionalTest {
     @Test(priority = 10)
     @TestCaseId("TC-PROJ-TPL-001")
     @Story("Template CRUD")
-    @Description("CRUD шаблону проєктного виробництва зі стадією — залишки на складі не змінюються")
-    @Severity(SeverityLevel.CRITICAL)
-    public void testTemplateCrudDoesNotAffectStock() {
+    public void templateCrudUsesEquipmentCategoryAndModelWithoutAffectingStock() {
         Map<Long, Double> inventoryBefore = fixture.getInventorySnapshot(storageId);
-
-        ProjectProductionTemplateRequest createRequest = ProjectProductionDataFactory.buildTemplateCreateRequest(
-                storageId, categoryId, productId,
+        ProjectProductionTemplateRequest request = ProjectProductionDataFactory.buildTemplateCreateRequest(
+                storageId, categoryId, modelId,
                 List.of(ProjectProductionDataFactory.singleResourceStage(resourceId, 3.0, 3.0)));
 
-        ProjectProductionTemplateResponse created = Allure.step("Створити шаблон зі стадією", () ->
-                fixture.createTemplate(UserRole.PROJECT_MANAGER, createRequest));
+        ProjectProductionTemplateResponse created = fixture.createTemplate(UserRole.ADMIN, request);
         createdTemplateIds.add(created.getId());
-
-        assertThat(created.getId()).isNotNull();
+        assertThat(created.getEquipmentCategory().getId()).isEqualTo(categoryId);
+        assertThat(created.getEquipmentModel().getId()).isEqualTo(modelId);
         assertThat(created.getProjectProductionStageTemplates()).hasSize(1);
-        assertThat(created.getState()).isEqualTo(ProjectProductionState.CREATED);
-        assertThat(created.getType()).isEqualTo(ProjectProductionType.CREATION);
 
-        Allure.step("Оновити шаблон (нова назва)", () -> {
-            ProjectProductionTemplateRequest updateRequest = createRequest.toBuilder()
-                    .name(ProjectProductionDataFactory.uniqueTemplateName())
-                    .description("erp-auto-test updated template")
-                    .build();
-            Response updateResponse = apiExecutor.execute(
-                    com.erp.api.endpoints.ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_PUT_UPDATE,
-                    UserRole.PROJECT_MANAGER, updateRequest, created.getId());
-            assertThat(updateResponse.statusCode()).isEqualTo(200);
-            ProjectProductionTemplateResponse updated = updateResponse.as(ProjectProductionTemplateResponse.class);
-            assertThat(updated.getDescription()).isEqualTo("erp-auto-test updated template");
-        });
-
-        Allure.step("Перевірити GET за id", () -> {
-            Response getResponse = apiExecutor.execute(
-                    com.erp.api.endpoints.ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_GET_BY_ID,
-                    UserRole.PROJECT_MANAGER, null, created.getId(), storageId);
-            assertThat(getResponse.statusCode()).isEqualTo(200);
-        });
-
-        Allure.step("Видалити шаблон", () -> {
-            Response deleteResponse = apiExecutor.execute(
-                    com.erp.api.endpoints.ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_DELETE,
-                    UserRole.PROJECT_MANAGER, null, created.getId(), storageId);
-            assertThat(deleteResponse.statusCode()).isBetween(200, 299);
-        });
-        createdTemplateIds.remove(created.getId());
-
-        Allure.step("Перевірити, що залишки на складі не змінилися", () ->
-                fixture.assertInventoryUnchanged(storageId, inventoryBefore));
+        ProjectProductionTemplateRequest update = request.toBuilder()
+                .name(ProjectProductionDataFactory.uniqueTemplateName())
+                .description("updated equipment template")
+                .build();
+        Response updateResponse = apiExecutor.execute(
+                ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_PUT_UPDATE,
+                UserRole.ADMIN, update, created.getId());
+        assertThat(updateResponse.statusCode()).isEqualTo(200);
+        assertThat(updateResponse.as(ProjectProductionTemplateResponse.class).getDescription())
+                .isEqualTo("updated equipment template");
+        fixture.assertInventoryUnchanged(storageId, inventoryBefore);
     }
 
     @Test(priority = 20)
     @TestCaseId("TC-PROJ-TPL-002")
-    @Story("Create production from template")
-    @Description("Створення проєктного виробництва з шаблону копіює категорію/продукт/стадії")
-    @Severity(SeverityLevel.CRITICAL)
-    public void testCreateProductionFromTemplate() {
-        ProjectProductionTemplateRequest templateRequest = ProjectProductionDataFactory.buildTemplateCreateRequest(
-                storageId, categoryId, productId,
-                List.of(ProjectProductionDataFactory.singleResourceStage(resourceId, 2.0, 0.0)));
-
-        ProjectProductionTemplateResponse template = Allure.step("Створити шаблон", () ->
-                fixture.createTemplate(UserRole.PROJECT_MANAGER, templateRequest));
+    @Story("Create CREATION from template")
+    public void creationFromTemplateCopiesEquipmentCategoryModelAndStages() {
+        ProjectProductionTemplateResponse template = fixture.createTemplate(
+                UserRole.ADMIN,
+                ProjectProductionDataFactory.buildTemplateCreateRequest(
+                        storageId, categoryId, modelId,
+                        List.of(ProjectProductionDataFactory.singleResourceStage(resourceId, 2.0, 0.0))));
         createdTemplateIds.add(template.getId());
 
-        ProjectProductionResponse production = Allure.step("Створити виробництво з шаблону", () ->
-                fixture.createProductionFromTemplate(UserRole.PROJECT_MANAGER, template.getId(), storageId));
+        ProjectProductionResponse production = fixture.createProductionFromTemplate(
+                UserRole.ADMIN, template.getId(), storageId);
         createdProductionIds.add(production.getId());
 
-        assertThat(production.getId()).isNotNull();
-        assertThat(production.getProjectCategory().getId()).isEqualTo(categoryId);
-        assertThat(production.getProjectProduct().getId()).isEqualTo(productId);
+        assertThat(production.getEquipmentCategory().getId()).isEqualTo(categoryId);
+        assertThat(production.getEquipmentModel().getId()).isEqualTo(modelId);
+        assertThat(production.getEquipment()).isNull();
+        assertThat(production.getProjectProductionStages()).hasSize(1);
     }
 
     @Test(priority = 30)
     @TestCaseId("TC-PROJ-TPL-003")
     @Story("Save production as template")
-    @Description("Збереження існуючого проєктного виробництва як нового шаблону")
-    @Severity(SeverityLevel.NORMAL)
-    public void testCreateTemplateFromExistingProduction() {
-        ProjectProductionRequest createRequest = ProjectProductionDataFactory.buildCreateRequest(
-                storageId, categoryId, productId,
+    public void createTemplateFromExistingProductionKeepsEquipmentContract() {
+        ProjectProductionRequest request = ProjectProductionDataFactory.buildCreateRequest(
+                storageId, categoryId, modelId,
                 ProjectProductionState.IN_PROGRESS, ProjectProductionType.CREATION, null);
-        ProjectProductionResponse production = Allure.step("Створити проєктне виробництво", () ->
-                fixture.createAs(UserRole.PROJECT_MANAGER, createRequest));
+        ProjectProductionResponse production = fixture.createAs(UserRole.ADMIN, request);
         createdProductionIds.add(production.getId());
 
-        String templateName = ProjectProductionDataFactory.uniqueTemplateName();
-        ProjectProductionTemplateResponse template = Allure.step(
-                "Зберегти виробництво як шаблон «" + templateName + "»", () ->
-                        fixture.createTemplateFromProduction(
-                                UserRole.PROJECT_MANAGER, production.getId(), storageId, templateName));
+        String name = ProjectProductionDataFactory.uniqueTemplateName();
+        ProjectProductionTemplateResponse template = fixture.createTemplateFromProduction(
+                UserRole.ADMIN, production.getId(), storageId, name);
         createdTemplateIds.add(template.getId());
 
-        assertThat(template.getId()).isNotNull();
-        assertThat(template.getName()).isEqualTo(templateName);
-        assertThat(template.getProjectCategory().getId()).isEqualTo(categoryId);
-        assertThat(template.getProjectProduct().getId()).isEqualTo(productId);
+        assertThat(template.getName()).isEqualTo(name);
+        assertThat(template.getEquipmentCategory().getId()).isEqualTo(categoryId);
+        assertThat(template.getEquipmentModel().getId()).isEqualTo(modelId);
+    }
+
+    @Test(priority = 40)
+    @TestCaseId("TC-PROJ-TPL-004")
+    @Story("MODIFICATION from template requires concrete equipment before finish")
+    @Description("Проєкт MODIFICATION зі шаблону без equipmentId не можна завершити")
+    @Severity(SeverityLevel.BLOCKER)
+    public void modificationFromTemplateCannotFinishWithoutEquipment() {
+        ProjectProductionTemplateResponse template = fixture.createTemplate(
+                UserRole.ADMIN,
+                ProjectProductionDataFactory.buildTemplateCreateRequest(
+                        storageId, categoryId, modelId, ProjectProductionType.MODIFICATION,
+                        List.of(ProjectProductionDataFactory.stage(
+                                "Modification", 1, ProjectProductionState.DONE, List.of()))));
+        createdTemplateIds.add(template.getId());
+
+        ProjectProductionResponse production = fixture.createProductionFromTemplate(
+                UserRole.ADMIN, template.getId(), storageId);
+        createdProductionIds.add(production.getId());
+        assertThat(production.getType()).isEqualTo(ProjectProductionType.MODIFICATION);
+        assertThat(production.getEquipment()).isNull();
+
+        Response finish = fixture.finishRaw(UserRole.ADMIN, production.getId(), storageId);
+        assertThat(finish.statusCode())
+                .as("MODIFICATION without equipment must not finish; body=%s", finish.asString())
+                .isBetween(400, 499);
+        assertThat(fixture.getById(production.getId(), storageId).getState())
+                .isNotEqualTo(ProjectProductionState.DONE);
+    }
+
+    @Test(priority = 50)
+    @TestCaseId("TC-PROJ-TPL-005")
+    @Story("Template stage execution percentage validation")
+    @Description("Сума executionPercentage етапів шаблону не може перевищувати 100%")
+    @Severity(SeverityLevel.BLOCKER)
+    public void addingTemplateStageAboveHundredIsRejected() {
+        ProjectProductionTemplateResponse template = fixture.createTemplate(
+                UserRole.ADMIN,
+                ProjectProductionDataFactory.buildTemplateCreateRequest(
+                        storageId, categoryId, modelId,
+                        List.of(ProjectProductionDataFactory.stage(
+                                "Stage-100", 1, ProjectProductionState.CREATED, List.of()))));
+        createdTemplateIds.add(template.getId());
+
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_STAGE_POST_ADD,
+                UserRole.ADMIN,
+                ProjectProductionDataFactory.stage(
+                                "Stage-5", 2, ProjectProductionState.CREATED, List.of())
+                        .toBuilder().executionPercentage(5).build(),
+                template.getId(), storageId);
+
+        assertThat(response.statusCode())
+                .as("Template stages totaling 105%% must be rejected; body=%s", response.asString())
+                .isBetween(400, 499);
     }
 }

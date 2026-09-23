@@ -25,8 +25,9 @@ public class ProjectProductionTemplateRequest {
     private ProjectProductionType type;
     private String description;
     private Long storageId;
-    private Long projectCategoryId;
-    private Long projectProductId;
+    private Long equipmentCategoryId;
+    private Long equipmentModelId;
+    private String equipmentModelName;
     @Builder.Default
     private List<ProjectProductionStageRequest> projectProductionStages = new ArrayList<>();
 }
