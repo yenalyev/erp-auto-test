@@ -149,6 +149,25 @@ public class OrderDetailUiTest extends OrderUiTestBase {
     }
 
     @Test(priority = 6)
+    @TestCaseId("TC-ORD-UI-019")
+    @Story("Gathering owner cancellation guard")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Овнер призначеної локації збору бачить замовлення, але не бачить дії «Скасувати».")
+    public void gatheringOwnerDoesNotSeeCancelAction() {
+        OrderResponse order = prepareManagedInProgressUi();
+        reopenPageWithSession(GATHERER, gatheringStorageId);
+
+        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+
+        assertThat(ordersPage.isOrderDialogVisible(order.getId()))
+                .as("Овнер локації збору має бачити призначене йому замовлення")
+                .isTrue();
+        assertThat(ordersPage.isCancelOrderVisible())
+                .as("Овнер локації збору не повинен бачити дію «Скасувати»")
+                .isFalse();
+    }
+
+    @Test(priority = 7)
     @TestCaseId("TC-ORD-UI-018")
     @Story("Comment author fallback")
     @Severity(SeverityLevel.CRITICAL)

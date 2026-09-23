@@ -156,4 +156,31 @@ public class OrderRbacTest extends OrderApiTestBase {
         assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
                 .isEqualTo(OrderState.DONE);
     }
+
+    @Test(priority = 16)
+    @TestCaseId("TC-ORD-RBAC-006")
+    @Story("Gathering owner cannot cancel")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Овнер призначеної локації збору бачить замовлення, але не може його скасувати.")
+    public void testGatheringOwnerCannotCancelOrder() {
+        OrderResponse order = prepareManagedInProgress();
+
+        assertThat(orderFixture.getById(GATHERER, order.getId()).getId())
+                .as("Овнер локації збору має бачити призначене йому замовлення")
+                .isEqualTo(order.getId());
+
+        Response cancelDenied = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_PUT_CANCEL,
+                GATHERER,
+                null,
+                order.getId(),
+                requesterStorageId);
+
+        assertThat(cancelDenied.statusCode())
+                .as("Овнер локації збору не повинен мати права скасувати замовлення")
+                .isEqualTo(403);
+        assertThat(orderFixture.getById(REQUESTER, order.getId()).getState())
+                .as("Заборонена спроба скасування не повинна змінювати стан замовлення")
+                .isEqualTo(OrderState.IN_PROGRESS);
+    }
 }

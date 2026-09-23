@@ -1,0 +1,42 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": "updated",
+  "testCases": {
+    "TC-ORD-RBAC-006": "created",
+    "TC-ORD-UI-019": "created"
+  },
+  "verification": {
+    "featureId": "REQ-ORD",
+    "documentationLength": 27462,
+    "documentationSha256": "5d259c1cc021ba78dc6c1ed56db99fa97cc1743ed75e7865178c63a7ba99d76a",
+    "sourceDocumentationSha256": "5d259c1cc021ba78dc6c1ed56db99fa97cc1743ed75e7865178c63a7ba99d76a",
+    "documentationMatchesSource": true,
+    "allCasesMatch": true,
+    "testCases": {
+      "TC-ORD-RBAC-006": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-11",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ORD-RBAC-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4,
+        "matchesExpected": true
+      },
+      "TC-ORD-UI-019": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-12",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ORD-UI-019"
+        ],
+        "stepCount": 3,
+        "matchesExpected": true
+      }
+    }
+  },
+  "completedAt": "2026-09-23T10:20:38.432705+00:00",
+  "result": "SUCCESS"
+}
