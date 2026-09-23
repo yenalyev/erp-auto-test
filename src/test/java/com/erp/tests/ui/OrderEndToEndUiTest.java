@@ -311,6 +311,27 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
         receiveAsRequesterAndAssertDone(orderId, finalMarker);
     }
 
+    @Test(priority = 45)
+    @TestCaseId(value = "TC-ORD-E2E-012", roles = {
+            BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})
+    @Story("Relocation request maximum ignores gathering stock")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Для замовлення 5 із залишком 2 на зборі UI встановлює максимум запиту 5; створення і скасування запиту коректно резервує та звільняє джерело.")
+    public void relocationRequestMaximumEqualsOrderQuantity() {
+        seedStock(resourceId, 2.0, 5.0);
+        long orderId = createOrderThroughUi(resourceName, 5.0);
+        OrderListPage adminPage = takeToWorkAndChooseGathering(orderId);
+
+        long taskId = adminPage.createRelocationTaskCheckingMaximum(
+                sourceStorage.getName(), resourceName, 5.0, 5.0);
+        assertThat(readBookedAmount(sourceStorage.getId(), resourceId)).isEqualTo(5.0);
+
+        adminPage.cancelRelocationTask(taskId);
+        assertThat(relocationTask(orderId, taskId).getState())
+                .isEqualTo(OrderRelocationTaskState.CANCELLED);
+        assertThat(readBookedAmount(sourceStorage.getId(), resourceId)).isZero();
+    }
+
     @Test(priority = 50)
     @TestCaseId(value = "TC-ORD-E2E-005", roles = {
             BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN})

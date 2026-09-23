@@ -1,0 +1,46 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": "updated",
+  "acceptanceCriterion": {
+    "AC-14": "created"
+  },
+  "testCases": {
+    "TC-ORD-ADMIN-005": "updated",
+    "TC-ORD-E2E-012": "created"
+  },
+  "verification": {
+    "featureId": "REQ-ORD",
+    "documentationLength": 26786,
+    "documentationSha256": "f92b29799af1d1a925345cf366f555af9974c1362525183e0d01639fe64869b0",
+    "sourceDocumentationSha256": "f92b29799af1d1a925345cf366f555af9974c1362525183e0d01639fe64869b0",
+    "documentationMatchesSource": true,
+    "acceptanceCriterionMatches": true,
+    "allCasesMatch": true,
+    "testCases": {
+      "TC-ORD-ADMIN-005": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-14",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ORD-ADMIN-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4,
+        "matchesExpected": true
+      },
+      "TC-ORD-E2E-012": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-14",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ORD-E2E-012"
+        ],
+        "stepCount": 4,
+        "matchesExpected": true
+      }
+    }
+  },
+  "completedAt": "2026-09-23T10:09:02.657166+00:00",
+  "result": "SUCCESS"
+}

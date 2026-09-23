@@ -426,6 +426,16 @@ public class OrderListPage extends BasePage {
     }
 
     public long createRelocationTask(String sourceStorageName, String resourceName, double amount) {
+        return createRelocationTask(sourceStorageName, resourceName, amount, null);
+    }
+
+    public long createRelocationTaskCheckingMaximum(String sourceStorageName, String resourceName,
+                                                     double amount, double expectedMaximum) {
+        return createRelocationTask(sourceStorageName, resourceName, amount, expectedMaximum);
+    }
+
+    private long createRelocationTask(String sourceStorageName, String resourceName, double amount,
+                                      Double expectedMaximum) {
         orderDialog().getByRole(AriaRole.BUTTON,
                         new Locator.GetByRoleOptions().setName("Замовити переміщення"))
                 .click();
@@ -443,7 +453,17 @@ public class OrderListPage extends BasePage {
         Locator resourceLabel = taskDialog.getByText(resourceName,
                 new Locator.GetByTextOptions().setExact(true));
         Locator line = resourceLabel.first().locator("xpath=..");
-        line.locator("input[type='number']").fill(formatAmount(amount));
+        Locator amountInput = line.locator("input[type='number']");
+        if (expectedMaximum != null) {
+            String actualMaximum = amountInput.getAttribute("max");
+            if (actualMaximum == null
+                    || Double.compare(Double.parseDouble(actualMaximum), expectedMaximum) != 0) {
+                throw new AssertionError("Relocation task maximum for '" + resourceName
+                        + "' must be " + formatAmount(expectedMaximum)
+                        + ", but input max is " + actualMaximum);
+            }
+        }
+        amountInput.fill(formatAmount(amount));
         Locator submit = taskDialog.getByRole(AriaRole.BUTTON,
                 new Locator.GetByRoleOptions().setName("Створити запит"));
         Response response = page.waitForResponse(

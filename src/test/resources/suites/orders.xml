@@ -21,6 +21,7 @@
             <class name="com.erp.tests.functional.order.OrderFreeStockApiTest"/>
             <class name="com.erp.tests.functional.order.OrderStockRegressionApiTest"/>
             <class name="com.erp.tests.functional.order.OrderRbacTest"/>
+            <class name="com.erp.tests.functional.order.OrderRelocationAmountLimitApiTest"/>
             <class name="com.erp.tests.functional.order.OrderAdminApiTest"/>
         </classes>
     </test>

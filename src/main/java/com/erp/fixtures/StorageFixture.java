@@ -3,6 +3,7 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
@@ -217,6 +218,10 @@ public class StorageFixture extends BaseFixture {
     @Step("API: створити orderHub STORAGE parentId={parentId}, prefix={namePrefix}")
     public StorageResponse createOrderHubStorage(Long parentId, String namePrefix) {
         StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix)
+                .features(Set.of(
+                        LocationFeature.RELOCATIONS,
+                        LocationFeature.EQUIPMENT,
+                        LocationFeature.ORDER_HUB))
                 .orderHub(true)
                 .build();
         return createStorage(request);
@@ -288,10 +293,16 @@ public class StorageFixture extends BaseFixture {
     @Step("API: ensure storage {storageId} is orderHub")
     public StorageResponse ensureOrderHub(UserRole role, Long storageId) {
         StorageResponse existing = getById(role, storageId);
-        if (Boolean.TRUE.equals(existing.getOrderHub())) {
+        Set<LocationFeature> features = new LinkedHashSet<>(
+                existing.getFeatures() != null ? existing.getFeatures() : Set.of());
+        if (Boolean.TRUE.equals(existing.getOrderHub())
+                && features.contains(LocationFeature.ORDER_HUB)) {
             return existing;
         }
-        StorageRequest body = StorageDataFactory.updateFromExisting(existing, builder -> builder.orderHub(true));
+        features.add(LocationFeature.ORDER_HUB);
+        StorageRequest body = StorageDataFactory.updateFromExisting(
+                existing,
+                builder -> builder.orderHub(true).features(features));
         Response response = update(role, storageId, body);
         validateSuccess(response, "Enable orderHub on storage " + storageId);
         return response.as(StorageResponse.class);

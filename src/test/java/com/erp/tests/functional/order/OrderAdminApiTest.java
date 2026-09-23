@@ -343,45 +343,6 @@ public class OrderAdminApiTest extends OrderApiTestBase {
     }
 
     @Test(priority = 4)
-    @TestCaseId(value = "TC-ORD-ADMIN-005", roles = BusinessRole.ORDER_ADMIN)
-    @Story("Relocation task amount limit and cancellation")
-    @Severity(SeverityLevel.CRITICAL)
-    @Description("Максимальний запит дорівнює кількості в замовленні незалежно від залишку на зборі; скасування NEW-запиту звільняє резерв джерела.")
-    public void relocationTaskUsesOrderQuantityLimitAndCancellationReleasesReservation() {
-        double quantity = 5.0;
-        double gatheringStock = 2.0;
-        resetIsolatedGatheringStock();
-        inventoryFixture.resetResourceStock(
-                isolatedGatheringStorage.getId(), resourceId, gatheringStock, UserRole.ADMIN);
-        OrderResponse order = orderFixture.createOrder(
-                REQUESTER, requesterStorageId, resourceId, quantity);
-        orderFixture.takeToWork(ORDER_ADMIN, order.getId(), requesterStorageId);
-        Long gatheringId = isolatedGatheringStorage.getId();
-        orderFixture.setGathering(ORDER_ADMIN, order.getId(), requesterStorageId, gatheringId);
-        relocationFixture.ensureStock(sourceStorage.getId(), resourceId, quantity);
-        long orderLineId = order.getLines().getFirst().getId();
-
-        Response exceedsOrderQuantity = relocationTaskFixture.createRaw(
-                ORDER_ADMIN,
-                order.getId(),
-                requesterStorageId,
-                relocationTaskFixture.request(sourceStorage.getId(), orderLineId, quantity + 1));
-        assertThat(exceedsOrderQuantity.statusCode()).isEqualTo(400);
-
-        OrderRelocationTaskResponse task = relocationTaskFixture.create(
-                ORDER_ADMIN,
-                order.getId(),
-                requesterStorageId,
-                relocationTaskFixture.request(sourceStorage.getId(), orderLineId, quantity));
-        assertThat(readBookedAmount(sourceStorage.getId())).isEqualTo(quantity);
-
-        OrderRelocationTaskResponse cancelled = relocationTaskFixture.cancel(
-                ORDER_ADMIN, order.getId(), task.getId(), requesterStorageId);
-        assertThat(cancelled.getState()).isEqualTo(OrderRelocationTaskState.CANCELLED);
-        assertThat(readBookedAmount(sourceStorage.getId())).isZero();
-    }
-
-    @Test(priority = 5)
     @TestCaseId(value = "TC-ORD-ADMIN-004", roles = BusinessRole.ORDER_ADMIN)
     @Story("Production shortage handoff")
     @Severity(SeverityLevel.CRITICAL)
