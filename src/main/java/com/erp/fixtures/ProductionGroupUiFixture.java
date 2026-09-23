@@ -4,6 +4,9 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationFeature;
+import com.erp.enums.StorageRelation;
+import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.models.request.*;
 import com.erp.models.response.*;
@@ -23,6 +26,7 @@ public class ProductionGroupUiFixture implements AutoCloseable {
     private final UserFixture users;
     private final TechnologicalMapFixture maps;
     private final ProductionOrderFixture orders;
+    private final InventoryFixture inventory;
     private final List<Long> resourceIds = new ArrayList<>(), orderIds = new ArrayList<>();
     private final Map<Long, Set<Long>> mapLocations = new LinkedHashMap<>();
     public StorageResponse target, groupA, groupB, memberA1, memberA2, memberB, outside;
@@ -38,16 +42,17 @@ public class ProductionGroupUiFixture implements AutoCloseable {
         users = new UserFixture(context, api);
         maps = new TechnologicalMapFixture(context, api);
         orders = new ProductionOrderFixture(context, api);
+        inventory = new InventoryFixture(context, api);
     }
 
     public void seed(PlaywrightSessionProvider provider) {
         this.provider = provider;
         target = storages.createChildStorage(orders.resolveTargetStorageId(UserRole.ADMIN), "PGUI-target");
         groupA = group("PGUI-A"); groupB = group("PGUI-B");
-        memberA1 = storages.createChildStorage(groupA.getId(), "PGUI-A1");
-        memberA2 = storages.createChildStorage(groupA.getId(), "PGUI-A2");
-        memberB = storages.createChildStorage(groupB.getId(), "PGUI-B1");
-        outside = storages.createChildStorage(target.getId(), "PGUI-outside");
+        memberA1 = productionLocation(groupA.getId(), "PGUI-A1");
+        memberA2 = productionLocation(groupA.getId(), "PGUI-A2");
+        memberB = productionLocation(groupB.getId(), "PGUI-B1");
+        outside = productionLocation(target.getId(), "PGUI-outside");
         ResourceFixture resources = new ResourceFixture(context, api);
         resources.fetchSharedUnit(1); resources.fetchSharedResourceCategory();
         output = resource(resources, "PGUI-output");
@@ -76,6 +81,16 @@ public class ProductionGroupUiFixture implements AutoCloseable {
     private StorageResponse group(String prefix) {
         return storages.createStorage(StorageDataFactory.childStorage(target.getId(), prefix).productionGroup(true).build());
     }
+    private StorageResponse productionLocation(long parentId, String prefix) {
+        return storages.createStorage(StorageDataFactory.childStorage(
+                        parentId, prefix, UnitType.PRODUCTION, StorageRelation.INTERNAL)
+                .features(Set.of(
+                        LocationFeature.RELOCATIONS,
+                        LocationFeature.PRODUCE,
+                        LocationFeature.EQUIPMENT,
+                        LocationFeature.TASKS))
+                .build());
+    }
     private ResourceResponse resource(ResourceFixture fixture, String name) {
         ResourceResponse result = fixture.createUniqueResource(name);
         resourceIds.add(result.getId()); return result;
@@ -90,6 +105,9 @@ public class ProductionGroupUiFixture implements AutoCloseable {
     public long createOrder() {
         long id = orders.create(UserRole.ADMIN, orders.buildCreateRequest(target.getId(), output.getId(), 10)).getId();
         orderIds.add(id); return id;
+    }
+    public void seedOutputInputStock() {
+        inventory.resetResourceStock(outside.getId(), component.getId(), 10, UserRole.ADMIN);
     }
     public StorageResponse newGroupCandidateWithChild() {
         StorageResponse candidate = storages.createChildStorage(target.getId(), "PGUI-form");
@@ -160,6 +178,10 @@ public class ProductionGroupUiFixture implements AutoCloseable {
         org.assertj.core.api.SoftAssertions errors = new org.assertj.core.api.SoftAssertions();
         cleanup(errors, this::cleanupOrders);
         cleanup(errors, users::deactivateTrackedUsers);
+        if (outside != null && component != null) {
+            cleanup(errors, () -> inventory.removeResourceFromStorage(
+                    outside.getId(), component.getId(), UserRole.ADMIN));
+        }
         mapLocations.forEach((map, locations) -> locations.forEach(location ->
                 cleanup(errors, () -> ok(maps.deactivateTechMap(UserRole.ADMIN, map, location)))));
         resourceIds.forEach(id -> cleanup(errors, () -> ok(call(RESOURCE_DEACTIVATE, null, id))));

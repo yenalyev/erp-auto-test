@@ -1,0 +1,31 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "feature": "updated",
+  "acceptanceCriterion": {
+    "AC-05": "created"
+  },
+  "testCases": {
+    "TC-PO-008": "created"
+  },
+  "verification": {
+    "featureId": "REQ-PO",
+    "documentationLength": 1537,
+    "documentationSha256": "395e298f1f55ea66e8af03b82ee6236ca339cd60f31f06f32b4931b0cd420d0d",
+    "sourceDocumentationSha256": "395e298f1f55ea66e8af03b82ee6236ca339cd60f31f06f32b4931b0cd420d0d",
+    "documentationMatchesSource": true,
+    "acceptanceCriterionMatches": true,
+    "testCaseMatches": true,
+    "testCase": {
+      "testId": "TC-PO-008",
+      "featureId": "REQ-PO",
+      "acId": "AC-05",
+      "status": "ACTIVE",
+      "uiAutomationIds": [
+        "TC-PO-008"
+      ],
+      "stepCount": 4
+    }
+  },
+  "completedAt": "2026-09-23T09:02:39.369140+00:00",
+  "result": "SUCCESS"
+}

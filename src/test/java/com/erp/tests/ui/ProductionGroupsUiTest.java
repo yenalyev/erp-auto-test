@@ -8,7 +8,11 @@ import com.erp.pages.ProductionGroupPlanningPage;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.*;
+import io.qameta.allure.Description;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.Story;
 import org.testng.annotations.*;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -57,6 +61,44 @@ public class ProductionGroupsUiTest extends BaseUITest {
                 new Page.GetByRoleOptions().setName("Зберегти").setExact(true)).and(page.locator(":enabled"));
         assertThat(enabledSave).hasCount(0);
         attachScreenshot("Production group direct inventory route blocked");
+    }
+
+    @Test
+    @com.erp.annotations.TestCaseId("TC-PO-008")
+    @Story("Relocation is unavailable until production is completed")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після генерації ВЗ, але до виконання виробничого завдання, кнопка "
+            + "«Створити переміщення» у картці ВЗ відсутня.")
+    public void relocationCreationIsUnavailableUntilProductionIsCompleted() {
+        fixture.seedOutputInputStock();
+        var decomposition = ProductionGroupUiFixture.plan(
+                fixture.output.getId(),
+                ProductionGroupUiFixture.assignment(
+                        fixture.outside.getId(), fixture.outputMap, 10));
+        decomposition.getBlocks().add(ProductionGroupUiFixture.plan(
+                        fixture.component.getId(),
+                        ProductionGroupUiFixture.assignment(
+                                fixture.outside.getId(), null, 10))
+                .getBlocks().getFirst());
+        ok(fixture.call(
+                PRODUCTION_ORDER_POST_GENERATE,
+                decomposition,
+                orderId));
+
+        io.restassured.response.Response order = fixture.getOrder(orderId);
+        org.assertj.core.api.Assertions.assertThat(order.jsonPath().getString("state"))
+                .as("Generated production order must still be unfinished")
+                .isEqualTo("IN_PROGRESS");
+        org.assertj.core.api.Assertions.assertThat(order.jsonPath().getInt("completedTasks"))
+                .as("No production task has been completed yet")
+                .isZero();
+
+        navigate("/production-orders/" + orderId);
+        Locator createRelocation = page.getByRole(
+                AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Створити переміщення").setExact(true));
+        assertThat(createRelocation).hasCount(0);
+        attachScreenshot("Unfinished production order cannot create relocation");
     }
 
     private void verifyRelocationLocations(String action, StorageResponse groupLocation,
