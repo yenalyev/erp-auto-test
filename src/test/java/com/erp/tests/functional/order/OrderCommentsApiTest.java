@@ -2,12 +2,21 @@ package com.erp.tests.functional.order;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.user.UserDataFactory;
 import com.erp.data.factories.order.OrderDataFactory;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.UserRole;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.OrderCommentResponse;
 import com.erp.models.response.OrderResponse;
+import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UserModelResponse;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -18,6 +27,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Epic("Orders")
 @Feature("REQ-ORD Order comments")
 public class OrderCommentsApiTest extends OrderApiTestBase {
+
+    private static final UserRole USERNAME_ONLY_AUTHOR = UserRole.ORDER_SOURCE_KEEPER;
+
+    private UserFixture commentAuthorFixture;
+    private UserFixture.BusinessActor usernameOnlyAuthor;
+
+    @BeforeClass(alwaysRun = true, dependsOnMethods = "setupOrderApiTests")
+    public void setupUsernameOnlyCommentAuthor() {
+        commentAuthorFixture = new UserFixture(testContext, apiExecutor);
+        StorageResponse requester = new StorageFixture(testContext, apiExecutor)
+                .getById(MANAGER, requesterStorageId);
+        usernameOnlyAuthor = commentAuthorFixture.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(requester));
+
+        UserModelResponse profile = commentAuthorFixture.getUser(MANAGER, usernameOnlyAuthor.userId());
+        UserModelResponse updated = commentAuthorFixture.updateUser(
+                MANAGER,
+                usernameOnlyAuthor.userId(),
+                UserDataFactory.fromExisting(profile).toBuilder()
+                        .firstName(null)
+                        .lastName(null)
+                        .build());
+        assertThat(updated.getFirstName() == null || updated.getFirstName().isBlank()).isTrue();
+        assertThat(updated.getLastName() == null || updated.getLastName().isBlank()).isTrue();
+
+        apiExecutor.setSessionForRole(
+                USERNAME_ONLY_AUTHOR, usernameOnlyAuthor.username(), usernameOnlyAuthor.password());
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupUsernameOnlyCommentAuthor() {
+        apiExecutor.restoreDefaultSessionForRole(USERNAME_ONLY_AUTHOR);
+        if (commentAuthorFixture != null) {
+            commentAuthorFixture.deactivateTrackedUsers();
+        }
+    }
 
     @Test(priority = 10)
     @TestCaseId("TC-ORD-040")
@@ -84,5 +129,30 @@ public class OrderCommentsApiTest extends OrderApiTestBase {
                 OrderDataFactory.buildCommentRequest("outsider comment"),
                 order.getId());
         assertThat(response.statusCode()).isIn(403, 404);
+    }
+
+    @Test(priority = 15)
+    @TestCaseId("TC-ORD-045")
+    @Story("Comment author fallback")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Якщо firstName і lastName автора відсутні, POST і GET comments повертають username замість null/«Невідомо».")
+    public void usernameUsedWhenCommentAuthorHasNoFirstOrLastName() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        String text = "username fallback " + order.getId();
+
+        OrderCommentResponse created = orderFixture.addComment(
+                USERNAME_ONLY_AUTHOR, order.getId(), text);
+
+        assertThat(created.getAuthorName()).isEqualTo(usernameOnlyAuthor.username());
+        assertThat(created.getAuthorName()).isNotBlank().isNotEqualTo("Невідомо");
+
+        List<OrderCommentResponse> comments = orderFixture.getComments(REQUESTER, order.getId());
+        assertThat(comments)
+                .filteredOn(comment -> text.equals(comment.getText()))
+                .singleElement()
+                .satisfies(comment -> {
+                    assertThat(comment.getAuthorName()).isEqualTo(usernameOnlyAuthor.username());
+                    assertThat(comment.getCreatedAt()).isNotNull();
+                });
     }
 }

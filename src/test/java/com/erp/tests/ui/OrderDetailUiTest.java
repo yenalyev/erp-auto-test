@@ -1,7 +1,13 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.data.factories.user.UserDataFactory;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.UserRole;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.OrderResponse;
+import com.erp.models.response.StorageResponse;
+import com.erp.models.response.UserModelResponse;
 import com.erp.pages.OrderListPage;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -10,13 +16,52 @@ import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("Orders")
 @Feature("REQ-ORD Orders UI")
 public class OrderDetailUiTest extends OrderUiTestBase {
+
+    private static final UserRole USERNAME_ONLY_AUTHOR = UserRole.ORDER_SOURCE_KEEPER;
+
+    private UserFixture commentAuthorFixture;
+    private UserFixture.BusinessActor usernameOnlyAuthor;
+
+    @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
+    public void setupUsernameOnlyCommentAuthor() {
+        commentAuthorFixture = new UserFixture(testContext, apiExecutor);
+        StorageResponse requester = storageFixture.getById(MANAGER, requesterStorageId);
+        usernameOnlyAuthor = commentAuthorFixture.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(requester));
+
+        UserModelResponse profile = commentAuthorFixture.getUser(MANAGER, usernameOnlyAuthor.userId());
+        UserModelResponse updated = commentAuthorFixture.updateUser(
+                MANAGER,
+                usernameOnlyAuthor.userId(),
+                UserDataFactory.fromExisting(profile).toBuilder()
+                        .firstName(null)
+                        .lastName(null)
+                        .build());
+        assertThat(updated.getFirstName() == null || updated.getFirstName().isBlank()).isTrue();
+        assertThat(updated.getLastName() == null || updated.getLastName().isBlank()).isTrue();
+
+        apiExecutor.setSessionForRole(
+                USERNAME_ONLY_AUTHOR, usernameOnlyAuthor.username(), usernameOnlyAuthor.password());
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupUsernameOnlyCommentAuthor() {
+        apiExecutor.restoreDefaultSessionForRole(USERNAME_ONLY_AUTHOR);
+        if (commentAuthorFixture != null) {
+            commentAuthorFixture.deactivateTrackedUsers();
+        }
+    }
 
     @BeforeMethod(alwaysRun = true)
     public void prepareSession() {
@@ -101,5 +146,25 @@ public class OrderDetailUiTest extends OrderUiTestBase {
             throw new AssertionError("Gatherer empty-bookings copy not visible");
         }
         assertThat(ordersPage.isGathererEmptyBookingsVisible() || ordersPage.isBookingPanelVisible()).isTrue();
+    }
+
+    @Test(priority = 6)
+    @TestCaseId("TC-ORD-UI-018")
+    @Story("Comment author fallback")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("UI показує username автора коментаря, якщо firstName і lastName відсутні, і не показує «Невідомо».")
+    public void commentWithoutAuthorNameShowsUsername() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        String text = "ui username fallback " + order.getId();
+        orderFixture.addComment(USERNAME_ONLY_AUTHOR, order.getId(), text);
+
+        OrderListPage ordersPage = new OrderListPage(page).openDeepLink(order.getId());
+        ordersPage.attachScreenshot("TC-ORD-UI-018 — username shown as comment author");
+
+        assertThat(ordersPage.commentShowsAuthor(text, usernameOnlyAuthor.username()))
+                .as("Коментар автора без ПІБ має показувати username %s", usernameOnlyAuthor.username())
+                .isTrue();
+        assertThat(page.getByText("Невідомо", new com.microsoft.playwright.Page.GetByTextOptions().setExact(true)).count())
+                .isZero();
     }
 }

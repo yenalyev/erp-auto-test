@@ -605,6 +605,18 @@ public class OrderListPage extends BasePage {
         return this;
     }
 
+    public boolean commentShowsAuthor(String text, String authorName) {
+        Locator textNode = orderDialog().getByText(
+                text, new Locator.GetByTextOptions().setExact(true));
+        if (textNode.count() == 0) {
+            return false;
+        }
+        Locator commentCard = textNode.first().locator("..");
+        Locator author = commentCard.getByText(
+                authorName, new Locator.GetByTextOptions().setExact(true));
+        return author.count() > 0 && author.first().isVisible();
+    }
+
     public OrderListPage selectPageSize(int size) {
         Locator trigger = page.locator("[data-slot='select-trigger']").filter(
                 new Locator.FilterOptions().setHasText(java.util.regex.Pattern.compile("^(25|100|200|500)$")));

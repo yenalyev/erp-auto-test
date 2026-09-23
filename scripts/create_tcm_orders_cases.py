@@ -60,6 +60,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-04", "TC-ORD-042", "Blank text → 400", "MEDIUM", "MINOR", "FUNCTIONAL"),
     ("AC-04", "TC-ORD-043", "Comment з read на gathering (не requester)", "HIGH", "MAJOR", "FUNCTIONAL"),
     ("AC-04", "TC-ORD-044", "Comment без access → 403", "HIGH", "MAJOR", "SECURITY"),
+    ("AC-04", "TC-ORD-045", "Коментар автора без firstName/lastName використовує username", "CRITICAL", "MAJOR", "FUNCTIONAL"),
     # AC-05
     ("AC-05", "TC-ORD-050", "GET availability: locations з amount + heldAmount", "CRITICAL", "MAJOR", "FUNCTIONAL"),
     ("AC-05", "TC-ORD-051", "Scope обмежений order_availability_root_storage (+ children)", "HIGH", "MAJOR", "FUNCTIONAL"),
@@ -138,6 +139,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-12", "TC-ORD-UI-015", "Deep-link ?orderId=N відкриває detail; close чистить query", "HIGH", "MAJOR", "UI"),
     ("AC-12", "TC-ORD-UI-016", "Gatherer card: prepare only; empty «ще немає броней»", "HIGH", "MAJOR", "UI"),
     ("AC-12", "TC-ORD-UI-017", "List accent жовтий/зелений + «Підготовлено X/Y»", "HIGH", "MAJOR", "UI"),
+    ("AC-04", "TC-ORD-UI-018", "UI показує username автора без firstName/lastName замість «Невідомо»", "CRITICAL", "MAJOR", "UI"),
     ("AC-12", "TC-ORD-UI-020", "Панель збору: пошук локації, badges покриття, обрати", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-021", "Таблиця Потрібно/Заброньовано/Вільно; default max; зняти бронь", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-022", "Часткова бронь: «Відправити» активна лише після «Готово до відправки»", "CRITICAL", "CRITICAL", "UI"),
@@ -160,6 +162,16 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
 
 
 E2E_STEPS: dict[str, list[dict[str, object]]] = {
+    "TC-ORD-045": [
+        {"stepOrder": 1, "actionText": "Створити окремого активного користувача з доступом до локації замовника, заповненим username і без firstName/lastName.", "expectedText": "Профіль користувача активний; firstName і lastName відсутні; username доступний у сесії."},
+        {"stepOrder": 2, "actionText": "Створити доступне користувачу замовлення та додати від його імені коментар через POST /orders/{id}/comments.", "expectedText": "Коментар створено; text і createdAt заповнені; authorName точно дорівнює username, а не null чи «Невідомо»."},
+        {"stepOrder": 3, "actionText": "Отримати список коментарів через GET /orders/{id}/comments.", "expectedText": "Створений коментар повертається з тим самим authorName=username."},
+    ],
+    "TC-ORD-UI-018": [
+        {"stepOrder": 1, "actionText": "Підготувати замовлення з коментарем окремого користувача, у якого є username, але відсутні firstName/lastName.", "expectedText": "API коментаря повертає authorName=username."},
+        {"stepOrder": 2, "actionText": "Відкрити картку замовлення у браузері та знайти підготовлений коментар.", "expectedText": "Біля тексту коментаря показаний точний username автора; напис «Невідомо» відсутній."},
+        {"stepOrder": 3, "actionText": "Перезавантажити або повторно відкрити картку замовлення.", "expectedText": "Після повторного GET коментарів username автора відображається без змін."},
+    ],
     "TC-ORD-E2E-001": [
         {"stepOrder": 1, "actionText": "Під `Unit_Owner-ROLE` створити замовлення на 5 одиниць із потрібною локацією доставки.", "expectedText": "Замовлення створене у стані «Нове»; фізичні залишки не змінилися."},
         {"stepOrder": 2, "actionText": "Під `Order_Admin-ROLE` відкрити замовлення, взяти в роботу та обрати локацію збору.", "expectedText": "Стан «В роботі»; доступна панель комплектації."},
