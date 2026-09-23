@@ -43,6 +43,7 @@ public class CrewIssuanceUITest extends BaseUITest {
 
     private CrewRegionScenario flatScenario;
     private CrewRegionScenario hierarchyScenario;
+    private CrewRegionScenario attachedScenario;
     private long memberStorageId;
     private long unitStorageId;
     private Long resourceId;
@@ -67,6 +68,7 @@ public class CrewIssuanceUITest extends BaseUITest {
         unitStorageId = ConfigProvider.getUnitStorageId();
         flatScenario = crewFixture.prepareSingleCrewScenario("ui-crew-flat-");
         hierarchyScenario = crewFixture.prepareHierarchyScenario("ui-crew-hier-");
+        attachedScenario = crewFixture.prepareAttachedCrewScenario("ui-crew-label-");
 
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
@@ -179,6 +181,66 @@ public class CrewIssuanceUITest extends BaseUITest {
                 .as("Після вибору батьківського підрозділу екіпаж не повинен бути порожнім")
                 .isFalse();
         crewForm.attachScreenshot("TC-UI-CREW-005 — crew combobox populated");
+    }
+
+    @Test(priority = 45)
+    @TestCaseId("TC-UI-CREW-026")
+    @Story("Fly point in product list label")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після вибору attached CREW заголовок показує «Список продукції (точка вильоту - {назва})»")
+    public void testProductListLabelShowsFlyPointForAttachedCrew() {
+        RelocationCreateOutputCrewPage crewForm = new RelocationPage(page).open()
+                .clickIssueToCrew()
+                .selectUnitByName(attachedScenario.unit().getName())
+                .selectCrewByName(attachedScenario.crew().getName());
+
+        String expected = "Список продукції (точка вильоту - "
+                + attachedScenario.flyPoint().getName() + ")";
+        crewForm.attachScreenshot("TC-UI-CREW-026 — attached crew fly point label");
+        assertThat(crewForm.getProductListLabel())
+                .as("Заголовок списку продукції для екіпажу з точкою вильоту")
+                .isEqualTo(expected);
+    }
+
+    @Test(priority = 46)
+    @TestCaseId("TC-UI-CREW-027")
+    @Story("No fly point in product list label")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після вибору unattached CREW заголовок показує «Список продукції (точки вильоту немає)»")
+    public void testProductListLabelShowsNoFlyPointForUnattachedCrew() {
+        RelocationCreateOutputCrewPage crewForm = new RelocationPage(page).open()
+                .clickIssueToCrew()
+                .selectUnitByName(flatScenario.unit().getName())
+                .selectCrewByName(flatScenario.crew().getName());
+
+        crewForm.attachScreenshot("TC-UI-CREW-027 — unattached crew label");
+        assertThat(crewForm.getProductListLabel())
+                .as("Заголовок списку продукції для екіпажу без точки вильоту")
+                .isEqualTo("Список продукції (точки вильоту немає)");
+    }
+
+    @Test(priority = 47)
+    @TestCaseId("TC-UI-CREW-028")
+    @Story("Product list label follows crew selection")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після зміни attached CREW на unattached заголовок оновлюється і не містить стару точку вильоту")
+    public void testProductListLabelUpdatesWhenCrewChanges() {
+        RelocationCreateOutputCrewPage crewForm = new RelocationPage(page).open()
+                .clickIssueToCrew()
+                .selectUnitByName(attachedScenario.unit().getName())
+                .selectCrewByName(attachedScenario.crew().getName());
+
+        assertThat(crewForm.getProductListLabel())
+                .contains(attachedScenario.flyPoint().getName());
+
+        crewForm.selectUnitByName(flatScenario.unit().getName())
+                .selectCrewByName(flatScenario.crew().getName());
+
+        crewForm.attachScreenshot("TC-UI-CREW-028 — label after crew change");
+        assertThat(crewForm.getProductListLabel())
+                .as("Після зміни екіпажу заголовок не повинен містити стару точку")
+                .isEqualTo("Список продукції (точки вильоту немає)")
+                .doesNotContain(attachedScenario.flyPoint().getName());
     }
 
     @Test(priority = 50)

@@ -23,7 +23,7 @@ SUT: backend `tk`, frontend `tk-ui`. Автотести: `erp-auto-test`.
 2. **Повернення** (CPMA-647) — отримання від екіпажу назад на склад локації через `POST /relocations/receive` з `senderId` = CREW.
 3. **Передача між точками зльоту** (AC-23) — `POST /relocations/send` з `senderId`/`recipientId` = дві різні FLY_POINT; CREATED → FINISHED відправником (точка-відправник).
 
-Цей документ детально описує **повернення (AC-22)** і **передачу FP→FP (AC-23)**. Видача (AC-01…AC-21) — у TCM acceptance criteria тієї ж фічі; автотести: `CrewRelocationTest`, `FlyPointRelocationTest`, `FlyPointToFlyPointRelocationTest`, `CrewIssuanceUITest`, `FlyPointToFlyPointIssuanceUiTest`.
+Цей документ детально описує **повернення (AC-22)**, **передачу FP→FP (AC-23)** і UI-підказку точки вильоту на формі видачі (**AC-25**). Базова видача (AC-01…AC-21) — у TCM acceptance criteria тієї ж фічі; автотести: `CrewRelocationTest`, `FlyPointRelocationTest`, `FlyPointToFlyPointRelocationTest`, `CrewIssuanceUITest`, `FlyPointToFlyPointIssuanceUiTest`.
 
 ### 1.1. Терміни
 
@@ -123,11 +123,28 @@ AC-01…AC-21 — видача UNIT→CREW/FLY, journal, RBAC, UI «Видати
 Автотести: `CrewRelocationTest`, `FlyPointRelocationTest`, `CrewFlyPointIncidentTest`, `CrewIssuanceUITest`, `CrewJournalNameVisibilityUiTest`.  
 Деталі критеріїв — у TCM під тим самим `REQ-CREW-002`.
 
+### 3.1. Точка вильоту біля списку продукції — AC-25
+
+Після вибору екіпажу форма `/relocation/create-output-crew` показує його операційний контекст безпосередньо після лейбла «Список продукції»:
+
+- attached CREW: `Список продукції (точка вильоту - {назва точки})`;
+- unattached CREW: `Список продукції (точки вильоту немає)`.
+
+Підказка визначається за `parentKind=FLY_POINT` вибраного екіпажу. При зміні підрозділу або екіпажу вона має оновлюватися без залишкового значення попередньої точки. Зміна є інформаційною й не змінює payload або lifecycle видачі.
+
+| TestCaseId | Автотест | Суть |
+|------------|----------|------|
+| TC-UI-CREW-026 | `testProductListLabelShowsFlyPointForAttachedCrew` | Attached CREW — точна назва точки після лейбла |
+| TC-UI-CREW-027 | `testProductListLabelShowsNoFlyPointForUnattachedCrew` | Unattached CREW — повідомлення про відсутність точки |
+| TC-UI-CREW-028 | `testProductListLabelUpdatesWhenCrewChanges` | Перемикання attached→unattached очищує стару точку |
+
+Page object: `RelocationCreateOutputCrewPage#getProductListLabel`. Повний submit-flow після зміни покриває `TC-UI-CREW-002`.
+
 ---
 
-## 3.1. Передача між точками зльоту — AC-23
+## 3.2. Передача між точками зльоту — AC-23
 
-### 3.1.1. Бізнес-правила
+### 3.2.1. Бізнес-правила
 
 1. Sender і recipient — **різні** `FLY_POINT`. З точки вильоту не можна видати на UNIT або CREW (`relocation.send.flyPointRecipientOnly`).
 2. Caller має мати `relocation::{recipient}::create` (точки з CREWS-області користувача).
@@ -142,7 +159,7 @@ flowchart TD
   finish --> stock["FP_A −N; FP_B +N; склад 0"]
 ```
 
-### 3.1.2. API
+### 3.2.2. API
 
 | Метод | Path | Enum | Примітка |
 |-------|------|------|----------|
@@ -157,7 +174,7 @@ SUT (read-only):
 
 Fixture: `CrewRegionFixture.prepareTwoFlyPointsScenario`, `RelocationFixture.createSend` / `createSendAndFinishBySender` / `resolve`.
 
-### 3.1.3. UI
+### 3.2.3. UI
 
 | Елемент | Значення |
 |---------|----------|
@@ -171,7 +188,7 @@ Page objects: `RelocationPage.clickIssueBetweenFlyPoints()`, `RelocationCreateOu
 
 Опції combobox: `GET /storages/names/crew-units` (лістинг включає FLY_POINT без CREW); підпис `unit / fpName`.
 
-### 3.1.4. Acceptance Criteria — AC-23
+### 3.2.4. Acceptance Criteria — AC-23
 
 **TCM:** Передача FLY_POINT→FLY_POINT: send → CREATED → FINISHED відправником; FP_A −N, FP_B +N, склад без змін. FLY_POINT → UNIT/CREW заборонено.
 
@@ -199,6 +216,9 @@ mvn test -Denv=dev -Dtest=FlyPointToFlyPointRelocationTest
 
 # UI передача між точками зльоту
 mvn test -Denv=dev -Dtest=FlyPointToFlyPointIssuanceUiTest
+
+# UI-підказка точки вильоту на формі видачі
+mvn test -Denv=dev -Dtest=CrewIssuanceUITest#testProductListLabelShowsFlyPointForAttachedCrew+testProductListLabelShowsNoFlyPointForUnattachedCrew+testProductListLabelUpdatesWhenCrewChanges
 
 # Обидва
 mvn test -Denv=staging -Dtest=CrewReturnTest,CrewReturnUITest
@@ -234,3 +254,4 @@ Suites: `relocations.xml`, `functional.xml`, `storage-regions.xml`, `regression.
 | 2026-07-27 | Перша версія: фокус AC-22 повернення CPMA-647; карта TC API/UI; дзеркало TCM |
 | 2026-09-05 | AC-23: передача FLY_POINT→FLY_POINT (API + UI + карта TC) |
 | 2026-09-07 | AC-24: DELETE повернення — rollback на FP (attached) / CREW (unattached); TC-CREW-RET-005/006 |
+| 2026-09-23 | AC-25: точка вильоту біля «Список продукції»; TC-UI-CREW-026…028 |

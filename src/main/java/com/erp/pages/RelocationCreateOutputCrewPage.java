@@ -7,16 +7,18 @@ import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.stream.Collectors;
+
 @Slf4j
 public class RelocationCreateOutputCrewPage extends BasePage {
 
     public static final String PATH = "/relocation/create-output-crew";
     private static final String TITLE = "Видача на екіпаж";
     private static final String SUBMIT = "Підтвердити";
-    private static final String UNIT_PLACEHOLDER = "Оберіть підрозділ...";
     private static final String CREW_PLACEHOLDER = "Оберіть екіпаж...";
     private static final String RESOURCE_PLACEHOLDER = "Оберіть ресурс...";
     private static final String QUANTITY_PLACEHOLDER = "Кількість";
+    private static final String PRODUCT_LIST_LABEL = "Список продукції";
     private static final String COMBOBOX_ITEM_SELECTOR = "[data-slot='combobox-item']";
 
     public RelocationCreateOutputCrewPage(Page page) {
@@ -43,8 +45,8 @@ public class RelocationCreateOutputCrewPage extends BasePage {
     }
 
     private Locator unitComboboxTrigger() {
-        return page.locator("button[role='combobox']")
-                .filter(new Locator.FilterOptions().setHasText(UNIT_PLACEHOLDER));
+        return page.getByText("Підрозділ чи точка вильоту", new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=following::button[@role='combobox'][1]");
     }
 
     public boolean isLoaded() {
@@ -124,6 +126,22 @@ public class RelocationCreateOutputCrewPage extends BasePage {
 
     public int productRowCount() {
         return page.getByPlaceholder(RESOURCE_PLACEHOLDER).count();
+    }
+
+    /**
+     * Visible product-list heading, including the selected crew's fly-point note.
+     * The UI renders the base label and note as sibling elements, so join them in
+     * visual order to assert the user-facing text as one normalized label.
+     */
+    public String getProductListLabel() {
+        Locator baseLabel = page.getByText(
+                PRODUCT_LIST_LABEL,
+                new Page.GetByTextOptions().setExact(true));
+        baseLabel.waitFor();
+        return baseLabel.locator("xpath=..").locator(":scope > div").allInnerTexts().stream()
+                .map(String::trim)
+                .filter(text -> !text.isEmpty())
+                .collect(Collectors.joining(" "));
     }
 
     public RelocationCreateOutputCrewPage fillIssuer(String name, String rank) {
