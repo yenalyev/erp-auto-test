@@ -939,7 +939,7 @@ public enum ApiEndpointDefinition {
     ),
 
     STORAGE_GET_SUPPLIER(
-            "/api/v1/storages?types=SUPPLIER&size=1",
+            "/api/v1/storages?types=SUPPLIER&size=100",
             Method.GET,
             "schemas/storages/storage-paged-list-schema.json",
             "Get first SUPPLIER storage",

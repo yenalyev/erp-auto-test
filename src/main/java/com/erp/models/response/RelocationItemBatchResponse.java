@@ -18,4 +18,6 @@ public class RelocationItemBatchResponse {
     private BigDecimal amount;
     private String batchNumber;
     private Boolean isProduced;
+    private BigDecimal paidAmount;
+    private String accResourceId;
 }

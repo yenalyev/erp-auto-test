@@ -16,6 +16,7 @@
             <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationBatchAccountingTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
@@ -36,6 +37,7 @@
             <class name="com.erp.tests.ui.CrewReturnUITest"/>
             <class name="com.erp.tests.ui.FlyPointToFlyPointIssuanceUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
+            <class name="com.erp.tests.ui.RelocationBatchAccountingUiTest"/>
             <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.BattalionRelocationEditUiTest"/>

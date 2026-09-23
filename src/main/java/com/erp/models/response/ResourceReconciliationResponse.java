@@ -17,6 +17,7 @@ public class ResourceReconciliationResponse {
     private Long id;
     private String source;
     private String externalId;
+    private String externalName;
     private SimpleEntityResponse resource;
     private String createdBy;
     private Instant createdAt;

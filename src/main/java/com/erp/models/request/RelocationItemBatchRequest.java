@@ -17,4 +17,6 @@ public class RelocationItemBatchRequest {
     private String batchNumber;
     private BigDecimal amount;
     private Boolean isProduced;
+    private String accResourceId;
+    private BigDecimal paidAmount;
 }

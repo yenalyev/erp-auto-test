@@ -48,6 +48,33 @@ public final class RelocationDataFactory {
                 .build();
     }
 
+    public static RelocationItemBatchRequest accountingBatch(String batchNumber,
+                                                             double amount,
+                                                             boolean isProduced,
+                                                             String accResourceId,
+                                                             BigDecimal paidAmount) {
+        return RelocationItemBatchRequest.builder()
+                .batchNumber(batchNumber)
+                .amount(BigDecimal.valueOf(amount))
+                .isProduced(isProduced)
+                .accResourceId(accResourceId)
+                .paidAmount(paidAmount)
+                .build();
+    }
+
+    public static ResourceUsageRequest usageWithAccountingBatch(Long resourceId,
+                                                                double amount,
+                                                                String batchNumber,
+                                                                String accResourceId,
+                                                                BigDecimal paidAmount) {
+        return ResourceUsageRequest.builder()
+                .resourceId(resourceId)
+                .amount(BigDecimal.valueOf(amount))
+                .batches(List.of(accountingBatch(
+                        batchNumber, amount, false, accResourceId, paidAmount)))
+                .build();
+    }
+
     public static RelocationOutputRequest buildSendRequest(Long senderId,
                                                            Long recipientId,
                                                            Long resourceId,
@@ -132,6 +159,20 @@ public final class RelocationDataFactory {
                 .invoiceNumber(uniqueInvoiceNumber())
                 .date(LocalDate.now())
                 .items(List.of(usageWithBatch(resourceId, amount, batchNumber, isProduced)))
+                .build();
+    }
+
+    public static RelocationInputRequest buildReceiveRequest(Long supplierId,
+                                                             Long recipientId,
+                                                             List<ResourceUsageRequest> items,
+                                                             String description) {
+        return RelocationInputRequest.builder()
+                .senderId(supplierId)
+                .recipientId(recipientId)
+                .description(description)
+                .invoiceNumber(uniqueInvoiceNumber())
+                .date(LocalDate.now())
+                .items(items)
                 .build();
     }
 

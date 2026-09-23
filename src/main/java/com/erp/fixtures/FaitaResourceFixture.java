@@ -22,13 +22,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * FAITA list / FLIGHT reconciliation / implicit-resources helpers.
+ * FAITA list / resource reconciliation / implicit-resources helpers.
  * Product appears in {@code GET /integrations/faita/resources} only after a FLIGHT mapping.
  */
 @Slf4j
 public class FaitaResourceFixture extends BaseFixture {
 
     public static final String SOURCE_FLIGHT = "FLIGHT";
+    public static final String SOURCE_ACCOUNTING = "ACCOUNTING";
 
     public FaitaResourceFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
@@ -48,9 +49,21 @@ public class FaitaResourceFixture extends BaseFixture {
     @Step("API: create FLIGHT reconciliation {externalId} → {resourceIds}")
     public List<Long> createFlightReconciliation(
             String externalId, String externalName, Long... resourceIds) {
+        return createReconciliation(SOURCE_FLIGHT, externalId, externalName, resourceIds);
+    }
+
+    @Step("API: create ACCOUNTING reconciliation {externalId} → {resourceIds}")
+    public List<Long> createAccountingReconciliation(
+            String externalId, String externalName, Long... resourceIds) {
+        return createReconciliation(SOURCE_ACCOUNTING, externalId, externalName, resourceIds);
+    }
+
+    @Step("API: create {source} reconciliation {externalId} → {resourceIds}")
+    public List<Long> createReconciliation(
+            String source, String externalId, String externalName, Long... resourceIds) {
         List<Long> ids = Arrays.asList(resourceIds);
         ResourceReconciliationRequest body = ResourceReconciliationRequest.builder()
-                .source(SOURCE_FLIGHT)
+                .source(source)
                 .externalId(externalId)
                 .externalName(externalName)
                 .resourceIds(new ArrayList<>(ids))
@@ -62,7 +75,7 @@ public class FaitaResourceFixture extends BaseFixture {
                         externalId, response.getBody().asString())
                 .isEqualTo(200);
         List<ResourceReconciliationResponse> created = ApiResponseHelper.parseList(
-                response, ResourceReconciliationResponse.class, "Create FLIGHT reconciliation");
+                response, ResourceReconciliationResponse.class, "Create " + source + " reconciliation");
         assertThat(created)
                 .as("create reconciliations має повернути id для %s", externalId)
                 .isNotEmpty();

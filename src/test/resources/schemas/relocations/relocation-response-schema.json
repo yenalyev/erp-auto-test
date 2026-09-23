@@ -55,7 +55,9 @@
         "id": { "type": "integer" },
         "amount": { "type": "number" },
         "batchNumber": { "type": ["string", "null"] },
-        "isProduced": { "type": ["boolean", "null"] }
+        "isProduced": { "type": ["boolean", "null"] },
+        "paidAmount": { "type": ["number", "null"], "minimum": 0, "multipleOf": 0.01 },
+        "accResourceId": { "type": ["string", "null"] }
       },
       "required": ["amount"],
       "additionalProperties": true

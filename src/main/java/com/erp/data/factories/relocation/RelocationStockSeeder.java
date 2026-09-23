@@ -2,6 +2,8 @@ package com.erp.data.factories.relocation;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.enums.LocationFeature;
+import com.erp.enums.StorageRelation;
 import com.erp.enums.UserRole;
 import com.erp.models.request.RelocationInputRequest;
 import com.erp.models.request.RelocationItemBatchRequest;
@@ -87,9 +89,14 @@ public class RelocationStockSeeder {
         List<StorageResponse> storages = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
         return storages.stream()
                 .filter(s -> s != null && s.getId() != null)
+                .filter(s -> s.getFeatures() != null
+                        && s.getFeatures().contains(LocationFeature.RELOCATIONS))
+                .filter(s -> StorageRelation.EXTERNAL.name().equals(s.getRelation()))
+                .filter(s -> !Boolean.FALSE.equals(s.getActive()))
                 .map(StorageResponse::getId)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
-                        "No SUPPLIER storage found. Cannot seed stock via relocation receive."));
+                        "No active EXTERNAL SUPPLIER storage with RELOCATIONS feature found. "
+                                + "Cannot seed stock via relocation receive."));
     }
 }

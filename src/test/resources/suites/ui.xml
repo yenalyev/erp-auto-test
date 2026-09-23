@@ -30,6 +30,7 @@
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
+            <class name="com.erp.tests.ui.RelocationBatchAccountingUiTest"/>
             <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>

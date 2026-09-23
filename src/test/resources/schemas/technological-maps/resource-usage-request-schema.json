@@ -14,7 +14,18 @@
     },
     "batches": {
       "type": "array",
-      "items": { "type": "object" }
+      "items": {
+        "type": "object",
+        "properties": {
+          "batchNumber": { "type": ["string", "null"] },
+          "amount": { "type": "number", "exclusiveMinimum": 0 },
+          "isProduced": { "type": ["boolean", "null"] },
+          "accResourceId": { "type": ["string", "null"] },
+          "paidAmount": { "type": ["number", "null"], "minimum": 0, "multipleOf": 0.01 }
+        },
+        "required": ["amount"],
+        "additionalProperties": true
+      }
     }
   },
   "additionalProperties": true
