@@ -210,6 +210,16 @@ public enum ApiEndpointDefinition {
             "CREATE_ORDER_COMMENT"
     ),
 
+    ORDER_POST_COMMENTS_READ(
+            "/api/v1/orders/{id}/comments/read",
+            Method.POST,
+            null,
+            "Mark order comments read",
+            null,
+            new TypeReference<Void>() {},
+            null
+    ),
+
     ORDER_GET_LINKED_PRODUCTION_ORDERS(
             "/api/v1/orders/{id}/production-orders",
             Method.GET,

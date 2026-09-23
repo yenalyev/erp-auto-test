@@ -10,6 +10,7 @@ import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.response.OrderCommentResponse;
 import com.erp.models.response.OrderResponse;
+import com.erp.models.response.PagedOrderResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.UserModelResponse;
 import io.qameta.allure.*;
@@ -20,6 +21,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -154,5 +156,111 @@ public class OrderCommentsApiTest extends OrderApiTestBase {
                     assertThat(comment.getAuthorName()).isEqualTo(usernameOnlyAuthor.username());
                     assertThat(comment.getCreatedAt()).isNotNull();
                 });
+    }
+
+    @Test(priority = 16)
+    @TestCaseId("TC-ORD-046")
+    @Story("Unread comments per user")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Чужий коментар позначається непрочитаним, власний — ні; list/detail/comments і unreadComments filter узгоджені для кожного користувача.")
+    public void foreignCommentsAreUnreadButOwnCommentsAreNot() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        String requesterText = "requester own comment " + order.getId();
+        String otherText = "foreign unread comment " + order.getId();
+        OrderCommentResponse requesterComment = orderFixture.addComment(
+                REQUESTER, order.getId(), requesterText);
+        OrderCommentResponse otherComment = orderFixture.addComment(
+                USERNAME_ONLY_AUTHOR, order.getId(), otherText);
+
+        OrderResponse requesterRow = findOrder(pageFor(REQUESTER, false), order.getId());
+        assertThat(requesterRow.getUnreadCommentsCount()).isEqualTo(1);
+        assertThat(pageFor(REQUESTER, true).getContent())
+                .extracting(OrderResponse::getId)
+                .contains(order.getId());
+
+        OrderResponse requesterView = orderFixture.getById(REQUESTER, order.getId());
+        assertThat(requesterView.getUnreadCommentsCount()).isEqualTo(1);
+        assertCommentUnread(requesterView.getComments(), requesterComment.getId(), false);
+        assertCommentUnread(requesterView.getComments(), otherComment.getId(), true);
+
+        List<OrderCommentResponse> requesterComments = orderFixture.getComments(REQUESTER, order.getId());
+        assertCommentUnread(requesterComments, requesterComment.getId(), false);
+        assertCommentUnread(requesterComments, otherComment.getId(), true);
+
+        OrderResponse authorView = orderFixture.getById(USERNAME_ONLY_AUTHOR, order.getId());
+        assertThat(authorView.getUnreadCommentsCount()).isEqualTo(1);
+        assertCommentUnread(authorView.getComments(), requesterComment.getId(), true);
+        assertCommentUnread(authorView.getComments(), otherComment.getId(), false);
+    }
+
+    @Test(priority = 17)
+    @TestCaseId("TC-ORD-047")
+    @Story("Mark comments read")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("POST comments/read очищає непрочитані лише поточного користувача; наступний чужий коментар знову вмикає count і filter.")
+    public void markReadIsPerUserAndNewForeignCommentBecomesUnreadAgain() {
+        OrderResponse order = orderFixture.createOrder(REQUESTER);
+        OrderCommentResponse firstForeign = orderFixture.addComment(
+                USERNAME_ONLY_AUTHOR, order.getId(), "first unread " + order.getId());
+        assertThat(findOrder(pageFor(REQUESTER, false), order.getId()).getUnreadCommentsCount())
+                .isEqualTo(1);
+
+        orderFixture.markCommentsRead(REQUESTER, order.getId());
+
+        OrderResponse readView = orderFixture.getById(REQUESTER, order.getId());
+        assertThat(readView.getUnreadCommentsCount()).isZero();
+        assertCommentUnread(readView.getComments(), firstForeign.getId(), false);
+        assertThat(pageFor(REQUESTER, true).getContent())
+                .extracting(OrderResponse::getId)
+                .doesNotContain(order.getId());
+
+        OrderCommentResponse requesterReply = orderFixture.addComment(
+                REQUESTER, order.getId(), "requester reply " + order.getId());
+        OrderResponse otherUserView = orderFixture.getById(USERNAME_ONLY_AUTHOR, order.getId());
+        assertThat(otherUserView.getUnreadCommentsCount()).isEqualTo(1);
+        assertCommentUnread(otherUserView.getComments(), firstForeign.getId(), false);
+        assertCommentUnread(otherUserView.getComments(), requesterReply.getId(), true);
+
+        OrderCommentResponse secondForeign = orderFixture.addComment(
+                USERNAME_ONLY_AUTHOR, order.getId(), "new after read " + order.getId());
+        OrderResponse requesterView = orderFixture.getById(REQUESTER, order.getId());
+        assertThat(requesterView.getUnreadCommentsCount()).isEqualTo(1);
+        assertCommentUnread(requesterView.getComments(), firstForeign.getId(), false);
+        assertCommentUnread(requesterView.getComments(), requesterReply.getId(), false);
+        assertCommentUnread(requesterView.getComments(), secondForeign.getId(), true);
+        assertThat(pageFor(REQUESTER, true).getContent())
+                .extracting(OrderResponse::getId)
+                .contains(order.getId());
+    }
+
+    private PagedOrderResponse pageFor(UserRole role, boolean unreadOnly) {
+        Map<String, Object> query = new java.util.HashMap<>();
+        query.put("storageIds", requesterStorageId);
+        query.put("page", 0);
+        query.put("size", 50);
+        if (unreadOnly) {
+            query.put("unreadComments", true);
+        }
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.ORDER_GET_PAGE, role, query);
+        assertThat(response.statusCode()).isEqualTo(200);
+        return response.as(PagedOrderResponse.class);
+    }
+
+    private static OrderResponse findOrder(PagedOrderResponse page, Long orderId) {
+        return page.getContent().stream()
+                .filter(order -> orderId.equals(order.getId()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Order " + orderId + " is absent from page"));
+    }
+
+    private static void assertCommentUnread(List<OrderCommentResponse> comments,
+                                            Long commentId,
+                                            boolean expectedUnread) {
+        assertThat(comments)
+                .filteredOn(comment -> commentId.equals(comment.getId()))
+                .singleElement()
+                .extracting(OrderCommentResponse::getUnread)
+                .isEqualTo(expectedUnread);
     }
 }

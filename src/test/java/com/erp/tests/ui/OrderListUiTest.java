@@ -1,6 +1,7 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.models.response.OrderCommentResponse;
 import com.erp.models.response.OrderResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.OrderListPage;
@@ -142,5 +143,50 @@ public class OrderListUiTest extends OrderUiTestBase {
             throw new AssertionError("«Підготовлено» badge not visible on current journal page");
         }
         assertThat(ordersPage.isPreparedProgressVisible()).isTrue();
+    }
+
+    @Test(priority = 8)
+    @TestCaseId("TC-ORD-UI-033")
+    @Story("Unread comments hint")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Чужий непрочитаний коментар показує hint у sidebar/tab/рядку, лічильник і filter; відкриття картки підсвічує коментар та позначає його прочитаним.")
+    public void unreadCommentHintAndFilterClearAfterOpeningOrder() {
+        OrderResponse order = prepareManagedInProgressUi();
+        OrderCommentResponse unreadComment = orderFixture.addComment(
+                GATHERER, order.getId(), "ui unread comment " + order.getId());
+        OrderResponse quietOrder = orderFixture.createOrder(REQUESTER);
+
+        OrderListPage ordersPage = new OrderListPage(page)
+                .open()
+                .waitForUnreadCommentsHints(order.getId(), 1);
+
+        assertThat(ordersPage.orderRowHasUnreadHint(order.getId(), 1)).isTrue();
+        assertThat(ordersPage.hasSidebarUnreadCommentsHint()).isTrue();
+
+        ordersPage.setUnreadCommentsFilter(true);
+        assertThat(ordersPage.isUnreadCommentsFilterEnabled()).isTrue();
+        assertThat(ordersPage.isOrderRowVisible(order.getId())).isTrue();
+        assertThat(ordersPage.isOrderRowVisible(quietOrder.getId())).isFalse();
+
+        ordersPage.openOrderAndMarkUnreadCommentsRead(order.getId());
+        assertThat(ordersPage.isUnreadCommentsJumpVisible(1)).isTrue();
+        assertThat(ordersPage.isCommentMarkedUnread(unreadComment.getId())).isTrue();
+        ordersPage.attachScreenshot("TC-ORD-UI-033 — unread order comment hint");
+
+        OrderResponse readOrder = orderFixture.getById(REQUESTER, order.getId());
+        assertThat(readOrder.getUnreadCommentsCount()).isZero();
+
+        ordersPage.closeOrderDialog(order.getId()).setUnreadCommentsFilter(false);
+        assertThat(ordersPage.isOrderRowVisible(order.getId())).isTrue();
+        assertThat(ordersPage.orderRowHasNoUnreadHint(order.getId())).isTrue();
+
+        loginAsAdmin();
+        ordersPage = new OrderListPage(page)
+                .open()
+                .waitForUnreadCommentsHints(order.getId(), 1)
+                .waitForOrdersTabUnreadCommentsHint();
+        assertThat(ordersPage.hasOrdersTabUnreadCommentsHint())
+                .as("Admin бачить grouped tab «Замовлення» з unread hint")
+                .isTrue();
     }
 }

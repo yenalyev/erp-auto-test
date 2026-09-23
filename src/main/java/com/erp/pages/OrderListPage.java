@@ -45,6 +45,8 @@ public class OrderListPage extends BasePage {
     private static final String QUANTITY_PLACEHOLDER = "Кількість";
     private static final String COMMENT_PLACEHOLDER = "Додати коментар...";
     private static final String ADD_COMMENT_BUTTON = "Додати";
+    private static final String UNREAD_COMMENTS_LABEL = "Є непрочитані коментарі";
+    private static final String UNREAD_COMMENTS_FILTER = "order-list-unread-comments-filter";
     private static final String ALL_LOCATIONS_TOOLTIP = "Оберіть конкретну локацію для виконання дії";
     private static final String LOADING_TEXT = "Завантаження...";
     private static final String TABLE_CONTAINER_SELECTOR = "[data-slot='table-container'], table";
@@ -196,6 +198,125 @@ public class OrderListPage extends BasePage {
 
     public OrderListPage submitCreateDialog() {
         orderDialog().getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(CREATE_SUBMIT)).click();
+        return this;
+    }
+
+    public boolean isOrderRowVisible(long orderId) {
+        Locator row = orderRow(orderId);
+        return row.count() > 0 && row.first().isVisible();
+    }
+
+    public boolean orderRowHasUnreadHint(long orderId, int expectedCount) {
+        Locator row = orderRow(orderId);
+        if (row.count() == 0 || !row.first().isVisible()
+                || !"true".equals(row.first().getAttribute("data-unread"))) {
+            return false;
+        }
+        Locator dot = row.getByRole(AriaRole.STATUS,
+                new Locator.GetByRoleOptions().setName(UNREAD_COMMENTS_LABEL));
+        Locator counter = page.getByTestId("order-row-" + orderId + "-comments");
+        return dot.count() > 0
+                && dot.first().isVisible()
+                && counter.count() > 0
+                && String.valueOf(expectedCount).equals(counter.first().getAttribute("data-unread"))
+                && counter.first().innerText().trim().equals(String.valueOf(expectedCount));
+    }
+
+    public boolean orderRowHasNoUnreadHint(long orderId) {
+        Locator row = orderRow(orderId);
+        Locator counter = page.getByTestId("order-row-" + orderId + "-comments");
+        return row.count() > 0
+                && row.first().isVisible()
+                && "false".equals(row.first().getAttribute("data-unread"))
+                && counter.count() > 0
+                && "0".equals(counter.first().getAttribute("data-unread"));
+    }
+
+    public boolean hasSidebarUnreadCommentsHint() {
+        Locator ordersEntry = page.locator("[data-sidebar='menu-button']")
+                .filter(new Locator.FilterOptions().setHasText(PAGE_TITLE))
+                .first();
+        return hasUnreadStatus(ordersEntry);
+    }
+
+    public boolean hasOrdersTabUnreadCommentsHint() {
+        return hasUnreadStatus(ordersTab());
+    }
+
+    public OrderListPage waitForUnreadCommentsHints(long orderId, int expectedCount) {
+        page.waitForCondition(
+                () -> orderRowHasUnreadHint(orderId, expectedCount)
+                        && hasSidebarUnreadCommentsHint(),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public OrderListPage waitForOrdersTabUnreadCommentsHint() {
+        page.waitForCondition(this::hasOrdersTabUnreadCommentsHint,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public OrderListPage setUnreadCommentsFilter(boolean enabled) {
+        Locator filter = page.getByTestId(UNREAD_COMMENTS_FILTER);
+        filter.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        if (Boolean.parseBoolean(filter.getAttribute("aria-pressed")) == enabled) {
+            return this;
+        }
+        page.waitForResponse(
+                response -> response.url().contains("/orders")
+                        && "GET".equals(response.request().method())
+                        && (response.url().contains("unreadComments=true") == enabled),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                filter::click);
+        waitForJournalDataSettled();
+        return this;
+    }
+
+    public boolean isUnreadCommentsFilterEnabled() {
+        Locator filter = page.getByTestId(UNREAD_COMMENTS_FILTER);
+        return filter.count() > 0
+                && filter.first().isVisible()
+                && Boolean.parseBoolean(filter.first().getAttribute("aria-pressed"));
+    }
+
+    public OrderListPage openOrderAndMarkUnreadCommentsRead(long orderId) {
+        Response response = page.waitForResponse(
+                candidate -> candidate.url().contains("/orders/" + orderId + "/comments/read")
+                        && "POST".equals(candidate.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                () -> orderRow(orderId).click());
+        requireSuccess(response, "Mark order comments read from detail dialog");
+        waitForOrderDialog(orderId);
+        return this;
+    }
+
+    public boolean isUnreadCommentsJumpVisible(int count) {
+        Locator jump = page.getByTestId("order-detail-unread-comments-jump");
+        String expectedText = count == 1 ? "1 новий" : count + " нових";
+        return jump.count() > 0
+                && jump.first().isVisible()
+                && jump.first().innerText().contains(expectedText);
+    }
+
+    public boolean isCommentMarkedUnread(long commentId) {
+        Locator comment = page.getByTestId("order-comment-" + commentId);
+        return comment.count() > 0
+                && comment.first().isVisible()
+                && "true".equals(comment.first().getAttribute("data-unread"))
+                && comment.first().getByText("Новий",
+                        new Locator.GetByTextOptions().setExact(true)).count() > 0;
+    }
+
+    public OrderListPage closeOrderDialog(long orderId) {
+        page.keyboard().press("Escape");
+        page.getByRole(AriaRole.HEADING,
+                        new Page.GetByRoleOptions().setName("Замовлення #" + orderId))
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.HIDDEN)
+                        .setTimeout(uiTimeoutMs()));
         return this;
     }
 
@@ -741,6 +862,25 @@ public class OrderListPage extends BasePage {
 
     private Locator createOrderButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CREATE_BUTTON));
+    }
+
+    private Locator orderRow(long orderId) {
+        return page.getByTestId("order-row-" + orderId);
+    }
+
+    private Locator ordersTab() {
+        return page.locator("[role='tab']")
+                .filter(new Locator.FilterOptions().setHasText(PAGE_TITLE))
+                .first();
+    }
+
+    private boolean hasUnreadStatus(Locator root) {
+        if (root.count() == 0 || !root.first().isVisible()) {
+            return false;
+        }
+        Locator status = root.first().getByRole(AriaRole.STATUS,
+                new Locator.GetByRoleOptions().setName(UNREAD_COMMENTS_LABEL));
+        return status.count() > 0 && status.first().isVisible();
     }
 
     private Locator bookAllButton() {

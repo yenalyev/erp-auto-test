@@ -61,6 +61,8 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-04", "TC-ORD-043", "Comment з read на gathering (не requester)", "HIGH", "MAJOR", "FUNCTIONAL"),
     ("AC-04", "TC-ORD-044", "Comment без access → 403", "HIGH", "MAJOR", "SECURITY"),
     ("AC-04", "TC-ORD-045", "Коментар автора без firstName/lastName використовує username", "CRITICAL", "MAJOR", "FUNCTIONAL"),
+    ("AC-04", "TC-ORD-046", "Непрочитані коментарі per-user: count/flags/filter, власні не враховуються", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
+    ("AC-04", "TC-ORD-047", "Mark read per-user; наступний чужий коментар знову непрочитаний", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     # AC-05
     ("AC-05", "TC-ORD-050", "GET availability: locations з amount + heldAmount", "CRITICAL", "MAJOR", "FUNCTIONAL"),
     ("AC-05", "TC-ORD-051", "Scope обмежений order_availability_root_storage (+ children)", "HIGH", "MAJOR", "FUNCTIONAL"),
@@ -148,6 +150,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-12", "TC-ORD-UI-023", "/relocation/create-output?orderId=N: фіксовані from/to/lines", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-024", "E2E: create→work→gather→book→prepare→send→DONE", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-025", "Relocation list badge orderId", "HIGH", "MAJOR", "UI"),
+    ("AC-04", "TC-ORD-UI-033", "UI hint непрочитаних коментарів: sidebar/tab/row/filter/detail", "CRITICAL", "CRITICAL", "UI"),
     # AC-13 multi-actor browser journeys
     ("AC-13", "TC-ORD-E2E-001", "UI E2E: повне замовлення з локального залишку", "CRITICAL", "CRITICAL", "UI"),
     ("AC-13", "TC-ORD-E2E-002", "UI E2E: часткова комплектація після підтвердження готовності", "CRITICAL", "CRITICAL", "UI"),
@@ -164,6 +167,22 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
 
 
 E2E_STEPS: dict[str, list[dict[str, object]]] = {
+    "TC-ORD-046": [
+        {"stepOrder": 1, "actionText": "Створити замовлення; від імені замовника додати власний коментар, від іншого користувача з доступом — чужий.", "expectedText": "Обидва коментарі збережені та доступні обом користувачам."},
+        {"stepOrder": 2, "actionText": "Отримати список, картку й comments під замовником.", "expectedText": "unreadCommentsCount=1; власний comment.unread=false, чужий comment.unread=true."},
+        {"stepOrder": 3, "actionText": "Запросити список з unreadComments=true і відкрити картку під автором другого коментаря.", "expectedText": "Замовлення є у filtered list замовника; для другого користувача його власний коментар прочитаний, а коментар замовника — непрочитаний."},
+    ],
+    "TC-ORD-047": [
+        {"stepOrder": 1, "actionText": "Додати до замовлення чужий коментар і викликати POST /orders/{id}/comments/read під замовником.", "expectedText": "У картці замовника unreadCommentsCount=0, коментар unread=false; unread-only list не містить замовлення."},
+        {"stepOrder": 2, "actionText": "Додати відповідь замовника й перевірити картку другого користувача.", "expectedText": "Read-state замовника не поширився на іншого користувача; його власний коментар не unread, відповідь замовника unread=true."},
+        {"stepOrder": 3, "actionText": "Після mark-read додати ще один чужий коментар.", "expectedText": "Для замовника тільки новий коментар unread=true, count=1, замовлення знову є в unread-only list."},
+    ],
+    "TC-ORD-UI-033": [
+        {"stepOrder": 1, "actionText": "Підготувати незавершене замовлення з чужим непрочитаним коментарем і відкрити список під замовником.", "expectedText": "Синя крапка є в sidebar, на вкладці та в рядку; рядок акцентований, лічильник дорівнює 1."},
+        {"stepOrder": 2, "actionText": "Увімкнути фільтр «Непрочитані коментарі».", "expectedText": "Замовлення з новим коментарем лишається, замовлення без непрочитаних приховане."},
+        {"stepOrder": 3, "actionText": "Відкрити картку замовлення.", "expectedText": "Видно chip «1 новий», коментар має синій акцент і бейдж «Новий»; UI успішно викликає comments/read."},
+        {"stepOrder": 4, "actionText": "Закрити картку, вимкнути unread-фільтр і перевірити рядок.", "expectedText": "Замовлення знову видно без синьої крапки; unreadCommentsCount=0."},
+    ],
     "TC-ORD-045": [
         {"stepOrder": 1, "actionText": "Створити окремого активного користувача з доступом до локації замовника, заповненим username і без firstName/lastName.", "expectedText": "Профіль користувача активний; firstName і lastName відсутні; username доступний у сесії."},
         {"stepOrder": 2, "actionText": "Створити доступне користувачу замовлення та додати від його імені коментар через POST /orders/{id}/comments.", "expectedText": "Коментар створено; text і createdAt заповнені; authorName точно дорівнює username, а не null чи «Невідомо»."},

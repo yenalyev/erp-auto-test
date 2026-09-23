@@ -24,6 +24,7 @@ public class OrderResponse {
     private Integer activeBookings;
     private Integer preparedBookings;
     private Boolean hasLinkedProductionOrder;
+    private Integer unreadCommentsCount;
     private String createdBy;
     private Instant createdAt;
     @Builder.Default

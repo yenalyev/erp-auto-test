@@ -598,6 +598,13 @@ public class OrderFixture extends BaseFixture {
         return comments == null ? List.of() : comments;
     }
 
+    @Step("API: POST mark comments read for order {orderId}")
+    public void markCommentsRead(UserRole role, Long orderId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.ORDER_POST_COMMENTS_READ, role, null, orderId);
+        validateSuccess(response, "Mark order comments read");
+    }
+
     /**
      * Create as {@code requester}, then Admin manages lifecycle: take-to-work + set gathering.
      * Product model: Owner has create/update; only Administrator has {@code order::manage}.

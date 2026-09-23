@@ -1,0 +1,58 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "feature": "updated",
+  "acceptanceCriterion": {
+    "AC-04": "updated"
+  },
+  "testCases": {
+    "TC-ORD-046": "created",
+    "TC-ORD-047": "created",
+    "TC-ORD-UI-033": "created"
+  },
+  "verification": {
+    "featureId": "REQ-ORD",
+    "documentationLength": 31355,
+    "documentationSha256": "1ec63b7b2127cb5f03f577886c8daf698ac42af03419df74f5f9115ee6bb09b9",
+    "sourceDocumentationSha256": "1ec63b7b2127cb5f03f577886c8daf698ac42af03419df74f5f9115ee6bb09b9",
+    "documentationMatchesSource": true,
+    "acceptanceCriterionMatches": true,
+    "allCasesMatch": true,
+    "testCases": {
+      "TC-ORD-046": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ORD-046"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3,
+        "matchesExpected": true
+      },
+      "TC-ORD-047": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ORD-047"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3,
+        "matchesExpected": true
+      },
+      "TC-ORD-UI-033": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ORD-UI-033"
+        ],
+        "stepCount": 4,
+        "matchesExpected": true
+      }
+    }
+  },
+  "completedAt": "2026-09-23T15:16:46.0883267Z",
+  "result": "SUCCESS"
+}

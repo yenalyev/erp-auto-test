@@ -18,4 +18,5 @@ public class OrderCommentResponse {
     private String authorName;
     private String text;
     private Instant createdAt;
+    private Boolean unread;
 }
