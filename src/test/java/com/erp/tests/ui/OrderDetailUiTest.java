@@ -9,6 +9,9 @@ import com.erp.models.response.OrderResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.UserModelResponse;
 import com.erp.pages.OrderListPage;
+import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Response;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -185,5 +188,32 @@ public class OrderDetailUiTest extends OrderUiTestBase {
                 .isTrue();
         assertThat(page.getByText("Невідомо", new com.microsoft.playwright.Page.GetByTextOptions().setExact(true)).count())
                 .isZero();
+    }
+
+    @Test(priority = 8)
+    @TestCaseId("TC-ORD-UI-034")
+    @Story("Requester opens own order with bookings")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Комірник відкриває власне замовлення: GET /orders/{id}/bookings повертає 200, картка та блок збору відображаються.")
+    public void requesterOpensOwnOrderWithoutBookings403() {
+        OrderResponse order = prepareManagedInProgressUi();
+        orderFixture.book(MANAGER, order.getId(), requesterStorageId, resourceId, 5.0);
+        loginAsOwner();
+
+        OrderListPage ordersPage = new OrderListPage(page);
+        Response bookingsResponse = page.waitForResponse(
+                response -> response.url().contains("/orders/" + order.getId() + "/bookings")
+                        && "GET".equals(response.request().method()),
+                new Page.WaitForResponseOptions()
+                        .setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000.0),
+                () -> ordersPage.openDeepLink(order.getId()));
+
+        assertThat(bookingsResponse.status())
+                .as("GET /orders/%s/bookings для автора замовлення", order.getId())
+                .isEqualTo(200);
+        assertThat(ordersPage.isOrderDialogVisible(order.getId())).isTrue();
+        assertThat(ordersPage.isBookingPanelVisible())
+                .as("Блок «Збір замовлення» має відобразитися після успішного запиту бронювань")
+                .isTrue();
     }
 }

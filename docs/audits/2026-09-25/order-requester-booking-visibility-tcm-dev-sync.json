@@ -1,0 +1,66 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": "updated",
+  "testCases": {
+    "TC-ORD-RBAC-006": "updated",
+    "TC-ORD-UI-019": "updated",
+    "TC-ORD-RBAC-007": "created",
+    "TC-ORD-UI-034": "created"
+  },
+  "verification": {
+    "featureId": "REQ-ORD",
+    "documentationLength": 32043,
+    "documentationSha256": "5c66ddadaeff7844d0a47fdb68d906884e15b68a3801b81a5f40c7808f47b798",
+    "sourceDocumentationSha256": "5c66ddadaeff7844d0a47fdb68d906884e15b68a3801b81a5f40c7808f47b798",
+    "documentationMatchesSource": true,
+    "allCasesMatch": true,
+    "testCases": {
+      "TC-ORD-RBAC-006": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-11",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ORD-RBAC-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4,
+        "matchesExpected": true
+      },
+      "TC-ORD-UI-019": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-12",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ORD-UI-019"
+        ],
+        "stepCount": 3,
+        "matchesExpected": true
+      },
+      "TC-ORD-RBAC-007": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-11",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ORD-RBAC-007"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2,
+        "matchesExpected": true
+      },
+      "TC-ORD-UI-034": {
+        "featureId": "REQ-ORD",
+        "acId": "AC-12",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ORD-UI-034"
+        ],
+        "stepCount": 2,
+        "matchesExpected": true
+      }
+    }
+  },
+  "completedAt": "2026-09-25T09:17:20.066353+00:00",
+  "result": "SUCCESS"
+}

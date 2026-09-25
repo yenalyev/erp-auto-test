@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synchronize the REQ-ORD gathering-owner cancellation guard with TCM.
+"""Synchronize REQ-ORD role-access regressions with TCM.
 
 The script is idempotent. It publishes the local REQ-ORD documentation and
 upserts the API/UI regression cases without publishing execution results.
@@ -128,6 +128,97 @@ CASES: list[dict[str, Any]] = [
                 "stepOrder": 3,
                 "actionText": "Перевірити доступні дії в картці.",
                 "expectedText": "Дія «Скасувати» не відображається.",
+            },
+        ],
+    },
+    {
+        "featureId": FEATURE_ID,
+        "acKey": "AC-11",
+        "testId": "TC-ORD-RBAC-007",
+        "title": "Комірник-замовник бачить бронювання власного замовлення",
+        "description": (
+            "API-регресія відтворює дефект, коли комірник локації-"
+            "замовника отримував 403 на GET /orders/{id}/bookings під час "
+            "перегляду власного замовлення."
+        ),
+        "priority": "CRITICAL",
+        "severity": "CRITICAL",
+        "status": "ACTIVE",
+        "testType": "SECURITY",
+        "preconditions": (
+            "Комірник з роллю Business_Unit_Owner-ROLE і grant «Керівник локації» "
+            "створив замовлення; Admin взяв його в роботу, призначив локацію "
+            "збору та створив активну бронь."
+        ),
+        "expectedResult": (
+            "GET /orders/{id}/bookings під автором повертає HTTP 200 і містить "
+            "створену бронь; 403 немає."
+        ),
+        "tags": "orders,rbac,requester,bookings,security,regression,automated",
+        "apiAutomationIds": ["TC-ORD-RBAC-007"],
+        "uiAutomationIds": [],
+        "steps": [
+            {
+                "stepOrder": 1,
+                "actionText": (
+                    "Під комірником локації-замовника створити замовлення; "
+                    "під Admin взяти його в роботу, призначити збір і створити бронь."
+                ),
+                "expectedText": "Замовлення належить комірнику; бронь активна.",
+            },
+            {
+                "stepOrder": 2,
+                "actionText": (
+                    "Під тим самим комірником-замовником викликати "
+                    "GET /orders/{id}/bookings."
+                ),
+                "expectedText": "HTTP 200; відповідь містить створену бронь.",
+            },
+        ],
+    },
+    {
+        "featureId": FEATURE_ID,
+        "acKey": "AC-12",
+        "testId": "TC-ORD-UI-034",
+        "title": "Комірник відкриває власне замовлення без 403 на бронювання",
+        "description": (
+            "UI-регресія перехоплює реальний браузерний GET /orders/{id}/bookings "
+            "під автором замовлення та перевіряє відображення картки."
+        ),
+        "priority": "CRITICAL",
+        "severity": "CRITICAL",
+        "status": "ACTIVE",
+        "testType": "UI",
+        "preconditions": (
+            "Для комірника локації-замовника існує власне замовлення з "
+            "призначеною локацією збору та активною бронню."
+        ),
+        "expectedResult": (
+            "Картка власного замовлення відкривається; GET /orders/{id}/bookings "
+            "повертає HTTP 200; блок «Збір замовлення» відображається."
+        ),
+        "tags": "orders,ui,rbac,requester,bookings,regression,automated",
+        "apiAutomationIds": [],
+        "uiAutomationIds": ["TC-ORD-UI-034"],
+        "steps": [
+            {
+                "stepOrder": 1,
+                "actionText": (
+                    "Створити для комірника замовлення з призначеною локацією "
+                    "збору та активною бронню."
+                ),
+                "expectedText": "Замовлення доступне його автору.",
+            },
+            {
+                "stepOrder": 2,
+                "actionText": (
+                    "Увійти як автор та відкрити власне замовлення через "
+                    "/orders?orderId={id}."
+                ),
+                "expectedText": (
+                    "GET /orders/{id}/bookings повертає 200; картка й блок "
+                    "«Збір замовлення» відображаються без 403."
+                ),
             },
         ],
     },

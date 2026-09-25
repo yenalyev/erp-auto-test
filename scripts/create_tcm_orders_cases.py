@@ -118,6 +118,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-11", "TC-ORD-RBAC-004", "gathering read: list+get+bookings view; без update — немає prepare", "HIGH", "MAJOR", "SECURITY"),
     ("AC-11", "TC-ORD-RBAC-005", "Комірник: prepare+send READY; без manage — немає book/ready", "CRITICAL", "CRITICAL", "SECURITY"),
     ("AC-11", "TC-ORD-RBAC-006", "Овнер локації збору бачить замовлення, але cancel → 403", "CRITICAL", "CRITICAL", "SECURITY"),
+    ("AC-11", "TC-ORD-RBAC-007", "Комірник-замовник бачить бронювання власного замовлення без 403", "CRITICAL", "CRITICAL", "SECURITY"),
     ("AC-11", "TC-ORD-ADMIN-001", "Order_Admin-ROLE: order manage + production read; без production create і relocation send", "CRITICAL", "CRITICAL", "SECURITY"),
     ("AC-09", "TC-ORD-ADMIN-002", "Рольовий E2E: requester create → Order Admin partial ready → gatherer send → requester receive", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
     ("AC-06", "TC-ORD-ADMIN-003", "Relocation task E2E: NEW→SHIPPED→DONE → auto-book → final send/receive", "CRITICAL", "CRITICAL", "FUNCTIONAL"),
@@ -151,6 +152,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-12", "TC-ORD-UI-024", "E2E: create→work→gather→book→prepare→send→DONE", "CRITICAL", "CRITICAL", "UI"),
     ("AC-12", "TC-ORD-UI-025", "Relocation list badge orderId", "HIGH", "MAJOR", "UI"),
     ("AC-04", "TC-ORD-UI-033", "UI hint непрочитаних коментарів: sidebar/tab/row/filter/detail", "CRITICAL", "CRITICAL", "UI"),
+    ("AC-12", "TC-ORD-UI-034", "Комірник відкриває власне замовлення: bookings=200 і блок збору видимий", "CRITICAL", "CRITICAL", "UI"),
     # AC-13 multi-actor browser journeys
     ("AC-13", "TC-ORD-E2E-001", "UI E2E: повне замовлення з локального залишку", "CRITICAL", "CRITICAL", "UI"),
     ("AC-13", "TC-ORD-E2E-002", "UI E2E: часткова комплектація після підтвердження готовності", "CRITICAL", "CRITICAL", "UI"),
@@ -167,6 +169,14 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
 
 
 E2E_STEPS: dict[str, list[dict[str, object]]] = {
+    "TC-ORD-RBAC-007": [
+        {"stepOrder": 1, "actionText": "Під комірником локації-замовника створити замовлення; адміністратор бере його в роботу, призначає збір і створює бронь.", "expectedText": "Бронь ACTIVE належить власному замовленню комірника."},
+        {"stepOrder": 2, "actionText": "Під комірником-замовником викликати GET /orders/{id}/bookings.", "expectedText": "HTTP 200; відповідь містить створену бронь, 403 немає."},
+    ],
+    "TC-ORD-UI-034": [
+        {"stepOrder": 1, "actionText": "Створити для комірника замовлення з призначеною локацією збору та активною бронню.", "expectedText": "Замовлення доступне його автору."},
+        {"stepOrder": 2, "actionText": "Увійти як автор та відкрити власне замовлення через /orders?orderId={id}.", "expectedText": "GET /orders/{id}/bookings повертає 200; картка й блок «Збір замовлення» відображаються без помилки 403."},
+    ],
     "TC-ORD-046": [
         {"stepOrder": 1, "actionText": "Створити замовлення; від імені замовника додати власний коментар, від іншого користувача з доступом — чужий.", "expectedText": "Обидва коментарі збережені та доступні обом користувачам."},
         {"stepOrder": 2, "actionText": "Отримати список, картку й comments під замовником.", "expectedText": "unreadCommentsCount=1; власний comment.unread=false, чужий comment.unread=true."},

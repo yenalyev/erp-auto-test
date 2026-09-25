@@ -183,4 +183,20 @@ public class OrderRbacTest extends OrderApiTestBase {
                 .as("Заборонена спроба скасування не повинна змінювати стан замовлення")
                 .isEqualTo(OrderState.IN_PROGRESS);
     }
+
+    @Test(priority = 17)
+    @TestCaseId("TC-ORD-RBAC-007")
+    @Story("Requester booking visibility")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Комірник локації-замовника може отримати бронювання власного замовлення через GET /orders/{id}/bookings.")
+    public void testRequesterCanViewBookingsForOwnOrder() {
+        OrderResponse order = prepareManagedInProgress();
+        BookingResponse booking = orderFixture.book(
+                MANAGER, order.getId(), requesterStorageId, resourceId, DEFAULT_ORDER_QTY);
+
+        assertThat(orderFixture.getBookings(REQUESTER, order.getId()))
+                .as("Автор має отримати бронювання власного замовлення без 403")
+                .extracting(BookingResponse::getId)
+                .contains(booking.getId());
+    }
 }
