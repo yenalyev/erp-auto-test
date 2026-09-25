@@ -2,10 +2,18 @@ package com.erp.tests.functional.analytics;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.data.factories.ResourceDataFactory;
+import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
+import com.erp.models.request.ResourcePropertyRequest;
+import com.erp.models.request.ResourceRequest;
 import com.erp.models.response.ResourceResponse;
+import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
+import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.PollUtils;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -40,6 +48,8 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
 
     private static final String[] METRIC_KEYS = {
             "produced", "relocated", "used", "stockTotal", "stockInRoot"};
+    private static final String SUPPLIER_MOU = "МОУ";
+    private static final String SUPPLIER_OTHER = "Інші";
 
     private ResourceFixture resourceFixture;
     private List<ResourceResponse> resources;
@@ -47,6 +57,12 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
     private LocalDate lastMonthFrom;
     private LocalDate lastMonthTo;
     private LocalDate threeMonthsFrom;
+    private ResourceResponse supplierResourceA;
+    private ResourceResponse supplierResourceB;
+    private ResourceResponse noSupplierResource;
+    private long supplierCategoryId;
+    private long supplierStockStorageId;
+    private RelocationFixture supplierRelocationFixture;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setupPlanAnalytics() {
@@ -62,8 +78,40 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
         threeMonthsFrom = lastFull.minusMonths(2).atDay(1);
 
         resourceId = pickResourceWithActivity(resources);
+        prepareSupplierFilterResources();
         log.info("Plan analytics probe resourceId={} period={}…{} / 3m from {}",
                 resourceId, lastMonthFrom, lastMonthTo, threeMonthsFrom);
+    }
+
+    private void prepareSupplierFilterResources() {
+        resourceFixture.fetchSharedUnit(3);
+        resourceFixture.fetchSharedResourceCategory();
+        supplierCategoryId = testContext.get(ContextKey.SHARED_RESOURCE_CATEGORY_ID);
+        supplierResourceA = resourceFixture.createUniqueResourceWithSupplier(
+                "PLAN-ANL-SUP-A-", SUPPLIER_MOU);
+        supplierResourceB = resourceFixture.createUniqueResourceWithSupplier(
+                "PLAN-ANL-SUP-B-", SUPPLIER_OTHER);
+        noSupplierResource = resourceFixture.createUniqueResource("PLAN-ANL-SUP-C-");
+
+        supplierRelocationFixture = new RelocationFixture(testContext, apiExecutor);
+        long supplierStorageId = RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, UserRole.ADMIN);
+        testContext.set(ContextKey.RELOCATION_SUPPLIER_ID, supplierStorageId);
+        supplierStockStorageId = ConfigProvider.getOwner1StorageId();
+        for (ResourceResponse resource : supplierResources()) {
+            supplierRelocationFixture.createExternalReceive(
+                    UserRole.ADMIN,
+                    supplierStockStorageId,
+                    resource.getId(),
+                    3.0,
+                    "plan-anl-supplier-" + resource.getId() + "-" + System.nanoTime());
+        }
+        PollUtils.waitUntilTrue(
+                () -> rowIds(requestSupplierRows(
+                        supplierResources().stream().map(ResourceResponse::getId).toList(),
+                        null, null, 0, 20))
+                        .containsAll(supplierResources().stream().map(ResourceResponse::getId).toList()),
+                20_000,
+                "plan analytics rows contain all isolated supplier resources");
     }
 
     @Test(priority = 10)
@@ -250,6 +298,133 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
                 .isEqualByComparingTo(toDecimal(row.get("stockTotal")));
     }
 
+    @Test(priority = 40)
+    @TestCaseId("TC-PLAN-ANL-005")
+    @Story("Supplier exact match")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            REQ-PLAN-ANL-SUPPLIER / AC-02.
+            Один supplier=МОУ залишає лише ресурс із точним актуальним значенням;
+            ресурс з Інші та ресурс без властивості виключені.
+            """)
+    public void singleSupplierKeepsOnlyExactCurrentPropertyMatch() {
+        Response response = requestSupplierRows(
+                supplierResources().stream().map(ResourceResponse::getId).toList(),
+                List.of(SUPPLIER_MOU), null, 0, 20);
+
+        assertThat(response.statusCode()).as("supplier rows: %s", response.asString()).isEqualTo(200);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.PLAN_ANALYTIC_ROWS_GET);
+        assertThat(rowIds(response))
+                .containsExactly(supplierResourceA.getId())
+                .doesNotContain(supplierResourceB.getId(), noSupplierResource.getId());
+    }
+
+    @Test(priority = 50)
+    @TestCaseId("TC-PLAN-ANL-006")
+    @Story("Supplier OR and outer AND")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            REQ-PLAN-ANL-SUPPLIER / AC-03, AC-06.
+            Повторювані supplier=МОУ&supplier=Інші працюють як OR.
+            Група постачальників додатково перетинається з resourceIds, categoryIds і періодом.
+            """)
+    public void repeatedSuppliersUseOrAndOtherFiltersUseAnd() {
+        List<Long> allIds = supplierResources().stream().map(ResourceResponse::getId).toList();
+        List<String> suppliers = List.of(SUPPLIER_MOU, SUPPLIER_OTHER);
+
+        Response both = requestSupplierRows(allIds, suppliers, List.of(supplierCategoryId), 0, 20);
+        assertThat(both.statusCode()).as("two suppliers: %s", both.asString()).isEqualTo(200);
+        assertThat(rowIds(both))
+                .containsExactlyInAnyOrder(supplierResourceA.getId(), supplierResourceB.getId())
+                .doesNotContain(noSupplierResource.getId());
+
+        Response resourceIntersection = requestSupplierRows(
+                List.of(supplierResourceB.getId()), suppliers, List.of(supplierCategoryId), 0, 20);
+        assertThat(rowIds(resourceIntersection)).containsExactly(supplierResourceB.getId());
+
+        Response resourceWithoutSupplier = requestSupplierRows(
+                List.of(noSupplierResource.getId()), suppliers, List.of(supplierCategoryId), 0, 20);
+        assertThat(rowIds(resourceWithoutSupplier)).isEmpty();
+
+        long anotherCategoryId = resources.stream()
+                .filter(resource -> resource.getCategory() != null)
+                .map(resource -> resource.getCategory().getId())
+                .filter(id -> id != null && id != supplierCategoryId)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Потрібна інша категорія для перевірки AND"));
+        Response categoryIntersection = requestSupplierRows(
+                allIds, suppliers, List.of(anotherCategoryId), 0, 20);
+        assertThat(rowIds(categoryIntersection)).isEmpty();
+    }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-PLAN-ANL-007")
+    @Story("Current supplier property")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            REQ-PLAN-ANL-SUPPLIER / AC-02.
+            Після PUT ресурсу фільтр використовує нове актуальне значення Постачальника;
+            старе значення більше не збігається.
+            """)
+    public void supplierFilterUsesCurrentValueAfterResourceUpdate() {
+        ResourceRequest update = ResourceDataFactory
+                .fromExisting(supplierResourceA, supplierCategoryId)
+                .properties(List.of(ResourcePropertyRequest.builder()
+                        .name("Постачальник")
+                        .value(SUPPLIER_OTHER)
+                        .build()))
+                .build();
+        supplierResourceA = resourceFixture.update(
+                UserRole.ADMIN, supplierResourceA.getId(), update);
+
+        PollUtils.waitUntilTrue(
+                () -> !rowIds(requestSupplierRows(
+                        List.of(supplierResourceA.getId()), List.of(SUPPLIER_MOU), null, 0, 20))
+                        .contains(supplierResourceA.getId())
+                        && rowIds(requestSupplierRows(
+                        List.of(supplierResourceA.getId()), List.of(SUPPLIER_OTHER), null, 0, 20))
+                        .contains(supplierResourceA.getId()),
+                20_000,
+                "plan analytics uses updated supplier property");
+
+        assertThat(rowIds(requestSupplierRows(
+                List.of(supplierResourceA.getId()), List.of(SUPPLIER_MOU), null, 0, 20)))
+                .isEmpty();
+        assertThat(rowIds(requestSupplierRows(
+                List.of(supplierResourceA.getId()), List.of(SUPPLIER_OTHER), null, 0, 20)))
+                .containsExactly(supplierResourceA.getId());
+    }
+
+    @Test(priority = 70, dependsOnMethods = "supplierFilterUsesCurrentValueAfterResourceUpdate")
+    @TestCaseId("TC-PLAN-ANL-008")
+    @Story("Supplier totals and pagination")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            REQ-PLAN-ANL-SUPPLIER / AC-04.
+            Ресурс без властивості виключений. За size=1 page metadata і totals
+            враховують обидва відфільтровані рядки, а не лише поточну сторінку.
+            """)
+    public void supplierTotalsAndPaginationCoverTheWholeFilteredSelection() {
+        List<Long> allIds = supplierResources().stream().map(ResourceResponse::getId).toList();
+        Response complete = requestSupplierRows(
+                allIds, List.of(SUPPLIER_OTHER), null, 0, 20);
+        Response firstPage = requestSupplierRows(
+                allIds, List.of(SUPPLIER_OTHER), null, 0, 1);
+
+        assertThat(complete.statusCode()).as("complete supplier page: %s", complete.asString()).isEqualTo(200);
+        assertThat(firstPage.statusCode()).as("paged supplier page: %s", firstPage.asString()).isEqualTo(200);
+        SchemaRegistry.validateIfSuccess(firstPage, ApiEndpointDefinition.PLAN_ANALYTIC_ROWS_GET);
+        assertThat(rowIds(complete))
+                .containsExactlyInAnyOrder(supplierResourceA.getId(), supplierResourceB.getId())
+                .doesNotContain(noSupplierResource.getId());
+        assertThat(firstPage.jsonPath().getList("content")).hasSize(1);
+        assertThat(firstPage.jsonPath().getInt("page.totalElements")).isEqualTo(2);
+        assertThat(firstPage.jsonPath().getInt("page.totalPages")).isEqualTo(2);
+        assertTotalsEqual(
+                complete.jsonPath().getList("totals"),
+                firstPage.jsonPath().getList("totals"));
+    }
+
     private Response requestRows(long id, LocalDate from, LocalDate to) {
         return requestRows(List.of(id), from, to);
     }
@@ -259,6 +434,63 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
         params.put("resourceIds", ids);
         return apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.PLAN_ANALYTIC_ROWS_GET, UserRole.ADMIN, params);
+    }
+
+    private Response requestSupplierRows(
+            List<Long> ids,
+            List<String> suppliers,
+            List<Long> categoryIds,
+            int page,
+            int size) {
+        Map<String, Object> params = periodParams(lastMonthFrom, lastMonthTo);
+        params.put("page", page);
+        params.put("size", size);
+        if (ids != null && !ids.isEmpty()) {
+            params.put("resourceIds", ids);
+        }
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            params.put("categoryIds", categoryIds);
+        }
+        if (suppliers != null && !suppliers.isEmpty()) {
+            params.put("supplier", suppliers);
+        }
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.PLAN_ANALYTIC_ROWS_GET, UserRole.ADMIN, params);
+    }
+
+    private List<ResourceResponse> supplierResources() {
+        if (supplierResourceA == null || supplierResourceB == null || noSupplierResource == null) {
+            return List.of();
+        }
+        return List.of(supplierResourceA, supplierResourceB, noSupplierResource);
+    }
+
+    private static List<Long> rowIds(Response response) {
+        if (response.statusCode() != 200) {
+            return List.of();
+        }
+        List<Long> ids = response.jsonPath().getList("content.resourceId", Long.class);
+        return ids == null ? List.of() : ids;
+    }
+
+    private static void assertTotalsEqual(
+            List<Map<String, Object>> expected,
+            List<Map<String, Object>> actual) {
+        assertThat(actual).extracting(total -> total.get("unit"))
+                .containsExactlyInAnyOrderElementsOf(
+                        expected.stream().map(total -> total.get("unit")).toList());
+        for (Map<String, Object> expectedTotal : expected) {
+            String unit = (String) expectedTotal.get("unit");
+            Map<String, Object> actualTotal = actual.stream()
+                    .filter(total -> unit.equals(total.get("unit")))
+                    .findFirst()
+                    .orElseThrow();
+            for (String key : METRIC_KEYS) {
+                assertThat(toDecimal(actualTotal.get(key)))
+                        .as("paged totals[%s].%s", unit, key)
+                        .isEqualByComparingTo(toDecimal(expectedTotal.get(key)));
+            }
+        }
     }
 
     private Map<String, Object> periodParams(LocalDate from, LocalDate to) {

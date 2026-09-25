@@ -1,0 +1,119 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-PLAN-ANL-005",
+      "TC-PLAN-ANL-006",
+      "TC-PLAN-ANL-007",
+      "TC-PLAN-ANL-008",
+      "TC-PLAN-ANL-UI-004",
+      "TC-PLAN-ANL-UI-005",
+      "TC-PLAN-ANL-UI-006"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-PLAN-ANL-SUPPLIER",
+    "parentFeatureId": "REQ-PLAN-ANL",
+    "status": "ACTIVE",
+    "documentationLength": 6084,
+    "documentationSha256": "7ec69420fb048fa375d10a50a923bc936bc179f09faccb8d3df191dec79c4817",
+    "sourceDocumentationSha256": "7ec69420fb048fa375d10a50a923bc936bc179f09faccb8d3df191dec79c4817",
+    "requiredAcPresent": true,
+    "managedAcCount": 6,
+    "managedCaseCount": 7,
+    "automatedCaseCount": 7,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-PLAN-ANL-005": {
+        "featureId": "REQ-PLAN-ANL-SUPPLIER",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PLAN-ANL-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PLAN-ANL-006": {
+        "featureId": "REQ-PLAN-ANL-SUPPLIER",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PLAN-ANL-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PLAN-ANL-007": {
+        "featureId": "REQ-PLAN-ANL-SUPPLIER",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PLAN-ANL-007"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PLAN-ANL-008": {
+        "featureId": "REQ-PLAN-ANL-SUPPLIER",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PLAN-ANL-008"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-PLAN-ANL-UI-004": {
+        "featureId": "REQ-PLAN-ANL-SUPPLIER",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-PLAN-ANL-UI-004"
+        ],
+        "stepCount": 2
+      },
+      "TC-PLAN-ANL-UI-005": {
+        "featureId": "REQ-PLAN-ANL-SUPPLIER",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-PLAN-ANL-UI-005"
+        ],
+        "stepCount": 2
+      },
+      "TC-PLAN-ANL-UI-006": {
+        "featureId": "REQ-PLAN-ANL-SUPPLIER",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-PLAN-ANL-UI-006"
+        ],
+        "stepCount": 2
+      }
+    }
+  },
+  "completedAt": "2026-09-25T11:28:46.933736+00:00",
+  "result": "SUCCESS"
+}

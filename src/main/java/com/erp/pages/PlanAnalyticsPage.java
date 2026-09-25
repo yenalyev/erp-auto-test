@@ -24,6 +24,7 @@ public class PlanAnalyticsPage extends BasePage {
     private static final String PATH = "/analytics/plan";
     public static final String EMPTY_STATE = "Оберіть ресурс або категорію, щоб побачити дані";
     public static final String RESOURCES_PLACEHOLDER = "Оберіть ресурси";
+    public static final String SUPPLIER_LABEL = "Постачальник";
     public static final String STOCK_IN_ROOT_LABEL = "Залишок (Цукрарня)";
     public static final String ROOT_GROUP = "Цукрарня";
     public static final String OTHER_GROUP = "Інші локації";
@@ -141,6 +142,86 @@ public class PlanAnalyticsPage extends BasePage {
         return this;
     }
 
+    @Step("Фільтр постачальників: прочитати доступні опції")
+    public List<String> supplierOptions() {
+        openSupplierPicker();
+        List<String> options = visibleSupplierOptions().allInnerTexts().stream()
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .toList();
+        closeSupplierPicker();
+        return options;
+    }
+
+    @Step("Фільтр постачальників: знайти «{search}»")
+    public List<String> searchSupplierOptions(String search) {
+        openSupplierPicker();
+        supplierSearch().fill(search);
+        List<String> options = visibleSupplierOptions().allInnerTexts().stream()
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .toList();
+        supplierSearch().fill("");
+        closeSupplierPicker();
+        return options;
+    }
+
+    @Step("Фільтр постачальників: обрати значення")
+    public PlanAnalyticsPage selectSuppliers(String... supplierNames) {
+        if (supplierNames == null || supplierNames.length == 0) {
+            throw new IllegalArgumentException("Потрібно вказати хоча б одного постачальника");
+        }
+        openSupplierPicker();
+        for (String supplierName : supplierNames) {
+            openSupplierPicker();
+            supplierSearch().fill(supplierName);
+            Locator option = exactSupplierOption(supplierName);
+            option.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            option.click();
+        }
+        closeSupplierPicker();
+        return this;
+    }
+
+    @Step("Фільтр постачальників: очистити вибрані значення")
+    public PlanAnalyticsPage clearSuppliers(String... supplierNames) {
+        if (supplierNames == null || supplierNames.length == 0) {
+            throw new IllegalArgumentException("Потрібно вказати вибрані значення для очищення");
+        }
+        openSupplierPicker();
+        for (String supplierName : supplierNames) {
+            openSupplierPicker();
+            supplierSearch().fill(supplierName);
+            Locator option = exactSupplierOption(supplierName);
+            option.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+            option.click();
+        }
+        closeSupplierPicker();
+        return this;
+    }
+
+    public boolean isSupplierSelected(String supplierName) {
+        Locator selected = supplierFilterGroup().getByText(
+                supplierName, new Locator.GetByTextOptions().setExact(true));
+        return selected.count() > 0 && selected.first().isVisible();
+    }
+
+    public boolean isSupplierFilterEmpty() {
+        return "Всі...".equals(supplierTrigger().getAttribute("placeholder"));
+    }
+
+    public boolean hasDataRowFor(String resourceName) {
+        return tableBodyRows()
+                .filter(new Locator.FilterOptions().setHasText(resourceName))
+                .count() > 0;
+    }
+
     public String totalCardText(String label) {
         Locator title = page.getByText(label, new Page.GetByTextOptions().setExact(true)).first();
         title.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
@@ -228,6 +309,62 @@ public class PlanAnalyticsPage extends BasePage {
         return page.locator("[cmdk-item], [data-slot='command-item']");
     }
 
+    private void openSupplierPicker() {
+        Locator trigger = supplierTrigger();
+        if ("true".equals(trigger.getAttribute("aria-expanded"))) {
+            return;
+        }
+        trigger.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        trigger.click();
+        page.waitForCondition(
+                () -> "true".equals(supplierTrigger().getAttribute("aria-expanded")),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        visibleSupplierOptions().first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+    }
+
+    private void closeSupplierPicker() {
+        if (!"true".equals(supplierTrigger().getAttribute("aria-expanded"))) {
+            return;
+        }
+        page.keyboard().press("Escape");
+        page.waitForCondition(
+                () -> !"true".equals(supplierTrigger().getAttribute("aria-expanded")),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+    }
+
+    private Locator supplierTrigger() {
+        Locator group = supplierFilterGroup();
+        Locator combobox = group.getByRole(AriaRole.COMBOBOX);
+        if (combobox.count() > 0) {
+            return combobox.first();
+        }
+        return group.getByRole(AriaRole.BUTTON).first();
+    }
+
+    private Locator supplierSearch() {
+        return supplierTrigger();
+    }
+
+    private Locator visibleSupplierOptions() {
+        String popupId = supplierTrigger().getAttribute("aria-controls");
+        if (popupId != null && !popupId.isBlank()) {
+            String escapedId = popupId.replace("\\", "\\\\").replace("\"", "\\\"");
+            return page.locator("[id=\"" + escapedId + "\"]").getByRole(AriaRole.OPTION);
+        }
+        return page.getByRole(AriaRole.OPTION);
+    }
+
+    private Locator exactSupplierOption(String supplierName) {
+        return page.getByRole(
+                AriaRole.OPTION,
+                new Page.GetByRoleOptions().setName(supplierName).setExact(true))
+                .first();
+    }
+
     private void waitUntilTotalsOrEmptyTable() {
         try {
             page.waitForCondition(
@@ -252,6 +389,12 @@ public class PlanAnalyticsPage extends BasePage {
 
     private Locator periodFilterGroup() {
         return periodLabel().locator("xpath=ancestor::div[contains(@class,'flex-col')][1]");
+    }
+
+    private Locator supplierFilterGroup() {
+        Locator label = page.getByText(
+                SUPPLIER_LABEL, new Page.GetByTextOptions().setExact(true)).first();
+        return label.locator("xpath=ancestor::div[contains(@class,'flex-col')][1]");
     }
 
     private boolean isAccessForbidden() {
