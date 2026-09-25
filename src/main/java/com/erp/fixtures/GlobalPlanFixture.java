@@ -404,6 +404,26 @@ public class GlobalPlanFixture extends BaseFixture {
                 chain.getResourceA().getId(),
                 amount).build();
 
+        return createGlobalPlan(request);
+    }
+
+    @Step("API: створити глобальний план {month}/{year} з довільним output")
+    public GlobalPlanResponse createGlobalPlanForPeriod(
+            int month,
+            int year,
+            String description,
+            List<ResourceUsageRequest> output) {
+        GlobalPlanRequest request = GlobalPlanRequest.builder()
+                .description(description)
+                .month(month)
+                .year(year)
+                .output(output)
+                .build();
+
+        return createGlobalPlan(request);
+    }
+
+    private GlobalPlanResponse createGlobalPlan(GlobalPlanRequest request) {
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.GLOBAL_PLAN_POST_CREATE,
                 UserRole.ADMIN,

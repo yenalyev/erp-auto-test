@@ -358,6 +358,7 @@
     <test name="UI Global Plans">
         <classes>
             <class name="com.erp.tests.ui.GlobalPlansUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanPivotUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanCreateUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanInsightsUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAddOutputUiTest"/>

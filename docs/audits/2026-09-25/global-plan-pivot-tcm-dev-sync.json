@@ -1,0 +1,85 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-GP-PIVOT-01",
+      "AC-GP-PIVOT-02",
+      "AC-GP-PIVOT-03",
+      "AC-GP-PIVOT-04"
+    ]
+  },
+  "testCases": {
+    "created": [
+      "TC-GP-PIVOT-002",
+      "TC-GP-PIVOT-003",
+      "TC-GP-PIVOT-004"
+    ],
+    "updated": [
+      "TC-GP-PIVOT-001"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-GLOBAL-PLAN-PIVOT",
+    "parentFeatureId": "REQ-GLOBAL-PLAN",
+    "status": "ACTIVE",
+    "documentationLength": 5296,
+    "documentationSha256": "9cb91dfa93b6bf213ee7dd0e685ab441ddd8f5de6f3c43f40eb0c91906d5e7ee",
+    "sourceDocumentationSha256": "9cb91dfa93b6bf213ee7dd0e685ab441ddd8f5de6f3c43f40eb0c91906d5e7ee",
+    "requiredAcPresent": true,
+    "managedAcCount": 4,
+    "managedCaseCount": 4,
+    "automatedCaseCount": 4,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-GP-PIVOT-001": {
+        "featureId": "REQ-GLOBAL-PLAN-PIVOT",
+        "acId": "AC-GP-PIVOT-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-GP-PIVOT-001"
+        ],
+        "stepCount": 3
+      },
+      "TC-GP-PIVOT-002": {
+        "featureId": "REQ-GLOBAL-PLAN-PIVOT",
+        "acId": "AC-GP-PIVOT-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-GP-PIVOT-002"
+        ],
+        "stepCount": 4
+      },
+      "TC-GP-PIVOT-003": {
+        "featureId": "REQ-GLOBAL-PLAN-PIVOT",
+        "acId": "AC-GP-PIVOT-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-GP-PIVOT-003"
+        ],
+        "stepCount": 4
+      },
+      "TC-GP-PIVOT-004": {
+        "featureId": "REQ-GLOBAL-PLAN-PIVOT",
+        "acId": "AC-GP-PIVOT-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-GP-PIVOT-004"
+        ],
+        "stepCount": 3
+      }
+    }
+  },
+  "completedAt": "2026-09-25T08:54:33.475014+00:00",
+  "result": "SUCCESS"
+}
