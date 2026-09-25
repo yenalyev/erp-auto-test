@@ -25,7 +25,8 @@ core.ACCEPTANCE_CRITERIA = [
         "лишається у snapshot, тому UI показує пов'язані поточні/майбутні плани, просить підтвердження "
         "structural edit і вимагає повторного призначення та generate. Архівація карти актуального "
         "snapshot лишається забороненою для OWNER і ADMIN; DELETE є soft-archive. Минулий план або "
-        "відсутній snapshot не блокують edit/archive, а replacement-карту можна використати в новому GP.",
+        "відсутній snapshot не блокують edit/archive. Після reassignment на version+1 повторний generate "
+        "того самого GP замінює location plans і переводить snapshot/live references на новий id.",
     ),
 ]
 
@@ -161,6 +162,33 @@ core.CASES = [
             ("Створити новий майбутній GP і призначити M2 під час decompose.", "Decompose complete=true, HTTP 200."),
             ("Виконати generate з тією самою decomposition.", "HTTP 200; location plans створено."),
             ("GET нового GP.", "Snapshot містить id M2 і не містить id M1."),
+        ),
+    ),
+    case(
+        "TC-GP-061",
+        "Live archive guard не блокує structural versioning за наявності historical snapshot",
+        "Карта одночасно є в historical і live snapshots: live GP блокує DELETE, але не structural PUT.",
+        "ADMIN; EDIT_ALLOWED; M1 у generated historical GP та generated майбутньому GP.",
+        "DELETE M1 повертає 400; structural PUT повертає 200/M2 version+1; обидва snapshots лишають id M1.",
+        steps(
+            ("Створити historical GP та live GP зі snapshot M1.", "Обидва snapshots містять id M1."),
+            ("Виконати DELETE M1.", "HTTP 400 через live GP; M1 лишається активною."),
+            ("Змінити input amount M1 через PUT.", "HTTP 200; створено активну M2 version+1."),
+            ("GET historical і live GP.", "Обидва snapshots містять M1 і не містять M2."),
+        ),
+    ),
+    case(
+        "TC-GP-064",
+        "Перегенерація глобального плану після structural edit техкарти",
+        "Той самий live GP має перейти зі stale M1 на активну M2 після явного reassignment і regenerate.",
+        "ADMIN; EDIT_ALLOWED; ізольована M1 у generated snapshot майбутнього GP; M2 створена structural PUT.",
+        "Stale generate=400; decompose з M2 complete; regenerate=200/replaced; snapshot і live references переходять M1→M2.",
+        steps(
+            ("Згенерувати майбутній GP зі snapshot M1 та виконати structural PUT M1.", "M2 active version+1; snapshot ще містить M1."),
+            ("Повторити generate зі stale decomposition M1.", "HTTP 400; чинний location plan не змінено."),
+            ("Замінити assignment на M2 і виконати decompose.", "HTTP 200; complete=true; options містять M2, не M1."),
+            ("Виконати generate того самого GP з M2.", "HTTP 200; location plan має replaced=true і новий id."),
+            ("GET GP та live global-plan references M1/M2.", "Snapshot/reference прибрано з M1 і додано до M2."),
         ),
     ),
     case(

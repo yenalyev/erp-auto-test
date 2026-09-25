@@ -16,6 +16,7 @@ import com.erp.models.response.DecompositionResponse;
 import com.erp.models.response.GenerationResponse;
 import com.erp.models.response.GlobalPlanRefResponse;
 import com.erp.models.response.GlobalPlanResponse;
+import com.erp.models.response.PlanResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
@@ -415,6 +416,108 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         });
     }
 
+    @Test(priority = 19)
+    @TestCaseId("TC-GP-064")
+    @Story("Regenerate a live global plan after structural tech-map edit")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** після structural edit техкарти з live snapshot перепризначити ресурс на version+1
+            і повторно згенерувати **той самий** глобальний план.
+
+            **Arrange:** ізольована M1 + майбутній GP + перший decompose/generate зі snapshot M1.
+            **Mutate:** PUT input amount → активна M2 (new id, version+1), M1 inactive.
+            **Перевірки до reassignment:** snapshot та існуючий location plan не змінені; generate зі
+            stale assignment M1 повертає 400.
+            **Reassign + regenerate:** decompose/generate з M2 повертають 200; location plan замінено;
+            snapshot і GET /technological-maps/{id}/global-plans переходять з M1 на M2.
+            """)
+    public void testCanRegenerateSameGlobalPlanAfterStructuralTechMapEdit() {
+        TechMapInGlobalPlan context = arrangeIsolatedTechMapInGlobalPlan();
+        GlobalPlanResponse globalPlan = context.globalPlan();
+        TechnologicalMapResponse oldVersion = techMapFixture.getById(
+                UserRole.ADMIN, context.techMap().getId(), l1StorageId);
+        List<Long> originalLocationPlanIds = context.generatedPlanIds();
+        assertThat(originalLocationPlanIds).hasSize(1);
+
+        double modifiedAmount = oldVersion.getInput().getFirst().getAmount() + 1.0;
+        TechnologicalMapRequest updateRequest =
+                TechnologicalMapDataFactory.withFirstInputAmount(oldVersion, modifiedAmount);
+        Response update = Allure.step("Structural PUT M1 → M2", () ->
+                techMapFixture.updateTechMap(UserRole.ADMIN, oldVersion.getId(), updateRequest));
+        assertThat(update.statusCode()).isEqualTo(200);
+
+        TechnologicalMapResponse updateBody = update.as(TechnologicalMapResponse.class);
+        TechnologicalMapResponse newVersion = techMapFixture.getById(
+                UserRole.ADMIN, updateBody.getId(), l1StorageId);
+        assertThat(newVersion.getId()).isNotEqualTo(oldVersion.getId());
+        assertThat(newVersion.getVersion()).isEqualTo(oldVersion.getVersion() + 1);
+        assertThat(newVersion.getInput().getFirst().getAmount()).isEqualTo(modifiedAmount);
+
+        Allure.step("До reassignment snapshot і live reference лишаються на M1", () -> {
+            assertThat(snapshotTechMapIds(globalPlanFixture.getById(globalPlan.getId())))
+                    .contains(oldVersion.getId())
+                    .doesNotContain(newVersion.getId());
+            assertThat(techMapFixture.getLiveGlobalPlans(UserRole.ADMIN, oldVersion.getId()))
+                    .extracting(GlobalPlanRefResponse::getId)
+                    .contains(globalPlan.getId());
+            assertThat(techMapFixture.getLiveGlobalPlans(UserRole.ADMIN, newVersion.getId()))
+                    .extracting(GlobalPlanRefResponse::getId)
+                    .doesNotContain(globalPlan.getId());
+        });
+
+        Response staleGenerate = Allure.step("Generate зі stale snapshot M1 → 400", () ->
+                apiExecutor.execute(
+                        ApiEndpointDefinition.GLOBAL_PLAN_GENERATE,
+                        UserRole.ADMIN,
+                        globalPlan.getDecomposition(),
+                        globalPlan.getId()));
+        assertThat(staleGenerate.statusCode()).isEqualTo(400);
+        assertThat(globalPlanFixture.getLocationPlans(l1StorageId))
+                .extracting(PlanResponse::getId)
+                .containsAll(originalLocationPlanIds);
+
+        Long outputResourceId = techMapFixture.getOutputResourceId(newVersion);
+        DecompositionRequest reassigned = DecompositionRequest.builder()
+                .blocks(List.of(GlobalPlanDataFactory.block(GlobalPlanDataFactory.item(
+                        outputResourceId,
+                        GlobalPlanDataFactory.assignment(l1StorageId, newVersion.getId(), "10")))))
+                .build();
+
+        Allure.step("Повторно призначити M2: decompose complete і options без M1", () -> {
+            DecompositionResponse decomposition = globalPlanFixture.decompose(globalPlan.getId(), reassigned);
+            assertThat(decomposition.isComplete()).isTrue();
+            List<Long> optionIds = decomposition.getBlocks().getFirst().getItems().getFirst().getOptions()
+                    .stream()
+                    .map(option -> option.getTechnologicalMap().getId())
+                    .toList();
+            assertThat(optionIds).contains(newVersion.getId()).doesNotContain(oldVersion.getId());
+        });
+
+        GenerationResponse regeneration = Allure.step("Regenerate той самий GP з M2", () ->
+                globalPlanFixture.generate(globalPlan.getId(), reassigned));
+        List<Long> regeneratedLocationPlanIds = regeneration.getPlans().stream()
+                .map(item -> item.getPlan().getId())
+                .toList();
+        trackGeneratedPlans(regeneratedLocationPlanIds);
+
+        Allure.step("Location plan замінено, snapshot і live reference перейшли на M2", () -> {
+            assertThat(regeneration.getPlans()).allMatch(item -> item.isReplaced());
+            assertThat(regeneratedLocationPlanIds)
+                    .doesNotContainAnyElementsOf(originalLocationPlanIds);
+
+            GlobalPlanResponse regeneratedPlan = globalPlanFixture.getById(globalPlan.getId());
+            assertThat(snapshotTechMapIds(regeneratedPlan))
+                    .contains(newVersion.getId())
+                    .doesNotContain(oldVersion.getId());
+            assertThat(techMapFixture.getLiveGlobalPlans(UserRole.ADMIN, oldVersion.getId()))
+                    .extracting(GlobalPlanRefResponse::getId)
+                    .doesNotContain(globalPlan.getId());
+            assertThat(techMapFixture.getLiveGlobalPlans(UserRole.ADMIN, newVersion.getId()))
+                    .extracting(GlobalPlanRefResponse::getId)
+                    .contains(globalPlan.getId());
+        });
+    }
+
     @Test(priority = 20, dataProvider = "ownerAndAdminRoles")
     @TestCaseId("TC-GP-049")
     @Severity(SeverityLevel.NORMAL)
@@ -607,7 +710,11 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         });
     }
 
-    private record TechMapInGlobalPlan(GlobalPlanResponse globalPlan, TechnologicalMapResponse techMap) {}
+    private record TechMapInGlobalPlan(
+            GlobalPlanResponse globalPlan,
+            TechnologicalMapResponse techMap,
+            List<Long> generatedPlanIds
+    ) {}
 
     private TechMapInGlobalPlan arrangeCurrentMonthTechMapForStructureGuard() {
         YearMonth current = allocateCurrentMonthIfFree();
@@ -615,7 +722,7 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
             return arrangeIsolatedTechMapInGlobalPlan(current);
         }
         if (currentMonthGuardPlan != null) {
-            return new TechMapInGlobalPlan(currentMonthGuardPlan, chain.getMapM1());
+            return new TechMapInGlobalPlan(currentMonthGuardPlan, chain.getMapM1(), List.of());
         }
         throw new SkipException("Поточний місяць зайнятий іншим глобальним планом, shared current-month GP немає");
     }
@@ -649,13 +756,14 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
                     .build();
             globalPlanFixture.decompose(created.getId(), decomposition);
             GenerationResponse generation = globalPlanFixture.generate(created.getId(), decomposition);
-            trackGeneratedPlans(generation.getPlans().stream()
+            List<Long> locationPlanIds = generation.getPlans().stream()
                     .map(gp -> gp.getPlan().getId())
-                    .toList());
+                    .toList();
+            trackGeneratedPlans(locationPlanIds);
 
             GlobalPlanResponse fetched = globalPlanFixture.getById(created.getId());
             assertThat(fetched.getDecomposition()).isNotNull();
-            return new TechMapInGlobalPlan(fetched, techMap);
+            return new TechMapInGlobalPlan(fetched, techMap, locationPlanIds);
         });
     }
 

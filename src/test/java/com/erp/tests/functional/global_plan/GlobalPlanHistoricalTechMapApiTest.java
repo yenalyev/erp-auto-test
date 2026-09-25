@@ -142,13 +142,14 @@ public class GlobalPlanHistoricalTechMapApiTest extends GlobalPlanApiTestBase {
 
     @Test(priority = 7)
     @TestCaseId("TC-GP-061")
-    @Story("Actual guard wins over historical snapshot")
+    @Story("Live archive guard coexists with structural versioning")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            **Мета:** якщо карта одночасно в snapshot минулого і актуального GP — діє гуард актуального.
-            Архів і зміна структури заборонені.
+            **Мета:** якщо карта одночасно в snapshot минулого і актуального GP, актуальний план
+            блокує archive, але structural edit дозволений і створює version+1.
             
             **Сид:** історичний GP (generate + backdate) + другий GP на майбутній місяць з тією ж M1.
+            **Очікування:** DELETE M1 → 400; structural PUT M1 → 200/M2; обидва snapshots лишають M1.
             """)
     public void testActualGlobalPlanGuardWinsWhenMapAlsoInHistoricalPlan() {
         requireJdbc();
@@ -166,19 +167,38 @@ public class GlobalPlanHistoricalTechMapApiTest extends GlobalPlanApiTestBase {
             assertThat(activeIds(mapM1.getName())).contains(mapM1.getId());
         });
 
-        Allure.step("Act: PUT структури M1 (очікувана відмова)", () -> {
+        Allure.step("Act: PUT структури M1 → version+1", () -> {
             TechnologicalMapResponse mapFetched = techMapFixture.getById(
                     UserRole.ADMIN, mapM1.getId(), l1StorageId);
             double originalAmount = mapFetched.getInput().getFirst().getAmount();
             TechnologicalMapRequest updateRequest = TechnologicalMapDataFactory.withFirstInputAmount(
                     mapFetched, originalAmount + 1.0);
             Response update = techMapFixture.updateTechMap(UserRole.ADMIN, mapM1.getId(), updateRequest);
-            techMapFixture.assertUsedInGlobalPlanRejection(update, livePlan.getDescription());
+            assertThat(update.statusCode()).isEqualTo(200);
 
-            TechnologicalMapResponse mapAfter = techMapFixture.getById(
+            TechnologicalMapResponse updateBody = update.as(TechnologicalMapResponse.class);
+            TechnologicalMapResponse newVersion = techMapFixture.getById(
+                    UserRole.ADMIN, updateBody.getId(), l1StorageId);
+            assertThat(newVersion.getId()).isNotEqualTo(mapFetched.getId());
+            assertThat(newVersion.getVersion()).isEqualTo(mapFetched.getVersion() + 1);
+            assertThat(newVersion.getInput().getFirst().getAmount()).isEqualTo(originalAmount + 1.0);
+
+            TechnologicalMapResponse oldVersion = techMapFixture.getById(
                     UserRole.ADMIN, mapM1.getId(), l1StorageId);
-            assertThat(mapAfter.getVersion()).isEqualTo(mapFetched.getVersion());
-            assertThat(mapAfter.getInput().getFirst().getAmount()).isEqualTo(originalAmount);
+            assertThat(oldVersion.getVersion()).isEqualTo(mapFetched.getVersion());
+            assertThat(oldVersion.getInput().getFirst().getAmount()).isEqualTo(originalAmount);
+            assertThat(activeIds(mapFetched.getName()))
+                    .contains(newVersion.getId())
+                    .doesNotContain(mapFetched.getId());
+
+            GlobalPlanResponse historical = globalPlanFixture.getById(context.seed().pastPlan().getId());
+            assertThat(GlobalPlanFixture.snapshotTechMapIds(historical))
+                    .contains(mapFetched.getId())
+                    .doesNotContain(newVersion.getId());
+            GlobalPlanResponse live = globalPlanFixture.getById(livePlan.getId());
+            assertThat(GlobalPlanFixture.snapshotTechMapIds(live))
+                    .contains(mapFetched.getId())
+                    .doesNotContain(newVersion.getId());
         });
     }
 

@@ -34,6 +34,20 @@
 - `decomposition` snapshot не мігрує автоматично й продовжує містити `id` попередньої версії;
 - у кожному актуальному глобальному плані ресурс треба призначити повторно на вкладці «Хто буде виробляти?» та ще раз згенерувати плани на локації.
 
+## Повторне призначення та перегенерація
+
+Одразу після structural edit існуючі location plans і snapshot не змінюються автоматично. Для актуального плану стара неактивна версія вже не є валідним assignment, тому `POST /global-plans/{id}/generate` зі stale snapshot повертає `400` і не замінює чинні location plans.
+
+Щоб застосувати нову версію:
+
+1. Відкрити той самий глобальний план і на вкладці «Хто буде виробляти?» замінити assignment старої версії на активну `version+1`.
+2. Виконати `POST /global-plans/{id}/decompose` з повною decomposition; відповідь має бути `complete=true`, options містять новий id і не містять старий неактивний id.
+3. Виконати `POST /global-plans/{id}/generate` з тією самою decomposition.
+4. Для кожної задіяної локації попередній місячний plan замінюється новим (`replaced=true`, новий plan id).
+5. Snapshot того самого GP тепер містить id нової версії й більше не містить старий id. Відповідно `GET /technological-maps/{id}/global-plans` перестає повертати GP для старої версії та повертає його для нової.
+
+Історичні snapshots не мігрують і продовжують посилатися на версію, з якою були згенеровані.
+
 ## Інформування UI
 
 Форма редагування викликає `GET /api/v1/technological-maps/{id}/global-plans`.
@@ -75,7 +89,8 @@ Endpoint:
 - `TC-GP-060` — після архівації replacement-карта працює у новому актуальному плані.
 - `TC-GP-053/058` — name-only update не змінює id/version для майбутнього й поточного місяця.
 - `TC-GP-054/059` — structural update дозволений; створюється version+1, стара версія неактивна, snapshot зберігає старий id.
-- `TC-GP-057/061/062` — structural edit історичних snapshot і взаємодія з новими актуальними планами.
+- `TC-GP-057/061/062` — historical snapshot, live archive guard, structural versioning і нові актуальні плани.
+- `TC-GP-064` — stale generate відхиляється; reassignment на version+1 і regenerate того самого GP замінюють location plan та оновлюють snapshot/live references.
 - `TC-GP-063` — endpoint актуальних GP повертає повні references і `[]` для невикористаної карти.
 - `TC-GP-UI-063` — warning, link, confirmation modal, successful PUT і незмінний snapshot у UI-flow.
 - `TC-GP-UI-064` — точний title/description/actions confirmation popup; cancel не створює нову версію.
@@ -83,6 +98,7 @@ Endpoint:
 DEV-перевірка 2026-09-25:
 
 - `TC-GP-063` і параметризований `TC-GP-054` для OWNER_1/ADMIN: `3 tests, 0 failures, 0 errors, 0 skipped`;
+- `TC-GP-061/064` historical+live versioning і перегенерація того самого GP: `2 tests, 0 failures, 0 errors, 0 skipped`;
 - `TC-GP-UI-063`: `1 test, 0 failures, 0 errors, 0 skipped`;
 - `TC-GP-UI-064` confirmation popup: `1 test, 0 failures, 0 errors, 0 skipped`; перевірено точний title/description/actions і відсутність version bump після «Скасувати»;
 - цільова перевірка архівації `TC-GP-046/049/056/060`: `6 tests, 0 failures, 0 errors, 0 skipped`; перевірено блокування для live snapshot, успішний archive без snapshot та з historical-only snapshot, а також replacement-flow у новому GP;
