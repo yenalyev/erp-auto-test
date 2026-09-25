@@ -301,6 +301,30 @@ public class TechnologicalMapFormPage extends BasePage {
         return reassignConfirmation().innerText().trim();
     }
 
+    public String getReassignConfirmationTitle() {
+        return reassignConfirmation().locator("[data-slot='alert-dialog-title']").innerText().trim();
+    }
+
+    public String getReassignConfirmationDescription() {
+        return reassignConfirmation().locator("[data-slot='alert-dialog-description']").innerText().trim();
+    }
+
+    public boolean isReassignConfirmationButtonVisible(String label) {
+        return reassignConfirmation()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(label).setExact(true))
+                .isVisible();
+    }
+
+    public TechnologicalMapFormPage dismissReassignConfirmation() {
+        reassignConfirmation()
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Скасувати").setExact(true))
+                .click();
+        reassignConfirmation().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.HIDDEN)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     public int confirmReassignAndSubmit() {
         try {
             var response = page.waitForResponse(

@@ -42,12 +42,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Feature("Global Plans UI")
 public class GlobalPlanTechMapEditUiTest extends BaseUITest {
 
-    private static final String TEST_ID = "TC-GP-UI-063";
+    private static final String STRUCTURAL_EDIT_TEST_ID = "TC-GP-UI-063";
+    private static final String NOTIFICATION_TEST_ID = "TC-GP-UI-064";
+    private static final List<String> UKRAINIAN_MONTHS = List.of(
+            "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень",
+            "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень");
 
     private GlobalPlanFixture globalPlanFixture;
     private TechnologicalMapFixture techMapFixture;
     private Long storageId;
-    private String techMapName;
+    private final List<String> techMapNamesToCleanup = new ArrayList<>();
     private final List<Long> globalPlanIdsToCleanup = new ArrayList<>();
     private final List<Long> generatedPlanIdsToCleanup = new ArrayList<>();
 
@@ -79,13 +83,15 @@ public class GlobalPlanTechMapEditUiTest extends BaseUITest {
                 }
             }
         }
-        if (techMapFixture != null && storageId != null && techMapName != null) {
-            for (TechnologicalMapResponse map : techMapFixture.getActiveTechMapsByName(
-                    storageId, UserRole.ADMIN, techMapName)) {
-                try {
-                    techMapFixture.deactivateTechMap(UserRole.ADMIN, map.getId(), storageId);
-                } catch (Exception e) {
-                    log.warn("Tech map cleanup failed for id {}: {}", map.getId(), e.getMessage());
+        if (techMapFixture != null && storageId != null) {
+            for (String techMapName : techMapNamesToCleanup) {
+                for (TechnologicalMapResponse map : techMapFixture.getActiveTechMapsByName(
+                        storageId, UserRole.ADMIN, techMapName)) {
+                    try {
+                        techMapFixture.deactivateTechMap(UserRole.ADMIN, map.getId(), storageId);
+                    } catch (Exception e) {
+                        log.warn("Tech map cleanup failed for id {}: {}", map.getId(), e.getMessage());
+                    }
                 }
             }
         }
@@ -94,8 +100,64 @@ public class GlobalPlanTechMapEditUiTest extends BaseUITest {
         }
     }
 
+    @Test(priority = 5)
+    @TestCaseId(NOTIFICATION_TEST_ID)
+    @Story("Confirmation popup for a tech map used by a live global plan")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** після структурної зміни техкарти з актуального global-plan snapshot і натискання
+            «Зберегти» UI показує confirmation popup про нову версію та повторний розподіл.
+
+            **Підготовка (API):** ізольована M1 + майбутній GP + decompose/generate зі snapshot M1.
+            **Очікування:** popup має точні title/description і кнопки «Скасувати»/«Зберегти»;
+            скасування закриває popup і не створює нову версію.
+            """)
+    public void structuralEditConfirmationShowsExactPopup() {
+        TechMapInPlan context = Allure.step(
+                "API arrange: ізольована M1 у snapshot майбутнього GP",
+                () -> arrangeTechMapInPlan("GP-UI-064-M1"));
+        TechnologicalMapResponse techMap = context.techMap();
+        GlobalPlanResponse globalPlan = context.globalPlan();
+
+        double originalInputAmount = techMap.getInput().getFirst().getAmount();
+        TechnologicalMapFormPage form = Allure.step("UI: відкрити M1 і викликати confirmation popup", () ->
+                new TechnologicalMapFormPage(page)
+                        .openUpdate(techMap.getId(), storageId)
+                        .waitForLiveGlobalPlanWarning(globalPlan.getDescription())
+                        .fillInputAmount(0, String.valueOf(originalInputAmount + 1.0))
+                        .requestStructuralUpdateConfirmation());
+
+        Allure.step("Assert: точний текст і кнопки popup", () -> {
+            String expectedDescription = normalizeWhitespace("""
+                    Розподіл у глобальних планах %s стане недійсним для цієї картки.
+
+                    Після збереження відкрийте кожен план, призначте ресурс знову й повторно
+                    згенеруйте плани на локації.
+                    """.formatted(globalPlanLabel(globalPlan)));
+
+            form.attachScreenshot(NOTIFICATION_TEST_ID + " — structural edit confirmation popup");
+            assertThat(form.isReassignConfirmationVisible()).isTrue();
+            assertThat(form.getReassignConfirmationTitle())
+                    .isEqualTo("Створити нову версію техкарти?");
+            assertThat(normalizeWhitespace(form.getReassignConfirmationDescription()))
+                    .isEqualTo(expectedDescription);
+            assertThat(form.isReassignConfirmationButtonVisible("Скасувати")).isTrue();
+            assertThat(form.isReassignConfirmationButtonVisible("Зберегти")).isTrue();
+        });
+
+        Allure.step("UI + API assert: скасувати popup без створення нової версії", () -> {
+            form.dismissReassignConfirmation();
+            assertThat(form.isReassignConfirmationVisible()).isFalse();
+
+            TechnologicalMapResponse afterCancel = techMapFixture.getById(
+                    UserRole.ADMIN, techMap.getId(), storageId);
+            assertThat(afterCancel.getVersion()).isEqualTo(techMap.getVersion());
+            assertThat(afterCancel.getInput().getFirst().getAmount()).isEqualTo(originalInputAmount);
+        });
+    }
+
     @Test(priority = 10)
-    @TestCaseId(TEST_ID)
+    @TestCaseId(STRUCTURAL_EDIT_TEST_ID)
     @Story("Confirm structural tech-map update used by a live global plan")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
@@ -108,17 +170,19 @@ public class GlobalPlanTechMapEditUiTest extends BaseUITest {
             створена активна version+1, а snapshot плану продовжує містити id M1.
             """)
     public void structuralEditShowsWarningAndCreatesNewVersionAfterConfirmation() {
-        TechMapInPlan context = Allure.step("API arrange: M1 у snapshot майбутнього GP", this::arrangeTechMapInPlan);
+        TechMapInPlan context = Allure.step(
+                "API arrange: M1 у snapshot майбутнього GP",
+                () -> arrangeTechMapInPlan("GP-UI-063-M1"));
         TechnologicalMapResponse oldVersion = context.techMap();
         GlobalPlanResponse globalPlan = context.globalPlan();
-        techMapName = oldVersion.getName();
+        String techMapName = oldVersion.getName();
         double newInputAmount = oldVersion.getInput().getFirst().getAmount() + 1.0;
 
         TechnologicalMapFormPage form = Allure.step("UI: відкрити M1 і перевірити warning з GP", () -> {
             TechnologicalMapFormPage opened = new TechnologicalMapFormPage(page)
                     .openUpdate(oldVersion.getId(), storageId)
                     .waitForLiveGlobalPlanWarning(globalPlan.getDescription());
-            opened.attachScreenshot(TEST_ID + " — live global plan warning");
+            opened.attachScreenshot(STRUCTURAL_EDIT_TEST_ID + " — live global plan warning");
             assertThat(opened.getLiveGlobalPlanWarningText())
                     .contains(globalPlan.getDescription())
                     .contains("доведеться перепризначити")
@@ -131,7 +195,7 @@ public class GlobalPlanTechMapEditUiTest extends BaseUITest {
         Allure.step("UI: structural change вимагає confirmation", () -> {
             form.fillInputAmount(0, String.valueOf(newInputAmount))
                     .requestStructuralUpdateConfirmation();
-            form.attachScreenshot(TEST_ID + " — structural update confirmation");
+            form.attachScreenshot(STRUCTURAL_EDIT_TEST_ID + " — structural update confirmation");
             assertThat(form.isReassignConfirmationVisible()).isTrue();
             assertThat(form.getReassignConfirmationText())
                     .contains("Створити нову версію техкарти?")
@@ -157,10 +221,11 @@ public class GlobalPlanTechMapEditUiTest extends BaseUITest {
         });
     }
 
-    private TechMapInPlan arrangeTechMapInPlan() {
+    private TechMapInPlan arrangeTechMapInPlan(String namePrefix) {
         IsolatedTechMapContext isolated = techMapFixture.createIsolatedProductionTechMap(
-                UserRole.ADMIN, storageId, "GP-UI-063-M1");
+                UserRole.ADMIN, storageId, namePrefix);
         TechnologicalMapResponse techMap = isolated.getTechMap();
+        techMapNamesToCleanup.add(techMap.getName());
         Long productId = isolated.getProduct().getId();
 
         YearMonth period = globalPlanFixture.nextUniquePeriod();
@@ -189,6 +254,19 @@ public class GlobalPlanTechMapEditUiTest extends BaseUITest {
         GlobalPlanResponse generated = globalPlanFixture.getById(globalPlan.getId());
         assertThat(GlobalPlanFixture.snapshotTechMapIds(generated)).contains(techMap.getId());
         return new TechMapInPlan(generated, techMap);
+    }
+
+    private static String normalizeWhitespace(String value) {
+        return value.replaceAll("\\s+", " ").trim();
+    }
+
+    private static String globalPlanLabel(GlobalPlanResponse globalPlan) {
+        String period = UKRAINIAN_MONTHS.get(globalPlan.getFrom().getMonthValue() - 1)
+                + " " + globalPlan.getFrom().getYear();
+        String description = globalPlan.getDescription() == null ? "" : globalPlan.getDescription().trim();
+        return !description.isBlank() && !description.equals(period)
+                ? description + " (" + period + ")"
+                : period;
     }
 
     private record TechMapInPlan(GlobalPlanResponse globalPlan, TechnologicalMapResponse techMap) {}

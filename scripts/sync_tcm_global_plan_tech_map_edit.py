@@ -186,6 +186,22 @@ core.CASES = [
             ("Підтвердити збереження.", "PUT=200; M2 active version+1; snapshot лишив id M1."),
         ),
     ),
+    case(
+        "TC-GP-UI-064",
+        "Confirmation popup під час редагування техкарти з глобального плану",
+        "Після structural edit і натискання «Зберегти» форма показує popup про versioning і повторний розподіл.",
+        "ADMIN; EDIT_ALLOWED; ізольована M1 у generated snapshot майбутнього GP.",
+        "Popup має точні title/description та кнопки; «Скасувати» не виконує PUT і не створює version+1.",
+        steps(
+            ("Створити й згенерувати майбутній GP зі snapshot M1.", "Snapshot містить id M1."),
+            ("Відкрити M1, змінити input amount і натиснути «Зберегти».", "Відкрито confirmation popup."),
+            (
+                "Перевірити title, description з назвою GP та кнопки popup.",
+                "Текст збігається дослівно; доступні «Скасувати» і «Зберегти».",
+            ),
+            ("Натиснути «Скасувати» і повторно прочитати M1 через API.", "Popup закрито; id/version/input amount не змінилися."),
+        ),
+    ),
 ]
 
 
