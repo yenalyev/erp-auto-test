@@ -41,6 +41,8 @@ public class ProductionAnalyticsPage extends BasePage {
     public static final String TAB_NON_SERIES = "Несерійне виробництво";
     private static final String PERIOD_LABEL = "Період";
     private static final String EMPTY_STATE = "Немає даних для відображення";
+    private static final String ONLY_MATERIALS_TEST_ID = "production-input-raw-resources-checkbox";
+    private static final String EXPENSE_SEARCH_PLACEHOLDER = "Пошук за назвою...";
 
     public ProductionAnalyticsPage(Page page) {
         super(page);
@@ -97,9 +99,16 @@ public class ProductionAnalyticsPage extends BasePage {
     }
 
     public ProductionAnalyticsPage openNonSeriesExpenses() {
+        return openExpenses(TAB_NON_SERIES);
+    }
+
+    public ProductionAnalyticsPage openExpenses(String productionType) {
         openStatisticsTab();
         tab(TAB_EXPENSES).click();
-        tab(TAB_NON_SERIES).click();
+        tab(productionType).click();
+        onlyMaterialsCheckbox().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
         return this;
     }
 
@@ -181,6 +190,56 @@ public class ProductionAnalyticsPage extends BasePage {
                 .trim();
     }
 
+    public boolean isExpenseResourceVisible(String resourceName) {
+        Locator row = page.getByRole(AriaRole.ROW)
+                .filter(new Locator.FilterOptions().setHasText(resourceName));
+        return row.count() > 0 && row.first().isVisible();
+    }
+
+    public boolean hasOnlyMaterialsControl() {
+        Locator checkbox = onlyMaterialsCheckbox();
+        Locator label = page.getByText("Лише матеріали", new Page.GetByTextOptions().setExact(true));
+        return checkbox.count() == 1 && checkbox.isVisible()
+                && label.count() > 0 && label.first().isVisible();
+    }
+
+    public boolean isOnlyMaterialsChecked() {
+        Locator checkbox = onlyMaterialsCheckbox();
+        return "checked".equals(checkbox.getAttribute("data-state"))
+                || "true".equals(checkbox.getAttribute("aria-checked"));
+    }
+
+    public ProductionAnalyticsPage setOnlyMaterials(boolean enabled) {
+        Locator checkbox = onlyMaterialsCheckbox();
+        checkbox.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        if (isOnlyMaterialsChecked() != enabled) {
+            checkbox.click();
+        }
+        return this;
+    }
+
+    public String onlyMaterialsTooltipText() {
+        Locator container = onlyMaterialsCheckbox().locator("xpath=parent::*");
+        Locator icon = container.locator("svg").last();
+        icon.hover();
+        Locator tooltip = page.getByRole(AriaRole.TOOLTIP);
+        tooltip.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return tooltip.innerText().trim();
+    }
+
+    public ProductionAnalyticsPage searchExpensesByName(String resourceName) {
+        Locator search = page.getByPlaceholder(EXPENSE_SEARCH_PLACEHOLDER);
+        search.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        search.fill(resourceName);
+        return this;
+    }
+
     public String statisticValueText(String label) {
         Locator labelNode = page.getByText(label, new Page.GetByTextOptions().setExact(true)).first();
         labelNode.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
@@ -207,12 +266,13 @@ public class ProductionAnalyticsPage extends BasePage {
             if (!downloads.isEmpty()) {
                 Download download = downloads.getFirst();
                 Path path = download.path();
-                return new ExportDownloadResult(download.suggestedFilename(), path.toFile().length(), path);
+                return new ExportDownloadResult(
+                        download.suggestedFilename(), path.toFile().length(), path, response.url());
             }
             byte[] body = response.body();
             Path path = Files.createTempFile("erp-production-analytics-", ".xlsx");
             Files.write(path, body);
-            return new ExportDownloadResult("production-analytics.xlsx", body.length, path);
+            return new ExportDownloadResult("production-analytics.xlsx", body.length, path, response.url());
         } catch (IOException e) {
             throw new IllegalStateException("Cannot persist production analytics export", e);
         } finally {
@@ -271,6 +331,10 @@ public class ProductionAnalyticsPage extends BasePage {
                 .locator("xpath=ancestor::div[contains(@class,'flex-col')][1]");
     }
 
+    private Locator onlyMaterialsCheckbox() {
+        return page.getByTestId(ONLY_MATERIALS_TEST_ID);
+    }
+
     private boolean isAccessForbidden() {
         return page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("403")).count() > 0
                 || page.getByText(AccessForbiddenPage.FORBIDDEN_MESSAGE).count() > 0;
@@ -327,5 +391,9 @@ public class ProductionAnalyticsPage extends BasePage {
                 tabs);
     }
 
-    public record ExportDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}
+    public record ExportDownloadResult(
+            String suggestedFilename,
+            long sizeBytes,
+            Path path,
+            String requestUrl) {}
 }

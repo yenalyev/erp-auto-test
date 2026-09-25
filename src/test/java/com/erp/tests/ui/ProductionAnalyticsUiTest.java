@@ -68,6 +68,8 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
     private static final BigDecimal EXPECTED_EXPENSE = new BigDecimal("14");
     private static final double JOURNAL_PRODUCTION_AMOUNT = 6.0;
     private static final int JOURNAL_SHIFT_WORKERS = 7;
+    private static final String MATERIAL_TOOLTIP =
+            "Матеріали — ресурси які не виготовляються і не мають активних техкарт";
 
     private final List<Long> nonSeriesProductionIds = new ArrayList<>();
     private LocationProfileFixture locationProfiles;
@@ -78,9 +80,13 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
     private ShiftFixture shifts;
     private TechnologicalMapFixture technologicalMaps;
     private StorageResponse location;
+    private StorageResponse techMapOnlyLocation;
     private ResourceResponse material;
+    private ResourceResponse inactiveMapMaterial;
+    private ResourceResponse activeMapResource;
     private final List<ResourceResponse> productionResources = new ArrayList<>();
     private TechnologicalMapResponse productionTechMap;
+    private TechnologicalMapResponse activeExpenseResourceTechMap;
     private ShiftResponse journalShift;
     private ManufacturingItemResponse journalProduction;
     private String firstProduct;
@@ -99,8 +105,9 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
         shifts = new ShiftFixture(testContext, apiExecutor);
         technologicalMaps = new TechnologicalMapFixture(testContext, apiExecutor);
 
-        location = locationProfiles.create(LocationProfile.TSUK_PRODUCTION, 1)
-                .locations().getFirst();
+        LocationProfileFixture.LocationSet locations = locationProfiles.create(LocationProfile.TSUK_PRODUCTION, 2);
+        location = locations.locations().getFirst();
+        techMapOnlyLocation = locations.locations().get(1);
         UserFixture.BusinessActor actor = users.createBusinessActor(
                 getPlaywrightSessionProvider(),
                 BusinessRole.BUSINESS_UNIT_OWNER,
@@ -116,8 +123,12 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
         resources.fetchSharedUnit(1);
         resources.fetchSharedResourceCategory();
         material = resources.createUniqueResource("analytics-nsp-material-");
-        new RelocationFixture(testContext, apiExecutor)
-                .seedExactStock(location.getId(), material.getId(), 50.0, ACTOR);
+        inactiveMapMaterial = resources.createUniqueResource("analytics-inactive-map-material-");
+        activeMapResource = resources.createUniqueResource("analytics-active-map-resource-");
+        RelocationFixture relocation = new RelocationFixture(testContext, apiExecutor);
+        relocation.seedExactStock(location.getId(), material.getId(), 50.0, ACTOR);
+        relocation.seedExactStock(location.getId(), inactiveMapMaterial.getId(), 50.0, ACTOR);
+        relocation.seedExactStock(location.getId(), activeMapResource.getId(), 50.0, ACTOR);
 
         firstProduct = "analytics-nsp-product-a-" + System.nanoTime();
         secondProduct = "analytics-nsp-product-b-" + System.nanoTime();
@@ -125,9 +136,26 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
         productionResources.add(resources.createUniqueResource("analytics-daily-input-a-"));
         productionResources.add(resources.createUniqueResource("analytics-daily-input-b-"));
         productionResources.add(resources.createUniqueResource("analytics-daily-product-"));
-        RelocationFixture relocation = new RelocationFixture(testContext, apiExecutor);
         relocation.seedExactStock(location.getId(), productionResources.get(0).getId(), 100.0, ACTOR);
         relocation.seedExactStock(location.getId(), productionResources.get(1).getId(), 100.0, ACTOR);
+        activeExpenseResourceTechMap = technologicalMaps.createTechMapWithRequest(
+                UserRole.ADMIN,
+                TechnologicalMapDataFactory.createProductionTechMap(
+                        List.of(
+                                productionResources.get(0),
+                                productionResources.get(1),
+                                activeMapResource),
+                        techMapOnlyLocation.getId()).build());
+        TechnologicalMapResponse inactiveMap = technologicalMaps.createTechMapWithRequest(
+                UserRole.ADMIN,
+                TechnologicalMapDataFactory.createProductionTechMap(
+                        List.of(
+                                productionResources.get(0),
+                                productionResources.get(1),
+                                inactiveMapMaterial),
+                        techMapOnlyLocation.getId()).build());
+        technologicalMaps.deactivateTechMap(
+                UserRole.ADMIN, inactiveMap.getId(), techMapOnlyLocation.getId());
         productionTechMap = technologicalMaps.createTechMapWithRequest(
                 UserRole.ADMIN,
                 TechnologicalMapDataFactory.createProductionTechMap(
@@ -152,6 +180,16 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
                 journalShift);
         createNonSeriesProduction(firstProduct, FIRST_PRODUCT_AMOUNT, FIRST_USAGE_PER_UNIT);
         createNonSeriesProduction(secondProduct, SECOND_PRODUCT_AMOUNT, SECOND_USAGE_PER_UNIT);
+        createNonSeriesProduction(
+                "analytics-inactive-map-product-" + System.nanoTime(),
+                1.0,
+                inactiveMapMaterial,
+                1.0);
+        createNonSeriesProduction(
+                "analytics-active-map-product-" + System.nanoTime(),
+                1.0,
+                activeMapResource,
+                1.0);
 
         log.info("Production analytics fixture: location={} ({}), actor={}, material={} ({}), "
                         + "journalProduction={}, product={}, shift={} workers={}",
@@ -191,6 +229,17 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
                 log.warn("Could not deactivate tech map {}: {}", productionTechMap.getId(), e.getMessage());
             }
         }
+        if (activeExpenseResourceTechMap != null) {
+            try {
+                technologicalMaps.deactivateTechMap(
+                        UserRole.ADMIN,
+                        activeExpenseResourceTechMap.getId(),
+                        techMapOnlyLocation.getId());
+            } catch (RuntimeException e) {
+                log.warn("Could not deactivate active-map expense tech map {}: {}",
+                        activeExpenseResourceTechMap.getId(), e.getMessage());
+            }
+        }
         if (locationProfiles != null) {
             locationProfiles.cleanup();
         }
@@ -198,6 +247,12 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
             List<ResourceResponse> createdResources = new ArrayList<>(productionResources);
             if (material != null) {
                 createdResources.add(material);
+            }
+            if (inactiveMapMaterial != null) {
+                createdResources.add(inactiveMapMaterial);
+            }
+            if (activeMapResource != null) {
+                createdResources.add(activeMapResource);
             }
             for (ResourceResponse resource : createdResources) {
                 try {
@@ -277,11 +332,11 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
         assertThat(categoryFiltered.url()).contains(String.valueOf(productionResources.get(2).getCategory().getId()));
         assertTimelineMatchesJournal(categoryFiltered, journalProduction);
 
-        Response locationFiltered = waitForTimelineResponse(
-                () -> analytics.selectDailyFilterOption("Локації", location.getName()));
-        log.info("Location-filtered timeline URL: {}", locationFiltered.url());
-        assertThat(locationFiltered.url()).contains(String.valueOf(location.getId()));
-        assertTimelineMatchesJournal(locationFiltered, journalProduction);
+        // selectedStorageId is injected before navigation, so the dynamic location is already
+        // an active filter. Re-selecting the same single option does not issue a new request.
+        log.info("Location-filtered timeline URL: {}", categoryFiltered.url());
+        assertThat(categoryFiltered.url()).contains("storageIds=" + location.getId());
+        assertTimelineMatchesJournal(categoryFiltered, journalProduction);
         analytics.attachScreenshot("TC-ANL-UI-008 — daily filters");
     }
 
@@ -348,6 +403,8 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
                 .isEqualByComparingTo(EXPECTED_EXPENSE);
         assertThat(materialRow.path("operations")).hasSize(2);
 
+        analytics.waitForExpenseResource(material.getName());
+        analytics.searchExpensesByName(material.getName());
         analytics.waitForExpenseResource(material.getName());
         assertThat(analytics.hasLoadError()).as("Помилка завантаження «Статистика»").isFalse();
         assertThat(decimalFrom(analytics.statisticValueText("Обсяг, шт")))
@@ -424,6 +481,119 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
         analytics.attachScreenshot("TC-ANL-UI-009 — statistics tabs and Excel export");
     }
 
+    @Test(priority = 50)
+    @TestCaseId("TC-ANL-UI-010")
+    @Story("Expenses — only materials control")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("""
+            Чекбокс «Лише матеріали» видимий для Виготовлення, Розбору та Несерійного
+            виробництва, за замовчуванням вимкнений, а InfoIcon показує погоджену підказку.
+            """)
+    public void onlyMaterialsCheckboxAndTooltipAreAvailableForEveryExpenseType() {
+        ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
+        analytics.periodPicker().selectPreset(DateRangePickerComponent.PRESET_7_DAYS);
+
+        for (String productionType : List.of(
+                ProductionAnalyticsPage.TAB_ASSEMBLY,
+                ProductionAnalyticsPage.TAB_DISASSEMBLY,
+                ProductionAnalyticsPage.TAB_NON_SERIES)) {
+            analytics.openExpenses(productionType);
+            assertThat(analytics.hasOnlyMaterialsControl())
+                    .as("Чекбокс для типу %s", productionType)
+                    .isTrue();
+            assertThat(analytics.isOnlyMaterialsChecked())
+                    .as("Початковий стан для %s", productionType)
+                    .isFalse();
+        }
+        assertThat(analytics.onlyMaterialsTooltipText()).isEqualTo(MATERIAL_TOOLTIP);
+        analytics.attachScreenshot("TC-ANL-UI-010 — only materials control and tooltip");
+    }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-ANL-UI-011")
+    @Story("Expenses — global active tech-map material filter")
+    @Severity(SeverityLevel.BLOCKER)
+    @Description("""
+            rawResources=true передається для всіх трьох типів витрат і зберігається між
+            перемиканнями. У non-series ресурс без техкарти та ресурс лише з неактивною
+            техкартою лишаються, а ресурс з активною техкартою іншої локації виключається.
+            """)
+    public void onlyMaterialsUsesGlobalActiveTechMapsAndPersistsAcrossTypes() throws Exception {
+        ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
+        analytics.periodPicker().selectPreset(DateRangePickerComponent.PRESET_7_DAYS);
+        analytics.openExpenses(ProductionAnalyticsPage.TAB_ASSEMBLY);
+
+        Response assembly = waitForExpenseResponse(
+                "/assembly/input?", true, () -> analytics.setOnlyMaterials(true));
+        assertRawResourcesRequest(assembly, true);
+
+        Response disassembly = waitForExpenseResponse(
+                "/disassembly/input?", true,
+                () -> analytics.openExpenses(ProductionAnalyticsPage.TAB_DISASSEMBLY));
+        assertRawResourcesRequest(disassembly, true);
+        assertThat(analytics.isOnlyMaterialsChecked()).isTrue();
+
+        Response nonSeries = waitForExpenseResponse(
+                "/non-serial/input?", true,
+                () -> analytics.openExpenses(ProductionAnalyticsPage.TAB_NON_SERIES));
+        assertRawResourcesRequest(nonSeries, true);
+        assertThat(analytics.isOnlyMaterialsChecked()).isTrue();
+
+        JsonNode filtered = JSON.readTree(nonSeries.text());
+        assertThat(findResourceRowOrNull(filtered, material.getId())).isNotNull();
+        assertThat(findResourceRowOrNull(filtered, inactiveMapMaterial.getId())).isNotNull();
+        assertThat(findResourceRowOrNull(filtered, activeMapResource.getId()))
+                .as("Активна техкарта іншої локації виключає ресурс глобально")
+                .isNull();
+
+        Response unfiltered = waitForExpenseResponse(
+                "/non-serial/input?", false, () -> analytics.setOnlyMaterials(false));
+        assertRawResourcesRequest(unfiltered, false);
+        assertThat(findResourceRowOrNull(JSON.readTree(unfiltered.text()), activeMapResource.getId()))
+                .as("Вимкнення фільтра повертає вироблюваний ресурс")
+                .isNotNull();
+        analytics.attachScreenshot("TC-ANL-UI-011 — global active tech-map filter");
+    }
+
+    @Test(priority = 70)
+    @TestCaseId("TC-ANL-UI-012")
+    @Story("Expenses — filtered Excel export")
+    @Severity(SeverityLevel.BLOCKER)
+    @Description("""
+            Excel враховує rawResources=true і локальний текст «Пошук за назвою…»: workbook містить
+            лише видимий матеріал, не містить інший матеріал і ресурс з активною техкартою.
+            """)
+    public void excelExportRespectsOnlyMaterialsAndExpenseSearch() throws Exception {
+        ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
+        analytics.periodPicker().selectPreset(DateRangePickerComponent.PRESET_7_DAYS);
+        analytics.openNonSeriesExpenses();
+        waitForExpenseResponse("/non-serial/input?", true, () -> analytics.setOnlyMaterials(true));
+
+        analytics.searchExpensesByName(material.getName());
+        analytics.waitForExpenseResource(material.getName());
+        assertThat(analytics.isExpenseResourceVisible(material.getName())).isTrue();
+        assertThat(analytics.isExpenseResourceVisible(inactiveMapMaterial.getName())).isFalse();
+
+        ProductionAnalyticsPage.ExportDownloadResult export = analytics.exportStatisticsToExcel();
+        try {
+            assertThat(export.requestUrl()).contains("rawResources=true");
+            UiDownloadAssertions.assertNonEmptyXlsx(
+                    export.path(), export.sizeBytes(), "Production Analytics filtered Excel");
+            Map<String, List<List<String>>> workbook = XlsxWorkbookReader.sheets(
+                    Files.readAllBytes(export.path()));
+            String workbookText = workbook.values().stream()
+                    .flatMap(List::stream)
+                    .flatMap(List::stream)
+                    .reduce("", (left, right) -> left + "\n" + right);
+            assertThat(workbookText)
+                    .contains(material.getName())
+                    .doesNotContain(inactiveMapMaterial.getName(), activeMapResource.getName());
+        } finally {
+            Files.deleteIfExists(export.path());
+        }
+        analytics.attachScreenshot("TC-ANL-UI-012 — filtered materials Excel");
+    }
+
     private Response waitForTimelineResponse(Runnable action) {
         return page.waitForResponse(
                 response -> response.url().contains("/production/analytic/assembly/timeline?")
@@ -457,15 +627,40 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
     }
 
     private void createNonSeriesProduction(String product, double amount, double usagePerUnit) {
+        createNonSeriesProduction(product, amount, material, usagePerUnit);
+    }
+
+    private void createNonSeriesProduction(
+            String product,
+            double amount,
+            ResourceResponse expenseResource,
+            double usagePerUnit) {
         NonSeriesProductionResponse created = nonSeriesProductions.createAs(
                 ACTOR,
                 location.getId(),
                 NonSeriesProductionStatus.DONE,
                 product,
                 amount,
-                material.getId(),
+                expenseResource.getId(),
                 usagePerUnit);
         nonSeriesProductionIds.add(created.getId());
+    }
+
+    private Response waitForExpenseResponse(
+            String endpointFragment,
+            boolean rawResources,
+            Runnable action) {
+        return page.waitForResponse(
+                response -> response.url().contains("/production/analytic" + endpointFragment)
+                        && response.url().contains("rawResources=true") == rawResources
+                        && "GET".equals(response.request().method()),
+                action);
+    }
+
+    private void assertRawResourcesRequest(Response response, boolean enabled) {
+        assertThat(response.status()).isEqualTo(200);
+        assertThat(response.url()).contains("parentStorageId=" + location.getId());
+        assertThat(response.url().contains("rawResources=true")).isEqualTo(enabled);
     }
 
     private void assertScopedResponse(Response response, String endpointFragment) {
@@ -485,6 +680,17 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
         }
         throw new AssertionError("Analytics response does not contain resourceId=" + resourceId
                 + "; body=" + rows);
+    }
+
+    private static JsonNode findResourceRowOrNull(JsonNode rows, long resourceId) {
+        if (rows != null && rows.isArray()) {
+            for (JsonNode row : rows) {
+                if (row.path("resourceId").asLong() == resourceId) {
+                    return row;
+                }
+            }
+        }
+        return null;
     }
 
     private static BigDecimal decimalFrom(String text) {
