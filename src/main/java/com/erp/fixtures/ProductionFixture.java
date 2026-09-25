@@ -14,6 +14,7 @@ import com.erp.models.response.BatchRecipeResponse;
 import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.ShiftResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
 import com.erp.utils.helpers.ProductionStockAssertions;
@@ -272,6 +273,36 @@ public class ProductionFixture extends BaseFixture {
                 request,
                 String.valueOf(storageId));
         validateSuccess(response, "Create production batch=" + batchNumber);
+        List<ManufacturingItemResponse> created = response.jsonPath()
+                .getList("", ManufacturingItemResponse.class);
+        if (created == null || created.isEmpty()) {
+            throw new IllegalStateException("Empty create production response");
+        }
+        return created.getFirst();
+    }
+
+    @Step("API: створити виробництво зі зміною «{shift.name}» — {amount} од., партія «{batchNumber}»")
+    public ManufacturingItemResponse createAsWithShift(UserRole role,
+                                                       Long storageId,
+                                                       TechnologicalMapResponse techMap,
+                                                       double amount,
+                                                       String batchNumber,
+                                                       java.time.LocalDate date,
+                                                       ShiftResponse shift) {
+        var request = ProductionDataFactory.buildCreateRequest(techMap, amount, date, batchNumber);
+        request.setShift(com.erp.models.request.ShiftSnapshotRequest.builder()
+                .shiftId(shift.getId())
+                .name(shift.getName())
+                .workerQty(shift.getWorkerQty())
+                .timeStart(shift.getTimeStart())
+                .timeEnd(shift.getTimeEnd())
+                .build());
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PRODUCTION_POST_CREATE,
+                role,
+                request,
+                String.valueOf(storageId));
+        validateSuccess(response, "Create production with shift, batch=" + batchNumber);
         List<ManufacturingItemResponse> created = response.jsonPath()
                 .getList("", ManufacturingItemResponse.class);
         if (created == null || created.isEmpty()) {

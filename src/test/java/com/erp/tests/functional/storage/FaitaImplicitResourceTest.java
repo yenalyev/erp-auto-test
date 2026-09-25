@@ -54,6 +54,8 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
     private static final String RESOURCE_PREFIX = "faita-impl-";
     private static final double ISSUE_AMOUNT = 15.0;
     private static final double WRITE_OFF_AMOUNT = 4.0;
+    private static final int IMPLICIT_1_COUNT = 2;
+    private static final int IMPLICIT_2_COUNT = 3;
     private static final UserRole STOCK_READER = UserRole.ADMIN;
 
     private boolean faitaApiAvailable;
@@ -143,10 +145,12 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
                         FaitaResourceResponse.builder()
                                 .resourceId(implicit1ExternalId)
                                 .resourceName(implicit1ExternalName)
+                                .count(IMPLICIT_1_COUNT)
                                 .build(),
                         FaitaResourceResponse.builder()
                                 .resourceId(implicit2ExternalId)
                                 .resourceName(implicit2ExternalName)
+                                .count(IMPLICIT_2_COUNT)
                                 .build()))
                 .build();
 
@@ -165,6 +169,10 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
         assertThat(saved.getImplicitResources())
                 .extracting(FaitaResourceResponse::getResourceId)
                 .containsExactlyInAnyOrder(implicit1ExternalId, implicit2ExternalId);
+        assertThat(FaitaResourceFixture.implicitCountsByExternalId(saved))
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        implicit1ExternalId, IMPLICIT_1_COUNT,
+                        implicit2ExternalId, IMPLICIT_2_COUNT));
 
         Response get = apiExecutor.execute(ApiEndpointDefinition.FAITA_RESOURCES_GET, UserRole.ADMIN);
         assertThat(get.statusCode()).isEqualTo(200);
@@ -178,6 +186,10 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
         assertThat(fromList.getImplicitResources())
                 .extracting(FaitaResourceResponse::getResourceId)
                 .containsExactlyInAnyOrder(implicit1ExternalId, implicit2ExternalId);
+        assertThat(FaitaResourceFixture.implicitCountsByExternalId(fromList))
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        implicit1ExternalId, IMPLICIT_1_COUNT,
+                        implicit2ExternalId, IMPLICIT_2_COUNT));
 
         if (getDbHelper() != null) {
             assertImplicitConfigInDb(productExternalId, implicit1ExternalId, implicit2ExternalId);
@@ -226,10 +238,15 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
                 productExternalId, productExternalName, WRITE_OFF_AMOUNT, sourceId);
         long impl1WoId = seedPendingCrewWriteOff(
                 crewId, implicitResource1.getId(), implicitResource1.getName(),
-                implicit1ExternalId, implicit1ExternalName, WRITE_OFF_AMOUNT, sourceId);
+                implicit1ExternalId, implicit1ExternalName,
+                WRITE_OFF_AMOUNT * IMPLICIT_1_COUNT, sourceId);
         long impl2WoId = seedPendingCrewWriteOff(
                 crewId, implicitResource2.getId(), implicitResource2.getName(),
-                implicit2ExternalId, implicit2ExternalName, WRITE_OFF_AMOUNT, sourceId);
+                implicit2ExternalId, implicit2ExternalName,
+                WRITE_OFF_AMOUNT * IMPLICIT_2_COUNT, sourceId);
+        assertWriteOffSourceIds(sourceId, productWoId, impl1WoId, impl2WoId);
+
+        List<Long> writeOffIds = List.of(productWoId, impl1WoId, impl2WoId);
 
         Response page = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.INVENTORY_WRITE_OFF_GET_PAGE,
@@ -239,27 +256,22 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
 
         List<Map<String, Object>> content = page.jsonPath().getList("content");
         assertThat(content).isNotNull();
-        Set<String> externalIdsOnPage = content.stream()
-                .map(row -> String.valueOf(row.get("externalResourceId")))
-                .collect(Collectors.toSet());
-        assertThat(externalIdsOnPage)
-                .as("Журнал з Файти має містити виріб і обидві додаткові номенклатури")
-                .contains(productExternalId, implicit1ExternalId, implicit2ExternalId);
-
         List<Map<String, Object>> seededRows = content.stream()
-                .filter(row -> Set.of(productExternalId, implicit1ExternalId, implicit2ExternalId)
-                        .contains(String.valueOf(row.get("externalResourceId"))))
+                .filter(row -> writeOffIds.contains(((Number) row.get("id")).longValue()))
                 .toList();
         assertThat(seededRows)
-                .as("Write-off виробу та додаткових номенклатур мають однакову кількість (як після SyncTeamProcess)")
-                .hasSizeGreaterThanOrEqualTo(3)
-                .allSatisfy(row -> assertThat(toDouble(row.get("amount")))
-                        .isEqualTo(WRITE_OFF_AMOUNT));
+                .as("API журнал має містити весь DB-seed набір")
+                .hasSize(3);
+        assertThat(amountByExternalId(seededRows))
+                .as("Write-off amounts мають відповідати amount(B) × count(A)")
+                .containsEntry(productExternalId, WRITE_OFF_AMOUNT)
+                .containsEntry(implicit1ExternalId, WRITE_OFF_AMOUNT * IMPLICIT_1_COUNT)
+                .containsEntry(implicit2ExternalId, WRITE_OFF_AMOUNT * IMPLICIT_2_COUNT);
 
         Response complete = apiExecutor.execute(
                 ApiEndpointDefinition.INVENTORY_WRITE_OFF_PUT_COMPLETE,
                 UserRole.ADMIN,
-                Map.of("writeOffIdentifiers", List.of(productWoId, impl1WoId, impl2WoId)));
+                Map.of("writeOffIdentifiers", writeOffIds));
         assertThat(complete.statusCode())
                 .as("PUT /write-off/complete має прийняти product + 2 implicit write-offs")
                 .isEqualTo(200);
@@ -272,10 +284,12 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
                 beforeFp, afterFp, flyPointId, productResource.getId(), WRITE_OFF_AMOUNT,
                 "complete product write-off списує з FLY_POINT");
         RelocationStockAssertions.assertDebitedFromSender(
-                beforeFp, afterFp, flyPointId, implicitResource1.getId(), WRITE_OFF_AMOUNT,
+                beforeFp, afterFp, flyPointId, implicitResource1.getId(),
+                WRITE_OFF_AMOUNT * IMPLICIT_1_COUNT,
                 "complete implicit-1 write-off списує з FLY_POINT");
         RelocationStockAssertions.assertDebitedFromSender(
-                beforeFp, afterFp, flyPointId, implicitResource2.getId(), WRITE_OFF_AMOUNT,
+                beforeFp, afterFp, flyPointId, implicitResource2.getId(),
+                WRITE_OFF_AMOUNT * IMPLICIT_2_COUNT,
                 "complete implicit-2 write-off списує з FLY_POINT");
     }
 
@@ -301,7 +315,9 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
                     .as("global implicit_resource_usage JSON")
                     .contains(productExternalId)
                     .contains(implicit1)
-                    .contains(implicit2);
+                    .contains(implicit2)
+                    .contains("\"count\":" + IMPLICIT_1_COUNT)
+                    .contains("\"count\":" + IMPLICIT_2_COUNT);
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to read implicit_resource_usage: " + e.getMessage(), e);
         }
@@ -346,6 +362,30 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
         }
     }
 
+    @Step("DB: assert write-offs share sourceId={sourceId}")
+    private void assertWriteOffSourceIds(String sourceId, long... writeOffIds) {
+        assertThat(writeOffIds).hasSize(3);
+        String sql = """
+                SELECT count(*)
+                FROM storage_item_write_off
+                WHERE source_id = ? AND id IN (?, ?, ?)
+                """;
+        try (PreparedStatement ps = getDbHelper().getConnection().prepareStatement(sql)) {
+            ps.setString(1, sourceId);
+            ps.setLong(2, writeOffIds[0]);
+            ps.setLong(3, writeOffIds[1]);
+            ps.setLong(4, writeOffIds[2]);
+            try (ResultSet rs = ps.executeQuery()) {
+                assertThat(rs.next()).isTrue();
+                assertThat(rs.getInt(1))
+                        .as("усі три write-off мають однаковий sourceId")
+                        .isEqualTo(3);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to verify write-off sourceId: " + e.getMessage(), e);
+        }
+    }
+
     private static String toJsonString(String value) {
         if (value == null) {
             return "\"\"";
@@ -363,4 +403,12 @@ public class FaitaImplicitResourceTest extends CrewApiTestBase {
         }
         return Double.parseDouble(String.valueOf(value));
     }
+
+    private static Map<String, Double> amountByExternalId(List<Map<String, Object>> rows) {
+        return rows.stream().collect(Collectors.toMap(
+                row -> String.valueOf(row.get("externalResourceId")),
+                row -> toDouble(row.get("amount")),
+                (first, ignored) -> first));
+    }
+
 }

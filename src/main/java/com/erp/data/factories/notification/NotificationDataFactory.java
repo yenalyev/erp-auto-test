@@ -18,8 +18,11 @@ public final class NotificationDataFactory {
     public static final String TYPE_WEB_PUSH = "WEB_PUSH";
     public static final String TEMPLATE_STOCK_RED = "stock_red";
     public static final String TEMPLATE_STOCK_YELLOW = "stock_yellow";
-    public static final String TEMPLATE_TECH_MAP = "tech_map_mode_changed";
+    public static final String TEMPLATE_ORDER_CREATED = "order_created";
+    public static final String TEMPLATE_PRODUCTION_ORDER_CREATED = "production_order_created";
     public static final String TEMPLATE_RELOCATION_INCOMING = "relocation_incoming";
+    public static final String REMOVED_TEMPLATE_INVOICE_GENERATED = "invoice_generated";
+    public static final String REMOVED_TEMPLATE_TECH_MAP_MODE_CHANGED = "tech_map_mode_changed";
 
     /** Special chars that may affect WhatsApp / templates (not JSON-critical). */
     public static String storageNameWithMarkupChars() {

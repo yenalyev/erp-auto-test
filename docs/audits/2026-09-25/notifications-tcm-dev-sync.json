@@ -1,0 +1,131 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [
+      "AC-09",
+      "AC-10",
+      "AC-11",
+      "AC-12"
+    ],
+    "updated": [
+      "AC-02"
+    ]
+  },
+  "testCases": {
+    "created": [
+      "TC-NOTIF-040",
+      "TC-NOTIF-041",
+      "TC-NOTIF-042",
+      "TC-NOTIF-050",
+      "TC-NOTIF-051",
+      "TC-NOTIF-UI-020",
+      "TC-NOTIF-UI-021"
+    ],
+    "updated": [
+      "TC-NOTIF-010"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-NOTIF",
+    "parentFeatureId": "REQ-INTEGRATION",
+    "status": "ACTIVE",
+    "documentationLength": 3490,
+    "documentationSha256": "feb643d57b35aad0b5b477b27e395ad5bad4094e4372bffd1bdbdb3d7a3353c8",
+    "sourceDocumentationSha256": "feb643d57b35aad0b5b477b27e395ad5bad4094e4372bffd1bdbdb3d7a3353c8",
+    "requiredAcPresent": true,
+    "managedAcCount": 5,
+    "managedCaseCount": 8,
+    "automatedCaseCount": 8,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-NOTIF-010": {
+        "featureId": "REQ-NOTIF",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NOTIF-010"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-NOTIF-040": {
+        "featureId": "REQ-NOTIF",
+        "acId": "AC-09",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NOTIF-040"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NOTIF-041": {
+        "featureId": "REQ-NOTIF",
+        "acId": "AC-09",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NOTIF-041"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NOTIF-042": {
+        "featureId": "REQ-NOTIF",
+        "acId": "AC-09",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NOTIF-042"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-NOTIF-050": {
+        "featureId": "REQ-NOTIF",
+        "acId": "AC-10",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NOTIF-050"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NOTIF-051": {
+        "featureId": "REQ-NOTIF",
+        "acId": "AC-11",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NOTIF-051"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NOTIF-UI-020": {
+        "featureId": "REQ-NOTIF",
+        "acId": "AC-12",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-NOTIF-UI-020"
+        ],
+        "stepCount": 2
+      },
+      "TC-NOTIF-UI-021": {
+        "featureId": "REQ-NOTIF",
+        "acId": "AC-12",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-NOTIF-UI-021"
+        ],
+        "stepCount": 2
+      }
+    }
+  },
+  "completedAt": "2026-09-25T07:20:57.485022+00:00",
+  "result": "SUCCESS"
+}

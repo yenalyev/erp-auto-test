@@ -165,9 +165,14 @@ public class FaitaResourceFixture extends BaseFixture {
     }
 
     public static FaitaResourceResponse implicitRef(String externalId, String externalName) {
+        return implicitRef(externalId, externalName, 1);
+    }
+
+    public static FaitaResourceResponse implicitRef(String externalId, String externalName, int count) {
         return FaitaResourceResponse.builder()
                 .resourceId(externalId)
                 .resourceName(externalName)
+                .count(count)
                 .build();
     }
 
@@ -196,5 +201,15 @@ public class FaitaResourceFixture extends BaseFixture {
         return product.getImplicitResources().stream()
                 .map(FaitaResourceResponse::getResourceId)
                 .toList();
+    }
+
+    public static java.util.Map<String, Integer> implicitCountsByExternalId(FaitaResourceResponse product) {
+        if (product.getImplicitResources() == null) {
+            return java.util.Map.of();
+        }
+        return product.getImplicitResources().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        FaitaResourceResponse::getResourceId,
+                        FaitaResourceResponse::getCount));
     }
 }

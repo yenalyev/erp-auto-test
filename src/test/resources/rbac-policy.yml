@@ -58,6 +58,13 @@ rules:
     deniedRoles: [ ANONYMOUS ]
     bodyType: null
 
+  - endpointName: "TECH_MAP_GET_LIVE_GLOBAL_PLANS"
+    contextKey: "DYNAMIC_TECH_MAP_ID"
+    allowedRoles: [ ADMIN, OWNER_1 ]
+    deniedRoles: [ ANONYMOUS ]
+    bodyType: null
+    description: "Актуальні глобальні плани техкарти: ADMIN та OWNER_1 з tech-map-list::read — так, ANONYMOUS — ні"
+
   - endpointName: "TECH_MAP_CREATE"
     allowedRoles: [ ADMIN ]
     deniedRoles: [ OWNER_1, ANONYMOUS ]

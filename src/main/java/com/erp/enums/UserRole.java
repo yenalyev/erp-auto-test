@@ -47,6 +47,8 @@ public enum UserRole {
     ORDER_ISOLATED_GATHERER,
     /** Ephemeral business-unit owner that executes production-order tasks for order E2E tests. */
     ORDER_PRODUCTION_WORKER,
+    /** Runtime-only slot for a freshly created location head; never resolves configured credentials. */
+    DYNAMIC_LOCATION_OWNER,
     ANONYMOUS;
 
     public String getUsername() {
@@ -70,6 +72,7 @@ public enum UserRole {
             case ORDER_SOURCE_KEEPER -> "order-source-keeper";
             case ORDER_ISOLATED_GATHERER -> "order-isolated-gatherer";
             case ORDER_PRODUCTION_WORKER -> "order-production-worker";
+            case DYNAMIC_LOCATION_OWNER -> "";
             case ANONYMOUS       -> "";
         };
     }
@@ -95,6 +98,7 @@ public enum UserRole {
             case ORDER_SOURCE_KEEPER -> "";
             case ORDER_ISOLATED_GATHERER -> "";
             case ORDER_PRODUCTION_WORKER -> "";
+            case DYNAMIC_LOCATION_OWNER -> "";
             case ANONYMOUS       -> "";
         };
     }
@@ -115,7 +119,7 @@ public enum UserRole {
                 long id = ConfigProvider.getOrderRequesterStorageId();
                 yield id > 0 ? String.valueOf(id) : "";
             }
-            case OWNER_3, ANONYMOUS -> "";
+            case OWNER_3, DYNAMIC_LOCATION_OWNER, ANONYMOUS -> "";
         };
     }
 }

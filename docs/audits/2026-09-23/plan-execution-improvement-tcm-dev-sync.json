@@ -16,7 +16,9 @@
     ]
   },
   "testCases": {
-    "created": [],
+    "created": [
+      "TC-UI-PLANEXEC-029"
+    ],
     "updated": [
       "TC-API-PLANEXEC-001",
       "TC-API-PLANEXEC-002",
@@ -44,13 +46,13 @@
     "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
     "parentFeatureId": null,
     "status": "ACTIVE",
-    "documentationLength": 25159,
-    "documentationSha256": "080b315718f9b80d91510c7a91cda50e81f0095c9e3a237e68cce9bf37915af0",
-    "sourceDocumentationSha256": "080b315718f9b80d91510c7a91cda50e81f0095c9e3a237e68cce9bf37915af0",
+    "documentationLength": 25921,
+    "documentationSha256": "b8f3ba10da4b4b679d6e1483f855e070fd6a83ac93e096be5e22d6e1b92e50ba",
+    "sourceDocumentationSha256": "b8f3ba10da4b4b679d6e1483f855e070fd6a83ac93e096be5e22d6e1b92e50ba",
     "requiredAcPresent": true,
     "managedAcCount": 6,
-    "managedCaseCount": 20,
-    "automatedCaseCount": 20,
+    "managedCaseCount": 21,
+    "automatedCaseCount": 21,
     "manualCaseCount": 0,
     "allCasesPresent": true,
     "documentationMatchesSource": true,
@@ -195,6 +197,16 @@
         ],
         "stepCount": 2
       },
+      "TC-UI-PLANEXEC-029": {
+        "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-PLANEXEC-029"
+        ],
+        "stepCount": 2
+      },
       "TC-UI-PLANEXEC-022": {
         "featureId": "REQ-PLAN-EXECUTION-IMPROVEMENT",
         "acId": "AC-01",
@@ -257,6 +269,6 @@
       }
     }
   },
-  "completedAt": "2026-09-23T11:08:34.923770+00:00",
+  "completedAt": "2026-09-23T13:28:30.674630+00:00",
   "result": "SUCCESS"
 }

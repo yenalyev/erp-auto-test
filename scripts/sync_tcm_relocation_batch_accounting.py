@@ -30,6 +30,7 @@ FEATURE_DESCRIPTION = (
     "отримання ресурсу, унікальність партії та загальна вартість форми"
 )
 FEATURE_MODULE = "EDIT_REL"
+FEATURE_PRIORITY = "CRITICAL"
 ROOT = Path(__file__).resolve().parent.parent
 DOCUMENTATION_PATH = ROOT / "docs" / "RELOCATION_BATCH_ACCOUNTING_TEST_PLAN.md"
 
@@ -320,7 +321,7 @@ def sync(client: TcmClient) -> dict[str, Any]:
         "description": FEATURE_DESCRIPTION,
         "documentation": documentation,
         "module": FEATURE_MODULE,
-        "priority": "CRITICAL",
+        "priority": FEATURE_PRIORITY,
         "status": "ACTIVE",
     }
     report: dict[str, Any] = {
@@ -366,7 +367,29 @@ def sync(client: TcmClient) -> dict[str, Any]:
         path = f"/api/ai/projects/{PROJECT_ID}/test-cases/{urllib.parse.quote(test_id, safe='')}"
         existing = client.get_optional(path)
         write_payload = dict(payload)
-        write_payload["acceptanceCriterionId"] = ac_ids[payload["acKey"]]
+        owner_feature_id = write_payload.pop("_ownerFeatureId", FEATURE_ID)
+        owner_ac_key = write_payload.pop("_ownerAcKey", payload["acKey"])
+        if owner_feature_id == FEATURE_ID:
+            owner_ac_id = ac_ids[owner_ac_key]
+        else:
+            owner_feature = client.request(
+                "GET", f"/api/ai/projects/{PROJECT_ID}/features/{owner_feature_id}"
+            )
+            owner_ac = next(
+                (
+                    item
+                    for item in owner_feature.get("acceptanceCriteria", [])
+                    if item["acId"] == owner_ac_key
+                ),
+                None,
+            )
+            if owner_ac is None:
+                raise RuntimeError(
+                    f"Missing owner AC {owner_feature_id}/{owner_ac_key} for {test_id}"
+                )
+            owner_ac_id = int(owner_ac["id"])
+        write_payload["featureId"] = owner_feature_id
+        write_payload["acceptanceCriterionId"] = owner_ac_id
         if existing is None:
             client.request("POST", f"/api/ai/projects/{PROJECT_ID}/test-cases", write_payload)
             report["testCases"]["created"].append(test_id)

@@ -36,6 +36,7 @@
             <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanHistoricalTechMapUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanTechMapEditUiTest"/>
         </classes>
     </test>
 </suite>

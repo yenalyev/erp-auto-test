@@ -18,7 +18,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserNotificationConfigResponse {
     @Builder.Default
-    private Map<String, Object> templates = new LinkedHashMap<>();
+    private Map<String, List<NotificationAvailableTemplateResponse>> templates = new LinkedHashMap<>();
     @Builder.Default
     private List<NotificationUserSubscriptionResponse> subscriptions = new ArrayList<>();
 }

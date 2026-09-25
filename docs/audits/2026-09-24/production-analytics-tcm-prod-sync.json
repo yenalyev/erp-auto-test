@@ -1,0 +1,96 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "feature": {
+    "created": true,
+    "updated": false
+  },
+  "acceptanceCriteria": {
+    "created": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05"
+    ],
+    "updated": []
+  },
+  "testCases": {
+    "created": [
+      "TC-ANL-UI-005",
+      "TC-ANL-UI-006",
+      "TC-ANL-UI-007",
+      "TC-ANL-UI-008",
+      "TC-ANL-UI-009"
+    ],
+    "updated": []
+  },
+  "verification": {
+    "featureId": "REQ-ANL-PRODUCTION",
+    "parentFeatureId": "REQ-ANL",
+    "status": "ACTIVE",
+    "documentationLength": 5386,
+    "documentationSha256": "7b5496a6ae3fabcf9ba0b970c0428a35397a4f1c170f8dd358b30f01bcf65f4f",
+    "sourceDocumentationSha256": "7b5496a6ae3fabcf9ba0b970c0428a35397a4f1c170f8dd358b30f01bcf65f4f",
+    "requiredAcPresent": true,
+    "managedAcCount": 5,
+    "managedCaseCount": 5,
+    "automatedCaseCount": 5,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-ANL-UI-005": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-005"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-006": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-006"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-007": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-007"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-008": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-008"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-009": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-009"
+        ],
+        "stepCount": 4
+      }
+    }
+  },
+  "completedAt": "2026-09-24T12:18:20.8021909Z",
+  "result": "SUCCESS"
+}

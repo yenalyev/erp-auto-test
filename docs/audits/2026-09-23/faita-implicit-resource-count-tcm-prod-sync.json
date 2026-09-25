@@ -1,0 +1,172 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [
+      "AC-04"
+    ],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03"
+    ]
+  },
+  "testCases": {
+    "created": [
+      "TC-FAITA-IMPL-004"
+    ],
+    "updated": [
+      "TC-FAITA-REC-001",
+      "TC-FAITA-REC-002",
+      "TC-FAITA-REC-003",
+      "TC-FAITA-IMPL-001",
+      "TC-FAITA-IMPL-002",
+      "TC-FAITA-IMPL-003",
+      "TC-UI-FAITA-001",
+      "TC-UI-FAITA-002",
+      "TC-UI-FAITA-003",
+      "TC-UI-FAITA-004"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-FAITA-001",
+    "parentFeatureId": "REQ-INTEGRATION",
+    "status": "ACTIVE",
+    "requiredAcPresent": true,
+    "managedAcCount": 4,
+    "managedCaseCount": 11,
+    "automatedCaseCount": 11,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "crossFeatureOwnershipPreserved": true,
+    "testCases": {
+      "TC-FAITA-REC-001": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-FAITA-REC-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2,
+        "title": "Створення 1 FAITA → 2 ERP"
+      },
+      "TC-FAITA-REC-002": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-FAITA-REC-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2,
+        "title": "Додавання третього ERP до зіставлення"
+      },
+      "TC-FAITA-REC-003": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-FAITA-REC-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2,
+        "title": "Видалення однієї з двох прив’язок"
+      },
+      "TC-FAITA-IMPL-001": {
+        "featureId": "REQ-CREW-003",
+        "acId": "AC-15",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-FAITA-IMPL-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2,
+        "title": "Збереження кількох implicit із різними count"
+      },
+      "TC-FAITA-IMPL-002": {
+        "featureId": "REQ-CREW-003",
+        "acId": "AC-15",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-FAITA-IMPL-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3,
+        "title": "DB-backed complete списує amount × count з FLY_POINT"
+      },
+      "TC-FAITA-IMPL-003": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-FAITA-IMPL-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2,
+        "title": "Full-list PUT видаляє одну implicit-позицію"
+      },
+      "TC-FAITA-IMPL-004": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-FAITA-IMPL-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2,
+        "title": "Редагування count без втрати сусідніх implicit"
+      },
+      "TC-UI-FAITA-001": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-FAITA-001"
+        ],
+        "stepCount": 2,
+        "title": "Список показує reconciliation та implicit count"
+      },
+      "TC-UI-FAITA-002": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-FAITA-002"
+        ],
+        "stepCount": 2,
+        "title": "Додавання другого ERP на картці"
+      },
+      "TC-UI-FAITA-003": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-FAITA-003"
+        ],
+        "stepCount": 2,
+        "title": "Видалення одного ERP на картці"
+      },
+      "TC-UI-FAITA-004": {
+        "featureId": "REQ-FAITA-001",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-FAITA-004"
+        ],
+        "stepCount": 4,
+        "title": "Валідація, додавання, редагування і видалення count"
+      }
+    }
+  },
+  "completedAt": "2026-09-23T15:30:56.346Z",
+  "result": "SUCCESS"
+}

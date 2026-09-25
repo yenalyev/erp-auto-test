@@ -1,0 +1,147 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-GP-16"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-GP-046",
+      "TC-GP-049",
+      "TC-GP-053",
+      "TC-GP-054",
+      "TC-GP-056",
+      "TC-GP-058",
+      "TC-GP-059",
+      "TC-GP-060",
+      "TC-GP-063",
+      "TC-GP-UI-063"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-GLOBAL-PLAN",
+    "parentFeatureId": "REQ-PLN",
+    "status": "ACTIVE",
+    "documentationLength": 4820,
+    "documentationSha256": "69551def7223086881f8b6a8a1befb8773462ea09eb4c0de1695d58318e4af62",
+    "sourceDocumentationSha256": "69551def7223086881f8b6a8a1befb8773462ea09eb4c0de1695d58318e4af62",
+    "requiredAcPresent": true,
+    "managedAcCount": 1,
+    "managedCaseCount": 10,
+    "automatedCaseCount": 10,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-GP-046": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-046"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-049": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-049"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-053": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-053"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-054": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-054"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-056": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-056"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-058": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-058"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-GP-059": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-059"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-060": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-060"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 5
+      },
+      "TC-GP-063": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-063"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-GP-UI-063": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-GP-UI-063"
+        ],
+        "stepCount": 3
+      }
+    }
+  },
+  "completedAt": "2026-09-25T07:09:30.942904+00:00",
+  "result": "SUCCESS"
+}

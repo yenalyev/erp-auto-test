@@ -22,6 +22,8 @@ public class FaitaResourceDetailPage extends BasePage {
     public static final String ADD_RESOURCE = "Додати ресурс";
     public static final String ASSIGN_RESOURCE = "Призначити ресурс";
     public static final String DIALOG_TITLE = "Знайдіть відповідний ресурс у системі";
+    public static final String ADD_IMPLICIT_DIALOG_TITLE = "Додати додатковий ресурс";
+    public static final String EDIT_IMPLICIT_DIALOG_TITLE = "Редагувати кількість";
 
     public FaitaResourceDetailPage(Page page) {
         super(page);
@@ -65,6 +67,11 @@ public class FaitaResourceDetailPage extends BasePage {
     public boolean isImplicitListed(String implicitName) {
         return card(IMPLICIT_CARD).getByText(implicitName).count() > 0
                 && card(IMPLICIT_CARD).getByText(implicitName).first().isVisible();
+    }
+
+    public boolean isImplicitCountListed(String implicitName, int count) {
+        Locator row = implicitRow(implicitName);
+        return row.count() > 0 && row.getByText("× " + count).count() > 0;
     }
 
     public boolean isImplicitAddVisible() {
@@ -111,10 +118,15 @@ public class FaitaResourceDetailPage extends BasePage {
     }
 
     public FaitaResourceDetailPage addImplicit(String implicitName) {
+        return addImplicit(implicitName, 1);
+    }
+
+    public FaitaResourceDetailPage addImplicit(String implicitName, int count) {
         card(IMPLICIT_CARD)
                 .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(ADD_RESOURCE))
                 .click();
-        Locator combo = card(IMPLICIT_CARD).getByRole(AriaRole.COMBOBOX);
+        Locator dialog = implicitDialog(ADD_IMPLICIT_DIALOG_TITLE);
+        Locator combo = dialog.getByRole(AriaRole.COMBOBOX);
         combo.click();
         page.getByPlaceholder("Пошук або нова назва...").fill(implicitName);
         waitForComboboxOptionsSettled();
@@ -122,14 +134,51 @@ public class FaitaResourceDetailPage extends BasePage {
                 .filter(new Locator.FilterOptions().setHasText(implicitName))
                 .first()
                 .click();
+        dialog.locator("input[type='number']").fill(String.valueOf(count));
         waitForResponseTolerant(
                 r -> r.url().contains("/implicit-resources") && "PUT".equalsIgnoreCase(r.request().method()),
-                () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Зберегти")).click(),
+                () -> dialog.getByRole(
+                        AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Зберегти")).click(),
                 "PUT implicit-resources");
         waitForConditionTolerant(
-                () -> isImplicitListed(implicitName),
-                "implicit name after save");
+                () -> isImplicitCountListed(implicitName, count),
+                "implicit name and count after save");
         return this;
+    }
+
+    public FaitaResourceDetailPage editImplicitCount(String implicitName, int count) {
+        implicitRow(implicitName).locator("button").first().click();
+        Locator dialog = implicitDialog(EDIT_IMPLICIT_DIALOG_TITLE);
+        dialog.locator("input[type='number']").fill(String.valueOf(count));
+        waitForResponseTolerant(
+                r -> r.url().contains("/implicit-resources") && "PUT".equalsIgnoreCase(r.request().method()),
+                () -> dialog.getByRole(
+                        AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Зберегти")).click(),
+                "PUT implicit-resources count update");
+        waitForConditionTolerant(
+                () -> isImplicitCountListed(implicitName, count),
+                "updated implicit count");
+        return this;
+    }
+
+    public boolean rejectsImplicitCount(String implicitName, String invalidCount) {
+        card(IMPLICIT_CARD)
+                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(ADD_RESOURCE))
+                .click();
+        Locator dialog = implicitDialog(ADD_IMPLICIT_DIALOG_TITLE);
+        dialog.getByRole(AriaRole.COMBOBOX).click();
+        page.getByPlaceholder("Пошук або нова назва...").fill(implicitName);
+        waitForComboboxOptionsSettled();
+        page.getByRole(AriaRole.OPTION)
+                .filter(new Locator.FilterOptions().setHasText(implicitName))
+                .first()
+                .click();
+        dialog.locator("input[type='number']").fill(invalidCount);
+        boolean rejected = dialog.getByText("Мінімальне значення — 1").isVisible()
+                && dialog.getByRole(
+                        AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Зберегти")).isDisabled();
+        dialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Скасувати")).click();
+        return rejected;
     }
 
     public FaitaResourceDetailPage removeImplicit(String implicitName) {
@@ -147,7 +196,23 @@ public class FaitaResourceDetailPage extends BasePage {
         row.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        row.locator("button").click();
+        row.locator("button").last().click();
+    }
+
+    private Locator implicitRow(String implicitName) {
+        return card(IMPLICIT_CARD).locator("li")
+                .filter(new Locator.FilterOptions().setHasText(implicitName))
+                .first();
+    }
+
+    private Locator implicitDialog(String title) {
+        Locator dialog = page.getByRole(AriaRole.DIALOG)
+                .filter(new Locator.FilterOptions().setHasText(title))
+                .first();
+        dialog.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return dialog;
     }
 
     private boolean isFaitaResourcesGet(com.microsoft.playwright.Response response) {

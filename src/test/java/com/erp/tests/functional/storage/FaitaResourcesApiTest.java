@@ -160,19 +160,66 @@ public class FaitaResourcesApiTest extends StorageApiTestBase {
 
         FaitaResourceResponse saved = faitaFixture.putImplicitResources(
                 productId, productName, List.of(
-                        FaitaResourceFixture.implicitRef(impl1Id, impl1Name),
-                        FaitaResourceFixture.implicitRef(impl2Id, impl2Name)));
+                        FaitaResourceFixture.implicitRef(impl1Id, impl1Name, 2),
+                        FaitaResourceFixture.implicitRef(impl2Id, impl2Name, 4)));
         assertThat(FaitaResourceFixture.implicitExternalIds(saved))
                 .containsExactlyInAnyOrder(impl1Id, impl2Id);
+        assertThat(FaitaResourceFixture.implicitCountsByExternalId(saved))
+                .containsEntry(impl1Id, 2)
+                .containsEntry(impl2Id, 4);
 
         FaitaResourceResponse remaining = faitaFixture.putImplicitResources(
-                productId, productName, List.of(FaitaResourceFixture.implicitRef(impl1Id, impl1Name)));
+                productId, productName, List.of(FaitaResourceFixture.implicitRef(impl1Id, impl1Name, 2)));
         assertThat(FaitaResourceFixture.implicitExternalIds(remaining))
                 .containsExactly(impl1Id);
+        assertThat(FaitaResourceFixture.implicitCountsByExternalId(remaining))
+                .containsExactlyEntriesOf(java.util.Map.of(impl1Id, 2));
 
         FaitaResourceResponse fromList = faitaFixture.requireByExternalId(productId);
         assertThat(FaitaResourceFixture.implicitExternalIds(fromList))
                 .containsExactly(impl1Id);
+        assertThat(FaitaResourceFixture.implicitCountsByExternalId(fromList))
+                .containsExactlyEntriesOf(java.util.Map.of(impl1Id, 2));
+    }
+
+    @Test(priority = 50)
+    @TestCaseId("TC-FAITA-IMPL-004")
+    @Description(StorageRegionsAllureDescriptions.TC_FAITA_IMPL_004)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testEditImplicitCountPreservesOtherResources() {
+        requireFaitaApi();
+        ResourceResponse productErp = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "count-p-");
+        ResourceResponse impl1Erp = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "count-i1-");
+        ResourceResponse impl2Erp = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "count-i2-");
+
+        String productId = faitaFixture.newExternalId("erp-count-");
+        String productName = "FAITA count product " + productId;
+        String impl1Id = faitaFixture.newExternalId("erp-count-a-");
+        String impl1Name = "FAITA count A " + impl1Id;
+        String impl2Id = faitaFixture.newExternalId("erp-count-c-");
+        String impl2Name = "FAITA count C " + impl2Id;
+
+        reconciliationIdsToCleanup.addAll(faitaFixture.createFlightReconciliation(
+                productId, productName, productErp.getId()));
+        reconciliationIdsToCleanup.addAll(faitaFixture.createFlightReconciliation(
+                impl1Id, impl1Name, impl1Erp.getId()));
+        reconciliationIdsToCleanup.addAll(faitaFixture.createFlightReconciliation(
+                impl2Id, impl2Name, impl2Erp.getId()));
+        implicitExternalIdsToClear.add(productId);
+
+        faitaFixture.putImplicitResources(productId, productName, List.of(
+                FaitaResourceFixture.implicitRef(impl1Id, impl1Name, 2),
+                FaitaResourceFixture.implicitRef(impl2Id, impl2Name, 3)));
+
+        FaitaResourceResponse updated = faitaFixture.putImplicitResources(productId, productName, List.of(
+                FaitaResourceFixture.implicitRef(impl1Id, impl1Name, 5),
+                FaitaResourceFixture.implicitRef(impl2Id, impl2Name, 3)));
+        assertThat(FaitaResourceFixture.implicitCountsByExternalId(updated))
+                .containsExactlyInAnyOrderEntriesOf(java.util.Map.of(impl1Id, 5, impl2Id, 3));
+
+        FaitaResourceResponse persisted = faitaFixture.requireByExternalId(productId);
+        assertThat(FaitaResourceFixture.implicitCountsByExternalId(persisted))
+                .containsExactlyInAnyOrderEntriesOf(java.util.Map.of(impl1Id, 5, impl2Id, 3));
     }
 
     private void requireFaitaApi() {

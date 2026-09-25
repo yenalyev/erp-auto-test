@@ -443,10 +443,10 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_STOCK;
 
     public static final String TC_FAITA_IMPL_001 = """
-            Що перевіряємо: PUT implicit-resources зберігає кілька додаткових номенклатур на один виріб (глобально).
-            Тестові дані: FLIGHT reconciliations для виробу + 2 implicit; ADMIN session.
-            Очікуваний результат: HTTP 200; response і GET /faita/resources містять обидва implicit id;
-            за наявності БД — sync_process_config.implicit_resource_usage містить усі три externalId.
+            Що перевіряємо: PUT implicit-resources зберігає кілька додаткових номенклатур та їх count.
+            Тестові дані: FLIGHT reconciliations для виробу + implicit A×2 і C×3; ADMIN session.
+            Очікуваний результат: HTTP 200; response і GET /faita/resources містять обидва id та count;
+            за наявності БД — sync_process_config.implicit_resource_usage містить externalId і count 2/3.
             """ + ON_FAIL_API;
 
     public static final String TC_FAITA_REC_001 = """
@@ -471,15 +471,21 @@ public final class StorageRegionsAllureDescriptions {
     public static final String TC_FAITA_IMPL_003 = """
             Що перевіряємо: PUT implicit-resources замінює повний набір — після 2 позицій PUT з однією
             прибирає другу. Суміжний TC-FAITA-IMPL-001 (збереження кількох) — REQ-CREW-003 AC-15.
-            Тестові дані: виріб + 2 implicit FAITA (кожний з FLIGHT reconciliation).
-            Очікуваний результат: response і GET list містять лише перший implicit id.
+            Тестові дані: виріб + 2 implicit FAITA з count 2/4 (кожний з FLIGHT reconciliation).
+            Очікуваний результат: response і GET list містять лише перший implicit id з count=2.
+            """ + ON_FAIL_API;
+
+    public static final String TC_FAITA_IMPL_004 = """
+            Що перевіряємо: редагування count одного implicit через full-list PUT не змінює сусідні зв'язки.
+            Тестові дані: B → A×2, C×3; повторний PUT передає A×5, C×3.
+            Очікуваний результат: PUT response і наступний GET містять A×5 та C×3 без втрати/дублювання.
             """ + ON_FAIL_API;
 
     public static final String TC_UI_FAITA_001 = """
             Що перевіряємо: UI /faita-resources — sidebar Екіпажі → Ресурси Файти; пошук за назвою;
             колонки ID / Назва / Зіставлення / Додаткові; фільтри типу.
             Тестові дані: виріб з 1 ERP і 1 implicit; ADMIN session.
-            Очікуваний результат: рядок знайдено, ERP та implicit назви видимі.
+            Очікуваний результат: рядок знайдено, ERP та implicit назви видимі; implicit показано як «назва × count».
             """ + ON_FAIL_UI;
 
     public static final String TC_UI_FAITA_002 = """
@@ -495,16 +501,16 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_UI;
 
     public static final String TC_UI_FAITA_004 = """
-            Що перевіряємо: картка → додаткові ресурси — додати інший виріб FAITA через combobox і прибрати «−».
-            Тестові дані: цільовий виріб зі зіставленням; другий FAITA-виріб як опція.
-            Очікуваний результат: після Зберегти назва в списку; після «−» порожньо.
+            Що перевіряємо: картка → додаткові ресурси — валідація, додавання count, редагування і видалення.
+            Тестові дані: цільовий виріб зі зіставленням; другий FAITA-виріб; count 0, 3, потім 5.
+            Очікуваний результат: 0 заблоковано без PUT; ресурс додано як ×3, змінено на ×5 і видалено «−».
             """ + ON_FAIL_UI;
 
     public static final String TC_FAITA_IMPL_002 = """
             Що перевіряємо: після usage (симуляція SyncTeamProcess) у журналі з'являються write-off виробу
-            і додаткових номенклатур з однаковим amount/sourceId; complete списує всі з FLY_POINT.
-            Тестові дані: attached CREW; stock виробу+2 implicit на FLY_POINT; DB seed 3 PENDING write-off.
-            Очікуваний результат: GET write-off page містить 3 externalId; після complete FLY_POINT −N для кожного.
+            та implicit A×2/C×3 зі спільним sourceId; complete списує всі з FLY_POINT.
+            Тестові дані: usage B=4; attached CREW; stock на FLY_POINT; DB seed write-off B=4, A=8, C=12.
+            Очікуваний результат: GET містить amounts 4/8/12; stock delta після complete дорівнює 4/8/12.
             """ + ON_FAIL_STOCK;
 
     public static final String TC_CREW_INC_001 = """

@@ -254,4 +254,3 @@
 3. Додати справжній API E2E через source tables і sync endpoint.
 4. Додати UI-01…UI-04.
 5. Закрити P1: idempotency, scope точки, retry, status transitions та часткові помилки.
-

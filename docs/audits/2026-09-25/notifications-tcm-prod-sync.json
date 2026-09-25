@@ -1,0 +1,46 @@
+{
+  "environment": "prod",
+  "featureId": "REQ-NOTIF",
+  "feature": {
+    "id": 90,
+    "title": "Система сповіщень",
+    "updated": true,
+    "documentationLength": 3490,
+    "documentationSha256": "feb643d57b35aad0b5b477b27e395ad5bad4094e4372bffd1bdbdb3d7a3353c8"
+  },
+  "acceptanceCriteria": {
+    "updated": [
+      {"acId": "AC-02", "id": 366}
+    ],
+    "created": [
+      {"acId": "AC-09", "id": 589},
+      {"acId": "AC-10", "id": 590},
+      {"acId": "AC-11", "id": 591},
+      {"acId": "AC-12", "id": 592}
+    ]
+  },
+  "testCases": {
+    "updated": [
+      {"testId": "TC-NOTIF-010", "id": 880, "acId": "AC-02", "automation": "api"}
+    ],
+    "created": [
+      {"testId": "TC-NOTIF-040", "id": 1452, "acId": "AC-09", "automation": "api"},
+      {"testId": "TC-NOTIF-041", "id": 1453, "acId": "AC-09", "automation": "api"},
+      {"testId": "TC-NOTIF-042", "id": 1454, "acId": "AC-09", "automation": "api"},
+      {"testId": "TC-NOTIF-050", "id": 1455, "acId": "AC-10", "automation": "api"},
+      {"testId": "TC-NOTIF-051", "id": 1456, "acId": "AC-11", "automation": "api"},
+      {"testId": "TC-NOTIF-UI-020", "id": 1457, "acId": "AC-12", "automation": "ui"},
+      {"testId": "TC-NOTIF-UI-021", "id": 1458, "acId": "AC-12", "automation": "ui"}
+    ]
+  },
+  "verification": {
+    "readAfterWrite": true,
+    "requiredAcPresent": true,
+    "allCasesPresent": true,
+    "managedAcCount": 5,
+    "managedCaseCount": 8,
+    "automatedCaseCount": 8
+  },
+  "completedAt": "2026-09-25T07:23:39.4979664Z",
+  "result": "SUCCESS"
+}

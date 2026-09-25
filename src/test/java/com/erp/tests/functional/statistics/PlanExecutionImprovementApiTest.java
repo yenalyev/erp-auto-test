@@ -203,8 +203,8 @@ public class PlanExecutionImprovementApiTest extends BaseFunctionalTest {
 
     @Test(priority = 50)
     @TestCaseId("TC-API-RES-007")
-    @Story("ADMIN can change a resource unit; production is split by unit and old unit does not satisfy new target")
-    public void unitChangeSplitsExecutionRows() {
+    @Story("ADMIN can change a resource unit; all production stays aggregated in the latest unit")
+    public void unitChangeKeepsOneAggregatedExecutionRow() {
         List<MeasurementUnitResponse> units = units();
         assertThat(units).as("At least two units are required for mixed-unit aggregation").hasSizeGreaterThanOrEqualTo(2);
         ResourceCategoryResponse category = categories().getFirst();
@@ -230,14 +230,11 @@ public class PlanExecutionImprovementApiTest extends BaseFunctionalTest {
                         "produced", row.getTotalProduced(),
                         "goal", row.getPlanGoal()))
                 .toList());
-        assertThat(rows).extracting(r -> r.getUnit().getId())
-                .containsExactlyInAnyOrder(units.get(0).getId(), units.get(1).getId());
-        PlanExecutionRowResponse oldUnit = rows.stream()
-                .filter(r -> Objects.equals(r.getUnit().getId(), units.get(0).getId())).findFirst().orElseThrow();
-        PlanExecutionRowResponse newUnit = rows.stream()
-                .filter(r -> Objects.equals(r.getUnit().getId(), units.get(1).getId())).findFirst().orElseThrow();
-        assertThat(oldUnit.getPlanGoal()).isZero();
-        assertThat(newUnit.getPlanGoal()).isEqualTo(10.0);
+        assertThat(rows).hasSize(1);
+        PlanExecutionRowResponse aggregated = rows.getFirst();
+        assertThat(aggregated.getUnit().getId()).isEqualTo(units.get(1).getId());
+        assertThat(aggregated.getTotalProduced()).isEqualTo(5.0);
+        assertThat(aggregated.getPlanGoal()).isEqualTo(10.0);
     }
 
     private StorageResponse isolatedStorage() {

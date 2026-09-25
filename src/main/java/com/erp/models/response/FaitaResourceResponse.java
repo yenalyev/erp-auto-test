@@ -21,6 +21,12 @@ import java.util.List;
 public class FaitaResourceResponse {
     private String resourceId;
     private String resourceName;
+    /**
+     * Multiplier for an implicit resource. Top-level FAITA resources do not expose this field,
+     * while legacy implicit records without it are interpreted as one by the API.
+     */
+    @Builder.Default
+    private Integer count = 1;
     @Builder.Default
     private List<ResourceReconciliationResponse> reconciliations = new ArrayList<>();
     @Builder.Default

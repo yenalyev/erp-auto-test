@@ -1,0 +1,104 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-GP-16"
+    ]
+  },
+  "testCases": {
+    "created": [
+      "TC-GP-063",
+      "TC-GP-UI-063"
+    ],
+    "updated": [
+      "TC-GP-053",
+      "TC-GP-054",
+      "TC-GP-058",
+      "TC-GP-059"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-GLOBAL-PLAN",
+    "parentFeatureId": "REQ-PLN",
+    "status": "ACTIVE",
+    "documentationLength": 3623,
+    "documentationSha256": "0668aea62e817807771189755d98d991ead229e834c4aac2d203e3e20f2e4b77",
+    "sourceDocumentationSha256": "0668aea62e817807771189755d98d991ead229e834c4aac2d203e3e20f2e4b77",
+    "requiredAcPresent": true,
+    "managedAcCount": 1,
+    "managedCaseCount": 6,
+    "automatedCaseCount": 6,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-GP-053": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-053"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-054": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-054"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-058": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-058"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-GP-059": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-059"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-GP-063": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-GP-063"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-GP-UI-063": {
+        "featureId": "REQ-GLOBAL-PLAN",
+        "acId": "AC-GP-16",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-GP-UI-063"
+        ],
+        "stepCount": 3
+      }
+    }
+  },
+  "completedAt": "2026-09-25T06:39:48.512327+00:00",
+  "result": "SUCCESS"
+}

@@ -14,6 +14,7 @@ import com.erp.models.request.GlobalPlanRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.DecompositionResponse;
 import com.erp.models.response.GenerationResponse;
+import com.erp.models.response.GlobalPlanRefResponse;
 import com.erp.models.response.GlobalPlanResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.validators.SchemaRegistry;
@@ -34,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @Epic("Production Planning")
 @Feature("Global Plans")
-@Story("Tech map deactivation guard")
+@Story("Tech map lifecycle in global plans")
 public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBase {
 
     private TechnologicalMapFixture techMapFixture;
@@ -178,6 +179,40 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         });
     }
 
+    @Test(priority = 14)
+    @TestCaseId("TC-GP-063")
+    @Story("Current and future global plan references")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            **Мета:** endpoint форми редагування повертає актуальні глобальні плани, snapshot яких
+            посилається на техкарту, і повертає порожній список для невикористаної карти.
+
+            **Ендпоінт:** `GET /api/v1/technological-maps/{id}/global-plans`
+
+            **Arrange:** ізольовані M1 і M-unused; майбутній GP + generate зі snapshot M1.
+            **Очікування:** для M1 повертається GP з id/description/from/to; для M-unused — `[]`.
+            """)
+    public void testLiveGlobalPlansEndpointReturnsReferencedPlansAndEmptyForUnusedMap() {
+        TechMapInGlobalPlan context = arrangeIsolatedTechMapInGlobalPlan();
+        IsolatedTechMapContext unused = techMapFixture.createIsolatedProductionTechMap(
+                UserRole.ADMIN, l1StorageId, "GP-063-unused");
+
+        List<GlobalPlanRefResponse> references = techMapFixture.getLiveGlobalPlans(
+                UserRole.ADMIN, context.techMap().getId());
+
+        assertThat(references)
+                .singleElement()
+                .satisfies(reference -> {
+                    assertThat(reference.getId()).isEqualTo(context.globalPlan().getId());
+                    assertThat(reference.getDescription()).isEqualTo(context.globalPlan().getDescription());
+                    assertThat(reference.getFrom()).isEqualTo(context.globalPlan().getFrom());
+                    assertThat(reference.getTo()).isEqualTo(context.globalPlan().getTo());
+                });
+        assertThat(techMapFixture.getLiveGlobalPlans(UserRole.ADMIN, unused.getTechMap().getId()))
+                .as("Невикористана карта не має актуальних GP references")
+                .isEmpty();
+    }
+
     @Test(priority = 15, dataProvider = "ownerAndAdminRoles")
     @TestCaseId("TC-GP-053")
     @Story("Name update allowed in global plan")
@@ -218,22 +253,21 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
 
     @Test(priority = 16, dataProvider = "ownerAndAdminRoles")
     @TestCaseId("TC-GP-054")
-    @Story("Structural update blocked by global plan")
+    @Story("Structural update allowed in future global plan")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            **Мета:** заборонити PUT, що змінює структуру техкарти (input/output/groups), якщо вона в snapshot
-            глобального плану — така зміна створила б нову версію (новий id), що зламає decomposition.
+            **Мета:** дозволити PUT структури техкарти (input/output/groups), якщо вона в snapshot
+            майбутнього глобального плану. Зміна створює нову активну версію, а snapshot лишається
+            незмінним і потребує перепризначення у wizard.
             
             **Ендпоінт:** `PUT /api/v1/technological-maps/{id}`
             
             **Arrange:** ізольована техкарта + global plan + generate (не shared M1 — structural PUT може деактивувати map).
             **Act:** PUT — змінити норму першого input (version bump).
-            **Очікування:** HTTP 400; id, version і input без змін.
-            
-            **Відомий дефект (dev):** guard відсутній на structural PUT — можливий 200 і createNewVersion.
-            Тест — regression до фіксу в `tk`.
+            **Очікування:** HTTP 200; новий id, version+1 і нова норма; стара версія неактивна,
+            але id старої версії збережений у decomposition snapshot.
             """)
-    public void testCannotUpdateTechMapStructureWhenUsedInFutureGlobalPlan(UserRole role) {
+    public void testCanUpdateTechMapStructureWhenUsedInFutureGlobalPlan(UserRole role) {
         TechMapInGlobalPlan context = arrangeIsolatedTechMapInGlobalPlan();
         GlobalPlanResponse globalPlan = context.globalPlan();
         TechnologicalMapResponse mapBefore = context.techMap();
@@ -247,24 +281,40 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         long activeCountBefore = techMapFixture.countActiveTechMapsByName(
                 l1StorageId, UserRole.ADMIN, mapFetched.getName());
 
-        Response response = Allure.step(role + ": PUT change input amount (expected failure)", () ->
+        Response response = Allure.step(role + ": PUT change input amount (expected new version)", () ->
                 techMapFixture.updateTechMap(role, mapBefore.getId(), updateRequest));
 
-        Allure.step("Assert: відмова через глобальний план «" + globalPlan.getDescription() + "»", () -> {
-            techMapFixture.assertUsedInGlobalPlanRejection(response, globalPlan.getDescription());
+        Allure.step("Assert: створено нову версію, snapshot лишив старий id", () -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+            TechnologicalMapResponse newVersion = response.as(TechnologicalMapResponse.class);
+            assertThat(newVersion.getId()).isNotEqualTo(mapFetched.getId());
+            assertThat(newVersion.getVersion()).isEqualTo(mapFetched.getVersion() + 1);
+            assertThat(newVersion.getInput().getFirst().getAmount()).isEqualTo(modifiedAmount);
 
-            TechnologicalMapResponse mapAfter = techMapFixture.getById(
+            TechnologicalMapResponse persistedNewVersion = techMapFixture.getById(
+                    UserRole.ADMIN, newVersion.getId(), l1StorageId);
+            assertThat(persistedNewVersion.getInput().getFirst().getAmount()).isEqualTo(modifiedAmount);
+
+            TechnologicalMapResponse oldVersion = techMapFixture.getById(
                     UserRole.ADMIN, mapBefore.getId(), l1StorageId);
-            assertThat(mapAfter.getVersion())
-                    .as("Version не має змінитись")
+            assertThat(oldVersion.getVersion())
+                    .as("Стара version лишається immutable")
                     .isEqualTo(mapFetched.getVersion());
-            assertThat(mapAfter.getInput().getFirst().getAmount())
-                    .as("Норма input не має змінитись")
+            assertThat(oldVersion.getInput().getFirst().getAmount())
+                    .as("Стара норма лишається в snapshot-версії")
                     .isEqualTo(originalAmount);
             assertThat(techMapFixture.countActiveTechMapsByName(
                     l1StorageId, UserRole.ADMIN, mapFetched.getName()))
-                    .as("Не має з'явитись нова активна версія")
+                    .as("Активна лише нова версія")
                     .isEqualTo(activeCountBefore);
+            assertThat(activeTechMapIdsByName(mapFetched.getName()))
+                    .contains(newVersion.getId())
+                    .doesNotContain(mapFetched.getId());
+
+            GlobalPlanResponse planAfter = globalPlanFixture.getById(globalPlan.getId());
+            assertThat(snapshotTechMapIds(planAfter))
+                    .contains(mapFetched.getId())
+                    .doesNotContain(newVersion.getId());
         });
     }
 
@@ -302,18 +352,20 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         });
     }
 
-    @Test(priority = 18, dataProvider = "ownerAndAdminRoles")
+    @Test(priority = 18)
     @TestCaseId("TC-GP-059")
-    @Story("Structural update blocked by current-month global plan")
+    @Story("Structural update allowed in current-month global plan")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            **Мета:** заборонити PUT структури для карти в snapshot актуального GP **поточного** місяця.
+            **Мета:** дозволити PUT структури для карти в snapshot актуального GP **поточного** місяця.
             Пара до TC-GP-054 (майбутній місяць).
             
             Якщо поточний місяць вільний — ізольована карта + generate.
             Якщо вже зайнятий TC-GP-047 — той самий current-month GP і shared M1.
+            Очікування: HTTP 200, новий id/version, старий id лишається в snapshot.
             """)
-    public void testCannotUpdateTechMapStructureWhenUsedInCurrentMonthGlobalPlan(UserRole role) {
+    public void testCanUpdateTechMapStructureWhenUsedInCurrentMonthGlobalPlan() {
+        UserRole role = UserRole.ADMIN;
         TechMapInGlobalPlan context = arrangeCurrentMonthTechMapForStructureGuard();
         GlobalPlanResponse globalPlan = context.globalPlan();
         TechnologicalMapResponse mapBefore = context.techMap();
@@ -328,24 +380,38 @@ public class GlobalPlanTechMapDeactivationGuardTest extends GlobalPlanApiTestBas
         long activeCountBefore = techMapFixture.countActiveTechMapsByName(
                 l1StorageId, UserRole.ADMIN, mapFetched.getName());
 
-        Response response = Allure.step(role + ": PUT change input amount in current-month GP (expected failure)", () ->
+        Response response = Allure.step(role + ": PUT change input amount in current-month GP", () ->
                 techMapFixture.updateTechMap(role, mapBefore.getId(), updateRequest));
 
-        Allure.step("Assert: відмова через GP поточного місяця «" + globalPlan.getDescription() + "»", () -> {
-            techMapFixture.assertUsedInGlobalPlanRejection(response, globalPlan.getDescription());
+        Allure.step("Assert: нова версія створена, current-month snapshot лишив старий id", () -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+            TechnologicalMapResponse newVersion = response.as(TechnologicalMapResponse.class);
+            assertThat(newVersion.getId()).isNotEqualTo(mapFetched.getId());
+            assertThat(newVersion.getVersion()).isEqualTo(mapFetched.getVersion() + 1);
+            assertThat(newVersion.getInput().getFirst().getAmount()).isEqualTo(modifiedAmount);
 
-            TechnologicalMapResponse mapAfter = techMapFixture.getById(
+            TechnologicalMapResponse persistedNewVersion = techMapFixture.getById(
+                    UserRole.ADMIN, newVersion.getId(), l1StorageId);
+            assertThat(persistedNewVersion.getInput().getFirst().getAmount()).isEqualTo(modifiedAmount);
+
+            TechnologicalMapResponse oldVersion = techMapFixture.getById(
                     UserRole.ADMIN, mapBefore.getId(), l1StorageId);
-            assertThat(mapAfter.getVersion())
-                    .as("Version не має змінитись")
+            assertThat(oldVersion.getVersion())
                     .isEqualTo(mapFetched.getVersion());
-            assertThat(mapAfter.getInput().getFirst().getAmount())
-                    .as("Норма input не має змінитись")
+            assertThat(oldVersion.getInput().getFirst().getAmount())
                     .isEqualTo(originalAmount);
             assertThat(techMapFixture.countActiveTechMapsByName(
                     l1StorageId, UserRole.ADMIN, mapFetched.getName()))
-                    .as("Не має з'явитись нова активна версія")
+                    .as("Активна лише нова версія")
                     .isEqualTo(activeCountBefore);
+            assertThat(activeTechMapIdsByName(mapFetched.getName()))
+                    .contains(newVersion.getId())
+                    .doesNotContain(mapFetched.getId());
+
+            GlobalPlanResponse planAfter = globalPlanFixture.getById(globalPlan.getId());
+            assertThat(snapshotTechMapIds(planAfter))
+                    .contains(mapFetched.getId())
+                    .doesNotContain(newVersion.getId());
         });
     }
 

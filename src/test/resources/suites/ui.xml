@@ -62,6 +62,7 @@
             <class name="com.erp.tests.ui.GlobalPlanDeleteUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanHistoricalTechMapUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanTechMapEditUiTest"/>
         </classes>
     </test>
 
@@ -137,7 +138,7 @@
 
     <test name="Production Analytics UI">
         <classes>
-            <class name="com.erp.tests.ui.ProductionAnalyticsDatePickerUiTest"/>
+            <class name="com.erp.tests.ui.ProductionAnalyticsUiTest"/>
             <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
         </classes>
     </test>

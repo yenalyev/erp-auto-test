@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 public class NotificationFixture extends BaseFixture {
@@ -196,37 +197,49 @@ public class NotificationFixture extends BaseFixture {
 
     @Step("API: підписати {role} на relocation_incoming для складу {storageId}")
     public void subscribeToRelocationIncoming(UserRole role, Long storageId) {
-        NotificationSubscriptionRequest request = NotificationDataFactory.subscription(
-                null,
-                NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING,
+        subscribeMy(role, NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING,
                 storageId != null ? List.of(storageId) : List.of());
+    }
+
+    @Step("API: підписати {role} на персональне сповіщення {templateCode}")
+    public void subscribeMy(UserRole role, String templateCode, List<Long> storageIds) {
+        NotificationSubscriptionRequest request = NotificationDataFactory.subscription(
+                null, templateCode, storageIds != null ? storageIds : List.of());
         // WEB_PUSH recipient is created asynchronously on first login — retry 404 briefly.
         com.erp.utils.helpers.PollUtils.waitUntilTrue(
                 () -> {
-                    Response response = apiExecutor.execute(
-                            ApiEndpointDefinition.NOTIFICATION_MY_SUBSCRIBE, role, request);
+                    Response response = subscribeMyRaw(role, request);
                     if (response.statusCode() >= 200 && response.statusCode() < 300) {
                         return true;
                     }
-                    log.info("Subscribe {} to relocation_incoming returned {} body={}",
-                            role, response.statusCode(), response.getBody().asString());
+                    log.info("Subscribe {} to {} returned {} body={}",
+                            role, templateCode, response.statusCode(), response.getBody().asString());
                     return false;
                 },
                 20_000,
-                "Subscribe " + role + " to relocation_incoming");
+                "Subscribe " + role + " to " + templateCode);
+    }
+
+    public Response subscribeMyRaw(UserRole role, NotificationSubscriptionRequest request) {
+        return apiExecutor.execute(ApiEndpointDefinition.NOTIFICATION_MY_SUBSCRIBE, role, request);
     }
 
     @Step("API: зняти підписку {role} з relocation_incoming")
     public void unsubscribeFromRelocationIncoming(UserRole role) {
+        unsubscribeMy(role, NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING);
+    }
+
+    @Step("API: зняти підписку {role} з персонального сповіщення {templateCode}")
+    public void unsubscribeMy(UserRole role, String templateCode) {
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.NOTIFICATION_MY_UNSUBSCRIBE,
                 role,
                 NotificationDataFactory.removeSubscription(
-                        null, NotificationDataFactory.TEMPLATE_RELOCATION_INCOMING));
+                        null, templateCode));
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             return;
         }
-        log.warn("Unsubscribe {} from relocation_incoming returned {}", role, response.statusCode());
+        log.warn("Unsubscribe {} from {} returned {}", role, templateCode, response.statusCode());
     }
 
     @Step("API: GET /notifications/my as {role}")
@@ -236,6 +249,20 @@ public class NotificationFixture extends BaseFixture {
         return response.as(UserNotificationConfigResponse.class);
     }
 
+    public List<String> availableMyTemplateCodes(UserRole role) {
+        return getMyConfiguration(role).getTemplates().values().stream()
+                .flatMap(List::stream)
+                .map(com.erp.models.response.NotificationAvailableTemplateResponse::getCode)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+    }
+
+    public boolean isMySubscribed(UserRole role, String templateCode) {
+        return getMyConfiguration(role).getSubscriptions().stream()
+                .anyMatch(subscription -> Objects.equals(templateCode, subscription.getTemplateCode()));
+    }
+
     @Step("API: GET browser-notifications as {role}")
     public List<PushNotificationResponse> listBrowserNotifications(UserRole role) {
         Response response = apiExecutor.execute(ApiEndpointDefinition.NOTIFICATION_BROWSER_GET, role);
@@ -243,6 +270,29 @@ public class NotificationFixture extends BaseFixture {
         List<PushNotificationResponse> list = ApiResponseHelper.parseList(
                 response, PushNotificationResponse.class, "GET browser notifications");
         return list != null ? list : List.of();
+    }
+
+    @Step("API: знайти browser-notification {templateCode} для {entityParam}={entityId}")
+    public PushNotificationResponse findBrowserNotification(
+            UserRole role, String templateCode, String entityParam, Long entityId) {
+        String expectedId = entityId == null ? null : String.valueOf(entityId);
+        Optional<PushNotificationResponse> matching = listBrowserNotifications(role).stream()
+                .filter(notification -> notification.getParams() != null)
+                .filter(notification -> templateCode.equals(notification.getParams().get("template_code")))
+                .filter(notification -> expectedId == null
+                        || expectedId.equals(notification.getParams().get(entityParam)))
+                .findFirst();
+        return matching.orElse(null);
+    }
+
+    @Step("Await: browser-notification {templateCode} для {entityParam}={entityId}")
+    public PushNotificationResponse awaitBrowserNotification(
+            UserRole role, String templateCode, String entityParam, Long entityId, long timeoutMs) {
+        return com.erp.utils.helpers.PollUtils.waitUntil(
+                () -> findBrowserNotification(role, templateCode, entityParam, entityId),
+                Objects::nonNull,
+                timeoutMs,
+                templateCode + " browser notification for " + entityParam + "=" + entityId);
     }
 
     @Step("API: знайти browser-notification relocation_id={relocationId}")

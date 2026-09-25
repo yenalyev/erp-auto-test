@@ -352,12 +352,14 @@ TCM status кейсів: **DEPRECATED**.
 
 ### AC-15 — FAITA implicit
 
-**TCM:** кілька implicit-номенклатур на виріб; usage списує з FP.
+**TCM:** кілька implicit-номенклатур на виріб; кожна має цілий `count ≥ 1`;
+usage Б у кількості `N` списує implicit А з FP у кількості `N × count(A)`.
 
 | TC | DB | Суть |
 |----|-----|------|
-| TC-FAITA-IMPL-001 | ні | PUT implicit-resources, перевірка list |
-| TC-FAITA-IMPL-002 | так | Write-offs у журналі + debit FP |
+| TC-FAITA-IMPL-001 | ні | PUT A×2/C×3, перевірка count у response/list |
+| TC-FAITA-IMPL-002 | так | DB seed B=4/A=8/C=12 у журналі + debit FP; sync endpoint не викликається |
+| TC-FAITA-IMPL-004 | ні | Редагування A×2→A×5 зі збереженням C×3 |
 
 ---
 

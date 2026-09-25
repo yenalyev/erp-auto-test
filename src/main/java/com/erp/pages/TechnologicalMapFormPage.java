@@ -269,9 +269,69 @@ public class TechnologicalMapFormPage extends BasePage {
         return this;
     }
 
+    public TechnologicalMapFormPage waitForLiveGlobalPlanWarning(String planDescription) {
+        liveGlobalPlanWarning()
+                .filter(new Locator.FilterOptions().setHasText(planDescription))
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public String getLiveGlobalPlanWarningText() {
+        return liveGlobalPlanWarning().innerText().trim();
+    }
+
+    public String getGlobalPlanLinkHref(long globalPlanId) {
+        return liveGlobalPlanWarning()
+                .locator("a[href='/global-plans/" + globalPlanId + "']")
+                .getAttribute("href");
+    }
+
+    public TechnologicalMapFormPage requestStructuralUpdateConfirmation() {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT_BUTTON_TEXT).setExact(true))
+                .click();
+        reassignConfirmation().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isReassignConfirmationVisible() {
+        return reassignConfirmation().isVisible();
+    }
+
+    public String getReassignConfirmationText() {
+        return reassignConfirmation().innerText().trim();
+    }
+
+    public int confirmReassignAndSubmit() {
+        try {
+            var response = page.waitForResponse(
+                    candidate -> candidate.url().contains("/api/v1/technological-maps/")
+                            && "PUT".equals(candidate.request().method()),
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                    () -> reassignConfirmation()
+                            .getByRole(AriaRole.BUTTON,
+                                    new Locator.GetByRoleOptions().setName(SUBMIT_BUTTON_TEXT).setExact(true))
+                            .click());
+            return response.status();
+        } catch (Exception e) {
+            throw new AssertionError("Structural tech-map update did not complete after confirmation", e);
+        }
+    }
+
     private Locator typeCombobox() {
         return page.getByRole(AriaRole.COMBOBOX).filter(new Locator.FilterOptions()
                 .setHasText(java.util.regex.Pattern.compile("Оберіть тип|Виготовлення|Розбирання")));
+    }
+
+    private Locator liveGlobalPlanWarning() {
+        return page.locator("div.bg-amber-50")
+                .filter(new Locator.FilterOptions().setHasText("Ця техкарта використовується в глобальних планах"))
+                .first();
+    }
+
+    private Locator reassignConfirmation() {
+        return page.locator("[role='alertdialog']")
+                .filter(new Locator.FilterOptions().setHasText("Створити нову версію техкарти?"))
+                .first();
     }
 
     private boolean isTypeValueLoaded() {

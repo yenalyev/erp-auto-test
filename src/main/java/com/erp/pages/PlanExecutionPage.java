@@ -544,16 +544,24 @@ public class PlanExecutionPage extends BasePage {
     }
 
     public PlanExecutionPage expandOutOfPlanSection() {
-        Locator toggle = outOfPlanToggle();
-        toggle.waitFor(new Locator.WaitForOptions()
+        outOfPlanToggle().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        if (outOfPlanTable().count() == 0 || !outOfPlanTable().first().isVisible()) {
-            toggle.click();
+        if (!"true".equalsIgnoreCase(outOfPlanToggle().getAttribute("aria-expanded"))) {
+            // Execution filters re-render the accordion trigger. A forced click on a freshly
+            // resolved locator avoids Playwright waiting on an element that React just detached.
+            outOfPlanToggle().click(new Locator.ClickOptions().setForce(true));
         }
-        outOfPlanTable().waitFor(new Locator.WaitForOptions()
-                .setState(WaitForSelectorState.VISIBLE)
-                .setTimeout(uiTimeoutMs()));
+        page.waitForCondition(
+                () -> {
+                    Locator currentToggle = outOfPlanToggle();
+                    return currentToggle.count() > 0
+                            && currentToggle.first().isVisible()
+                            && "true".equalsIgnoreCase(currentToggle.getAttribute("aria-expanded"))
+                            && outOfPlanTable().count() > 0
+                            && outOfPlanTable().first().isVisible();
+                },
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
 
@@ -577,24 +585,40 @@ public class PlanExecutionPage extends BasePage {
                 .filter(new Locator.FilterOptions().setHasText(productName)).count();
     }
 
+    /** Waits for the client-side product search to finish updating the out-of-plan rows. */
+    public PlanExecutionPage waitForOutOfPlanProductVisibility(String productName, boolean visible) {
+        page.waitForCondition(
+                () -> isOutOfPlanProductRowVisible(productName) == visible,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     /** Text of the aggregate row in the expanded «Поза планом» table. */
     public String getOutOfPlanFooterText() {
-        Locator footer = outOfPlanTable().locator("tfoot");
-        footer.waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(uiTimeoutMs()));
-        return footer.innerText().trim().replaceAll("\\s+", " ");
+        Locator total = outOfPlanTable().locator("tfoot")
+                .or(outOfPlanTable().locator("tr")
+                        .filter(new Locator.FilterOptions().setHasText("Разом")))
+                .first();
+        total.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return total.innerText().trim().replaceAll("\\s+", " ");
     }
 
     /** Applies one or more values in the execution-page category multiselect. */
     public PlanExecutionPage selectExecutionCategories(String... categoryNames) {
         Locator input = page.getByPlaceholder("Категорії").first();
+        input.click();
         for (String categoryName : categoryNames) {
-            input.click();
             page.waitForResponse(
                     r -> r.url().contains("/statistics/execution") && "POST".equals(r.request().method()),
                     () -> page.getByRole(AriaRole.OPTION,
                             new Page.GetByRoleOptions().setName(categoryName).setExact(true)).click());
         }
-        return waitForExecutionDataSettled();
+        waitForExecutionDataSettled();
+        // The fetch is complete before React commits the filtered table/empty state.
+        page.waitForTimeout(300);
+        return this;
     }
 
     public PlanExecutionPage searchExecutionProduct(String value) {
@@ -732,10 +756,14 @@ public class PlanExecutionPage extends BasePage {
     }
 
     public PlanExecutionPage clickFavouritesOnly() {
-        page.waitForResponse(
-                r -> r.url().contains("/statistics/execution") && "POST".equals(r.request().method()),
-                () -> favouritesOnlyButton().click());
-        return waitForExecutionDataSettled();
+        boolean pressedBefore = isFavouritesOnlyPressed();
+        favouritesOnlyButton().click();
+        page.waitForCondition(
+                () -> isFavouritesOnlyPressed() != pressedBefore,
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        // This toggle can be applied client-side without another execution request.
+        page.waitForTimeout(300);
+        return this;
     }
 
     /**
@@ -789,13 +817,20 @@ public class PlanExecutionPage extends BasePage {
                 .filter(new Locator.FilterOptions().setHasText(Pattern.compile("Активні|Архівні")))
                 .first();
         trigger.click();
-        page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(state).setExact(true)).click();
-        return waitForManageDialogReady();
+        String expectedState = "Архівні".equals(state) ? "isActive=false" : "isActive=true";
+        armManageDialogSpinnerObserver();
+        page.waitForResponse(
+                r -> r.url().contains("/resources/with-technological-map")
+                        && r.url().contains(expectedState)
+                        && "GET".equals(r.request().method()),
+                () -> page.getByRole(AriaRole.OPTION,
+                        new Page.GetByRoleOptions().setName(state).setExact(true)).click());
+        return waitForManageDialogReload();
     }
 
     public PlanExecutionPage selectManageDialogCategory(String categoryName) {
-        Locator input = manageFavouritesDialog().getByPlaceholder("Категорії").first();
-        input.click();
+        Locator categorySelect = manageFavouritesDialog().getByRole(AriaRole.COMBOBOX).first();
+        categorySelect.click();
         page.waitForResponse(
                 r -> r.url().contains("/resources/with-technological-map") && "GET".equals(r.request().method()),
                 () -> page.getByRole(AriaRole.OPTION,
@@ -813,10 +848,12 @@ public class PlanExecutionPage extends BasePage {
      */
     public PlanExecutionPage filterManageDialogByName(String nameFragment) {
         Locator input = manageFavouritesDialog().getByPlaceholder("Фільтр за назвою");
+        armManageDialogSpinnerObserver();
         page.waitForResponse(
                 r -> r.url().contains("/resources/with-technological-map")
                         && "GET".equals(r.request().method()),
                 () -> input.fill(nameFragment));
+        waitForManageDialogReload();
         manageDialogProductRow(nameFragment).first().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
@@ -832,11 +869,37 @@ public class PlanExecutionPage extends BasePage {
     /** Name filter variant for negative/archived searches where an empty result is a valid settled state. */
     public PlanExecutionPage filterManageDialogByNameAllowEmpty(String nameFragment) {
         Locator input = manageFavouritesDialog().getByPlaceholder("Фільтр за назвою");
+        armManageDialogSpinnerObserver();
         page.waitForResponse(
                 r -> r.url().contains("/resources/with-technological-map")
                         && "GET".equals(r.request().method()),
                 () -> input.fill(nameFragment));
-        return waitForManageDialogReady();
+        return waitForManageDialogReload();
+    }
+
+    /** Filters by name and returns the catalog request URL for asserting name/isActive params. */
+    public String filterManageDialogByNameAndCaptureRequestUrl(String nameFragment) {
+        Locator input = manageFavouritesDialog().getByPlaceholder("Фільтр за назвою");
+        String expectedName = "name=" + java.net.URLEncoder.encode(
+                nameFragment, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
+        armManageDialogSpinnerObserver();
+        var response = page.waitForResponse(
+                r -> r.url().contains("/resources/with-technological-map")
+                        && r.url().contains(expectedName)
+                        && "GET".equals(r.request().method()),
+                () -> input.fill(nameFragment));
+        waitForManageDialogReload();
+        log.info("Manage favourites name-filter request: {}; response contains requested resource={}",
+                response.url(), response.text().contains(nameFragment));
+        return response.url();
+    }
+
+    /** Waits until a positive name-search result is committed to the popup table. */
+    public PlanExecutionPage waitForManageDialogProduct(String productName) {
+        manageDialogProductRow(productName).first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return this;
     }
 
     public boolean isManageFavouritesDialogVisible() {
@@ -856,6 +919,50 @@ public class PlanExecutionPage extends BasePage {
                     || manageFavouritesDialog().getByText("Немає записів").count() > 0;
         }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
+    }
+
+    /**
+     * Arms a DOM observer before a popup filter action so a fast loading cycle cannot be missed.
+     * Waiting only after the catalog response is racy: React may still expose the previous rows or
+     * empty state for one render while the spinner is about to mount.
+     */
+    private void armManageDialogSpinnerObserver() {
+        page.evaluate("""
+                () => {
+                  window.__erpManageDialogSpinnerObserver?.disconnect();
+                  window.__erpManageDialogSpinnerSeen = false;
+                  const dialog = [...document.querySelectorAll('[role="dialog"]')]
+                    .find(element => element.textContent?.includes('Керування обраними ресурсами'));
+                  const probe = () => {
+                    if (dialog?.querySelector('svg.animate-spin')) {
+                      window.__erpManageDialogSpinnerSeen = true;
+                    }
+                  };
+                  probe();
+                  const observer = new MutationObserver(probe);
+                  observer.observe(dialog ?? document.body, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['class']
+                  });
+                  window.__erpManageDialogSpinnerObserver = observer;
+                }
+                """);
+    }
+
+    /** Waits for the observed spinner to appear and finish, then for the resulting table state. */
+    private PlanExecutionPage waitForManageDialogReload() {
+        page.waitForCondition(
+                () -> Boolean.TRUE.equals(page.evaluate(
+                        "() => window.__erpManageDialogSpinnerSeen === true")),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        manageFavouritesDialog().locator("svg.animate-spin").first().waitFor(
+                new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.HIDDEN)
+                        .setTimeout(uiTimeoutMs()));
+        page.evaluate("() => window.__erpManageDialogSpinnerObserver?.disconnect()");
+        return waitForManageDialogReady();
     }
 
     /**

@@ -13,6 +13,7 @@ import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.request.StorageTechnologicalMapModeRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.request.UpdateNotesRequest;
+import com.erp.models.response.GlobalPlanRefResponse;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.ResourceResponse;
@@ -239,6 +240,16 @@ public class TechnologicalMapFixture extends BaseFixture {
                 role,
                 request,
                 String.valueOf(techMapId));
+    }
+
+    @Step("{role}: GET current and future global plans for tech map {techMapId}")
+    public List<GlobalPlanRefResponse> getLiveGlobalPlans(UserRole role, Long techMapId) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_GET_LIVE_GLOBAL_PLANS,
+                role,
+                String.valueOf(techMapId));
+        validateSuccess(response, "Get live global plans for tech map " + techMapId);
+        return response.jsonPath().getList("", GlobalPlanRefResponse.class);
     }
 
     @Step("API: DELETE per-location plan {planId}")

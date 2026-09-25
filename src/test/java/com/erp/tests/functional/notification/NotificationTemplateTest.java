@@ -51,7 +51,11 @@ public class NotificationTemplateTest extends BaseFunctionalTest {
         assertThat(codes).contains(
                 NotificationDataFactory.TEMPLATE_STOCK_RED,
                 NotificationDataFactory.TEMPLATE_STOCK_YELLOW,
-                NotificationDataFactory.TEMPLATE_TECH_MAP);
+                NotificationDataFactory.TEMPLATE_ORDER_CREATED,
+                NotificationDataFactory.TEMPLATE_PRODUCTION_ORDER_CREATED);
+        assertThat(codes).doesNotContain(
+                NotificationDataFactory.REMOVED_TEMPLATE_INVOICE_GENERATED,
+                NotificationDataFactory.REMOVED_TEMPLATE_TECH_MAP_MODE_CHANGED);
 
         assertThat(templates).allSatisfy(t -> {
             assertThat(t.getDescription()).isNotBlank();

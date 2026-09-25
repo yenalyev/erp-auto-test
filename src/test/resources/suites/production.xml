@@ -36,7 +36,7 @@
             <class name="com.erp.tests.ui.OperationHistoryUiTest"/>
             <class name="com.erp.tests.ui.OperationHistoryCardsVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
-            <class name="com.erp.tests.ui.ProductionAnalyticsDatePickerUiTest"/>
+            <class name="com.erp.tests.ui.ProductionAnalyticsUiTest"/>
             <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
         </classes>
     </test>

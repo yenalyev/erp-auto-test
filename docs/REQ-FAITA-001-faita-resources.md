@@ -24,7 +24,7 @@ SUT: backend `tk`, frontend `tk-ui`. Автотести: `erp-auto-test`.
 |--------|----------|
 | **FAITA / FLIGHT** | Зовнішній виріб: `externalId` + `externalName` |
 | **Зіставлення (reconciliation)** | Прив’язка `FLIGHT` → один або кілька ERP `resourceId` |
-| **Додаткові / implicit** | Інші FAITA-вироби, які списуються разом із основним |
+| **Додаткові / implicit** | Інші FAITA-вироби, які списуються разом із основним; кожний має цілий множник `count ≥ 1` |
 | **Список FAITA** | `GET /api/v1/integrations/faita/resources` — лише вироби, у яких уже є хоча б одне FLIGHT зіставлення |
 
 ### 1.2. Права
@@ -41,6 +41,11 @@ SUT: backend `tk`, frontend `tk-ui`. Автотести: `erp-auto-test`.
 4. **Implicit** зберігаються **повним списком** `PUT .../implicit-resources`. Додати / прибрати = новий повний набір.
 5. У combobox implicit — лише інші позиції з того ж GET-списку (тобто вже зіставлені FAITA-вироби).
 6. UI: кнопка «Додати ресурс» у блоці implicit **лише якщо** `reconciliations.length > 0`.
+7. Для implicit зберігається `count`. Якщо Fight використав `N` одиниць основного виробу Б,
+   amount додаткового ресурсу А дорівнює `N × count(A)`.
+8. Редагування count виконується тим самим full-list PUT і не повинно змінювати інші implicit.
+9. UI приймає лише цілий `count ≥ 1`, початкове значення — `1`; старі збережені записи без count
+   відображаються та списуються як `×1`.
 
 ```mermaid
 flowchart TD
@@ -60,7 +65,7 @@ flowchart TD
 | Метод | Path | Enum | Примітка |
 |-------|------|------|----------|
 | GET | `/api/v1/integrations/faita/resources` | `FAITA_RESOURCES_GET` | Список виробів + reconciliations + implicit |
-| PUT | `/api/v1/integrations/faita/resources/{externalId}/implicit-resources` | `FAITA_IMPLICIT_RESOURCES_PUT` | Повний набір implicit |
+| PUT | `/api/v1/integrations/faita/resources/{externalId}/implicit-resources` | `FAITA_IMPLICIT_RESOURCES_PUT` | Повний набір implicit `{resourceId, resourceName, count}` |
 | POST | `/api/v1/resources/reconciliations` | `RESOURCE_RECONCILIATION_CREATE` | `{ source, externalId, externalName, resourceIds }` |
 | DELETE | `/api/v1/resources/reconciliations/{id}` | `RESOURCE_RECONCILIATION_DELETE_BY_ID` | Зняти одну прив’язку |
 | DELETE | `/api/v1/resources/reconciliations` | — | Тіло як у POST; так працює UI «−» |
@@ -76,7 +81,7 @@ SUT (read-only): `FaitaResourceController`, `FaitaResourceRepository`, `Resource
 | Екран | Route | Нотатки |
 |-------|-------|---------|
 | Список | `/faita-resources` | PageTabs групи «Екіпажі», **без h1**. Пошук «Пошук за назвою...». Тип: Боєприпаси / Ініціатори (`i-`) / Технічні (`d-`). Колонки: ID, Назва, Зіставлення, Додаткові ресурси |
-| Картка | `/faita-resources/:resourceId` | h1 = назва виробу. Картки «Зіставлення» і «Використання додаткових ресурсів» |
+| Картка | `/faita-resources/:resourceId` | h1 = назва виробу. Implicit показано як `× count`; олівець редагує count |
 | Діалог | — | «Знайдіть відповідний ресурс у системі» → «Призначити ресурс» |
 
 Sidebar: група **Екіпажі** → вкладка **Ресурси Файти**.
@@ -90,8 +95,11 @@ Sidebar: група **Екіпажі** → вкладка **Ресурси Фа�
 | AC-01 | Зіставлення 1→N: create, extend, delete | `TC-FAITA-REC-001/002/003` |
 | AC-02 | Implicit: зберегти кілька, замінити/прибрати | `TC-FAITA-IMPL-003` (+ `TC-FAITA-IMPL-001` на REQ-CREW-003) |
 | AC-03 | UI список + картка CRUD | `TC-UI-FAITA-001…004` |
+| AC-04 | Довільний цілий count: persist, edit без втрати сусідніх зв'язків, `amount × count` | `TC-FAITA-IMPL-001/002/004`, `TC-UI-FAITA-001/004` |
 
-Автотести: `FaitaResourcesApiTest`, `FaitaResourcesUiTest`, `FaitaResourceFixture`.  
+Автотести: `FaitaResourcesApiTest`, `FaitaImplicitResourceTest`, `FaitaResourcesUiTest`, `FaitaResourceFixture`.
 Suite: `functional.xml`, `storage-regions.xml`, `regression.xml`, `ui.xml`, `faita-resources.xml`.
+
+Повний тестовий дизайн CPMA-832: [`FAITA_IMPLICIT_RESOURCE_COUNT_TEST_PLAN.md`](FAITA_IMPLICIT_RESOURCE_COUNT_TEST_PLAN.md).
 
 Якщо `GET /integrations/faita/resources` ≠ 200 — SkipException (немає FaitaResourceController на env).

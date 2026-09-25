@@ -884,6 +884,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    TECH_MAP_GET_LIVE_GLOBAL_PLANS(
+            "/api/v1/technological-maps/{id}/global-plans",
+            Method.GET,
+            null,
+            "Get current and future global plans that reference a technological map",
+            null,
+            new TypeReference<List<GlobalPlanRefResponse>>() {},
+            null
+    ),
+
     TECH_MAP_GET_VERSIONS(
             "/api/v1/technological-maps/versions/{groupId}?storageId={storageId}",
             Method.GET,

@@ -101,6 +101,9 @@ public class FaitaResourcesUiTest extends BaseUITest {
         assertThat(list.rowByExternalId(seed.productId()).getByText(seed.implicitName()).count())
                 .as("колонка Додаткові містить implicit")
                 .isGreaterThan(0);
+        assertThat(list.rowByExternalId(seed.productId()).getByText("× " + seed.implicitCount()).count())
+                .as("колонка Додаткові містить множник implicit")
+                .isGreaterThan(0);
         list.attachScreenshot("TC-UI-FAITA-001 — list search");
     }
 
@@ -152,10 +155,10 @@ public class FaitaResourcesUiTest extends BaseUITest {
 
     @Test(priority = 40)
     @TestCaseId("TC-UI-FAITA-004")
-    @Story("Add and remove implicit on card")
+    @Story("Add, validate, edit and remove implicit count on card")
     @Severity(SeverityLevel.CRITICAL)
     @Description(StorageRegionsAllureDescriptions.TC_UI_FAITA_004)
-    public void testAddAndRemoveImplicitOnCard() {
+    public void testAddValidateEditAndRemoveImplicitCountOnCard() {
         requireFaitaApi();
         ResourceResponse productErp = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "p-");
         ResourceResponse implicitErp = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "i-");
@@ -170,8 +173,17 @@ public class FaitaResourcesUiTest extends BaseUITest {
         implicitExternalIdsToClear.add(productId);
 
         FaitaResourceDetailPage card = new FaitaResourceDetailPage(page).open(productId);
-        card.addImplicit(implicitName);
-        assertThat(card.isImplicitListed(implicitName)).as("implicit додано").isTrue();
+        assertThat(card.rejectsImplicitCount(implicitName, "0"))
+                .as("UI блокує count=0 і не надсилає PUT")
+                .isTrue();
+        card.addImplicit(implicitName, 3);
+        assertThat(card.isImplicitCountListed(implicitName, 3))
+                .as("implicit додано з ×3")
+                .isTrue();
+        card.editImplicitCount(implicitName, 5);
+        assertThat(card.isImplicitCountListed(implicitName, 5))
+                .as("implicit count змінено на ×5")
+                .isTrue();
         card.removeImplicit(implicitName);
         assertThat(card.isImplicitListed(implicitName)).as("implicit прибрано").isFalse();
         card.attachScreenshot("TC-UI-FAITA-004 — implicit removed");
@@ -189,9 +201,11 @@ public class FaitaResourcesUiTest extends BaseUITest {
         reconciliationIdsToCleanup.addAll(faitaFixture.createFlightReconciliation(
                 implicitId, implicitName, implicitErp.getId()));
         implicitExternalIdsToClear.add(productId);
+        int implicitCount = 4;
         faitaFixture.putImplicitResources(
-                productId, productName, List.of(FaitaResourceFixture.implicitRef(implicitId, implicitName)));
-        return new SeededProduct(productId, productName, productErp.getName(), implicitName);
+                productId, productName,
+                List.of(FaitaResourceFixture.implicitRef(implicitId, implicitName, implicitCount)));
+        return new SeededProduct(productId, productName, productErp.getName(), implicitName, implicitCount);
     }
 
     private void requireFaitaApi() {
@@ -208,6 +222,7 @@ public class FaitaResourcesUiTest extends BaseUITest {
                 "localStorage.setItem('selectedStorageId', '" + storageId + "');");
     }
 
-    private record SeededProduct(String productId, String productName, String erpName, String implicitName) {
+    private record SeededProduct(
+            String productId, String productName, String erpName, String implicitName, int implicitCount) {
     }
 }
