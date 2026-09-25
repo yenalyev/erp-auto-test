@@ -101,7 +101,8 @@ public class ProjectProductionHistoryUiTest extends BaseUITest {
     @Test
     @TestCaseId(value = "TC-UI-PROJ-HIST-001", roles = BusinessRole.BUSINESS_UNIT_AND_PROJECT_OWNER)
     @Story("Resource input and equipment output in operation history")
-    @Description("Сировина відображається як USED, а створене обладнання — як equipment PRODUCED")
+    @Description("Сировина відображається як USED, а створене обладнання — у картці "
+            + "«Обладнання (виготовлено)» та equipment-таблиці як PRODUCED")
     @Severity(SeverityLevel.CRITICAL)
     public void usedResourceAndProducedEquipmentAppearInHistory() {
         ResourceResponse input = resourceFixture.createUniqueResource("PP-HIST-INPUT");
@@ -151,18 +152,19 @@ public class ProjectProductionHistoryUiTest extends BaseUITest {
                 .as("Таблиця містить рядок «Використано» для сировини")
                 .isTrue();
         String equipmentInventoryNumber = finished.getEquipment().getInventoryNumber();
-        String equipmentModelName = finished.getEquipment().getModelName();
         SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(history.isEquipmentSummaryCardVisible(
+                            OperationHistoryPage.EQUIPMENT_PRODUCED_CARD))
+                    .as("Картка «Обладнання (виготовлено)» має бути видима")
+                    .isTrue();
             softly.assertThat(equipmentHistoryPayload)
                     .as("GET /equipment/history містить створене проєктом обладнання")
                     .contains(equipmentInventoryNumber);
-            softly.assertThat(history.equipmentTableContains(equipmentInventoryNumber)
-                            || history.equipmentTableContains(equipmentModelName))
-                    .as("Equipment-таблиця містить створене проєктом обладнання")
+            softly.assertThat(history.equipmentTableContains(equipmentInventoryNumber))
+                    .as("Equipment-таблиця містить саме створену проєктом одиницю")
                     .isTrue();
             softly.assertThat(history.equipmentTableHasOperation(
-                            equipmentInventoryNumber, "Виготовлено")
-                            || history.equipmentTableHasOperation(equipmentModelName, "Виготовлено"))
+                            equipmentInventoryNumber, OperationHistoryPage.EQUIPMENT_OP_PRODUCED))
                     .as("Створене проєктом обладнання має UI-операцію «Виготовлено»")
                     .isTrue();
         });

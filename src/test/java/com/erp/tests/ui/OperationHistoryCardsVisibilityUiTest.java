@@ -31,6 +31,7 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
     private static final String CARD_ISSUED = "Видано";
     private static final String CARD_PRODUCED = "Вироблено";
     private static final String CARD_USED = "Використано";
+    private static final String CARD_EQUIPMENT_PRODUCED = OperationHistoryPage.EQUIPMENT_PRODUCED_CARD;
     private static final String CARD_INV_ADDED = "Додано (Інвентаризація)";
     private static final String CARD_INV_REMOVED = "Видалено (Інвентаризація)";
     private static final String CARD_DEFECT_ADDED = "Виявлено брак";
@@ -43,7 +44,7 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
     @Description("""
             OWNER_1 (alkatras) має sidebar «Виробництво» (і PageTab «Брак»), «Видати/Отримати»,
             «Залишки». На «Історія операцій» (/history) видимі картки:
-            «Отримано», «Видано», «Вироблено», «Використано»,
+            «Отримано», «Видано», «Вироблено», «Використано», «Обладнання (виготовлено)»,
             «Додано (Інвентаризація)», «Видалено (Інвентаризація)»,
             «Виявлено брак», «Списано брак».
             non-series-production поза scope — картки виробництва залежать лише від production::view.
@@ -65,7 +66,7 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
     @Description("""
             CREW_MANAGER (argument) не має sidebar «Виробництво» / PageTab «Брак»;
             має «Видати/Отримати» та «Залишки». На «Історія операцій» (/history):
-            картки браку та виробництва приховані;
+            картки браку, виробництва та «Обладнання (виготовлено)» приховані;
             «Отримано», «Видано», «Додано (Інвентаризація)», «Видалено (Інвентаризація)» видимі.
             non-series-production поза scope.
             """)
@@ -124,6 +125,7 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
             assertCard(historyAfterNav, CARD_ISSUED, expectRelocationAccess);
             assertCard(historyAfterNav, CARD_PRODUCED, expectProductionAccess);
             assertCard(historyAfterNav, CARD_USED, expectProductionAccess);
+            assertEquipmentCard(historyAfterNav, CARD_EQUIPMENT_PRODUCED, expectProductionAccess);
             assertCard(historyAfterNav, CARD_INV_ADDED, expectInventoryAccess);
             assertCard(historyAfterNav, CARD_INV_REMOVED, expectInventoryAccess);
             assertCard(historyAfterNav, CARD_DEFECT_ADDED, expectDefectAccess);
@@ -161,6 +163,12 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
     private static void assertCard(OperationHistoryPage history, String cardTitle, boolean expected) {
         assertThat(history.isSummaryCardVisible(cardTitle))
                 .as("Картка «%s»", cardTitle)
+                .isEqualTo(expected);
+    }
+
+    private static void assertEquipmentCard(OperationHistoryPage history, String cardTitle, boolean expected) {
+        assertThat(history.isEquipmentSummaryCardVisible(cardTitle))
+                .as("Equipment-картка «%s»", cardTitle)
                 .isEqualTo(expected);
     }
 

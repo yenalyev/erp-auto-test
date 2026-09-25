@@ -21,7 +21,9 @@ public class OperationHistoryPage extends BasePage {
 
     public static final String EQUIPMENT_SENT_CARD = "Відправлено (Обладнання)";
     public static final String EQUIPMENT_RECEIVED_CARD = "Отримано (Обладнання)";
+    public static final String EQUIPMENT_PRODUCED_CARD = "Обладнання (виготовлено)";
     public static final String EQUIPMENT_OP_SENT = "Відправлено";
+    public static final String EQUIPMENT_OP_PRODUCED = "Виготовлено";
 
     public OperationHistoryPage open() {
         LocalDate today = LocalDate.now();
@@ -90,7 +92,8 @@ public class OperationHistoryPage extends BasePage {
     }
 
     /**
-     * Equipment summary cards («Відправлено/Отримано (Обладнання)») — do not use
+     * Equipment summary cards («Відправлено/Отримано (Обладнання)»,
+     * «Обладнання (виготовлено)») — do not use
      * {@link #isSummaryCardVisible} which excludes titles containing «Обладнання».
      */
     public boolean isEquipmentSummaryCardVisible(String cardTitle) {
@@ -99,10 +102,17 @@ public class OperationHistoryPage extends BasePage {
             title.first().waitFor(new Locator.WaitForOptions()
                     .setState(WaitForSelectorState.VISIBLE)
                     .setTimeout(uiTimeoutMs()));
-            return true;
         } catch (Exception e) {
-            return title.count() > 0 && title.first().isVisible();
+            return false;
         }
+        String expectedTitle = normalizeUiText(cardTitle);
+        for (int i = 0; i < title.count(); i++) {
+            if (title.nth(i).isVisible()
+                    && expectedTitle.equals(normalizeUiText(title.nth(i).innerText()))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean equipmentHistoryContains(String text) {
@@ -142,6 +152,10 @@ public class OperationHistoryPage extends BasePage {
     private Locator equipmentSummaryCardTitle(String cardTitle) {
         return page.locator("[data-slot='card-title']")
                 .filter(new Locator.FilterOptions().setHasText(cardTitle));
+    }
+
+    private static String normalizeUiText(String text) {
+        return text.replace('\u00A0', ' ').strip().replaceAll("\\s+", " ");
     }
 
     public boolean containsInventoryOperationMarker() {
