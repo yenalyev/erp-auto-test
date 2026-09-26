@@ -2,7 +2,8 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.relocation.RelocationDataFactory;
-import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
@@ -10,6 +11,7 @@ import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.RelocationOutputRequest;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.pages.AppSidebarPage;
 import com.erp.pages.RelocationCreateInputPage;
 import com.erp.pages.RelocationCreateOutputPage;
 import com.erp.pages.RelocationPage;
@@ -20,11 +22,14 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,6 +44,7 @@ public class RelocationReceivedDateUiTest extends BaseUITest {
     private StorageFixture storages;
     private Long senderId;
     private Long recipientId;
+    private String recipientName;
     private Long resourceId;
     private Long supplierId;
     private String resourceName;
@@ -53,19 +59,47 @@ public class RelocationReceivedDateUiTest extends BaseUITest {
         fixture.fetchSharedUnit(3);
         fixture.fetchSharedResourceCategory();
         fixture.setupSharedResourceList(3);
-        senderId = ConfigProvider.getOwner1StorageId();
-        recipientId = ConfigProvider.getOwner2StorageId();
-        supplierId = RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, UserRole.ADMIN);
+        senderId = storages.createStorage(StorageDataFactory.childStorage(
+                ConfigProvider.getOwner1StorageId(), "ui-received-date-sender-")
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
+                .build()).getId();
+        var recipient = storages.createStorage(StorageDataFactory.childStorage(
+                ConfigProvider.getOwner2StorageId(), "ui-received-date-recipient-")
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
+                .build());
+        recipientId = recipient.getId();
+        recipientName = recipient.getName();
+        supplierId = storages.createStorage(StorageDataFactory.externalStorage(
+                ConfigProvider.getOwner1StorageId(), "ui-received-date-external-")
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
+                .build()).getId();
         ResourceResponse resource = resources.createUniqueResource("ui-received-date-");
         resourceId = resource.getId();
         resourceName = resource.getName();
 
         Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(UserRole.OWNER_2.getUsername(), UserRole.OWNER_2.getPassword());
+                .getSession(UserRole.ADMIN.getUsername(), UserRole.ADMIN.getPassword());
         String domain = ConfigProvider.getBaseUrl().replaceFirst("https?://", "").split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
                 "localStorage.setItem('selectedStorageId', '" + recipientId + "');");
+    }
+
+    @BeforeMethod(alwaysRun = true)
+    @Override
+    public void testSetup() {
+        super.testSetup();
+        new RelocationPage(page).open();
+        AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
+        sidebar.selectWorkspaceByName(recipientName);
+        assertThat(sidebar.getSelectedLocationName()).contains(recipientName);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupReceivedDateUiStorages() {
+        if (storages != null) {
+            storages.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
     @Test
@@ -86,7 +120,7 @@ public class RelocationReceivedDateUiTest extends BaseUITest {
         page.waitForURL("**/relocations");
 
         RelocationResponse received = ReceivedDateJournalLookup.byDescription(
-                fixture, UserRole.OWNER_2, recipientId, resourceId, marker);
+                fixture, UserRole.ADMIN, recipientId, resourceId, marker);
         assertThat(received).as("Отримання після submit форми").isNotNull();
         assertThat(received.getReceivedAt()).isNotNull();
         assertThat(received.getReceivedAt().atZone(KYIV).toLocalDate()).isEqualTo(selected);
@@ -156,7 +190,7 @@ public class RelocationReceivedDateUiTest extends BaseUITest {
         journal.open().openInTransitTab();
         assertThat(journal.isRowWithTextVisible(marker)).as("Прийнятий запис зник з «В дорозі»").isFalse();
         RelocationResponse received = ReceivedDateJournalLookup.byDescription(
-                fixture, UserRole.OWNER_2, recipientId, resourceId, marker);
+                fixture, UserRole.ADMIN, recipientId, resourceId, marker);
         assertThat(received).as("Прийнятий запис у «Отримано»").isNotNull();
         assertThat(received.getDate()).as("«Надіслано» не змінюється").isEqualTo(sentDate);
         assertThat(received.getReceivedAt()).isNotNull();

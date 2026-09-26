@@ -154,7 +154,9 @@ public class RelocationCreateOutputPage extends BasePage {
     }
 
     public RelocationCreateOutputPage selectRecipientByLabel(String label) {
-        openRecipientDropdown();
+        recipientInput().click();
+        recipientInput().fill(label);
+        waitForRecipientOptionsSettled();
         page.locator(COMBOBOX_ITEM_SELECTOR)
                 .filter(new Locator.FilterOptions().setHasText(label))
                 .first()

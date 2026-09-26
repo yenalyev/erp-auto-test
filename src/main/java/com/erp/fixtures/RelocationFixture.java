@@ -4,6 +4,7 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.models.request.RelocationInputEditRequest;
@@ -17,6 +18,7 @@ import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.enums.LocationFeature;
+import com.erp.enums.StorageRelation;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -67,11 +69,12 @@ public class RelocationFixture extends BaseFixture {
         Long supplierId = RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, UserRole.OWNER_1);
         testContext.set(ContextKey.RELOCATION_SUPPLIER_ID, supplierId);
 
-        Long unitId = resolveUnitStorageId(UserRole.ADMIN);
-        testContext.set(ContextKey.RELOCATION_UNIT_STORAGE_ID, unitId);
+        Long recipientId = createAutoFinishedRecipientStorageId();
+        testContext.set(ContextKey.RELOCATION_UNIT_STORAGE_ID, recipientId);
 
         ensureStock(owner1Storage, resourceId, DEFAULT_SEED_STOCK);
-        log.info("Relocation fixture ready: resource={}, supplier={}, unit={}", resourceId, supplierId, unitId);
+        log.info("Relocation fixture ready: resource={}, supplier={}, externalRecipient={}",
+                resourceId, supplierId, recipientId);
     }
 
     @Step("API: поповнити залишок ресурсу {resourceId} на складі {storageId}")
@@ -743,15 +746,20 @@ public class RelocationFixture extends BaseFixture {
                 apiExecutor, storageId, role, resourceId);
     }
 
-    @Step("Знайти UNIT storage")
-    public Long resolveUnitStorageId(UserRole role) {
-        Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_ALL, role);
-        List<StorageResponse> storages = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
-        return storages.stream()
-                .filter(s -> s.getFeatures() != null && s.getFeatures().contains(LocationFeature.ORDERS))
-                .map(StorageResponse::getId)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No UNIT storage found for relocation tests"));
+    @Step("Створити зовнішнього отримувача для автоматично завершених переміщень")
+    public Long createAutoFinishedRecipientStorageId() {
+        StorageResponse recipient = new StorageFixture(testContext, apiExecutor).createStorage(
+                StorageDataFactory.externalStorage(ConfigProvider.getOwner1StorageId(), "rel-recipient-")
+                        .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
+                        .build());
+        if (!StorageRelation.EXTERNAL.name().equals(recipient.getRelation())
+                || recipient.getFeatures() == null
+                || !recipient.getFeatures().containsAll(
+                        Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))) {
+            throw new IllegalStateException("Created relocation recipient lacks required capabilities: "
+                    + recipient.getId());
+        }
+        return recipient.getId();
     }
 
     public Set<Long> trackedResource(Long resourceId) {

@@ -2,10 +2,12 @@ package com.erp.tests.functional.relocation;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.relocation.RelocationDataFactory;
-import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.RelocationFixture;
+import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.RelocationInputRequest;
 import com.erp.models.request.RelocationOutputRequest;
 import com.erp.models.response.RelocationResponse;
@@ -19,11 +21,13 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,6 +38,7 @@ public class RelocationReceivedDateTest extends BaseFunctionalTest {
     private static final ZoneId KYIV = ZoneId.of("Europe/Kyiv");
 
     private RelocationFixture fixture;
+    private StorageFixture storages;
     private Long senderId;
     private Long recipientId;
     private Long supplierId;
@@ -42,14 +47,31 @@ public class RelocationReceivedDateTest extends BaseFunctionalTest {
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void prepareRelocations() {
         fixture = new RelocationFixture(testContext, apiExecutor);
+        storages = new StorageFixture(testContext, apiExecutor);
         fixture.fetchSharedUnit(3);
         fixture.fetchSharedResourceCategory();
         fixture.setupSharedResourceList(3);
-        senderId = ConfigProvider.getOwner1StorageId();
-        recipientId = ConfigProvider.getOwner2StorageId();
-        supplierId = RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, UserRole.ADMIN);
+        senderId = storages.createStorage(StorageDataFactory.childStorage(
+                ConfigProvider.getOwner1StorageId(), "received-date-sender-")
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
+                .build()).getId();
+        recipientId = storages.createStorage(StorageDataFactory.childStorage(
+                ConfigProvider.getOwner2StorageId(), "received-date-recipient-")
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
+                .build()).getId();
+        supplierId = storages.createStorage(StorageDataFactory.externalStorage(
+                ConfigProvider.getOwner1StorageId(), "received-date-external-")
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT))
+                .build()).getId();
         List<ResourceResponse> resources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
         resourceId = resources.getFirst().getId();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupReceivedDateStorages() {
+        if (storages != null) {
+            storages.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
     @Test

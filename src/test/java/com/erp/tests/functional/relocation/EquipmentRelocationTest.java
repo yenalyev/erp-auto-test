@@ -8,6 +8,9 @@ import com.erp.enums.UserRole;
 import com.erp.fixtures.EmployeeFixture;
 import com.erp.fixtures.EquipmentFixture;
 import com.erp.fixtures.RelocationFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.models.request.EquipmentRelocationReceiveEditRequest;
 import com.erp.models.request.EquipmentRelocationSendEditRequest;
 import com.erp.models.request.EquipmentRelocationSendRequest;
@@ -21,10 +24,12 @@ import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,6 +44,8 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
     private Long owner1Storage;
     private Long owner2Storage;
     private Long unitStorageId;
+    private Long internalUnitWithoutEquipmentId;
+    private StorageFixture storageFixture;
     private Long categoryId;
     private Long supplierId;
 
@@ -52,8 +59,21 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
         owner1Storage = ConfigProvider.getOwner1StorageId();
         owner2Storage = ConfigProvider.getOwner2StorageId();
         unitStorageId = testContext.get(ContextKey.RELOCATION_UNIT_STORAGE_ID);
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        storageFixture.trackForCleanup(unitStorageId);
+        internalUnitWithoutEquipmentId = storageFixture.createStorage(
+                StorageDataFactory.unitStorage(owner1Storage, "eq-no-equipment-")
+                        .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.ORDERS))
+                        .build()).getId();
         categoryId = testContext.get(ContextKey.EQUIPMENT_CATEGORY_ID);
         supplierId = equipmentFixture.supplierId();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupEquipmentRelocationStorages() {
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
     @Test
@@ -79,7 +99,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
 
     @Test
     @TestCaseId("TC-REL-EQ-002")
-    @Story("Equipment send to UNIT AUTO_FINISHED")
+    @Story("Equipment send to external recipient AUTO_FINISHED")
     public void sendToUnitAutoFinishesAndMovesEquipment() {
         Long equipmentId = equipmentFixture.createEquipmentOnStorage(
                 UserRole.ADMIN, owner1Storage, categoryId).getId();
@@ -91,6 +111,9 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
         EquipmentStatus status = equipmentFixture.getEquipmentStatus(
                 UserRole.ADMIN, unitStorageId, equipmentId);
         assertThat(status).isEqualTo(EquipmentStatus.AVAILABLE);
+        equipmentFixture.deleteRelocationRaw(UserRole.ADMIN, relocation.getId(), owner1Storage)
+                .then().statusCode(org.hamcrest.Matchers.anyOf(
+                        org.hamcrest.Matchers.is(200), org.hamcrest.Matchers.is(204)));
     }
 
     @Test
@@ -462,6 +485,9 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
         RelocationResponse updated = equipmentFixture.editEquipmentSend(
                 UserRole.ADMIN, relocation.getId(), owner1Storage, request);
         assertThat(updated.getDescription()).isEqualTo("person fields");
+        equipmentFixture.deleteRelocationRaw(UserRole.ADMIN, relocation.getId(), owner1Storage)
+                .then().statusCode(org.hamcrest.Matchers.anyOf(
+                        org.hamcrest.Matchers.is(200), org.hamcrest.Matchers.is(204)));
     }
 
     @Test
@@ -559,7 +585,7 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
                 UserRole.OWNER_1, owner1Storage, owner2Storage, equipmentId);
 
         EquipmentRelocationSendEditRequest request = EquipmentRelocationSendEditRequest.builder()
-                .toStorageId(unitStorageId)
+                .toStorageId(internalUnitWithoutEquipmentId)
                 .equipmentIds(List.of(equipmentId))
                 .date(LocalDate.now())
                 .description("redirect to unit")
