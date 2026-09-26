@@ -1,15 +1,20 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.pages.RelocationCreateInputCrewPage;
 import com.erp.pages.RelocationPage;
 import com.erp.utils.config.ConfigProvider;
@@ -29,11 +34,12 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * UI happy path повернення від екіпажу (CPMA-647): «Отримати від екіпажа».
+ * UI happy path повернення залишків (CPMA-647): «Отримати з точки вильоту».
  */
 @Slf4j
 @Epic("Relocation")
@@ -50,9 +56,12 @@ public class CrewReturnUITest extends BaseUITest {
     private ResourceFixture resourceFixture;
     private StorageFixture storageFixture;
     private StorageRegionFixture regionFixture;
+    private LocationProfileFixture locations;
+    private UserFixture users;
 
     private CrewRegionScenario unattachedScenario;
     private CrewRegionScenario attachedScenario;
+    private UserFixture.BusinessActor returnActor;
     private long memberStorageId;
     private Long resourceId;
     private String resourceName;
@@ -67,14 +76,22 @@ public class CrewReturnUITest extends BaseUITest {
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
 
-        storageFixture.prepareContext();
+        locations = new LocationProfileFixture(testContext, apiExecutor);
+        users = new UserFixture(testContext, apiExecutor);
+        StorageResponse warehouse = locations.create(LocationProfile.BATTALION_WARENHAUSE_UNIT, 1)
+                .locations().getFirst();
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
-        relocationFixture.prepareContext();
+        relocationFixture.prepareContext(warehouse.getId());
 
-        memberStorageId = ConfigProvider.getOwner1StorageId();
-        unattachedScenario = crewFixture.prepareSingleCrewScenario("ui-ret-u-");
-        attachedScenario = crewFixture.prepareAttachedCrewScenario("ui-ret-a-");
+        memberStorageId = warehouse.getId();
+        unattachedScenario = crewFixture.prepareReturnScenario(warehouse, false, "ui-ret-u-");
+        attachedScenario = crewFixture.prepareReturnScenario(warehouse, true, "ui-ret-a-");
+        returnActor = users.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.UNIT_KOMIRNIK,
+                List.of(warehouse, unattachedScenario.unit(), unattachedScenario.crew(),
+                        attachedScenario.unit(), attachedScenario.flyPoint(), attachedScenario.crew()));
+        apiExecutor.setSessionForRole(UserRole.OWNER_1, returnActor.username(), returnActor.password());
 
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
@@ -83,7 +100,10 @@ public class CrewReturnUITest extends BaseUITest {
 
     @AfterClass(alwaysRun = true)
     public void cleanupCrewReturnArtifacts() {
+        apiExecutor.restoreDefaultSessionForRole(UserRole.OWNER_1);
+        if (users != null) users.deactivateTrackedUsers();
         TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
+        if (locations != null) locations.cleanup();
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -96,11 +116,11 @@ public class CrewReturnUITest extends BaseUITest {
     @TestCaseId("TC-UI-CREW-RET-001")
     @Story("Receive from crew button")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("OWNER_1 на member storage з CREWS — кнопка «Отримати від екіпажа» видима")
+    @Description("Комірник на member storage з CREWS — кнопка «Отримати з точки вильоту» видима")
     public void receiveFromCrewButtonVisible() {
         RelocationPage relocationPage = new RelocationPage(page).open();
         assertThat(relocationPage.isReceiveFromCrewButtonVisible())
-                .as("Кнопка «Отримати від екіпажа» має бути видимою")
+                .as("Кнопка «Отримати з точки вильоту» має бути видимою")
                 .isTrue();
         relocationPage.attachScreenshot("TC-UI-CREW-RET-001 — journal CTA");
     }
@@ -111,7 +131,7 @@ public class CrewReturnUITest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             API: видача на unattached CREW FINISHED.
-            UI: Отримати від екіпажа → UNIT → CREW → ресурс → кількість → Підтвердити.
+            UI: Отримати з точки вильоту → неприкріплені екіпажі → CREW → ресурс → кількість → Підтвердити.
             Очікування: вкладка «Отримано» + marker; CREW −N; warehouse +N.
             """)
     public void happyPathUnattachedCrewReturn() {
@@ -130,7 +150,7 @@ public class CrewReturnUITest extends BaseUITest {
         RelocationPage relocationPage = new RelocationPage(page).open();
         RelocationCreateInputCrewPage form = relocationPage.clickReceiveFromCrew();
 
-        form.selectUnitByName(unattachedScenario.unit().getName())
+        form.selectUnitByName("Не прив’язані до точки вильоту")
                 .selectCrewByName(unattachedScenario.crew().getName())
                 .selectResourceByName(resourceName)
                 .fillQuantity(String.valueOf((int) RETURN_AMOUNT))
@@ -165,7 +185,7 @@ public class CrewReturnUITest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             API: видача на attached CREW → stock на FLY_POINT.
-            UI: той самий флоу «Отримати від екіпажа» (sender=CREW).
+            UI: «Отримати з точки вильоту» з вибором FLY_POINT як відправника.
             Очікування: «Отримано»; FLY_POINT −N; warehouse +N; CREW ≈ 0.
             """)
     public void happyPathAttachedCrewReturnDebitsFlyPoint() {
@@ -194,8 +214,7 @@ public class CrewReturnUITest extends BaseUITest {
         RelocationPage relocationPage = new RelocationPage(page).open();
         RelocationCreateInputCrewPage form = relocationPage.clickReceiveFromCrew();
 
-        form.selectUnitByName(attachedScenario.unit().getName())
-                .selectCrewByName(attachedScenario.crew().getName())
+        form.selectUnitByName(attachedScenario.flyPoint().getName())
                 .selectResourceByName(resourceName)
                 .fillQuantity(String.valueOf((int) RETURN_AMOUNT))
                 .fillDescription(marker);
@@ -229,13 +248,16 @@ public class CrewReturnUITest extends BaseUITest {
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
-        Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(role.getUsername(), role.getPassword());
+        Map<String, String> cookies = role == UserRole.OWNER_1
+                ? authService.getSessionForUser(returnActor.username(), returnActor.password())
+                : cachedSessionCookies(role);
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId:" +
+                        (role == UserRole.OWNER_1 ? returnActor.username() : role.getUsername()) +
+                        "', '" + selectedStorageId + "');");
     }
 }

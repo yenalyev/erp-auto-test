@@ -11,10 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 public class RelocationCreateOutputFlyPointPage extends BasePage {
 
     public static final String PATH = "/relocation/create-output-fly-point";
-    private static final String TITLE = "Видача між точками зльоту";
+    private static final String TITLE = "Видача між точками вильоту";
     private static final String SUBMIT = "Підтвердити";
-    private static final String FROM_LABEL = "Точка зльоту (звідки)";
-    private static final String TO_LABEL = "Точка зльоту (куди)";
+    private static final String FROM_LABEL = "Точка вильоту (звідки)";
+    private static final String TO_LABEL = "Точка вильоту (куди)";
     private static final String RESOURCE_PLACEHOLDER = "Оберіть ресурс...";
     private static final String QUANTITY_PLACEHOLDER = "Кількість";
     private static final String COMBOBOX_ITEM_SELECTOR = "[data-slot='combobox-item']";

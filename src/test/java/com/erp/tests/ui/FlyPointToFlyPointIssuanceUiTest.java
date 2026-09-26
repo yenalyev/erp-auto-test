@@ -1,17 +1,22 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.CrewRegionFixture;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.pages.RelocationCreateOutputFlyPointPage;
 import com.erp.pages.RelocationPage;
 import com.erp.utils.config.ConfigProvider;
@@ -31,11 +36,12 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * UI видачі між точками зльоту (REQ-CREW-002 AC-23).
+ * UI видачі між точками вильоту (REQ-CREW-002 AC-23).
  */
 @Slf4j
 @Epic("Relocation")
@@ -53,6 +59,8 @@ public class FlyPointToFlyPointIssuanceUiTest extends BaseUITest {
     private ResourceFixture resourceFixture;
     private StorageFixture storageFixture;
     private StorageRegionFixture regionFixture;
+    private LocationProfileFixture locations;
+    private UserFixture users;
 
     private CrewRegionScenario scenario;
     private long memberStorageId;
@@ -69,13 +77,20 @@ public class FlyPointToFlyPointIssuanceUiTest extends BaseUITest {
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
 
-        storageFixture.prepareContext();
+        locations = new LocationProfileFixture(testContext, apiExecutor);
+        users = new UserFixture(testContext, apiExecutor);
+        StorageResponse warehouse = locations.create(LocationProfile.BATTALION_WARENHAUSE_UNIT, 1)
+                .locations().getFirst();
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
-        relocationFixture.prepareContext();
+        relocationFixture.prepareContext(warehouse.getId());
 
-        memberStorageId = ConfigProvider.getOwner1StorageId();
-        scenario = crewFixture.prepareTwoFlyPointsScenario("ui-fp2fp-");
+        memberStorageId = warehouse.getId();
+        scenario = crewFixture.prepareTwoFlyPointsScenario(warehouse, "ui-fp2fp-");
+        UserFixture.BusinessActor actor = users.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.UNIT_KOMIRNIK,
+                List.of(warehouse, scenario.unit(), scenario.flyPoint(), scenario.flyPointB()));
+        apiExecutor.setSessionForRole(UserRole.OWNER_1, actor.username(), actor.password());
 
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
@@ -84,7 +99,10 @@ public class FlyPointToFlyPointIssuanceUiTest extends BaseUITest {
 
     @AfterClass(alwaysRun = true)
     public void cleanupFlyPointIssuanceArtifacts() {
+        apiExecutor.restoreDefaultSessionForRole(UserRole.OWNER_1);
+        if (users != null) users.deactivateTrackedUsers();
         TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
+        if (locations != null) locations.cleanup();
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -97,11 +115,11 @@ public class FlyPointToFlyPointIssuanceUiTest extends BaseUITest {
     @TestCaseId("TC-UI-FLY-FP-001")
     @Story("Issue between fly points button visibility")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("ADMIN на member storage з CREWS region — кнопка «Видати між точками зльоту» видима")
+    @Description("ADMIN на member storage з CREWS region — кнопка «Видати між точками вильоту» видима")
     public void testIssueBetweenFlyPointsButtonVisible() {
         RelocationPage relocationPage = new RelocationPage(page).open();
         assertThat(relocationPage.isIssueBetweenFlyPointsButtonVisible())
-                .as("Кнопка «Видати між точками зльоту» має бути видимою")
+                .as("Кнопка «Видати між точками вильоту» має бути видимою")
                 .isTrue();
         relocationPage.attachScreenshot("TC-UI-FLY-FP-001 — journal with fly-point button");
     }
@@ -192,6 +210,7 @@ public class FlyPointToFlyPointIssuanceUiTest extends BaseUITest {
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId:" + role.getUsername()
+                        + "', '" + selectedStorageId + "');");
     }
 }

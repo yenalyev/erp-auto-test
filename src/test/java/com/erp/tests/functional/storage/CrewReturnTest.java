@@ -1,11 +1,16 @@
 package com.erp.tests.functional.storage;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.LocationProfileFixture;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.Description;
@@ -18,10 +23,12 @@ import io.qameta.allure.Story;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.Set;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,28 +46,51 @@ public class CrewReturnTest extends CrewApiTestBase {
     private static final String RESOURCE_PREFIX = "crew-ret-";
     private static final double ISSUE_AMOUNT = 12.0;
     private static final double RETURN_AMOUNT = 5.0;
-    /** Owner often lacks inventory-list::{crew}::read — crew/FP stock via ADMIN. */
+    /** Independent stock snapshots for the crew and fly point. */
     private static final UserRole STOCK_READER = UserRole.ADMIN;
 
     private Long resourceId;
+    private StorageResponse warehouse;
+    private LocationProfileFixture locations;
+    private UserFixture users;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupCrewApiBase")
     @Step("Підготовка: ресурс і relocation context")
     public void setupCrewReturnTests() {
-        storageFixture.prepareContext();
+        locations = new LocationProfileFixture(testContext, apiExecutor);
+        warehouse = locations.create(LocationProfile.BATTALION_WARENHAUSE_UNIT, 1)
+                .locations().getFirst();
+        users = new UserFixture(testContext, apiExecutor);
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
-        relocationFixture.prepareContext();
+        relocationFixture.prepareContext(warehouse.getId());
 
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
-        refreshRoleSessions(UserRole.OWNER_1);
     }
 
-    @BeforeMethod(alwaysRun = true)
-    public void ensureSenderStock() {
-        relocationFixture.ensureStock(owner1StorageId, resourceId, 100.0);
-        refreshRoleSessions(UserRole.OWNER_1);
+    private CrewRegionScenario prepareReturnScenario(boolean attached, String prefix) {
+        CrewRegionScenario scenario = crewFixture.prepareReturnScenario(warehouse, attached, prefix);
+        List<StorageResponse> scopedLocations = new java.util.ArrayList<>(
+                List.of(warehouse, scenario.unit(), scenario.crew()));
+        if (scenario.flyPoint() != null) scopedLocations.add(scenario.flyPoint());
+        UserFixture.BusinessActor actor = users.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.UNIT_KOMIRNIK, scopedLocations);
+        apiExecutor.setSessionForRole(UserRole.OWNER_1, actor.username(), actor.password());
+        relocationFixture.ensureStock(warehouse.getId(), resourceId, 100.0);
+        return scenario;
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void clearReturnActor() {
+        apiExecutor.restoreDefaultSessionForRole(UserRole.OWNER_1);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupReturnActors() {
+        apiExecutor.restoreDefaultSessionForRole(UserRole.OWNER_1);
+        if (users != null) users.deactivateTrackedUsers();
+        if (locations != null) locations.cleanup();
     }
 
     @Test(priority = 10)
@@ -68,8 +98,7 @@ public class CrewReturnTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RET_001)
     @Severity(SeverityLevel.CRITICAL)
     public void unattachedCrewReturnDebitsCrewCreditsWarehouse() {
-        CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("crew-ret-u-");
-        refreshRoleSessions(UserRole.OWNER_1);
+        CrewRegionScenario scenario = prepareReturnScenario(false, "crew-ret-u-");
 
         Long crewId = scenario.crew().getId();
         Long warehouseId = scenario.memberStorageId();
@@ -109,8 +138,7 @@ public class CrewReturnTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RET_002)
     @Severity(SeverityLevel.CRITICAL)
     public void attachedCrewReturnDebitsFlyPointCreditsWarehouse() {
-        CrewRegionScenario scenario = crewFixture.prepareAttachedCrewScenario("crew-ret-a-");
-        refreshRoleSessions(UserRole.OWNER_1);
+        CrewRegionScenario scenario = prepareReturnScenario(true, "crew-ret-a-");
 
         Long crewId = scenario.crew().getId();
         Long flyPointId = scenario.flyPoint().getId();
@@ -161,8 +189,7 @@ public class CrewReturnTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RET_003)
     @Severity(SeverityLevel.NORMAL)
     public void unattachedCrewReturnOverStockRejected() {
-        CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("crew-ret-neg-u-");
-        refreshRoleSessions(UserRole.OWNER_1);
+        CrewRegionScenario scenario = prepareReturnScenario(false, "crew-ret-neg-u-");
 
         Long crewId = scenario.crew().getId();
         Long warehouseId = scenario.memberStorageId();
@@ -199,8 +226,7 @@ public class CrewReturnTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RET_004)
     @Severity(SeverityLevel.NORMAL)
     public void attachedCrewReturnOverStockOnFlyPointRejected() {
-        CrewRegionScenario scenario = crewFixture.prepareAttachedCrewScenario("crew-ret-neg-a-");
-        refreshRoleSessions(UserRole.OWNER_1);
+        CrewRegionScenario scenario = prepareReturnScenario(true, "crew-ret-neg-a-");
 
         Long crewId = scenario.crew().getId();
         Long flyPointId = scenario.flyPoint().getId();
@@ -238,8 +264,7 @@ public class CrewReturnTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RET_005)
     @Severity(SeverityLevel.CRITICAL)
     public void attachedCrewReturnDeleteRestoresFlyPointNotCrew() {
-        CrewRegionScenario scenario = crewFixture.prepareAttachedCrewScenario("crew-ret-del-a-");
-        refreshRoleSessions(UserRole.OWNER_1);
+        CrewRegionScenario scenario = prepareReturnScenario(true, "crew-ret-del-a-");
 
         Long crewId = scenario.crew().getId();
         Long flyPointId = scenario.flyPoint().getId();
@@ -291,8 +316,7 @@ public class CrewReturnTest extends CrewApiTestBase {
     @Description(StorageRegionsAllureDescriptions.TC_CREW_RET_006)
     @Severity(SeverityLevel.NORMAL)
     public void unattachedCrewReturnDeleteRestoresCrew() {
-        CrewRegionScenario scenario = crewFixture.prepareSingleCrewScenario("crew-ret-del-u-");
-        refreshRoleSessions(UserRole.OWNER_1);
+        CrewRegionScenario scenario = prepareReturnScenario(false, "crew-ret-del-u-");
 
         Long crewId = scenario.crew().getId();
         Long warehouseId = scenario.memberStorageId();

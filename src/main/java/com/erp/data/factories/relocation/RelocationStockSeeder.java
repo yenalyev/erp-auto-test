@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +45,7 @@ public class RelocationStockSeeder {
                 .recipientId(recipientStorageId)
                 .description("erp-auto-test: seed stock via relocation receive")
                 .invoiceNumber("erp-auto-test-seed")
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(items)
                 .build();
 

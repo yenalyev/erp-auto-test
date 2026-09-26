@@ -110,7 +110,7 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         regions.addRegionLocations(flyPointRegion.getId(),
                 nestedTsukWarehouse.getId(), flyPoint1.getId(), flyPoint2.getId());
         tsukWarehouse = createActor(BusinessRole.UNIT_KOMIRNIK,
-                TSUK_WAREHOUSE_SLOT, nestedTsukWarehouse);
+                TSUK_WAREHOUSE_SLOT, nestedTsukWarehouse, flyPoint1, flyPoint2);
         assertThat(tsukWarehouse.insideTsukHierarchy()).isTrue();
         assertThat(flyPoint1.getKind()).isEqualTo(StorageKind.FLY_POINT);
         assertThat(flyPoint2.getKind()).isEqualTo(StorageKind.FLY_POINT);
@@ -624,15 +624,19 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         Allure.parameter("recipientId", flyPoint2.getId());
     }
 
-    private Actor createActor(BusinessRole businessRole, UserRole slot, StorageResponse sender) {
+    private Actor createActor(BusinessRole businessRole, UserRole slot, StorageResponse sender,
+                              StorageResponse... additionalLocations) {
         boolean insideTsukHierarchy = hasTsukAncestor(sender);
         String label = slot.name().toLowerCase().replace('_', '-');
         StorageResponse recipient = storages.createChildStorage(
                 sender.getId(), "rel-date-" + label + "-recipient-");
         StorageResponse externalRecipient = storages.createExternalChildStorage(
                 sender.getId(), "rel-date-" + label + "-external-");
+        List<StorageResponse> allowedLocations = new java.util.ArrayList<>();
+        allowedLocations.add(sender);
+        allowedLocations.addAll(List.of(additionalLocations));
         UserFixture.BusinessActor user = users.createBusinessActor(
-                getPlaywrightSessionProvider(), businessRole, List.of(sender));
+                getPlaywrightSessionProvider(), businessRole, allowedLocations);
         apiExecutor.setSessionForRole(slot, user.username(), user.password());
         relocations.ensureStock(sender.getId(), resourceId, 200.0);
         Long parentId = sender.getParent() == null ? null : sender.getParent().getId();

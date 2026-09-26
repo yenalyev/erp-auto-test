@@ -11,6 +11,7 @@ import com.erp.models.response.ResourceResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 
 public final class RelocationDataFactory {
@@ -92,7 +93,7 @@ public final class RelocationDataFactory {
                 .senderId(senderId)
                 .recipientId(recipientId)
                 .description(description)
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(usage(resourceId, amount)))
                 .sendingPersonName("Test Sender")
                 .sendingPersonRank("Сержант")
@@ -111,7 +112,7 @@ public final class RelocationDataFactory {
                 .senderId(senderId)
                 .recipientId(recipientId)
                 .description("erp-auto-test send with batch")
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(usageWithBatch(resourceId, amount, batchNumber, isProduced)))
                 .build();
     }
@@ -129,7 +130,7 @@ public final class RelocationDataFactory {
                 .senderId(senderId)
                 .recipientId(recipientId)
                 .description("erp-auto-test send with mixed batches")
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(ResourceUsageRequest.builder()
                         .resourceId(resourceId)
                         .amount(BigDecimal.valueOf(amount))
@@ -157,7 +158,7 @@ public final class RelocationDataFactory {
                 .recipientId(recipientId)
                 .description("erp-auto-test external receive")
                 .invoiceNumber(uniqueInvoiceNumber())
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(usageWithBatch(resourceId, amount, batchNumber, isProduced)))
                 .build();
     }
@@ -171,7 +172,7 @@ public final class RelocationDataFactory {
                 .recipientId(recipientId)
                 .description(description)
                 .invoiceNumber(uniqueInvoiceNumber())
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(items)
                 .build();
     }
@@ -188,7 +189,7 @@ public final class RelocationDataFactory {
                 .senderId(crewId)
                 .recipientId(recipientId)
                 .description("erp-auto-test crew return")
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(usage(resourceId, amount)))
                 .build();
     }
@@ -199,7 +200,7 @@ public final class RelocationDataFactory {
                                                                      String description) {
         return RelocationInputEditRequest.builder()
                 .description(description)
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(usageWithBatch(resourceId, amount, batchNumber, false)))
                 .build();
     }
@@ -207,7 +208,7 @@ public final class RelocationDataFactory {
     public static RelocationOutputEditRequest buildSendEditRequest(Long resourceId, double amount, String description) {
         return RelocationOutputEditRequest.builder()
                 .description(description)
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(usage(resourceId, amount)))
                 .build();
     }
@@ -218,7 +219,7 @@ public final class RelocationDataFactory {
                                                                    Long recipientId) {
         return RelocationOutputEditRequest.builder()
                 .description(description)
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .recipientId(recipientId)
                 .items(List.of(usage(resourceId, amount)))
                 .build();
@@ -238,7 +239,7 @@ public final class RelocationDataFactory {
                 .senderId(senderId)
                 .recipientId(recipientId)
                 .description(description)
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(items)
                 .build();
     }
@@ -253,7 +254,7 @@ public final class RelocationDataFactory {
                 .description(FakerProvider.ukrainian().commerce().department())
                 .senderId(fromStorageId)
                 .recipientId(toStorageId)
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(ResourceUsageRequest.builder()
                         .resourceId(resource.getId())
                         .amount(amount)

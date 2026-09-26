@@ -85,6 +85,51 @@ public class CrewRegionFixture extends BaseFixture {
         return scenario;
     }
 
+    /** Return scenario with a newly created warehouse and explicitly scoped CREWS stock locations. */
+    @Step("FIXTURE: підготувати динамічний склад і екіпаж для повернення")
+    public CrewRegionScenario prepareReturnScenario(
+            StorageResponse warehouse, boolean attachedToFlyPoint, String namePrefix) {
+        Long parentId = warehouse.getParent() != null
+                ? warehouse.getParent().getId() : warehouse.getId();
+        StorageResponse unit = storageFixture.createUnitStorage(parentId, namePrefix + "unit-");
+        StorageResponse flyPoint = attachedToFlyPoint
+                ? storageFixture.createFlyPointStorage(unit.getId(), namePrefix + "fp-") : null;
+        StorageResponse crew = storageFixture.createCrewStorage(
+                attachedToFlyPoint ? flyPoint.getId() : unit.getId(), namePrefix + "crew-");
+
+        StorageRegionResponse region = regionFixture.createRegion(
+                unit, StorageAccessMode.CREWS, namePrefix + "reg-");
+        regionFixture.addRegionMembers(region.getId(), warehouse.getId());
+        if (flyPoint == null) {
+            regionFixture.addRegionLocations(region.getId(), unit.getId(), crew.getId());
+        } else {
+            regionFixture.addRegionLocations(region.getId(), unit.getId(), flyPoint.getId(), crew.getId());
+        }
+        testContext.set(ContextKey.CREW_STORAGE_ID, crew.getId());
+        testContext.set(ContextKey.CREW_PARENT_UNIT_ID, unit.getId());
+        return CrewRegionScenario.builder()
+                .region(region).unit(unit).flyPoint(flyPoint).crew(crew)
+                .memberStorageId(warehouse.getId()).build();
+    }
+
+    @Step("FIXTURE: підготувати дві точки вильоту для динамічного складу")
+    public CrewRegionScenario prepareTwoFlyPointsScenario(
+            StorageResponse warehouse, String namePrefix) {
+        Long parentId = warehouse.getParent() != null
+                ? warehouse.getParent().getId() : warehouse.getId();
+        StorageResponse unit = storageFixture.createUnitStorage(parentId, namePrefix + "unit-");
+        StorageResponse flyPointA = storageFixture.createFlyPointStorage(unit.getId(), namePrefix + "fpA-");
+        StorageResponse flyPointB = storageFixture.createFlyPointStorage(unit.getId(), namePrefix + "fpB-");
+        StorageRegionResponse region = regionFixture.createRegion(
+                unit, StorageAccessMode.CREWS, namePrefix + "reg-");
+        regionFixture.addRegionMembers(region.getId(), warehouse.getId());
+        regionFixture.addRegionLocations(
+                region.getId(), unit.getId(), flyPointA.getId(), flyPointB.getId());
+        return CrewRegionScenario.builder()
+                .region(region).unit(unit).flyPoint(flyPointA).flyPointB(flyPointB)
+                .memberStorageId(warehouse.getId()).build();
+    }
+
     /**
      * Як {@link #prepareSingleCrewScenario}, але учасники області — явний список storage id
      * (напр. LOCATION scope на батальйон для ролі «Екіпажі: перегляд»).

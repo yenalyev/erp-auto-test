@@ -11,9 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 public class RelocationCreateInputCrewPage extends BasePage {
 
     public static final String PATH = "/relocation/create-input-crew";
-    private static final String TITLE = "Отримання від екіпажа";
+    private static final String TITLE = "Отримання з точки вильоту";
     private static final String SUBMIT = "Підтвердити";
-    private static final String UNIT_PLACEHOLDER = "Оберіть підрозділ...";
+    private static final String UNIT_PLACEHOLDER = "Оберіть точку вильоту...";
     private static final String CREW_PLACEHOLDER = "Оберіть екіпаж...";
     private static final String RESOURCE_PLACEHOLDER = "Оберіть ресурс...";
     private static final String QUANTITY_PLACEHOLDER = "Кількість";
@@ -28,7 +28,6 @@ public class RelocationCreateInputCrewPage extends BasePage {
         page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(TITLE))
                 .waitFor();
         waitForCrewFormBootstrap();
-        page.getByPlaceholder(CREW_PLACEHOLDER).waitFor();
         return this;
     }
 
@@ -89,27 +88,16 @@ public class RelocationCreateInputCrewPage extends BasePage {
         } else {
             searchTerm = trimmed;
         }
-        // Receive form uses ResourceAutocomplete (combobox trigger + «Пошук...» popover).
-        Locator trigger = page.locator("button[role='combobox']")
-                .filter(new Locator.FilterOptions().setHasText(RESOURCE_PLACEHOLDER))
-                .first();
-        trigger.waitFor(new Locator.WaitForOptions()
+        // Stock-backed receipt uses the same searchable resource combobox as a handout.
+        Locator resourceInput = page.getByPlaceholder(RESOURCE_PLACEHOLDER).first();
+        resourceInput.waitFor(new Locator.WaitForOptions()
                 .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        trigger.scrollIntoViewIfNeeded();
-        trigger.click();
-
-        Locator searchInput = page.getByPlaceholder("Пошук...");
-        searchInput.waitFor(new Locator.WaitForOptions()
-                .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
-                .setTimeout(uiTimeoutMs()));
-        page.waitForResponse(
-                response -> response.url().contains("/resources/autocomplete")
-                        && "GET".equals(response.request().method()),
-                () -> searchInput.fill(searchTerm));
+        resourceInput.click();
+        resourceInput.fill(searchTerm);
         waitForComboboxOptionsSettled();
 
-        page.getByRole(AriaRole.OPTION)
+        page.locator(COMBOBOX_ITEM_SELECTOR)
                 .filter(new Locator.FilterOptions().setHasText(trimmed))
                 .first()
                 .click();
@@ -154,7 +142,7 @@ public class RelocationCreateInputCrewPage extends BasePage {
     }
 
     public RelocationCreateInputCrewPage open() {
-        navigateTo(ConfigProvider.getBaseUrl() + PATH, "Отримання від екіпажа");
+        navigateTo(ConfigProvider.getBaseUrl() + PATH, TITLE);
         return waitForLoaded();
     }
 }

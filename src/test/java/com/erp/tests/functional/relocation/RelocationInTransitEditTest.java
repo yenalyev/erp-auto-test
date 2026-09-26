@@ -3,6 +3,7 @@ package com.erp.tests.functional.relocation;
 import com.erp.annotations.TestCaseId;
 import com.erp.data.LocationProfileCatalog;
 import com.erp.data.factories.relocation.RelocationDataFactory;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.LocationFeature;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageRelation;
@@ -53,6 +54,7 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
     private RelocationFixture fixture;
     private StorageFixture storageFixture;
     private StorageRegionFixture regionFixture;
+    private UserFixture users;
     private Long owner1Storage;
     private Long owner2Storage;
     private Long resourceId;
@@ -62,6 +64,7 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
         fixture = new RelocationFixture(testContext, apiExecutor);
         storageFixture = new StorageFixture(testContext, apiExecutor);
         regionFixture = new StorageRegionFixture(testContext, apiExecutor);
+        users = new UserFixture(testContext, apiExecutor);
         fixture.prepareContext();
         owner1Storage = ConfigProvider.getOwner1StorageId();
         owner2Storage = ConfigProvider.getOwner2StorageId();
@@ -75,12 +78,14 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
 
     @AfterMethod(alwaysRun = true)
     public void cleanupRelationTestStorages() {
+        apiExecutor.restoreDefaultSessionForRole(UserRole.OWNER_1);
         archiveRelationTestStorages();
     }
 
     @AfterClass(alwaysRun = true)
     public void cleanupRelationTestStoragesAfterClass() {
         archiveRelationTestStorages();
+        if (users != null) users.deactivateTrackedUsers();
     }
 
     private void archiveRelationTestStorages() {
@@ -362,6 +367,9 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
         Allure.parameter("senderType", senderType.name());
         StorageResponse parent = storageFixture.resolveParentUnit();
         StorageResponse sender = createTypedSender(parent.getId(), senderType);
+        UserFixture.BusinessActor senderOwner = users.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(sender));
+        apiExecutor.setSessionForRole(UserRole.OWNER_1, senderOwner.username(), senderOwner.password());
         assertThat(sender.getKind()).isEqualTo(StorageKind.LOCATION);
         assertThat(sender.getFeatures()).contains(LocationFeature.RELOCATIONS);
         if (senderType == UnitType.PRODUCTION) {
@@ -433,8 +441,12 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
         Allure.parameter("senderType", UnitType.UNIT.name());
         Allure.parameter("recipientType", recipientType.name());
         assertThat(unit.getFeatures()).contains(LocationFeature.ORDERS);
-        assertThat(recipient.getKind()).isEqualTo(
-                recipientType == UnitType.CREW ? StorageKind.CREW : StorageKind.FLY_POINT);
+        assertThat(recipient.getKind()).isEqualTo(switch (recipientType) {
+            case CREW -> StorageKind.CREW;
+            case FLY_POINT -> StorageKind.FLY_POINT;
+            case STORAGE -> StorageKind.LOCATION;
+            default -> throw new IllegalArgumentException("Unsupported recipient type: " + recipientType);
+        });
 
         fixture.createExternalReceive(
                 UserRole.ADMIN, unit.getId(), resourceId, 20.0,

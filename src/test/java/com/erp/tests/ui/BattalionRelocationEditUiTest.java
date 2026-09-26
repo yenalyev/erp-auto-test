@@ -117,9 +117,12 @@ public class BattalionRelocationEditUiTest extends BaseUITest {
                 pointA1.getId(), pointA2.getId(), pointB1.getId(), pointB2.getId(),
                 crewA.getId(), crewB.getId(), attachedCrewA.getId());
 
-        keeperA = createActor(BusinessRole.UNIT_KOMIRNIK, KEEPER_A, warehouseA);
-        keeperAPeer = createActor(BusinessRole.UNIT_KOMIRNIK, KEEPER_A_PEER, warehouseA);
-        keeperB = createActor(BusinessRole.UNIT_KOMIRNIK, KEEPER_B, warehouseB);
+        keeperA = createActor(BusinessRole.UNIT_KOMIRNIK, KEEPER_A,
+                warehouseA, pointA1, pointA2, crewA, attachedCrewA);
+        keeperAPeer = createActor(BusinessRole.UNIT_KOMIRNIK, KEEPER_A_PEER,
+                warehouseA, pointA1, pointA2, crewA, attachedCrewA);
+        keeperB = createActor(BusinessRole.UNIT_KOMIRNIK, KEEPER_B,
+                warehouseB, pointB1, pointB2, crewB);
 
         production = locationProfiles.create(LocationProfile.TSUK_PRODUCTION, 1).locations().getFirst();
         productionDestination = storages.createChildStorage(production.getId(), "rel-edit-production-destination-");
@@ -158,8 +161,9 @@ public class BattalionRelocationEditUiTest extends BaseUITest {
         return description;
     }
 
-    private UserFixture.BusinessActor createActor(BusinessRole businessRole, UserRole slot, StorageResponse location) {
-        var actor = users.createBusinessActor(getPlaywrightSessionProvider(), businessRole, List.of(location));
+    private UserFixture.BusinessActor createActor(BusinessRole businessRole, UserRole slot,
+                                                  StorageResponse... locations) {
+        var actor = users.createBusinessActor(getPlaywrightSessionProvider(), businessRole, List.of(locations));
         apiExecutor.setSessionForRole(slot, actor.username(), actor.password());
         return actor;
     }
@@ -550,7 +554,7 @@ public class BattalionRelocationEditUiTest extends BaseUITest {
                 .senderId(sender.getId())
                 .recipientId(warehouse.getId())
                 .description(description)
-                .date(LocalDate.now())
+                .date(LocalDate.now().minusDays(1))
                 .items(List.of(RelocationDataFactory.usage(resourceId, amount)))
                 .build();
         var response = apiExecutor.executeRelocationReceive(request, role);
@@ -646,7 +650,10 @@ public class BattalionRelocationEditUiTest extends BaseUITest {
                 : authService.getSessionForUser(actor.username(), actor.password());
         injectSessionCookies(cookies, sessionCookieDomain());
         page.navigate(ConfigProvider.getBaseUrl());
-        page.evaluate("id => localStorage.setItem('selectedStorageId', id)", String.valueOf(workspaceId));
+        String username = actor == null ? role.getUsername() : actor.username();
+        page.evaluate("args => localStorage.setItem('selectedStorageId:' + args.username, args.id)",
+                Map.of("username", username, "id", String.valueOf(workspaceId)));
+        page.reload();
     }
 
     private static String marker(String prefix) {
