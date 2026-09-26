@@ -181,6 +181,7 @@
     <test name="Relocation API">
         <classes>
             <class name="com.erp.tests.functional.relocation.RelocationTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationReceivedDateTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationOperationHistoryCommentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
@@ -295,6 +296,7 @@
     <test name="UI Relocation">
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
+            <class name="com.erp.tests.ui.RelocationReceivedDateUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
             <class name="com.erp.tests.ui.RelocationBatchAccountingUiTest"/>
             <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>

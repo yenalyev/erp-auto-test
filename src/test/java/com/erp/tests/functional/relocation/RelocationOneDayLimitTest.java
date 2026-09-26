@@ -23,6 +23,7 @@ import com.erp.models.request.RelocationOutputEditRequest;
 import com.erp.models.request.RelocationOutputRequest;
 import com.erp.models.request.StorageRequest;
 import com.erp.models.response.RelocationResponse;
+import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
@@ -79,8 +80,12 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
         regions = new StorageRegionFixture(testContext, apiExecutor);
         locationProfiles = new LocationProfileFixture(testContext, apiExecutor);
         users = new UserFixture(testContext, apiExecutor);
-        relocations.prepareContext();
-        resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
+        relocations.fetchSharedUnit(3);
+        relocations.fetchSharedResourceCategory();
+        relocations.setupSharedResourceList(3);
+        List<ResourceResponse> resources = testContext.get(ContextKey.SHARED_AVAILABLE_RESOURCES);
+        resourceId = resources.getFirst().getId();
+        testContext.set(ContextKey.RELOCATION_RESOURCE_ID, resourceId);
 
         tsukParentId = LocationProfileCatalog.parentPool(TSUK_PARENT_POOL).candidates().getFirst();
 
@@ -351,17 +356,21 @@ public class RelocationOneDayLimitTest extends BaseFunctionalTest {
             locationProfiles = {LocationProfile.TSUK_PRODUCTION, LocationProfile.TSUK_WARENHAUSE})
     @Description("Старе переміщення між локаціями TSUK-ієрархії можна прийняти.")
     public void tsukRecipientCanAlwaysAcceptOldRelocation() {
-        LocalDate oldDate = LocalDate.now().minusDays(30);
+        LocalDate oldDate = LocalDate.now(java.time.ZoneId.of("Europe/Kyiv")).minusDays(30);
+        LocalDate receivedDate = oldDate.plusDays(5);
         RelocationResponse sent = send(UserRole.ADMIN,
                 tsukProduction.senderId(), tsukWarehouse.senderId(),
                 oldDate, marker("tsuk-accept-old"));
         assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
 
         RelocationResponse accepted = relocations.resolve(
-                tsukWarehouse.role(), sent.getId(), tsukWarehouse.senderId(), RelocationState.FINISHED);
+                tsukWarehouse.role(), sent.getId(), tsukWarehouse.senderId(), RelocationState.FINISHED,
+                "old relocation accepted with selected receipt date", receivedDate);
 
         assertThat(accepted.getId()).isEqualTo(sent.getId());
         assertThat(accepted.getDate()).isEqualTo(oldDate);
+        assertThat(accepted.getReceivedAt().atZone(java.time.ZoneId.of("Europe/Kyiv")).toLocalDate())
+                .isEqualTo(receivedDate);
         assertThat(accepted.getState()).isEqualTo(RelocationState.FINISHED);
     }
 

@@ -278,6 +278,8 @@ public class EquipmentFixture extends BaseFixture {
         RelocationUpdateRequest request = RelocationUpdateRequest.builder()
                 .state(state)
                 .description("erp-auto-test equipment resolve")
+                .receivedDate(state == RelocationState.FINISHED
+                        ? LocalDate.now(java.time.ZoneId.of("Europe/Kyiv")) : null)
                 .build();
         Response response = apiExecutor.executeRelocationResolve(relocationId, storageId, request, role);
         validateSuccess(response, "Resolve equipment relocation");
@@ -291,6 +293,8 @@ public class EquipmentFixture extends BaseFixture {
         RelocationUpdateRequest request = RelocationUpdateRequest.builder()
                 .state(state)
                 .description("erp-auto-test equipment resolve")
+                .receivedDate(state == RelocationState.FINISHED
+                        ? LocalDate.now(java.time.ZoneId.of("Europe/Kyiv")) : null)
                 .build();
         return apiExecutor.executeRelocationResolve(relocationId, storageId, request, role);
     }

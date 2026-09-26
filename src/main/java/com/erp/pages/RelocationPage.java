@@ -667,6 +667,11 @@ public class RelocationPage extends BasePage {
      * Recipient accepts an in-transit send («Прийняти» → «Підтвердити прийом?»).
      */
     public RelocationPage acceptInTransitAsRecipient(String rowText) {
+        openAcceptDialog(rowText);
+        return confirmAcceptDialog();
+    }
+
+    public RelocationPage openAcceptDialog(String rowText) {
         Locator row = rowContainingText(rowText);
         row.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
@@ -679,11 +684,42 @@ public class RelocationPage extends BasePage {
                 .waitFor(new Locator.WaitForOptions()
                         .setState(WaitForSelectorState.VISIBLE)
                         .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public String acceptDateMin() {
+        return acceptDateInput().getAttribute("min");
+    }
+
+    public String acceptDateMax() {
+        return acceptDateInput().getAttribute("max");
+    }
+
+    public String acceptDateValue() {
+        return acceptDateInput().inputValue();
+    }
+
+    public String acceptDateInputType() {
+        return acceptDateInput().getAttribute("type");
+    }
+
+    public RelocationPage fillAcceptDate(String isoDate) {
+        acceptDateInput().fill(isoDate);
+        return this;
+    }
+
+    public boolean isAcceptConfirmationEnabled() {
+        return cancelDialog().getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Підтвердити")).isEnabled();
+    }
+
+    public RelocationPage confirmAcceptDialog() {
+        Locator dialog = cancelDialog();
         var response = page.waitForResponse(
                 r -> r.url().contains("/resolve") && "PUT".equals(r.request().method()),
                 new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
-                () -> dialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Підтвердити"))
-                        .click());
+                () -> dialog.getByRole(AriaRole.BUTTON,
+                        new Locator.GetByRoleOptions().setName("Підтвердити")).click());
         if (response.status() < 200 || response.status() >= 300) {
             attachScreenshot("PUT resolve FINISHED failed — status " + response.status());
             throw new IllegalStateException(
@@ -691,6 +727,10 @@ public class RelocationPage extends BasePage {
         }
         waitForJournalDataSettled();
         return this;
+    }
+
+    private Locator acceptDateInput() {
+        return cancelDialog().locator("input[type='date']");
     }
 
     /**

@@ -36,6 +36,7 @@ public class RelocationRequestBodyFactory {
                 RelocationUpdateRequest.builder()
                         .state(RelocationState.FINISHED)
                         .description("rbac resolve")
+                        .receivedDate(LocalDate.now(java.time.ZoneId.of("Europe/Kyiv")))
                         .build());
         register(ApiEndpointDefinition.RELOCATION_PUT_UPDATE_SEND, context ->
                 buildSendEdit(context, 2.0));

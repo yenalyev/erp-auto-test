@@ -27,6 +27,8 @@ import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -575,9 +577,21 @@ public class RelocationFixture extends BaseFixture {
                                       Long storageId,
                                       RelocationState state,
                                       String description) {
+        return resolve(role, relocationId, storageId, state, description,
+                state == RelocationState.FINISHED ? LocalDate.now(ZoneId.of("Europe/Kyiv")) : null);
+    }
+
+    /** Accept with an explicit receipt date; other state transitions do not carry one. */
+    public RelocationResponse resolve(UserRole role,
+                                      Long relocationId,
+                                      Long storageId,
+                                      RelocationState state,
+                                      String description,
+                                      LocalDate receivedDate) {
         RelocationUpdateRequest request = RelocationUpdateRequest.builder()
                 .state(state)
                 .description(description)
+                .receivedDate(state == RelocationState.FINISHED ? receivedDate : null)
                 .build();
         Response response = apiExecutor.executeRelocationResolve(relocationId, storageId, request, role);
         validateSuccess(response, "Resolve relocation");
@@ -634,6 +648,8 @@ public class RelocationFixture extends BaseFixture {
         RelocationUpdateRequest request = RelocationUpdateRequest.builder()
                 .state(state)
                 .description("erp-auto-test resolve")
+                .receivedDate(state == RelocationState.FINISHED
+                        ? LocalDate.now(ZoneId.of("Europe/Kyiv")) : null)
                 .build();
         return apiExecutor.executeRelocationResolve(relocationId, storageId, request, role);
     }

@@ -171,6 +171,11 @@ public class RelocationCreateOutputPage extends BasePage {
         return this;
     }
 
+    public RelocationCreateOutputPage fillDate(String isoDate) {
+        page.locator("form input[type='date']").fill(isoDate);
+        return this;
+    }
+
     public RelocationCreateOutputPage selectOutputResourceByName(String resourceNamePart) {
         return selectOutputResourceByName(0, resourceNamePart);
     }

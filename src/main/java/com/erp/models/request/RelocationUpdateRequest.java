@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,4 +19,6 @@ import lombok.NoArgsConstructor;
 public class RelocationUpdateRequest {
     private RelocationState state;
     private String description;
+    /** Date selected in the «Прийняти» dialog for a FINISHED internal relocation. */
+    private LocalDate receivedDate;
 }

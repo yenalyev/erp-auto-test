@@ -32,6 +32,8 @@ public class RelocationResponse {
     private SimpleEntityResponse sender;
     private SimpleEntityResponse recipient;
     private LocalDate date;
+    /** Actual receipt timestamp; the journal's «Отримано» column uses this, not date. */
+    private Instant receivedAt;
     private Boolean canGenerateInvoice;
     private Boolean hasExternalInvoicePhoto;
     private Boolean isPaidByCash;

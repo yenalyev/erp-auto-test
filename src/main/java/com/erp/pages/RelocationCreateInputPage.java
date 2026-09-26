@@ -44,6 +44,22 @@ public class RelocationCreateInputPage extends BasePage {
         return this;
     }
 
+    public RelocationCreateInputPage fillDate(String isoDate) {
+        page.locator("form input[type='date']").fill(isoDate);
+        return this;
+    }
+
+    public RelocationCreateInputPage selectSourceByName(String name) {
+        Locator source = page.getByPlaceholder("Оберіть склад...");
+        source.click();
+        source.fill(name);
+        waitForComboboxOptionsSettled();
+        page.locator("[data-slot='combobox-item']")
+                .filter(new Locator.FilterOptions().setHasText(name))
+                .first().click();
+        return this;
+    }
+
     public RelocationCreateInputPage selectResourceByName(String resourceNamePart) {
         return selectResourceByName(0, resourceNamePart);
     }

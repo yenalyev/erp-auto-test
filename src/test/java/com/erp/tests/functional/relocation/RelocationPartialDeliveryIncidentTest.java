@@ -289,6 +289,7 @@ public class RelocationPartialDeliveryIncidentTest extends BaseFunctionalTest {
 
         RelocationUpdateRequest resolveRequest = RelocationUpdateRequest.builder()
                 .state(RelocationState.FINISHED)
+                .receivedDate(java.time.LocalDate.now(java.time.ZoneId.of("Europe/Kyiv")))
                 .description("must fail on LOST after partial delivery")
                 .build();
         Response response = apiExecutor.executeRelocationResolve(
