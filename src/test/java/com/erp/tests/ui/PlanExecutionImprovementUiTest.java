@@ -193,14 +193,14 @@ public class PlanExecutionImprovementUiTest extends BaseUITest {
                 "Продукт", "Категорія", "Ціль", "Од. вимір", "Зроблено",
                 "На складі (" + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")) + ")");
         assertThat(workbook.get("Поза планом").getFirst()).containsExactly(
-                "Продукт", "Категорія", "Од. виміру", "Зроблено",
+                "Продукт", "Категорія", "Зроблено", "Од. вимір",
                 "На складі (" + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")) + ")");
         assertThat(workbook.get("Розбір").getFirst()).containsExactly("Продукт", "Кількість");
     }
 
     @Test(priority = 21)
     @TestCaseId("TC-UI-PLANEXEC-016")
-    @Story("Excel contains only currently visible rows, including collapsed out-of-plan rows")
+    @Story("Execution sheets contain only currently visible rows, including collapsed out-of-plan rows")
     public void exportUsesCurrentVisibleRows() {
         List<ResourceCategoryResponse> categories = categories();
         assertThat(categories).hasSizeGreaterThanOrEqualTo(2);
@@ -214,19 +214,38 @@ public class PlanExecutionImprovementUiTest extends BaseUITest {
         fixture.saveFavouriteResources(ACTOR_SESSION, activeStorageId, List.of(visible.getProduct().getId()));
 
         injectDynamicActorSession();
-        PlanExecutionPage pageObject = new PlanExecutionPage(page).open()
-                .selectExecutionCategories(categories.get(0).getName());
+        PlanExecutionPage pageObject = new PlanExecutionPage(page).open();
+        Map<String, List<List<String>>> unfilteredWorkbook = XlsxWorkbookReader.sheets(
+                read(pageObject.clickExportToExcelAndDownload().path()));
+        pageObject.selectExecutionCategories(categories.get(0).getName());
+        Map<String, List<List<String>>> categoryWorkbook = XlsxWorkbookReader.sheets(
+                read(pageObject.clickExportToExcelAndDownload().path()));
         pageObject.searchExecutionProduct(visible.getProduct().getName());
+        Map<String, List<List<String>>> searchedWorkbook = XlsxWorkbookReader.sheets(
+                read(pageObject.clickExportToExcelAndDownload().path()));
         pageObject.clickFavouritesOnly();
         // Out-of-plan remains collapsed: collapse is presentation state, not an export filter.
         var download = pageObject.clickExportToExcelAndDownload();
         assertThat(download.sizeBytes()).isGreaterThan(0);
         Map<String, List<List<String>>> workbook = XlsxWorkbookReader.sheets(read(download.path()));
-        List<String> cells = workbook.values().stream().flatMap(List::stream).flatMap(List::stream).toList();
+        List<String> cells = List.of("За планом", "Поза планом").stream()
+                .flatMap(sheet -> workbook.get(sheet).stream())
+                .flatMap(List::stream).toList();
         assertThat(cells).contains(visible.getProduct().getName());
         assertThat(cells).doesNotContain(
                 hiddenBySearch.getProduct().getName(),
                 hiddenByCategory.getProduct().getName());
+        org.assertj.core.api.SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(categoryWorkbook.get("Розбір"))
+                    .as("Category filter does not change the disassembly sheet")
+                    .isEqualTo(unfilteredWorkbook.get("Розбір"));
+            softly.assertThat(searchedWorkbook.get("Розбір"))
+                    .as("Product search does not change the disassembly sheet")
+                    .isEqualTo(unfilteredWorkbook.get("Розбір"));
+            softly.assertThat(workbook.get("Розбір"))
+                    .as("Favourites filter does not change the disassembly sheet")
+                    .isEqualTo(unfilteredWorkbook.get("Розбір"));
+        });
     }
 
     @Test(priority = 30)

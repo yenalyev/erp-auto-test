@@ -129,15 +129,25 @@ public class PlanExecutionImprovementApiTest extends BaseFunctionalTest {
 
     @Test(priority = 20)
     @TestCaseId("TC-API-PLANEXEC-002")
-    @Story("Excel export contains the filtered rows, unit and current stock date")
+    @Story("Excel filters execution rows, preserves unfiltered disassembly, unit and current stock date")
     public void exportHasRequiredColumnsAndFilteredRows() {
-        ResourceCategoryResponse category = categories().getFirst();
+        List<ResourceCategoryResponse> availableCategories = categories();
+        assertThat(availableCategories)
+                .as("At least two categories are required for the empty-sheet export scenario")
+                .hasSizeGreaterThanOrEqualTo(2);
+        ResourceCategoryResponse category = availableCategories.getFirst();
+        ResourceCategoryResponse emptyCategory = availableCategories.stream()
+                .filter(candidate -> !Objects.equals(candidate.getId(), category.getId()))
+                .findFirst()
+                .orElseThrow();
         MeasurementUnitResponse unit = units().getFirst();
         storageId = isolatedStorage().getId();
         var context = fixture.createIsolatedProduct(storageId, unit.getId(), category.getId());
         contexts.add(context);
         productions.add(fixture.createCurrentMonthProduction(storageId, context.getTechMap(), 4));
 
+        Map<String, List<List<String>>> unfilteredSheets = XlsxWorkbookReader.sheets(
+                fixture.exportExecution(storageId, filter(null, null)));
         byte[] bytes = fixture.exportExecution(storageId, filter(List.of(category.getId()), null));
         assertThat(bytes).startsWith((byte) 'P', (byte) 'K');
         Map<String, List<List<String>>> sheets = XlsxWorkbookReader.sheets(bytes);
@@ -149,15 +159,28 @@ public class PlanExecutionImprovementApiTest extends BaseFunctionalTest {
                 "Продукт", "Категорія", "Ціль", "Од. вимір", "Зроблено",
                 "На складі (" + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + ")");
         List<String> outsidePlanHeaders = List.of(
-                "Продукт", "Категорія", "Од. виміру", "Зроблено",
+                "Продукт", "Категорія", "Зроблено", "Од. вимір",
                 "На складі (" + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + ")");
         assertThat(sheets).containsKeys("За планом", "Поза планом", "Розбір");
         assertThat(sheets.get("За планом")).isNotEmpty();
         assertThat(sheets.get("За планом").getFirst()).containsExactlyElementsOf(plannedHeaders);
         assertThat(sheets.get("Поза планом")).isNotEmpty();
         assertThat(sheets.get("Поза планом").getFirst()).containsExactlyElementsOf(outsidePlanHeaders);
+        assertThat(sheets.get("Розбір"))
+                .as("Category filter does not change the disassembly sheet")
+                .isEqualTo(unfilteredSheets.get("Розбір"));
         assertThat(sheets.values().stream().flatMap(List::stream).flatMap(List::stream).toList())
                 .contains(context.getProduct().getName(), unit.getShortName());
+
+        Map<String, List<List<String>>> emptySheets = XlsxWorkbookReader.sheets(
+                fixture.exportExecution(storageId, filter(List.of(emptyCategory.getId()), null)));
+        assertThat(emptySheets).containsKeys("За планом", "Поза планом", "Розбір");
+        assertThat(emptySheets.get("Поза планом"))
+                .as("Out-of-plan sheet contains only its accepted header when the filtered result has no rows")
+                .containsExactly(outsidePlanHeaders);
+        assertThat(emptySheets.get("Розбір"))
+                .as("Disassembly sheet remains unchanged when the selected category has no execution rows")
+                .isEqualTo(unfilteredSheets.get("Розбір"));
     }
 
     @Test(priority = 30)
