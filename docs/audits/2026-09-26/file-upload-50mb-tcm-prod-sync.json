@@ -1,0 +1,107 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "feature": {
+    "created": true,
+    "updated": false
+  },
+  "acceptanceCriteria": {
+    "created": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05"
+    ],
+    "updated": []
+  },
+  "testCases": {
+    "created": [
+      "TC-UPLOAD-50-01",
+      "TC-UPLOAD-50-02",
+      "TC-UPLOAD-50-03",
+      "TC-UPLOAD-50-04",
+      "TC-UPLOAD-50-05",
+      "TC-UPLOAD-50-06"
+    ],
+    "updated": []
+  },
+  "verification": {
+    "featureId": "REQ-UPLOAD-50MB",
+    "parentFeatureId": null,
+    "status": "ACTIVE",
+    "documentationLength": 2130,
+    "documentationSha256": "e3a9692ea2012224b23a06f944bca8d9a28e4c66803d66b87db30a7128032c96",
+    "sourceDocumentationSha256": "e3a9692ea2012224b23a06f944bca8d9a28e4c66803d66b87db30a7128032c96",
+    "requiredAcPresent": true,
+    "managedAcCount": 5,
+    "managedCaseCount": 6,
+    "automatedCaseCount": 6,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-UPLOAD-50-01": {
+        "featureId": "REQ-UPLOAD-50MB",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-UPLOAD-50-01"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UPLOAD-50-02": {
+        "featureId": "REQ-UPLOAD-50MB",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-UPLOAD-50-02"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UPLOAD-50-03": {
+        "featureId": "REQ-UPLOAD-50MB",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UPLOAD-50-03"
+        ],
+        "stepCount": 2
+      },
+      "TC-UPLOAD-50-04": {
+        "featureId": "REQ-UPLOAD-50MB",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-UPLOAD-50-04"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UPLOAD-50-05": {
+        "featureId": "REQ-UPLOAD-50MB",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-UPLOAD-50-05"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-UPLOAD-50-06": {
+        "featureId": "REQ-UPLOAD-50MB",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-UPLOAD-50-06"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      }
+    }
+  },
+  "completedAt": "2026-09-26T10:44:26.519052+00:00",
+  "result": "SUCCESS"
+}
