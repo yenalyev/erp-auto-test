@@ -1,0 +1,44 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "projectId": 1,
+  "timestamp": "2026-09-26T09:08:34.066110+00:00",
+  "applied": true,
+  "features": [
+    {
+      "featureId": "REQ-MFG-001",
+      "id": 3,
+      "changed": true,
+      "documentationVerified": true,
+      "otherFieldsPreserved": true,
+      "beforeSha256": "6c2efc6805b032ac6cd7c66cb43fcdfcecfda2a1ee49323d9cf577a5017096d2",
+      "afterSha256": "423924ae7dd00dfa0d0de364439031a8e300bd7405671f544f6c31fbf75ff59a"
+    },
+    {
+      "featureId": "REQ-MFG-001-01",
+      "id": 5,
+      "changed": true,
+      "documentationVerified": true,
+      "otherFieldsPreserved": true,
+      "beforeSha256": "5cf9071e2079cacda478883b7f6f747592ef20088fb32c27a3181b44b8073407",
+      "afterSha256": "dc424adb3e09aa03b6e83850462ccbfc10e5fbb05dadc02a349b61a98b3c65d6"
+    },
+    {
+      "featureId": "REQ-MFG-001-02",
+      "id": 9,
+      "changed": true,
+      "documentationVerified": true,
+      "otherFieldsPreserved": true,
+      "beforeSha256": "4ad750e23700e636dddb228c4baa83a5c93058c6c4ff318217553cf7914df223",
+      "afterSha256": "93d4712b3845982b648aecdf0baca9a27d862d6655b4a05656e275ae538989cd"
+    },
+    {
+      "featureId": "REQ-MFG-001-03",
+      "id": 12,
+      "changed": true,
+      "documentationVerified": true,
+      "otherFieldsPreserved": true,
+      "beforeSha256": "00e62691ca4756e066c3bca4bfa8864c58b93a4ba9d2c773272930bbc5f52f0f",
+      "afterSha256": "e1d4849cf31d62f5f0d30e2f2e11674b9c931d6f5a16bc319e6479e8d879797b"
+    }
+  ]
+}
