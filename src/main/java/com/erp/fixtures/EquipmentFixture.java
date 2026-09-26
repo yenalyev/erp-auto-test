@@ -3,6 +3,8 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.EquipmentStatus;
+import com.erp.enums.LocationFeature;
+import com.erp.enums.StorageRelation;
 import com.erp.enums.UserRole;
 import com.erp.models.request.EquipmentAssignmentRequest;
 import com.erp.models.request.EquipmentCreateRequest;
@@ -121,7 +123,9 @@ public class EquipmentFixture extends BaseFixture {
 
     /**
      * A sender is mandatory on create unless the target location has an open equipment inventory
-     * session ({@code EquipmentValidator}); SUPPLIER is the only always-available allowed type.
+     * session ({@code EquipmentValidator}). Use the same active external supplier selection as
+     * relocation fixtures; the first SUPPLIER returned by the API is not necessarily permitted to
+     * send equipment to the target location.
      */
     private Long resolveSupplierSenderId() {
         Long cached = testContext.get(ContextKey.EQUIPMENT_SUPPLIER_ID);
@@ -132,10 +136,17 @@ public class EquipmentFixture extends BaseFixture {
         validateSuccess(response, "Get SUPPLIER storage for equipment sender");
         List<StorageResponse> suppliers =
                 DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
-        if (suppliers == null || suppliers.isEmpty()) {
-            throw new IllegalStateException("No SUPPLIER storage available as equipment sender");
-        }
-        Long supplierId = suppliers.getFirst().getId();
+        Long supplierId = suppliers.stream()
+                .filter(s -> s != null && s.getId() != null)
+                .filter(s -> !Boolean.FALSE.equals(s.getActive()))
+                .filter(s -> StorageRelation.EXTERNAL.name().equals(s.getRelation()))
+                .filter(s -> s.getFeatures() != null
+                        && s.getFeatures().contains(LocationFeature.EQUIPMENT)
+                        && s.getFeatures().contains(LocationFeature.RELOCATIONS))
+                .map(StorageResponse::getId)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No active EXTERNAL SUPPLIER with EQUIPMENT and RELOCATIONS features found"));
         testContext.set(ContextKey.EQUIPMENT_SUPPLIER_ID, supplierId);
         return supplierId;
     }
