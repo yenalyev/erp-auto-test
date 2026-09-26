@@ -148,6 +148,35 @@ public class TechnologicalMapsListPage extends BasePage {
         return page.getByText(techMapName, new Page.GetByTextOptions().setExact(true)).count() > 0;
     }
 
+    /** Use the row action so workspace-dependent availability is exercised. */
+    public TechnologicalMapFormPage editTechMap(String techMapName) {
+        clickTechMapAction(techMapName, "Редагувати");
+        return new TechnologicalMapFormPage(page).waitForUpdateLoaded();
+    }
+
+    public TechnologicalMapFormPage cloneTechMap(String techMapName) {
+        clickTechMapAction(techMapName, "Клонувати");
+        return new TechnologicalMapFormPage(page).waitForCloneLoaded();
+    }
+
+    /** Does not assume the action can load a form in the selected workspace. */
+    public void clickTechMapAction(String techMapName, String action) {
+        techMapRow(techMapName).getByTitle(action, new Locator.GetByTitleOptions().setExact(true)).click();
+    }
+
+    public String waitForLocationHint(String locationName) {
+        Locator toast = page.locator("[data-sonner-toast]").filter(new Locator.FilterOptions()
+                .setHasText("Для вибраної Технологічної карти виберіть одну з наступних локацій: " + locationName));
+        toast.first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE).setTimeout(uiTimeoutMs()));
+        return toast.first().innerText().trim();
+    }
+
+    private Locator techMapRow(String techMapName) {
+        return page.locator("table tbody tr").filter(new Locator.FilterOptions()
+                .setHas(page.getByText(techMapName, new Page.GetByTextOptions().setExact(true))));
+    }
+
     public List<String> getDisplayedTechMapNames() {
         List<String> names = new ArrayList<>();
         Locator rows = page.locator("table tbody tr");

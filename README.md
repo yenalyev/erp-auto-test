@@ -72,6 +72,10 @@ mvn clean test
 mvn clean test -Denv=dev -Dsuite=regression
 ```
 
+Підказка про перехід на відповідну локацію для редагування й клонування техкарт із Цукрарні та
+регресійні сценарії описані в [REQ-MFG-WORKSPACE-ACTIONS](docs/REQ-MFG-WORKSPACE-ACTIONS.md).
+Перевірки входять до наборів `technological-maps`, `ui` та `regression`.
+
 Тематичні набори обираються через `-Dsuite=<назва XML без розширення>`:
 
 ```bash

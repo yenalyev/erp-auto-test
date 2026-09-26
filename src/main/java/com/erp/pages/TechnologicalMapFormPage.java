@@ -59,6 +59,10 @@ public class TechnologicalMapFormPage extends BasePage {
     public TechnologicalMapFormPage openClone(long techMapId) {
         String path = PATH_CREATE + "?cloneId=" + techMapId;
         navigateTo(ConfigProvider.getBaseUrl() + path, "Клонування тех. карти");
+        return waitForCloneLoaded();
+    }
+
+    public TechnologicalMapFormPage waitForCloneLoaded() {
         waitForLoaded();
         try {
             page.waitForCondition(
