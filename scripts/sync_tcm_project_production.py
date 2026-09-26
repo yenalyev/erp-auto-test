@@ -33,7 +33,7 @@ ROOT_DOCUMENTATION = """# Проєктне виробництво
 
 - `CREATION` виготовляє нову одиницю обладнання.
 - `MODIFICATION` змінює вибрану наявну одиницю обладнання і не створює нову.
-- Виробничі етапи списують ресурси; сумарне виконання етапів не може перевищувати 100%.
+- Виробничі етапи списують ресурси; сумарне виконання етапів CREATION і MODIFICATION, а також шаблонів обох типів не може перевищувати 100%.
 - Активна модифікація резервує вибране обладнання від інших несумісних операцій.
 - Після скасування виробництва або видалення етапу ресурси повертаються повністю чи частково окремою швидкою дією.
 - Кожне повернення відображається в історії операцією «Повернено з проекту».
@@ -62,7 +62,7 @@ FEATURES: list[dict[str, Any]] = [
 
 Результатом `CREATION` є одна нова одиниця обладнання, а не партія ресурсу. Категорія, модель і серійний номер визначають майбутнє обладнання. Серійний номер обов'язковий та унікальний. Обладнання створюється тільки після завершення виробництва і стає доступним для подальших операцій.
 
-Ресурси є вхідними матеріалами етапів. Не можна використати більше наявного залишку. Сумарний відсоток виконання етапів не може перевищувати 100%. Завершений проєкт не видаляється. Скасування завершення прибирає виготовлене обладнання та повертає проєкт у незавершений стан.
+Ресурси є вхідними матеріалами етапів. Не можна використати більше наявного залишку. Сумарний відсоток виконання етапів не може перевищувати 100% як для CREATION, так і для MODIFICATION. Завершений проєкт не видаляється. Скасування завершення прибирає виготовлене обладнання та повертає проєкт у незавершений стан.
 """,
         "module": "PROJ",
         "priority": "CRITICAL",
@@ -77,7 +77,7 @@ FEATURES: list[dict[str, Any]] = [
 
 Шаблон зберігає тип виробництва, структуру етапів і потрібні ресурси, але сам не списує залишки. Шаблон модифікації не містить конкретної одиниці обладнання і нічого не резервує. Обладнання вибирається у створеному зі шаблону проєкті.
 
-Модифікацію зі шаблону без обладнання можна зберегти та скасувати, але не можна завершити. Для шаблону, як і для проєкту, сумарний відсоток виконання етапів не може перевищувати 100%.
+Модифікацію зі шаблону без обладнання можна зберегти та скасувати, але не можна завершити. Для шаблонів CREATION і MODIFICATION, як і для проєктів обох типів, сумарний відсоток виконання етапів не може перевищувати 100%.
 """,
         "module": "PROJ",
         "priority": "HIGH",
@@ -257,12 +257,14 @@ CASES: list[dict[str, Any]] = [
     case("TC-PROJ-TPL-004", "REQ-PROJ-002", "AC-04", "Модифікація зі шаблону без обладнання не завершується", "Створити MODIFICATION із шаблону без обладнання, спробувати завершити, потім скасувати.", "Завершення відхилено, скасування дозволено.", priority="CRITICAL", severity="CRITICAL"),
     case("TC-PROJ-TPL-005", "REQ-PROJ-002", "AC-05", "Етапи шаблону не можуть перевищувати 100%", "Спробувати зберегти шаблон із сумарним виконанням етапів 105%.", "Збереження відхилено; стан понад 100% не створений.", priority="CRITICAL", severity="CRITICAL"),
     case("TC-PROJ-TPL-006", "REQ-PROJ-002", "AC-06", "Шаблон модифікації не зберігає конкретне обладнання", "Створити шаблон із проєкту модифікації та повторно використати його.", "Конкретне обладнання не перенесене й не зарезервоване; його обирають у новому проєкті.", automated=False),
+    case("TC-PROJ-TPL-007", "REQ-PROJ-002", "AC-05", "Етапи шаблону модифікації не можуть перевищувати 100%", "Створити шаблон MODIFICATION з етапом 100% і спробувати додати етап 5%.", "Додавання відхилено; сума етапів шаблону залишилася не більшою за 100%.", priority="CRITICAL", severity="CRITICAL"),
 
     case("TC-PROJ-MOD-001", "REQ-PROJ-004", "AC-01", "Модифікація змінює вибране обладнання без створення нового", "Завершити MODIFICATION для вибраної одиниці обладнання.", "Зміни застосовані до цієї самої одиниці; нове обладнання не створене.", priority="CRITICAL", severity="CRITICAL"),
     case("TC-PROJ-MOD-006", "REQ-PROJ-004", "AC-02", "Вибране обладнання не можна замінити", "У створеній модифікації спробувати замінити обладнання A на B.", "Зміну відхилено; характеристики A і B не отримали побічних змін.", priority="CRITICAL", severity="CRITICAL"),
     case("TC-PROJ-MOD-007", "REQ-PROJ-004", "AC-03", "Категорія та модель обладнання незмінні", "У створеній модифікації спробувати змінити категорію та модель.", "Зміну відхилено; класифікація обладнання залишилася початковою.", priority="CRITICAL", severity="CRITICAL"),
     case("TC-PROJ-MOD-008", "REQ-PROJ-004", "AC-04", "Зміна доступних характеристик обладнання", "Змінити кілька доступних характеристик, крім категорії та моделі, і завершити модифікацію.", "Усі введені характеристики збережені на вибраному обладнанні.", automated=False),
     case("TC-PROJ-MOD-009", "REQ-PROJ-004", "AC-05", "Скасування не застосовує незавершені зміни", "Змінити характеристики в активній модифікації та скасувати її.", "Обладнання зберегло значення, які мало до модифікації.", automated=False),
+    case("TC-PROJ-MOD-010", "REQ-PROJ-001", "AC-10", "Етапи модифікації не можуть перевищувати 100%", "Створити MODIFICATION з етапом 100% і спробувати додати етап 5%.", "Додавання відхилено; другий етап не збережено.", priority="CRITICAL", severity="CRITICAL"),
     case("TC-UI-PROJ-MOD-001", "REQ-PROJ-004", "AC-03", "Обладнання, категорія та модель недоступні для зміни в UI", "Відкрити редагування створеної модифікації.", "Обладнання, категорія та модель доступні лише для читання; дія створення нової моделі відсутня.", priority="CRITICAL", severity="CRITICAL"),
 
     case("TC-PROJ-MOD-002", "REQ-PROJ-005", "AC-01", "Заборона другої активної модифікації", "Створити активну модифікацію та спробувати створити другу для того самого обладнання.", "Другу модифікацію відхилено.", priority="CRITICAL", severity="CRITICAL"),
@@ -484,12 +486,82 @@ def sync(client: TcmClient) -> dict[str, Any]:
     return report
 
 
+def sync_percentage_only(client: TcmClient) -> dict[str, Any]:
+    """Update only the percentage rule and its CREATION/MODIFICATION cases."""
+    report: dict[str, Any] = {
+        "baseUrl": client.base_url,
+        "features": {"created": [], "updated": []},
+        "acceptanceCriteria": {"created": [], "updated": []},
+        "testCases": {"created": [], "updated": [], "deprecated": []},
+        "verification": {},
+    }
+    feature_ids = ("REQ-PROJ", "REQ-PROJ-001", "REQ-PROJ-002")
+    case_ids = ("TC-PROJ-MOD-010", "TC-PROJ-TPL-007")
+    feature_docs: dict[str, str] = {}
+    ac_ids: dict[tuple[str, str], int] = {}
+
+    for feature_id in feature_ids:
+        payload = next(feature for feature in FEATURES if feature["featureId"] == feature_id)
+        path = f"/api/ai/projects/{PROJECT_ID}/features/{feature_id}"
+        existing = client.request("GET", path)
+        if existing.get("featureId") != feature_id:
+            raise RuntimeError(f"Unexpected feature at {path}")
+        client.request("PUT", path, payload)
+        read_back = client.request("GET", path)
+        if read_back.get("documentation") != payload["documentation"]:
+            raise RuntimeError(f"Documentation read-back mismatch for {feature_id}")
+        feature_docs[feature_id] = hashlib.sha256(
+            read_back["documentation"].encode("utf-8")
+        ).hexdigest()
+        report["features"]["updated"].append(feature_id)
+        for criterion in read_back.get("acceptanceCriteria", []):
+            ac_ids[(feature_id, criterion["acId"])] = int(criterion["id"])
+
+    verified_cases: dict[str, Any] = {}
+    for test_id in case_ids:
+        payload = next(case for case in CASES if case["testId"] == test_id)
+        path = f"/api/ai/projects/{PROJECT_ID}/test-cases/{test_id}"
+        existing = client.get_optional(path)
+        if existing is not None and existing.get("title") != payload["title"]:
+            raise RuntimeError(f"Existing {test_id} belongs to a different scenario")
+        write_payload = dict(payload)
+        write_payload["acceptanceCriterionId"] = ac_ids[(payload["featureId"], payload["acKey"])]
+        if existing is None:
+            client.request("POST", f"/api/ai/projects/{PROJECT_ID}/test-cases", write_payload)
+            report["testCases"]["created"].append(test_id)
+        else:
+            client.request("PUT", path, write_payload)
+            report["testCases"]["updated"].append(test_id)
+        read_back = client.request("GET", path)
+        if (read_back.get("title") != payload["title"]
+                or read_back.get("status") != "ACTIVE"
+                or test_id not in (read_back.get("apiAutomationIds") or [])):
+            raise RuntimeError(f"Test case read-back mismatch for {test_id}")
+        verified_cases[test_id] = {
+            "featureId": read_back["featureId"],
+            "acId": read_back["acId"],
+            "status": read_back["status"],
+            "apiAutomationIds": read_back.get("apiAutomationIds") or [],
+        }
+
+    report["verification"] = {
+        "features": feature_docs,
+        "testCases": verified_cases,
+        "allCasesPresent": len(verified_cases) == len(case_ids),
+        "managedCaseCount": len(case_ids),
+        "automatedCaseCount": len(case_ids),
+        "manualCaseCount": 0,
+    }
+    return report
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--token-env", default="TCM_AI_TOKEN")
     parser.add_argument("--token", help=argparse.SUPPRESS)
     parser.add_argument("--insecure", action="store_true", help="Allow the internal lab certificate")
+    parser.add_argument("--percentage-only", action="store_true", help="Update only the 100% rule and its new cases")
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
 
@@ -498,7 +570,8 @@ def main() -> int:
         print(f"Missing token: set {args.token_env}", file=sys.stderr)
         return 2
 
-    report = sync(TcmClient(args.base_url, token, args.insecure))
+    client = TcmClient(args.base_url, token, args.insecure)
+    report = sync_percentage_only(client) if args.percentage_only else sync(client)
     report["completedAt"] = datetime.now(timezone.utc).isoformat()
     report["result"] = "SUCCESS"
     args.report.parent.mkdir(parents=True, exist_ok=True)

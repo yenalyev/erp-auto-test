@@ -325,6 +325,32 @@ public class ProjectProductionModificationTest extends BaseFunctionalTest {
         return equipmentFixture.createEquipmentOnStorage(UserRole.ADMIN, storageId, categoryId);
     }
 
+    @Test(priority = 80)
+    @TestCaseId("TC-PROJ-MOD-010")
+    @Story("Modification stage execution percentage validation")
+    @Description("Сума executionPercentage етапів модифікації не може перевищувати 100%")
+    @Severity(SeverityLevel.BLOCKER)
+    public void addingModificationStageAboveHundredIsRejected() {
+        EquipmentResponse equipment = createEquipment();
+        ProjectProductionResponse modification = createModification(equipment);
+
+        productionFixture.addStage(UserRole.ADMIN, modification.getId(), storageId,
+                ProjectProductionDataFactory.stage(
+                        "Stage-100", 1, ProjectProductionState.CREATED, List.of()));
+
+        Response response = productionFixture.addStageRaw(
+                UserRole.ADMIN, modification.getId(), storageId,
+                ProjectProductionDataFactory.stage(
+                                "Stage-5", 2, ProjectProductionState.CREATED, List.of())
+                        .toBuilder().executionPercentage(5).build());
+
+        assertThat(response.statusCode())
+                .as("Modification stages totaling 105%% must be rejected; body=%s", response.asString())
+                .isBetween(400, 499);
+        assertThat(productionFixture.getById(modification.getId(), storageId).getProjectProductionStages())
+                .hasSize(1);
+    }
+
     private ProjectProductionResponse createModification(EquipmentResponse equipment) {
         ProjectProductionResponse created = productionFixture.createAs(
                 UserRole.ADMIN, modificationRequest(equipment));

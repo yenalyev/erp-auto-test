@@ -199,4 +199,31 @@ public class ProjectProductionTemplateTest extends BaseFunctionalTest {
                 .as("Template stages totaling 105%% must be rejected; body=%s", response.asString())
                 .isBetween(400, 499);
     }
+
+    @Test(priority = 60)
+    @TestCaseId("TC-PROJ-TPL-007")
+    @Story("Modification template stage execution percentage validation")
+    @Description("Сума executionPercentage етапів шаблону модифікації не може перевищувати 100%")
+    @Severity(SeverityLevel.BLOCKER)
+    public void addingModificationTemplateStageAboveHundredIsRejected() {
+        ProjectProductionTemplateResponse template = fixture.createTemplate(
+                UserRole.ADMIN,
+                ProjectProductionDataFactory.buildTemplateCreateRequest(
+                        storageId, categoryId, modelId, ProjectProductionType.MODIFICATION,
+                        List.of(ProjectProductionDataFactory.stage(
+                                "Stage-100", 1, ProjectProductionState.CREATED, List.of()))));
+        createdTemplateIds.add(template.getId());
+
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.PROJECT_PRODUCTION_TEMPLATE_STAGE_POST_ADD,
+                UserRole.ADMIN,
+                ProjectProductionDataFactory.stage(
+                                "Stage-5", 2, ProjectProductionState.CREATED, List.of())
+                        .toBuilder().executionPercentage(5).build(),
+                template.getId(), storageId);
+
+        assertThat(response.statusCode())
+                .as("Modification template stages totaling 105%% must be rejected; body=%s", response.asString())
+                .isBetween(400, 499);
+    }
 }

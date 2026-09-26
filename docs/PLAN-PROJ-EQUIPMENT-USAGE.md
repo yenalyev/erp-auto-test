@@ -210,8 +210,8 @@ Backend оновлює категорію/модель проекту, але д
 - `ProjectProductionTest` перевіряє, що `CREATION` створює `AVAILABLE` equipment, а не ресурсну партію;
 - `ProjectProductionOperationHistoryTest` розділяє resource `USED` і equipment `PRODUCED`;
 - `ProjectProductionTemplateTest` містить blocker-регресію `TC-PROJ-TPL-004`: `MODIFICATION` зі шаблону без обладнання не можна завершити;
-- `ProjectProductionTest` містить `TC-PROJ-VAL-001`: проект із сумою етапів `105%` має бути відхилений;
-- `ProjectProductionTemplateTest` містить `TC-PROJ-TPL-005`: шаблон із сумою етапів `105%` має бути відхилений;
+- `ProjectProductionTest` (`TC-PROJ-VAL-001`) і `ProjectProductionModificationTest` (`TC-PROJ-MOD-010`) перевіряють відхилення додавання етапу, що піднімає суму до `105%`, для `CREATION` та `MODIFICATION` відповідно;
+- `ProjectProductionTemplateTest` перевіряє те саме для шаблонів обох типів: `TC-PROJ-TPL-005` (`CREATION`) і `TC-PROJ-TPL-007` (`MODIFICATION`);
 - додано `ProjectProductionModificationTest`:
   - `TC-PROJ-MOD-001` — модифікується і завершується та сама одиниця;
   - `TC-PROJ-MOD-002` — друга активна модифікація тієї самої одиниці відхиляється;
@@ -220,6 +220,7 @@ Backend оновлює категорію/модель проекту, але д
   - `TC-PROJ-MOD-005` — активна модифікація блокує переведення в ремонт;
   - `TC-PROJ-MOD-006` — update не може змінити equipment A на B і не залишає side effects на жодній одиниці;
   - `TC-PROJ-MOD-007` — update не може змінити category/model вибраного Equipment;
+  - `TC-PROJ-MOD-010` — додавання етапу до модифікації не може підняти суму до `105%`;
 - page objects та UI scenarios переведено на категорію/модель обладнання й блок «Виготовлено»;
 - `TC-UI-PROJ-MOD-001` перевіряє read-only category/model/equipment і відсутність дії «Нова модель»;
 - новий modification-клас додано до `project-production.xml` і `regression.xml`.

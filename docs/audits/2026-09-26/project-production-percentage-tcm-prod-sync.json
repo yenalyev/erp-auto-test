@@ -1,0 +1,54 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "features": {
+    "created": [],
+    "updated": [
+      "REQ-PROJ",
+      "REQ-PROJ-001",
+      "REQ-PROJ-002"
+    ]
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": []
+  },
+  "testCases": {
+    "created": [
+      "TC-PROJ-MOD-010",
+      "TC-PROJ-TPL-007"
+    ],
+    "updated": [],
+    "deprecated": []
+  },
+  "verification": {
+    "features": {
+      "REQ-PROJ": "25baf7e24260a67816f532784ee724a132c91f39ec1c73d8be6f9fe23692434d",
+      "REQ-PROJ-001": "543410b1c0596d9d43bd0040f0e4877c82cc7584301589ef9f7efa248fcb1d11",
+      "REQ-PROJ-002": "1cbcb08f6a5e3100d25c39a63197864e62c42cc4e7852903a083a117898d8a32"
+    },
+    "testCases": {
+      "TC-PROJ-MOD-010": {
+        "featureId": "REQ-PROJ-001",
+        "acId": "AC-10",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-MOD-010"
+        ]
+      },
+      "TC-PROJ-TPL-007": {
+        "featureId": "REQ-PROJ-002",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-PROJ-TPL-007"
+        ]
+      }
+    },
+    "allCasesPresent": true,
+    "managedCaseCount": 2,
+    "automatedCaseCount": 2,
+    "manualCaseCount": 0
+  },
+  "completedAt": "2026-09-26T09:53:33.684398+00:00",
+  "result": "SUCCESS"
+}
