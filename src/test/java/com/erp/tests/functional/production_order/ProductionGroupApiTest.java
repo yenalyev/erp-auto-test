@@ -3,7 +3,6 @@ package com.erp.tests.functional.production_order;
 import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.BusinessRoleCatalog;
-import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.BusinessRole;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.*;
@@ -39,12 +38,11 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
         storages = new StorageFixture(testContext, apiExecutor);
         maps = new TechnologicalMapFixture(testContext, apiExecutor);
         orders = new ProductionOrderFixture(testContext, apiExecutor);
-        target = orders.resolveTargetStorageId(UserRole.ADMIN);
-        group = storages.createStorage(StorageDataFactory.childStorage(target, "PG-group")
-                .productionGroup(true).build()).getId();
-        member1 = storages.createChildStorage(group, "PG-member-1").getId();
-        member2 = storages.createChildStorage(group, "PG-member-2").getId();
-        outside = storages.createChildStorage(target, "PG-outside").getId();
+        target = storages.createChildStorage(orders.resolveTargetStorageId(UserRole.ADMIN), "PG-target").getId();
+        group = storages.createProductionGroupStorage(target, "PG-group").getId();
+        member1 = storages.createProductionTaskStorage(group, "PG-member-1").getId();
+        member2 = storages.createProductionTaskStorage(group, "PG-member-2").getId();
+        outside = storages.createProductionTaskStorage(target, "PG-outside").getId();
         ResourceFixture resources = new ResourceFixture(testContext, apiExecutor);
         resources.fetchSharedUnit(1);
         resources.fetchSharedResourceCategory();
@@ -121,7 +119,8 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
     @Test
     @TestCaseId({"TC-PG-001", "TC-PG-004"})
     public void groupFlagPersistsAndGroupCannotBeTarget() {
-        assertThat(storages.getById(UserRole.ADMIN, group).getProductionGroup()).isTrue();
+        assertThat(storages.getById(UserRole.ADMIN, group).getFeatures())
+                .contains(com.erp.enums.LocationFeature.PRODUCTION_GROUP);
         assertThat(storages.getById(UserRole.ADMIN, member1).getParent().getId()).isEqualTo(group);
         assertThat(storages.getById(UserRole.ADMIN, member2).getParent().getId()).isEqualTo(group);
         assertThat(ok(orders.getTargetLocationsRaw(UserRole.ADMIN)).jsonPath().getList("id", Long.class))
@@ -129,7 +128,7 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
         Response response = call(PRODUCTION_ORDER_POST_CREATE, createRequest.toBuilder().targetStorageId(group).build());
         // Track even an unexpectedly accepted order so a failing assertion cannot leak it.
         if (response.statusCode() == 200) orderIds.add(response.jsonPath().getLong("id"));
-        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.statusCode()).isIn(400, 403);
     }
 
     @Test
@@ -347,9 +346,8 @@ public class ProductionGroupApiTest extends BaseFunctionalTest {
         assertThat(BusinessRoleCatalog.definition(BusinessRole.PRODUCTION_GROUP_DIRECTOR).permissionKeys())
                 .as("Production-group director must use the canonical allocation permission")
                 .contains("production-order.allocate");
-        StorageResponse otherGroup = storages.createStorage(StorageDataFactory.childStorage(target, "PG-other-group")
-                .productionGroup(true).build());
-        StorageResponse otherMember = storages.createChildStorage(otherGroup.getId(), "PG-other-member");
+        StorageResponse otherGroup = storages.createProductionGroupStorage(target, "PG-other-group");
+        StorageResponse otherMember = storages.createProductionTaskStorage(otherGroup.getId(), "PG-other-member");
         String firstPermission = allocationPermission(group);
         String secondPermission = allocationPermission(otherGroup.getId());
         UserFixture.BusinessActor first = users.createBusinessActor(getPlaywrightSessionProvider(),

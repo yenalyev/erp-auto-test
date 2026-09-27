@@ -470,7 +470,10 @@ public class DefectTest extends BaseFunctionalTest {
 
         DefectRequest req = DefectDataFactory.buildStorageExplicitBatchesDefect(
                 storageId, outRes, defectAmount,
-                List.of(DefectDataFactory.batch(batch, true, defectAmount)));
+                List.of(DefectDataFactory.batch(
+                        com.erp.utils.helpers.ProductionStockAssertions.requireBatchUuid(
+                                apiExecutor, storageId, UserRole.OWNER_1, outRes, batch, true),
+                        batch, true, defectAmount)));
         fixture.createAs(UserRole.OWNER_1, req);
 
         DefectStockAssertions.assertStockDebited(stockBefore, fixture.resourceStock(outRes), defectAmount,

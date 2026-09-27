@@ -26,6 +26,7 @@ import io.qameta.allure.Story;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.SoftAssertions;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -62,15 +63,24 @@ public class ProjectProductionUITest extends BaseUITest {
         modelName = testContext.get(ContextKey.PROJECT_EQUIPMENT_MODEL_NAME);
         resourceName = testContext.get(ContextKey.PROJECT_RESOURCE_NAME);
 
-        Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(UserRole.ADMIN.getUsername(), UserRole.ADMIN.getPassword());
-        String domain = ConfigProvider.getBaseUrl()
-                .replaceFirst("https?://", "")
-                .split("/")[0];
+        Map<String, String> cookies = cachedSessionCookies(UserRole.OWNER_1);
+        String domain = sessionCookieDomain();
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
                 "localStorage.setItem('selectedStorageId', '" + storageId + "');");
         log.info("OWNER_1 session injected — domain: {}, storageId: {}", domain, storageId);
+    }
+
+    @BeforeMethod(alwaysRun = true)
+    @Override
+    public void testSetup() {
+        super.testSetup();
+        page.onResponse(response -> {
+            if (response.url().contains("/api/v1/project-production")) {
+                log.info("Project production UI response: {} {} {}",
+                        response.request().method(), response.status(), response.url());
+            }
+        });
     }
 
     @Test(priority = 10)
@@ -168,7 +178,11 @@ public class ProjectProductionUITest extends BaseUITest {
         ProjectProductionResponse created = fixture.createWithStageUsage(2.0, 1.0);
         String serial = created.getSerialNumber();
 
-        ProjectProductionFormPage form = new ProjectProductionFormPage(page).openEdit(created.getId());
+        ProjectProductionFormPage form = new ProjectProductionListPage(page)
+                .open()
+                .clearPeriodFilter()
+                .waitForRowWithSerial(serial)
+                .clickEditBySerialNumber(serial);
         assertThat(form.addStageButton().isVisible())
                 .as("На edit-формі кнопка «Додати етап» має бути видима")
                 .isTrue();
@@ -207,7 +221,10 @@ public class ProjectProductionUITest extends BaseUITest {
                 .build();
         ProjectProductionResponse modification = fixture.createAs(UserRole.ADMIN, request);
 
-        ProjectProductionFormPage form = new ProjectProductionFormPage(page).openEdit(modification.getId());
+        ProjectProductionFormPage form = new ProjectProductionListPage(page)
+                .open()
+                .clearPeriodFilter()
+                .clickEditByRowText(equipment.getSerialNumber());
 
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(form.isCategorySelectionDisabled())

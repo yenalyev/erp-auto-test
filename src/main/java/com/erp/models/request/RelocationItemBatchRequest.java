@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 @Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RelocationItemBatchRequest {
+    private UUID batchUuid;
     private String batchNumber;
     private BigDecimal amount;
     private Boolean isProduced;

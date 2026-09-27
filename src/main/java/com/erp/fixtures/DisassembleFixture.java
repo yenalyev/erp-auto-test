@@ -288,9 +288,13 @@ public class DisassembleFixture extends BaseFixture {
 
     @Step("FIXTURE: Seed input stock for disassemble via relocation receive")
     public void seedInputStock(Long storageId, Long inputResourceId) {
+        seedInputStock(UserRole.OWNER_1, storageId, inputResourceId);
+    }
+
+    public void seedInputStock(UserRole role, Long storageId, Long inputResourceId) {
         RelocationStockSeeder.receiveFromSupplier(
                 apiExecutor,
-                UserRole.OWNER_1,
+                role,
                 storageId,
                 Map.of(inputResourceId, INPUT_STOCK));
         log.info("Seeded disassemble input stock: storage={}, resource={}, amount={}",

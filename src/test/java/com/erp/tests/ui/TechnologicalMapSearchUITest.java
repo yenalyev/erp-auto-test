@@ -5,12 +5,14 @@ import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.request.TechnologicalMapRequest;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.pages.TechnologicalMapsListPage;
+import com.erp.pages.AppSidebarPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -47,6 +49,7 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
     private TechnologicalMapFixture techMapFixture;
     private ResourceFixture resourceFixture;
     private Long storageId;
+    private String storageName;
 
     private ResourceResponse productA;
     private ResourceResponse productB;
@@ -71,6 +74,8 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         techMapFixture.prepareContext();
         storageId = techMapFixture.getOwner1StorageId();
+        storageName = new StorageFixture(testContext, apiExecutor)
+                .getNames(UserRole.ADMIN, true, null, storageId).getFirst().getName();
 
         String suffix = String.valueOf(System.currentTimeMillis());
         productA = resourceFixture.createUniqueResource(RESOURCE_PREFIX + "prodA_" + suffix);
@@ -286,8 +291,20 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
         page.setDefaultTimeout(timeoutMs);
         page.setDefaultNavigationTimeout(timeoutMs);
 
-        return Allure.step("Відкрити /technological-maps як " + role, () ->
-                new TechnologicalMapsListPage(page).openForStorage(storageId));
+        return Allure.step("Відкрити /technological-maps як " + role, () -> {
+            TechnologicalMapsListPage listPage = new TechnologicalMapsListPage(page)
+                    .openForStorage(storageId);
+            if (role == UserRole.ADMIN
+                    && !new AppSidebarPage(page).getSelectedLocationName().contains(storageName)) {
+                page.waitForResponse(
+                        response -> response.url().contains("/technological-maps")
+                                && "GET".equals(response.request().method()),
+                        new com.microsoft.playwright.Page.WaitForResponseOptions().setTimeout(timeoutMs),
+                        () -> new AppSidebarPage(page).selectWorkspaceByName(storageName));
+                listPage.waitForTableSettled();
+            }
+            return listPage;
+        });
     }
 
     private TechnologicalMapResponse createProductionMap(
@@ -317,6 +334,8 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + role.getUsername()
+                        + "', '" + selectedStorageId + "');");
     }
 }

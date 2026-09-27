@@ -1,14 +1,12 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
-import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
 import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageResponse;
-import com.erp.models.response.StorageTechnologicalMapModeResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.TechnologicalMapFormPage;
@@ -36,14 +34,13 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("Technological Maps")
-@Feature("Tech map actions in the Цукрарня workspace")
+@Feature("Tech map actions in a production workspace")
 public class TechnologicalMapWorkspaceActionsUiTest extends BaseUITest {
 
     private StorageFixture storageFixture;
     private TechnologicalMapFixture techMapFixture;
     private StorageResponse root;
     private StorageResponse child;
-    private StorageTechnologicalMapMode originalRootMode;
     private final Set<Long> createdMapIds = new LinkedHashSet<>();
 
     @BeforeClass(alwaysRun = true)
@@ -52,16 +49,8 @@ public class TechnologicalMapWorkspaceActionsUiTest extends BaseUITest {
         super.baseTestClassSetup();
         storageFixture = new StorageFixture(testContext, apiExecutor);
         techMapFixture = new TechnologicalMapFixture(testContext, apiExecutor);
-        List<StorageResponse> roots = storageFixture.getPageContent(UserRole.ADMIN,
-                        java.util.Map.of("name", "Цукрарня", "isActive", true, "size", 100)).stream()
-                .filter(storage -> "Цукрарня".equals(storage.getName().trim())).toList();
-        assertThat(roots).as("Exactly one active Цукрарня workspace must exist").hasSize(1);
-        root = roots.getFirst();
-        var modeResponse = apiExecutor.execute(ApiEndpointDefinition.TECH_MAP_MODE_GET,
-                UserRole.ADMIN, String.valueOf(root.getId()));
-        assertThat(modeResponse.statusCode()).isEqualTo(200);
-        originalRootMode = modeResponse.as(StorageTechnologicalMapModeResponse.class).getMode();
-        assertThat(originalRootMode).isNotNull();
+        root = storageFixture.createProductionStorage(
+                storageFixture.resolveParentUnit().getId(), "TM-Workspace-Root-");
         techMapFixture.setMode(root.getId(), StorageTechnologicalMapMode.EDIT_ALLOWED);
         child = storageFixture.createProductionStorage(root.getId(), "TM-Workspace");
         techMapFixture.prepareContext();
@@ -76,7 +65,7 @@ public class TechnologicalMapWorkspaceActionsUiTest extends BaseUITest {
     @Test(dataProvider = "unavailableActions")
     @TestCaseId("TC-UI-MFG-WORKSPACE-HINT")
     @Description("""
-            CPMA-895: при виборі Цукрарні натиснути «Редагувати» або «Клонувати» для
+            CPMA-895: при виборі батьківської production-локації натиснути «Редагувати» або «Клонувати» для
             техкарти дочірньої локації. Після помилки завантаження показано повідомлення
             з назвою відповідної локації та відновлено список. Техкарта не змінена,
             нових версій немає, POST/PUT/PATCH/DELETE техкарт не відправляються.
@@ -93,7 +82,7 @@ public class TechnologicalMapWorkspaceActionsUiTest extends BaseUITest {
     @Test
     @TestCaseId("TC-UI-MFG-WORKSPACE-EDIT")
     @Description("""
-            Отримати повідомлення про відповідну локацію при спробі редагування з Цукрарні.
+            Отримати повідомлення про відповідну локацію при спробі редагування з батьківської локації.
             Через сайдбар перейти на вказану дочірню локацію, повторно натиснути «Редагувати»,
             змінити норму input і зберегти. API підтверджує нову версію, змінену норму
             та початкову прив'язку до локації.
@@ -123,7 +112,7 @@ public class TechnologicalMapWorkspaceActionsUiTest extends BaseUITest {
     @Test
     @TestCaseId("TC-UI-MFG-WORKSPACE-CLONE")
     @Description("""
-            Отримати повідомлення про відповідну локацію при спробі клонування з Цукрарні.
+            Отримати повідомлення про відповідну локацію при спробі клонування з батьківської локації.
             Через сайдбар перейти на вказану дочірню локацію, повторно натиснути «Клонувати»,
             задати унікальну назву і зберегти. Копія має окремі id та groupId,
             той самий склад і локацію; оригінал не змінений.
@@ -242,8 +231,15 @@ public class TechnologicalMapWorkspaceActionsUiTest extends BaseUITest {
             }
         } finally {
             try {
-                if (root != null && originalRootMode != null) {
-                    techMapFixture.setMode(root.getId(), originalRootMode);
+                if (storageFixture != null && child != null) {
+                    if (storageFixture.archiveStorage(UserRole.ADMIN, child.getId())) {
+                        storageFixture.untrackForCleanup(child.getId());
+                    }
+                }
+                if (storageFixture != null && root != null) {
+                    if (storageFixture.archiveStorage(UserRole.ADMIN, root.getId())) {
+                        storageFixture.untrackForCleanup(root.getId());
+                    }
                 }
             } finally {
                 if (storageFixture != null) {

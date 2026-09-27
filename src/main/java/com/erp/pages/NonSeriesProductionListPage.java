@@ -128,9 +128,15 @@ public class NonSeriesProductionListPage extends BasePage {
     }
 
     public NonSeriesProductionFormPage clickEditForProduct(String productName) {
-        rowForProduct(productName)
-                .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Редагувати"))
-                .click();
+        Locator row = rowForProduct(productName);
+        Locator namedEdit = row.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName("Редагувати"));
+        Locator iconEdit = row.locator("button[title='Редагувати'], button:has(svg.lucide-pencil)");
+        if (namedEdit.count() > 0) {
+            namedEdit.click();
+        } else {
+            iconEdit.first().click();
+        }
         return new NonSeriesProductionFormPage(page).waitForEditLoaded();
     }
 

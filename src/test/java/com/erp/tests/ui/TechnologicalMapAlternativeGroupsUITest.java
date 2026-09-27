@@ -272,7 +272,7 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
         techMapForCleanup = created;
 
         TechnologicalMapsListPage listPage = new TechnologicalMapsListPage(page).openForStorage(storageId);
-        listPage.waitForTableSettled();
+        listPage.filterByName(created.getName());
 
         String columnText = listPage.getInterchangeableColumnTextForTechMap(created.getName());
         assertThat(columnText).contains("Клей");
@@ -288,7 +288,7 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
         TechnologicalMapResponse source = techMapFixture.createTechMapWithAlternativeGroup(UserRole.ADMIN, storageId);
         techMapForCleanup = source;
 
-        injectRoleSession(UserRole.ADMIN, storageId);
+        injectRoleSession(UserRole.OWNER_1, storageId);
         TechnologicalMapFormPage form = new TechnologicalMapFormPage(page).openClone(source.getId());
         assertThat(form.isAlternativeGroupsSectionVisible()).isTrue();
         assertThat(page.getByPlaceholder("Назва групи (напр.: Пальне)").inputValue()).contains("Клей");
@@ -348,6 +348,8 @@ public class TechnologicalMapAlternativeGroupsUITest extends BaseUITest {
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + role.getUsername()
+                        + "', '" + selectedStorageId + "');");
     }
 }

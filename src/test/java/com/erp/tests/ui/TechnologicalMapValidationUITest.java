@@ -189,6 +189,7 @@ public class TechnologicalMapValidationUITest extends BaseUITest {
         form.selectOutputResource(0, inputResourceName)
                 .submit();
 
+        form.waitForErrorVisible();
         assertThat(form.isErrorVisible()).as("Повідомлення про помилку").isTrue();
         assertThat(form.getErrorText())
                 .contains(OVERLAP_MESSAGE_FRAGMENT)
@@ -216,6 +217,7 @@ public class TechnologicalMapValidationUITest extends BaseUITest {
             String mapName,
             String overlappingResourceName) {
 
+        form.waitForErrorVisible();
         assertThat(form.isErrorVisible()).as("Повідомлення про помилку").isTrue();
         assertThat(form.getErrorText())
                 .contains(OVERLAP_MESSAGE_FRAGMENT)

@@ -1,7 +1,14 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.enums.BusinessRole;
+import com.erp.enums.LocationProfile;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.AccessFixture;
+import com.erp.fixtures.LocationProfileFixture;
+import com.erp.fixtures.UserFixture;
+import com.erp.models.access.GrantScopeKind;
+import com.erp.models.response.StorageResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.OperationHistoryPage;
 import com.erp.utils.config.ConfigProvider;
@@ -9,13 +16,15 @@ import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * UI RBAC: summary cards on «Історія операцій» follow sidebar tab permissions
+ * UI RBAC: summary cards on «Історія операцій» follow effective permissions
  * ({@code defect::view}, {@code production::view}, {@code relocation::view}, {@code inventory::view}).
+ * Sidebar links also depend on the selected location's features.
  */
 @Slf4j
 @Epic("Operation History")
@@ -42,7 +51,7 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
     @Story("Owner sees all permission-gated summary cards")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            OWNER_1 (alkatras) має sidebar «Виробництво» (і PageTab «Брак»), «Видати/Отримати»,
+            OWNER_1 (alkatras) має sidebar «Виробництво», «Брак», «Видати/Отримати»,
             «Залишки». На «Історія операцій» (/history) видимі картки:
             «Отримано», «Видано», «Вироблено», «Використано», «Обладнання (виготовлено)»,
             «Додано (Інвентаризація)», «Видалено (Інвентаризація)»,
@@ -61,23 +70,36 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
 
     @Test
     @TestCaseId("TC-UI-HIST-CARD-002")
-    @Story("Crew-Manager summary cards follow sidebar permissions")
+    @Story("Battalion location head with crew read sees permitted summary cards")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            CREW_MANAGER (argument) не має sidebar «Виробництво» / PageTab «Брак»;
-            має «Видати/Отримати» та «Залишки». На «Історія операцій» (/history):
-            картки браку, виробництва та «Обладнання (виготовлено)» приховані;
-            «Отримано», «Видано», «Додано (Інвентаризація)», «Видалено (Інвентаризація)» видимі.
+            Ізольований керівник дочірньої локації батальйону має додаткову роль
+            «Екіпажі: перегляд» на батальйоні. Вкладка «Виробництво» прихована,
+            бо дочірня локація не має функції PRODUCE. Роль «Керівник локації» має
+            права production::view та defect::view, тому на «Історія операцій» (/history)
+            картки виробництва, обладнання, браку, переміщень та інвентаризації видимі.
             non-series-production поза scope.
             """)
-    public void crewManagerHidesDefectAndProductionCards() {
-        assertCardsVisibilityForRole(
-                UserRole.CREW_MANAGER,
-                ConfigProvider.getUnitStorageId(),
-                false,
-                false,
-                true,
-                true);
+    public void crewReaderLocationOwnerSeesPermittedCards() {
+        LocationProfileFixture locations = new LocationProfileFixture(testContext, apiExecutor);
+        UserFixture users = new UserFixture(testContext, apiExecutor);
+        try {
+            LocationProfileFixture.LocationSet locationSet = locations.create(
+                    LocationProfile.BATTALION_WARENHAUSE_UNIT, 1);
+            StorageResponse battalion = locationSet.parent();
+            StorageResponse warehouse = locationSet.locations().getFirst();
+            UserFixture.BusinessActor actor = users.createBusinessActor(
+                    getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(warehouse));
+            new AccessFixture(testContext, apiExecutor).ensureGrants(
+                    actor.userId(), List.of(UserFixture.CREW_READ_ROLE_NAME), List.of(),
+                    GrantScopeKind.LOCATION, battalion.getId());
+
+            assertCardsVisibilityForUser(actor.username(), actor.password(), warehouse.getId(),
+                    true, false, true, true, true);
+        } finally {
+            users.deactivateTrackedUsers();
+            locations.cleanup();
+        }
     }
 
     private void assertCardsVisibilityForRole(
@@ -87,20 +109,36 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
             boolean expectProductionAccess,
             boolean expectRelocationAccess,
             boolean expectInventoryAccess) {
-        Allure.parameter("User", role.getUsername());
+        assertCardsVisibilityForUser(role.getUsername(), role.getPassword(), storageId,
+                expectDefectAccess, expectProductionAccess, expectProductionAccess, expectRelocationAccess,
+                expectInventoryAccess);
+    }
+
+    private void assertCardsVisibilityForUser(
+            String username,
+            String password,
+            long storageId,
+            boolean expectDefectAccess,
+            boolean expectProductionNav,
+            boolean expectProductionCards,
+            boolean expectRelocationAccess,
+            boolean expectInventoryAccess) {
+        Allure.parameter("User", username);
         Allure.parameter("storageId", storageId);
         Allure.parameter("expectDefectAccess", expectDefectAccess);
-        Allure.parameter("expectProductionAccess", expectProductionAccess);
+        Allure.parameter("expectProductionNav", expectProductionNav);
+        Allure.parameter("expectProductionCards", expectProductionCards);
         Allure.parameter("expectRelocationAccess", expectRelocationAccess);
         Allure.parameter("expectInventoryAccess", expectInventoryAccess);
 
-        injectRoleSession(role, storageId);
+        injectUserSession(username, password, storageId);
+        page.close();
         page = browserContext.newPage();
 
         OperationHistoryPage history = Allure.step("Відкрити «Історія операцій»", () -> {
             OperationHistoryPage pageObj = new OperationHistoryPage(page).open();
             assertThat(pageObj.isLoaded())
-                    .as("Сторінка «Історія операцій» має завантажитись для %s", role.getUsername())
+                    .as("Сторінка «Історія операцій» має завантажитись для %s", username)
                     .isTrue();
             return pageObj;
         });
@@ -108,10 +146,10 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
         AppSidebarPage sidebar = new AppSidebarPage(page);
 
         Allure.step("Перевірити sidebar-вкладки (передумова ролі в Keycloak)", () -> {
-            assertNav(sidebar, NAV_PRODUCTION, expectProductionAccess, role);
-            assertNav(sidebar, NAV_RELOCATION, expectRelocationAccess, role);
-            assertNav(sidebar, NAV_INVENTORY, expectInventoryAccess, role);
-            assertDefectNav(sidebar, expectDefectAccess, role);
+            assertNav(sidebar, NAV_PRODUCTION, expectProductionNav, username);
+            assertNav(sidebar, NAV_RELOCATION, expectRelocationAccess, username);
+            assertNav(sidebar, NAV_INVENTORY, expectInventoryAccess, username);
+            assertDefectNav(sidebar, expectDefectAccess, username);
         });
 
         OperationHistoryPage historyAfterNav = Allure.step("Повернутись на «Історія операцій» після перевірки навігації", () -> {
@@ -123,41 +161,29 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
         Allure.step("Перевірити видимість summary-карток", () -> {
             assertCard(historyAfterNav, CARD_RECEIVED, expectRelocationAccess);
             assertCard(historyAfterNav, CARD_ISSUED, expectRelocationAccess);
-            assertCard(historyAfterNav, CARD_PRODUCED, expectProductionAccess);
-            assertCard(historyAfterNav, CARD_USED, expectProductionAccess);
-            assertEquipmentCard(historyAfterNav, CARD_EQUIPMENT_PRODUCED, expectProductionAccess);
+            assertCard(historyAfterNav, CARD_PRODUCED, expectProductionCards);
+            assertCard(historyAfterNav, CARD_USED, expectProductionCards);
+            assertEquipmentCard(historyAfterNav, CARD_EQUIPMENT_PRODUCED, expectProductionCards);
             assertCard(historyAfterNav, CARD_INV_ADDED, expectInventoryAccess);
             assertCard(historyAfterNav, CARD_INV_REMOVED, expectInventoryAccess);
             assertCard(historyAfterNav, CARD_DEFECT_ADDED, expectDefectAccess);
             assertCard(historyAfterNav, CARD_DEFECT_REMOVED, expectDefectAccess);
         });
 
-        historyAfterNav.attachScreenshot(role.getUsername() + " — history cards visibility");
+        historyAfterNav.attachScreenshot(username + " — history cards visibility");
     }
 
-    private static void assertNav(AppSidebarPage sidebar, String label, boolean expected, UserRole role) {
+    private static void assertNav(AppSidebarPage sidebar, String label, boolean expected, String username) {
         assertThat(sidebar.isNavItemVisible(label))
-                .as("Sidebar «%s» для %s (роль у Keycloak змінилась?)", label, role.getUsername())
+                .as("Sidebar «%s» для %s", label, username)
                 .isEqualTo(expected);
     }
 
-    /** «Брак» is a PageTab under «Виробництво», not a direct sidebar link. */
-    private static void assertDefectNav(AppSidebarPage sidebar, boolean expected, UserRole role) {
-        if (expected) {
-            assertThat(sidebar.isNavItemVisible(NAV_PRODUCTION))
-                    .as("Sidebar «Виробництво» для %s (потрібен для PageTab «Брак»)", role.getUsername())
-                    .isTrue();
-            sidebar.openGroup(NAV_PRODUCTION);
-            sidebar.waitForPageTab(NAV_DEFECT);
-            assertThat(sidebar.isPageTabVisible(NAV_DEFECT))
-                    .as("PageTab «Брак» для %s", role.getUsername())
-                    .isTrue();
-        } else if (sidebar.isNavItemVisible(NAV_PRODUCTION)) {
-            sidebar.openGroup(NAV_PRODUCTION);
-            assertThat(sidebar.isPageTabVisible(NAV_DEFECT))
-                    .as("PageTab «Брак» має бути прихований для %s", role.getUsername())
-                    .isFalse();
-        }
+    /** «Брак» is a direct sidebar link in the current navigation. */
+    private static void assertDefectNav(AppSidebarPage sidebar, boolean expected, String username) {
+        assertThat(sidebar.isNavItemVisible(NAV_DEFECT))
+                .as("Sidebar «Брак» для %s", username)
+                .isEqualTo(expected);
     }
 
     private static void assertCard(OperationHistoryPage history, String cardTitle, boolean expected) {
@@ -172,14 +198,16 @@ public class OperationHistoryCardsVisibilityUiTest extends BaseUITest {
                 .isEqualTo(expected);
     }
 
-    private void injectRoleSession(UserRole role, long selectedStorageId) {
+    private void injectUserSession(String username, String password, long selectedStorageId) {
         Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(role.getUsername(), role.getPassword());
+                .getSession(username, password);
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + username
+                        + "', '" + selectedStorageId + "');");
     }
 }

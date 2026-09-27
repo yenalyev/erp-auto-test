@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BatchInspectionResponseList",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string", "format": "uuid" },
+      "name": { "type": "string", "minLength": 1 },
+      "resource": { "$ref": "#/definitions/simpleEntity" },
+      "legacy": { "type": "boolean" },
+      "createdAt": { "type": "string", "format": "date-time" },
+      "productions": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/production" }
+      },
+      "ingredients": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/ingredient" }
+      },
+      "movements": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/movement" }
+      },
+      "stock": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/stock" }
+      }
+    },
+    "required": ["id", "name", "legacy", "createdAt", "productions", "ingredients", "movements", "stock"],
+    "additionalProperties": true
+  },
+  "definitions": {
+    "simpleEntity": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": ["string", "null"] }
+      },
+      "required": ["id"],
+      "additionalProperties": true
+    },
+    "production": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "date": { "type": "string", "format": "date" },
+        "storage": { "$ref": "#/definitions/simpleEntity" },
+        "techMap": { "$ref": "#/definitions/simpleEntity" },
+        "product": { "$ref": "#/definitions/simpleEntity" },
+        "amount": { "type": "number" },
+        "unit": { "type": ["string", "null"] }
+      },
+      "required": ["id", "date", "storage", "product", "amount"],
+      "additionalProperties": true
+    },
+    "ingredient": {
+      "type": "object",
+      "properties": {
+        "productionId": { "type": "integer" },
+        "techMap": { "$ref": "#/definitions/simpleEntity" },
+        "resource": { "$ref": "#/definitions/simpleEntity" },
+        "batchName": { "type": ["string", "null"] },
+        "amount": { "type": "number" },
+        "unit": { "type": ["string", "null"] }
+      },
+      "required": ["resource", "amount"],
+      "additionalProperties": true
+    },
+    "movement": {
+      "type": "object",
+      "properties": {
+        "relocationId": { "type": "integer" },
+        "dateTime": { "type": "string", "format": "date-time" },
+        "sender": { "$ref": "#/definitions/simpleEntity" },
+        "recipient": { "$ref": "#/definitions/simpleEntity" },
+        "state": {
+          "type": "string",
+          "enum": ["CREATED", "AUTO_FINISHED", "FINISHED", "CANCELLED", "RETURNED", "LOST"]
+        },
+        "invoiceNumber": { "type": ["string", "null"] },
+        "canGenerateInvoice": { "type": ["boolean", "null"] },
+        "hasExternalInvoicePhoto": { "type": ["boolean", "null"] },
+        "resource": { "$ref": "#/definitions/simpleEntity" },
+        "amount": { "type": "number" },
+        "unit": { "type": ["string", "null"] }
+      },
+      "required": ["relocationId", "dateTime", "sender", "recipient", "state", "resource", "amount"],
+      "additionalProperties": true
+    },
+    "stock": {
+      "type": "object",
+      "properties": {
+        "storage": { "$ref": "#/definitions/simpleEntity" },
+        "resource": { "$ref": "#/definitions/simpleEntity" },
+        "amount": { "type": "number" },
+        "unit": { "type": ["string", "null"] }
+      },
+      "required": ["storage", "resource", "amount"],
+      "additionalProperties": true
+    }
+  }
+}

@@ -9,7 +9,9 @@ import com.erp.pages.RelocationPage;
 import io.qameta.allure.Allure;
 import lombok.experimental.UtilityClass;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,12 +37,28 @@ public class RelocationJournalUiVerification {
                                                               RelocationJournalQuery query,
                                                               UserRole role,
                                                               List<Long> relocationIds) {
-        List<RelocationResponse> apiPage = fixture.getJournalPage(query, role);
-        for (Long id : relocationIds) {
-            assertThat(apiPage)
-                    .as("API має повертати переміщення id=%s у відфільтрованому списку", id)
-                    .anyMatch(r -> id.equals(r.getId()));
+        int pageSize = query.getPageSize();
+        RelocationJournalQuery firstPageQuery = query.toBuilder().page(0).build();
+        long totalElements = fixture.getJournalTotalElements(firstPageQuery, role);
+        int pageCount = (int) Math.ceil((double) totalElements / pageSize);
+        Set<Long> actualIds = new HashSet<>();
+        int pagesChecked = 0;
+
+        for (int page = 0; page < pageCount && !actualIds.containsAll(relocationIds); page++) {
+            fixture.getJournalPage(query.toBuilder().page(page).build(), role).stream()
+                    .map(RelocationResponse::getId)
+                    .forEach(actualIds::add);
+            pagesChecked++;
         }
+
+        for (Long id : relocationIds) {
+            assertThat(actualIds)
+                    .as("API має повертати переміщення id=%s у повному відфільтрованому списку", id)
+                    .contains(id);
+        }
+
+        Allure.parameter("filteredTotalElements", totalElements);
+        Allure.parameter("filteredPagesChecked", pagesChecked);
     }
 
     public static void assertDisplayedOrderMatchesApi(RelocationPage relocationPage,

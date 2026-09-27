@@ -280,6 +280,21 @@ public class ProductionStockAssertions {
                 "GET storage-items/batches (storageId=" + storageId + ", resourceId=" + resourceId + ")");
     }
 
+    /** Name lookup is only safe when it identifies one logical batch. Never choose a collision silently. */
+    public static java.util.UUID requireBatchUuid(ApiExecutor apiExecutor, Long storageId, UserRole role,
+                                                  Long resourceId, String batchNumber, boolean isProduced) {
+        List<StorageItemBatchResponse> matches = queryBatches(
+                apiExecutor, storageId, role, resourceId, isProduced, batchNumber).stream()
+                .filter(b -> Objects.equals(batchNumber, b.getBatchNumber()))
+                .filter(b -> Boolean.valueOf(isProduced).equals(b.getIsProduced()))
+                .toList();
+        assertThat(matches).as("Unique source batch %s on storage %s for resource %s",
+                batchNumber, storageId, resourceId).hasSize(1);
+        java.util.UUID uuid = matches.getFirst().getBatchUuid();
+        assertThat(uuid).as("Source batch UUID for %s", batchNumber).isNotNull();
+        return uuid;
+    }
+
     public static Optional<StorageItemBatchResponse> findBatch(ApiExecutor apiExecutor,
                                                                Long storageId,
                                                                UserRole role,
@@ -293,25 +308,21 @@ public class ProductionStockAssertions {
 
 
 
-  /**
-   * CREW storages may return 403 (plain text) when JWT lacks {@code inventory-list::{crew}::read}
-   * or the location is empty — treat as zero stock instead of failing JSON parsing.
-   */
-    private static List<MultiLocationStorageItemResponse> parseMultiInventoryContent(Response response) {
-        if (response == null) {
-            return List.of();
-        }
-        int status = response.statusCode();
-        if (status == 403 || status == 404) {
-            return List.of();
-        }
+    /** Only a successful, valid empty inventory page represents zero stock. */
+    static List<MultiLocationStorageItemResponse> parseMultiInventoryContent(Response response) {
+        assertThat(response).as("Inventory response is required").isNotNull();
+        assertThat(response.statusCode()).as("Inventory snapshot HTTP status").isEqualTo(200);
         String contentType = response.getContentType();
-        if (contentType == null || !contentType.toLowerCase().contains("json")) {
-            return List.of();
-        }
+        assertThat(contentType).as("Inventory response content type").isNotNull();
+        String mediaType = contentType.split(";", 2)[0].trim().toLowerCase(java.util.Locale.ROOT);
+        assertThat(mediaType.equals("application/json") || mediaType.endsWith("+json"))
+                .as("Inventory response must be JSON, got %s", contentType).isTrue();
+        Object rawContent = response.jsonPath().get("content");
+        assertThat(rawContent).as("Inventory page must contain a content array").isInstanceOf(List.class);
         List<MultiLocationStorageItemResponse> content = response.jsonPath()
                 .getList("content", MultiLocationStorageItemResponse.class);
-        return content != null ? content : List.of();
+        assertThat(content).as("Inventory page must contain a content array").isNotNull();
+        return content;
     }
 
     private static void logStockPhase(Map<Long, Double> amounts,

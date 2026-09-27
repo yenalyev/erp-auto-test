@@ -445,13 +445,14 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
     }
 
     private Long newStorage(String prefix) {
-        StorageResponse storage = storageFixture.createChildStorage(prefix);
+        StorageResponse storage = storageFixture.createProductionStorage(
+                storageFixture.resolveParentUnit().getId(), prefix);
         storagesNewestFirst.add(0, storage.getId());
         return storage.getId();
     }
 
     private Long newChildStorage(Long parentId, String prefix) {
-        StorageResponse storage = storageFixture.createChildStorage(parentId, prefix);
+        StorageResponse storage = storageFixture.createProductionStorage(parentId, prefix);
         storagesNewestFirst.add(0, storage.getId());
         return storage.getId();
     }

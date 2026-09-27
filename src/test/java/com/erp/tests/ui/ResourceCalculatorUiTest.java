@@ -271,7 +271,7 @@ public class ResourceCalculatorUiTest extends BaseUITest {
     }
 
     private Long newStorage(String prefix) {
-        StorageResponse storage = storageFixture.createChildStorage(ownerStorageId, prefix);
+        StorageResponse storage = storageFixture.createProductionStorage(ownerStorageId, prefix);
         storagesNewestFirst.add(0, storage.getId());
         return storage.getId();
     }
@@ -279,13 +279,17 @@ public class ResourceCalculatorUiTest extends BaseUITest {
     private void injectRoleSession(UserRole role, long selectedStorageId) {
         injectSessionCookies(cachedSessionCookies(role), sessionCookieDomain());
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + role.getUsername()
+                        + "', '" + selectedStorageId + "');");
         recreatePageAfterInject();
     }
 
     private void injectAllLocationsSession() {
         injectSessionCookies(cachedSessionCookies(UserRole.ADMIN), sessionCookieDomain());
         injectAllLocationsView();
+        browserContext.addInitScript("localStorage.setItem('selectedStorageId:"
+                + UserRole.ADMIN.getUsername() + "', 'all');");
         recreatePageAfterInject();
     }
 

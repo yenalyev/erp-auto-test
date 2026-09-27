@@ -125,9 +125,8 @@ public class CoverageGapUiSmokeTest extends BaseUITest {
     public void productionAnalyticsTabOpens() {
         openApp();
         AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
-        sidebar.openGroup(AppSidebarPage.GROUP_PRODUCTION);
-        sidebar.openPageTab(AppSidebarPage.TAB_PRODUCTION_ANALYTICS);
-        assertThat(page.url()).contains("/production-analytics");
+        sidebar.openCollapsiblePath(AppSidebarPage.GROUP_ANALYTICS, "/analytics/production");
+        assertThat(page.url()).contains("/analytics/production");
     }
 
     @Test(priority = 80)

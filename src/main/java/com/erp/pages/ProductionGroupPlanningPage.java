@@ -44,7 +44,14 @@ public class ProductionGroupPlanningPage {
     }
     public void selectLocation(int index, String name) {
         assignmentRow(index).getByRole(AriaRole.COMBOBOX).first().click();
-        page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(Pattern.compile("^" + regexLiteral(name) + "(?:\\s+\\(.*\\))?$"))).click();
+        locationOption(name).click();
+    }
+    public Locator locationOption(String name) {
+        // The dropdown is rendered in a portal outside the dialog. Group names
+        // also receive a visible "(група)" suffix in the current UI.
+        return page.locator("[data-slot='select-content'] [data-slot='select-item']")
+                .filter(new Locator.FilterOptions()
+                        .setHasText(Pattern.compile("^" + regexLiteral(name) + "(?:\\s+\\([^)]*\\))*$")));
     }
     public void amount(int index, int amount) { assignmentRow(index).locator("input[type=number]").fill(String.valueOf(amount)); }
     public void assign(String resource, String location, int amount) {

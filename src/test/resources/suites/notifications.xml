@@ -24,6 +24,7 @@
             <class name="com.erp.tests.functional.notification.NotificationSubscriptionTest"/>
             <class name="com.erp.tests.functional.notification.NotificationMySubscriptionTest"/>
             <class name="com.erp.tests.functional.order.OrderCreatedNotificationApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderRelocationNotificationApiTest"/>
             <class name="com.erp.tests.functional.production_order.ProductionOrderCreatedNotificationApiTest"/>
             <class name="com.erp.tests.functional.notification.NotificationJournalTest"/>
             <class name="com.erp.tests.functional.notification.NotificationEscapingTest"/>
@@ -34,6 +35,7 @@
         <classes>
             <class name="com.erp.tests.ui.NotificationsUITest"/>
             <class name="com.erp.tests.ui.MyNotificationsUITest"/>
+            <class name="com.erp.tests.ui.OrderRelocationMyNotificationsUITest"/>
             <class name="com.erp.tests.ui.NotificationRelocationGoUiTest"/>
         </classes>
     </test>

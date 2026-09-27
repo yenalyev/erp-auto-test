@@ -8,6 +8,7 @@
       "id": { "type": "integer" },
       "amount": { "type": "number" },
       "date": { "type": ["string", "null"], "format": "date-time" },
+      "batchUuid": { "type": "string", "format": "uuid" },
       "batchNumber": { "type": ["string", "null"] },
       "isProduced": { "type": "boolean" },
       "techmap": {
@@ -29,6 +30,7 @@
         "additionalProperties": true
       }
     },
+    "required": ["batchUuid"],
     "additionalProperties": true
   }
 }

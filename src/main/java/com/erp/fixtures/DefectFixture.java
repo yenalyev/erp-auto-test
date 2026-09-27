@@ -226,8 +226,8 @@ public class DefectFixture extends BaseFixture {
                 .invoiceNumber(RelocationDataFactory.uniqueInvoiceNumber())
                 .date(LocalDate.now())
                 .items(List.of(
-                        RelocationDataFactory.usageWithBatch(resourceA, amountA, batchA, false),
-                        RelocationDataFactory.usageWithBatch(resourceB, amountB, batchB, false)))
+                        RelocationDataFactory.usageForExternalBatch(resourceA, amountA, batchA, false),
+                        RelocationDataFactory.usageForExternalBatch(resourceB, amountB, batchB, false)))
                 .build();
         Response response = apiExecutor.executeRelocationReceive(request, UserRole.OWNER_1);
         validateSuccess(response, "Create multi-resource receipt");

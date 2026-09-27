@@ -4,9 +4,6 @@ import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.BusinessRole;
-import com.erp.enums.LocationFeature;
-import com.erp.enums.StorageRelation;
-import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.models.request.*;
 import com.erp.models.response.*;
@@ -79,17 +76,10 @@ public class ProductionGroupUiFixture implements AutoCloseable {
     }
 
     private StorageResponse group(String prefix) {
-        return storages.createStorage(StorageDataFactory.childStorage(target.getId(), prefix).productionGroup(true).build());
+        return storages.createProductionGroupStorage(target.getId(), prefix);
     }
     private StorageResponse productionLocation(long parentId, String prefix) {
-        return storages.createStorage(StorageDataFactory.childStorage(
-                        parentId, prefix, UnitType.PRODUCTION, StorageRelation.INTERNAL)
-                .features(Set.of(
-                        LocationFeature.RELOCATIONS,
-                        LocationFeature.PRODUCE,
-                        LocationFeature.EQUIPMENT,
-                        LocationFeature.TASKS))
-                .build());
+        return storages.createProductionTaskStorage(parentId, prefix);
     }
     private ResourceResponse resource(ResourceFixture fixture, String name) {
         ResourceResponse result = fixture.createUniqueResource(name);
@@ -118,12 +108,11 @@ public class ProductionGroupUiFixture implements AutoCloseable {
         return "production-order.allocate";
     }
 
-    public List<StorageResponse> receiveLocations() {
-        StorageResponse group = storages.createStorage(StorageDataFactory.externalStorage(target.getId(), "PGUI-input-group")
-                .productionGroup(true).build());
-        StorageResponse member = storages.createStorage(StorageDataFactory.externalStorage(group.getId(), "PGUI-input-member")
+    public List<StorageResponse> relocationLocations(String prefix) {
+        StorageResponse group = storages.createProductionGroupStorage(target.getId(), prefix + "-group");
+        StorageResponse member = storages.createStorage(StorageDataFactory.externalStorage(group.getId(), prefix + "-member")
                 .build());
-        StorageResponse outside = storages.createStorage(StorageDataFactory.externalStorage(target.getId(), "PGUI-input-outside")
+        StorageResponse outside = storages.createStorage(StorageDataFactory.externalStorage(target.getId(), prefix + "-outside")
                 .build());
         return List.of(group, member, outside);
     }

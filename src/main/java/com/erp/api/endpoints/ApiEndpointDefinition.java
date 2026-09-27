@@ -2105,6 +2105,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    BATCH_INSPECT_GET(
+            "/api/v1/batches/inspect",
+            Method.GET,
+            "schemas/batches/batch-inspection-response-list-schema.json",
+            "Inspect batches by exact batch name",
+            null,
+            new TypeReference<List<BatchInspectionResponse>>() {},
+            null
+    ),
+
     STORAGE_INVENTORY_STATUS_GET(
             "/api/v1/storages/{id}/inventory/status",
             Method.GET,
@@ -2975,6 +2985,16 @@ public enum ApiEndpointDefinition {
             Method.GET,
             null,
             "Get production analytics summary",
+            null,
+            null,
+            null
+    ),
+
+    PRODUCTION_ANALYTIC_EXPORT_GET(
+            "/api/v1/production/analytic/export",
+            Method.GET,
+            null,
+            "Export production analytics workbook",
             null,
             null,
             null

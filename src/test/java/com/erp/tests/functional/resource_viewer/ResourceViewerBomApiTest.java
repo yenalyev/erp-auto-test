@@ -328,11 +328,17 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                 relocateTotal,
                 List.of(
                         RelocationItemBatchRequest.builder()
+                                .batchUuid(com.erp.utils.helpers.ProductionStockAssertions.requireBatchUuid(
+                                        apiExecutor, productionStorageId, UserRole.ADMIN,
+                                        product.getId(), produced.getBatchNumber(), true))
                                 .batchNumber(produced.getBatchNumber())
                                 .amount(BigDecimal.valueOf(PRODUCE_AMOUNT))
                                 .isProduced(true)
                                 .build(),
                         RelocationItemBatchRequest.builder()
+                                .batchUuid(com.erp.utils.helpers.ProductionStockAssertions.requireBatchUuid(
+                                        apiExecutor, productionStorageId, UserRole.ADMIN,
+                                        product.getId(), externalBatch, false))
                                 .batchNumber(externalBatch)
                                 .amount(BigDecimal.valueOf(RELOCATE_AMOUNT))
                                 .isProduced(false)
@@ -892,6 +898,9 @@ public class ResourceViewerBomApiTest extends BaseFunctionalTest {
                             receiverUnitId,
                             productId,
                             amount,
+                            com.erp.utils.helpers.ProductionStockAssertions.requireBatchUuid(
+                                    apiExecutor, productionStorageId, UserRole.ADMIN,
+                                    productId, batchNumber, false),
                             batchNumber,
                             false)
                     .toBuilder()

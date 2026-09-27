@@ -386,7 +386,7 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
             """)
     @Severity(SeverityLevel.CRITICAL)
     public void testGroupsOnlyProduceWithNonDefaultWhenDefaultStockZero() {
-        StorageResponse isolated = storageFixture.createUniqueStorage("prod-alt-011-");
+        StorageResponse isolated = storageFixture.createProductionStorage(storageId, "prod-alt-011-");
         long isolatedId = isolated.getId();
         techMapFixture.setMode(isolatedId, StorageTechnologicalMapMode.EDIT_ALLOWED);
         TechnologicalMapResponse groupsOnly = techMapFixture.createTechMapGroupsOnly(UserRole.ADMIN, isolatedId);
@@ -418,18 +418,18 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
 
             Set<Long> resourceIds = Set.of(defId, othId, outId);
             ProductionStockAssertions.StockSnapshot before = ProductionStockAssertions.capture(
-                    apiExecutor, isolatedId, UserRole.OWNER_1, resourceIds, "before groups-only non-default");
+                    apiExecutor, isolatedId, UserRole.ADMIN, resourceIds, "before groups-only non-default");
 
             List<AlternativeInputRequest> choice = ProductionDataFactory.alternativeInputsChoosing(
                     groupsOnly, groupIdLocal, othId);
 
-            ManufacturingItemResponse created = Allure.step("OWNER_1: create with non-default when default=0", () ->
+            ManufacturingItemResponse created = Allure.step("ADMIN: create with non-default when default=0", () ->
                     productionFixture.createAsWithAlternatives(
-                            UserRole.OWNER_1, isolatedId, groupsOnly, PRODUCE_AMOUNT, choice));
+                            UserRole.ADMIN, isolatedId, groupsOnly, PRODUCE_AMOUNT, choice));
             assertThat(created.getId()).isNotNull();
 
             ProductionStockAssertions.StockSnapshot after = ProductionStockAssertions.capture(
-                    apiExecutor, isolatedId, UserRole.OWNER_1, resourceIds, "after groups-only non-default");
+                    apiExecutor, isolatedId, UserRole.ADMIN, resourceIds, "after groups-only non-default");
 
             Map<Long, Double> expectedDelta = Map.of(
                     defId, 0.0,
@@ -438,7 +438,7 @@ public class ProductionAlternativeInputsTest extends BaseFunctionalTest {
             );
             ProductionStockAssertions.assertDelta(before, after, expectedDelta, outId);
         } finally {
-            techMapFixture.deactivateTechMap(UserRole.OWNER_1, groupsOnly.getId(), isolatedId);
+            techMapFixture.deactivateTechMap(UserRole.ADMIN, groupsOnly.getId(), isolatedId);
         }
     }
 }

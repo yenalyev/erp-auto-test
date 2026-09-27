@@ -138,6 +138,7 @@
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.statistics.PlanStatisticsAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.statistics.PlanNeededResourcesApiTest"/>
+            <class name="com.erp.tests.functional.statistics.PlanExecutionImprovementApiTest"/>
         </classes>
     </test>
 
@@ -209,6 +210,7 @@
             <class name="com.erp.tests.functional.inventory.InventoryCommentApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryBatchTechMapApiTest"/>
+            <class name="com.erp.tests.functional.inventory.BatchInspectorApiTest"/>
             <class name="com.erp.tests.functional.inventory.StorageRelationInventoryTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryHierarchyApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryMultiLocationExportApiTest"/>
@@ -276,6 +278,7 @@
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
             <class name="com.erp.tests.ui.ProductionAnalyticsUiTest"/>
             <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
+            <class name="com.erp.tests.ui.PlanExecutionImprovementUiTest"/>
         </classes>
     </test>
 
@@ -330,6 +333,7 @@
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
             <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>
+            <class name="com.erp.tests.ui.BatchInspectorUiTest"/>
             <class name="com.erp.tests.ui.InventoryMultiLocationExportUiTest"/>
             <class name="com.erp.tests.ui.InventoryCommentUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
@@ -395,6 +399,7 @@
             <class name="com.erp.tests.functional.notification.NotificationSubscriptionTest"/>
             <class name="com.erp.tests.functional.notification.NotificationMySubscriptionTest"/>
             <class name="com.erp.tests.functional.order.OrderCreatedNotificationApiTest"/>
+            <class name="com.erp.tests.functional.order.OrderRelocationNotificationApiTest"/>
             <class name="com.erp.tests.functional.production_order.ProductionOrderCreatedNotificationApiTest"/>
             <class name="com.erp.tests.functional.notification.NotificationJournalTest"/>
             <class name="com.erp.tests.functional.notification.NotificationEscapingTest"/>
@@ -405,6 +410,7 @@
         <classes>
             <class name="com.erp.tests.ui.NotificationsUITest"/>
             <class name="com.erp.tests.ui.MyNotificationsUITest"/>
+            <class name="com.erp.tests.ui.OrderRelocationMyNotificationsUITest"/>
             <class name="com.erp.tests.ui.NotificationRelocationGoUiTest"/>
         </classes>
     </test>

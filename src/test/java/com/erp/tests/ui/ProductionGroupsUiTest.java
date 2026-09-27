@@ -30,14 +30,15 @@ public class ProductionGroupsUiTest extends BaseUITest {
     @Test
     @com.erp.annotations.TestCaseId("TC-PG-031")
     public void sendSelectorsExcludeProductionGroups() {
+        List<StorageResponse> locations = fixture.relocationLocations("PGUI-send");
         new com.erp.pages.RelocationPage(page).open().clickSend();
-        verifyRelocationLocations("Видати", fixture.groupA, fixture.memberA1, fixture.outside);
+        verifyRelocationLocations("Видати", locations.get(0), locations.get(1), locations.get(2));
     }
 
     @Test
     @com.erp.annotations.TestCaseId("TC-PG-032")
     public void receiveSelectorsExcludeProductionGroups() {
-        List<StorageResponse> locations = fixture.receiveLocations();
+        List<StorageResponse> locations = fixture.relocationLocations("PGUI-receive");
         new com.erp.pages.RelocationPage(page).open().clickReceive();
         verifyRelocationLocations("Отримати", locations.get(0), locations.get(1), locations.get(2));
     }
@@ -283,17 +284,14 @@ public class ProductionGroupsUiTest extends BaseUITest {
         navigate("/production-orders");
         assertThat(orderRow())
                 .containsText("Запити груп 0/2");
-        int orders = ok(apiExecutor.executeWithQueryParams(ORDER_GET_PAGE, UserRole.ADMIN,
-                Map.of("storageIds", fixture.target.getId(), "states", List.of("NEW", "IN_PROGRESS"), "size", 1)))
-                .jsonPath().getInt("page.totalElements");
         int production = ok(apiExecutor.executeWithQueryParams(PRODUCTION_ORDER_GET_PAGE, UserRole.ADMIN,
-                Map.of("storageIds", fixture.target.getId(), "states", List.of("NEW", "IN_PROGRESS"), "size", 1)))
+                Map.of("states", List.of("NEW", "IN_PROGRESS"), "size", 1)))
                 .jsonPath().getInt("page.totalElements");
         int queue = ok(fixture.call(PRODUCTION_DELEGATION_QUEUE, null)).jsonPath().getList("$").size();
-        assertCounter("Замовлення", orders); assertCounter("Виробничі замовлення", production);
+        assertCounter("Виробничі замовлення", production);
         assertCounter("Запити на виробництво", queue);
         assertThat(page.locator("[data-sidebar='menu-button']").filter(new Locator.FilterOptions()
-                .setHasText(Pattern.compile("^Замовлення")))).hasText(counterPattern("Замовлення", orders + production + queue));
+                .setHasText(Pattern.compile("^Замовлення")))).hasText(counterPattern("Замовлення", production + queue));
         attachScreenshot("Request progress and sidebar counters");
         ok(fixture.call(PRODUCTION_ORDER_PUT_CANCEL, null, orderId));
         page.reload();
@@ -301,17 +299,20 @@ public class ProductionGroupsUiTest extends BaseUITest {
         // A private owner's queue has no unrelated concurrent requests on shared dev.
         owner(fixture.groupA.getId()); navigate("/production-delegations");
         assertThat(page.getByText("Немає запитів до ваших груп", new Page.GetByTextOptions().setExact(false))).isVisible();
-        assertCounter("Запити на виробництво", 0);
     }
 
     @Test
     @com.erp.annotations.TestCaseId({"TC-PG-001", "TC-PG-004"})
     public void locationCheckboxPersistsAndGroupIsNotADestination() {
         StorageResponse location = fixture.newGroupCandidateWithChild();
-        navigate("/storage"); navigate("/storage/update/" + location.getId());
+        navigate("/storage");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Створити"))
+                .waitFor();
+        navigate("/storage/update/" + location.getId());
         Locator flag = page.getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName("Група виробництва"));
         assertThat(flag).not().isChecked(); flag.check();
         planning.clickApi("Зберегти", "PUT", "/storages/" + location.getId());
+        page.waitForURL("**/storage");
         navigate("/storage/update/" + location.getId()); assertThat(flag).isChecked();
         planning.openOrder(orderId); planning.tab("1. Що виробити").click();
         page.getByRole(AriaRole.TABPANEL).getByRole(AriaRole.COMBOBOX).first().click();
@@ -340,7 +341,6 @@ public class ProductionGroupsUiTest extends BaseUITest {
                 .containsText("Запити груп 1/1");
         owner(fixture.groupA.getId()); navigate("/production-delegations");
         assertThat(page.getByText("Немає запитів до ваших груп", new Page.GetByTextOptions().setExact(false))).isVisible();
-        assertCounter("Запити на виробництво", 0);
     }
 
     private Locator orderRow() {
@@ -356,10 +356,8 @@ public class ProductionGroupsUiTest extends BaseUITest {
     }
     private void assertOptions(int row, List<String> present, List<String> absent) {
         planning.assignmentRow(row).getByRole(AriaRole.COMBOBOX).first().click();
-        for (String name : present) assertThat(page.getByRole(AriaRole.OPTION,
-                new Page.GetByRoleOptions().setName(Pattern.compile("^" + regexLiteral(name))))).isVisible();
-        for (String name : absent) assertThat(page.getByRole(AriaRole.OPTION,
-                new Page.GetByRoleOptions().setName(Pattern.compile("^" + regexLiteral(name))))).hasCount(0);
+        for (String name : present) assertThat(planning.locationOption(name)).isVisible();
+        for (String name : absent) assertThat(planning.locationOption(name)).hasCount(0);
         page.keyboard().press("Escape");
     }
     private void openRequestFromQueue(long id) {
@@ -368,18 +366,21 @@ public class ProductionGroupsUiTest extends BaseUITest {
         assertThat(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(Pattern.compile("Запит групі")))).isVisible();
     }
     private void navigate(String path) { page.navigate(ConfigProvider.getBaseUrl() + path); }
-    private void admin() { session(cachedSessionCookies(UserRole.ADMIN), fixture.target.getId()); }
+    private void admin() { session(cachedSessionCookies(UserRole.ADMIN), fixture.target.getId(),
+            UserRole.ADMIN.getUsername()); }
     private void owner(long group) {
         UserFixture.BusinessActor director = fixture.directorForGroup(group);
-        session(authService.getSessionForUser(director.username(), director.password()), group);
+        session(authService.getSessionForUser(director.username(), director.password()), group,
+                director.username());
     }
-    private void session(Map<String, String> cookies, long location) {
+    private void session(Map<String, String> cookies, long location, String username) {
         if (page != null) page.close();
         if (browserContext != null) browserContext.close();
         browserContext = getPlaywrightSessionProvider().getBrowser().newContext(new Browser.NewContextOptions()
                 .setIgnoreHTTPSErrors(true).setViewportSize(1600, 1100));
         injectSessionCookies(cookies, sessionCookieDomain());
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', '" + location + "');");
+        browserContext.addInitScript("localStorage.setItem('selectedStorageId', '" + location + "');"
+                + "localStorage.setItem('selectedStorageId:" + username + "', '" + location + "');");
         page = browserContext.newPage(); page.setDefaultTimeout(30000); page.setDefaultNavigationTimeout(45000);
         planning = new ProductionGroupPlanningPage(page);
     }

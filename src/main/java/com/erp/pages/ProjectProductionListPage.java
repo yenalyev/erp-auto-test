@@ -61,8 +61,25 @@ public class ProjectProductionListPage extends BasePage {
     }
 
     public ProjectProductionFormPage clickEditBySerialNumber(String serialNumber) {
-        Locator row = page.locator("table tbody tr").filter(new Locator.FilterOptions().setHasText(serialNumber));
-        row.getByRole(AriaRole.BUTTON).first().click();
+        return clickEditByRowText(serialNumber);
+    }
+
+    /**
+     * Opens the edit form through the journal action, preserving the active workspace and using
+     * the same route contract as a real user instead of guessing a deep link in the test.
+     */
+    public ProjectProductionFormPage clickEditByRowText(String uniqueRowText) {
+        Locator row = page.locator("table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(uniqueRowText));
+        row.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        Locator edit = row.locator("button[title='Редагувати']");
+        if (edit.count() != 1) {
+            throw new IllegalStateException(
+                    "Project production row has no edit action: " + uniqueRowText);
+        }
+        edit.click();
         return new ProjectProductionFormPage(page).waitForEditLoaded();
     }
 

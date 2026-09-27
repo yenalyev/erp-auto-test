@@ -105,8 +105,9 @@ public final class DefectDataFactory {
                 .build();
     }
 
-    public static DefectBatchItem batch(String batchNumber, boolean isProduced, double amount) {
+    public static DefectBatchItem batch(java.util.UUID batchUuid, String batchNumber, boolean isProduced, double amount) {
         return DefectBatchItem.builder()
+                .batchUuid(java.util.Objects.requireNonNull(batchUuid, "Existing defect batch UUID is required"))
                 .batchNumber(batchNumber)
                 .isProduced(isProduced)
                 .amount(BigDecimal.valueOf(amount))
@@ -147,6 +148,7 @@ public final class DefectDataFactory {
 
         List<DefectWriteOffBatch> batches = defectBatches.stream()
                 .map(b -> DefectWriteOffBatch.builder()
+                        .batchUuid(java.util.Objects.requireNonNull(b.getBatchUuid(), "Defect response batch UUID is required"))
                         .batchNumber(b.getBatchNumber())
                         .amount(b.getAmount())
                         .build())

@@ -12,7 +12,7 @@
 - frontend: `tk-ui`;
 - API/UI автотести: `erp-auto-test`.
 
-Загалом: **35 сценаріїв**, із них **20 P0**, **14 P1**, **1 P2**.
+Базова матриця нижче: **35 сценаріїв**, із них **20 P0**, **14 P1**, **1 P2**. Окрема матриця нового поля «Позиція з ЖБД» наприкінці документа додає ще 6 сценаріїв.
 
 ## Критичні розбіжності між вимогою та кодом
 
@@ -254,3 +254,54 @@
 3. Додати справжній API E2E через source tables і sync endpoint.
 4. Додати UI-01…UI-04.
 5. Закрити P1: idempotency, scope точки, retry, status transitions та часткові помилки.
+
+## Актуальна перевірка покриття — 2026-09-26
+
+Це аудит коду, а не результат запуску тестів. Перевірено `erp-auto-test`, а також доступні поруч `tk` і `tk-ui`. Позначка «частково» означає, що тест перевіряє лише нижчий шар або симуляцію, а не весь шлях від Fight-джерела.
+
+### Що вже автоматизовано
+
+- **Team/storage — частково.** Backend `SyncTeamProcessIT.shouldImportTeams`, `shouldUpdateTeamName`, `shouldDeactivateTeam`, `shouldReconcileCrewsByName` перевіряють створення, назву, деактивацію і reconcile за ім'ям. Повторну активацію, active drift і сувору унікальність за `team_id` не доводять.
+- **watch_schedule — частково.** `SyncTeamProcessIT.shouldMoveCrewUnderFlyPoint`, `shouldReconcileFlyPoint`, `shouldChangeFlyPoint` покривають наявну та змінену точку. Немає перевірки зниклого запису, дубліката `team_code`, порожньої позиції та scope однакових назв.
+- **Імпорт списання — частково.** `SyncTeamProcessIT.shouldCreateWriteOffs` доводить появу implicit-записів, але не перевіряє джерело stock, кінцевий статус, повноту набору для одного event і поле «Позиція з ЖБД».
+- **Дебет з екіпажа/точки — частково.** Backend `InventoryWriteOffAutoCompleteProcessIT.shouldUseFlyPointIfAvailableInWriteOff` перевіряє пріоритет точки. Зовнішні `CrewWriteOffTest` (`TC-CREW-FIGHT-002`, `TC-FLY-WO-001`) сіють `PENDING` прямо в БД і викликають ручний `PUT /write-off/complete`; вони перевіряють stock delta, але не імпорт Fight та автоматичне завершення.
+- **Журнал додаткових ресурсів — частково.** `FaitaImplicitResourceTest` (`TC-FAITA-IMPL-002`) також сіє записи прямо в `storage_item_write_off`, після чого перевіряє GET, ручне complete і stock. `TC-CREW-FIGHT-001` перевіряє лише HTTP 200 і ненульовий список, без вимоги знайти конкретну Fight-подію.
+- **UI — суміжне покриття.** Є тести сторінок точок, залишків і зіставлення FAITA-ресурсів. Наскрізного UI-сценарію `Fight → sync → write-off → поле «Позиція з ЖБД»` немає. `faita-resources.xml` запускає ресурсні API/UI тести; `CrewWriteOffTest` входить до `functional.xml`, `regression.xml`, `storage-regions.xml` і `db-dependent.xml`.
+
+### Підтверджені розриви контракту
+
+- `tk` зараз імпортує `imp.ammo_agg_v2.position_name` у `crew.team_flight_log.fly_point_name`, але `InventoryWriteOffCreateRequest`, `StorageItemWriteOffEntry` та `InventoryWriteOffResponse` не мають окремого поля для сирої «Позиції з ЖБД». `tk-ui` тип `InventoryWriteOffResponse` і таблиця `/inventory-write-off` теж його не показують. Наявне `flyPointStorage` — це зіставлений склад точки; воно не гарантує збереження оригінального тексту ЖБД.
+- Нинішній `StorageItemWriteOffStatus` має `PENDING`, `COMPLETED`, `FAILED`, `REJECTED_USER`. Автопроцес переводить успішний запис у `COMPLETED`, а запис без достатнього залишку — у `FAILED`. Вимога називає результати `autofinished` і `pending`; перед фіксацією assertion потрібно узгодити, чи це нові API/DB статуси, чи бізнес-назви наявних станів. Для відсутнього mapping запис залишається `PENDING`.
+- Вибір точки для екіпажа у `TeamRepository` зараз обмежений `watch_date = current_date`. Вимога не задає часової межі. Відсутність рядка після попереднього прикріплення теж потребує окремого acceptance-правила та тесту.
+
+## Додаток до тест-плану: «Позиція з ЖБД» у записі списання
+
+**Робоче трактування.** Поле — сире `imp.ammo_agg_v2.position_name` конкретної Fight-події, збережене як snapshot у кожному створеному списанні. Воно може відрізнятися від поточного `watch_schedule` і від `flyPointStorage.name`. Це трактування слід підтвердити з власником вимоги перед реалізацією тестових assertions; без нього легко помилково протестувати назву поточної точки замість історичної позиції події.
+
+### P0
+
+1. **POS-01 — наявна позиція.** У події `position_name = «Позиція А»`; виконати імпорт через source table і sync job. Перевірити точне значення поля у `storage_item_write_off`, GET сторінки списань і рядку UI. Перевірити, що `flyPointStorage` окремо вказує фактично зіставлену точку.
+2. **POS-02 — позиція без зіставленої точки.** Подія містить назву, якої немає серед точок. Сирий текст має залишитися в полі списання; відсутність `flyPointStorage` не стирає позицію. Дебет і статус перевірити за погодженим правилом для екіпажа без точки.
+3. **POS-03 — `NULL` у джерелі.** Подія має `position_name = NULL`. Імпорт і GET не падають; поле має погоджене порожнє представлення (`null` в API/БД, `—` у UI), а логіка вибору складу не змінюється.
+4. **POS-04 — один event, кілька списань.** Для основного ресурсу, ініціатора і додаткових ресурсів перевірити однакову позицію та `sourceId` у всіх записах; повторний sync не дублює їх.
+
+### P1
+
+5. **POS-05 — історичний snapshot.** Після створення списання змінити `watch_schedule`, назву точки або поточну точку екіпажа. Позиція з ЖБД у старому списанні не змінюється; UI і API показують те саме значення після refresh.
+6. **POS-06 — межі тексту й старі записи.** Перевірити кирилицю, пробіли, максимальну дозволену довжину та записи до міграції без нового поля. Імпорт/список/експорт, якщо він існує, не мають втрачати рядки або обрізати значення без узгодженого правила.
+
+Для POS-01…04 потрібен справжній імпорт із `imp.ammo_agg_v2`, а не INSERT готового `storage_item_write_off`: інакше передавання нового поля не перевіряється. Мінімальні assertions: `team_id`, `sourceId`, сире значення позиції, `flyPointStorage`, `storage`, ресурс, amount, status та зміна залишку рівно на amount.
+
+### Рішення, які визначають очікування тестів
+
+1. Яка точна назва поля в DB/API та чи показувати його лише в глобальному журналі, чи також у detail точки й екіпажа?
+2. Чи є джерелом саме `ammo_agg_v2.position_name`, а не `watch_schedule.position_name`? Що робити, якщо вони різні?
+3. Які точні стани відповідають словам `autofinished` та `pending`, зокрема коли mapping є, а залишку бракує?
+4. Чи дозволено fallback на stock екіпажа, коли точка є, але на ній ресурсу немає? За наданою матрицею очікування — `PENDING` без fallback.
+
+## Результат цільового запуску — 2026-09-26
+
+- `tk`: `gradlew.bat test --tests org.pm.tk.fight.process.SyncTeamProcessIT --tests org.pm.tk.service.InventoryWriteOffAutoCompleteProcessIT --tests org.pm.tk.service.InventoryWriteOffServiceIT` — **BUILD SUCCESSFUL**; відповідно 10, 3 і 6 тестів, разом **19 passed**, 0 failed/skipped. Це підтверджує поточну реалізацію, але не закриває розриви нової вимоги, описані вище.
+- `erp-auto-test`: `mvn test '-Denv=dev' '-Dtest=CrewWriteOffTest' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false' '-Duse.database=false'` — **BUILD FAILURE**: 1 failure у `setupWriteOffTests`, 4 skipped. Падіння сталося в `RelocationFixture.resolveUnitStorageId`: `No active EXTERNAL recipient with ORDERS and RELOCATIONS found`. Самі чотири test methods не виконали assertions.
+- `RelocationFixture.java` вже мав незакомічені зміни до цього запуску. Поточний `resolveUnitStorageId` за назвою шукає UNIT, але фактично фільтрує `EXTERNAL` з двома features; `CrewWriteOffTest` викликає загальний `prepareContext`, хоча його власні сценарії не потребують зовнішнього отримувача. Потрібно розділити пошук UNIT та зовнішнього отримувача або прибрати зайву передумову з setup цього класу. Не змінювати контракт інших relocation-тестів без окремої перевірки їхніх маршрутів.
+- Для перевірки `TC-CREW-FIGHT-002` і `TC-FLY-WO-001` після виправлення setup потрібен `-Duse.database=true` і доступна тестова БД; за `false` ці DB-seeded методи пропускаються. `TC-CREW-FIGHT-001` усе одно потребує посилення assertion до конкретного Fight event.

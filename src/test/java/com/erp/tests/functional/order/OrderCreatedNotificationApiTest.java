@@ -79,11 +79,12 @@ public class OrderCreatedNotificationApiTest extends OrderApiTestBase {
                 ORDER_ADMIN,
                 NotificationDataFactory.TEMPLATE_ORDER_CREATED,
                 "order_id",
-                null,
+                order.getId(),
                 30_000);
 
         assertThat(notification.getParams())
                 .containsEntry("template_code", NotificationDataFactory.TEMPLATE_ORDER_CREATED)
+                .containsEntry("order_id", String.valueOf(order.getId()))
                 .containsEntry("storage_name", requesterStorageName);
         assertThat(notification.getTitle()).isNotBlank();
         assertThat(notification.getDescription()).isNotBlank();

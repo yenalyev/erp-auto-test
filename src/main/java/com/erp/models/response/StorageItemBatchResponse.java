@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Builder(toBuilder = true)
@@ -17,6 +18,7 @@ public class StorageItemBatchResponse {
     private Long id;
     private Double amount;
     private Instant date;
+    private UUID batchUuid;
     private String batchNumber;
     private Boolean isProduced;
     private SimpleEntityResponse techmap;

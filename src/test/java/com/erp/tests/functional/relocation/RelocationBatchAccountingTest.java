@@ -404,7 +404,7 @@ public class RelocationBatchAccountingTest extends BaseFunctionalTest {
         RelocationInputEditRequest edit = RelocationInputEditRequest.builder()
                 .description("accounting attributes must survive description edit")
                 .date(LocalDate.now())
-                .items(List.of(RelocationDataFactory.usageWithBatch(
+                .items(List.of(RelocationDataFactory.usageForExternalBatch(
                         resourceId, 2.0, batchNumber, false)))
                 .build();
 
@@ -454,7 +454,7 @@ public class RelocationBatchAccountingTest extends BaseFunctionalTest {
     @Story("Legacy receive without accounting attributes remains supported")
     public void legacyBatchWithoutAccountingFieldsStillWorks() {
         double stockBefore = stock(resourceId);
-        ResourceUsageRequest legacy = RelocationDataFactory.usageWithBatch(
+        ResourceUsageRequest legacy = RelocationDataFactory.usageForExternalBatch(
                 resourceId, 2.0, RelocationDataFactory.uniqueBatchNumber(), false);
 
         RelocationResponse created = receive(List.of(legacy));

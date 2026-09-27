@@ -49,7 +49,8 @@ public class DisassembleCrudApiTest extends BaseFunctionalTest {
         resourceFixture = new ResourceFixture(testContext, apiExecutor);
         resourceFixture.prepareContext();
 
-        StorageResponse isolated = storageFixture.createUniqueStorage("dis-crud-");
+        StorageResponse isolated = storageFixture.createProductionStorage(
+                storageFixture.resolveParentUnit().getId(), "dis-crud-");
         ResourceResponse input = resourceFixture.createUniqueResource("dis-in-");
         ResourceResponse output = resourceFixture.createUniqueResource("dis-out-");
         storageId = isolated.getId();
@@ -57,7 +58,7 @@ public class DisassembleCrudApiTest extends BaseFunctionalTest {
                 UserRole.ADMIN, storageId, List.of(input, output));
         inputResourceId = input.getId();
         outputResourceId = output.getId();
-        fixture.seedInputStock(storageId, inputResourceId);
+        fixture.seedInputStock(UserRole.ADMIN, storageId, inputResourceId);
     }
 
     @AfterClass(alwaysRun = true)
@@ -69,7 +70,7 @@ public class DisassembleCrudApiTest extends BaseFunctionalTest {
 
     @BeforeMethod(alwaysRun = true)
     public void seedInputStock() {
-        fixture.seedInputStock(storageId, inputResourceId);
+        fixture.seedInputStock(UserRole.ADMIN, storageId, inputResourceId);
     }
 
     @Test(priority = 10)
@@ -80,18 +81,18 @@ public class DisassembleCrudApiTest extends BaseFunctionalTest {
     public void createDisassembleAdjustsStock() {
         Set<Long> tracked = Set.of(inputResourceId, outputResourceId);
         ProductionStockAssertions.StockSnapshot before = ProductionStockAssertions.capture(
-                apiExecutor, storageId, UserRole.OWNER_1, tracked, "до розбору");
+                apiExecutor, storageId, UserRole.ADMIN, tracked, "до розбору");
 
-        Response created = fixture.createAs(UserRole.OWNER_1, storageId, techMap, 2.0, 2.0,
+        Response created = fixture.createAs(UserRole.ADMIN, storageId, techMap, 2.0, 2.0,
                 "dis-" + System.currentTimeMillis() % 1_000_000);
         assertThat(created.statusCode()).isEqualTo(200);
         List<DisassembleItemResponse> items = created.jsonPath().getList("", DisassembleItemResponse.class);
         assertThat(items).isNotEmpty();
-        DisassembleItemResponse fetched = fixture.getById(UserRole.OWNER_1, items.getFirst().getId(), storageId);
+        DisassembleItemResponse fetched = fixture.getById(UserRole.ADMIN, items.getFirst().getId(), storageId);
         assertThat(fetched.getId()).isEqualTo(items.getFirst().getId());
 
         ProductionStockAssertions.StockSnapshot after = ProductionStockAssertions.capture(
-                apiExecutor, storageId, UserRole.OWNER_1, tracked, "після розбору");
+                apiExecutor, storageId, UserRole.ADMIN, tracked, "після розбору");
         assertThat(after.amountOf(inputResourceId))
                 .isLessThan(before.amountOf(inputResourceId));
     }
@@ -103,18 +104,18 @@ public class DisassembleCrudApiTest extends BaseFunctionalTest {
     @Description("PUT розбір змінює кількість; залишок input змінюється відносно create.")
     public void updateDisassembleAdjustsStock() {
         Set<Long> tracked = Set.of(inputResourceId, outputResourceId);
-        Response created = fixture.createAs(UserRole.OWNER_1, storageId, techMap, 1.0, 1.0,
+        Response created = fixture.createAs(UserRole.ADMIN, storageId, techMap, 1.0, 1.0,
                 "dis-upd-" + System.currentTimeMillis() % 1_000_000);
         List<DisassembleItemResponse> items = created.jsonPath().getList("", DisassembleItemResponse.class);
         long id = items.getFirst().getId();
 
         ProductionStockAssertions.StockSnapshot beforeUpdate = ProductionStockAssertions.capture(
-                apiExecutor, storageId, UserRole.OWNER_1, tracked, "перед update");
+                apiExecutor, storageId, UserRole.ADMIN, tracked, "перед update");
         Response updated = fixture.updateRaw(
-                UserRole.OWNER_1, id, storageId, techMap, 2.0, 2.0, items.getFirst().getBatchNumber());
+                UserRole.ADMIN, id, storageId, techMap, 2.0, 2.0, items.getFirst().getBatchNumber());
         assertThat(updated.statusCode()).isIn(200, 204);
         ProductionStockAssertions.StockSnapshot afterUpdate = ProductionStockAssertions.capture(
-                apiExecutor, storageId, UserRole.OWNER_1, tracked, "після update");
+                apiExecutor, storageId, UserRole.ADMIN, tracked, "після update");
         assertThat(afterUpdate.amountOf(inputResourceId))
                 .isLessThanOrEqualTo(beforeUpdate.amountOf(inputResourceId));
     }
@@ -126,17 +127,17 @@ public class DisassembleCrudApiTest extends BaseFunctionalTest {
     @Description("DELETE розбір повертає input.")
     public void deleteDisassembleRestoresInput() {
         Set<Long> tracked = Set.of(inputResourceId, outputResourceId);
-        Response created = fixture.createAs(UserRole.OWNER_1, storageId, techMap, 1.0, 1.0,
+        Response created = fixture.createAs(UserRole.ADMIN, storageId, techMap, 1.0, 1.0,
                 "dis-del-" + System.currentTimeMillis() % 1_000_000);
         List<DisassembleItemResponse> items = created.jsonPath().getList("", DisassembleItemResponse.class);
         long id = items.getFirst().getId();
 
         ProductionStockAssertions.StockSnapshot beforeDelete = ProductionStockAssertions.capture(
-                apiExecutor, storageId, UserRole.OWNER_1, tracked, "перед delete");
-        Response deleted = fixture.deleteRaw(UserRole.OWNER_1, id, storageId);
+                apiExecutor, storageId, UserRole.ADMIN, tracked, "перед delete");
+        Response deleted = fixture.deleteRaw(UserRole.ADMIN, id, storageId);
         assertThat(deleted.statusCode()).isIn(200, 204);
         ProductionStockAssertions.StockSnapshot afterDelete = ProductionStockAssertions.capture(
-                apiExecutor, storageId, UserRole.OWNER_1, tracked, "після delete");
+                apiExecutor, storageId, UserRole.ADMIN, tracked, "після delete");
         assertThat(afterDelete.amountOf(inputResourceId))
                 .isGreaterThanOrEqualTo(beforeDelete.amountOf(inputResourceId));
     }

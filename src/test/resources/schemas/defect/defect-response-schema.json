@@ -37,7 +37,9 @@
       "type": ["array", "null"],
       "items": {
         "type": "object",
+        "required": ["batchUuid"],
         "properties": {
+          "batchUuid": { "type": "string", "format": "uuid" },
           "batchNumber": { "type": ["string", "null"] },
           "isProduced": { "type": ["boolean", "null"] },
           "amount": { "type": ["number", "null"] }

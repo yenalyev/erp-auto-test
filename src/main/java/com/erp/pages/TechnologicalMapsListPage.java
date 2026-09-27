@@ -26,6 +26,7 @@ public class TechnologicalMapsListPage extends BasePage {
     private static final String CALCULATOR_BUTTON = "Калькулятор розхідників";
     private static final String ALL_LOCATIONS_TOOLTIP = "Оберіть конкретну локацію для виконання дії";
     private static final String PRODUCT_PLACEHOLDER = "Введіть назву продукту...";
+    private static final String NAME_PLACEHOLDER = "Введіть назву техкарти...";
     private static final String INGREDIENT_PLACEHOLDER = "Введіть назву сировини...";
     private static final String LOADING_TEXT = "Завантаження...";
     private static final String EMPTY_TEXT = "Немає даних";
@@ -136,6 +137,11 @@ public class TechnologicalMapsListPage extends BasePage {
 
     public TechnologicalMapsListPage filterByProduct(String productTerm) {
         runSearchFilterAction(() -> productSearchInput().fill(productTerm));
+        return this;
+    }
+
+    public TechnologicalMapsListPage filterByName(String nameTerm) {
+        runSearchFilterAction(() -> page.getByPlaceholder(NAME_PLACEHOLDER).fill(nameTerm));
         return this;
     }
 

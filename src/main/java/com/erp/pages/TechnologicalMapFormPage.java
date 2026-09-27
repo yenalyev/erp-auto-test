@@ -377,6 +377,13 @@ public class TechnologicalMapFormPage extends BasePage {
         return page.locator(".bg-red-50").isVisible();
     }
 
+    public TechnologicalMapFormPage waitForErrorVisible() {
+        page.locator(".bg-red-50").first().waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     public String getErrorText() {
         return page.locator(".bg-red-50 span").innerText().trim();
     }
@@ -403,7 +410,7 @@ public class TechnologicalMapFormPage extends BasePage {
     private Locator altGroupsSection() {
         return page.locator("h3")
                 .filter(new Locator.FilterOptions().setHasText(ALT_GROUPS_SECTION_TITLE))
-                .locator("xpath=ancestor::div[contains(@class,'p-4')][1]");
+                .locator("xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' p-4 ')][1]");
     }
 
     private Locator alternativeGroupCard(int groupIndex) {
@@ -472,10 +479,6 @@ public class TechnologicalMapFormPage extends BasePage {
     }
 
     private static String autocompleteSearchTerm(String resourceName) {
-        String trimmed = resourceName.trim();
-        if (trimmed.length() <= 12) {
-            return trimmed;
-        }
-        return trimmed.substring(0, 12);
+        return resourceName.trim();
     }
 }

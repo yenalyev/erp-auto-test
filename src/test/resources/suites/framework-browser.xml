@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Local Chromium only. All requests fulfilled in memory; no ERP, login or external reporting. -->
+<suite name="Framework browser contracts" parallel="none" verbose="1">
+    <test name="Page object regressions">
+        <classes>
+            <class name="com.erp.tests.framework.PageObjectContractTest"/>
+        </classes>
+    </test>
+</suite>

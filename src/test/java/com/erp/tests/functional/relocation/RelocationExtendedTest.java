@@ -569,8 +569,12 @@ public class RelocationExtendedTest extends BaseFunctionalTest {
         RelocationOutputRequest request = RelocationDataFactory.buildSendMultiItem(
                 owner1Storage, owner2Storage,
                 List.of(
-                        RelocationDataFactory.usageWithBatch(resourceId, 3.0, batch1, false),
-                        RelocationDataFactory.usageWithBatch(secondResourceId, 2.0, batch2, false)));
+                        RelocationDataFactory.usageWithBatch(resourceId, 3.0,
+                                ProductionStockAssertions.requireBatchUuid(apiExecutor, owner1Storage,
+                                        UserRole.OWNER_1, resourceId, batch1, false), batch1, false),
+                        RelocationDataFactory.usageWithBatch(secondResourceId, 2.0,
+                                ProductionStockAssertions.requireBatchUuid(apiExecutor, owner1Storage,
+                                        UserRole.OWNER_1, secondResourceId, batch2, false), batch2, false)));
 
         Response response = fixture.sendRaw(UserRole.OWNER_1, request);
         assertThat(response.statusCode()).isBetween(200, 299);
@@ -637,7 +641,8 @@ public class RelocationExtendedTest extends BaseFunctionalTest {
 
         RelocationOutputEditRequest edit = RelocationDataFactory.buildSendEditRequest(
                 resourceId, 5.0, "B06 reduce batch send").toBuilder()
-                .items(List.of(RelocationDataFactory.usageWithBatch(resourceId, 5.0, batchNumber, false)))
+                .items(List.of(RelocationDataFactory.usageWithBatch(resourceId, 5.0,
+                        sent.getItems().getFirst().getBatches().getFirst().getBatchUuid(), batchNumber, false)))
                 .build();
         fixture.editSend(UserRole.ADMIN, sent.getId(), owner1Storage, edit);
 

@@ -2,6 +2,7 @@ package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
 import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
@@ -71,21 +72,27 @@ public class IsolatedRestrictedOwnerScope {
 
     @Step("FIXTURE: isolated REGIONS STORAGE/PRODUCTION + Keycloak restricted owner")
     public Long acquireLocation(UnitType type) {
+        return acquireLocation(type, null);
+    }
+
+    public Long acquireLocation(UnitType type, Set<LocationFeature> features) {
         if (type != UnitType.STORAGE && type != UnitType.PRODUCTION) {
             throw new IllegalArgumentException(
                     "Isolated owner home must be STORAGE or PRODUCTION, got " + type);
         }
         synchronized (LOCK) {
+            var request = StorageDataFactory.childStorage(
+                            storageFixture.resolveParentUnit().getId(),
+                            REGIONS_NAME_PREFIX,
+                            type,
+                            StorageRelation.INTERNAL)
+                    .accessMode(StorageAccessMode.REGIONS);
+            if (features != null) {
+                request.features(features);
+            }
             return acquireOwner(
                     UserRole.OWNER_2,
-                    storageFixture.createStorage(
-                            StorageDataFactory.childStorage(
-                                            storageFixture.resolveParentUnit().getId(),
-                                            REGIONS_NAME_PREFIX,
-                                            type,
-                                            StorageRelation.INTERNAL)
-                                    .accessMode(StorageAccessMode.REGIONS)
-                                    .build()));
+                    storageFixture.createStorage(request.build()));
         }
     }
 

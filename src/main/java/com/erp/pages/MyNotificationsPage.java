@@ -51,6 +51,25 @@ public class MyNotificationsPage extends BasePage {
         return this;
     }
 
+    public MyNotificationsPage selectLocation(String description, String locationName) {
+        Locator row = notificationRow(description);
+        row.locator("[cmdk-input]").click();
+        page.getByRole(AriaRole.OPTION,
+                new Page.GetByRoleOptions().setName(locationName).setExact(true)).click();
+        return this;
+    }
+
+    public boolean isLocationSelected(String description, String locationName) {
+        return notificationRow(description)
+                .getByText(locationName, new Locator.GetByTextOptions().setExact(true))
+                .count() > 0;
+    }
+
+    private Locator notificationRow(String description) {
+        return page.getByText(description, new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=ancestor::tr[1]");
+    }
+
     private Locator notificationControl(String description) {
         Locator text = page.getByText(description, new Page.GetByTextOptions().setExact(true));
         Locator container = text.locator(

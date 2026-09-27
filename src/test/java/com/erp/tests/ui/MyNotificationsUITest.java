@@ -91,6 +91,8 @@ public class MyNotificationsUITest extends BaseUITest {
         MyNotificationsPage pageObject = openMyNotifications();
 
         assertThat(pageObject.isNotificationVisible("Нове виробниче замовлення")).isTrue();
+        assertThat(pageObject.isNotificationVisible("Нове завдання на переміщення")).isTrue();
+        assertThat(pageObject.isNotificationVisible("Замовлення переміщення")).isFalse();
         pageObject.setNotificationEnabled("Нове виробниче замовлення", true);
 
         assertThat(notifications.isMySubscribed(

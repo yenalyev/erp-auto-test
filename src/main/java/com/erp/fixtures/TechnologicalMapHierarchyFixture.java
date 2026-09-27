@@ -1,6 +1,8 @@
 package com.erp.fixtures;
 
 import com.erp.api.clients.ApiExecutor;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.StorageRelation;
 import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Isolated REGIONS owner bound to a STORAGE parent P (not a UNIT) + a sibling PRODUCTION
@@ -65,14 +68,14 @@ public class TechnologicalMapHierarchyFixture {
     @Step("FIXTURE: isolated REGIONS STORAGE home + PRODUCTION sibling + A/B/C/X tech maps")
     public Seed acquireAndSeed() {
         techMapFixture.prepareContext();
-        Long homeId = isolatedScope.acquireLocation(UnitType.STORAGE);
+        Long homeId = isolatedScope.acquireLocation(UnitType.STORAGE, mapLocationFeatures());
         StorageResponse storageHome = storageFixture.getById(UserRole.ADMIN, homeId);
         Long standParentId = storageFixture.resolveParentUnit().getId();
 
         Branch storageParent = seedChildren(storageHome, "s", homeId);
         Branch productionParent = seedBranch(standParentId, UnitType.PRODUCTION, "p", homeId);
 
-        StorageResponse storageX = storageFixture.createChildStorage(standParentId, "tm-hier-x-");
+        StorageResponse storageX = storageFixture.createProductionStorage(standParentId, "tm-hier-x-");
         regionFixture.addExplicitLocations(storageX.getId(), homeId);
         TechnologicalMapResponse mapX = createMap(storageX.getId(), "tm-hier-X");
 
@@ -111,16 +114,18 @@ public class TechnologicalMapHierarchyFixture {
     }
 
     private Branch seedBranch(Long parentOfP, UnitType parentType, String tag, Long viewerId) {
-        StorageResponse parent = storageFixture.createChildStorage(
-                parentOfP, "tm-hier-" + tag + "-p-", parentType, StorageRelation.INTERNAL);
+        StorageResponse parent = storageFixture.createStorage(StorageDataFactory.childStorage(
+                        parentOfP, "tm-hier-" + tag + "-p-", parentType, StorageRelation.INTERNAL)
+                .features(mapLocationFeatures())
+                .build());
         regionFixture.addExplicitLocations(parent.getId(), viewerId);
         return seedChildren(parent, tag, viewerId);
     }
 
     private Branch seedChildren(StorageResponse parent, String tag, Long viewerId) {
-        StorageResponse storageA = storageFixture.createChildStorage(parent.getId(), "tm-hier-" + tag + "-a-");
-        StorageResponse storageB = storageFixture.createChildStorage(parent.getId(), "tm-hier-" + tag + "-b-");
-        StorageResponse storageC = storageFixture.createChildStorage(storageB.getId(), "tm-hier-" + tag + "-c-");
+        StorageResponse storageA = storageFixture.createProductionStorage(parent.getId(), "tm-hier-" + tag + "-a-");
+        StorageResponse storageB = storageFixture.createProductionStorage(parent.getId(), "tm-hier-" + tag + "-b-");
+        StorageResponse storageC = storageFixture.createProductionStorage(storageB.getId(), "tm-hier-" + tag + "-c-");
 
         regionFixture.addExplicitLocations(storageA.getId(), viewerId);
         regionFixture.addExplicitLocations(storageC.getId(), viewerId);
@@ -144,6 +149,10 @@ public class TechnologicalMapHierarchyFixture {
                 .getTechMap();
         createdMaps.add(new CreatedMap(map.getId(), storageId));
         return map;
+    }
+
+    private static Set<LocationFeature> mapLocationFeatures() {
+        return Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT, LocationFeature.PRODUCE);
     }
 
     private record CreatedMap(Long techMapId, Long storageId) {

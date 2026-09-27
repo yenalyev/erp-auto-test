@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @Builder(toBuilder = true)
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 public class RelocationItemBatchResponse {
     private Long id;
     private BigDecimal amount;
+    private UUID batchUuid;
     private String batchNumber;
     private Boolean isProduced;
     private BigDecimal paidAmount;

@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 
 public final class RelocationDataFactory {
 
@@ -34,14 +35,31 @@ public final class RelocationDataFactory {
                 .build();
     }
 
-    public static ResourceUsageRequest usageWithBatch(Long resourceId,
+    /** External arrival names a new batch; existing stock must use usageWithBatch and its UUID. */
+    public static ResourceUsageRequest usageForExternalBatch(Long resourceId,
                                                       double amount,
                                                       String batchNumber,
                                                       boolean isProduced) {
+        return batchUsage(resourceId, amount, null, batchNumber, isProduced);
+    }
+
+    public static ResourceUsageRequest usageWithBatch(Long resourceId,
+                                                      double amount,
+                                                      UUID batchUuid,
+                                                      String batchNumber,
+                                                      boolean isProduced) {
+        return batchUsage(resourceId, amount,
+                java.util.Objects.requireNonNull(batchUuid, "Existing stock batch UUID is required"),
+                batchNumber, isProduced);
+    }
+
+    private static ResourceUsageRequest batchUsage(Long resourceId, double amount,
+                                                   UUID batchUuid, String batchNumber, boolean isProduced) {
         return ResourceUsageRequest.builder()
                 .resourceId(resourceId)
                 .amount(BigDecimal.valueOf(amount))
                 .batches(List.of(RelocationItemBatchRequest.builder()
+                        .batchUuid(batchUuid)
                         .batchNumber(batchNumber)
                         .amount(BigDecimal.valueOf(amount))
                         .isProduced(isProduced)
@@ -106,6 +124,7 @@ public final class RelocationDataFactory {
                                                              Long recipientId,
                                                              Long resourceId,
                                                              double amount,
+                                                             UUID batchUuid,
                                                              String batchNumber,
                                                              boolean isProduced) {
         return RelocationOutputRequest.builder()
@@ -113,7 +132,8 @@ public final class RelocationDataFactory {
                 .recipientId(recipientId)
                 .description("erp-auto-test send with batch")
                 .date(LocalDate.now(ZoneOffset.UTC))
-                .items(List.of(usageWithBatch(resourceId, amount, batchNumber, isProduced)))
+                .items(List.of(usageWithBatch(
+                        resourceId, amount, batchUuid, batchNumber, isProduced)))
                 .build();
     }
 
@@ -126,6 +146,9 @@ public final class RelocationDataFactory {
                                                                Long resourceId,
                                                                double amount,
                                                                List<RelocationItemBatchRequest> batches) {
+        for (RelocationItemBatchRequest batch : batches) {
+            java.util.Objects.requireNonNull(batch.getBatchUuid(), "Existing stock batch UUID is required");
+        }
         return RelocationOutputRequest.builder()
                 .senderId(senderId)
                 .recipientId(recipientId)
@@ -159,7 +182,7 @@ public final class RelocationDataFactory {
                 .description("erp-auto-test external receive")
                 .invoiceNumber(uniqueInvoiceNumber())
                 .date(LocalDate.now(ZoneOffset.UTC))
-                .items(List.of(usageWithBatch(resourceId, amount, batchNumber, isProduced)))
+                .items(List.of(usageForExternalBatch(resourceId, amount, batchNumber, isProduced)))
                 .build();
     }
 
@@ -201,7 +224,7 @@ public final class RelocationDataFactory {
         return RelocationInputEditRequest.builder()
                 .description(description)
                 .date(LocalDate.now(ZoneOffset.UTC))
-                .items(List.of(usageWithBatch(resourceId, amount, batchNumber, false)))
+                .items(List.of(usageForExternalBatch(resourceId, amount, batchNumber, false)))
                 .build();
     }
 

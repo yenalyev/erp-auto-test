@@ -223,6 +223,25 @@ public class StorageFixture extends BaseFixture {
         return createStorage(request);
     }
 
+    /** Isolated production location that can also receive production-order tasks. */
+    @Step("API: створити дочірню production/task-локацію parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createProductionTaskStorage(Long parentId, String namePrefix) {
+        StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix)
+                .features(Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT,
+                        LocationFeature.PRODUCE, LocationFeature.TASKS))
+                .build();
+        return createStorage(request);
+    }
+
+    /** Production group is a routing node and cannot own stock or tasks. */
+    @Step("API: створити дочірню групу виробництва parentId={parentId}, prefix={namePrefix}")
+    public StorageResponse createProductionGroupStorage(Long parentId, String namePrefix) {
+        StorageRequest request = StorageDataFactory.childStorage(parentId, namePrefix)
+                .features(Set.of(LocationFeature.PRODUCTION_GROUP))
+                .build();
+        return createStorage(request);
+    }
+
     /** CPMA-711: gathering candidate — STORAGE + {@code orderHub=true}. */
     @Step("API: створити orderHub STORAGE parentId={parentId}, prefix={namePrefix}")
     public StorageResponse createOrderHubStorage(Long parentId, String namePrefix) {

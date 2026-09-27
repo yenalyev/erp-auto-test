@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Аналітика виробництва — {@code /analytics/production}.
@@ -80,6 +77,26 @@ public class ProductionAnalyticsPage extends BasePage {
         return tab(TAB_STATISTICS).count() > 0 && tab(TAB_STATISTICS).first().isVisible();
     }
 
+    public boolean isExcelExportButtonVisible() {
+        Locator button = excelExportButton();
+        return button.count() == 1 && button.isVisible();
+    }
+
+    public boolean isExcelExportButtonEnabled() {
+        Locator button = excelExportButton();
+        return button.count() == 1 && button.isEnabled();
+    }
+
+    public boolean clickExcelExportAndWaitForError() {
+        excelExportButton().click();
+        Locator toast = page.getByText("Не вдалося завантажити файл",
+                new Page.GetByTextOptions().setExact(true));
+        toast.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        return toast.isVisible();
+    }
+
     public boolean isTabSelected(String name) {
         Locator selectedTab = tab(name);
         return "active".equals(selectedTab.getAttribute("data-state"))
@@ -121,6 +138,11 @@ public class ProductionAnalyticsPage extends BasePage {
     }
 
     public ProductionAnalyticsPage selectDailyFilterOption(String label, String optionName) {
+        return selectFilterOption(label, optionName);
+    }
+
+    /** Selects an option from the shared top filter bar on either analytics view. */
+    public ProductionAnalyticsPage selectFilterOption(String label, String optionName) {
         Locator trigger = filterGroup(label).getByRole(AriaRole.COMBOBOX).first();
         trigger.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
@@ -246,37 +268,29 @@ public class ProductionAnalyticsPage extends BasePage {
         return labelNode.locator("xpath=parent::*").innerText().trim();
     }
 
-    /** Captures the XLSX body even when the frontend uses fetch/blob before emitting a download. */
+    /** Verifies the browser download, including fetch/blob exports. HTTP success alone is insufficient. */
     public ExportDownloadResult exportStatisticsToExcel() {
-        List<Download> downloads = Collections.synchronizedList(new ArrayList<>());
-        Consumer<Download> listener = downloads::add;
-        page.onDownload(listener);
+        Response[] exportResponse = new Response[1];
+        Download download = page.waitForDownload(
+                new Page.WaitForDownloadOptions().setTimeout(uiTimeoutMs()),
+                () -> exportResponse[0] = page.waitForResponse(
+                        response -> response.url().contains("/api/v1/production/analytic/export")
+                                && "GET".equals(response.request().method()),
+                        new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                        () -> excelExportButton().click()));
+        if (!isSpreadsheetResponse(exportResponse[0])) {
+            throw new AssertionError("Invalid export response: HTTP " + exportResponse[0].status());
+        }
+        String failure = download.failure();
+        if (failure != null) {
+            throw new AssertionError("Production analytics download failed: " + failure);
+        }
         try {
-            Response response = page.waitForResponse(
-                    ProductionAnalyticsPage::isSpreadsheetResponse,
-                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
-                    () -> page.getByRole(AriaRole.BUTTON,
-                            new Page.GetByRoleOptions().setName("Експорт в Excel").setExact(true)).click());
-            try {
-                page.waitForCondition(() -> !downloads.isEmpty(),
-                        new Page.WaitForConditionOptions().setTimeout(1_500));
-            } catch (RuntimeException ignored) {
-                // Axios/fetch blob responses do not always surface as a Chromium download event.
-            }
-            if (!downloads.isEmpty()) {
-                Download download = downloads.getFirst();
-                Path path = download.path();
-                return new ExportDownloadResult(
-                        download.suggestedFilename(), path.toFile().length(), path, response.url());
-            }
-            byte[] body = response.body();
-            Path path = Files.createTempFile("erp-production-analytics-", ".xlsx");
-            Files.write(path, body);
-            return new ExportDownloadResult("production-analytics.xlsx", body.length, path, response.url());
+            Path path = download.path();
+            return new ExportDownloadResult(
+                    download.suggestedFilename(), Files.size(path), path, exportResponse[0].url());
         } catch (IOException e) {
-            throw new IllegalStateException("Cannot persist production analytics export", e);
-        } finally {
-            page.offDownload(listener);
+            throw new IllegalStateException("Cannot read production analytics download", e);
         }
     }
 
@@ -333,6 +347,15 @@ public class ProductionAnalyticsPage extends BasePage {
 
     private Locator onlyMaterialsCheckbox() {
         return page.getByTestId(ONLY_MATERIALS_TEST_ID);
+    }
+
+    private Locator excelExportButton() {
+        Locator byTestId = page.getByTestId("production-analytics-export-excel");
+        if (byTestId.count() > 0) {
+            return byTestId.first();
+        }
+        return page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Експорт в Excel").setExact(true));
     }
 
     private boolean isAccessForbidden() {

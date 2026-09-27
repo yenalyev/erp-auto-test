@@ -16,6 +16,9 @@
             <class name="com.erp.tests.framework.IntegrationPrerequisitesTest"/>
             <class name="com.erp.utils.config.DotEnvLoaderTest"/>
             <class name="com.erp.tests.framework.RegressionSuiteCompletenessTest"/>
+            <class name="com.erp.tests.framework.BatchIdentityContractTest"/>
+            <class name="com.erp.tests.framework.XlsxColumnContractTest"/>
+            <class name="com.erp.utils.helpers.InventorySnapshotContractTest"/>
         </classes>
     </test>
 </suite>

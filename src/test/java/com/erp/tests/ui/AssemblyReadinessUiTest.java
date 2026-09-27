@@ -405,6 +405,15 @@ public class AssemblyReadinessUiTest extends BaseUITest {
 
         prepareAuthenticatedPage(UserRole.ADMIN, owner1StorageId);
         AssemblyReadinessPage adminPage = new AssemblyReadinessPage(page).openAndWaitForApi();
+        if (!new AppSidebarPage(page).getSelectedLocationName().contains(owner1StorageName)) {
+            page.waitForResponse(
+                    response -> response.url().contains("/assembly-readiness/")
+                            && "GET".equals(response.request().method()),
+                    new Page.WaitForResponseOptions()
+                            .setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000),
+                    () -> new AppSidebarPage(page).selectWorkspaceByName(owner1StorageName));
+            adminPage.waitForDataSettled();
+        }
         adminPage.expandRow(assembly.getTechMap().getName());
         assertThat(adminPage.isComponentTechMapLinkVisible(
                 assembly.getInput1().getName(), foreignProducer.getName())).isTrue();
@@ -450,7 +459,9 @@ public class AssemblyReadinessUiTest extends BaseUITest {
         String domain = ConfigProvider.getBaseUrl().replaceFirst("https?://", "").split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + role.getUsername()
+                        + "', '" + selectedStorageId + "');");
         if (page != null) {
             page.close();
         }

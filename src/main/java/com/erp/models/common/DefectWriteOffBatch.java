@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Per-batch breakdown of a defect write-off ("Списання браку").
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DefectWriteOffBatch {
+    private UUID batchUuid;
     private String batchNumber;
     private BigDecimal amount;
 }

@@ -66,7 +66,7 @@ public class RelocationFixture extends BaseFixture {
         Long resourceId = resources.getFirst().getId();
         testContext.set(ContextKey.RELOCATION_RESOURCE_ID, resourceId);
 
-        Long supplierId = RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, UserRole.OWNER_1);
+        Long supplierId = RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, UserRole.ADMIN);
         testContext.set(ContextKey.RELOCATION_SUPPLIER_ID, supplierId);
 
         Long recipientId = createAutoFinishedRecipientStorageId();
@@ -546,8 +546,11 @@ public class RelocationFixture extends BaseFixture {
                                                   double amount,
                                                   String batchNumber,
                                                   boolean isProduced) {
+        java.util.UUID sourceBatchUuid = com.erp.utils.helpers.ProductionStockAssertions.requireBatchUuid(
+                apiExecutor, senderId, role, resourceId, batchNumber, isProduced);
         RelocationOutputRequest request = RelocationDataFactory.buildSendWithBatch(
-                senderId, recipientId, resourceId, amount, batchNumber, isProduced);
+                senderId, recipientId, resourceId, amount, sourceBatchUuid,
+                batchNumber, isProduced);
         Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, role, request);
         validateSuccess(response, "Send with batch");
         return response.as(RelocationResponse.class);

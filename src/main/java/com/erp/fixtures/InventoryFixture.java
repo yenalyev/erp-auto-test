@@ -17,6 +17,7 @@ import com.erp.models.response.ResourceHistoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.StorageItemBatchResponse;
+import com.erp.models.response.BatchInspectionResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.test_context.TestContext;
 import com.erp.utils.helpers.DatabaseIntegrityValidator;
@@ -590,5 +591,20 @@ public class InventoryFixture extends BaseFixture {
         validateSuccess(response, "GET storage-item batches by resource");
         SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_ITEM_BATCHES_GET_BY_RESOURCE);
         return DatabaseIntegrityValidator.extractList(response, StorageItemBatchResponse.class);
+    }
+
+    @Step("API: Batch Inspector — пошук партії «{batchName}» роллю {role}")
+    public List<BatchInspectionResponse> inspectBatch(String batchName, UserRole role) {
+        Response response = inspectBatchRaw(batchName, role);
+        validateSuccess(response, "GET batch inspector by name=" + batchName);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.BATCH_INSPECT_GET);
+        return DatabaseIntegrityValidator.extractList(response, BatchInspectionResponse.class);
+    }
+
+    public Response inspectBatchRaw(String batchName, UserRole role) {
+        return apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.BATCH_INSPECT_GET,
+                role,
+                Map.of("name", batchName));
     }
 }

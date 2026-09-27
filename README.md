@@ -155,3 +155,5 @@ src/test/resources/rbac-policy.yml — Матриця доступу.
 - RBAC-матриця відкладена до появи бізнес-вимог; її правила не змінювалися.
 
 Локальні перевірки ізоляції cleanup і класифікації передумов входять у `mvn test -Dsuite=framework -Dtcm.enabled=false -Dgoogle.sheets.enabled=false`.
+
+Цей suite також перевіряє збереження UUID партій, відмову на помилкових відповідях залишків і числові стовпці Excel. Браузерні контракти Page Object запускаються окремо: `mvn test -Dsuite=framework-browser -Dtcm.enabled=false -Dgoogle.sheets.enabled=false`. Вони використовують локальний Chromium і підміняють усі запити, без ERP та авторизації. Для встановленого Chrome додайте `-Dframework.browser.channel=chrome`.

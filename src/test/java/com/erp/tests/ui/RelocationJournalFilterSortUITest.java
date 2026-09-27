@@ -79,8 +79,8 @@ public class RelocationJournalFilterSortUITest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             Видано: фільтр за продуктом + сортування за «До».
-            Два нові переміщення (різні отримувачі) мають потрапити у відфільтрований список
-            у тому ж порядку, що й GET /relocations.
+            Два нові переміщення (різні отримувачі) мають потрапити у повний відфільтрований набір,
+            а перша сторінка UI — відображатися у тому ж порядку, що й GET /relocations.
             """)
     public void sentHistoryProductFilterAndRecipientSort() {
         long timestamp = System.currentTimeMillis();
@@ -99,9 +99,12 @@ public class RelocationJournalFilterSortUITest extends BaseUITest {
                         UserRole.OWNER_2, sendToOwner2.getId(), owner2StorageId,
                         RelocationState.FINISHED, markerToOwner2));
 
-        RelocationResponse sendToUnit = Allure.step("API: видача на UNIT (AUTO_FINISHED)", () ->
+        RelocationResponse sendToUnit = Allure.step("API: видача на UNIT", () ->
                 fixture.createSendWithDescription(
                         UserRole.OWNER_1, storageId, unitStorageId, resourceId, amount, markerToUnit));
+
+        assertThat(sendToUnit.getState()).as("EXTERNAL recipient does not require confirmation")
+                .isEqualTo(RelocationState.AUTO_FINISHED);
 
         String recipientOwner2 = sendToOwner2.getRecipient().getName();
         String recipientUnit = sendToUnit.getRecipient().getName();
@@ -130,9 +133,7 @@ public class RelocationJournalFilterSortUITest extends BaseUITest {
                 .productId(resourceId)
                 .build();
 
-        Allure.step("Перевірити, що тестові переміщення видимі після фільтрації", () -> {
-            RelocationJournalUiVerification.assertFilteredRowsContainMarkers(
-                    relocationPage, List.of(recipientOwner2, recipientUnit));
+        Allure.step("Перевірити, що тестові переміщення є у повному відфільтрованому наборі", () -> {
             RelocationJournalUiVerification.assertFilteredRowsContainRelocationIds(
                     fixture, filteredQuery, UserRole.OWNER_1,
                     List.of(sendToOwner2.getId(), sendToUnit.getId()));

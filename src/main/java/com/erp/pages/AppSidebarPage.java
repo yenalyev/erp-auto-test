@@ -115,6 +115,21 @@ public class AppSidebarPage extends BasePage {
         return this;
     }
 
+    /** Open a collapsible child by route when its label also names another sidebar entry. */
+    public AppSidebarPage openCollapsiblePath(String groupLabel, String path) {
+        Locator child = page.locator(SIDEBAR_SELECTOR).locator("a[href='" + path + "']").first();
+        if (child.count() == 0 || !child.isVisible()) {
+            Locator trigger = page.locator(SIDEBAR_SELECTOR)
+                    .getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName(groupLabel));
+            trigger.first().click();
+        }
+        child.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.VISIBLE)
+                .setTimeout(uiTimeoutMs()));
+        child.click();
+        return this;
+    }
+
     /** Click an in-page {@code PageTabs} trigger by label. */
     public AppSidebarPage openPageTab(String tabLabel) {
         waitForPageTab(tabLabel);

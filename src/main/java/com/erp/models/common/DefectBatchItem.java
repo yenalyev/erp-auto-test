@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Explicit per-batch breakdown used both in {@code DefectRequest} (input) and
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DefectBatchItem {
+    private UUID batchUuid;
     private String batchNumber;
     private Boolean isProduced;
     private BigDecimal amount;
