@@ -39,6 +39,8 @@
             <class name="com.erp.tests.ui.CrewReturnUITest"/>
             <class name="com.erp.tests.ui.FlyPointToFlyPointIssuanceUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
+            <class name="com.erp.tests.ui.RelocationLocationSelectorsUiTest"/>
+            <class name="com.erp.tests.ui.RelocationRegionAliasFeatureUiTest"/>
             <class name="com.erp.tests.ui.RelocationBatchAccountingUiTest"/>
             <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
