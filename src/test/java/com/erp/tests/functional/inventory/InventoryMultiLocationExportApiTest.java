@@ -14,6 +14,7 @@ import com.erp.models.response.StorageAmountResponse;
 import com.erp.models.response.UserMeResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
 import com.erp.utils.helpers.XlsxContentAssertions;
+import com.erp.utils.helpers.XlsxWorkbookReader;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -26,8 +27,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,6 +62,7 @@ public class InventoryMultiLocationExportApiTest extends BaseFunctionalTest {
     private IsolatedMultiLocationOwnerScope.Context ownerContext;
     private ResourceResponse resourceA;
     private ResourceResponse resourceB;
+    private ResourceResponse sharedResource;
     private ResourceResponse decoyResource;
     private static final UserRole OWNER = UserRole.OWNER_2;
     private static final double STOCK_A = 12.0;
@@ -76,17 +87,24 @@ public class InventoryMultiLocationExportApiTest extends BaseFunctionalTest {
 
         resourceA = resourceFixture.createUniqueResource("mloc-exp-a-");
         resourceB = resourceFixture.createUniqueResource("mloc-exp-b-");
+        sharedResource = resourceFixture.createUniqueResource("mloc-exp-shared-");
         decoyResource = resourceFixture.createUniqueResource("mloc-decoy-");
-        relocationFixture.ensureStock(ownerContext.storageAId(), resourceA.getId(), STOCK_A);
-        relocationFixture.ensureStock(ownerContext.storageBId(), resourceB.getId(), STOCK_B);
+        relocationFixture.seedExactStock(ownerContext.storageAId(), resourceA.getId(), STOCK_A);
+        relocationFixture.seedExactStock(ownerContext.storageBId(), resourceB.getId(), STOCK_B);
+        relocationFixture.seedExactStock(ownerContext.storageAId(), sharedResource.getId(), 4.0);
+        relocationFixture.seedExactStock(ownerContext.storageBId(), sharedResource.getId(), 9.0);
 
         long forbiddenStorageId = storageFixture.createUniqueStorage("mloc-forbidden-").getId();
-        relocationFixture.ensureStock(forbiddenStorageId, decoyResource.getId(), 99.0);
+        relocationFixture.seedExactStock(forbiddenStorageId, decoyResource.getId(), 99.0);
 
         inventoryFixture.requireItemForResourceWithRetry(
                 ownerContext.storageAId(), resourceA.getId(), OWNER, 15_000);
         inventoryFixture.requireItemForResourceWithRetry(
                 ownerContext.storageBId(), resourceB.getId(), OWNER, 15_000);
+        inventoryFixture.requireItemForResourceWithRetry(
+                ownerContext.storageAId(), sharedResource.getId(), OWNER, 15_000);
+        inventoryFixture.requireItemForResourceWithRetry(
+                ownerContext.storageBId(), sharedResource.getId(), OWNER, 15_000);
         inventoryFixture.requireItemForResourceWithRetry(
                 forbiddenStorageId, decoyResource.getId(), UserRole.ADMIN, 15_000);
     }
@@ -162,6 +180,104 @@ public class InventoryMultiLocationExportApiTest extends BaseFunctionalTest {
         assertThat(XlsxContentAssertions.zipContainsText(singleABytes, decoyResource.getName()))
                 .as("Single-location export for A must not include decoy from forbidden storage")
                 .isFalse();
+    }
+
+    @Test
+    @TestCaseId("TC-WMS-007-022")
+    @Story("Inventory workbook contains a per-storage worksheet")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            На аркуші «По складах» один ресурс, що лежить на двох дозволених складах,
+            має один рядок: загальний залишок 13, бронь 0, окремі числові колонки 4 і 9.
+            П'ять фіксованих заголовків і назви складів перевіряються у завантаженому XLSX.
+            """)
+    public void exportContainsPerStorageSheetWithAggregatedResource() throws IOException {
+        Response response = inventoryFixture.exportRemaindersByLocations(
+                OWNER,
+                List.of(ownerContext.storageAId(), ownerContext.storageBId()),
+                Map.of("searchTerm", sharedResource.getName()));
+        assertThat(response.statusCode()).isEqualTo(200);
+        byte[] xlsx = response.asByteArray();
+        assertThat(XlsxWorkbookReader.sheetNames(xlsx))
+                .contains("Залишок", "По складах");
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsx))) {
+            Sheet sheet = workbook.getSheet("По складах");
+            Row header = sheet.getRow(0);
+            assertThat(header).as("Аркуш має рядок заголовків").isNotNull();
+            DataFormatter formatter = new DataFormatter();
+            List<String> headings = java.util.stream.IntStream.range(0, header.getLastCellNum())
+                    .mapToObj(index -> formatter.formatCellValue(header.getCell(index)).trim())
+                    .toList();
+
+            Response inventory = inventoryFixture.getMultiLocationInventory(
+                    OWNER, ownerContext.storageAId() + "," + ownerContext.storageBId());
+            assertThat(inventory.statusCode()).isEqualTo(200);
+            List<MultiLocationStorageItemResponse> inventoryRows =
+                    inventory.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
+            MultiLocationStorageItemResponse source = inventoryRows.stream()
+                    .filter(item -> item.getResource() != null
+                            && sharedResource.getId().equals(item.getResource().getId()))
+                    .findFirst().orElseThrow();
+            Map<Long, StorageAmountResponse> locations = source.getLocations().stream()
+                    .filter(location -> location.getStorage() != null)
+                    .collect(Collectors.toMap(location -> location.getStorage().getId(), location -> location));
+            StorageAmountResponse a = locations.get(ownerContext.storageAId());
+            StorageAmountResponse b = locations.get(ownerContext.storageBId());
+            assertThat(a).isNotNull();
+            assertThat(b).isNotNull();
+            assertThat(a.getAmount()).isEqualTo(4.0);
+            assertThat(b.getAmount()).isEqualTo(9.0);
+            double bookedA = a.getBookedAmount() == null ? 0.0 : a.getBookedAmount();
+            double bookedB = b.getBookedAmount() == null ? 0.0 : b.getBookedAmount();
+            assertThat(bookedA).isZero();
+            assertThat(bookedB).isZero();
+
+            int aColumn = storageColumn(headings, a.getStorage().getName());
+            int bColumn = storageColumn(headings, b.getStorage().getName());
+            assertThat(aColumn).isNotEqualTo(bColumn);
+            assertThat(headings.subList(5, headings.size())).hasSize(2);
+
+            List<Row> matchingRows = java.util.stream.IntStream.rangeClosed(1, sheet.getLastRowNum())
+                    .mapToObj(sheet::getRow)
+                    .filter(Objects::nonNull)
+                    .filter(row -> sharedResource.getName().equals(formatter.formatCellValue(row.getCell(0))))
+                    .toList();
+            assertThat(matchingRows).as("Ресурс має рівно один агрегований рядок").hasSize(1);
+            assertThat(sheet.getPhysicalNumberOfRows())
+                    .as("Пошук у експорті залишає тільки заголовок і ресурс")
+                    .isEqualTo(2);
+            Row row = matchingRows.getFirst();
+            assertNumericCell(row, 1, a.getAmount() + b.getAmount());
+            assertNumericCell(row, 2, bookedA + bookedB);
+            assertNumericCell(row, aColumn, a.getAmount());
+            assertNumericCell(row, bColumn, b.getAmount());
+            assertThat(formatter.formatCellValue(row.getCell(3)))
+                    .isIn(source.getResource().getUnit().getShortName(),
+                            source.getResource().getUnit().getName());
+            assertThat(formatter.formatCellValue(row.getCell(4)))
+                    .isEqualTo(source.getResource().getCategory().getName());
+            assertThat(XlsxContentAssertions.zipContainsText(xlsx, decoyResource.getName()))
+                    .as("Чужий ресурс відсутній у книзі")
+                    .isFalse();
+            assertThat(headings).startsWith(
+                    "Назва", "Залишок", "Заброньовано", "Одиниця Виміру", "Категорія");
+        }
+    }
+
+    private static int storageColumn(List<String> headings, String storageName) {
+        List<Integer> matches = java.util.stream.IntStream.range(5, headings.size())
+                .filter(index -> headings.get(index).contains(storageName))
+                .boxed().toList();
+        assertThat(matches).as("Одна колонка для складу %s", storageName).hasSize(1);
+        return matches.getFirst();
+    }
+
+    private static void assertNumericCell(Row row, int column, double expected) {
+        Cell cell = row.getCell(column);
+        assertThat(cell).as("Числова комірка %s у рядку %s", column, row.getRowNum() + 1).isNotNull();
+        assertThat(cell.getCellType()).isEqualTo(CellType.NUMERIC);
+        assertThat(cell.getNumericCellValue()).isEqualTo(expected);
     }
 
     private void assertExportMatchesOwnerInventory(byte[] xlsx, Response inventoryList) {

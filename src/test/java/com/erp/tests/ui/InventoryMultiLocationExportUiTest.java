@@ -9,10 +9,12 @@ import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.response.ResourceResponse;
+import com.erp.pages.AppSidebarPage;
 import com.erp.pages.UnitManagementPage;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.UiDownloadAssertions;
 import com.erp.utils.helpers.XlsxContentAssertions;
+import com.erp.utils.helpers.XlsxWorkbookReader;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -24,6 +26,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,11 +76,11 @@ public class InventoryMultiLocationExportUiTest extends BaseUITest {
         resourceA = resourceFixture.createUniqueResource("mloc-ui-a-");
         resourceB = resourceFixture.createUniqueResource("mloc-ui-b-");
         decoyResource = resourceFixture.createUniqueResource("mloc-decoy-ui-");
-        relocationFixture.ensureStock(ownerContext.storageAId(), resourceA.getId(), STOCK_A);
-        relocationFixture.ensureStock(ownerContext.storageBId(), resourceB.getId(), STOCK_B);
+        relocationFixture.seedExactStock(ownerContext.storageAId(), resourceA.getId(), STOCK_A);
+        relocationFixture.seedExactStock(ownerContext.storageBId(), resourceB.getId(), STOCK_B);
 
         long forbiddenStorageId = storageFixture.createUniqueStorage("mloc-forbidden-ui-").getId();
-        relocationFixture.ensureStock(forbiddenStorageId, decoyResource.getId(), 99.0);
+        relocationFixture.seedExactStock(forbiddenStorageId, decoyResource.getId(), 99.0);
 
         inventoryFixture.requireItemForResourceWithRetry(
                 ownerContext.storageAId(), resourceA.getId(), OWNER, 15_000);
@@ -94,7 +98,7 @@ public class InventoryMultiLocationExportUiTest extends BaseUITest {
     }
 
     @Test
-    @TestCaseId("TC-WMS-007-019")
+    @TestCaseId({"TC-WMS-007-019", "TC-WMS-007-023"})
     @Story("Multi-location owner export UI")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
@@ -103,7 +107,7 @@ public class InventoryMultiLocationExportUiTest extends BaseUITest {
             → GET /export-analytics/inventory?locations=allowedActiveStorageIds.
             Очікується: XLSX з обома ресурсами та їх кількостями; без decoy з чужої локації.
             """)
-    public void multiLocationOwnerExportsAllLocationsFromUi() {
+    public void multiLocationOwnerExportsAllLocationsFromUi() throws IOException {
         Allure.parameter("ownerUsername", ownerContext.owner().username());
         Allure.parameter("resourceA", resourceA.getName());
         Allure.parameter("resourceB", resourceB.getName());
@@ -113,6 +117,7 @@ public class InventoryMultiLocationExportUiTest extends BaseUITest {
         UnitManagementPage stock = new UnitManagementPage(page)
                 .openForAllLocations()
                 .waitForLoaded();
+        new AppSidebarPage(page).selectAllLocations();
 
         assertThat(stock.isAllLocationsTableVisible())
                 .as("Aggregated inventory table must load in all-locations mode")
@@ -126,6 +131,9 @@ public class InventoryMultiLocationExportUiTest extends BaseUITest {
         Allure.parameter("downloadSizeBytes", download.sizeBytes());
         UiDownloadAssertions.assertNonEmptyXlsx(
                 download.path(), download.sizeBytes(), "Multi-location all-locations export");
+        assertThat(XlsxWorkbookReader.sheetNames(Files.readAllBytes(download.path())))
+                .as("UI завантажує книгу з новим аркушем")
+                .contains("Залишок", "По складах");
         assertThat(XlsxContentAssertions.zipContainsText(download.path(), resourceA.getName()))
                 .as("UI export must include resource from storage A")
                 .isTrue();
