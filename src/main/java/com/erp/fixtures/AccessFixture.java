@@ -3,9 +3,11 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.models.access.AccessScopeKind;
 import com.erp.models.access.GrantScopeKind;
 import com.erp.models.request.AccessGrantRequest;
 import com.erp.models.request.AccessRevokeRequest;
+import com.erp.models.request.AccessRoleRequest;
 import com.erp.models.response.AccessGrantResponse;
 import com.erp.models.response.AccessPermissionResponse;
 import com.erp.models.response.AccessRoleResponse;
@@ -54,6 +56,45 @@ public class AccessFixture extends BaseFixture {
                 .filter(role -> normalize(role.getName()).equals(expected))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Access role not found: " + roleName));
+    }
+
+    @Step("Create isolated global access role {name}")
+    public AccessRoleResponse createGlobalRole(String name, List<String> permissionKeys) {
+        AccessRoleRequest request = AccessRoleRequest.builder()
+                .name(name)
+                .description("Automated test fixture")
+                .scopeKind(AccessScopeKind.GLOBAL)
+                .permissionKeys(List.copyOf(permissionKeys))
+                .build();
+        Response response = apiExecutor.execute(ApiEndpointDefinition.ACCESS_POST_ROLE, UserRole.ADMIN, request);
+        validateSuccess(response, "Create global access role " + name);
+        AccessRoleResponse role = response.as(AccessRoleResponse.class);
+        if (role.getId() == null || role.getScopeKind() != AccessScopeKind.GLOBAL
+                || !role.getPermissionKeys().containsAll(permissionKeys)) {
+            if (role.getId() != null) {
+                deleteRole(role.getId());
+            }
+            throw new IllegalStateException("Created access role does not match requested global permissions: " + name);
+        }
+        return role;
+    }
+
+    @Step("Delete isolated access role {roleId}")
+    public void deleteRole(Long roleId) {
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            Response response = apiExecutor.execute(
+                    ApiEndpointDefinition.ACCESS_DELETE_ROLE, UserRole.ADMIN, null, roleId);
+            if (response.statusCode() != 503 || attempt == 3) {
+                validateSuccess(response, "Delete access role " + roleId);
+                return;
+            }
+            try {
+                Thread.sleep(1_000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while retrying deletion of access role " + roleId, e);
+            }
+        }
     }
 
     @Step("Get access grants for user {userId}")

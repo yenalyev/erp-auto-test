@@ -1,0 +1,25 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "featureId": "REQ-RVW-UI",
+  "documentationSha256": "d729209d297cc5b79a8eca6e8e9133843bee4c2c8aeb2912cc5f219fb4c84a74",
+  "acceptanceCriteria": [
+    "AC-07",
+    "AC-08",
+    "AC-09",
+    "AC-10"
+  ],
+  "testCasesCreated": [
+    "TC-UI-RVW-006",
+    "TC-UI-RVW-007",
+    "TC-UI-RVW-008",
+    "TC-UI-RVW-009",
+    "TC-UI-RVW-010",
+    "TC-UI-RVW-011",
+    "TC-UI-RVW-012",
+    "TC-UI-RVW-013"
+  ],
+  "testCasesUpdated": [],
+  "verifiedCaseCount": 8,
+  "completedAt": "2026-09-30T12:24:03.681755+00:00",
+  "result": "SUCCESS"
+}

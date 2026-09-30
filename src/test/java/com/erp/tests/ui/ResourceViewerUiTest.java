@@ -32,10 +32,13 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -307,6 +310,97 @@ public class ResourceViewerUiTest extends BaseUITest {
                 .isZero();
     }
 
+    @Test(priority = 60)
+    @TestCaseId("TC-UI-RVW-006")
+    @Story("Receiver battalion selector contains PM battalions")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Селектор «Отримувач - батальйон» видимий і містить непорожній список без дублікатів")
+    public void receiverBattalionSelectorHasOptions() {
+        injectAdminSession();
+        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open().clearFilters();
+        assertThat(viewer.isBattalionSelectorVisible())
+                .as("на сторінці є селектор «Отримувач - батальйон»")
+                .isTrue();
+        List<String> battalions = viewer.battalionOptions();
+        assertThat(battalions).as("доступні батальйони ПМ").isNotEmpty();
+        assertThat(battalions).as("батальйони ПМ без дублікатів").doesNotHaveDuplicates();
+        viewer.attachScreenshot("TC-UI-RVW-006 — battalion options");
+    }
+
+    @Test(priority = 70, dependsOnMethods = "receiverBattalionSelectorHasOptions")
+    @TestCaseId("TC-UI-RVW-007")
+    @Story("Battalion selection disables receiver and group filters")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після вибору батальйону Отримувачі, ПМ, СБС та Інші неактивні; попередня група Інші не передається в пошук")
+    public void battalionSelectionDisablesOtherReceiverFilters() {
+        injectAdminSession();
+        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open().clearFilters();
+        assertThat(viewer.isBattalionSelectorVisible()).isTrue();
+        viewer.restoreResourceOnlyFilter(alcohol.getId(), alcohol.getName()).enableOthersReceivers();
+        List<String> options = viewer.battalionOptions();
+        assertThat(options).as("батальйони ПМ доступні для вибору").isNotEmpty();
+        String battalion = options.getFirst();
+        viewer.selectBattalion(battalion);
+
+        assertThat(viewer.isReceiverSelectorDisabled()).as("Отримувачі неактивні").isTrue();
+        assertThat(viewer.areReceiverGroupsDisabled()).as("ПМ, СБС та Інші неактивні").isTrue();
+
+        AtomicReference<String> searchUrl = new AtomicReference<>();
+        page.onRequest(request -> {
+            if (request.url().contains("/resources-viewer/relocations")) {
+                searchUrl.set(request.url());
+            }
+        });
+        viewer.search();
+        assertThat(searchUrl.get()).as("пошуковий запит виконався").isNotBlank();
+        String decodedUrl = URLDecoder.decode(searchUrl.get(), StandardCharsets.UTF_8);
+        assertThat(decodedUrl).as("попередній вибір «Інші» не впливає на батальйон")
+                .doesNotContain("unitsOther=Інші");
+        viewer.attachScreenshot("TC-UI-RVW-007 — battalion filter");
+    }
+
+    @Test(priority = 80)
+    @TestCaseId("TC-UI-RVW-008")
+    @Story("Receiver selection disables battalion selector")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після вибору конкретного отримувача селектор батальйону стає неактивним")
+    public void receiverSelectionDisablesBattalionSelector() {
+        injectAdminSession();
+        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open().clearFilters();
+        assertThat(viewer.isBattalionSelectorVisible()).isTrue();
+        viewer.restoreReceiverOnlyFilter(receiverUnitId, receiverUnitName);
+        assertThat(viewer.isBattalionSelectorDisabled())
+                .as("після вибору Отримувача батальйон неактивний")
+                .isTrue();
+        viewer.attachScreenshot("TC-UI-RVW-008 — receiver selected");
+    }
+
+    @Test(priority = 90, dependsOnMethods = "receiverBattalionSelectorHasOptions")
+    @TestCaseId("TC-UI-RVW-009")
+    @Story("Clear restores receiver filters")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Очистити після вибору батальйону знову активує Отримувачі, ПМ, СБС та Інші")
+    public void clearingBattalionRestoresReceiverFilters() {
+        injectAdminSession();
+        ResourceRelocationViewerPage viewer = new ResourceRelocationViewerPage(page).open().clearFilters();
+        assertThat(viewer.isBattalionSelectorVisible()).isTrue();
+        List<String> options = viewer.battalionOptions();
+        assertThat(options).as("батальйони ПМ доступні для вибору").isNotEmpty();
+        viewer.selectBattalion(options.getFirst());
+        assertThat(viewer.isReceiverSelectorDisabled()).isTrue();
+        viewer.clearFilters();
+        assertThat(viewer.isReceiverSelectorDisabled()).as("Отримувачі знову доступні").isFalse();
+        assertThat(viewer.areReceiverGroupsEnabled()).as("ПМ, СБС та Інші знову доступні").isTrue();
+        assertThat(viewer.isBattalionSelectorDisabled()).as("селектор батальйону знову доступний").isFalse();
+
+        viewer.restoreReceiverOnlyFilter(receiverUnitId, receiverUnitName);
+        assertThat(viewer.isBattalionSelectorDisabled()).isTrue();
+        viewer.clearFilters();
+        assertThat(viewer.isBattalionSelectorDisabled())
+                .as("після очищення Отримувачів батальйон знову доступний")
+                .isFalse();
+    }
+
     private void injectResourceViewerSession() {
         var actor = dynamicResourceViewerActor();
         log.info("Injecting dynamic RESOURCE_VIEWER session for UI tests: {}", actor.username());
@@ -318,6 +412,10 @@ public class ResourceViewerUiTest extends BaseUITest {
                         actor.username(),
                         actor.password()),
                 domain);
+    }
+
+    private void injectAdminSession() {
+        injectSessionCookies(cachedSessionCookies(UserRole.ADMIN), sessionCookieDomain());
     }
 
     private double fetchApiSum(Long resourceId) {

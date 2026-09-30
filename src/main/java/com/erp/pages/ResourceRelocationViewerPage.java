@@ -4,6 +4,7 @@ import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Page Object for resource tracking journal.
@@ -25,6 +27,8 @@ public class ResourceRelocationViewerPage extends BasePage {
     private static final String PAGE_TITLE = "Журнал переміщень ресурсів";
     private static final String CATEGORY_LABEL = "Категорії";
     private static final String RECEIVER_FILTER_LABEL = "Отримувачі";
+    private static final Pattern RECEIVER_BATTALION_LABEL = Pattern.compile(
+            "Отримувач\\s*[-–—]\\s*батальйон|Батальйони", Pattern.CASE_INSENSITIVE);
     private static final String RESOURCE_FILTER_LABEL = "Ресурси для відстеження";
     private static final String CLEAR_BUTTON_TEXT = "Очистити";
     private static final String SEARCH_PLACEHOLDER = "Пошук...";
@@ -87,9 +91,7 @@ public class ResourceRelocationViewerPage extends BasePage {
     }
 
     public ResourceRelocationViewerPage selectReceiver(String receiverName) {
-        receiverAutocompleteTrigger().click();
-        Locator searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER).last();
-        searchInput.fill(extractSearchPrefix(receiverName));
+        receiverAutocompleteTrigger().fill(extractSearchPrefix(receiverName));
         waitForAutocompleteOptionsSettled();
         popoverOptions()
                 .filter(new Locator.FilterOptions().setHasText(receiverName))
@@ -104,6 +106,89 @@ public class ResourceRelocationViewerPage extends BasePage {
         if (!checkbox.isChecked()) {
             checkbox.check();
         }
+        return this;
+    }
+
+    public boolean isBattalionSelectorVisible() {
+        Locator selector = battalionSelectorTrigger();
+        return selector.count() == 1 && selector.isVisible();
+    }
+
+    public boolean isBattalionSelectorDisabled() {
+        return battalionSelectorTrigger().isDisabled();
+    }
+
+    public boolean isReceiverSelectorDisabled() {
+        return receiverAutocompleteTrigger().isDisabled();
+    }
+
+    public boolean areReceiverGroupsDisabled() {
+        return pmCheckbox().isDisabled()
+                && sbsCheckbox().isDisabled()
+                && othersCheckbox().isDisabled();
+    }
+
+    public boolean areReceiverGroupsEnabled() {
+        return !pmCheckbox().isDisabled()
+                && !sbsCheckbox().isDisabled()
+                && !othersCheckbox().isDisabled();
+    }
+
+    public ResourceRelocationViewerPage restoreReceiverOnlyFilter(Long receiverId, String receiverName) {
+        Map<String, Object> filters = new HashMap<>();
+        filters.put("selectedCategories", List.of());
+        filters.put("selectedResources", List.of());
+        filters.put("selectedReceivers", List.of(Map.of(
+                "label", receiverName, "value", receiverId.toString())));
+        filters.put("isPm414", false);
+        filters.put("isSbsWithoutPm414", false);
+        filters.put("isOthers", false);
+        filters.put("groupByLowestComponents", true);
+        page.evaluate(
+                "filters => localStorage.setItem('resourceRelocationFilters', JSON.stringify(filters))",
+                filters);
+        page.reload();
+        return waitForLoaded();
+    }
+
+    public ResourceRelocationViewerPage restoreResourceOnlyFilter(Long resourceId, String resourceName) {
+        Map<String, Object> filters = new HashMap<>();
+        filters.put("selectedCategories", List.of());
+        filters.put("selectedResources", List.of(Map.of(
+                "id", resourceId.intValue(), "name", resourceName)));
+        filters.put("selectedReceivers", List.of());
+        filters.put("isPm414", false);
+        filters.put("isSbsWithoutPm414", false);
+        filters.put("isOthers", false);
+        filters.put("groupByLowestComponents", true);
+        page.evaluate(
+                "filters => localStorage.setItem('resourceRelocationFilters', JSON.stringify(filters))",
+                filters);
+        page.reload();
+        return waitForLoaded();
+    }
+
+    public List<String> battalionOptions() {
+        Locator options = openBattalionOptions();
+        try {
+            options.first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        } catch (TimeoutError e) {
+            page.keyboard().press("Escape");
+            return List.of();
+        }
+        List<String> names = readOptionNames(options);
+        page.keyboard().press("Escape");
+        return names;
+    }
+
+    public ResourceRelocationViewerPage selectBattalion(String battalionName) {
+        Locator options = openBattalionOptions();
+        options.first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        options
+                .filter(new Locator.FilterOptions().setHasText(battalionName))
+                .first()
+                .click();
+        page.keyboard().press("Escape");
         return this;
     }
 
@@ -280,8 +365,11 @@ public class ResourceRelocationViewerPage extends BasePage {
     }
 
     private List<String> readAutocompleteOptionNames() {
+        return readOptionNames(popoverOptions());
+    }
+
+    private List<String> readOptionNames(Locator options) {
         List<String> names = new ArrayList<>();
-        Locator options = popoverOptions();
         int count = options.count();
         for (int i = 0; i < count; i++) {
             String text = options.nth(i).innerText().trim();
@@ -309,8 +397,32 @@ public class ResourceRelocationViewerPage extends BasePage {
     private Locator receiverAutocompleteTrigger() {
         return page.locator("label")
                 .filter(new Locator.FilterOptions().setHasText(RECEIVER_FILTER_LABEL))
-                .locator("xpath=following::button[@role='combobox'][1]")
+                .locator("xpath=following::input[1]")
                 .first();
+    }
+
+    private Locator battalionSelectorTrigger() {
+        return page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText(RECEIVER_BATTALION_LABEL))
+                .locator("xpath=following::input[1]")
+                .first();
+    }
+
+    private Locator battalionOptionsLocator() {
+        String listboxId = battalionSelectorTrigger().getAttribute("aria-controls");
+        if (listboxId == null || listboxId.isBlank()) {
+            throw new IllegalStateException("Battalion selector has no associated listbox");
+        }
+        return page.locator("[id='" + listboxId + "']").locator(AUTOCOMPLETE_OPTION_SELECTOR);
+    }
+
+    private Locator openBattalionOptions() {
+        page.getByText("Завантаження...", new Page.GetByTextOptions().setExact(true))
+                .first().waitFor(new Locator.WaitForOptions()
+                        .setState(com.microsoft.playwright.options.WaitForSelectorState.HIDDEN)
+                        .setTimeout(uiTimeoutMs()));
+        battalionSelectorTrigger().click();
+        return battalionOptionsLocator();
     }
 
     private Locator popoverOptions() {
@@ -345,6 +457,18 @@ public class ResourceRelocationViewerPage extends BasePage {
 
     private Locator groupByLowestComponentsCheckbox() {
         return page.locator("#groupByLowest");
+    }
+
+    private Locator pmCheckbox() {
+        return page.locator("#isPm414");
+    }
+
+    private Locator sbsCheckbox() {
+        return page.locator("#isSbs");
+    }
+
+    private Locator othersCheckbox() {
+        return page.locator("#isOthers");
     }
 
     private static String extractSearchPrefix(String resourceName) {
