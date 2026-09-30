@@ -197,6 +197,7 @@
             <class name="com.erp.tests.functional.equipment.EquipmentInventoryCreateTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentCategoryCrudApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertCrudApiTest"/>
+            <class name="com.erp.tests.functional.alert.AlertOwnerSaveApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertStorageTypeApiTest"/>
             <class name="com.erp.tests.functional.invoice.InvoiceGenerateApiTest"/>
@@ -341,6 +342,7 @@
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
             <class name="com.erp.tests.ui.AlertStockHighlightUiTest"/>
             <class name="com.erp.tests.ui.AlertStorageTypeUiTest"/>
+            <class name="com.erp.tests.ui.AlertOwnerSaveUiTest"/>
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.FaitaResourcesUiTest"/>

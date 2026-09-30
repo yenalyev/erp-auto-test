@@ -243,13 +243,10 @@ public class AlertFixture extends BaseFixture {
     }
 
     /**
-     * Isolated location of {@code type} plus one resource threshold.
-     * CREW / FLY_POINT hang under a fresh UNIT — same shape as inventory comment seeds.
-     */
-    /**
-     * Isolated location: {@code zzz-alert} has a threshold (weight 100 at amount 0),
-     * {@code aaa-plain} has stock and no alert (weight 0). Alphabetically plain comes first,
-     * so pin-to-top is visible: alerted rows, then the rest.
+     * Isolated location: {@code zzz-alert} has a threshold and a persisted zero-stock row,
+     * {@code aaa-plain} has stock and no alert. Alphabetically plain comes first,
+     * so pin-to-top is visible: alerted rows, then the rest. CREW / FLY_POINT
+     * hang under a fresh UNIT, like the inventory comment seeds.
      */
     @Step("FIXTURE: локація type={type} з порогом і рядком без алерту")
     public TypedAlertSeed seedAlertForType(
@@ -266,6 +263,8 @@ public class AlertFixture extends BaseFixture {
         ResourceResponse alerted = resourceFixture.createUniqueResource(searchToken + "-zzz-alert-");
         StorageAlertResponse alert = createOrUpdateStockAlert(
                 UserRole.ADMIN, location.getId(), alerted.getId(), limit);
+        inventoryFixture.resetResourceStock(location.getId(), alerted.getId(), 1.0, UserRole.ADMIN);
+        inventoryFixture.depleteToZero(location.getId(), alerted.getId());
         inventoryFixture.resetResourceStock(location.getId(), plain.getId(), 15.0, UserRole.ADMIN);
         PollUtils.waitUntil(
                 () -> inventoryFixture.findItemIncludingZero(location.getId(), alerted.getId(), UserRole.ADMIN),
