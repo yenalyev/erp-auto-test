@@ -301,10 +301,9 @@ public class DefectUITest extends BaseUITest {
             UI: тип «Переміщення», ресурс, відправник (SUPPLIER), вибір receipt batch1 у таблиці.
 
             Очікування: alert «Партія повністю використана…», «Зберегти» disabled, залишок без змін.
-            Відомий дефект бекенда: POST /defects приймає брак (200) і списує FIFO з batch2 —
-            див. DefectTest.testCannotDefectRelocationBatchUsedInNonSeriesProduction.
-            У звичайному UI-флоу це неможливо: DefectFormPage.relocationBlocked блокує submit,
-            коли produced-партія переміщення відсутня на складі.""")
+            API-перевірка цієї заборони: TC-DEF-029.
+            Dev 29.09.2026: receipt batch1 не з'явився у списку, тому тест зупинився
+            до перевірки alert. Потрібно уточнити очікуваний UI-контракт.""")
     public void testUiBlocksDefectOnRelocationBatchUsedInNonSeriesProduction() {
         ResourceResponse resource = resourceFixture.createUniqueResource("ui-def-nsp-");
         Long resourceId = resource.getId();

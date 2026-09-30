@@ -1,0 +1,92 @@
+{
+  "environment": "dev",
+  "date": "2026-09-29",
+  "source": "target/allure-results (latest result per test case)",
+  "results": [
+    {
+      "testCaseId": "TC-REL-USED-001",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:06:38.324000+00:00"
+    },
+    {
+      "testCaseId": "TC-REL-USED-002",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:06:33.670000+00:00"
+    },
+    {
+      "testCaseId": "TC-REL-USED-003",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:06:28.438000+00:00"
+    },
+    {
+      "testCaseId": "TC-REL-USED-004",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:14:58.172000+00:00"
+    },
+    {
+      "testCaseId": "TC-REL-USED-005",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:06:22.723000+00:00"
+    },
+    {
+      "testCaseId": "TC-DEF-010",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:02:50.684000+00:00"
+    },
+    {
+      "testCaseId": "TC-DEF-018",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:02:59.550000+00:00"
+    },
+    {
+      "testCaseId": "TC-DEF-023",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:03:05.681000+00:00"
+    },
+    {
+      "testCaseId": "TC-DEF-025",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:03:11.275000+00:00"
+    },
+    {
+      "testCaseId": "TC-DEF-028",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:03:16.691000+00:00"
+    },
+    {
+      "testCaseId": "TC-DEF-029",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:03:23.112000+00:00"
+    },
+    {
+      "testCaseId": "TC-REL-050",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:03:51.094000+00:00"
+    },
+    {
+      "testCaseId": "TC-REL-054",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:03:55.874000+00:00"
+    },
+    {
+      "testCaseId": "TC-REL-055",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:03:58.387000+00:00"
+    },
+    {
+      "testCaseId": "TC-REL-B04",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:03:42.094000+00:00"
+    },
+    {
+      "testCaseId": "TC-UI-REL-004",
+      "status": "passed",
+      "finishedAtUtc": "2026-09-29T14:15:22.512000+00:00"
+    },
+    {
+      "testCaseId": "TC-UI-DEF-029",
+      "status": "failed",
+      "finishedAtUtc": "2026-09-29T14:08:14.136000+00:00"
+    }
+  ]
+}

@@ -661,8 +661,7 @@ public class DefectTest extends BaseFunctionalTest {
             Кроки: ресурс stock=0 → receive batch1 (isProduced=true) → NSP IN_PROGRESS на batch1
             → receive batch2 (isProduced=true) → POST defect RELOCATION на receipt batch1.
 
-            Очікування: 4xx, залишок не змінюється.
-            Відомий дефект: API приймає брак (200) на вже використану партію.""")
+            Очікування: 4xx, залишок не змінюється.""")
     @Severity(SeverityLevel.CRITICAL)
     public void testCannotDefectRelocationBatchUsedInNonSeriesProduction() {
         Long resource = fixture.createFreshResource();
