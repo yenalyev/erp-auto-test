@@ -165,11 +165,17 @@ public class RelocationPage extends BasePage {
             if (isJournalLoadErrorVisible()) {
                 return true;
             }
+            // The page can keep a separate "Завантаження..." label mounted after
+            // the journal rows are ready. Visible rows are the stronger signal.
+            Locator table = journalTableWrapper();
+            if (table.count() > 0 && table.locator("tbody tr").count() > 0) {
+                return true;
+            }
             Locator loading = page.getByText(LOADING_TEXT);
             if (loading.count() > 0 && loading.isVisible()) {
                 return false;
             }
-            return journalTableWrapper().count() > 0;
+            return table.count() > 0;
         }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
@@ -823,7 +829,9 @@ public class RelocationPage extends BasePage {
     }
 
     private Locator journalTableWrapper() {
-        return page.locator(TABLE_CONTAINER_SELECTOR).last();
+        // Some journal views render a plain table without the shadcn table-container slot.
+        // Both shapes contain the same tbody rows used by the assertions below.
+        return page.locator(TABLE_CONTAINER_SELECTOR + ", table").last();
     }
 
     private Locator categoryTrigger() {

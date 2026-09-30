@@ -1,0 +1,178 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "feature": "updated",
+  "acceptanceCriteria": [
+    "AC-01",
+    "AC-02",
+    "AC-03",
+    "AC-04"
+  ],
+  "testCases": [
+    {
+      "testId": "TC-REL-USED-001",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-002",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-003",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-004",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-005",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-006",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-007",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-008",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-009",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-REL-USED-010",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-UI-REL-USED-008",
+      "action": "updated"
+    },
+    {
+      "testId": "TC-UI-REL-USED-009",
+      "action": "updated"
+    }
+  ],
+  "verification": {
+    "parentFeatureId": "REQ-EDIT_REL",
+    "documentationMatchesSource": true,
+    "documentationSha256": "d8f1676765437d1be44ec385e11235aae03c09d8398adfcf5a0687457291b06d",
+    "acceptanceCriteriaPresent": true,
+    "cases": {
+      "TC-REL-USED-001": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-01",
+        "apiAutomationIds": [
+          "TC-REL-USED-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-002": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-01",
+        "apiAutomationIds": [
+          "TC-REL-USED-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-003": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-02",
+        "apiAutomationIds": [
+          "TC-REL-USED-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-004": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-02",
+        "apiAutomationIds": [
+          "TC-REL-USED-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-005": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-03",
+        "apiAutomationIds": [
+          "TC-REL-USED-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-006": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-01",
+        "apiAutomationIds": [
+          "TC-REL-USED-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-007": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-02",
+        "apiAutomationIds": [
+          "TC-REL-USED-007"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-008": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-04",
+        "apiAutomationIds": [
+          "TC-REL-USED-008"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-009": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-04",
+        "apiAutomationIds": [
+          "TC-REL-USED-009"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-REL-USED-010": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-01",
+        "apiAutomationIds": [
+          "TC-REL-USED-010"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-UI-REL-USED-008": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-04",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-REL-USED-008"
+        ],
+        "stepCount": 4
+      },
+      "TC-UI-REL-USED-009": {
+        "featureId": "REQ-EDIT_REL-010",
+        "acId": "AC-04",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-REL-USED-009"
+        ],
+        "stepCount": 4
+      }
+    },
+    "allCasesLinked": true
+  },
+  "completedAt": "2026-09-30T07:18:34.410562+00:00"
+}
