@@ -42,7 +42,6 @@ public class UnitManagementPage extends BasePage {
             Pattern.compile("^(Пошук\\.\\.\\.|Пошук по назві)$");
     /** Quantity column of the stock table — «Кількість» only labels the per-batch detail table. */
     private static final String AMOUNT_HEADER = "Вільна к-сть";
-    private static final String LOCATION_HEADER = "Локація";
     public static final String BADGE_ABSENT = "відсутній";
     public static final String BADGE_BELOW_NORM = "менше норми";
     public static final String BADGE_ENOUGH = "достатньо";
@@ -411,7 +410,7 @@ public class UnitManagementPage extends BasePage {
         int count = rows.count();
         List<String> names = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            String text = rows.nth(i).locator("td").first().innerText();
+            String text = rows.nth(i).locator("td:nth-child(2)").innerText();
             if (text != null && !text.isBlank()) {
                 names.add(text.trim().replaceAll("\\s+", " "));
             }
@@ -433,7 +432,9 @@ public class UnitManagementPage extends BasePage {
     public String getLocationCellText(String resourceName) {
         Locator row = resourceRow(resourceName).first();
         row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
-        return row.locator("td").nth(columnIndexByHeader(LOCATION_HEADER)).innerText()
+        // In a single-location view the last column is headed by the location's name,
+        // not by a fixed «Локація» label.
+        return row.locator("td").last().innerText()
                 .trim()
                 .replaceAll("\\s+", " ");
     }
@@ -445,7 +446,11 @@ public class UnitManagementPage extends BasePage {
 
     public boolean hasStatusBadge(String resourceName, String badgeText) {
         Locator badge = statusBadge(resourceName, badgeText);
-        return badge.count() > 0 && badge.first().isVisible();
+        if (badge.count() > 0 && badge.first().isVisible()) {
+            return true;
+        }
+        Locator visibleText = resourceRow(resourceName).getByText(badgeText);
+        return visibleText.count() > 0 && visibleText.first().isVisible();
     }
 
     public String statusBadgeVariant(String resourceName, String badgeText) {
