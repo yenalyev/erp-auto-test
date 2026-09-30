@@ -1072,6 +1072,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    FLY_POINT_GET_ALL(
+            "/api/v1/fly-points",
+            Method.GET,
+            null,
+            "List fly points in selected battalions",
+            null,
+            new TypeReference<List<Map<String, Object>>>() {},
+            null
+    ),
+
     FLY_POINT_GET_STOCKS(
             "/api/v1/fly-points/stocks",
             Method.GET,
@@ -1089,6 +1099,16 @@ public enum ApiEndpointDefinition {
             "Get fly-point dashboard ammunition short stats by parent unit",
             null,
             new TypeReference<List<UnitShortStatsResponse>>() {},
+            null
+    ),
+
+    FLY_POINT_GET_CLOSE_PREREQUISITES(
+            "/api/v1/fly-points/{id}/close-prerequisites",
+            Method.GET,
+            null,
+            "Get fly-point archive blockers and sibling points",
+            null,
+            new TypeReference<Map<String, Object>>() {},
             null
     ),
 

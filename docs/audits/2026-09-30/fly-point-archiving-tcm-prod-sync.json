@@ -1,0 +1,36 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "featureId": "REQ-CREW-004",
+  "featureDbId": 131,
+  "parentFeatureId": "REQ-CREW",
+  "documentationMatchesSource": true,
+  "acceptanceCriteriaIds": [
+    "AC-01",
+    "AC-02",
+    "AC-03",
+    "AC-04",
+    "AC-05",
+    "AC-06"
+  ],
+  "testCaseIds": [
+    "TC-FPA-001",
+    "TC-FPA-002",
+    "TC-FPA-003",
+    "TC-FPA-004",
+    "TC-FPA-005",
+    "TC-FPA-006",
+    "TC-FPA-007",
+    "TC-FPA-008",
+    "TC-FPA-009",
+    "TC-FPA-010",
+    "TC-FPA-011",
+    "TC-FPA-012",
+    "TC-FPA-013",
+    "TC-FPA-014"
+  ],
+  "allCasesPresent": true,
+  "automatedCaseCount": 11,
+  "manualCaseCount": 3,
+  "result": "SUCCESS",
+  "note": "Documentation and cases only; no production ERP test run."
+}
