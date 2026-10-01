@@ -796,6 +796,20 @@ public class UnitManagementPage extends BasePage {
         return parseAmountFromCellText(getResourceAmountText(resourceName));
     }
 
+    /** Numeric value of the «Всього» column on the hierarchy inventory table. */
+    public double getResourceTotalAmount(String resourceName) {
+        Locator row = resourceRow(resourceName).first();
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return parseAmountFromCellText(
+                row.locator("td").nth(columnIndexByHeader("Всього")).innerText());
+    }
+
+    /** Status text shown in the inventory row for a specific resource. */
+    public boolean hasResourceStatusText(String resourceName, String statusText) {
+        Locator status = resourceRow(resourceName).getByText(statusText);
+        return status.count() > 0 && status.first().isVisible();
+    }
+
     public UnitManagementPage assertResourceAmountVisible(String resourceName, double expected) {
         double actual = getResourceAmount(resourceName);
         if (Math.abs(actual - expected) > 0.01) {

@@ -1,0 +1,22 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Run: mvn test -Denv=dev -Dsuite=alert-zero-stock -->
+<suite name="Alerted Zero Stock" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="Alerted zero stock API and UI">
+        <classes>
+            <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest">
+                <methods>
+                    <include name="alertedZeroStockIsIncludedWhenShowZeroStockIsFalse"/>
+                </methods>
+            </class>
+            <class name="com.erp.tests.ui.AlertStockHighlightUiTest">
+                <methods>
+                    <include name="zeroStockWithAlertRemainsVisibleWhenToggleIsOff"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

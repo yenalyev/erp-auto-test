@@ -7,6 +7,7 @@ import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.models.response.StorageItemResponse;
+import com.erp.models.response.ResourceResponse;
 import com.erp.tests.functional.storage.StorageApiTestBase;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -104,6 +105,44 @@ public class AlertStockHighlightApiTest extends StorageApiTestBase {
                         seed.yellow().getId(),
                         seed.green().getId(),
                         seed.plain().getId());
+    }
+
+    @Test(priority = 30)
+    @TestCaseId("TC-ALERT-006")
+    @Story("Zero stock with alert in inventory hierarchy")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            GET /storages/inventory?parentStorageId=...&showZeroStock=false
+            повертає нульовий ресурс з порогом, але не нульовий ресурс без порогу.
+            За showZeroStock=true обидва ресурси присутні.
+            """)
+    public void alertedZeroStockIsIncludedWhenShowZeroStockIsFalse() {
+        AlertFixture.StockHighlightSeed seed = seedScenario();
+        long storageId = seed.storage().getId();
+        ResourceResponse unalertedZero = resourceFixture.createUniqueResource(
+                seed.searchToken() + "-zero-without-alert-");
+        inventoryFixture.resetResourceStock(storageId, unalertedZero.getId(), 1.0, UserRole.ADMIN);
+        inventoryFixture.depleteToZero(storageId, unalertedZero.getId());
+
+        StorageItemResponse alertedItem = requireRow(storageId, seed.red().getId());
+        StorageItemResponse unalertedItem = requireRow(storageId, unalertedZero.getId());
+        assertThat(alertedItem.getAmount()).isZero();
+        assertThat(alertedItem.getAlertLimit()).isCloseTo(AlertFixture.DEFAULT_LIMIT, within(0.01));
+        assertThat(unalertedItem.getAmount()).isZero();
+        assertThat(unalertedItem.getAlertLimit()).isNull();
+
+        assertThat(inventoryFixture.hierarchyContainsResource(
+                storageId, seed.red().getId(), UserRole.ADMIN, false))
+                .as("нульовий ресурс з алертом у hierarchy при showZeroStock=false")
+                .isTrue();
+        assertThat(inventoryFixture.hierarchyContainsResource(
+                storageId, unalertedZero.getId(), UserRole.ADMIN, false))
+                .as("нульовий ресурс без алерту у hierarchy при showZeroStock=false")
+                .isFalse();
+        assertThat(inventoryFixture.hierarchyContainsResource(
+                storageId, seed.red().getId(), UserRole.ADMIN, true)).isTrue();
+        assertThat(inventoryFixture.hierarchyContainsResource(
+                storageId, unalertedZero.getId(), UserRole.ADMIN, true)).isTrue();
     }
 
     private AlertFixture.StockHighlightSeed seedScenario() {
