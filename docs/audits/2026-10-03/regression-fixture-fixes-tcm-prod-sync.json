@@ -1,0 +1,52 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "projectId": 1,
+  "actions": {
+    "TC-ORD-006": "unchanged",
+    "TC-ORD-007": "unchanged",
+    "TC-ORD-008": "unchanged",
+    "TC-ORD-011": "unchanged",
+    "TC-ORD-ADMIN-001": "unchanged",
+    "TC-WMS-007-004": "unchanged",
+    "TC-WMS-007-018": "unchanged",
+    "TC-UI-ALERT-003": "unchanged",
+    "TC-UI-PLANEXEC-011": "unchanged",
+    "TC-UI-PLANEXEC-012": "unchanged",
+    "TC-UI-PLANEXEC-013": "unchanged",
+    "TC-PLN-NR-044": "unchanged"
+  },
+  "verification": {
+    "managedCaseCount": 12,
+    "allCasesMatch": true,
+    "beforeSha256": {
+      "TC-ORD-006": "4f7d9dd6e7a6724353572f7c2b9b62f01611da5379e3e38d541b23069d9c9d27",
+      "TC-ORD-007": "9a5a12cd1fffb8cf1c0744b3e9b988770391ae9e2fed2cfc5b4929a45fa3fee5",
+      "TC-ORD-008": "e57c5f7197150ea4be5e8be98dadb73c65c3822433c6b90bf85c76ae679ceb85",
+      "TC-ORD-011": "5addd3d3bc8dd6dcfe65bb2fc17d13b6c65d482880a4f1242a8038beb62728b5",
+      "TC-ORD-ADMIN-001": "60e3dd41e67e680ac4fdb5e1d7c571e5b03b2095f5c4a275fc236637c6adfdaa",
+      "TC-WMS-007-004": "fb80f0c3412541039a4d6de71642a7d3ad79319d002d1db396aa4101d256128a",
+      "TC-WMS-007-018": "606e1754d41feb5496a7a9a28d23e68d35aedcb185a5fd4248eb932fadffe175",
+      "TC-UI-ALERT-003": "6f8353615cf4730c27aae76af5a558fa00eb4b8e7800f0c61db6fac88899fa7f",
+      "TC-UI-PLANEXEC-011": "93e148f9d4903b9987fc2f9df8577fdf19c69436be3abb99cf458d0f5a5c3e3d",
+      "TC-UI-PLANEXEC-012": "3c8b140ce84c579b592f23bfdb7ca9269aa4cf1af213288aced0e9ddfafd137d",
+      "TC-UI-PLANEXEC-013": "5503c8281fad5bcc8f30b7bdcd7fb2dcb7955569a708ee2075a709007f508fbb",
+      "TC-PLN-NR-044": "131800a9352e1200c4466f801fd07b0e72a5b68970918ac0b7a48e803f4b108b"
+    },
+    "afterSha256": {
+      "TC-ORD-006": "4f7d9dd6e7a6724353572f7c2b9b62f01611da5379e3e38d541b23069d9c9d27",
+      "TC-ORD-007": "9a5a12cd1fffb8cf1c0744b3e9b988770391ae9e2fed2cfc5b4929a45fa3fee5",
+      "TC-ORD-008": "e57c5f7197150ea4be5e8be98dadb73c65c3822433c6b90bf85c76ae679ceb85",
+      "TC-ORD-011": "5addd3d3bc8dd6dcfe65bb2fc17d13b6c65d482880a4f1242a8038beb62728b5",
+      "TC-ORD-ADMIN-001": "60e3dd41e67e680ac4fdb5e1d7c571e5b03b2095f5c4a275fc236637c6adfdaa",
+      "TC-WMS-007-004": "fb80f0c3412541039a4d6de71642a7d3ad79319d002d1db396aa4101d256128a",
+      "TC-WMS-007-018": "606e1754d41feb5496a7a9a28d23e68d35aedcb185a5fd4248eb932fadffe175",
+      "TC-UI-ALERT-003": "6f8353615cf4730c27aae76af5a558fa00eb4b8e7800f0c61db6fac88899fa7f",
+      "TC-UI-PLANEXEC-011": "93e148f9d4903b9987fc2f9df8577fdf19c69436be3abb99cf458d0f5a5c3e3d",
+      "TC-UI-PLANEXEC-012": "3c8b140ce84c579b592f23bfdb7ca9269aa4cf1af213288aced0e9ddfafd137d",
+      "TC-UI-PLANEXEC-013": "5503c8281fad5bcc8f30b7bdcd7fb2dcb7955569a708ee2075a709007f508fbb",
+      "TC-PLN-NR-044": "131800a9352e1200c4466f801fd07b0e72a5b68970918ac0b7a48e803f4b108b"
+    }
+  },
+  "completedAt": "2026-10-03T14:59:29.738852+00:00",
+  "result": "SUCCESS"
+}

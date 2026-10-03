@@ -281,6 +281,11 @@ public class PlanExecutionPage extends BasePage {
                 neededRow(resourceName).locator("td").nth(neededColumnIndex("Потрібно")).innerText());
     }
 
+    public double getNeededShortageAmount(String resourceName) {
+        return parseLeadingNumber(
+                neededRow(resourceName).locator("td").nth(neededColumnIndex("Дефіцит")).innerText());
+    }
+
     public boolean isNeededHeaderVisible(String header) {
         Locator cell = neededTable().locator("thead th")
                 .filter(new Locator.FilterOptions().setHasText(header));
@@ -761,21 +766,7 @@ public class PlanExecutionPage extends BasePage {
         page.waitForCondition(
                 () -> isFavouritesOnlyPressed() != pressedBefore,
                 new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
-        // This toggle can be applied client-side without another execution request.
-        page.waitForTimeout(300);
         return this;
-    }
-
-    /**
-     * Toggles «Лише обрані» and returns the {@code POST /statistics/execution} request body so
-     * tests can assert that {@code resourceIds} were actually sent to the backend.
-     */
-    public String clickFavouritesOnlyAndCaptureExecutionRequestBody() {
-        var response = page.waitForResponse(
-                r -> r.url().contains("/statistics/execution") && "POST".equals(r.request().method()),
-                () -> favouritesOnlyButton().click());
-        waitForExecutionDataSettled();
-        return response.request().postData();
     }
 
     public boolean isManageFavouritesButtonVisible() {

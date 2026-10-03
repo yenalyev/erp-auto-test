@@ -243,13 +243,10 @@ public class AlertFixture extends BaseFixture {
     }
 
     /**
-     * Isolated location of {@code type} plus one resource threshold.
-     * CREW / FLY_POINT hang under a fresh UNIT — same shape as inventory comment seeds.
-     */
-    /**
-     * Isolated location: {@code zzz-alert} has a threshold (weight 100 at amount 0),
-     * {@code aaa-plain} has stock and no alert (weight 0). Alphabetically plain comes first,
-     * so pin-to-top is visible: alerted rows, then the rest.
+     * Isolated location: {@code zzz-alert} has a threshold and a persisted zero-stock row,
+     * {@code aaa-plain} has stock and no alert. Alphabetically plain comes first,
+     * so pin-to-top is visible: alerted rows, then the rest. CREW / FLY_POINT
+     * hang under a fresh UNIT, like the inventory comment seeds.
      */
     @Step("FIXTURE: локація type={type} з порогом і рядком без алерту")
     public TypedAlertSeed seedAlertForType(
@@ -266,10 +263,15 @@ public class AlertFixture extends BaseFixture {
         ResourceResponse alerted = resourceFixture.createUniqueResource(searchToken + "-zzz-alert-");
         StorageAlertResponse alert = createOrUpdateStockAlert(
                 UserRole.ADMIN, location.getId(), alerted.getId(), limit);
+        inventoryFixture.resetResourceStock(location.getId(), alerted.getId(), 1.0, UserRole.ADMIN);
+        // An alert keeps a zero-stock row visible even when showZeroStock=false.
+        // depleteToZero() checks the opposite contract and is only suitable for unalerted rows.
+        inventoryFixture.resetResourceStock(location.getId(), alerted.getId(), 0.0, UserRole.ADMIN);
         inventoryFixture.resetResourceStock(location.getId(), plain.getId(), 15.0, UserRole.ADMIN);
         PollUtils.waitUntil(
                 () -> inventoryFixture.findItemIncludingZero(location.getId(), alerted.getId(), UserRole.ADMIN),
-                item -> item != null && Integer.valueOf(RED_WEIGHT).equals(item.getWeight()),
+                item -> item != null && item.getAmount() != null && item.getAmount() == 0.0
+                        && Integer.valueOf(RED_WEIGHT).equals(item.getWeight()),
                 20_000,
                 "alerted inventory row weight=" + RED_WEIGHT);
         PollUtils.waitUntil(

@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ExportAnalyticsPage extends BasePage {
 
     private static final String PATH = "/export-analytics";
-    private static final String PAGE_TITLE_TEXT = "Експорт в БД аналітики";
+    private static final String PAGE_TITLE_TEXT = "Експорт даних";
     private static final String SIDEBAR_LINK_TEXT = "Експорт даних";
     private static final String EXPORT_BUTTON_TEXT = "Завантажити в Excel";
     private static final String SUCCESS_TOAST_FRAGMENT = "успішно";
@@ -38,13 +38,14 @@ public class ExportAnalyticsPage extends BasePage {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         AppSidebarPage sidebar = new AppSidebarPage(page);
         sidebar.isSidebarVisible();
-        page.getByText(PAGE_TITLE_TEXT)
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(PAGE_TITLE_TEXT))
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         return this;
     }
 
     public boolean isLoaded() {
-        return page.getByText(PAGE_TITLE_TEXT).isVisible();
+        return page.getByRole(AriaRole.HEADING,
+                new Page.GetByRoleOptions().setName(PAGE_TITLE_TEXT)).isVisible();
     }
 
     public boolean isSidebarLinkVisible() {

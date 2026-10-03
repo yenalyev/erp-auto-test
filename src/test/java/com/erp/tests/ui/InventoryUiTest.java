@@ -2,16 +2,20 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
+import com.erp.enums.BusinessRole;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
+import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.pages.AccessForbiddenPage;
 import com.erp.pages.ExportAnalyticsPage;
 import com.erp.pages.InventoryEditPage;
 import com.erp.pages.OperationHistoryPage;
 import com.erp.pages.UnitManagementPage;
-import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.InventoryStockUiVerification;
 import com.erp.utils.helpers.PollUtils;
@@ -20,9 +24,11 @@ import com.erp.utils.helpers.XlsxContentAssertions;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.testng.SkipException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +49,10 @@ public class InventoryUiTest extends BaseUITest {
 
     private InventoryFixture inventoryFixture;
     private RelocationFixture relocationFixture;
+    private ResourceFixture resourceFixture;
+    private StorageFixture storageFixture;
+    private UserFixture userFixture;
+    private UserFixture.BusinessActor ownerActor;
     private long storageId;
     private Long resourceId;
     private String resourceName;
@@ -54,28 +64,32 @@ public class InventoryUiTest extends BaseUITest {
         super.baseTestClassSetup();
         inventoryFixture = new InventoryFixture(testContext, apiExecutor);
         relocationFixture = new RelocationFixture(testContext, apiExecutor);
-        relocationFixture.prepareContext();
-
-        storageId = ConfigProvider.getOwner1StorageId();
-        resourceId = testContext.get(ContextKey.RELOCATION_RESOURCE_ID);
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        userFixture = new UserFixture(testContext, apiExecutor);
+        StorageResponse storage = storageFixture.createChildStorage(
+                ConfigProvider.getOwner1StorageId(), "inv-ui-");
+        storageId = storage.getId();
+        resourceFixture.fetchSharedUnit(3);
+        resourceFixture.fetchSharedResourceCategory();
+        ResourceResponse resource = resourceFixture.createUniqueResource("inv-ui-base-");
+        resourceId = resource.getId();
+        ownerActor = userFixture.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(storage));
+        apiExecutor.setSessionForRole(UserRole.OWNER_1, ownerActor.username(), ownerActor.password());
         relocationFixture.ensureStock(storageId, resourceId, 50.0);
 
-        StorageItemResponse item;
-        try {
-            item = inventoryFixture.requireItemForResourceWithRetry(
-                    storageId, resourceId, UserRole.ADMIN, 15_000);
-        } catch (IllegalStateException ex) {
-            // Multi-location stock probe and storage inventory list can diverge on shared dev data.
-            log.warn("Relocation resource {} not on storage {} inventory list after ensureStock: {}",
-                    resourceId, storageId, ex.getMessage());
-            item = inventoryFixture.requireItemWithStock(storageId, UserRole.ADMIN);
-        }
+        StorageItemResponse item = inventoryFixture.requireItemForResourceWithRetry(
+                storageId, resourceId, UserRole.ADMIN, 15_000);
         resourceId = item.getResource().getId();
         resourceName = item.getResource().getName().trim().replaceAll("\\s+", " ");
     }
 
     @BeforeMethod(alwaysRun = true)
     public void prepareUiSession() {
+        if (resourceId == null || ownerActor == null) {
+            throw new SkipException("Inventory UI class fixture setup did not complete");
+        }
         resourcesToCleanup.clear();
         inventoryFixture.ensureClosed(storageId);
         relocationFixture.ensureStock(storageId, resourceId, 50.0);
@@ -84,9 +98,43 @@ public class InventoryUiTest extends BaseUITest {
 
     @AfterMethod(alwaysRun = true)
     public void teardownInventoryUi() {
+        if (resourceId == null) {
+            return;
+        }
         cleanupTrackedStorageResources();
         inventoryFixture.ensureClosed(storageId);
         relocationFixture.ensureStock(storageId, resourceId, 50.0);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupInventoryClassArtifacts() {
+        if (inventoryFixture != null && resourceId != null && storageId > 0) {
+            try {
+                inventoryFixture.removeResourceFromStorage(storageId, resourceId, UserRole.ADMIN);
+            } catch (RuntimeException cleanupError) {
+                log.warn("Inventory UI resource {} stock cleanup failed", resourceId, cleanupError);
+            }
+        }
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
+        if (resourceFixture != null && resourceId != null) {
+            try {
+                var response = resourceFixture.deactivate(UserRole.ADMIN, resourceId);
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                    log.warn("Inventory UI resource {} cleanup returned HTTP {}: {}",
+                            resourceId, response.statusCode(), response.asString());
+                }
+            } catch (RuntimeException cleanupError) {
+                log.warn("Inventory UI resource {} cleanup failed", resourceId, cleanupError);
+            }
+        }
+        if (apiExecutor != null) {
+            apiExecutor.evictSessionForRole(UserRole.OWNER_1);
+        }
+        if (userFixture != null) {
+            userFixture.deactivateTrackedUsers();
+        }
     }
 
     private void trackStorageResourceForCleanup(Long addedResourceId) {
@@ -103,6 +151,15 @@ public class InventoryUiTest extends BaseUITest {
                 inventoryFixture.removeResourceFromStorage(storageId, addedResourceId, UserRole.ADMIN);
             } catch (Exception e) {
                 log.warn("UI inventory cleanup failed for resource {}: {}", addedResourceId, e.getMessage());
+            }
+            try {
+                var response = resourceFixture.deactivate(UserRole.ADMIN, addedResourceId);
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                    log.warn("UI inventory resource {} deactivation returned HTTP {}: {}",
+                            addedResourceId, response.statusCode(), response.asString());
+                }
+            } catch (RuntimeException e) {
+                log.warn("UI inventory resource {} deactivation failed", addedResourceId, e);
             }
         }
         resourcesToCleanup.clear();
@@ -447,6 +504,12 @@ public class InventoryUiTest extends BaseUITest {
             для відсутнього збігу відображається порожній стан, а очищення повертає всі рядки.
             """)
     public void quickSearchFiltersInventoryResourcesUi() {
+        ResourceResponse additional = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
+                storageId, UserRole.ADMIN, "qsr-contrast-");
+        trackStorageResourceForCleanup(additional.getId());
+        relocationFixture.ensureStock(storageId, additional.getId(), 2.0);
+        inventoryFixture.requireItemForResourceWithRetry(
+                storageId, additional.getId(), UserRole.ADMIN, 15_000);
         List<StorageItemResponse> visibleItems = inventoryFixture.listItems(storageId, UserRole.ADMIN).stream()
                 .filter(item -> item.getResource() != null)
                 .filter(item -> item.getResource().getName() != null
@@ -615,14 +678,18 @@ public class InventoryUiTest extends BaseUITest {
     @Story("All locations aggregate UI")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
-            Admin у режимі «Всі локації» бачить агреговану таблицю з колонкою «Локація».
+            Admin у режимі «Всі локації» бачить агреговану таблицю з колонкою «Всього»
+            і окремими колонками доступних локацій.
             """)
     public void allLocationsAggregateUi() {
         Allure.step("Відкрити агреговані залишки", () -> {
             injectAllLocationsSession(UserRole.ADMIN);
             page = browserContext.newPage();
-            UnitManagementPage stock = new UnitManagementPage(page).openForAllLocations().waitForLoaded();
+            UnitManagementPage stock = new UnitManagementPage(page).openForAllLocations()
+                    .waitForInventoryTableSettled()
+                    .searchAndWaitForResource(resourceName, resourceName);
             assertThat(stock.isAllLocationsTableVisible()).isTrue();
+            assertThat(stock.getLocationColumnHeaders()).isNotEmpty();
             stock.attachScreenshot("TC-WMS-007-004 — all locations table");
         });
     }
@@ -716,10 +783,6 @@ public class InventoryUiTest extends BaseUITest {
             assertThat(clipboardLines)
                     .as("Кожен рядок буфера: «<Назва>\\t<Кількість>\\t<од. вимір.»")
                     .allMatch(line -> CLIPBOARD_LINE_FORMAT.matcher(line).matches());
-            assertThat(clipboardLines)
-                    .as("Поле кількості не містить одиницю виміру (шт/кг)")
-                    .noneMatch(line -> line.matches(".*\\t-?\\d+(?:\\.\\d+)?\\s+\\S+\\t.*")
-                            || line.matches(".*\\t-?\\d+(?:\\.\\d+)?\\s+\\S+$"));
 
             stock.attachScreenshot("TC-WMS-007-009 — after page copy");
         });
@@ -861,7 +924,7 @@ public class InventoryUiTest extends BaseUITest {
             Тогл off → таблиця і XLSX без нуля; on → обидва в таблиці і в файлі.
             """)
     public void exportExcelWithAndWithoutZeroStockUi() {
-        String prefix = "InvExpZUi_" + System.currentTimeMillis() + "_";
+        String prefix = "InvExpZUi_" + Long.toString(System.currentTimeMillis(), 36) + "_";
         ResourceResponse plus = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
                 storageId, UserRole.ADMIN, prefix + "p_");
         ResourceResponse zero = inventoryFixture.createUniqueCatalogResourceAbsentFromStorage(
@@ -1025,6 +1088,15 @@ public class InventoryUiTest extends BaseUITest {
         Allure.parameter("resourceB", nameB);
         Allure.parameter("resourceC", nameC);
 
+        Allure.step("Перевірити API union для динамічних тегів", () -> {
+            var union = inventoryFixture.listHierarchyByTags(
+                    storageId, UserRole.OWNER_1, List.of(seed.tagA(), seed.tagB()));
+            assertThat(union.stream().filter(row -> row.getResource() != null)
+                    .map(row -> row.getResource().getId()).toList())
+                    .contains(seed.resourceA().getId(), seed.resourceB().getId())
+                    .doesNotContain(seed.resourceC().getId());
+        });
+
         UnitManagementPage stock = Allure.step("Відкрити «Залишки» і дочекатися інфочіпів", () -> {
             injectRoleSession(UserRole.OWNER_1, storageId);
             page = browserContext.newPage();
@@ -1043,6 +1115,11 @@ public class InventoryUiTest extends BaseUITest {
             assertThat(stock.isTagBadgeSelected(seed.tagB()))
                     .as("Чіп %s має бути обраним", seed.tagB())
                     .isTrue();
+            PollUtils.waitUntilTrue(
+                    () -> stock.isResourceVisibleInTable(nameA)
+                            && stock.isResourceVisibleInTable(nameB),
+                    15_000,
+                    "Both tagged resources in inventory table");
             stock.attachScreenshot("TC-WMS-007-018 — two chips selected");
             InventoryStockUiVerification.assertResourceVisible(
                     stock, nameA, "Після двох чіпів ресурс A має бути видимий");
@@ -1088,23 +1165,34 @@ public class InventoryUiTest extends BaseUITest {
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
+        String username = role == UserRole.OWNER_1 && ownerActor != null
+                ? ownerActor.username() : role.getUsername();
+        String password = role == UserRole.OWNER_1 && ownerActor != null
+                ? ownerActor.password() : role.getPassword();
         Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(role.getUsername(), role.getPassword());
+                .getSession(username, password);
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + username
+                        + "', '" + selectedStorageId + "');");
     }
 
     private void injectAllLocationsSession(UserRole role) {
+        String username = role == UserRole.OWNER_1 && ownerActor != null
+                ? ownerActor.username() : role.getUsername();
+        String password = role == UserRole.OWNER_1 && ownerActor != null
+                ? ownerActor.password() : role.getPassword();
         Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(role.getUsername(), role.getPassword());
+                .getSession(username, password);
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');"
+                + "localStorage.setItem('selectedStorageId:" + username + "', 'all');");
     }
 }

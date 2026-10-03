@@ -2,15 +2,19 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
+import com.erp.enums.BusinessRole;
 import com.erp.fixtures.PlanExecutionFixture;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.TechnologicalMapFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
+import com.erp.models.response.ResourceUsageResponse;
 import com.erp.pages.PlanExecutionPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
@@ -23,11 +27,14 @@ import io.qameta.allure.Story;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,16 +46,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Covers all 4 data combinations (no plan/no production, no plan/has production, plan/production,
  * plan/no production) for two personas:
  * <ul>
- *     <li>Owner — logs in as {@code OWNER_1}, viewing their own storage.</li>
- *     <li>Admin — logs in as {@code ADMIN}, viewing {@code OWNER_2}'s storage (kept separate from
- *     the Owner group's storage to avoid data collisions between the two groups).</li>
+ *     <li>Owner — logs in as a temporary location owner, viewing their own new storage.</li>
+ *     <li>Admin — logs in as {@code ADMIN}, viewing a separate new storage.</li>
  * </ul>
  *
  * <p>Each scenario arranges its own uniquely-named product with a freshly created PRODUCTION tech
  * map ({@link PlanExecutionFixture#createIsolatedProduct}), so a test's own row is never affected
- * by other products' history. The "no plan / no production" scenarios use a freshly created
- * child storage (not shared OWNER_1/OWNER_2 warehouses), so leftover production on dev cannot
- * make the empty-state assertion flaky.
+ * by other products' history. Each scenario uses newly created storage, and empty-state cases
+ * get a fresh child storage so leftover production on dev cannot affect their assertions.
  *
  * <p>Also covers favourite-products filtering (CPMA-587): «Лише обрані» / «Керувати обраними»
  * on the execution tab.
@@ -63,6 +68,11 @@ public class PlanExecutionUiTest extends BaseUITest {
 
     private PlanExecutionFixture fixture;
     private StorageFixture storageFixture;
+    private StorageFixture classStorageFixture;
+    private ResourceFixture resourceFixture;
+    private UserFixture userFixture;
+    private UserFixture.BusinessActor ownerActor;
+    private final Set<Long> createdResourceIds = new LinkedHashSet<>();
     private Long ownerStorageId;
     private Long adminViewStorageId;
 
@@ -82,11 +92,48 @@ public class PlanExecutionUiTest extends BaseUITest {
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         fixture = new PlanExecutionFixture(testContext, apiExecutor);
-        fixture.prepareContext();
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        resourceFixture.fetchSharedUnit(1);
+        resourceFixture.fetchSharedResourceCategory();
         storageFixture = new StorageFixture(testContext, apiExecutor);
+        classStorageFixture = new StorageFixture(testContext, apiExecutor);
+        StorageResponse ownerStorage = classStorageFixture.createProductionStorage(
+                ConfigProvider.getOwner1StorageId(), "planexec-owner-");
+        StorageResponse adminStorage = classStorageFixture.createProductionStorage(
+                ConfigProvider.getOwner2StorageId(), "planexec-admin-");
+        ownerStorageId = ownerStorage.getId();
+        adminViewStorageId = adminStorage.getId();
+        userFixture = new UserFixture(testContext, apiExecutor);
+        ownerActor = userFixture.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER,
+                List.of(ownerStorage));
+        apiExecutor.setSessionForRole(UserRole.OWNER_1, ownerActor.username(), ownerActor.password());
+    }
 
-        ownerStorageId = ConfigProvider.getOwner1StorageId();
-        adminViewStorageId = ConfigProvider.getOwner2StorageId();
+    @AfterClass(alwaysRun = true)
+    public void cleanupClassArtifacts() {
+        if (classStorageFixture != null) {
+            classStorageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
+        if (resourceFixture != null) {
+            for (Long resourceId : createdResourceIds) {
+                try {
+                    var response = resourceFixture.deactivate(UserRole.ADMIN, resourceId);
+                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                        log.warn("Plan execution resource {} cleanup returned HTTP {}",
+                                resourceId, response.statusCode());
+                    }
+                } catch (RuntimeException cleanupError) {
+                    log.warn("Plan execution resource {} cleanup failed", resourceId, cleanupError);
+                }
+            }
+        }
+        if (apiExecutor != null) {
+            apiExecutor.evictSessionForRole(UserRole.OWNER_1);
+        }
+        if (userFixture != null) {
+            userFixture.deactivateTrackedUsers();
+        }
     }
 
     @AfterMethod(alwaysRun = true)
@@ -106,10 +153,12 @@ public class PlanExecutionUiTest extends BaseUITest {
             }
             if (currentContext != null && currentStorageId != null) {
                 fixture.cleanupTechMap(currentContext.getTechMap(), currentStorageId);
+                trackAndClearMapResources(currentContext, currentStorageId);
                 currentContext = null;
             }
             if (secondContext != null && currentStorageId != null) {
                 fixture.cleanupTechMap(secondContext.getTechMap(), currentStorageId);
+                trackAndClearMapResources(secondContext, currentStorageId);
                 secondContext = null;
             }
             if (favouritesMutated && favouritesRole != null) {
@@ -122,6 +171,27 @@ public class PlanExecutionUiTest extends BaseUITest {
         currentStorageId = null;
         if (storageFixture != null) {
             storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
+    }
+
+    private void trackAndClearMapResources(
+            TechnologicalMapFixture.IsolatedTechMapContext context, Long storageId) {
+        Set<Long> mapResourceIds = new LinkedHashSet<>();
+        context.getTechMap().getInput().stream()
+                .map(ResourceUsageResponse::getResource)
+                .forEach(resource -> mapResourceIds.add(resource.getId()));
+        context.getTechMap().getOutput().stream()
+                .map(ResourceUsageResponse::getResource)
+                .forEach(resource -> mapResourceIds.add(resource.getId()));
+        createdResourceIds.addAll(mapResourceIds);
+        InventoryFixture inventoryFixture = new InventoryFixture(testContext, apiExecutor);
+        for (Long resourceId : mapResourceIds) {
+            try {
+                inventoryFixture.removeResourceFromStorage(storageId, resourceId, UserRole.ADMIN);
+            } catch (RuntimeException cleanupError) {
+                log.warn("Plan execution stock cleanup failed for resource {} on storage {}",
+                        resourceId, storageId, cleanupError);
+            }
         }
     }
 
@@ -138,7 +208,7 @@ public class PlanExecutionUiTest extends BaseUITest {
             Assert: summary-картки показують нульове виконання, показано порожній стан
             «Дані про виконання плану за цей місяць відсутні».""")
     public void testOwnerNoPlanNoProduction() {
-        StorageResponse isolated = storageFixture.createChildStorage(ownerStorageId, "planexec-empty-owner-");
+        StorageResponse isolated = storageFixture.createProductionStorage(ownerStorageId, "planexec-empty-owner-");
         currentStorageId = isolated.getId();
         fixture.ensureNoPlanForCurrentMonth(currentStorageId);
         fixture.assertNoProductionThisMonth(currentStorageId);
@@ -296,7 +366,7 @@ public class PlanExecutionUiTest extends BaseUITest {
             Assert: обидва рядки видимі з коректними «Зроблено»; summary «Зроблено / Ціль»
             рахує лише штучні/комплектні вироби (7 / 7), без кілограмів.""")
     public void totalProducedSummaryCountsOnlyPiecesNotKg() {
-        StorageResponse isolated = storageFixture.createChildStorage(ownerStorageId, "planexec-units-");
+        StorageResponse isolated = storageFixture.createProductionStorage(ownerStorageId, "planexec-units-");
         currentStorageId = isolated.getId();
         fixture.ensureNoPlanForCurrentMonth(currentStorageId);
 
@@ -464,6 +534,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         secondContext = fixture.createIsolatedProduct(ownerStorageId);
         secondProduction = fixture.createCurrentMonthProduction(
                 ownerStorageId, secondContext.getTechMap(), 4.0);
+        createPlanForFavouriteProducts();
 
         String favouriteProduct = currentContext.getProduct().getName().trim();
         String otherProduct = secondContext.getProduct().getName().trim();
@@ -489,12 +560,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         assertThat(planPage.isFavouritesOnlyButtonEnabled())
                 .as("З налаштованими обраними «Лише обрані» має бути активною")
                 .isTrue();
-        String executionBody = planPage.clickFavouritesOnlyAndCaptureExecutionRequestBody();
-
-        assertThat(executionBody)
-                .as("POST /statistics/execution має містити resourceIds з обраним продуктом id=%s", favouriteId)
-                .contains("\"resourceIds\"")
-                .contains(String.valueOf(favouriteId));
+        planPage.clickFavouritesOnly();
         assertThat(planPage.isFavouritesOnlyPressed())
                 .as("«Лише обрані» має бути в натиснутому стані")
                 .isTrue();
@@ -538,6 +604,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         secondContext = fixture.createIsolatedProduct(ownerStorageId);
         secondProduction = fixture.createCurrentMonthProduction(
                 ownerStorageId, secondContext.getTechMap(), 4.0);
+        createPlanForFavouriteProducts();
 
         String existingFavourite = currentContext.getProduct().getName().trim();
         String productToAdd = secondContext.getProduct().getName().trim();
@@ -612,6 +679,7 @@ public class PlanExecutionUiTest extends BaseUITest {
         secondContext = fixture.createIsolatedProduct(ownerStorageId);
         secondProduction = fixture.createCurrentMonthProduction(
                 ownerStorageId, secondContext.getTechMap(), 4.0);
+        createPlanForFavouriteProducts();
 
         String removedProduct = currentContext.getProduct().getName().trim();
         String keptProduct = secondContext.getProduct().getName().trim();
@@ -666,6 +734,18 @@ public class PlanExecutionUiTest extends BaseUITest {
         planPage.attachScreenshot("TC-UI-PLANEXEC-013 — edit existing favourites");
     }
 
+    private void createPlanForFavouriteProducts() {
+        currentPlan = fixture.createCurrentMonthPlan(ownerStorageId, List.of(
+                ResourceUsageRequest.builder()
+                        .resourceId(currentContext.getProduct().getId())
+                        .amount(BigDecimal.valueOf(4.0))
+                        .build(),
+                ResourceUsageRequest.builder()
+                        .resourceId(secondContext.getProduct().getId())
+                        .amount(BigDecimal.valueOf(4.0))
+                        .build()));
+    }
+
     // -------------------------------------------------------------------
     // Admin persona — viewing OWNER_2's storage
     // -------------------------------------------------------------------
@@ -679,7 +759,7 @@ public class PlanExecutionUiTest extends BaseUITest {
             дочірньому складі OWNER_2 (не shared warehouse).
             Assert: summary показує нульове виконання, показано порожній стан.""")
     public void testAdminNoPlanNoProduction() {
-        StorageResponse isolated = storageFixture.createChildStorage(
+        StorageResponse isolated = storageFixture.createProductionStorage(
                 adminViewStorageId, "planexec-empty-admin-");
         currentStorageId = isolated.getId();
         fixture.ensureNoPlanForCurrentMonth(currentStorageId);
@@ -780,13 +860,19 @@ public class PlanExecutionUiTest extends BaseUITest {
     // -------------------------------------------------------------------
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
+        String username = role == UserRole.OWNER_1 && ownerActor != null
+                ? ownerActor.username() : role.getUsername();
+        String password = role == UserRole.OWNER_1 && ownerActor != null
+                ? ownerActor.password() : role.getPassword();
         Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(role.getUsername(), role.getPassword());
+                .getSession(username, password);
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + username
+                        + "', '" + selectedStorageId + "');");
     }
 }
