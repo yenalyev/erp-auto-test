@@ -218,8 +218,7 @@ public class FaitaResourcesUiTest extends BaseUITest {
         Map<String, String> cookies = getPlaywrightSessionProvider()
                 .getSession(role.getUsername(), role.getPassword());
         injectSessionCookies(cookies, sessionCookieDomain());
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + storageId + "');");
+        injectWorkspaceView(role, storageId);
     }
 
     private record SeededProduct(

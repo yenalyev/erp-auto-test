@@ -101,7 +101,7 @@ public abstract class BaseTest {
 
         // Playwright потрібен лише для remote-середовищ (dev, staging, debug).
         // Testcontainers-режим використовує прямий token-based auth через локальний Keycloak.
-        if (!isTestcontainersMode) {
+        if (!isTestcontainersMode && !Boolean.getBoolean("auth.browser.disabled")) {
             try {
                 playwrightSessionProvider = new PlaywrightSessionProvider(ConfigProvider.getBackendUrl());
                 authService.setPlaywrightSessionProvider(playwrightSessionProvider);

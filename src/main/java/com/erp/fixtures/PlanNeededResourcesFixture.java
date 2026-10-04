@@ -26,6 +26,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +48,7 @@ public class PlanNeededResourcesFixture extends BaseFixture {
     private final ProductionFixture productionFixture;
     private final ResourceFixture resourceFixture;
     private final InventoryFixture inventoryFixture;
+    private final List<Long> createdResourceIds = new ArrayList<>();
 
     public PlanNeededResourcesFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
@@ -58,7 +60,8 @@ public class PlanNeededResourcesFixture extends BaseFixture {
 
     @Step("FIXTURE: довідники для needed-resources")
     public void prepareContext() {
-        techMapFixture.prepareContext();
+        resourceFixture.fetchSharedUnit(1);
+        resourceFixture.fetchSharedResourceCategory();
     }
 
     public TechnologicalMapFixture techMaps() {
@@ -75,10 +78,9 @@ public class PlanNeededResourcesFixture extends BaseFixture {
             throw new IllegalArgumentException("storageIds is required");
         }
         String suffix = String.valueOf(System.currentTimeMillis());
-        ResourceResponse raw = resourceFixture.createUniqueResource("NR-RAW-" + suffix, rawCategoryId);
-        ResourceResponse intermediate = resourceFixture.createUniqueResource(
-                "NR-INT-" + suffix, intermediateCategoryId);
-        ResourceResponse product = resourceFixture.createUniqueResource("NR-OUT-" + suffix);
+        ResourceResponse raw = createResource("NR-RAW-" + suffix, rawCategoryId);
+        ResourceResponse intermediate = createResource("NR-INT-" + suffix, intermediateCategoryId);
+        ResourceResponse product = createResource("NR-OUT-" + suffix);
 
         TechnologicalMapResponse intermediateMap = techMapFixture.createTechMapWithRequest(
                 UserRole.ADMIN,
@@ -160,11 +162,24 @@ public class PlanNeededResourcesFixture extends BaseFixture {
     }
 
     public ResourceResponse createResource(String namePrefix) {
-        return resourceFixture.createUniqueResource(namePrefix);
+        return trackResource(resourceFixture.createUniqueResource(namePrefix));
     }
 
     public ResourceResponse createResource(String namePrefix, Long categoryId) {
-        return resourceFixture.createUniqueResource(namePrefix, categoryId);
+        return trackResource(resourceFixture.createUniqueResource(namePrefix, categoryId));
+    }
+
+    private ResourceResponse trackResource(ResourceResponse resource) {
+        createdResourceIds.add(resource.getId());
+        return resource;
+    }
+
+    public List<Long> createdResourceIds() {
+        return List.copyOf(createdResourceIds);
+    }
+
+    public void clearCreatedResourceIds() {
+        createdResourceIds.clear();
     }
 
     @Step("Виготовити {amount} од. за техкартою на складі {storageId}")
@@ -245,6 +260,7 @@ public class PlanNeededResourcesFixture extends BaseFixture {
 
     public TechnologicalMapResponse createAltGroupMap(Long storageId, double defaultAmount, double otherAmount) {
         List<ResourceResponse> resources = techMapFixture.createAltGroupResources();
+        resources.forEach(this::trackResource);
         TechnologicalMapRequest request = TechnologicalMapRequest.builder()
                 .name("NR-alt-" + System.currentTimeMillis())
                 .type(TechnologicalMapDataFactory.TYPE_PRODUCTION)

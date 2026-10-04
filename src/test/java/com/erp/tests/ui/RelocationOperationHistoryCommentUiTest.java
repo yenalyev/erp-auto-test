@@ -82,7 +82,6 @@ public class RelocationOperationHistoryCommentUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 }

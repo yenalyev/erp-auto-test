@@ -264,11 +264,14 @@ public class AlertFixture extends BaseFixture {
         StorageAlertResponse alert = createOrUpdateStockAlert(
                 UserRole.ADMIN, location.getId(), alerted.getId(), limit);
         inventoryFixture.resetResourceStock(location.getId(), alerted.getId(), 1.0, UserRole.ADMIN);
-        inventoryFixture.depleteToZero(location.getId(), alerted.getId());
+        // An alert keeps a zero-stock row visible even when showZeroStock=false.
+        // depleteToZero() checks the opposite contract and is only suitable for unalerted rows.
+        inventoryFixture.resetResourceStock(location.getId(), alerted.getId(), 0.0, UserRole.ADMIN);
         inventoryFixture.resetResourceStock(location.getId(), plain.getId(), 15.0, UserRole.ADMIN);
         PollUtils.waitUntil(
                 () -> inventoryFixture.findItemIncludingZero(location.getId(), alerted.getId(), UserRole.ADMIN),
-                item -> item != null && Integer.valueOf(RED_WEIGHT).equals(item.getWeight()),
+                item -> item != null && item.getAmount() != null && item.getAmount() == 0.0
+                        && Integer.valueOf(RED_WEIGHT).equals(item.getWeight()),
                 20_000,
                 "alerted inventory row weight=" + RED_WEIGHT);
         PollUtils.waitUntil(

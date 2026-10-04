@@ -79,8 +79,7 @@ public class AlertOwnerSaveUiTest extends BaseUITest {
         injectSessionCookies(
                 authService.getSessionForUser(owner.username(), owner.password()),
                 sessionCookieDomain());
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + storage.getId() + "');");
+        injectWorkspaceView(owner.username(), storage.getId());
 
         StorageAlertsPage alertsPage = new StorageAlertsPage(page).open(storage.getId());
         assertThat(alertsPage.showsResource(resource.getName())).isTrue();

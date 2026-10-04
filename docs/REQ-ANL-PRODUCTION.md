@@ -1,6 +1,6 @@
 # REQ-ANL-PRODUCTION — аналітика виробництва
 
-Статус: **автоматизовано; DEV 2026-09-25 — 23/23 passed**
+Статус: **автоматизовано; DEV 2026-09-28 — 24/24 passed**
 Сторінка: `/analytics/production`
 Актор: **Керівник локації**
 Батьківська вимога TCM: `REQ-ANL`
@@ -149,7 +149,7 @@
 mvn "-Dtest=ProductionAnalyticsUiTest" "-Denv=dev" "-Dsuite.artifact.sweep=false" "-Dgoogle.sheets.enabled=false" "-Dtcm.enabled=false" test
 ```
 
-Контрольний DEV-запуск 2026-09-25:
+Попередній контрольний DEV-запуск 2026-09-25:
 
 - **23 automated checks: 23 passed, 0 errors, 0 skipped**;
 - `TC-ANL-UI-005…024`, `TC-ANL-UI-026…028` — passed;
@@ -159,6 +159,12 @@ mvn "-Dtest=ProductionAnalyticsUiTest" "-Denv=dev" "-Dsuite.artifact.sweep=false
 
 Деталі зафіксовано у
 [DEV test report](audits/2026-09-25/production-analytics-excel-export-dev-test-report.md).
+
+Повторний повний DEV-прогін 2026-09-28: **24/24 passed**, включно з окремими
+фільтрами виробів і матеріалів у багатолистовому Excel. Деталі — у
+[звіті повторного прогону](audits/2026-09-28/production-analytics-excel-export-dev-test-report.md).
+Специфікація експорту ведеться окремо у
+[REQ-ANL-PRODUCTION-EXCEL-EXPORT](REQ-ANL-PRODUCTION-EXCEL-EXPORT.md).
 
 ## 4. TCM-синхронізація
 
@@ -170,12 +176,16 @@ Idempotent sync виконує `scripts/sync_tcm_production_analytics.py`. Ві�
 - UI automation links для всіх восьми кейсів;
 - повний текст цієї документації у feature.
 
-Audit-звіти зберігаються в `docs/audits/2026-09-24/` окремо для dev і production TCM.
+Останні audit-звіти зберігаються в `docs/audits/2026-09-28/` окремо для DEV і
+PROD TCM. Окрема дочірня вимога `REQ-ANL-PRODUCTION-EXCEL` містить критерії
+багатолистового експорту та `TC-ANL-UI-013…028`.
 
 ## 5. Багатолистовий Excel-експорт
 
 Контракт одного workbook із п'ятьма аркушами та застосуванням верхніх фільтрів
 описано в [REQ-ANL-PRODUCTION-EXCEL-EXPORT](REQ-ANL-PRODUCTION-EXCEL-EXPORT.md).
+Фактична поведінка експорту щодо активних представлень і типів виробництва
+описана окремо в [as-is документації](AS-IS-ANL-PRODUCTION-EXCEL-EXPORT.md).
 
 Документ деталізує склад Excel для `AC-05` і `AC-08`. Наявні `TC-ANL-UI-009` та
 `TC-ANL-UI-012` актуалізовано під багатолистовий контракт; розширений набір

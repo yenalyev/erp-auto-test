@@ -74,7 +74,7 @@ public class AccountantCabinetUITest extends BaseUITest {
     );
 
     private static final List<String> EXPECTED_RESOURCE_TABS = List.of(
-            "Словник ресурсів",
+            "Ресурси",
             "Ціни"
     );
 
@@ -123,7 +123,7 @@ public class AccountantCabinetUITest extends BaseUITest {
             — редирект на /production і активний розділ «Виробництво»
             — селектор локацій у sidebar (перша доступна локація обрана за замовчуванням)
             — розділи sidebar: Виробництво, Залишки, Обладнання, Логістика, Експорт даних
-            — словники: Техкарти, Довідники ресурсів (PageTabs: Словник ресурсів, Ціни)
+            — словники: Техкарти, Довідники ресурсів (PageTabs: Ресурси, Ціни)
             — PageTabs у «Виробництво»: Несерійне виробництво
             — фільтри журналу: Продукт, Категорія, Тип робіт, Період
             """)
@@ -291,7 +291,7 @@ public class AccountantCabinetUITest extends BaseUITest {
         relocationFixture.ensureStock(scenario.unit().getId(), resourceId, 50.0);
 
         relocationFixture.createSendAndFinishBySender(
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 scenario.unit().getId(),
                 scenario.crew().getId(),
                 resourceId,
@@ -326,7 +326,7 @@ public class AccountantCabinetUITest extends BaseUITest {
     }
 
     private void injectAccountantStorage(long storageId) {
-        page.evaluate("localStorage.setItem('selectedStorageId', '" + storageId + "');");
+        injectWorkspaceView(UserRole.ACCOUNTANT, storageId);
         page.reload();
     }
 

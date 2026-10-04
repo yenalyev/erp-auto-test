@@ -9,6 +9,8 @@ import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
+import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.StorageItemResponse;
 import com.erp.pages.UnitManagementPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
@@ -76,7 +78,7 @@ public class AlertStockHighlightUiTest extends BaseUITest {
         AlertFixture.StockHighlightSeed seed = opened.seed();
         UnitManagementPage stock = opened.page();
 
-        assertThat(stock.hasStatusBadge(seed.red().getName(), UnitManagementPage.BADGE_ABSENT))
+        assertThat(stock.hasResourceStatusText(seed.red().getName(), UnitManagementPage.BADGE_ABSENT))
                 .as("бейдж «відсутній»").isTrue();
         assertThat(stock.statusBadgeVariant(seed.red().getName(), UnitManagementPage.BADGE_ABSENT))
                 .isEqualTo("destructive");
@@ -134,6 +136,66 @@ public class AlertStockHighlightUiTest extends BaseUITest {
         stock.attachScreenshot("TC-UI-ALERT-002 — pin-to-top");
     }
 
+    @Test(priority = 30)
+    @TestCaseId("TC-UI-ALERT-005")
+    @Story("Zero stock with configured alert")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            За вимкненого тогла «Показувати нульові залишки» ресурс з amount=0
+            і налаштованим сповіщенням лишається в таблиці, а нульовий ресурс
+            без сповіщення прихований. Після ввімкнення тогла обидва видимі;
+            після вимкнення і видалення сповіщення перший також приховується.
+            """)
+    public void zeroStockWithAlertRemainsVisibleWhenToggleIsOff() {
+        AlertFixture.StockHighlightSeed seed = alertFixture.seedHighlightScenario(
+                storageFixture, resourceFixture, relocationFixture, inventoryFixture);
+        long storageId = seed.storage().getId();
+        ResourceResponse unalertedZero = resourceFixture.createUniqueResource(
+                seed.searchToken() + "-zero-without-alert-");
+        inventoryFixture.resetResourceStock(storageId, unalertedZero.getId(), 1.0, UserRole.ADMIN);
+        inventoryFixture.depleteToZero(storageId, unalertedZero.getId());
+
+        StorageItemResponse alertedItem = inventoryFixture.findItemIncludingZero(
+                storageId, seed.red().getId(), UserRole.ADMIN);
+        StorageItemResponse unalertedItem = inventoryFixture.findItemIncludingZero(
+                storageId, unalertedZero.getId(), UserRole.ADMIN);
+        assertThat(alertedItem).as("ресурс з алертом має рядок залишку").isNotNull();
+        assertThat(alertedItem.getAmount()).as("залишок ресурсу з алертом").isZero();
+        assertThat(unalertedItem).as("контрольний ресурс має рядок залишку").isNotNull();
+        assertThat(unalertedItem.getAmount()).as("контрольний залишок").isZero();
+        assertThat(unalertedItem.getAlertLimit()).as("контрольний ресурс без алерту").isNull();
+
+        injectRoleSession(UserRole.ADMIN, storageId);
+        page = browserContext.newPage();
+        UnitManagementPage stock = new UnitManagementPage(page)
+                .openWithStorageIdQuery(storageId, false)
+                .waitForLoaded()
+                .setShowZeroStock(false)
+                .searchAndWaitForResource(seed.searchToken(), seed.yellow().getName());
+
+        assertThat(stock.isShowZeroStockOn()).as("тогл вимкнений").isFalse();
+        assertThat(stock.isResourceVisibleInTable(seed.red().getName()))
+                .as("нульовий ресурс з алертом видимий при вимкненому тоглі").isTrue();
+        assertThat(stock.getResourceTotalAmount(seed.red().getName())).isZero();
+        assertThat(stock.hasStatusBadge(seed.red().getName(), UnitManagementPage.BADGE_ABSENT))
+                .as("статус нульового ресурсу з алертом").isTrue();
+        assertThat(stock.isResourceVisibleInTable(unalertedZero.getName()))
+                .as("нульовий ресурс без алерту прихований").isFalse();
+        stock.attachScreenshot("TC-UI-ALERT-005 — toggle off");
+
+        stock.setShowZeroStock(true).waitForResourceInTable(unalertedZero.getName());
+        assertThat(stock.isResourceVisibleInTable(seed.red().getName())).isTrue();
+        assertThat(stock.getResourceTotalAmount(unalertedZero.getName())).isZero();
+
+        stock.setShowZeroStock(false).waitForResourceAbsentFromTable(unalertedZero.getName());
+        alertFixture.removeResourceFromAlerts(storageId, seed.red().getId(), UserRole.ADMIN);
+        stock.refreshInventoryTable()
+                .searchAndWaitForResource(seed.searchToken(), seed.yellow().getName())
+                .waitForResourceAbsentFromTable(seed.red().getName());
+        assertThat(stock.isShowZeroStockOn()).isFalse();
+        stock.attachScreenshot("TC-UI-ALERT-005 — alert removed");
+    }
+
     private OpenedInventory openHighlightedInventory() {
         AlertFixture.StockHighlightSeed seed = alertFixture.seedHighlightScenario(
                 storageFixture, resourceFixture, relocationFixture, inventoryFixture);
@@ -155,7 +217,6 @@ public class AlertStockHighlightUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 }

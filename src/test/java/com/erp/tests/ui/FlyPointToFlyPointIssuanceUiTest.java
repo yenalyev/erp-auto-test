@@ -34,7 +34,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.List;
 
@@ -189,8 +188,8 @@ public class FlyPointToFlyPointIssuanceUiTest extends BaseUITest {
     @Description("«Всі локації» — кнопка «Видати між точками зльоту» прихована")
     public void testIssueBetweenFlyPointsHiddenForAllLocations() {
         browserContext.clearCookies();
-        injectRoleSession(UserRole.ADMIN, memberStorageId);
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        injectSessionCookies(cachedSessionCookies(UserRole.ADMIN), sessionCookieDomain());
+        injectAllLocationsView(UserRole.ADMIN);
 
         RelocationPage relocationPage = new RelocationPage(page);
         page.navigate(ConfigProvider.getBaseUrl() + RelocationPage.PATH);
@@ -203,14 +202,7 @@ public class FlyPointToFlyPointIssuanceUiTest extends BaseUITest {
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
-        Map<String, String> cookies = getPlaywrightSessionProvider()
-                .getSession(role.getUsername(), role.getPassword());
-        String domain = ConfigProvider.getBaseUrl()
-                .replaceFirst("https?://", "")
-                .split("/")[0];
-        injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId:" + role.getUsername()
-                        + "', '" + selectedStorageId + "');");
+        injectSessionCookies(cachedSessionCookies(role), sessionCookieDomain());
+        injectWorkspaceView(role, selectedStorageId);
     }
 }

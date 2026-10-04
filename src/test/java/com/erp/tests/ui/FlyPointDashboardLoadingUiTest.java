@@ -247,8 +247,7 @@ public class FlyPointDashboardLoadingUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 
     private record SeededFlyPoint(long unitId, String unitName, long flyPointId, String resourceName) {

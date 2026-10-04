@@ -50,7 +50,8 @@ public class ResourceCalculatorFixture extends BaseFixture {
 
     @Step("FIXTURE: довідники для калькулятора розхідників")
     public void prepareContext() {
-        techMapFixture.prepareContext();
+        resourceFixture.fetchSharedUnit(1);
+        resourceFixture.fetchSharedResourceCategory();
     }
 
     public TechnologicalMapFixture techMaps() {

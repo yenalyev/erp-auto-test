@@ -13,6 +13,8 @@ import com.erp.models.query.RelocationJournalQuery;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
+import java.nio.file.Files;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,8 +28,11 @@ public class RelocationPage extends BasePage {
     private static final String SEND_BUTTON = "Видати";
     private static final String ISSUE_TO_CREW_BUTTON = "Видати на екіпаж";
     private static final String ISSUE_BETWEEN_FLY_POINTS_BUTTON = "Видати між точками вильоту";
-    private static final String RECEIVE_FROM_CREW_BUTTON = "Отримати з точки вильоту";
+    // Crew/fly-point returns now enter through the common receive action; the sender type is
+    // selected on the next screen.
+    private static final String RECEIVE_FROM_CREW_BUTTON = "Отримати";
     private static final String HISTORY_RECEIVED_TAB = "Отримано";
+    private static final String EXPORT_EXCEL_BUTTON = "Експорт в Excel";
     private static final String IN_TRANSIT_TAB = "В дорозі";
     private static final String SENT_TAB = "Видано";
     private static final String LOST_TAB = "Втрачено";
@@ -393,6 +398,21 @@ public class RelocationPage extends BasePage {
     public RelocationPage openReceivedHistoryTab() {
         return openReceivedTab();
     }
+
+    public ExcelDownloadResult exportToExcel() {
+        Download download = page.waitForDownload(
+                new Page.WaitForDownloadOptions().setTimeout(120_000),
+                () -> page.getByRole(AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(EXPORT_EXCEL_BUTTON).setExact(true)).click());
+        try {
+            return new ExcelDownloadResult(download.suggestedFilename(),
+                    Files.size(download.path()), download.path());
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot read relocation Excel download", e);
+        }
+    }
+
+    public record ExcelDownloadResult(String suggestedFilename, long sizeBytes, Path path) {}
 
     public RelocationPage openReceivedTab() {
         page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(HISTORY_RECEIVED_TAB)).click();

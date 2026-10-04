@@ -1,0 +1,54 @@
+{
+  "environment": "prod",
+  "featureId": "REQ-ALERT",
+  "featureDbId": 103,
+  "documentationLength": 2977,
+  "documentationMatchesSource": true,
+  "acPresent": true,
+  "caseChecks": [
+    {
+      "testId": "TC-ALERT-006",
+      "featureId": "REQ-ALERT",
+      "acId": "AC-06",
+      "status": "ACTIVE",
+      "apiAutomationIds": [
+        "TC-ALERT-006"
+      ],
+      "uiAutomationIds": [],
+      "steps": 3
+    },
+    {
+      "testId": "TC-UI-ALERT-005",
+      "featureId": "REQ-ALERT",
+      "acId": "AC-06",
+      "status": "ACTIVE",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-UI-ALERT-005"
+      ],
+      "steps": 3
+    },
+    {
+      "testId": "TC-UI-ALERT-006",
+      "featureId": "REQ-ALERT",
+      "acId": "AC-06",
+      "status": "DRAFT",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [],
+      "steps": 1
+    },
+    {
+      "testId": "TC-UI-ALERT-007",
+      "featureId": "REQ-ALERT",
+      "acId": "AC-06",
+      "status": "DRAFT",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [],
+      "steps": 2
+    }
+  ],
+  "result": "SUCCESS",
+  "documentationSha256": "f41073a2b631fab2147f12dae1d84ec1fbc40b5fb6c2d66ee46d6f20f5d312d3",
+  "documentationIdenticalToDev": true,
+  "completedAt": "2026-10-01 10:01:38 UTC (UTC)"
+}

@@ -5,7 +5,6 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.StorageAccessMode;
 import com.erp.enums.UserRole;
 import com.erp.models.response.CrewResourceCategoryStockResponse;
-import com.erp.models.response.CrewResourceStockResponse;
 import com.erp.models.response.RelocationCreationOptionsResponse;
 import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageHierarchyResponse;
@@ -60,6 +59,11 @@ public class CrewRegionFixture extends BaseFixture {
      */
     @Step("FIXTURE: підготувати область CREWS з одним екіпажем (unattached)")
     public CrewRegionScenario prepareSingleCrewScenario(String namePrefix) {
+        return prepareSingleCrewScenario(namePrefix, ConfigProvider.getOwner1StorageId());
+    }
+
+    /** The stock source can be a fresh child location while role membership stays on its owner root. */
+    public CrewRegionScenario prepareSingleCrewScenario(String namePrefix, Long stockSourceId) {
         Long memberId = ConfigProvider.getOwner1StorageId();
         StorageResponse member = storageFixture.getById(UserRole.ADMIN, memberId);
         Long parentId = member.getParent() != null ? member.getParent().getId() : memberId;
@@ -78,7 +82,7 @@ public class CrewRegionFixture extends BaseFixture {
                 .childUnit(null)
                 .flyPoint(null)
                 .crew(crew)
-                .memberStorageId(memberId)
+                .memberStorageId(stockSourceId)
                 .build();
         testContext.set(ContextKey.CREW_STORAGE_ID, crew.getId());
         testContext.set(ContextKey.CREW_PARENT_UNIT_ID, unit.getId());
@@ -384,14 +388,6 @@ public class CrewRegionFixture extends BaseFixture {
                 String.valueOf(parentId));
         validateSuccess(response, "Get crew names for parent " + parentId);
         return DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
-    }
-
-    @Step("API: GET /storages/inventory/crews")
-    public List<CrewResourceStockResponse> getCrewInventory(UserRole role, Map<String, Object> params) {
-        Response response = apiExecutor.executeWithQueryParams(
-                ApiEndpointDefinition.STORAGE_GET_CREW_INVENTORY, role, params);
-        validateSuccess(response, "Get crew inventory");
-        return DatabaseIntegrityValidator.extractList(response, CrewResourceStockResponse.class);
     }
 
     @Step("API: GET /crews/stocks parentId={parentId} active={active}")

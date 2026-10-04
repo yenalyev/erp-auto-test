@@ -4,6 +4,7 @@ import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Response;
+import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -70,10 +71,23 @@ public class OrderListPage extends BasePage {
 
     public OrderListPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(PAGE_TITLE))
-                .waitFor(new Locator.WaitForOptions()
-                        .setState(WaitForSelectorState.VISIBLE)
-                        .setTimeout(uiTimeoutMs()));
+        try {
+            page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(PAGE_TITLE))
+                    .waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout(uiTimeoutMs()));
+        } catch (TimeoutError timeout) {
+            String bodyPreview = page.locator("body").innerText();
+            if (bodyPreview.length() > 500) {
+                bodyPreview = bodyPreview.substring(0, 500);
+            }
+            throw new AssertionError(
+                    "Orders page did not become ready: expected heading '" + PAGE_TITLE
+                            + "', currentUrl=" + page.url()
+                            + ", title=" + page.title()
+                            + ", bodyPreview=" + bodyPreview,
+                    timeout);
+        }
         waitForJournalDataSettled();
         return this;
     }

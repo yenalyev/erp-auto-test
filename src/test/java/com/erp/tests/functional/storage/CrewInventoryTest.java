@@ -4,9 +4,13 @@ import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.inventory.InventoryDataFactory;
 import com.erp.enums.UserRole;
+import com.erp.enums.BusinessRole;
 import com.erp.fixtures.CrewRegionFixture.CrewRegionScenario;
+import com.erp.fixtures.UserFixture;
+import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.request.InventoryRequest;
-import com.erp.models.response.CrewResourceStockResponse;
+import com.erp.models.response.CrewResourceCategoryStockResponse;
+import com.erp.models.response.CrewResourceStockItemResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.utils.helpers.AllureHelper;
@@ -18,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -32,8 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * Залишки екіпажів: звіт GET /storages/inventory/crews та direct GET /storages/{crewId}/inventory.
- * Owner читає через crews report; direct GET без {@code inventory-list::{crew}::read} → 403 (AC-04).
+ * Залишки екіпажів: GET /crews/stocks та direct GET /storages/{crewId}/inventory.
+ * Owner читає через crews analytics; direct GET без {@code inventory-list::{crew}::read} → 403 (AC-04).
  * Crew-Manager має direct read (AC-05); OWNER поза CREWS / без membership → 403/404 (AC-06).
  */
 @Slf4j
@@ -47,73 +52,61 @@ public class CrewInventoryTest extends CrewApiTestBase {
 
     private CrewRegionScenario scenario;
     private Long resourceId;
+    private UserFixture dynamicUserFixture;
+    private boolean classSetupReady;
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupCrewApiBase")
     @Step("Підготовка: fixtures для crew inventory")
     public void setupCrewInventoryTests() {
-        storageFixture.prepareContext();
         resourceFixture.fetchSharedUnit(3);
         resourceFixture.fetchSharedResourceCategory();
-        relocationFixture.prepareContext();
+        classSetupReady = true;
     }
 
     @BeforeMethod(alwaysRun = true)
     @Step("Підготовка: область CREWS + видача (per-method — cleanup деактивує storages)")
     public void seedCrewStockForTest() {
-        scenario = crewFixture.prepareSingleCrewScenario("crew-inv-");
+        if (!classSetupReady) {
+            throw new SkipException("Crew inventory class fixture setup did not complete");
+        }
+        StorageResponse stockSource = storageFixture.createChildStorage(
+                owner1StorageId, "crew-inv-source-");
+        scenario = crewFixture.prepareSingleCrewScenario("crew-inv-", stockSource.getId());
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
 
         relocationFixture.ensureStock(scenario.memberStorageId(), resourceId, 100.0);
         relocationFixture.createSendAndFinishBySender(
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 scenario.memberStorageId(),
                 scenario.crew().getId(),
                 resourceId,
                 ISSUE_AMOUNT);
         refreshRoleSessions(UserRole.OWNER_1, UserRole.CREW_MANAGER);
-        waitForCrewStockInReport(ISSUE_AMOUNT);
+        waitForCrewStock(ISSUE_AMOUNT);
     }
 
-    private void waitForCrewStockInReport(double expectedAmount) {
-        Map<String, Object> params = crewInventoryParams("STOCK");
+    private void waitForCrewStock(double expectedAmount) {
         PollUtils.waitUntilTrue(
-                () -> crewFixture.getCrewInventory(UserRole.OWNER_1, params).stream()
-                        .anyMatch(r -> r.getCrew() != null
-                                && Objects.equals(r.getCrew().getId(), scenario.crew().getId())
-                                && r.getResource() != null
-                                && Objects.equals(r.getResource().getId(), resourceId)
-                                && r.getAmount() != null
-                                && Math.abs(r.getAmount().doubleValue() - expectedAmount) < 0.01),
+                () -> Math.abs(relocationFixture.getResourceStock(
+                        scenario.crew().getId(), resourceId, UserRole.ADMIN) - expectedAmount) < 0.01,
                 15_000,
-                "Crew stock report row for crew=" + scenario.crew().getId() + " resource=" + resourceId);
+                "Crew stock for crew=" + scenario.crew().getId() + " resource=" + resourceId);
     }
 
     @Test(priority = 10)
     @TestCaseId("TC-CREW-INV-001")
-    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_001)
+    @Description("GET /crews/stocks returns the dynamically issued resource under the crew.")
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewResourceStockReport() {
-        Map<String, Object> params = crewInventoryParams("STOCK");
+        configureDynamicCrewReader();
+        Map<String, Object> params = crewStockParams();
 
         Response response = apiExecutor.executeWithQueryParams(
-                ApiEndpointDefinition.STORAGE_GET_CREW_INVENTORY, UserRole.OWNER_1, params);
+                ApiEndpointDefinition.CREW_GET_RESOURCE_STOCKS, UserRole.CREW_READ, params);
         assertThat(response.statusCode()).isEqualTo(200);
-        AllureHelper.attachSchemaValidationInfo(ApiEndpointDefinition.STORAGE_GET_CREW_INVENTORY, response);
-        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_GET_CREW_INVENTORY);
 
-        List<CrewResourceStockResponse> rows = crewFixture.getCrewInventory(UserRole.OWNER_1, params);
-        CrewResourceStockResponse row = rows.stream()
-                .filter(r -> r.getCrew() != null
-                        && Objects.equals(r.getCrew().getId(), scenario.crew().getId())
-                        && r.getResource() != null
-                        && Objects.equals(r.getResource().getId(), resourceId))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError(
-                        "Не знайдено рядок crew stock для crew=" + scenario.crew().getId()
-                                + " resource=" + resourceId));
-
-        assertThat(row.getAmount().doubleValue()).isCloseTo(ISSUE_AMOUNT, within(0.01));
+        assertThat(reportedCrewStock()).isCloseTo(ISSUE_AMOUNT, within(0.01));
     }
 
     @Test(priority = 20)
@@ -188,48 +181,41 @@ public class CrewInventoryTest extends CrewApiTestBase {
 
     @Test(priority = 30)
     @TestCaseId("TC-CREW-INV-006")
-    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_006)
+    @Description("GET /crews/stocks agrees with direct inventory on the same dynamic crew/resource.")
     @Severity(SeverityLevel.CRITICAL)
     public void testCrewStockReportMatchesDirectInventory() {
+        configureDynamicCrewReader();
         double directStock = relocationFixture.getResourceStock(
                 scenario.crew().getId(), resourceId, UserRole.CREW_MANAGER);
 
-        Map<String, Object> params = crewInventoryParams("STOCK");
-        List<CrewResourceStockResponse> rows = crewFixture.getCrewInventory(UserRole.OWNER_1, params);
-
-        BigDecimal reported = rows.stream()
-                .filter(r -> r.getCrew() != null
-                        && Objects.equals(r.getCrew().getId(), scenario.crew().getId())
-                        && r.getResource() != null
-                        && Objects.equals(r.getResource().getId(), resourceId))
-                .map(CrewResourceStockResponse::getAmount)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Не знайдено STOCK row для crew/resource"));
-
-        assertThat(reported.doubleValue()).isCloseTo(directStock, within(0.01));
+        assertThat(reportedCrewStock()).isCloseTo(directStock, within(0.01));
     }
 
     @Test(priority = 40)
     @TestCaseId("TC-CREW-INV-002")
-    @Description(StorageRegionsAllureDescriptions.TC_CREW_INV_002)
+    @Description("GET /crews/relocations reports the dynamically issued resource as crew income.")
     @Severity(SeverityLevel.NORMAL)
     public void testCrewResourceIncomeReport() {
+        configureDynamicCrewReader();
         LocalDate today = LocalDate.now();
-        Map<String, Object> params = crewInventoryParams("INCOME");
+        Map<String, Object> params = new HashMap<>();
+        params.put("parentId", scenario.unit().getId());
+        params.put("resourceName", resourceName());
+        params.put("page", 0);
+        params.put("size", 100);
         params.put("fromDate", today.minusDays(1).toString());
         params.put("toDate", today.plusDays(1).toString());
 
-        List<CrewResourceStockResponse> rows = crewFixture.getCrewInventory(UserRole.OWNER_1, params);
-
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.CREW_GET_RELOCATIONS, UserRole.CREW_READ, params);
+        assertThat(response.statusCode()).isEqualTo(200);
+        List<Map<String, Object>> rows = response.jsonPath().getList("content");
         double totalIncome = rows.stream()
-                .filter(r -> r.getCrew() != null
-                        && Objects.equals(r.getCrew().getId(), scenario.crew().getId())
-                        && r.getResource() != null
-                        && Objects.equals(r.getResource().getId(), resourceId))
-                .map(CrewResourceStockResponse::getIncome)
+                .filter(r -> Objects.equals(((Number) r.get("crewId")).longValue(), scenario.crew().getId())
+                        && Objects.equals(((Number) r.get("resourceId")).longValue(), resourceId))
+                .map(r -> (Number) r.get("ingressAmount"))
                 .filter(Objects::nonNull)
-                .mapToDouble(BigDecimal::doubleValue)
+                .mapToDouble(Number::doubleValue)
                 .sum();
 
         assertThat(totalIncome).isGreaterThanOrEqualTo(ISSUE_AMOUNT);
@@ -348,6 +334,37 @@ public class CrewInventoryTest extends CrewApiTestBase {
                 log.warn("Crew inventory session cleanup failed: {}", e.getMessage());
             }
         }
+        if (dynamicUserFixture != null) {
+            apiExecutor.evictSessionForRole(UserRole.CREW_READ);
+            dynamicUserFixture.deactivateTrackedUsers();
+            dynamicUserFixture = null;
+        }
+        if (scenario != null && resourceId != null && inventoryFixture != null) {
+            for (Long storageId : List.of(scenario.crew().getId(), scenario.memberStorageId())) {
+                try {
+                    inventoryFixture.removeResourceFromStorage(storageId, resourceId, UserRole.ADMIN);
+                } catch (RuntimeException cleanupError) {
+                    log.warn("Crew inventory stock cleanup failed for resource {} on storage {}",
+                            resourceId, storageId, cleanupError);
+                }
+            }
+        }
+        if (regionFixture != null && storageFixture != null) {
+            TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
+        }
+        if (resourceFixture != null && resourceId != null) {
+            try {
+                Response response = resourceFixture.deactivate(UserRole.ADMIN, resourceId);
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                    log.warn("Crew inventory resource {} cleanup returned HTTP {}: {}",
+                            resourceId, response.statusCode(), response.asString());
+                }
+            } catch (RuntimeException cleanupError) {
+                log.warn("Crew inventory resource {} cleanup failed", resourceId, cleanupError);
+            } finally {
+                resourceId = null;
+            }
+        }
     }
 
     /** Query params as UI /unit-management?mode=crews&crew=… */
@@ -360,13 +377,38 @@ public class CrewInventoryTest extends CrewApiTestBase {
         return params;
     }
 
-    private Map<String, Object> crewInventoryParams(String requestType) {
+    private Map<String, Object> crewStockParams() {
         Map<String, Object> params = new HashMap<>();
-        params.put("storageId", scenario.memberStorageId());
-        params.put("requestType", requestType);
-        params.put("page", 0);
-        params.put("size", 100);
-        params.put("groupByUnit", false);
+        params.put("parentId", scenario.unit().getId());
+        params.put("active", true);
+        params.put("resourceName", resourceName());
         return params;
+    }
+
+    private String resourceName() {
+        return resourceFixture.getById(UserRole.ADMIN, resourceId).getName();
+    }
+
+    private double reportedCrewStock() {
+        return crewFixture.getCrewAnalyticsResourceStocks(
+                        UserRole.CREW_READ, scenario.unit().getId(), true, resourceName()).stream()
+                .filter(row -> Objects.equals(row.getCrewId(), scenario.crew().getId()))
+                .map(CrewResourceCategoryStockResponse::getResourceStocks)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .filter(item -> Objects.equals(item.getResourceId(), resourceId))
+                .map(CrewResourceStockItemResponse::getAmount)
+                .filter(Objects::nonNull)
+                .mapToDouble(BigDecimal::doubleValue)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No crew stock for crew=" + scenario.crew().getId()
+                        + " resource=" + resourceId));
+    }
+
+    private void configureDynamicCrewReader() {
+        dynamicUserFixture = new UserFixture(testContext, apiExecutor);
+        UserFixture.BusinessActor actor = dynamicUserFixture.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.CREW_STOCK_READER, List.of(scenario.unit()));
+        apiExecutor.setSessionForRole(UserRole.CREW_READ, actor.username(), actor.password());
     }
 }

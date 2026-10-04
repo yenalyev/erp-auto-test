@@ -10,6 +10,7 @@ import com.erp.models.access.AccessScopeKind;
 import com.erp.models.access.GrantScopeKind;
 import com.erp.models.request.UserRequest;
 import com.erp.models.response.AccessGrantResponse;
+import com.erp.models.response.AccessPermissionResponse;
 import com.erp.models.response.AccessRoleResponse;
 import com.erp.models.response.OneTimeUserCredentialsResponse;
 import com.erp.models.response.PagedUserResponse;
@@ -57,6 +58,7 @@ public class UserFixture extends BaseFixture {
     private static final int MAX_ROLES_FOR_LIST_OVERFLOW = 8;
 
     private final List<String> trackedUserIds = new ArrayList<>();
+    private final List<Long> trackedGlobalRoleIds = new ArrayList<>();
     private final AccessFixture accessFixture;
 
     public UserFixture(TestContext testContext, ApiExecutor apiExecutor) {
@@ -189,7 +191,7 @@ public class UserFixture extends BaseFixture {
         return createBusinessActor(playwright, businessRole, storages, permissionKeys, true);
     }
 
-    /** Creates an actor whose access roles are global and therefore require no location grants. */
+    /** Creates an actor with isolated global roles copied from the configured role permissions. */
     @Step("FIXTURE: створити глобального бізнес-актора {businessRole}")
     public BusinessActor createGlobalBusinessActor(
             PlaywrightSessionProvider playwright,
@@ -201,19 +203,31 @@ public class UserFixture extends BaseFixture {
         if (definition.accessRoles().isEmpty()) {
             throw new IllegalStateException("Global business actor requires at least one access role: " + businessRole);
         }
-        List<AccessRoleResponse> resolvedRoles = definition.accessRoles().stream()
+        List<AccessRoleResponse> sourceRoles = definition.accessRoles().stream()
                 .map(accessFixture::roleByName)
                 .toList();
-        List<String> nonGlobalRoles = resolvedRoles.stream()
-                .filter(role -> role.getScopeKind() != AccessScopeKind.GLOBAL)
-                .map(AccessRoleResponse::getName)
-                .toList();
-        if (!nonGlobalRoles.isEmpty()) {
-            throw new IllegalStateException(
-                    "Global business actor contains non-global access roles: " + nonGlobalRoles);
-        }
-
+        Set<String> globalPermissionKeys = accessFixture.listCatalog().stream()
+                .filter(permission -> permission.getScopeKind() == AccessScopeKind.GLOBAL)
+                .map(AccessPermissionResponse::getKey)
+                .collect(Collectors.toSet());
         String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        List<String> roleNames = new ArrayList<>();
+        LinkedHashSet<String> expectedPermissionKeys = new LinkedHashSet<>();
+        for (AccessRoleResponse sourceRole : sourceRoles) {
+            String roleName = "autotest-" + businessRole.name().toLowerCase().replace('_', '-')
+                    + "-" + suffix + "-" + roleNames.size();
+            List<String> rolePermissionKeys = sourceRole.getPermissionKeys().stream()
+                    .filter(globalPermissionKeys::contains)
+                    .toList();
+            if (rolePermissionKeys.isEmpty()) {
+                throw new IllegalStateException("Source role has no global permissions: " + sourceRole.getName());
+            }
+            AccessRoleResponse createdRole = accessFixture.createGlobalRole(
+                    roleName, rolePermissionKeys);
+            trackedGlobalRoleIds.add(createdRole.getId());
+            roleNames.add(createdRole.getName());
+            expectedPermissionKeys.addAll(rolePermissionKeys);
+        }
         String username = "autotest-" + businessRole.name().toLowerCase().replace('_', '-') + "-" + suffix;
         String permanentPassword = "Autotest1!" + suffix;
         UserModelResponse created = createUserProfile(
@@ -221,15 +235,12 @@ public class UserFixture extends BaseFixture {
         trackForCleanup(created.getId());
 
         accessFixture.ensureGrants(
-                created.getId(), definition.accessRoles(), definition.permissionKeys(), GrantScopeKind.ALL, null);
-        LinkedHashSet<String> expectedPermissionKeys = resolvedRoles.stream()
-                .flatMap(role -> Optional.ofNullable(role.getPermissionKeys()).orElse(List.of()).stream())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+                created.getId(), roleNames, definition.permissionKeys(), GrantScopeKind.ALL, null);
         expectedPermissionKeys.addAll(definition.permissionKeys());
         assertBusinessActorAccess(
-                created.getId(), businessRole, definition.accessRoles(), List.of(), expectedPermissionKeys);
+                created.getId(), businessRole, roleNames, List.of(), expectedPermissionKeys);
         log.info("Created global business actor username={} businessRole={} accessRoles={}",
-                username, businessRole, definition.accessRoles());
+                username, businessRole, roleNames);
         return new BusinessActor(created.getId(), username, permanentPassword, businessRole, List.of());
     }
 
@@ -439,6 +450,7 @@ public class UserFixture extends BaseFixture {
         if (TestArtifactCleanup.shouldSkipApiCleanup()) {
             log.warn("Staging mode — skipping user cleanup (-Dstaging.cleanup=false)");
             trackedUserIds.clear();
+            trackedGlobalRoleIds.clear();
             return;
         }
         for (String userId : new ArrayList<>(trackedUserIds)) {
@@ -446,6 +458,11 @@ public class UserFixture extends BaseFixture {
             catch (Exception e) { log.warn("Failed to deactivate user {}: {}", userId, e.getMessage()); }
         }
         trackedUserIds.clear();
+        for (Long roleId : new ArrayList<>(trackedGlobalRoleIds)) {
+            try { accessFixture.deleteRole(roleId); }
+            catch (Exception e) { log.warn("Failed to delete global test role {}: {}", roleId, e.getMessage()); }
+        }
+        trackedGlobalRoleIds.clear();
     }
 
     public void trackUserByUsername(String username) { trackForCleanup(findUserIdByUsername(username)); }

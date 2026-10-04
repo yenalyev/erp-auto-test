@@ -2,7 +2,9 @@ package com.erp.tests.functional.statistics;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.PlanNeededResourcesFixture;
+import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.models.request.ExecutionFilterRequest;
 import com.erp.models.request.ResourceUsageRequest;
@@ -15,7 +17,6 @@ import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -44,6 +45,8 @@ public class PlanNeededResourcesApiTest extends BaseFunctionalTest {
     private static final double EPS = 0.05;
 
     private PlanNeededResourcesFixture fixture;
+    private InventoryFixture inventoryFixture;
+    private ResourceFixture resourceFixture;
     private StorageFixture storageFixture;
 
     private final List<PlanResponse> plans = new ArrayList<>();
@@ -54,12 +57,17 @@ public class PlanNeededResourcesApiTest extends BaseFunctionalTest {
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setup() {
         fixture = new PlanNeededResourcesFixture(testContext, apiExecutor);
-        fixture.prepareContext();
+        inventoryFixture = new InventoryFixture(testContext, apiExecutor);
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
         storageFixture = new StorageFixture(testContext, apiExecutor);
+        fixture.prepareContext();
     }
 
     @AfterMethod(alwaysRun = true)
     public void cleanup() {
+        if (fixture == null) {
+            return;
+        }
         for (PlanResponse plan : plans) {
             try {
                 fixture.techMaps().deleteLocationPlan(plan.getId());
@@ -84,6 +92,19 @@ public class PlanNeededResourcesApiTest extends BaseFunctionalTest {
             }
         }
         maps.clear();
+        if (inventoryFixture != null) {
+            for (Long storageId : storagesNewestFirst) {
+                for (Long resourceId : fixture.createdResourceIds()) {
+                    try {
+                        inventoryFixture.removeResourceFromStorage(
+                                storageId, resourceId, UserRole.ADMIN);
+                    } catch (RuntimeException e) {
+                        log.warn("Resource {} inventory cleanup failed on storage {}",
+                                resourceId, storageId, e);
+                    }
+                }
+            }
+        }
         for (Long storageId : storagesNewestFirst) {
             try {
                 storageFixture.archiveStorage(UserRole.ADMIN, storageId);
@@ -93,7 +114,23 @@ public class PlanNeededResourcesApiTest extends BaseFunctionalTest {
             }
         }
         storagesNewestFirst.clear();
-        storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
+        if (resourceFixture != null) {
+            for (Long resourceId : fixture.createdResourceIds()) {
+                try {
+                    Response response = resourceFixture.deactivate(UserRole.ADMIN, resourceId);
+                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                        log.warn("Resource {} deactivation failed: HTTP {}: {}",
+                                resourceId, response.statusCode(), response.asString());
+                    }
+                } catch (RuntimeException e) {
+                    log.warn("Resource {} deactivation failed", resourceId, e);
+                }
+            }
+            fixture.clearCreatedResourceIds();
+        }
     }
 
     @Test(priority = 10)
@@ -102,9 +139,10 @@ public class PlanNeededResourcesApiTest extends BaseFunctionalTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("OWNER_2 не має statistics-plan-execution::read на склад OWNER_1 → 403.")
     public void neededResourcesForbiddenWithoutRead() {
+        Long storageId = newStorage("nr-rbac-");
         Response response = fixture.requestNeededRaw(
                 UserRole.OWNER_2,
-                ConfigProvider.getOwner1StorageId(),
+                storageId,
                 fixture.currentMonth());
         assertThat(response.statusCode()).isEqualTo(403);
     }
@@ -587,7 +625,7 @@ public class PlanNeededResourcesApiTest extends BaseFunctionalTest {
         StorageResponse grand = storageFixture.createUnitStorage(
                 storageFixture.resolveParentUnit().getId(), "nr-grand-");
         StorageResponse mid = storageFixture.createUnitStorage(grand.getId(), "nr-mid-");
-        StorageResponse leaf = storageFixture.createChildStorage(mid.getId(), "nr-leaf-");
+        StorageResponse leaf = storageFixture.createProductionStorage(mid.getId(), "nr-leaf-");
         storagesNewestFirst.add(leaf.getId());
         storagesNewestFirst.add(mid.getId());
         storagesNewestFirst.add(grand.getId());
@@ -629,8 +667,8 @@ public class PlanNeededResourcesApiTest extends BaseFunctionalTest {
     private ParentTree parentTreeWithPlans(double planA, double planB) {
         StorageResponse parent = storageFixture.createUnitStorage(
                 storageFixture.resolveParentUnit().getId(), "nr-par-");
-        StorageResponse childA = storageFixture.createChildStorage(parent.getId(), "nr-ca-");
-        StorageResponse childB = storageFixture.createChildStorage(parent.getId(), "nr-cb-");
+        StorageResponse childA = storageFixture.createProductionStorage(parent.getId(), "nr-ca-");
+        StorageResponse childB = storageFixture.createProductionStorage(parent.getId(), "nr-cb-");
         storagesNewestFirst.add(childB.getId());
         storagesNewestFirst.add(childA.getId());
         storagesNewestFirst.add(parent.getId());
@@ -651,7 +689,8 @@ public class PlanNeededResourcesApiTest extends BaseFunctionalTest {
     }
 
     private Long newStorage(String prefix) {
-        StorageResponse storage = storageFixture.createChildStorage(prefix);
+        StorageResponse storage = storageFixture.createProductionStorage(
+                storageFixture.resolveParentUnit().getId(), prefix);
         storagesNewestFirst.add(0, storage.getId());
         return storage.getId();
     }

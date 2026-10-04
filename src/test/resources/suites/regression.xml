@@ -52,6 +52,7 @@
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
             <class name="com.erp.tests.functional.resource.ResourceImageApiTest"/>
+            <class name="com.erp.tests.functional.resource.ResourcePhoto50MbApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
             <class name="com.erp.tests.functional.resource.ResourceWithTechnologicalMapApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceDeactivationTest"/>
@@ -86,6 +87,12 @@
             <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest"/>
             <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
             <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaCrewSyncContractTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaCrewSyncE2eTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaInitiatorWriteOffTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaSpotterWriteOffTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaSpotterCleanupAuditTest"/>
+            <class name="com.erp.tests.functional.storage.FlightWriteOffNoStockTest"/>
             <class name="com.erp.tests.functional.storage.FaitaImplicitResourceTest"/>
             <class name="com.erp.tests.functional.storage.FaitaResourcesApiTest"/>
             <class name="com.erp.tests.functional.location_permissions.LocationPermissionMeTest"/>
@@ -154,6 +161,7 @@
             <class name="com.erp.tests.functional.project_production.ProjectProductionModificationTest"/>
             <class name="com.erp.tests.functional.project_production.ProjectProductionOperationHistoryTest"/>
             <class name="com.erp.tests.functional.project_production.ProjectProductionTemplateTest"/>
+            <class name="com.erp.tests.functional.project_production.FileUpload50MbApiTest"/>
         </classes>
     </test>
 
@@ -161,6 +169,7 @@
         <classes>
             <class name="com.erp.tests.ui.ProjectProductionUITest"/>
             <class name="com.erp.tests.ui.ProjectProductionHistoryUiTest"/>
+            <class name="com.erp.tests.ui.FileUpload50MbUiTest"/>
         </classes>
     </test>
 
@@ -186,6 +195,7 @@
             <class name="com.erp.tests.functional.relocation.RelocationOperationHistoryCommentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationBatchTechMapExportTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationBatchAccountingTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationUsedBatchEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
@@ -306,6 +316,7 @@
             <class name="com.erp.tests.ui.RelocationLocationSelectorsUiTest"/>
             <class name="com.erp.tests.ui.RelocationRegionAliasFeatureUiTest"/>
             <class name="com.erp.tests.ui.RelocationBatchAccountingUiTest"/>
+            <class name="com.erp.tests.ui.RelocationBatchTechMapExportUiTest"/>
             <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.RelocationSupplierDefectEditUiTest"/>
@@ -348,8 +359,10 @@
             <class name="com.erp.tests.ui.CrewResourceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.CrewFlyPointInventoryUiTest"/>
             <class name="com.erp.tests.ui.FaitaResourcesUiTest"/>
+            <class name="com.erp.tests.ui.FaitaCrewSyncPositionUiTest"/>
             <class name="com.erp.tests.ui.FlyPointDashboardLoadingUiTest"/>
             <class name="com.erp.tests.ui.FlyPointsUiTest"/>
+            <class name="com.erp.tests.ui.FlyPointArchivingUiTest"/>
             <class name="com.erp.tests.ui.CrewBattalionStocksUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.SystemAllResourcesRegionUiTest"/>

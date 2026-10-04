@@ -287,9 +287,7 @@ public class ResourceCalculatorUiTest extends BaseUITest {
 
     private void injectAllLocationsSession() {
         injectSessionCookies(cachedSessionCookies(UserRole.ADMIN), sessionCookieDomain());
-        injectAllLocationsView();
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId:"
-                + UserRole.ADMIN.getUsername() + "', 'all');");
+        injectAllLocationsView(UserRole.ADMIN);
         recreatePageAfterInject();
     }
 

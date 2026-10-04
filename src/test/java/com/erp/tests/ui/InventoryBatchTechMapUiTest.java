@@ -43,8 +43,7 @@ public class InventoryBatchTechMapUiTest extends BaseUITest {
         super.baseTestClassSetup();
         storageId = ConfigProvider.getOwner1StorageId();
         injectSessionCookies(cachedSessionCookies(UserRole.ADMIN), sessionCookieDomain());
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + storageId + "');");
+        injectWorkspaceView(UserRole.ADMIN, storageId);
     }
 
     @Test(priority = 10)

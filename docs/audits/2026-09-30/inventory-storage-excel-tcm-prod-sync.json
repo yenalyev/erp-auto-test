@@ -1,0 +1,30 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "completedAt": "2026-09-30T10:24:38Z",
+  "result": "SUCCESS",
+  "feature": {
+    "featureId": "REQ-WMS-007-EXCEL",
+    "id": 130,
+    "parentFeatureId": "REQ-WMS-007",
+    "created": true,
+    "documentationMatchesSource": true
+  },
+  "acceptanceCriteria": [
+    {"acKey": "AC-01", "id": 623, "created": true},
+    {"acKey": "AC-02", "id": 624, "created": true},
+    {"acKey": "AC-03", "id": 625, "created": true}
+  ],
+  "testCases": [
+    {"testId": "TC-WMS-007-022", "acKey": "AC-02", "status": "ACTIVE", "apiAutomationIds": ["TC-WMS-007-022"]},
+    {"testId": "TC-WMS-007-023", "acKey": "AC-01", "status": "ACTIVE", "uiAutomationIds": ["TC-WMS-007-023"]},
+    {"testId": "TC-WMS-007-024", "acKey": "AC-03", "status": "ACTIVE"},
+    {"testId": "TC-WMS-007-025", "acKey": "AC-03", "status": "REVIEW"},
+    {"testId": "TC-WMS-007-026", "acKey": "AC-02", "status": "ACTIVE"}
+  ],
+  "verification": {
+    "featureReadBack": true,
+    "allAcceptanceCriteriaPresent": true,
+    "allTestCasesPresent": true,
+    "allTestCasesHaveThreeSteps": true
+  }
+}

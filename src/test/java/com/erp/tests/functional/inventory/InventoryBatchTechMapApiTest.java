@@ -15,16 +15,21 @@ import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.Step;
 import io.qameta.allure.Story;
 import lombok.extern.slf4j.Slf4j;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,6 +65,8 @@ public class InventoryBatchTechMapApiTest extends InventoryApiTestBase {
         TechnologicalMapResponse mapB = null;
         List<ManufacturingItemResponse> productions = new ArrayList<>();
         Set<Long> createdResourceIds = new LinkedHashSet<>();
+        Long legacyProductionId = null;
+        UUID originalLegacyBatchId = null;
 
         try {
             isolated = techMapFixture.createIsolatedProductionTechMap(
@@ -81,16 +88,22 @@ public class InventoryBatchTechMapApiTest extends InventoryApiTestBase {
             String batchA = ProductionDataFactory.uniqueBatchNumber();
             String batchB = ProductionDataFactory.uniqueBatchNumber();
             String ambiguousBatch = ProductionDataFactory.uniqueBatchNumber();
+            String legacyDonorBatch = ProductionDataFactory.uniqueBatchNumber();
             String noMapBatch = ProductionDataFactory.uniqueBatchNumber();
 
             productions.add(productionFixture.createAs(
                     UserRole.ADMIN, owner1StorageId, mapA, 2.0, batchA));
             productions.add(productionFixture.createAs(
                     UserRole.ADMIN, owner1StorageId, mapB, 3.0, batchB));
-            productions.add(productionFixture.createAs(
-                    UserRole.ADMIN, owner1StorageId, mapA, 1.0, ambiguousBatch));
-            productions.add(productionFixture.createAs(
-                    UserRole.ADMIN, owner1StorageId, mapB, 1.0, ambiguousBatch));
+            ManufacturingItemResponse legacyA = productionFixture.createAs(
+                    UserRole.ADMIN, owner1StorageId, mapA, 1.0, ambiguousBatch);
+            productions.add(legacyA);
+            ManufacturingItemResponse legacyB = productionFixture.createAs(
+                    UserRole.ADMIN, owner1StorageId, mapB, 1.0, legacyDonorBatch);
+            productions.add(legacyB);
+            legacyProductionId = legacyB.getId();
+            originalLegacyBatchId = rebindProductionBatch(
+                    legacyB.getId(), legacyA.getId());
             relocationFixture.createExternalReceive(
                     UserRole.ADMIN, owner1StorageId, isolated.getProduct().getId(), 4.0, noMapBatch);
 
@@ -107,7 +120,56 @@ public class InventoryBatchTechMapApiTest extends InventoryApiTestBase {
                             .isNull());
             assertBatchTechMap(batches, ambiguousBatch, mapB);
         } finally {
+            restoreProductionBatch(legacyProductionId, originalLegacyBatchId);
             cleanupScenario(productions, isolated, mapB, createdResourceIds);
+        }
+    }
+
+    @Step("DB: змоделювати legacy-партію з двома техкартами")
+    private UUID rebindProductionBatch(Long productionId, Long sourceProductionId) {
+        if (ensureDatabaseHelper() == null) {
+            throw new SkipException(
+                    "TC-WMS-011-001 legacy batch setup requires JDBC (-Duse.database=true)");
+        }
+        try {
+            UUID originalBatchId = productionBatchId(productionId);
+            UUID sharedBatchId = productionBatchId(sourceProductionId);
+            try (PreparedStatement update = getDbHelper().getConnection().prepareStatement(
+                    "UPDATE production_process SET batch_id = ? WHERE id = ?")) {
+                update.setObject(1, sharedBatchId);
+                update.setLong(2, productionId);
+                assertThat(update.executeUpdate()).isEqualTo(1);
+            }
+            return originalBatchId;
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not prepare legacy ambiguous production batch", e);
+        }
+    }
+
+    private UUID productionBatchId(Long productionId) throws Exception {
+        try (PreparedStatement query = getDbHelper().getConnection().prepareStatement(
+                "SELECT batch_id FROM production_process WHERE id = ?")) {
+            query.setLong(1, productionId);
+            try (ResultSet rows = query.executeQuery()) {
+                if (!rows.next()) {
+                    throw new IllegalStateException("Production process not found: " + productionId);
+                }
+                return rows.getObject(1, UUID.class);
+            }
+        }
+    }
+
+    private void restoreProductionBatch(Long productionId, UUID originalBatchId) {
+        if (productionId == null || originalBatchId == null || getDbHelper() == null) {
+            return;
+        }
+        try (PreparedStatement update = getDbHelper().getConnection().prepareStatement(
+                "UPDATE production_process SET batch_id = ? WHERE id = ?")) {
+            update.setObject(1, originalBatchId);
+            update.setLong(2, productionId);
+            update.executeUpdate();
+        } catch (Exception e) {
+            log.warn("Could not restore batch for production {}: {}", productionId, e.getMessage());
         }
     }
 

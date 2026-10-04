@@ -3,9 +3,10 @@ package com.erp.tests.functional.inventory;
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.inventory.InventoryDataFactory;
 import com.erp.data.factories.relocation.RelocationDataFactory;
+import com.erp.data.factories.storage.StorageDataFactory;
+import com.erp.enums.LocationFeature;
 import com.erp.enums.RelocationState;
 import com.erp.enums.StorageRelation;
-import com.erp.enums.UnitType;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.RelocationFixture;
@@ -35,8 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Feature("Storage Relation × Stock")
 public class StorageRelationInventoryTest extends StorageApiTestBase {
 
-    private static final List<UnitType> RELATION_TEST_TYPES = List.of(
-            UnitType.STORAGE, UnitType.UNIT, UnitType.PRODUCTION);
+    private static final List<Set<LocationFeature>> EXTERNAL_FEATURE_VARIANTS = List.of(
+            Set.of(LocationFeature.RELOCATIONS),
+            Set.of(LocationFeature.RELOCATIONS, LocationFeature.EQUIPMENT),
+            Set.of(LocationFeature.RELOCATIONS, LocationFeature.CREWS));
 
     private RelocationFixture relocationFixture;
     private InventoryFixture inventoryFixture;
@@ -112,24 +115,23 @@ public class StorageRelationInventoryTest extends StorageApiTestBase {
 
     @Test(priority = 25)
     @TestCaseId("TC-INV-REL-005")
-    @Story("EXTERNAL receive no-op is independent of UnitType")
+    @Story("EXTERNAL receive no-op is independent of supported feature set")
     @Description("""
-            Що перевіряємо: відсутність нарахування залишку на EXTERNAL не залежить від UnitType локації.
-            Тестові дані: для type ∈ {STORAGE, UNIT, PRODUCTION} створюємо EXTERNAL child (inv-ext-<type>-),
-            виконуємо receive amount=5 від supplier на кожну.
-            Очікування: stock після receive = stock до receive для кожного type.
+            Що перевіряємо: відсутність нарахування залишку на EXTERNAL не залежить від дозволеного
+            набору features локації. Тестові дані: EXTERNAL child з кожним підтримуваним набором
+            {RELOCATIONS}, {RELOCATIONS, EQUIPMENT}, {RELOCATIONS, CREWS}; receive amount=5 від supplier.
+            Очікування: stock після receive = stock до receive для кожного набору features.
             """)
     @Severity(SeverityLevel.CRITICAL)
-    public void testExternalReceiveStockNoOpIndependentOfUnitType() {
+    public void testExternalReceiveStockNoOpForSupportedFeatureSets() {
         StorageResponse parent = storageFixture.resolveParentUnit();
         double amount = 5.0;
 
-        for (UnitType type : RELATION_TEST_TYPES) {
-            StorageResponse external = storageFixture.createChildStorage(
-                    parent.getId(),
-                    "inv-ext-" + type.name().toLowerCase() + "-",
-                    type,
-                    StorageRelation.EXTERNAL);
+        for (Set<LocationFeature> features : EXTERNAL_FEATURE_VARIANTS) {
+            StorageResponse external = storageFixture.createStorage(
+                    StorageDataFactory.externalStorage(parent.getId(), "inv-ext-features-")
+                            .features(features)
+                            .build());
             String batch = RelocationDataFactory.uniqueBatchNumber();
 
             double before = inventoryFixture.getResourceStock(
@@ -142,7 +144,7 @@ public class StorageRelationInventoryTest extends StorageApiTestBase {
                     external.getId(), resourceId, UserRole.ADMIN);
 
             assertThat(after)
-                    .as("EXTERNAL receive must not credit stock for type=%s", type)
+                    .as("EXTERNAL receive must not credit stock for features=%s", features)
                     .isEqualTo(before);
         }
     }

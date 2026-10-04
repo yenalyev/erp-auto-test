@@ -21,11 +21,11 @@ public final class RelocationDataFactory {
     }
 
     public static String uniqueBatchNumber() {
-        return "rel-batch-" + System.currentTimeMillis();
+        return "rel-batch-" + UUID.randomUUID();
     }
 
     public static String uniqueInvoiceNumber() {
-        return "INV-REL-" + System.currentTimeMillis();
+        return "INV-REL-" + UUID.randomUUID();
     }
 
     public static ResourceUsageRequest usage(Long resourceId, double amount) {

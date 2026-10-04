@@ -56,8 +56,7 @@ public class RelocationEditActionsUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + storageId + "');");
+        injectWorkspaceView(UserRole.ADMIN, storageId);
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -293,8 +292,7 @@ public class RelocationEditActionsUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 
     private void reopenPageWithSession(UserRole role, long selectedStorageId) {

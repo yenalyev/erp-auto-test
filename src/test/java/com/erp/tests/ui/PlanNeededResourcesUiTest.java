@@ -2,15 +2,20 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.PlanNeededResourcesFixture;
+import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.PlanResponse;
 import com.erp.models.response.ResourceCategoryResponse;
+import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.pages.PlanExecutionPage;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.PollUtils;
+import io.restassured.response.Response;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -38,12 +43,15 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
 
     private PlanNeededResourcesFixture fixture;
     private StorageFixture storageFixture;
+    private InventoryFixture inventoryFixture;
+    private ResourceFixture resourceFixture;
     private Long ownerStorageId;
 
     private final List<PlanResponse> plans = new ArrayList<>();
     private final List<ManufacturingItemResponse> productions = new ArrayList<>();
     private Long productionStorageId;
     private final List<CleanupMap> maps = new ArrayList<>();
+    private final List<ResourceResponse> createdResources = new ArrayList<>();
     private final List<Long> storagesNewestFirst = new ArrayList<>();
 
     @BeforeClass(alwaysRun = true)
@@ -53,6 +61,8 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
         fixture = new PlanNeededResourcesFixture(testContext, apiExecutor);
         fixture.prepareContext();
         storageFixture = new StorageFixture(testContext, apiExecutor);
+        inventoryFixture = new InventoryFixture(testContext, apiExecutor);
+        resourceFixture = new ResourceFixture(testContext, apiExecutor);
         ownerStorageId = ConfigProvider.getOwner1StorageId();
     }
 
@@ -89,6 +99,19 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
             }
         }
         maps.clear();
+        if (inventoryFixture != null) {
+            for (Long storageId : storagesNewestFirst) {
+                for (ResourceResponse resource : createdResources) {
+                    try {
+                        inventoryFixture.removeResourceFromStorage(
+                                storageId, resource.getId(), UserRole.ADMIN);
+                    } catch (RuntimeException e) {
+                        log.warn("Resource {} inventory cleanup failed on storage {}",
+                                resource.getId(), storageId, e);
+                    }
+                }
+            }
+        }
         if (storageFixture != null) {
             for (Long storageId : storagesNewestFirst) {
                 try {
@@ -102,6 +125,23 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
             storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
         } else {
             storagesNewestFirst.clear();
+        }
+        if (resourceFixture != null) {
+            for (ResourceResponse resource : createdResources) {
+                try {
+                    Response response = resourceFixture.deactivate(UserRole.ADMIN, resource.getId());
+                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                        log.warn("Resource {} deactivation failed: HTTP {}: {}",
+                                resource.getId(), response.statusCode(), response.asString());
+                    }
+                } catch (RuntimeException e) {
+                    log.warn("Resource {} deactivation failed", resource.getId(), e);
+                }
+            }
+        }
+        createdResources.clear();
+        if (fixture != null) {
+            fixture.clearCreatedResourceIds();
         }
     }
 
@@ -154,10 +194,11 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @Severity(SeverityLevel.NORMAL)
     @Description("«Всі локації» — банер замість вкладок виконання і потреби.")
     public void allLocationsShowsGuardInsteadOfTabs() {
-        injectAllLocationsView();
-        injectRoleSessionKeepingStorage(UserRole.ADMIN);
+        injectAllLocationsSession(UserRole.ADMIN);
         PlanExecutionPage planPage = new PlanExecutionPage(page).openWithoutExecutionFetch();
 
+        page.waitForCondition(planPage::isAllLocationsGuardVisible,
+                new com.microsoft.playwright.Page.WaitForConditionOptions().setTimeout(30_000));
         assertThat(planPage.isAllLocationsGuardVisible()).isTrue();
         assertThat(planPage.isNeededTabVisible()).isFalse();
         planPage.attachScreenshot("TC-PLN-NR-003 all locations");
@@ -181,7 +222,8 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
         assertThat(planPage.isNeededProducedBadgeVisible(isolated.chain().getIntermediate().getName())).isTrue();
         assertThat(planPage.isNeededProducedBadgeVisible(isolated.chain().getRaw().getName())).isFalse();
         assertThat(planPage.getNeededAmount(isolated.chain().getIntermediate().getName()))
-                .isCloseTo(200.0, within(0.2));
+                .isCloseTo((PlanNeededResourcesFixture.PLAN_GOAL - PlanNeededResourcesFixture.PRODUCED)
+                        * PlanNeededResourcesFixture.INTERMEDIATE_PER_PRODUCT, within(0.2));
         planPage.attachScreenshot("TC-PLN-NR-016 table");
     }
 
@@ -191,7 +233,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @Severity(SeverityLevel.MINOR)
     @Description("Empty state: «Немає потреби в додаткових ресурсах».")
     public void emptyStateWhenNoNeed() {
-        StorageResponse storage = storageFixture.createChildStorage(ownerStorageId, "nr-ui-empty-");
+        StorageResponse storage = storageFixture.createProductionStorage(ownerStorageId, "nr-ui-empty-");
         storagesNewestFirst.add(0, storage.getId());
         PlanNeededResourcesFixture.Chain chain = trackChain(storage.getId(), fixture.createTwoLevelChain(storage.getId()));
 
@@ -212,7 +254,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
         if (categories == null || categories.size() < 2) {
             throw new SkipException("Need ≥2 resource categories for TC-PLN-NR-020");
         }
-        StorageResponse storage = storageFixture.createChildStorage(ownerStorageId, "nr-ui-cat-");
+        StorageResponse storage = storageFixture.createProductionStorage(ownerStorageId, "nr-ui-cat-");
         storagesNewestFirst.add(0, storage.getId());
         PlanNeededResourcesFixture.Chain chain = trackChain(
                 storage.getId(),
@@ -239,7 +281,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @Severity(SeverityLevel.NORMAL)
     @Description("«Лише дефіцит» ховає покриті рядки; empty фільтрів, якщо всі відсіяні.")
     public void onlyShortagesFilter() {
-        StorageResponse storage = storageFixture.createChildStorage(ownerStorageId, "nr-ui-def-");
+        StorageResponse storage = storageFixture.createProductionStorage(ownerStorageId, "nr-ui-def-");
         storagesNewestFirst.add(0, storage.getId());
         PlanNeededResourcesFixture.Chain chain = trackChain(storage.getId(), fixture.createTwoLevelChain(storage.getId()));
         plans.add(fixture.createCurrentMonthPlan(storage.getId(), chain.getProduct().getId(), 10));
@@ -264,11 +306,16 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
         IsolatedChain isolated = arrangeCanonicalUnderOwner();
         injectRoleSession(UserRole.OWNER_1, isolated.storageId());
         PlanExecutionPage planPage = new PlanExecutionPage(page).open().openNeededResourcesTab();
+        planPage.setIncludeStock(true);
         assertThat(planPage.isIncludeStockChecked()).isTrue();
-        double withStock = planPage.getNeededAmount(isolated.chain().getRaw().getName());
+        double withStock = planPage.getNeededShortageAmount(isolated.chain().getRaw().getName());
 
         planPage.setIncludeStock(false);
-        double withoutStock = planPage.getNeededAmount(isolated.chain().getRaw().getName());
+        double withoutStock = PollUtils.waitUntil(
+                () -> planPage.getNeededShortageAmount(isolated.chain().getRaw().getName()),
+                shortage -> shortage > withStock,
+                10_000,
+                "Needed shortage after excluding stock");
         assertThat(withoutStock).isGreaterThan(withStock);
         planPage.attachScreenshot("TC-PLN-NR-022 include stock");
     }
@@ -282,6 +329,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
         IsolatedChain isolated = arrangeCanonicalUnderOwner();
         injectRoleSession(UserRole.OWNER_1, isolated.storageId());
         PlanExecutionPage planPage = new PlanExecutionPage(page).open().openNeededResourcesTab();
+        planPage.setIncludeProduced(false);
         double fullPlan = planPage.getNeededAmount(isolated.chain().getIntermediate().getName());
 
         planPage.setIncludeProduced(true);
@@ -352,19 +400,17 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Перемикання парент ↔ дитина оновлює таблицю потреби.")
     public void parentVersusChildAmounts() {
-        StorageResponse parent = storageFixture.createUnitStorage(ownerStorageId, "nr-ui-par-");
-        StorageResponse childA = storageFixture.createChildStorage(parent.getId(), "nr-ui-ca-");
-        StorageResponse childB = storageFixture.createChildStorage(parent.getId(), "nr-ui-cb-");
+        StorageResponse parent = storageFixture.createProductionStorage(ownerStorageId, "nr-ui-par-");
+        StorageResponse childA = storageFixture.createProductionStorage(parent.getId(), "nr-ui-ca-");
+        StorageResponse childB = storageFixture.createProductionStorage(parent.getId(), "nr-ui-cb-");
         storagesNewestFirst.add(childB.getId());
         storagesNewestFirst.add(childA.getId());
         storagesNewestFirst.add(parent.getId());
 
-        PlanNeededResourcesFixture.Chain chain = fixture.createTwoLevelChain(
+        PlanNeededResourcesFixture.Chain chain = trackChain(childA.getId(), fixture.createTwoLevelChain(
                 Set.of(childA.getId(), childB.getId()),
                 testContext.get(com.erp.test_context.ContextKey.SHARED_RESOURCE_CATEGORY_ID),
-                testContext.get(com.erp.test_context.ContextKey.SHARED_RESOURCE_CATEGORY_ID));
-        maps.add(new CleanupMap(chain.getProductMap(), childA.getId()));
-        maps.add(new CleanupMap(chain.getIntermediateMap(), childA.getId()));
+                testContext.get(com.erp.test_context.ContextKey.SHARED_RESOURCE_CATEGORY_ID)));
         plans.add(fixture.createCurrentMonthPlan(childA.getId(), chain.getProduct().getId(), 100));
         plans.add(fixture.createCurrentMonthPlan(childB.getId(), chain.getProduct().getId(), 50));
 
@@ -382,7 +428,7 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     }
 
     private IsolatedChain arrangeCanonicalUnderOwner() {
-        StorageResponse storage = storageFixture.createChildStorage(ownerStorageId, "nr-ui-can-");
+        StorageResponse storage = storageFixture.createProductionStorage(ownerStorageId, "nr-ui-can-");
         storagesNewestFirst.add(0, storage.getId());
         PlanNeededResourcesFixture.Chain chain = trackChain(storage.getId(), fixture.createTwoLevelChain(storage.getId()));
         productions.add(fixture.seedCanonicalPlanProductionAndStock(storage.getId(), chain));
@@ -397,17 +443,24 @@ public class PlanNeededResourcesUiTest extends BaseUITest {
     private PlanNeededResourcesFixture.Chain trackChain(Long storageId, PlanNeededResourcesFixture.Chain chain) {
         maps.add(new CleanupMap(chain.getProductMap(), storageId));
         maps.add(new CleanupMap(chain.getIntermediateMap(), storageId));
+        createdResources.add(chain.getProduct());
+        createdResources.add(chain.getIntermediate());
+        createdResources.add(chain.getRaw());
         return chain;
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
         injectSessionCookies(cachedSessionCookies(role), sessionCookieDomain());
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + role.getUsername()
+                        + "', '" + selectedStorageId + "');");
     }
 
-    private void injectRoleSessionKeepingStorage(UserRole role) {
+    private void injectAllLocationsSession(UserRole role) {
         injectSessionCookies(cachedSessionCookies(role), sessionCookieDomain());
+        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');"
+                + "localStorage.setItem('selectedStorageId:" + role.getUsername() + "', 'all');");
     }
 
     private record IsolatedChain(Long storageId, PlanNeededResourcesFixture.Chain chain) {

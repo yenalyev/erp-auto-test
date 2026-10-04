@@ -34,14 +34,15 @@ public class UnitManagementPage extends BasePage {
             Pattern.compile("^(Управління запасами|Ресурси та залишки)");
     private static final String OPEN_INVENTORY_BUTTON_TEXT = "Відкрити інвентаризацію";
     private static final String CLOSE_INVENTORY_BUTTON_TEXT = "Закрити інвентаризацію";
-    private static final String CONDUCT_INVENTORY_BUTTON_TEXT = "Провести інвентаризацію";
+    private static final String CONDUCT_INVENTORY_BUTTON_TEXT = "Інвентаризація";
     private static final String EXPORT_TO_EXCEL_BUTTON_TEXT = "Експорт в Excel";
     private static final String COPY_BUTTON_TEXT = "Скопіювати";
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано";
     private static final Pattern SEARCH_PLACEHOLDER_PATTERN =
             Pattern.compile("^(Пошук\\.\\.\\.|Пошук по назві)$");
     /** Quantity column of the stock table — «Кількість» only labels the per-batch detail table. */
-    private static final String AMOUNT_HEADER = "Вільна к-сть";
+    private static final String AVAILABLE_AMOUNT_HEADER = "Вільна к-сть";
+    private static final String TOTAL_AMOUNT_HEADER = "Всього";
     public static final String BADGE_ABSENT = "відсутній";
     public static final String BADGE_BELOW_NORM = "менше норми";
     public static final String BADGE_ENOUGH = "достатньо";
@@ -135,7 +136,8 @@ public class UnitManagementPage extends BasePage {
     }
 
     public boolean isConductInventoryButtonEnabled() {
-        return conductButton().isEnabled();
+        Locator button = conductButton();
+        return button.count() > 0 && button.first().isVisible() && button.first().isEnabled();
     }
 
     public boolean isConductInventoryButtonVisible() {
@@ -479,18 +481,21 @@ public class UnitManagementPage extends BasePage {
         badge.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));
-        try {
-            page.waitForResponse(
-                    response -> response.url().contains("/inventory")
-                            && !response.url().contains("/status")
-                            && !response.url().contains("/batches")
-                            && !response.url().contains("/tag-statistics")
-                            && "GET".equals(response.request().method()),
-                    badge::click);
-        } catch (Exception e) {
-            log.warn("Inventory tag filter response wait timed out: {}", e.getMessage());
-            page.waitForTimeout(2000);
-        }
+        page.waitForResponse(
+                response -> response.url().contains("/storages/inventory")
+                        && !response.url().contains("/totals")
+                        && "GET".equals(response.request().method())
+                        && response.status() == 200,
+                badge::click);
+        waitForInventoryTableSettled();
+        return this;
+    }
+
+    public UnitManagementPage waitForInventoryTableSettled() {
+        page.locator("[data-page-fill] [role='status'][aria-busy='true']")
+                .waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.HIDDEN)
+                        .setTimeout(uiTimeoutMs()));
         return this;
     }
 
@@ -611,13 +616,30 @@ public class UnitManagementPage extends BasePage {
         return isMultiLocationTableVisible();
     }
 
-    /** Multi-location table (колонка «Локація») — «Всі локації» або «По всій ієрархії». */
+    /** The stock table names each location in its own column after «Всього». */
+    public List<String> getLocationColumnHeaders() {
+        Locator headers = stockTable().locator("thead th");
+        List<String> names = new ArrayList<>();
+        boolean afterTotal = false;
+        for (String header : headers.allInnerTexts()) {
+            String text = header.trim().replaceAll("\\s+", " ");
+            if (afterTotal && !text.isEmpty()) {
+                names.add(text);
+            }
+            if (TOTAL_AMOUNT_HEADER.equals(text)) {
+                afterTotal = true;
+            }
+        }
+        return names;
+    }
+
+    /** Multi-location table has one column per returned location. */
     public boolean isMultiLocationTableVisible() {
-        Locator header = page.locator("table thead th")
-                .filter(new Locator.FilterOptions().setHasText("Локація"));
         try {
-            header.first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
-            return header.first().isVisible();
+            Locator total = stockTable().locator("thead th")
+                    .filter(new Locator.FilterOptions().setHasText(TOTAL_AMOUNT_HEADER)).first();
+            total.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+            return total.isVisible() && !getLocationColumnHeaders().isEmpty();
         } catch (Exception e) {
             return false;
         }
@@ -767,7 +789,7 @@ public class UnitManagementPage extends BasePage {
                 .first()
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         page.locator("table thead th")
-                .filter(new Locator.FilterOptions().setHasText(AMOUNT_HEADER))
+                .filter(new Locator.FilterOptions().setHasText(quantityHeader()))
                 .first()
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         return this;
@@ -777,10 +799,22 @@ public class UnitManagementPage extends BasePage {
     public String getResourceAmountText(String resourceName) {
         Locator row = resourceRow(resourceName).first();
         row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
-        Locator amountCell = row.locator("td").nth(columnIndexByHeader(AMOUNT_HEADER));
+        Locator amountCell = row.locator("td").nth(columnIndexByHeader(quantityHeader()));
         return amountCell.innerText().trim().replaceAll("\\s+", " ");
     }
 
+    private String quantityHeader() {
+        List<String> headers = stockTable().locator("thead th").allInnerTexts().stream()
+                .map(UnitManagementPage::normalizedText)
+                .toList();
+        if (headers.contains(AVAILABLE_AMOUNT_HEADER)) {
+            return AVAILABLE_AMOUNT_HEADER;
+        }
+        if (headers.contains(TOTAL_AMOUNT_HEADER)) {
+            return TOTAL_AMOUNT_HEADER;
+        }
+        throw new IllegalStateException("Quantity column not found in stock table. Present: " + headers);
+    }
     /** Resolves a body-cell index from a stock table header label, so column order can shift. */
     private int columnIndexByHeader(String headerText) {
         Locator headers = stockTable().locator("thead th");
@@ -799,6 +833,20 @@ public class UnitManagementPage extends BasePage {
     /** Parses numeric amount from the quantity cell. */
     public double getResourceAmount(String resourceName) {
         return parseAmountFromCellText(getResourceAmountText(resourceName));
+    }
+
+    /** Numeric value of the «Всього» column on the hierarchy inventory table. */
+    public double getResourceTotalAmount(String resourceName) {
+        Locator row = resourceRow(resourceName).first();
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return parseAmountFromCellText(
+                row.locator("td").nth(columnIndexByHeader("Всього")).innerText());
+    }
+
+    /** Status text shown in the inventory row for a specific resource. */
+    public boolean hasResourceStatusText(String resourceName, String statusText) {
+        Locator status = resourceRow(resourceName).getByText(statusText);
+        return status.count() > 0 && status.first().isVisible();
     }
 
     public UnitManagementPage assertResourceAmountVisible(String resourceName, double expected) {
@@ -856,7 +904,8 @@ public class UnitManagementPage extends BasePage {
     }
 
     private Locator conductButton() {
-        return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(CONDUCT_INVENTORY_BUTTON_TEXT));
+        return page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName(CONDUCT_INVENTORY_BUTTON_TEXT).setExact(true));
     }
 
     private Locator exportToExcelButton() {

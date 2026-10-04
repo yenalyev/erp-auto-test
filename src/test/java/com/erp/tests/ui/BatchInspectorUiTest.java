@@ -183,7 +183,7 @@ public class BatchInspectorUiTest extends BaseUITest {
         Map<String, String> cookies = getPlaywrightSessionProvider()
                 .getSession(role.getUsername(), role.getPassword());
         injectSessionCookies(cookies, sessionCookieDomain());
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        injectAllLocationsView(role);
     }
 
     private void prepareSession(UserFixture.BusinessActor actor) {
@@ -191,7 +191,7 @@ public class BatchInspectorUiTest extends BaseUITest {
         Map<String, String> cookies = getPlaywrightSessionProvider()
                 .getSession(actor.username(), actor.password());
         injectSessionCookies(cookies, sessionCookieDomain());
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        injectWorkspaceView(actor.username(), "all");
     }
 
     private static List<Map<String, Object>> mockInspection(String name, String invoice) {

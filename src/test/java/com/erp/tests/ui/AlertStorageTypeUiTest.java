@@ -23,12 +23,14 @@ import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.Allure;
+import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Epic("Inventory")
 @Feature("REQ-ALERT")
+@Slf4j
 public class AlertStorageTypeUiTest extends BaseUITest {
 
     private AlertFixture alertFixture;
@@ -45,6 +48,7 @@ public class AlertStorageTypeUiTest extends BaseUITest {
     private StorageRegionFixture regionFixture;
     private UserFixture userFixture;
     private Long parentId;
+    private final List<AlertFixture.TypedAlertSeed> createdSeeds = new ArrayList<>();
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -64,6 +68,7 @@ public class AlertStorageTypeUiTest extends BaseUITest {
 
     @AfterMethod(alwaysRun = true)
     public void cleanupStoragesAfterMethod() {
+        cleanupCreatedSeeds();
         if (userFixture != null) {
             userFixture.deactivateTrackedUsers();
         }
@@ -72,6 +77,7 @@ public class AlertStorageTypeUiTest extends BaseUITest {
 
     @AfterClass(alwaysRun = true)
     public void cleanupStoragesAfterClass() {
+        cleanupCreatedSeeds();
         if (userFixture != null) {
             userFixture.deactivateTrackedUsers();
         }
@@ -104,6 +110,7 @@ public class AlertStorageTypeUiTest extends BaseUITest {
         AlertFixture.TypedAlertSeed seed = alertFixture.seedAlertForType(
                 storageFixture, resourceFixture, inventoryFixture,
                 parentId, type, AlertFixture.DEFAULT_LIMIT);
+        createdSeeds.add(seed);
         boolean detachedLocation = type == UnitType.CREW || type == UnitType.FLY_POINT;
         StorageResponse workspace = detachedLocation
                 ? storageFixture.getById(UserRole.ADMIN, seed.storage().getParent().getId())
@@ -131,6 +138,10 @@ public class AlertStorageTypeUiTest extends BaseUITest {
         assertThat(alertedIdx)
                 .as("спочатку залишки з алертом, потім решта (type=%s)", type)
                 .isLessThan(plainIdx);
+        stock.waitForInventoryTableSettled();
+        page.waitForCondition(
+                () -> stock.hasStatusBadge(seed.alerted().getName(), UnitManagementPage.BADGE_ABSENT),
+                new Page.WaitForConditionOptions().setTimeout(30_000));
         assertThat(stock.hasStatusBadge(seed.alerted().getName(), UnitManagementPage.BADGE_ABSENT))
                 .as("бейдж «відсутній» на /inventory type=%s", type)
                 .isTrue();
@@ -167,11 +178,50 @@ public class AlertStorageTypeUiTest extends BaseUITest {
         return new UnitManagementPage(page).openWithStorageIdQuery(storageId, false);
     }
 
+    private void cleanupCreatedSeeds() {
+        if (createdSeeds.isEmpty()) {
+            return;
+        }
+        if (TestArtifactCleanup.shouldSkipApiCleanup()) {
+            createdSeeds.clear();
+            return;
+        }
+        for (AlertFixture.TypedAlertSeed seed : createdSeeds) {
+            try {
+                alertFixture.removeResourceFromAlerts(
+                        seed.storage().getId(), seed.alerted().getId(), UserRole.ADMIN);
+            } catch (RuntimeException e) {
+                log.warn("Could not remove alert for resource {}", seed.alerted().getId(), e);
+            }
+            for (var resource : List.of(seed.alerted(), seed.plain())) {
+                try {
+                    inventoryFixture.removeResourceFromStorage(
+                            seed.storage().getId(), resource.getId(), UserRole.ADMIN);
+                } catch (RuntimeException e) {
+                    log.warn("Could not clear resource {} from storage {}",
+                            resource.getId(), seed.storage().getId(), e);
+                }
+                try {
+                    var response = resourceFixture.deactivate(UserRole.ADMIN, resource.getId());
+                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                        log.warn("Could not deactivate resource {}: HTTP {}",
+                                resource.getId(), response.statusCode());
+                    }
+                } catch (RuntimeException e) {
+                    log.warn("Could not deactivate resource {}", resource.getId(), e);
+                }
+            }
+        }
+        createdSeeds.clear();
+    }
+
     private void injectOwnerSession(UserFixture.BusinessActor owner, long selectedStorageId) {
         browserContext.clearCookies();
         Map<String, String> cookies = authService.getSessionForUser(owner.username(), owner.password());
         injectSessionCookies(cookies, sessionCookieDomain());
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + owner.username() + "', '"
+                        + selectedStorageId + "');");
     }
 }

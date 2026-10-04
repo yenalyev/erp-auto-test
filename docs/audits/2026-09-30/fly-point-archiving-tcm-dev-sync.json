@@ -1,0 +1,190 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": true,
+    "updated": false
+  },
+  "acceptanceCriteria": {
+    "created": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06"
+    ],
+    "updated": []
+  },
+  "testCases": {
+    "created": [
+      "TC-FPA-001",
+      "TC-FPA-002",
+      "TC-FPA-003",
+      "TC-FPA-004",
+      "TC-FPA-005",
+      "TC-FPA-006",
+      "TC-FPA-007",
+      "TC-FPA-008",
+      "TC-FPA-009",
+      "TC-FPA-010",
+      "TC-FPA-011",
+      "TC-FPA-012",
+      "TC-FPA-013",
+      "TC-FPA-014"
+    ],
+    "updated": []
+  },
+  "verification": {
+    "featureId": "REQ-CREW-004",
+    "parentFeatureId": "REQ-CREW",
+    "status": "ACTIVE",
+    "documentationLength": 4905,
+    "documentationSha256": "c128aa1ca073726c81875ab880f5416167f2192266a5dcd8715126c9da233818",
+    "sourceDocumentationSha256": "c128aa1ca073726c81875ab880f5416167f2192266a5dcd8715126c9da233818",
+    "requiredAcPresent": true,
+    "managedAcCount": 6,
+    "managedCaseCount": 14,
+    "automatedCaseCount": 11,
+    "manualCaseCount": 3,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-FPA-001": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-001"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-002": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-002"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-003": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-003"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-004": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-004"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-005": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-005"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-006": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-006"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-007": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-007"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-008": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-FPA-009": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-009"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-010": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-010"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-011": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-011"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-012": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-FPA-013": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-FPA-013"
+        ],
+        "stepCount": 2
+      },
+      "TC-FPA-014": {
+        "featureId": "REQ-CREW-004",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      }
+    }
+  },
+  "completedAt": "2026-09-30T14:46:01.493828+00:00",
+  "result": "SUCCESS"
+}

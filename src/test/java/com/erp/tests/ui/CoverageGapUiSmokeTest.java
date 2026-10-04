@@ -37,7 +37,7 @@ public class CoverageGapUiSmokeTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', '" + storageId + "');");
+        injectWorkspaceView(UserRole.ADMIN, storageId);
     }
 
     private void openApp() {
@@ -146,8 +146,7 @@ public class CoverageGapUiSmokeTest extends BaseUITest {
     public void ordersAnalyticsTabOpens() {
         openApp();
         AppSidebarPage sidebar = new AppSidebarPage(page).waitForSidebarLoaded();
-        sidebar.openGroup(AppSidebarPage.GROUP_ORDERS);
-        sidebar.openPageTab(AppSidebarPage.TAB_ORDERS_ANALYTICS);
+        sidebar.openCollapsiblePath(AppSidebarPage.GROUP_ANALYTICS, "/orders-analytics");
         assertThat(page.url()).contains("/orders-analytics");
     }
 

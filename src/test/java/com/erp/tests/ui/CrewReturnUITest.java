@@ -255,9 +255,7 @@ public class CrewReturnUITest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId:" +
-                        (role == UserRole.OWNER_1 ? returnActor.username() : role.getUsername()) +
-                        "', '" + selectedStorageId + "');");
+        String username = role == UserRole.OWNER_1 ? returnActor.username() : role.getUsername();
+        injectWorkspaceView(username, selectedStorageId);
     }
 }

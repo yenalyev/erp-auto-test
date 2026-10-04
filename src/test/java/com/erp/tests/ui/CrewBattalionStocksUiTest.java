@@ -97,8 +97,7 @@ public class CrewBattalionStocksUiTest extends BaseUITest {
                 UserRole.CREW_READ.getUsername(), UserRole.CREW_READ.getPassword());
         apiExecutor.clearSessionCache();
         injectSessionCookies(cachedSessionCookies(UserRole.CREW_READ), sessionCookieDomain());
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + memberStorageId + "');");
+        injectWorkspaceView(UserRole.CREW_READ, memberStorageId);
 
         String unitName = scenario.unit().getName();
         String crewName = scenario.crew().getName();

@@ -291,7 +291,7 @@ public class UnitAnalyticsUiTest extends BaseUITest {
     private void loginAsUnitAnalyst() {
         browserContext.clearCookies();
         injectSessionCookies(cachedSessionCookies(UserRole.UNIT_ANALYST), sessionCookieDomain());
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.UNIT_ANALYST);
         if (page != null) {
             page.close();
         }

@@ -1,0 +1,220 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06",
+      "AC-07",
+      "AC-08"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-ANL-UI-013",
+      "TC-ANL-UI-014",
+      "TC-ANL-UI-015",
+      "TC-ANL-UI-016",
+      "TC-ANL-UI-017",
+      "TC-ANL-UI-018",
+      "TC-ANL-UI-019",
+      "TC-ANL-UI-020",
+      "TC-ANL-UI-021",
+      "TC-ANL-UI-022",
+      "TC-ANL-UI-023",
+      "TC-ANL-UI-024",
+      "TC-ANL-UI-025",
+      "TC-ANL-UI-026",
+      "TC-ANL-UI-027",
+      "TC-ANL-UI-028"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+    "parentFeatureId": "REQ-ANL-PRODUCTION",
+    "status": "ACTIVE",
+    "documentationLength": 20086,
+    "documentationSha256": "377b831594a3399f8200e27a25179164a143e95d363995a3c76bcab9b9572459",
+    "sourceDocumentationSha256": "377b831594a3399f8200e27a25179164a143e95d363995a3c76bcab9b9572459",
+    "requiredAcPresent": true,
+    "managedAcCount": 8,
+    "managedCaseCount": 16,
+    "automatedCaseCount": 16,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-ANL-UI-013": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-013"
+        ],
+        "stepCount": 4
+      },
+      "TC-ANL-UI-014": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-014"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-015": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-015"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-016": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-016"
+        ],
+        "stepCount": 4
+      },
+      "TC-ANL-UI-017": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-017"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-018": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-018"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-019": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-019"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-020": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-020"
+        ],
+        "stepCount": 4
+      },
+      "TC-ANL-UI-021": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-021"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-022": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-022"
+        ],
+        "stepCount": 4
+      },
+      "TC-ANL-UI-023": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-023"
+        ],
+        "stepCount": 4
+      },
+      "TC-ANL-UI-024": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-024"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-025": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-025"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-026": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-026"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-027": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-027"
+        ],
+        "stepCount": 4
+      },
+      "TC-ANL-UI-028": {
+        "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+        "acId": "AC-08",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-028"
+        ],
+        "stepCount": 4
+      }
+    }
+  },
+  "completedAt": "2026-09-28T08:49:20.055880+00:00",
+  "result": "SUCCESS"
+}

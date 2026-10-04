@@ -417,7 +417,7 @@ public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
                     getPlaywrightSessionProvider().getSession(
                             owner.username(), owner.password()),
                     sessionCookieDomain());
-            injectAllLocationsView();
+            injectWorkspaceView(owner.username(), "all");
 
             OperationHistoryPage historyPage = new OperationHistoryPage(page);
             Response equipmentHistoryResponse = Allure.step(
@@ -483,7 +483,6 @@ public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
         injectSessionCookies(cachedSessionCookies(role), sessionCookieDomain());
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 }

@@ -869,10 +869,10 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
 
     @Test(priority = 82)
     @TestCaseId("TC-ANL-UI-015")
-    @Story("Statistics — Excel is independent from active inner tab")
+    @Story("Statistics — Excel keeps five sheets when switching tabs")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Активний таб статистики не змінює склад або дані багатолистового workbook.")
-    public void excelWorkbookDoesNotDependOnActiveStatisticsTab() throws Exception {
+    @Description("Без активних фільтрів усі п'ять аркушів зберігають дані після перемикання таба.")
+    public void excelWorkbookKeepsAllSheetsWithUnchangedEffectiveFilters() throws Exception {
         ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
         analytics.periodPicker().selectPreset(DateRangePickerComponent.PRESET_7_DAYS);
         analytics.openStatisticsTab();
@@ -1018,7 +1018,7 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
 
     @Test(priority = 89)
     @TestCaseId("TC-ANL-UI-022")
-    @Story("Statistics — location and product filters in Excel")
+    @Story("Statistics — location, product and material filters in Excel")
     @Severity(SeverityLevel.BLOCKER)
     public void excelExportForwardsLocationAndProductTopFilters() throws Exception {
         ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
@@ -1069,18 +1069,32 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
                 List.of(location.getId(), secondLocation.getId()),
                 null,
                 List.of(journalProduction.getProduct().getId(), secondJournalProduction.getProduct().getId())));
-        String bothProductText = workbookText(bothProducts);
-        assertThat(bothProductText)
-                .contains(
-                        journalProduction.getProduct().getName(),
-                        secondJournalProduction.getProduct().getName(),
-                        productionResources.get(0).getName(),
-                        secondProductionResources.get(0).getName());
+        assertThat(sheetText(bothProducts, 0, "Виготовлення - За виробами"))
+                .contains(journalProduction.getProduct().getName(), secondJournalProduction.getProduct().getName());
+        assertThat(sheetText(bothProducts, 1, "Виготовлення - Витрати"))
+                .doesNotContain(productionResources.get(0).getName(), secondProductionResources.get(0).getName());
+
+        analytics.openExpenses(ProductionAnalyticsPage.TAB_ASSEMBLY);
+        analytics.waitForExpenseResource(productionResources.get(0).getName());
+        analytics.selectFilterOption("Матеріали", productionResources.get(0).getName());
+        ProductionAnalyticsPage.ExportDownloadResult materialExport = analytics.exportStatisticsToExcel();
+        try {
+            assertThat(materialExport.requestUrl())
+                    .contains("storageIds=" + location.getId())
+                    .contains("resourceIds=" + productionResources.get(0).getId());
+            Map<String, List<List<String>>> materialWorkbook =
+                    XlsxWorkbookReader.sheets(Files.readAllBytes(materialExport.path()));
+            assertThat(sheetText(materialWorkbook, 1, "Виготовлення - Витрати"))
+                    .contains(productionResources.get(0).getName())
+                    .doesNotContain(productionResources.get(1).getName());
+        } finally {
+            Files.deleteIfExists(materialExport.path());
+        }
     }
 
     @Test(priority = 90)
     @TestCaseId("TC-ANL-UI-023")
-    @Story("Statistics — combined top filters in Excel")
+    @Story("Statistics — combined product and material filters in Excel")
     @Severity(SeverityLevel.BLOCKER)
     public void excelExportForwardsCombinedCategoryAndProductFilters() throws Exception {
         ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
@@ -1104,12 +1118,11 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
                 List.of(location.getId()),
                 List.of(primaryCategoryId),
                 List.of(journalProduction.getProduct().getId())));
-        String matchingText = workbookText(matchingIntersection);
-        assertThat(matchingText)
-                .contains(journalProduction.getProduct().getName(), productionResources.get(0).getName())
-                .doesNotContain(
-                        secondJournalProduction.getProduct().getName(),
-                        secondProductionResources.get(0).getName());
+        assertThat(sheetText(matchingIntersection, 0, "Виготовлення - За виробами"))
+                .contains(journalProduction.getProduct().getName())
+                .doesNotContain(secondJournalProduction.getProduct().getName());
+        assertThat(sheetText(matchingIntersection, 1, "Виготовлення - Витрати"))
+                .doesNotContain(productionResources.get(0).getName(), secondProductionResources.get(0).getName());
 
         Map<String, List<List<String>>> incompatibleIntersection = exportWorkbookViaApi(filterQuery(
                 List.of(secondLocation.getId()),
@@ -1122,6 +1135,26 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
                         productionResources.get(0).getName(),
                         secondJournalProduction.getProduct().getName(),
                         secondProductionResources.get(0).getName());
+
+        analytics.openExpenses(ProductionAnalyticsPage.TAB_ASSEMBLY);
+        analytics.waitForExpenseResource(productionResources.get(0).getName());
+        analytics.selectFilterOption("Категорії матеріалів", productionResources.get(0).getCategory().getName());
+        analytics.selectFilterOption("Матеріали", productionResources.get(0).getName());
+        ProductionAnalyticsPage.ExportDownloadResult materialExport = analytics.exportStatisticsToExcel();
+        try {
+            assertThat(materialExport.requestUrl())
+                    .contains("storageIds=" + location.getId())
+                    .contains("categoryIds=" + productionResources.get(0).getCategory().getId())
+                    .contains("resourceIds=" + productionResources.get(0).getId())
+                    .doesNotContain("resourceIds=" + journalProduction.getProduct().getId());
+            Map<String, List<List<String>>> materialWorkbook =
+                    XlsxWorkbookReader.sheets(Files.readAllBytes(materialExport.path()));
+            assertThat(sheetText(materialWorkbook, 1, "Виготовлення - Витрати"))
+                    .contains(productionResources.get(0).getName())
+                    .doesNotContain(productionResources.get(1).getName());
+        } finally {
+            Files.deleteIfExists(materialExport.path());
+        }
     }
 
     @Test(priority = 91)

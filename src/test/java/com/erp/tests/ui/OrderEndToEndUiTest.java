@@ -703,8 +703,7 @@ public class OrderEndToEndUiTest extends OrderUiTestBase {
                 ? orderRoleSession(role)
                 : authService.getSessionForUser(actor.username(), actor.password());
         injectSessionCookies(cookies, sessionCookieDomain());
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(actor == null ? orderRoleUsername(role) : actor.username(), selectedStorageId);
         page = browserContext.newPage();
         int timeoutMs = ConfigProvider.getUiTimeoutSeconds() * 1000;
         page.setDefaultTimeout(timeoutMs);

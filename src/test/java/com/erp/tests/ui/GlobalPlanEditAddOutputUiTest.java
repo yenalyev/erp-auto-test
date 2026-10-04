@@ -60,7 +60,7 @@ public class GlobalPlanEditAddOutputUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.ADMIN);
 
         log.info("Global plan edit-add-output UI setup — A={}, B={}", resourceAName, resourceBName);
     }

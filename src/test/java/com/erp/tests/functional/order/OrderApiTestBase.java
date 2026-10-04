@@ -96,16 +96,9 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
 
         resourceFixture.fetchSharedUnit(1);
         resourceFixture.fetchSharedResourceCategory();
-        sharedResources = resourceFixture.getPage(UserRole.ADMIN, true, null).stream()
-                .filter(resource -> resource.getId() != null && resource.getId() > 0
-                        && resource.getName() != null && !resource.getName().isBlank()
-                        && resource.getUnit() != null && resource.getCategory() != null)
-                .limit(requiredResourceCount())
+        sharedResources = java.util.stream.IntStream.range(0, requiredResourceCount())
+                .mapToObj(index -> resourceFixture.createUniqueResource("ord-api-resource-" + index + "-"))
                 .toList();
-        if (sharedResources.size() < requiredResourceCount()) {
-            throw new IllegalStateException("Need " + requiredResourceCount()
-                    + " active catalog resources, found " + sharedResources.size());
-        }
         for (ResourceResponse resource : sharedResources) {
             // A zero inventory row makes the resource selectable on the new location.
             relocationFixture.seedExactStock(requesterStorageId, resource.getId(), 1.0);
@@ -157,12 +150,39 @@ abstract class OrderApiTestBase extends BaseFunctionalTest {
         if (userFixture != null) {
             userFixture.deactivateTrackedUsers();
         }
+        if (inventoryFixture != null && sharedResources != null
+                && requesterStorageId != null && primaryGatheringStorageId != null) {
+            for (ResourceResponse resource : sharedResources) {
+                for (Long storageId : List.of(requesterStorageId, primaryGatheringStorageId)) {
+                    try {
+                        inventoryFixture.removeResourceFromStorage(
+                                storageId, resource.getId(), UserRole.ADMIN);
+                    } catch (RuntimeException cleanupError) {
+                        log.warn("Could not remove order resource {} from storage {}",
+                                resource.getId(), storageId, cleanupError);
+                    }
+                }
+            }
+        }
         if (storageFixture != null && primaryGatheringStorageId != null
                 && !storageFixture.archiveStorage(UserRole.ADMIN, primaryGatheringStorageId)) {
             log.warn("Could not archive dynamic gathering STORAGE {}", primaryGatheringStorageId);
         }
         if (locationProfiles != null) {
             locationProfiles.cleanup();
+        }
+        if (resourceFixture != null && sharedResources != null) {
+            for (ResourceResponse resource : sharedResources) {
+                try {
+                    Response deactivated = resourceFixture.deactivate(UserRole.ADMIN, resource.getId());
+                    if (deactivated.statusCode() < 200 || deactivated.statusCode() >= 300) {
+                        log.warn("Could not deactivate dynamic order resource {}: HTTP {}: {}",
+                                resource.getId(), deactivated.statusCode(), deactivated.asString());
+                    }
+                } catch (RuntimeException e) {
+                    log.warn("Could not deactivate dynamic order resource {}", resource.getId(), e);
+                }
+            }
         }
     }
 

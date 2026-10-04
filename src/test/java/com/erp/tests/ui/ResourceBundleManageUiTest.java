@@ -87,7 +87,7 @@ public class ResourceBundleManageUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        injectAllLocationsView(UserRole.ADMIN);
 
         RelocationPage journal = new RelocationPage(page);
         page.navigate(ConfigProvider.getBaseUrl() + RelocationPage.PATH);
@@ -215,7 +215,6 @@ public class ResourceBundleManageUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 }

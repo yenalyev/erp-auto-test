@@ -282,11 +282,17 @@ public class PlanExecutionImprovementUiTest extends BaseUITest {
                 .filter(u -> !u.getId().equals(countable.getId()))
                 .findFirst().orElseThrow();
         ResourceCategoryResponse category = categories().getFirst();
-        product(countable.getId(), category.getId(), 2);
-        product(other.getId(), category.getId(), 9);
+        var countableProduct = product(countable.getId(), category.getId(), 2);
+        var otherProduct = product(other.getId(), category.getId(), 9);
+        previousFavourites = fixture.snapshotFavouriteResourceIds(ACTOR_SESSION, activeStorageId);
+        favouritesChanged = true;
+        fixture.saveFavouriteResources(ACTOR_SESSION, activeStorageId,
+                List.of(countableProduct.getProduct().getId(), otherProduct.getProduct().getId()));
 
         injectDynamicActorSession();
-        PlanExecutionPage pageObject = new PlanExecutionPage(page).open().expandOutOfPlanSection();
+        PlanExecutionPage pageObject = new PlanExecutionPage(page).open()
+                .clickFavouritesOnly()
+                .expandOutOfPlanSection();
         assertThat(pageObject.getOutOfPlanFooterText())
                 .contains("Разом", "2")
                 .doesNotContain("11");
@@ -566,7 +572,7 @@ public class PlanExecutionImprovementUiTest extends BaseUITest {
         Map<String, String> cookies = getPlaywrightSessionProvider()
                 .getSession(activeActor.username(), activeActor.password());
         injectSessionCookies(cookies, sessionCookieDomain());
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', '" + activeStorageId + "');");
+        injectWorkspaceView(activeActor.username(), activeStorageId);
     }
 
     private void useDynamicActor(StorageResponse storage) {

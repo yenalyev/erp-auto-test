@@ -13,7 +13,6 @@ import com.erp.models.request.OrderRequest;
 import com.erp.models.response.OrderResponse;
 import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.*;
@@ -194,52 +193,87 @@ public class OrderCrudApiTest extends OrderApiTestBase {
     @Story("Create validation")
     @Description("FULL_ACCESS (Admin) може створити заявку з будь-яким активним ресурсом каталогу.")
     public void testAdminFullAccessAllowsAnyResource() {
-        ResourceResponse ungranted = new ResourceFixture(testContext, apiExecutor)
-                .getPage(UserRole.ADMIN, true, null).stream()
-                .filter(candidate -> candidate.getId() != null
-                        && sharedResources.stream().noneMatch(visible -> visible.getId().equals(candidate.getId())))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No active catalog resource outside requester set"));
-        OrderRequest request = OrderDataFactory.buildOrderRequest(
-                requesterStorageId, ungranted.getId(), 1.0);
-        Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
-        assertThat(response.statusCode())
-                .as("Admin FULL_ACCESS create; body=%s", response.asString())
-                .isEqualTo(200);
-        OrderResponse created = response.as(OrderResponse.class);
-        assertThat(created.getId()).isNotNull();
-        assertThat(created.getLines().getFirst().getResource().getId()).isEqualTo(ungranted.getId());
+        ResourceFixture resourceFixture = new ResourceFixture(testContext, apiExecutor);
+        ResourceResponse ungranted = resourceFixture.createUniqueResource("ord-admin-catalog-");
+        Long createdOrderId = null;
+        try {
+            OrderRequest request = OrderDataFactory.buildOrderRequest(
+                    requesterStorageId, ungranted.getId(), 1.0);
+            Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
+            assertThat(response.statusCode())
+                    .as("Admin FULL_ACCESS create; body=%s", response.asString())
+                    .isEqualTo(200);
+            OrderResponse created = response.as(OrderResponse.class);
+            createdOrderId = created.getId();
+            assertThat(createdOrderId).isNotNull();
+            assertThat(created.getLines().getFirst().getResource().getId()).isEqualTo(ungranted.getId());
+        } finally {
+            if (createdOrderId != null) {
+                try {
+                    orderFixture.cancel(MANAGER, createdOrderId, requesterStorageId);
+                } catch (RuntimeException cleanupError) {
+                    log.warn("Could not cancel order {} with dynamic catalog resource", createdOrderId, cleanupError);
+                }
+            }
+            resourceFixture.deactivate(UserRole.ADMIN, ungranted.getId());
+        }
     }
 
     @Test(priority = 7)
     @TestCaseId("TC-ORD-007")
     @Story("Create on CREW")
-    @Description("CREW: доступні ресурси через grant батьківського складу.")
-    public void testCreateOrderOnCrewUsesParentGrants() {
+    @Description("CREW не підтримує функції локації; створення замовлення для екіпажу відхиляється.")
+    public void testCreateOrderOnCrewRejectedByLocationKind() {
         StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
         var crew = storageFixture.createCrewStorage(requesterStorageId, "ord-crew-");
-        OrderRequest request = OrderDataFactory.buildOrderRequest(crew.getId(), resourceId, 1.0);
-        Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
-        assertThat(response.statusCode())
-                .as("Create on CREW; body=%s", response.asString())
-                .isIn(200, 400);
-        if (response.statusCode() == 200) {
-            assertThat(response.as(OrderResponse.class).getId()).isNotNull();
+        Long createdOrderId = null;
+        try {
+            OrderRequest request = OrderDataFactory.buildOrderRequest(crew.getId(), resourceId, 1.0);
+            Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
+            if (response.statusCode() == 200) {
+                createdOrderId = response.as(OrderResponse.class).getId();
+            }
+            assertThat(response.statusCode())
+                    .as("CREW cannot host an order; body=%s", response.asString())
+                    .isEqualTo(403);
+        } finally {
+            cleanupChildOrder(storageFixture, crew.getId(), createdOrderId);
         }
     }
 
     @Test(priority = 8)
     @TestCaseId("TC-ORD-008")
     @Story("Create on FLY_POINT")
-    @Description("FLY_POINT: ресурси з батьківської ієрархії (фактична поведінка).")
-    public void testCreateOrderOnFlyPointUsesParentHierarchy() {
+    @Description("FLY_POINT не підтримує функції локації; створення замовлення для точки вильоту відхиляється.")
+    public void testCreateOrderOnFlyPointRejectedByLocationKind() {
         StorageFixture storageFixture = new StorageFixture(testContext, apiExecutor);
         var fly = storageFixture.createFlyPointStorage(requesterStorageId, "ord-fly-");
-        OrderRequest request = OrderDataFactory.buildOrderRequest(fly.getId(), resourceId, 1.0);
-        Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
-        assertThat(response.statusCode())
-                .as("Create on FLY_POINT; body=%s", response.asString())
-                .isIn(200, 400);
+        Long createdOrderId = null;
+        try {
+            OrderRequest request = OrderDataFactory.buildOrderRequest(fly.getId(), resourceId, 1.0);
+            Response response = apiExecutor.execute(ApiEndpointDefinition.ORDER_POST_CREATE, MANAGER, request);
+            if (response.statusCode() == 200) {
+                createdOrderId = response.as(OrderResponse.class).getId();
+            }
+            assertThat(response.statusCode())
+                    .as("FLY_POINT cannot host an order; body=%s", response.asString())
+                    .isEqualTo(403);
+        } finally {
+            cleanupChildOrder(storageFixture, fly.getId(), createdOrderId);
+        }
+    }
+
+    private void cleanupChildOrder(StorageFixture storageFixture, Long childStorageId, Long orderId) {
+        if (orderId != null) {
+            try {
+                orderFixture.cancel(MANAGER, orderId, childStorageId);
+            } catch (RuntimeException cleanupError) {
+                log.warn("Could not cancel dynamic child order {}", orderId, cleanupError);
+            }
+        }
+        if (!storageFixture.archiveStorage(UserRole.ADMIN, childStorageId)) {
+            log.warn("Could not archive dynamic order child location {}", childStorageId);
+        }
     }
 
     @Test(priority = 14)
@@ -249,7 +283,7 @@ public class OrderCrudApiTest extends OrderApiTestBase {
     public void testUpdateWithForeignStorageIdReturns4xx() {
         OrderResponse created = orderFixture.createOrder(REQUESTER);
         OrderRequest update = OrderDataFactory.buildOrderRequest(
-                ConfigProvider.getOwner1StorageId(), resourceId, 2.0);
+                gatheringStorageId, resourceId, 2.0);
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.ORDER_PUT_UPDATE, REQUESTER, update, created.getId());
         assertThat(response.statusCode()).isBetween(400, 499);

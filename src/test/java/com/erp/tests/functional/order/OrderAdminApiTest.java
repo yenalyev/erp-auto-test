@@ -35,6 +35,7 @@ import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.restassured.response.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -46,6 +47,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Slf4j
 @Epic("Orders")
 @Feature("Замовлення: адміністратор")
 public class OrderAdminApiTest extends OrderApiTestBase {
@@ -100,6 +102,8 @@ public class OrderAdminApiTest extends OrderApiTestBase {
                 availabilityRoot, "ord-gathering-");
         isolatedGatheringStorage = storageFixture.ensureOrderHub(
                 UserRole.ADMIN, isolatedGatheringStorage.getId());
+        isolatedGatheringStorage = storageFixture.ensureProductionFeature(
+                UserRole.ADMIN, isolatedGatheringStorage.getId());
         isolatedGatherer = userFixture.createBusinessActor(
                 getPlaywrightSessionProvider(),
                 BusinessRole.BUSINESS_UNIT_OWNER,
@@ -130,6 +134,20 @@ public class OrderAdminApiTest extends OrderApiTestBase {
         if (userFixture != null) {
             userFixture.deactivateTrackedUsers();
         }
+        if (inventoryFixture != null && sourceStorage != null && resourceId != null) {
+            removeStockForCleanup(sourceStorage.getId(), resourceId);
+        }
+        if (inventoryFixture != null && isolatedGatheringStorage != null && resourceId != null) {
+            removeStockForCleanup(isolatedGatheringStorage.getId(), resourceId);
+        }
+        if (inventoryFixture != null && productionResource != null) {
+            if (requesterStorageId != null) {
+                removeStockForCleanup(requesterStorageId, productionResource.getId());
+            }
+            if (isolatedGatheringStorage != null) {
+                removeStockForCleanup(isolatedGatheringStorage.getId(), productionResource.getId());
+            }
+        }
         if (storageFixture != null && sourceStorage != null) {
             storageFixture.archiveStorage(UserRole.ADMIN, sourceStorage.getId());
         }
@@ -143,7 +161,20 @@ public class OrderAdminApiTest extends OrderApiTestBase {
             storageFixture.archiveStorage(UserRole.ADMIN, isolatedGatheringStorage.getId());
         }
         if (resourceFixture != null && productionResource != null) {
-            resourceFixture.deactivate(UserRole.ADMIN, productionResource.getId());
+            Response response = resourceFixture.deactivate(UserRole.ADMIN, productionResource.getId());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.warn("Could not deactivate order production resource {}: HTTP {}: {}",
+                        productionResource.getId(), response.statusCode(), response.asString());
+            }
+        }
+    }
+
+    private void removeStockForCleanup(Long storageId, Long itemResourceId) {
+        try {
+            inventoryFixture.removeResourceFromStorage(storageId, itemResourceId, UserRole.ADMIN);
+        } catch (RuntimeException cleanupError) {
+            log.warn("Could not remove resource {} from storage {} during order cleanup",
+                    itemResourceId, storageId, cleanupError);
         }
     }
 
@@ -159,8 +190,12 @@ public class OrderAdminApiTest extends OrderApiTestBase {
                 .contains("Керівник локації", "Замовлення: адміністратор");
         assertThat(me.getPermissions())
                 .contains("order::read", "order::update", "order::manage")
-                .contains("order::" + requesterStorageId + "::manage")
-                .contains("production-order::" + requesterStorageId + "::read");
+                .contains("production-order::read");
+        assertThat(me.getGrants()).anySatisfy(grant -> {
+            assertThat(grant.getName()).isEqualTo("Керівник локації");
+            assertThat(grant.getStorage()).isNotNull();
+            assertThat(grant.getStorage().getId()).isEqualTo(requesterStorageId);
+        });
 
         Response productionList = productionOrderFixture.getPageRaw(ORDER_ADMIN, requesterStorageId);
         assertThat(productionList.statusCode()).isEqualTo(200);

@@ -1,0 +1,57 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "featureId": "REQ-ALERT",
+  "documentationChanged": true,
+  "documentationLength": 2977,
+  "documentationSha256": "f41073a2b631fab2147f12dae1d84ec1fbc40b5fb6c2d66ee46d6f20f5d312d3",
+  "acceptanceCriterion": {
+    "acKey": "AC-06",
+    "action": "created",
+    "id": 643
+  },
+  "testCases": {
+    "TC-ALERT-006": "created",
+    "TC-UI-ALERT-005": "created",
+    "TC-UI-ALERT-006": "created",
+    "TC-UI-ALERT-007": "created"
+  },
+  "verification": {
+    "documentationMatchesSource": true,
+    "cases": {
+      "TC-ALERT-006": {
+        "featureId": "REQ-ALERT",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ALERT-006"
+        ],
+        "uiAutomationIds": []
+      },
+      "TC-UI-ALERT-005": {
+        "featureId": "REQ-ALERT",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-UI-ALERT-005"
+        ]
+      },
+      "TC-UI-ALERT-006": {
+        "featureId": "REQ-ALERT",
+        "acId": "AC-06",
+        "status": "DRAFT",
+        "apiAutomationIds": [],
+        "uiAutomationIds": []
+      },
+      "TC-UI-ALERT-007": {
+        "featureId": "REQ-ALERT",
+        "acId": "AC-06",
+        "status": "DRAFT",
+        "apiAutomationIds": [],
+        "uiAutomationIds": []
+      }
+    }
+  },
+  "completedAt": "2026-10-01T09:59:34.319241+00:00",
+  "result": "SUCCESS"
+}

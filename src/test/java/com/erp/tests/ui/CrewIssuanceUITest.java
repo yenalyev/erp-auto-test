@@ -155,7 +155,7 @@ public class CrewIssuanceUITest extends BaseUITest {
     public void testIssueToCrewHiddenForAllLocations() {
         browserContext.clearCookies();
         injectRoleSession(UserRole.OWNER_1, memberStorageId);
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        injectAllLocationsView(UserRole.OWNER_1);
 
         RelocationPage relocationPage = new RelocationPage(page);
         page.navigate(ConfigProvider.getBaseUrl() + RelocationPage.PATH);
@@ -310,7 +310,6 @@ public class CrewIssuanceUITest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 }

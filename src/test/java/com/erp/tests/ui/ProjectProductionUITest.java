@@ -66,8 +66,7 @@ public class ProjectProductionUITest extends BaseUITest {
         Map<String, String> cookies = cachedSessionCookies(UserRole.OWNER_1);
         String domain = sessionCookieDomain();
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + storageId + "');");
+        injectWorkspaceView(UserRole.OWNER_1, storageId);
         log.info("OWNER_1 session injected — domain: {}, storageId: {}", domain, storageId);
     }
 

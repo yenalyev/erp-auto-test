@@ -108,7 +108,7 @@ public class AssemblyReadinessUiTest extends BaseUITest {
             OWNER_1 з однією локацією не може увійти в all-locations режим (tk-ui StorageContext).""")
     public void testAllLocationsGuard() {
         prepareAuthenticatedPage(UserRole.ADMIN, owner1StorageId);
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.ADMIN);
 
         AssemblyReadinessPage arPage = new AssemblyReadinessPage(page).open();
         assertThat(arPage.isAllLocationsGuardVisible()).isTrue();
@@ -458,10 +458,7 @@ public class AssemblyReadinessUiTest extends BaseUITest {
         var cookies = getPlaywrightSessionProvider().getSession(role.getUsername(), role.getPassword());
         String domain = ConfigProvider.getBaseUrl().replaceFirst("https?://", "").split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');"
-                        + "localStorage.setItem('selectedStorageId:" + role.getUsername()
-                        + "', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
         if (page != null) {
             page.close();
         }

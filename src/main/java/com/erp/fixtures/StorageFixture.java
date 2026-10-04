@@ -336,6 +336,22 @@ public class StorageFixture extends BaseFixture {
         return response.as(StorageResponse.class);
     }
 
+    /** Adds production capability to an existing location without changing its other features. */
+    @Step("API: ensure storage {storageId} has production feature")
+    public StorageResponse ensureProductionFeature(UserRole role, Long storageId) {
+        StorageResponse existing = getById(role, storageId);
+        Set<LocationFeature> features = new LinkedHashSet<>(
+                existing.getFeatures() != null ? existing.getFeatures() : Set.of());
+        if (!features.add(LocationFeature.PRODUCE)) {
+            return existing;
+        }
+        StorageRequest body = StorageDataFactory.updateFromExisting(
+                existing, builder -> builder.features(features));
+        Response response = update(role, storageId, body);
+        validateSuccess(response, "Enable production on storage " + storageId);
+        return response.as(StorageResponse.class);
+    }
+
     /**
      * Змінює {@code parentId} локації (напр. CREW → інша FLY_POINT).
      * При прикріпленні CREW до FLY_POINT backend авто-переміщує залишок екіпажу на точку.

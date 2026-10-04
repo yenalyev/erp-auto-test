@@ -1,0 +1,13 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Opt-in only: runs a global dev syncTeams job and needs explicit approval on shared dev. -->
+<suite name="FAITA Crew Sync Controlled E2E" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+    </listeners>
+    <test name="FAITA controlled flight log">
+        <classes>
+            <class name="com.erp.tests.functional.storage.FaitaCrewSyncE2eTest"/>
+        </classes>
+    </test>
+</suite>

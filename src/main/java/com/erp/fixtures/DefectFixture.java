@@ -34,6 +34,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 
@@ -164,7 +165,7 @@ public class DefectFixture extends BaseFixture {
 
     @Step("FIXTURE: створити виробництво {amount} од., партія «{batchNumber}» (для браку на виробництві)")
     public ManufacturingItemResponse createProduction(double amount, String batchNumber) {
-        return createProductionAs(UserRole.OWNER_1, amount, batchNumber, LocalDate.now());
+        return createProductionAs(UserRole.OWNER_1, amount, batchNumber, LocalDate.now(ZoneOffset.UTC));
     }
 
     @Step("FIXTURE: створити виробництво {amount} од. з датою {date}")
@@ -224,7 +225,7 @@ public class DefectFixture extends BaseFixture {
                 .recipientId(storageId)
                 .description("erp-auto-test multi-resource receipt")
                 .invoiceNumber(RelocationDataFactory.uniqueInvoiceNumber())
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .items(List.of(
                         RelocationDataFactory.usageForExternalBatch(resourceA, amountA, batchA, false),
                         RelocationDataFactory.usageForExternalBatch(resourceB, amountB, batchB, false)))

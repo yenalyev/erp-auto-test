@@ -82,7 +82,7 @@ public class GlobalPlanRequirementsUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.ADMIN);
     }
 
     @AfterClass(alwaysRun = true)
