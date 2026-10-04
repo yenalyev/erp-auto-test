@@ -6,6 +6,7 @@ import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.data.factories.storage.StorageDataFactory;
 import com.erp.enums.RelocationState;
+import com.erp.enums.StorageRelation;
 import com.erp.enums.UserRole;
 import com.erp.models.request.RelocationInputEditRequest;
 import com.erp.models.request.RelocationInputRequest;
@@ -18,7 +19,6 @@ import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.enums.LocationFeature;
-import com.erp.enums.StorageRelation;
 import com.erp.test_context.ContextKey;
 import com.erp.test_context.TestContext;
 import com.erp.utils.config.ConfigProvider;
@@ -523,6 +523,7 @@ public class RelocationFixture extends BaseFixture {
                 Map.of(
                         "page", 0,
                         "size", 100,
+                        "sort", "createdAt,desc",
                         "senderIds", storageId,
                         "receiverIds", storageId,
                         "isOr", true,
@@ -694,6 +695,7 @@ public class RelocationFixture extends BaseFixture {
         List<StorageResponse> storages = DatabaseIntegrityValidator.extractList(response, StorageResponse.class);
         return storages.stream()
                 .filter(s -> s != null && s.getId() != null)
+                .filter(s -> StorageRelation.EXTERNAL.name().equals(s.getRelation()))
                 .map(StorageResponse::getId)
                 .toList();
     }

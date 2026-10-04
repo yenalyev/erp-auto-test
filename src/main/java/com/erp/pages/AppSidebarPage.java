@@ -48,7 +48,7 @@ public class AppSidebarPage extends BasePage {
     public static final String TAB_GLOBAL_PLANS = "Глобальні плани";
     public static final String TAB_PLANS = "Виробничі плани";
     public static final String TAB_PLAN_EXECUTION = "Виконання плану";
-    public static final String TAB_RESOURCES_DICT = "Словник ресурсів";
+    public static final String TAB_RESOURCES_DICT = "Ресурси";
     public static final String TAB_PRICES = "Ціни";
     public static final String TAB_RESOURCE_CATEGORIES = "Категорії ресурсів";
     public static final String TAB_MEASUREMENT_UNITS = "Одиниці вимірювання";

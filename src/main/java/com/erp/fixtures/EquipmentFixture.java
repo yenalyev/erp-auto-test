@@ -481,7 +481,7 @@ public class EquipmentFixture extends BaseFixture {
         Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.RELOCATION_GET_PAGE,
                 role,
-                Map.of("receiverIds", storageId, "size", 50));
+                Map.of("receiverIds", storageId, "size", 50, "sort", "createdAt,desc"));
         validateSuccess(response, "Get relocations for equipment batch");
         PagedRelocationResponse page = response.as(PagedRelocationResponse.class);
         return page.getContent().stream()

@@ -14,7 +14,6 @@ import com.erp.models.response.TechnologicalMapComponentResponse;
 import com.erp.models.response.TechnologicalMapResourceUsageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.tests.functional.BaseFunctionalTest;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.PollUtils;
 import com.erp.utils.helpers.XlsxContentAssertions;
 import io.qameta.allure.Description;
@@ -31,6 +30,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,12 +45,13 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
 
     private final List<CleanupMap> maps = new ArrayList<>();
     private final List<Long> storagesNewestFirst = new ArrayList<>();
+    private final Set<Long> resourceIdsToCleanup = new LinkedHashSet<>();
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     public void setup() {
         fixture = new ResourceCalculatorFixture(testContext, apiExecutor);
-        fixture.prepareContext();
         storageFixture = new StorageFixture(testContext, apiExecutor);
+        fixture.prepareContext();
     }
 
     @AfterMethod(alwaysRun = true)
@@ -72,19 +73,38 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
             }
         }
         storagesNewestFirst.clear();
-        storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        if (fixture != null) {
+            for (Long resourceId : resourceIdsToCleanup) {
+                try {
+                    Response response = fixture.resources().deactivate(UserRole.ADMIN, resourceId);
+                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                        log.warn("Calculator resource {} cleanup returned HTTP {}: {}",
+                                resourceId, response.statusCode(), response.asString());
+                    }
+                } catch (RuntimeException cleanupError) {
+                    log.warn("Calculator resource {} cleanup failed", resourceId, cleanupError);
+                }
+            }
+        }
+        resourceIdsToCleanup.clear();
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
     @Test(priority = 10)
     @TestCaseId("TC-TM-CALC-003")
     @Story("RBAC")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("OWNER_2 не має tech-map-list::read на склад OWNER_1 → 403.")
+    @Description("OWNER_2 не має tech-map-list::read на новій виробничій локації → 403.")
     public void calculateForbiddenWithoutRead() {
+        Long storageId = newStorage("calc-denied-");
+        ResourceCalculatorFixture.Chain chain = trackChain(
+                storageId, fixture.createCanonicalChain(storageId));
         Response response = fixture.calculateRaw(
                 UserRole.OWNER_2,
-                ConfigProvider.getOwner1StorageId(),
-                1L,
+                storageId,
+                chain.getProductMap().getId(),
                 "1",
                 List.of());
         assertThat(response.statusCode()).isEqualTo(403);
@@ -181,8 +201,8 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
     public void productExcludedAndSiblingMapIsolated() {
         Long storageId = newStorage("calc-iso-");
         ResourceCalculatorFixture.Chain chain = trackChain(storageId, fixture.createCanonicalChain(storageId));
-        ResourceResponse siblingIn = fixture.resources().createUniqueResource("CALC-SIB-IN-" + System.currentTimeMillis());
-        ResourceResponse siblingOut = fixture.resources().createUniqueResource("CALC-SIB-OUT-" + System.currentTimeMillis());
+        ResourceResponse siblingIn = trackResource(fixture.resources().createUniqueResource("CALC-SIB-IN-" + System.currentTimeMillis()));
+        ResourceResponse siblingOut = trackResource(fixture.resources().createUniqueResource("CALC-SIB-OUT-" + System.currentTimeMillis()));
         TechnologicalMapResponse sibling = fixture.techMaps().createTechMapWithRequest(
                 UserRole.ADMIN,
                 TechnologicalMapDataFactory.createProductionMapWithStorages(
@@ -211,9 +231,9 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
     public void disassembleMapIsNotProducer() {
         Long storageId = newStorage("calc-dis-");
         String suffix = String.valueOf(System.currentTimeMillis());
-        ResourceResponse glue = fixture.resources().createUniqueResource("CALC-GLUE-" + suffix);
-        ResourceResponse scrap = fixture.resources().createUniqueResource("CALC-SCRAP-" + suffix);
-        ResourceResponse product = fixture.resources().createUniqueResource("CALC-GLP-" + suffix);
+        ResourceResponse glue = trackResource(fixture.resources().createUniqueResource("CALC-GLUE-" + suffix));
+        ResourceResponse scrap = trackResource(fixture.resources().createUniqueResource("CALC-SCRAP-" + suffix));
+        ResourceResponse product = trackResource(fixture.resources().createUniqueResource("CALC-GLP-" + suffix));
 
         TechnologicalMapResponse productMap = fixture.techMaps().createTechMapWithRequest(
                 UserRole.ADMIN,
@@ -246,6 +266,7 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
     public void alternativeGroupUsesDefaultOnly() {
         Long storageId = newStorage("calc-alt-");
         List<ResourceResponse> resources = fixture.techMaps().createAltGroupResources();
+        resources.forEach(this::trackResource);
         ResourceResponse defaultAlt = resources.get(1);
         ResourceResponse otherAlt = resources.get(2);
         TechnologicalMapRequest request = TechnologicalMapDataFactory.createProductionMapGroupsOnly(
@@ -269,8 +290,8 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
     public void resourceCycleStopsRecursion() {
         Long storageId = newStorage("calc-cyc-");
         String suffix = String.valueOf(System.currentTimeMillis());
-        ResourceResponse product = fixture.resources().createUniqueResource("CALC-CYC-P-" + suffix);
-        ResourceResponse part = fixture.resources().createUniqueResource("CALC-CYC-D-" + suffix);
+        ResourceResponse product = trackResource(fixture.resources().createUniqueResource("CALC-CYC-P-" + suffix));
+        ResourceResponse part = trackResource(fixture.resources().createUniqueResource("CALC-CYC-D-" + suffix));
 
         TechnologicalMapResponse productMap = fixture.techMaps().createTechMapWithRequest(
                 UserRole.ADMIN,
@@ -431,6 +452,9 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
         Long productStorage = newStorage("calc-ch-a-");
         Long otherStorage = newStorage("calc-ch-b-");
         ResourceCalculatorFixture.ChoiceChain chain = fixture.createChoiceChain(productStorage, otherStorage);
+        trackResource(chain.getProduct());
+        trackResource(chain.getBoard());
+        trackResource(chain.getChip());
         maps.add(new CleanupMap(chain.getProductMap(), productStorage));
         maps.add(new CleanupMap(chain.getBoardMapA(), productStorage));
         maps.add(new CleanupMap(chain.getBoardMapB(), otherStorage));
@@ -438,10 +462,19 @@ public class TechnologicalMapResourceCalculatorApiTest extends BaseFunctionalTes
     }
 
     private ResourceCalculatorFixture.Chain trackChain(Long storageId, ResourceCalculatorFixture.Chain chain) {
+        trackResource(chain.getProduct());
+        trackResource(chain.getBody());
+        trackResource(chain.getBoard());
+        trackResource(chain.getChip());
         maps.add(new CleanupMap(chain.getProductMap(), storageId));
         maps.add(new CleanupMap(chain.getBodyMap(), storageId));
         maps.add(new CleanupMap(chain.getBoardMap(), storageId));
         return chain;
+    }
+
+    private ResourceResponse trackResource(ResourceResponse resource) {
+        resourceIdsToCleanup.add(resource.getId());
+        return resource;
     }
 
     private Long newStorage(String prefix) {

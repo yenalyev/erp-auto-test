@@ -212,12 +212,8 @@ abstract class OrderUiTestBase extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        if (selectedStorageId == null) {
-            browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
-        } else {
-            browserContext.addInitScript(
-                    "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
-        }
+        injectWorkspaceView(orderRoleUsername(role),
+                selectedStorageId == null ? "all" : selectedStorageId);
     }
 
     protected Map<String, String> orderRoleSession(UserRole role) {
@@ -229,6 +225,16 @@ abstract class OrderUiTestBase extends BaseUITest {
             return authService.getSessionForUser(gathererActor.username(), gathererActor.password());
         }
         return cachedSessionCookies(role);
+    }
+
+    protected String orderRoleUsername(UserRole role) {
+        if (role == REQUESTER && requesterActor != null) {
+            return requesterActor.username();
+        }
+        if (role == GATHERER && gathererActor != null) {
+            return gathererActor.username();
+        }
+        return role.getUsername();
     }
 
     protected void requireOrderUiContext() {
@@ -291,8 +297,7 @@ abstract class OrderUiTestBase extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(actor.username(), selectedStorageId);
         page = browserContext.newPage();
         int timeoutMs = ConfigProvider.getUiTimeoutSeconds() * 1000;
         page.setDefaultTimeout(timeoutMs);

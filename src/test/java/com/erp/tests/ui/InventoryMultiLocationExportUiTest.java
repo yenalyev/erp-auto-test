@@ -162,6 +162,6 @@ public class InventoryMultiLocationExportUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        injectWorkspaceView(owner.username(), "all");
     }
 }

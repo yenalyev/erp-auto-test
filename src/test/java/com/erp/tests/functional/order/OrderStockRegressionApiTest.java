@@ -26,16 +26,17 @@ import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
-import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -65,9 +66,14 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
     private ProductionFixture productionFixture;
     private TechnologicalMapFixture techMapFixture;
     private ResourceFixture resourceFixture;
+    private TechnologicalMapResponse productionTechMap;
+    private Long productionOutputResourceId;
+    private final List<Long> pendingSendIds = new ArrayList<>();
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "setupOrderApiTests")
     public void setupStockRegressionFixtures() {
+        new com.erp.fixtures.StorageFixture(testContext, apiExecutor)
+                .ensureProductionFeature(com.erp.enums.UserRole.ADMIN, gatheringStorageId);
         defectFixture = new DefectFixture(testContext, apiExecutor);
         productionFixture = new ProductionFixture(testContext, apiExecutor);
         techMapFixture = new TechnologicalMapFixture(testContext, apiExecutor);
@@ -76,6 +82,40 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
             testContext.set(
                     ContextKey.RELOCATION_SUPPLIER_ID,
                     RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, MANAGER));
+        }
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupStockRegressionTechMap() {
+        if (relocationFixture != null && requesterStorageId != null) {
+            for (Long pendingSendId : pendingSendIds) {
+                try {
+                    relocationFixture.resolve(
+                            MANAGER, pendingSendId, requesterStorageId, RelocationState.FINISHED);
+                } catch (RuntimeException cleanupError) {
+                    log.warn("Could not finish stock regression send {}", pendingSendId, cleanupError);
+                }
+            }
+        }
+        if (techMapFixture != null && productionTechMap != null && gatheringStorageId != null) {
+            try {
+                techMapFixture.deactivateTechMap(MANAGER, productionTechMap.getId(), gatheringStorageId);
+            } catch (RuntimeException cleanupError) {
+                log.warn("Could not deactivate stock regression tech map {}",
+                        productionTechMap.getId(), cleanupError);
+            }
+        }
+        if (resourceFixture != null && productionOutputResourceId != null) {
+            try {
+                Response response = resourceFixture.deactivate(MANAGER, productionOutputResourceId);
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                    log.warn("Could not deactivate stock regression output resource {}: HTTP {}: {}",
+                            productionOutputResourceId, response.statusCode(), response.asString());
+                }
+            } catch (RuntimeException cleanupError) {
+                log.warn("Could not deactivate stock regression output resource {}",
+                        productionOutputResourceId, cleanupError);
+            }
         }
     }
 
@@ -116,7 +156,7 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
         seedExactGatheringStock(TOTAL_STOCK);
         prepareInProgressWithActiveHold();
 
-        Long recipientId = ConfigProvider.getOwner1StorageId();
+        Long recipientId = requesterStorageId;
         RelocationOutputRequest send = RelocationDataFactory.buildSendRequest(
                 gatheringStorageId, recipientId, resourceId, WRITE_OFF_QTY);
         Response response = apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, GATHERER, send);
@@ -184,12 +224,14 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
         seedExactGatheringStock(TOTAL_STOCK);
 
         ResourceResponse output = resourceFixture.createUniqueResource("ord-reg5-out-");
+        productionOutputResourceId = output.getId();
         TechnologicalMapRequest tmRequest = TechnologicalMapDataFactory.createProductionMapWithStorages(
                 "ord-reg5",
                 List.of(new ResourceUsageRequest(resourceId, WRITE_OFF_QTY)),
                 List.of(new ResourceUsageRequest(output.getId(), 1.0)),
                 Set.of(gatheringStorageId)).build();
         TechnologicalMapResponse techMap = techMapFixture.createTechMapWithRequest(MANAGER, tmRequest);
+        productionTechMap = techMap;
 
         prepareInProgressWithActiveHold();
 
@@ -212,7 +254,7 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
         seedExactGatheringStock(TOTAL_STOCK);
         BookedStockContext ctx = prepareInProgressWithActiveHold();
 
-        Long recipientId = ConfigProvider.getOwner1StorageId();
+        Long recipientId = requesterStorageId;
         RelocationOutputRequest send = RelocationDataFactory.buildSendRequest(
                 gatheringStorageId, recipientId, resourceId, WRITE_OFF_QTY);
 
@@ -229,6 +271,13 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
         String body = afterRelease.body().asString();
         assertThat(body).doesNotContain("заброньовано");
         assertThat(body).doesNotContain("вільного залишку");
+        RelocationResponse sent = afterRelease.as(RelocationResponse.class);
+        if (sent.getState() == RelocationState.CREATED) {
+            pendingSendIds.add(sent.getId());
+            relocationFixture.resolve(
+                    MANAGER, sent.getId(), requesterStorageId, RelocationState.FINISHED);
+            pendingSendIds.remove(sent.getId());
+        }
     }
 
     @Test(priority = 7)
@@ -244,10 +293,11 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
         seedExactGatheringStock(TOTAL_STOCK);
         prepareInProgressWithActiveHold();
 
-        Long recipientId = elsewhereRecipientId();
+        Long recipientId = requesterStorageId;
         String marker = "TC-ORD-REG-007-" + System.currentTimeMillis();
         RelocationResponse sent = relocationFixture.createSendWithDescription(
                 GATHERER, gatheringStorageId, recipientId, resourceId, FREE_SEND_QTY, marker);
+        pendingSendIds.add(sent.getId());
         assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
 
         Set<Long> tracked = trackedResource();
@@ -281,6 +331,9 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
                 RelocationStockAssertions.capture(
                         apiExecutor, recipientId, MANAGER, tracked, "ПІСЛЯ rejected edit recipient"),
                 recipientId, resourceId, "recipient stock after rejected booked edit");
+        relocationFixture.resolve(
+                MANAGER, sent.getId(), requesterStorageId, RelocationState.FINISHED);
+        pendingSendIds.remove(sent.getId());
     }
 
     private record BookedStockContext(OrderResponse order, BookingResponse booking) {}
@@ -303,11 +356,4 @@ public class OrderStockRegressionApiTest extends OrderApiTestBase {
         assertThat(body).containsAnyOf("заброньовано", "вільного залишку", "Недостатньо");
     }
 
-    private Long elsewhereRecipientId() {
-        Long owner1 = ConfigProvider.getOwner1StorageId();
-        if (owner1 != null && !owner1.equals(gatheringStorageId)) {
-            return owner1;
-        }
-        return ConfigProvider.getOwner2StorageId();
-    }
 }

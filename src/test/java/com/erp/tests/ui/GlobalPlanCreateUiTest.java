@@ -78,7 +78,7 @@ public class GlobalPlanCreateUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.ADMIN);
 
         log.info("Global plan UI happy-path setup — period {}/{}, output A={}, L1={}, L2={}",
                 planPeriod.getMonthValue(), planPeriod.getYear(), resourceAName, l1StorageName, l2StorageName);

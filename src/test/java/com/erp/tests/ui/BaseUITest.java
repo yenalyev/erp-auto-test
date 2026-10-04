@@ -35,10 +35,10 @@ public abstract class BaseUITest extends BaseTest {
     protected BrowserContext browserContext;
     protected Page page;
 
-    /** UI tests authenticate via Playwright browser flow — no DB pre-flight needed. */
+    /** UI-only runs skip JDBC by default, but an explicit suite-level DB opt-in must win. */
     @Override
     protected boolean shouldInitializeDatabase() {
-        return false;
+        return ConfigProvider.useDatabase();
     }
 
     @BeforeClass(alwaysRun = true)
@@ -151,10 +151,34 @@ public abstract class BaseUITest extends BaseTest {
                 .split("/")[0];
     }
 
+    /**
+     * Persist a workspace for both the legacy global key and the current per-user key.
+     * The frontend gives the per-user value precedence when both exist.
+     */
+    protected void injectWorkspaceView(String username, Object selectedStorageId) {
+        String safeUsername = username.replace("\\", "\\\\").replace("'", "\\'");
+        String safeStorageId = String.valueOf(selectedStorageId)
+                .replace("\\", "\\\\")
+                .replace("'", "\\'");
+        browserContext.addInitScript(
+                "localStorage.setItem('selectedStorageId', '" + safeStorageId + "');"
+                        + "localStorage.setItem('selectedStorageId:" + safeUsername + "', '"
+                        + safeStorageId + "');");
+        log.debug("BrowserContext init script: selectedStorageId:{}={}", username, selectedStorageId);
+    }
+
+    protected void injectWorkspaceView(UserRole role, Object selectedStorageId) {
+        injectWorkspaceView(role.getUsername(), selectedStorageId);
+    }
+
     /** Global plans and cross-location flows need tech maps from all permitted storages. */
     protected void injectAllLocationsView() {
         browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
         log.debug("BrowserContext init script: selectedStorageId=all");
+    }
+
+    protected void injectAllLocationsView(UserRole role) {
+        injectWorkspaceView(role, "all");
     }
 
     /**

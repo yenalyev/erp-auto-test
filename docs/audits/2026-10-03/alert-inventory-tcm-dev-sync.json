@@ -1,0 +1,51 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "featureId": "REQ-ALERT",
+  "documentationChanged": true,
+  "documentationLength": 4148,
+  "documentationSha256": "4d46a8185b9ebacb5201413d0303eea0a109c1c3bc57e358c417f153f5f6fca6",
+  "acceptanceCriterion": {
+    "acKey": "AC-07",
+    "action": "created",
+    "id": 644
+  },
+  "testCases": {
+    "TC-ALERT-007": "created",
+    "TC-ALERT-008": "created",
+    "TC-ALERT-009": "created"
+  },
+  "verification": {
+    "documentationMatchesSource": true,
+    "cases": {
+      "TC-ALERT-007": {
+        "featureId": "REQ-ALERT",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ALERT-007"
+        ],
+        "steps": 3
+      },
+      "TC-ALERT-008": {
+        "featureId": "REQ-ALERT",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ALERT-008"
+        ],
+        "steps": 3
+      },
+      "TC-ALERT-009": {
+        "featureId": "REQ-ALERT",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-ALERT-009"
+        ],
+        "steps": 3
+      }
+    }
+  },
+  "completedAt": "2026-10-03T09:21:23.996100+00:00",
+  "result": "SUCCESS"
+}

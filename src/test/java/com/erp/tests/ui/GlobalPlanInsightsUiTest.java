@@ -58,7 +58,7 @@ public class GlobalPlanInsightsUiTest extends BaseUITest {
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         injectSessionCookies(cachedSessionCookies(UserRole.ADMIN), sessionCookieDomain());
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.ADMIN);
     }
 
     @TestCaseId("TC-GP-UI-INSIGHTS-001")

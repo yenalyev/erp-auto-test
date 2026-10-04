@@ -22,6 +22,7 @@ public class RegressionSuiteCompletenessTest {
     private static final Pattern SUITE_CLASS = Pattern.compile("<class\\s+name=\"([^\"]+)\"\\s*(?:/?>)");
 
     private static final Set<String> DOCUMENTED_EXCEPTIONS = Set.of(
+            "com.erp.tests.functional.storage.FaitaCrewSyncCleanupAuditTest",
             "com.erp.tests.functional.statistics.FabergeMalutkaPlanProbeTest",
             "com.erp.tests.functional.statistics.FabergeNeededResourcesDevProbeTest",
             "com.erp.tests.rbac.RbacAccessMatrixTest"

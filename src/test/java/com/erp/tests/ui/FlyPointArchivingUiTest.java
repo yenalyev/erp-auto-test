@@ -62,9 +62,7 @@ public class FlyPointArchivingUiTest extends BaseUITest {
         resources.fetchSharedUnit(3);
         resources.fetchSharedResourceCategory();
         resource = resources.createUniqueResource("fp-archive-");
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', '" + battalion.getId() + "');"
-                + "localStorage.setItem('selectedStorageId:" + UserRole.ADMIN.getUsername() + "', '"
-                + battalion.getId() + "');");
+        injectWorkspaceView(UserRole.ADMIN, battalion.getId());
     }
 
     @AfterClass(alwaysRun = true)
@@ -326,8 +324,7 @@ public class FlyPointArchivingUiTest extends BaseUITest {
         if (keeper == null) {
             keeper = users.createBusinessActor(getPlaywrightSessionProvider(),
                     BusinessRole.UNIT_KOMIRNIK, List.of(battalion));
-            browserContext.addInitScript("localStorage.setItem('selectedStorageId:"
-                    + keeper.username() + "', '" + battalion.getId() + "');");
+            injectWorkspaceView(keeper.username(), battalion.getId());
         }
         login(keeper.username(), keeper.password());
     }

@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -150,10 +151,10 @@ public class RelocationBatchAccountingTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 30)
-    @TestCaseId({"TC-REL-ACC-003", "TC-REL-ACC-014"})
-    @Story("Normalized accounting name is unique within relocation and resource")
+    @TestCaseId("TC-REL-ACC-014")
+    @Story("Accounting names are unique after trimming and case folding")
     @Severity(SeverityLevel.BLOCKER)
-    @Description("Регістр, крайні пробіли та різні batchNumber не дозволяють обійти унікальність назви.")
+    @Description("Назви, що збігаються після trim і зміни регістру, є дублікатом.")
     public void duplicateAccountingNameAfterTrimAndCaseIsRejectedAtomically() {
         double stockBefore = stock(resourceId);
         RelocationInputRequest request = receiveRequest(List.of(
@@ -166,12 +167,32 @@ public class RelocationBatchAccountingTest extends BaseFunctionalTest {
 
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(response.statusCode())
-                    .as("Дубль resource + normalized accountingName має повертати validation error. Body: %s",
+                    .as("Дубль resource + normalized accountingName має повертати 400. Body: %s",
                             response.getBody().asString())
                     .isEqualTo(400);
-            softly.assertThat(response.getBody().asString())
-                    .as("Негативний тест не повинен проходити через невалідний sender fixture")
-                    .doesNotContain("\"field\":\"senderId\"");
+            softly.assertThat(stockAfterRequest).isEqualTo(stockBefore);
+        });
+    }
+
+    @Test(priority = 31)
+    @TestCaseId("TC-REL-ACC-003")
+    @Story("Literally identical accounting name is rejected within one relocation")
+    @Severity(SeverityLevel.BLOCKER)
+    public void literallyIdenticalAccountingNameIsRejectedAtomically() {
+        double stockBefore = stock(resourceId);
+        RelocationInputRequest request = receiveRequest(List.of(
+                accountingUsage(resourceId, 2.0, accountingIdA, new BigDecimal("10.00")),
+                accountingUsage(resourceId, 3.0, accountingIdA, new BigDecimal("20.00"))));
+
+        Response response = apiExecutor.executeRelocationReceive(request, UserRole.OWNER_1);
+        double stockAfterRequest = stock(resourceId);
+        cleanupUnexpectedSuccess(response);
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(response.statusCode())
+                    .as("Буквально однакова бухгалтерська назва має дати 400. Body: %s",
+                            response.getBody().asString())
+                    .isEqualTo(400);
             softly.assertThat(stockAfterRequest).isEqualTo(stockBefore);
         });
     }
@@ -259,7 +280,7 @@ public class RelocationBatchAccountingTest extends BaseFunctionalTest {
 
     @Test(priority = 71)
     @TestCaseId("TC-REL-ACC-007")
-    @Story("Unnamed accounting rows share one normalized empty key")
+    @Story("Two unnamed accounting rows for one resource are rejected")
     @Severity(SeverityLevel.CRITICAL)
     public void duplicateUnnamedRowsAreRejectedAtomically() {
         double stockBefore = stock(resourceId);
@@ -273,7 +294,7 @@ public class RelocationBatchAccountingTest extends BaseFunctionalTest {
 
         SoftAssertions.assertSoftly(softly -> {
             softly.assertThat(response.statusCode())
-                    .as("Два безіменні бухгалтерські рядки одного ресурсу мають бути дублікатом. Body: %s",
+                    .as("Два безіменні рядки одного ресурсу мають повертати 400. Body: %s",
                             response.getBody().asString())
                     .isEqualTo(400);
             softly.assertThat(stockAfterRequest).isEqualTo(stockBefore);
@@ -395,25 +416,110 @@ public class RelocationBatchAccountingTest extends BaseFunctionalTest {
 
     @Test(priority = 77)
     @TestCaseId("TC-REL-ACC-016")
-    @Story("Editing non-accounting fields preserves batch accounting attributes")
+    @Story("Editing non-accounting fields preserves the accounting name in the stored batch")
     @Severity(SeverityLevel.CRITICAL)
-    public void regularReceiveEditPreservesAccountingAttributes() {
+    public void regularReceiveEditPreservesStoredAccountingName() {
         RelocationResponse created = receive(List.of(accountingUsage(
                 resourceId, 2.0, accountingIdA, new BigDecimal("25.50"))));
-        String batchNumber = requireBatch(created, accountingIdA).getBatchNumber();
+        RelocationItemBatchResponse originalBatch = requireBatch(created, accountingIdA);
+        String batchNumber = originalBatch.getBatchNumber();
+        Map<String, Object> storedBeforeEdit = storedBatch(originalBatch.getBatchUuid());
+        assertThat(storedBeforeEdit.get("accResourceName")).isNotNull();
         RelocationInputEditRequest edit = RelocationInputEditRequest.builder()
                 .description("accounting attributes must survive description edit")
                 .date(LocalDate.now())
-                .items(List.of(RelocationDataFactory.usageForExternalBatch(
-                        resourceId, 2.0, batchNumber, false)))
+                .items(List.of(RelocationDataFactory.usageWithBatch(
+                        resourceId, 2.0, originalBatch.getBatchUuid(), batchNumber, false)))
                 .build();
 
         RelocationResponse updated = relocationFixture.editExternalReceive(
                 UserRole.ADMIN, created.getId(), storageId, edit);
+        Map<String, Object> storedAfterEdit = storedBatch(originalBatch.getBatchUuid());
 
-        RelocationItemBatchResponse batch = requireBatch(updated, accountingIdA);
-        assertThat(batch.getPaidAmount()).isEqualByComparingTo("25.50");
-        assertThat(batch.getBatchNumber()).isEqualTo(batchNumber);
+        assertThat(updated.getDescription()).isEqualTo(edit.getDescription());
+        assertThat(storedAfterEdit.get("batchNumber")).isEqualTo(batchNumber);
+        assertThat(storedAfterEdit.get("accResourceId")).isEqualTo(accountingIdA);
+        assertThat(storedAfterEdit.get("accResourceName"))
+                .isEqualTo(storedBeforeEdit.get("accResourceName"));
+    }
+
+    @Test(priority = 77)
+    @TestCaseId("TC-REL-ACC-016A")
+    @Story("Changing the accounting name on an existing receive updates the stored batch")
+    @Severity(SeverityLevel.CRITICAL)
+    public void editingReceiveChangesStoredAccountingName() {
+        RelocationResponse created = receive(List.of(accountingUsage(
+                resourceId, 2.0, accountingIdA, new BigDecimal("25.50"))));
+        RelocationItemBatchResponse original = requireBatch(created, accountingIdA);
+        Map<String, Object> before = storedBatch(original.getBatchUuid());
+        ResourceUsageRequest renamed = ResourceUsageRequest.builder()
+                .resourceId(resourceId)
+                .amount(new BigDecimal("2.0"))
+                .batches(List.of(RelocationItemBatchRequest.builder()
+                        .batchUuid(original.getBatchUuid())
+                        .batchNumber(original.getBatchNumber())
+                        .amount(new BigDecimal("2.0"))
+                        .isProduced(false)
+                        .accResourceId(accountingIdB)
+                        .paidAmount(new BigDecimal("25.50"))
+                        .build()))
+                .build();
+        RelocationInputEditRequest edit = RelocationInputEditRequest.builder()
+                .description("changed accounting name")
+                .date(created.getDate())
+                .items(List.of(renamed))
+                .build();
+
+        relocationFixture.editExternalReceive(UserRole.ADMIN, created.getId(), storageId, edit);
+        Map<String, Object> after = storedBatch(original.getBatchUuid());
+
+        assertThat(after.get("accResourceId")).isEqualTo(accountingIdB);
+        assertThat(after.get("accResourceName")).isNotEqualTo(before.get("accResourceName"));
+    }
+
+    @Test(priority = 77)
+    @TestCaseId("TC-REL-ACC-016B")
+    @Story("Changing the receipt date on an existing receive updates the received journal")
+    @Severity(SeverityLevel.CRITICAL)
+    public void editingReceiveChangesReceiptDate() {
+        LocalDate initialDate = LocalDate.now(ZoneId.of("Europe/Kyiv")).minusDays(2);
+        LocalDate editedDate = initialDate.plusDays(1);
+        RelocationInputRequest request = receiveRequest(List.of(accountingUsage(
+                resourceId, 2.0, accountingIdA, new BigDecimal("25.50"))))
+                .toBuilder().date(initialDate).build();
+        Response createResponse = apiExecutor.executeRelocationReceive(request, UserRole.ADMIN);
+        assertThat(createResponse.statusCode()).as(createResponse.asString()).isEqualTo(200);
+        RelocationResponse created = createResponse.as(RelocationResponse.class);
+        relocationIds.add(created.getId());
+        RelocationItemBatchResponse original = requireBatch(created, accountingIdA);
+        Map<String, Object> batchBefore = storedBatch(original.getBatchUuid());
+        RelocationInputEditRequest edit = RelocationInputEditRequest.builder()
+                .description("changed receipt date " + created.getId())
+                .date(editedDate)
+                .items(List.of(RelocationDataFactory.usageWithBatch(
+                        resourceId, 2.0, original.getBatchUuid(), original.getBatchNumber(), false)))
+                .build();
+
+        RelocationResponse updated = relocationFixture.editExternalReceive(
+                UserRole.ADMIN, created.getId(), storageId, edit);
+        RelocationResponse journal = relocationFixture.findHistoryByDescription(
+                UserRole.ADMIN, storageId, RelocationJournalQuery.Perspective.RECEIVED,
+                edit.getDescription());
+        Map<String, Object> batchAfter = storedBatch(original.getBatchUuid());
+
+        assertThat(journal).as("Edited receive in journal").isNotNull();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(updated.getDate()).as("PUT date").isEqualTo(editedDate);
+            softly.assertThat(journal.getDate()).as("Journal date").isEqualTo(editedDate);
+            softly.assertThat(updated.getReceivedAt().atZone(ZoneId.of("Europe/Kyiv")).toLocalDate())
+                    .as("PUT receivedAt").isEqualTo(editedDate);
+            softly.assertThat(journal.getReceivedAt().atZone(ZoneId.of("Europe/Kyiv")).toLocalDate())
+                    .as("Journal receivedAt").isEqualTo(editedDate);
+            softly.assertThat(String.valueOf(batchBefore.get("date")))
+                    .as("Initial stored batch date").startsWith(initialDate.toString());
+            softly.assertThat(String.valueOf(batchAfter.get("date")))
+                    .as("Edited stored batch date").startsWith(editedDate.toString());
+        });
     }
 
     @Test(priority = 78)
@@ -573,6 +679,20 @@ public class RelocationBatchAccountingTest extends BaseFunctionalTest {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError(
                         "Response не містить batch з accResourceId=" + accResourceId));
+    }
+
+    private Map<String, Object> storedBatch(UUID batchUuid) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_ITEM_BATCHES_GET_BY_RESOURCE,
+                UserRole.ADMIN,
+                Map.of("storageId", storageId, "resourceId", resourceId));
+        assertThat(response.statusCode()).isEqualTo(200);
+        List<Map<String, Object>> batches = response.jsonPath().getList("$");
+        return batches.stream()
+                .filter(batch -> batchUuid.toString().equals(batch.get("batchUuid")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "Stored batch not found: " + batchUuid));
     }
 
     private List<RelocationItemBatchResponse> allBatches(RelocationResponse relocation) {

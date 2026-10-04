@@ -9,6 +9,7 @@ import com.erp.models.response.DefectResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,7 +45,7 @@ public final class DefectDataFactory {
                                                        Long resourceId,
                                                        double amount) {
         return DefectRequest.builder()
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .storageId(storageId)
                 .resourceId(resourceId)
                 .amount(BigDecimal.valueOf(amount))
@@ -60,7 +61,7 @@ public final class DefectDataFactory {
                                                                   double totalAmount,
                                                                   List<DefectBatchItem> batches) {
         return DefectRequest.builder()
-                .date(LocalDate.now())
+                .date(LocalDate.now(ZoneOffset.UTC))
                 .storageId(storageId)
                 .resourceId(resourceId)
                 .amount(BigDecimal.valueOf(totalAmount))

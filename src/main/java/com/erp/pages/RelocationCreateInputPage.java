@@ -98,14 +98,6 @@ public class RelocationCreateInputPage extends BasePage {
         return paidAmountInput(rowIndex).isVisible();
     }
 
-    public String paidAmountMin(int rowIndex) {
-        return paidAmountInput(rowIndex).getAttribute("min");
-    }
-
-    public String paidAmountStep(int rowIndex) {
-        return paidAmountInput(rowIndex).getAttribute("step");
-    }
-
     public String paidAmountPlaceholder(int rowIndex) {
         return paidAmountInput(rowIndex).getAttribute("placeholder");
     }
@@ -140,6 +132,17 @@ public class RelocationCreateInputPage extends BasePage {
         return this;
     }
 
+    public RelocationCreateInputPage selectAccountingNameExact(int rowIndex, String accountingName) {
+        accountingSelect(rowIndex).click();
+        page.getByPlaceholder(ACCOUNTING_SEARCH_PLACEHOLDER).fill(accountingName.trim());
+        waitForComboboxOptionsSettled();
+        page.getByRole(AriaRole.OPTION,
+                        new Page.GetByRoleOptions().setName(accountingName.trim()).setExact(true))
+                .first()
+                .click();
+        return this;
+    }
+
     public RelocationCreateInputPage clickAddPosition() {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(ADD_POSITION)).click();
         return this;
@@ -159,16 +162,13 @@ public class RelocationCreateInputPage extends BasePage {
         return error.count() > 0 && error.first().isVisible();
     }
 
-    public boolean isTotalCostVisible() {
-        Locator total = page.getByText(Pattern.compile("Загальна вартість", Pattern.CASE_INSENSITIVE));
-        return total.count() > 0 && total.first().isVisible();
+    public boolean isPaidTotalVisible() {
+        Locator paidTotal = paidTotalInput();
+        return paidTotal.count() > 0 && paidTotal.isVisible();
     }
 
-    public String totalCostText() {
-        return page.getByText(Pattern.compile("Загальна вартість", Pattern.CASE_INSENSITIVE))
-                .first()
-                .innerText()
-                .trim();
+    public String paidTotalValue() {
+        return paidTotalInput().inputValue();
     }
 
     public RelocationPage submit() {
@@ -178,6 +178,13 @@ public class RelocationCreateInputPage extends BasePage {
 
     private Locator paidAmountInput(int rowIndex) {
         return page.getByTestId("relocation-item-" + rowIndex + "-paid-amount");
+    }
+
+    private Locator paidTotalInput() {
+        return page.locator("div.space-y-2")
+                .filter(new Locator.FilterOptions().setHasText("Сплачена сума"))
+                .locator("input")
+                .first();
     }
 
     private Locator accountingSelect(int rowIndex) {

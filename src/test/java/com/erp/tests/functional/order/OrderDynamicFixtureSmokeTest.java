@@ -95,8 +95,7 @@ public class OrderDynamicFixtureSmokeTest extends BaseUITest {
             injectSessionCookies(
                     authService.getSessionForUser(requesterActor.username(), requesterActor.password()),
                     sessionCookieDomain());
-            browserContext.addInitScript(
-                    "localStorage.setItem('selectedStorageId', '" + requester.getId() + "');");
+            injectWorkspaceView(requesterActor.username(), requester.getId());
             OrderListPage orderPage = new OrderListPage(page).open();
             assertThat(orderPage.isCreateButtonVisible()).as("Dynamic requester create button").isTrue();
             assertThat(orderPage.isCreateDisabled()).isFalse();

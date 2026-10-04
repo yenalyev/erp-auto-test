@@ -70,14 +70,14 @@ public class AccountantRelocationFilterTest extends CrewApiTestBase {
     @Severity(SeverityLevel.CRITICAL)
     public void testAccountantSeesOnlyStorageToUnitRelocations() {
         RelocationResponse unitToCrew = relocationFixture.createSendAndFinishBySender(
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 scenario.unit().getId(),
                 scenario.crew().getId(),
                 resourceId,
                 SEND_AMOUNT);
 
         RelocationResponse unitToUnit = relocationFixture.createSend(
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 scenario.unit().getId(),
                 secondUnit.getId(),
                 resourceId,

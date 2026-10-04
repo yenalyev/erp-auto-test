@@ -48,7 +48,9 @@ public class ProductionGroupsUiTest extends BaseUITest {
     public void productionGroupInventoryIsBlockedInUi() {
         page.navigate(ConfigProvider.getBaseUrl() + "/inventory");
         page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
-        page.evaluate("localStorage.setItem('selectedStorageId', '" + fixture.groupA.getId() + "');");
+        page.evaluate("localStorage.setItem('selectedStorageId', '" + fixture.groupA.getId() + "');"
+                + "localStorage.setItem('selectedStorageId:" + UserRole.ADMIN.getUsername()
+                + "', '" + fixture.groupA.getId() + "');");
         page.reload();
         page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED);
         Locator enabledInventoryActions = page.locator("button:enabled").filter(new Locator.FilterOptions()

@@ -1,0 +1,21 @@
+{
+  "baseUrl": "https://tcm.lab",
+  "date": "2026-09-28",
+  "result": "SUCCESS",
+  "parentFeature": {
+    "featureId": "REQ-ANL-PRODUCTION",
+    "documentationMatchesSource": true,
+    "acceptanceCriterionAc08Updated": true,
+    "testCaseTcAnlUi012Updated": true
+  },
+  "excelFeature": {
+    "featureId": "REQ-ANL-PRODUCTION-EXCEL",
+    "parentFeatureId": "REQ-ANL-PRODUCTION",
+    "created": true,
+    "documentationMatchesSource": true,
+    "acceptanceCriteriaCount": 8,
+    "testCaseCount": 16,
+    "testCasesWithUiAutomationLinkAndSteps": 16
+  },
+  "erpExecution": "24/24 passed on DEV ERP; PROD ERP was not run"
+}

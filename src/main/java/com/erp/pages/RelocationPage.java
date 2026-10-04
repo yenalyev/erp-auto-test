@@ -28,7 +28,9 @@ public class RelocationPage extends BasePage {
     private static final String SEND_BUTTON = "Видати";
     private static final String ISSUE_TO_CREW_BUTTON = "Видати на екіпаж";
     private static final String ISSUE_BETWEEN_FLY_POINTS_BUTTON = "Видати між точками вильоту";
-    private static final String RECEIVE_FROM_CREW_BUTTON = "Отримати з точки вильоту";
+    // Crew/fly-point returns now enter through the common receive action; the sender type is
+    // selected on the next screen.
+    private static final String RECEIVE_FROM_CREW_BUTTON = "Отримати";
     private static final String HISTORY_RECEIVED_TAB = "Отримано";
     private static final String EXPORT_EXCEL_BUTTON = "Експорт в Excel";
     private static final String IN_TRANSIT_TAB = "В дорозі";

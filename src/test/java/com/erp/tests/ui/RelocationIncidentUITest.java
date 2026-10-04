@@ -25,7 +25,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -59,14 +58,13 @@ public class RelocationIncidentUITest extends BaseUITest {
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
-        Map<String, String> cookies = getPlaywrightSessionProvider()
+        var cookies = getPlaywrightSessionProvider()
                 .getSession(role.getUsername(), role.getPassword());
         String domain = ConfigProvider.getBaseUrl()
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 
     @Test

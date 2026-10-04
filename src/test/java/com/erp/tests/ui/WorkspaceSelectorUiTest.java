@@ -14,6 +14,7 @@ import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * UI smoke for the sidebar workspace StorageTreeSelect («Робочий простір»).
  *
- * <p>TC-UI-WKS-001 — ADMIN switches from owner1 to owner2 via tree search + button click.
+ * <p>TC-UI-WKS-001 — ADMIN switches between two isolated locations via tree search + button click.
  */
 @Slf4j
 @Epic("Navigation")
@@ -31,24 +32,30 @@ public class WorkspaceSelectorUiTest extends BaseUITest {
     private static final String POST_LOGIN_PATH = "/production";
 
     private StorageFixture storageFixture;
-    private long owner1StorageId;
-    private long owner2StorageId;
-    private String owner1StorageName;
-    private String owner2StorageName;
+    private long firstStorageId;
+    private long secondStorageId;
+    private String firstStorageName;
+    private String secondStorageName;
 
     @BeforeClass(alwaysRun = true)
     @Override
     public void baseTestClassSetup() {
         super.baseTestClassSetup();
         storageFixture = new StorageFixture(testContext, apiExecutor);
-        owner1StorageId = ConfigProvider.getOwner1StorageId();
-        owner2StorageId = ConfigProvider.getOwner2StorageId();
-        owner1StorageName = storageFixture.getNames(UserRole.ADMIN, true, null, owner1StorageId)
-                .getFirst()
-                .getName();
-        owner2StorageName = storageFixture.getNames(UserRole.ADMIN, true, null, owner2StorageId)
-                .getFirst()
-                .getName();
+        long parentId = storageFixture.resolveParentUnit().getId();
+        var first = storageFixture.createProductionStorage(parentId, "workspace-first-");
+        var second = storageFixture.createProductionStorage(parentId, "workspace-second-");
+        firstStorageId = first.getId();
+        secondStorageId = second.getId();
+        firstStorageName = first.getName();
+        secondStorageName = second.getName();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void cleanupLocations() {
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
     }
 
     @Test(priority = 1)
@@ -56,14 +63,14 @@ public class WorkspaceSelectorUiTest extends BaseUITest {
     @Story("StorageTreeSelect — select location in tree")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            ADMIN з кількома локаціями:
-            1) старт з owner1 у localStorage;
+            ADMIN з двома динамічно створеними локаціями:
+            1) старт з першої у localStorage;
             2) відкрити /production — видно «Робочий простір»;
-            3) через StorageTreeSelect (пошук + button у дереві) обрати owner2;
-            4) trigger показує ім'я owner2 і localStorage.selectedStorageId = owner2 id.
+            3) через StorageTreeSelect (пошук + button у дереві) обрати другу;
+            4) trigger показує ім'я другої і localStorage.selectedStorageId:<username> = її id.
             """)
     public void adminSelectsLocationInWorkspaceTree() {
-        prepareAuthenticatedPage(UserRole.ADMIN, owner1StorageId);
+        prepareAuthenticatedPage(UserRole.ADMIN, firstStorageId);
 
         page.navigate(ConfigProvider.getBaseUrl() + POST_LOGIN_PATH);
         new ProductionPage(page).waitForLoaded();
@@ -76,20 +83,21 @@ public class WorkspaceSelectorUiTest extends BaseUITest {
 
         String selectedBefore = sidebar.getSelectedLocationName();
         assertThat(selectedBefore)
-                .as("До перемикання trigger має показувати локацію owner1")
-                .contains(owner1StorageName);
+                .as("До перемикання trigger має показувати першу локацію")
+                .contains(firstStorageName);
 
-        sidebar.selectWorkspaceByName(owner2StorageName);
+        sidebar.selectWorkspaceByName(secondStorageName);
 
         String selectedAfter = sidebar.getSelectedLocationName();
         assertThat(selectedAfter)
-                .as("Після кліку в дереві trigger має показувати локацію owner2")
-                .contains(owner2StorageName);
+                .as("Після кліку в дереві trigger має показувати другу локацію")
+                .contains(secondStorageName);
 
-        String storedId = (String) page.evaluate("() => localStorage.getItem('selectedStorageId')");
+        String storedId = (String) page.evaluate(
+                "() => localStorage.getItem('selectedStorageId:" + UserRole.ADMIN.getUsername() + "')");
         assertThat(storedId)
-                .as("localStorage.selectedStorageId має оновитися на id owner2")
-                .isEqualTo(String.valueOf(owner2StorageId));
+                .as("localStorage.selectedStorageId:<username> має оновитися на id другої локації")
+                .isEqualTo(String.valueOf(secondStorageId));
 
         sidebar.attachScreenshot("TC-UI-WKS-001 — workspace switched");
     }
@@ -103,7 +111,8 @@ public class WorkspaceSelectorUiTest extends BaseUITest {
         String domain = ConfigProvider.getBaseUrl().replaceFirst("https?://", "").split("/")[0];
         injectSessionCookies(cookies, domain);
         browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+                "localStorage.setItem('selectedStorageId:" + role.getUsername()
+                        + "', '" + selectedStorageId + "');");
         if (page != null) {
             page.close();
         }

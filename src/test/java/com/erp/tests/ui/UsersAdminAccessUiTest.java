@@ -132,7 +132,7 @@ public class UsersAdminAccessUiTest extends BaseUITest {
     }
 
     private void prepareSession(UserRole role) {
-        injectAllLocationsView();
+        injectAllLocationsView(role);
         Map<String, String> cookies = getPlaywrightSessionProvider()
                 .getSession(role.getUsername(), role.getPassword());
         String domain = ConfigProvider.getBaseUrl()

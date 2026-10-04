@@ -183,8 +183,7 @@ public class InventoryHierarchyUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
     }
 
     private void injectAllLocationsSession(UserRole role) {
@@ -194,6 +193,6 @@ public class InventoryHierarchyUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        browserContext.addInitScript("localStorage.setItem('selectedStorageId', 'all');");
+        injectAllLocationsView(role);
     }
 }

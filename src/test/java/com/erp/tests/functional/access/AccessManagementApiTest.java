@@ -62,7 +62,7 @@ public class AccessManagementApiTest extends BaseFunctionalTest {
                 .hasSizeGreaterThan(100)
                 .extracting(AccessPermissionResponse::getKey)
                 .doesNotHaveDuplicates()
-                .allMatch(key -> key.matches("[a-z0-9-]+(?:\\.[a-z0-9-]+)+"))
+                .allMatch(key -> key.matches("[a-z0-9_-]+(?:\\.[a-z0-9_-]+)+"))
                 .contains(LOCATION_PERMISSION, "access.manage", "users.read");
 
         AccessRoleResponse locationHead = access.roleByName(UserFixture.BUSINESS_UNIT_OWNER_ROLE_NAME);

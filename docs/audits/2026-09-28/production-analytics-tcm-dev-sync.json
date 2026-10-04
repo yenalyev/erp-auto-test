@@ -1,0 +1,132 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06",
+      "AC-07",
+      "AC-08"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-ANL-UI-005",
+      "TC-ANL-UI-006",
+      "TC-ANL-UI-007",
+      "TC-ANL-UI-008",
+      "TC-ANL-UI-009",
+      "TC-ANL-UI-010",
+      "TC-ANL-UI-011",
+      "TC-ANL-UI-012"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-ANL-PRODUCTION",
+    "parentFeatureId": "REQ-ANL",
+    "status": "ACTIVE",
+    "documentationLength": 9786,
+    "documentationSha256": "fd7847e9ef090407bf55727e74e16918ee7d97bb5b5eebd0c16364ee8a62d9c2",
+    "sourceDocumentationSha256": "fd7847e9ef090407bf55727e74e16918ee7d97bb5b5eebd0c16364ee8a62d9c2",
+    "requiredAcPresent": true,
+    "managedAcCount": 8,
+    "managedCaseCount": 8,
+    "automatedCaseCount": 8,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-ANL-UI-005": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-005"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-006": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-006"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-007": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-007"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-008": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-008"
+        ],
+        "stepCount": 3
+      },
+      "TC-ANL-UI-009": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-009"
+        ],
+        "stepCount": 4
+      },
+      "TC-ANL-UI-010": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-010"
+        ],
+        "stepCount": 2
+      },
+      "TC-ANL-UI-011": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-011"
+        ],
+        "stepCount": 4
+      },
+      "TC-ANL-UI-012": {
+        "featureId": "REQ-ANL-PRODUCTION",
+        "acId": "AC-08",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-ANL-UI-012"
+        ],
+        "stepCount": 3
+      }
+    }
+  },
+  "completedAt": "2026-09-28T08:47:09.021446+00:00",
+  "result": "SUCCESS"
+}

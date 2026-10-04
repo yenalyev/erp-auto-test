@@ -27,6 +27,9 @@ import static io.restassured.RestAssured.given;
 @Slf4j
 public class PlaywrightSessionProvider implements AutoCloseable {
 
+    private static final int SESSION_LOGIN_ATTEMPTS = 3;
+    private static final long SESSION_LOGIN_RETRY_DELAY_MS = 1_000L;
+
     private final Playwright playwright;
     private final Browser browser;
     private final String backendUrl;
@@ -49,7 +52,22 @@ public class PlaywrightSessionProvider implements AutoCloseable {
      */
     public Map<String, String> getSession(String username, String password) {
         log.info("🎭 Starting browser-based OAuth2 login for user: {}", username);
-        return loginInternal(username, password, password);
+        RuntimeException lastFailure = null;
+        for (int attempt = 1; attempt <= SESSION_LOGIN_ATTEMPTS; attempt++) {
+            try {
+                return loginInternal(username, password, password);
+            } catch (RuntimeException failure) {
+                lastFailure = failure;
+                if (attempt == SESSION_LOGIN_ATTEMPTS || !isTransientLoginFailure(failure)) {
+                    throw failure;
+                }
+                long delayMs = SESSION_LOGIN_RETRY_DELAY_MS * attempt;
+                log.warn("Transient OAuth login failure for user {} (attempt {}/{}); retrying in {} ms: {}",
+                        username, attempt, SESSION_LOGIN_ATTEMPTS, delayMs, failure.getMessage());
+                sleepBeforeRetry(delayMs, failure);
+            }
+        }
+        throw lastFailure;
     }
 
     /**
@@ -181,6 +199,38 @@ public class PlaywrightSessionProvider implements AutoCloseable {
                     response.getBody().asString().substring(0, Math.min(200, response.getBody().asString().length()))));
         }
         log.info("✅ Session verified via /api/v1/users/me for user: {}", username);
+    }
+
+    private static boolean isTransientLoginFailure(Throwable failure) {
+        for (Throwable current = failure; current != null; current = current.getCause()) {
+            String message = current.getMessage();
+            if (message == null) {
+                continue;
+            }
+            String normalized = message.toLowerCase(java.util.Locale.ROOT);
+            if (normalized.contains("err_connection_")
+                    || normalized.contains("err_network_changed")
+                    || normalized.contains("connection refused")
+                    || normalized.contains("connection reset")
+                    || normalized.contains("timed out")
+                    || normalized.contains("timeout")
+                    || normalized.contains("status 502")
+                    || normalized.contains("status 503")
+                    || normalized.contains("status 504")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void sleepBeforeRetry(long delayMs, RuntimeException originalFailure) {
+        try {
+            Thread.sleep(delayMs);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            originalFailure.addSuppressed(interrupted);
+            throw originalFailure;
+        }
     }
 
     @Override

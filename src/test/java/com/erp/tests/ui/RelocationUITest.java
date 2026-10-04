@@ -318,7 +318,7 @@ public class RelocationUITest extends BaseUITest {
             """)
     public void adminAllLocationsInTransitJournalLoads() {
         injectRoleSession(UserRole.ADMIN, storageId);
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.ADMIN);
         page = browserContext.newPage();
 
         RelocationPage relocationPage = new RelocationPage(page);

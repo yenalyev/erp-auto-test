@@ -1,5 +1,7 @@
 # План тестування синхронізації екіпажів Файти з Цукерочкою
 
+Документація вимоги: [REQ-FAITA-CREW-SYNC](REQ-FAITA-CREW-SYNC.md). Покрокові сценарії: [FAITA_CREW_SYNC_TEST_CASES](FAITA_CREW_SYNC_TEST_CASES.md). Постійний контрактний suite: `src/test/resources/suites/faita-crew-sync.xml`.
+
 ## Обсяг
 
 Покривається повний ланцюг:

@@ -568,7 +568,7 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_001 = """
-            Що перевіряємо: GET /storages/inventory/crews requestType=STOCK після видачі на CREW.
+            Що перевіряємо: GET /crews/stocks після видачі на CREW.
             Тестові дані: crew + resource після ISSUE_AMOUNT.
             Очікуваний результат: рядок crew+resource з amount≈ISSUE_AMOUNT.
             """ + ON_FAIL_API;
@@ -601,13 +601,13 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_006 = """
-            Що перевіряємо: STOCK-звіт /inventory/crews = direct GET /storages/{crewId}/inventory (Crew-Manager).
+            Що перевіряємо: STOCK-звіт /crews/stocks = direct GET /storages/{crewId}/inventory (Crew-Manager).
             Тестові дані: той самий crew/resource після видачі OWNER_1.
             Очікуваний результат: amount у звіті == direct stock (±0.01) під CREW_MANAGER.
             """ + ON_FAIL_API;
 
     public static final String TC_CREW_INV_002 = """
-            Що перевіряємо: GET /storages/inventory/crews requestType=INCOME — сума видач за період.
+            Що перевіряємо: GET /crews/relocations — сума видач за період.
             Тестові дані: crew після ISSUE_AMOUNT; fromDate/toDate = сьогодні ±1 день.
             Очікуваний результат: income≥ISSUE_AMOUNT для crew+resource.
             """ + ON_FAIL_API;

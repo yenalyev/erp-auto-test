@@ -68,7 +68,7 @@ public class GlobalPlanTechMapEditUiTest extends BaseUITest {
 
         Map<String, String> cookies = cachedSessionCookies(UserRole.ADMIN);
         injectSessionCookies(cookies, sessionCookieDomain());
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.ADMIN);
     }
 
     @AfterClass(alwaysRun = true)

@@ -5,10 +5,15 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.data.factories.tech_map.TechnologicalMapDataFactory;
 import com.erp.enums.UserRole;
+import com.erp.enums.BusinessRole;
 import com.erp.fixtures.ProductionFixture;
+import com.erp.fixtures.ResourceFixture;
+import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.request.ManufacturingListRequest;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.StorageItemBatchResponse;
+import com.erp.models.response.StorageResponse;
 import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.BaseFunctionalTest;
@@ -23,6 +28,8 @@ import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -41,6 +48,8 @@ public class ProductionTest extends BaseFunctionalTest {
     private static final double MIN_INPUT_STOCK_PER_TEST = 500.0;
 
     private ProductionFixture productionFixture;
+    private StorageFixture storageFixture;
+    private UserFixture userFixture;
     private Long storageId;
     private TechnologicalMapResponse techMap;
     private Long inputResourceId1;
@@ -50,10 +59,16 @@ public class ProductionTest extends BaseFunctionalTest {
     @BeforeClass(alwaysRun = true, dependsOnMethods = "baseTestClassSetup")
     @Step("Підготовка середовища для тестів виробництва")
     public void setupProductionTest() {
+        storageFixture = new StorageFixture(testContext, apiExecutor);
+        StorageResponse storage = storageFixture.createProductionStorage(
+                ConfigProvider.getOwner1StorageId(), "prd-isolated-");
+        storageId = storage.getId();
+        userFixture = new UserFixture(testContext, apiExecutor);
+        UserFixture.BusinessActor owner = userFixture.createBusinessActor(
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(storage));
+        apiExecutor.setSessionForRole(UserRole.OWNER_1, owner.username(), owner.password());
         productionFixture = new ProductionFixture(testContext, apiExecutor);
-        productionFixture.prepareContext();
-
-        storageId = ConfigProvider.getOwner1StorageId();
+        productionFixture.prepareContext(storageId);
         techMap = testContext.get(ContextKey.PRODUCTION_TECH_MAP);
         if (techMap == null) {
             throw new IllegalStateException("PRODUCTION_TECH_MAP missing after fixture setup");
@@ -69,9 +84,43 @@ public class ProductionTest extends BaseFunctionalTest {
         SchemaRegistry.logSchemaCoverage();
     }
 
+    @AfterClass(alwaysRun = true)
+    public void cleanupProductionLocation() {
+        if (techMap != null && productionFixture != null && storageId != null) {
+            try {
+                productionFixture.getTechMapFixture().deactivateTechMap(
+                        UserRole.ADMIN, techMap.getId(), storageId);
+            } catch (RuntimeException e) {
+                log.warn("Could not deactivate dynamic production tech map {}", techMap.getId(), e);
+            }
+        }
+        if (storageFixture != null) {
+            storageFixture.deactivateTrackedStorages(UserRole.ADMIN);
+        }
+        if (inputResourceId1 != null && inputResourceId2 != null && outputResourceId != null) {
+            ResourceFixture resources = new ResourceFixture(testContext, apiExecutor);
+            for (Long id : List.of(inputResourceId1, inputResourceId2, outputResourceId)) {
+                try {
+                    resources.deactivate(UserRole.ADMIN, id);
+                } catch (RuntimeException e) {
+                    log.warn("Could not deactivate dynamic production resource {}", id, e);
+                }
+            }
+        }
+        if (apiExecutor != null) {
+            apiExecutor.evictSessionForRole(UserRole.OWNER_1);
+        }
+        if (userFixture != null) {
+            userFixture.deactivateTrackedUsers();
+        }
+    }
+
     @BeforeMethod(alwaysRun = true)
     @Step("Поповнити запас сировини перед тестом (ізоляція на staging)")
     public void ensureInputStockBeforeTest() {
+        if (storageId == null || inputResourceId1 == null || inputResourceId2 == null) {
+            throw new SkipException("Production class fixture setup did not complete");
+        }
         productionFixture.ensureInputStockAtLeast(
                 storageId, inputResourceId1, inputResourceId2, MIN_INPUT_STOCK_PER_TEST);
     }

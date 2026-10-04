@@ -118,7 +118,7 @@ public class GlobalPlanPivotUiTest extends BaseUITest {
                 .replaceFirst("https?://", "")
                 .split("/")[0];
         injectSessionCookies(cookies, domain);
-        injectAllLocationsView();
+        injectAllLocationsView(UserRole.ADMIN);
 
         log.info("Global plan pivot seed: older={}, newer={}, A={}, B={}, categories=[{}, {}]",
                 olderPeriod, newerPeriod,

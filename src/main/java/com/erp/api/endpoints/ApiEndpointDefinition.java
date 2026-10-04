@@ -1032,16 +1032,6 @@ public enum ApiEndpointDefinition {
             null
     ),
 
-    STORAGE_GET_CREW_INVENTORY(
-            "/api/v1/storages/inventory/crews",
-            Method.GET,
-            "schemas/storages/crew-resource-stock-paged-list-schema.json",
-            "Get crew resource stock or income report",
-            null,
-            new TypeReference<List<CrewResourceStockResponse>>() {},
-            null
-    ),
-
     CREW_GET_RESOURCE_STOCKS(
             "/api/v1/crews/stocks",
             Method.GET,
@@ -1049,6 +1039,16 @@ public enum ApiEndpointDefinition {
             "Get crew analytics resource stocks (category breakdown)",
             null,
             new TypeReference<List<CrewResourceCategoryStockResponse>>() {},
+            null
+    ),
+
+    CREW_GET_RELOCATIONS(
+            "/api/v1/crews/relocations",
+            Method.GET,
+            null,
+            "Get crew relocation income journal",
+            null,
+            null,
             null
     ),
 
@@ -2278,6 +2278,26 @@ public enum ApiEndpointDefinition {
     // ========================================
     // FAITA / RESOURCE RECONCILIATION ENDPOINTS
     // ========================================
+
+    FAITA_DEV_LOG_POST(
+            "/api/v1/integrations/faita/log",
+            Method.POST,
+            null,
+            "Create a controlled FAITA flight log entry on non-production environments",
+            null,
+            null,
+            null
+    ),
+
+    FAITA_DEV_SYNC_TEAMS_POST(
+            "/api/v1/integrations/faita/syncTeams",
+            Method.POST,
+            null,
+            "Run FAITA crew synchronization on non-production environments",
+            null,
+            null,
+            null
+    ),
 
     FAITA_RESOURCES_GET(
             "/api/v1/integrations/faita/resources",

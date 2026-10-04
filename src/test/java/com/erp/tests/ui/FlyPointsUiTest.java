@@ -78,8 +78,7 @@ public class FlyPointsUiTest extends BaseUITest {
         injectSessionCookies(
                 authService.getSessionForUser(keeper.username(), keeper.password()),
                 sessionCookieDomain());
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + warehouse.getId() + "');");
+        injectWorkspaceView(keeper.username(), warehouse.getId());
     }
 
     @AfterClass(alwaysRun = true)

@@ -119,7 +119,7 @@ public class EquipmentCreateUITest extends BaseUITest {
 
         Allure.step("API: одне переміщення містить обидві одиниці", () -> {
             RelocationResponse relocation = equipmentFixture.findRelocationContainingEquipmentNames(
-                    UserRole.OWNER_1, storageId, names);
+                    UserRole.ADMIN, storageId, names);
             List<String> relocationNames = relocation.getEquipmentItems().stream()
                     .map(EquipmentSimpleResponse::getName)
                     .toList();
@@ -143,8 +143,7 @@ public class EquipmentCreateUITest extends BaseUITest {
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
         injectSessionCookies(cachedSessionCookies(role), sessionCookieDomain());
-        browserContext.addInitScript(
-                "localStorage.setItem('selectedStorageId', '" + selectedStorageId + "');");
+        injectWorkspaceView(role, selectedStorageId);
         if (page != null && !page.isClosed()) {
             page.close();
         }
