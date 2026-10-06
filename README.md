@@ -80,6 +80,7 @@ mvn clean test -Denv=dev -Dsuite=regression
 
 ```bash
 mvn test -Denv=dev -Dsuite=inventory
+mvn test -Denv=dev -Dsuite=inventory-process
 mvn test -Denv=dev -Dsuite=relocations
 mvn test -Denv=dev -Dsuite=ui
 ```

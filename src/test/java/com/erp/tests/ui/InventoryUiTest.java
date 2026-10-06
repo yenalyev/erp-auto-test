@@ -9,11 +9,13 @@ import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.InventoryProcessResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.pages.AccessForbiddenPage;
 import com.erp.pages.ExportAnalyticsPage;
 import com.erp.pages.InventoryEditPage;
+import com.erp.pages.InventoryProcessesPage;
 import com.erp.pages.OperationHistoryPage;
 import com.erp.pages.UnitManagementPage;
 import com.erp.utils.config.ConfigProvider;
@@ -165,107 +167,112 @@ public class InventoryUiTest extends BaseUITest {
         resourcesToCleanup.clear();
     }
 
-    // --- REQ-WMS-003 session ---
+    // --- Inventory request workflow ---
 
     @Test(priority = 10)
-    @TestCaseId("TC-WMS-003-001")
-    @Story("Admin opens session UI")
+    @TestCaseId("TC-INV-PROC-UI-001")
+    @Story("Owner requests inventory with a mandatory reason")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Admin відкриває сторінку «Залишки» на конкретній локації та натискає «Відкрити інвентаризацію».
-            Очікується: кнопка змінюється на «Закрити інвентаризацію», сесія відкрита.
+            Керівник локації відкриває «Залишки», створює запит і обов'язково вказує причину.
+            Після submit кнопка показує, що запит розглядається.
             """)
-    public void adminOpensInventorySessionUi() {
+    public void ownerRequestsInventoryWithReasonUi() {
         Allure.parameter("storageId", storageId);
-        Allure.parameter("role", UserRole.ADMIN.name());
+        Allure.parameter("role", UserRole.OWNER_1.name());
+        injectRoleSession(UserRole.OWNER_1, storageId);
+        page = browserContext.newPage();
 
-        UnitManagementPage stock = Allure.step("Відкрити «Залишки» для локації Owner 1", () -> {
+        UnitManagementPage stock = Allure.step("Відкрити «Залишки» керівником локації", () -> {
             UnitManagementPage pageObj = new UnitManagementPage(page).openForStorage(storageId);
-            pageObj.attachScreenshot("TC-WMS-003-001 — stock page initial");
+            pageObj.attachScreenshot("TC-INV-PROC-UI-001 — stock page initial");
             return pageObj;
         });
 
-        Allure.step("Відкрити сесію інвентаризації через UI", () -> {
-            assertThat(stock.isOpenInventoryButtonVisible())
-                    .as("Кнопка «Відкрити інвентаризацію» має бути видимою")
-                    .isTrue();
-            stock.clickOpenInventory().assertInventorySessionOpen();
-            stock.attachScreenshot("TC-WMS-003-001 — session open");
+        Allure.step("Перевірити mandatory reason і надіслати запит", () -> {
+            assertThat(stock.isInventoryRequestButtonVisible()).isTrue();
+            stock.openInventoryRequestDialog();
+            assertThat(stock.isInventoryRequestSubmitEnabled())
+                    .as("Submit без причини має бути disabled")
+                    .isFalse();
+            stock.submitInventoryRequest("Розбіжність фактичного залишку");
+            assertThat(stock.isInventoryRequestPendingVisible()).isTrue();
+            assertThat(inventoryFixture.getInventoryState(storageId, UserRole.OWNER_1).getState())
+                    .isEqualTo("REQUESTED");
+            stock.attachScreenshot("TC-INV-PROC-UI-001 — request pending");
         });
     }
 
     @Test(priority = 20)
-    @TestCaseId("TC-WMS-003-002")
-    @Story("Admin closes session UI")
+    @TestCaseId("TC-INV-PROC-UI-002")
+    @Story("Admin approves request from inventory sidebar page")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Admin закриває відкриту сесію інвентаризації на сторінці «Залишки».
-            Очікується: знову видима кнопка «Відкрити інвентаризацію».
+            Запит owner відображається адміністратору на сторінці «Інвентаризація».
+            Адміністратор дозволяє проведення, після чого стан локації OPEN.
             """)
-    public void adminClosesInventorySessionUi() {
-        inventoryFixture.openSession(storageId);
+    public void adminApprovesInventoryRequestUi() {
+        InventoryProcessResponse requested = inventoryFixture.requestInventory(
+                storageId, UserRole.OWNER_1, "Планова звірка через UI");
         Allure.parameter("storageId", storageId);
 
-        UnitManagementPage stock = Allure.step("Відкрити «Залишки» з відкритою сесією", () -> {
-            UnitManagementPage pageObj = new UnitManagementPage(page).openForStorage(storageId)
-                    .waitForSessionOpenState(true);
-            pageObj.attachScreenshot("TC-WMS-003-002 — session open before close");
+        InventoryProcessesPage processes = Allure.step("Відкрити вкладку запитів", () -> {
+            InventoryProcessesPage pageObj = new InventoryProcessesPage(page).open();
+            assertThat(pageObj.isRequestRowVisible(requested.getId())).isTrue();
+            pageObj.attachScreenshot("TC-INV-PROC-UI-002 — request row");
             return pageObj;
         });
 
-        Allure.step("Закрити сесію інвентаризації через UI", () -> {
-            stock.clickCloseInventory();
-            assertThat(stock.isOpenInventoryButtonVisible())
-                    .as("Після закриття має з'явитися «Відкрити інвентаризацію»")
-                    .isTrue();
-            stock.attachScreenshot("TC-WMS-003-002 — session closed");
+        Allure.step("Погодити запит", () -> {
+            processes.approve(requested.getId(), "Погоджено через UI");
+            assertThat(inventoryFixture.getInventoryState(storageId, UserRole.ADMIN).getState())
+                    .isEqualTo("OPEN");
+            processes.attachScreenshot("TC-INV-PROC-UI-002 — request approved");
         });
     }
 
     @Test(priority = 30)
-    @TestCaseId("TC-WMS-003-003")
-    @Story("Owner has no session toggle")
+    @TestCaseId("TC-INV-PROC-UI-003")
+    @Story("Rejected request is shown as a red one-time explanation button")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Owner 1 відкриває «Залишки» на своїй локації.
-            Очікується: кнопок «Відкрити/Закрити інвентаризацію» немає.
+            Після відхилення owner бачить червону кнопку «Запит на інвентаризацію відхилено».
+            Клік має показати пояснення адміністратора.
             """)
-    public void ownerHasNoSessionToggleUi() {
-        UnitManagementPage stock = Allure.step("Відкрити «Залишки» під Owner 1", () -> {
+    public void ownerSeesRejectedInventoryRequestUi() {
+        inventoryFixture.requestInventory(storageId, UserRole.OWNER_1, "Позапланова звірка");
+        inventoryFixture.rejectInventory(storageId, UserRole.ADMIN, "Перевірку відкладено");
+
+        UnitManagementPage stock = Allure.step("Відкрити «Залишки» після відхилення", () -> {
             injectRoleSession(UserRole.OWNER_1, storageId);
             page = browserContext.newPage();
             UnitManagementPage pageObj = new UnitManagementPage(page).openForStorage(storageId);
-            pageObj.attachScreenshot("TC-WMS-003-003 — owner stock page");
+            pageObj.attachScreenshot("TC-INV-PROC-UI-003 — rejected request");
             return pageObj;
         });
 
-        Allure.step("Переконатися, що toggle сесії відсутній", () -> {
-            assertThat(stock.isOpenInventoryButtonVisible()).isFalse();
-            assertThat(stock.isCloseInventoryButtonVisible()).isFalse();
-        });
+        assertThat(stock.isRejectedInventoryRequestButtonVisible())
+                .as("Очікується червона кнопка з текстом про відхилення")
+                .isTrue();
     }
 
     @Test(priority = 40)
-    @TestCaseId("TC-WMS-003-004")
-    @Story("All locations disables session button")
+    @TestCaseId("TC-INV-PROC-UI-004")
+    @Story("All locations mode does not allow inventory request")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
             Admin обирає «Всі локації» і відкриває «Залишки».
-            Очікується: кнопка «Відкрити інвентаризацію» disabled.
+            Очікується: запит можна створити лише для конкретної локації.
             """)
     public void allLocationsDisablesSessionButtonUi() {
         Allure.step("Відкрити агрегований перегляд «Всі локації»", () -> {
             injectAllLocationsSession(UserRole.ADMIN);
             page = browserContext.newPage();
             UnitManagementPage stock = new UnitManagementPage(page).openForAllLocations().waitForLoaded();
-            PollUtils.waitUntilTrue(
-                    stock::isInventorySessionToggleBlocked,
-                    10_000,
-                    "Inventory session toggle blocked in all-locations mode");
-            assertThat(stock.isInventorySessionToggleBlocked())
-                    .as("Toggle сесії має бути прихований або disabled у режимі «Всі локації»")
-                    .isTrue();
-            stock.attachScreenshot("TC-WMS-003-004 — all locations disabled session");
+            assertThat(stock.isInventoryRequestButtonVisible())
+                    .as("Запит потребує конкретної локації")
+                    .isFalse();
+            stock.attachScreenshot("TC-INV-PROC-UI-004 — all locations");
         });
     }
 
