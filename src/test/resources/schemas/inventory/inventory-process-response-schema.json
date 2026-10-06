@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InventoryProcessResponse",
+  "type": "object",
+  "required": ["id", "storage", "state", "requestedAt", "requestedBy"],
+  "properties": {
+    "id": { "type": "integer" },
+    "storage": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "state": { "type": "string", "enum": ["OPEN", "CLOSED", "REQUESTED", "REJECTED"] },
+    "requestedAt": { "type": "string" },
+    "requestedBy": { "type": "string" },
+    "requestedComment": { "type": ["string", "null"] },
+    "openedAt": { "type": ["string", "null"] },
+    "closedAt": { "type": ["string", "null"] },
+    "resolutionComment": { "type": ["string", "null"] },
+    "resolutionBy": { "type": ["string", "null"] },
+    "diff": { "type": ["array", "null"] }
+  },
+  "additionalProperties": true
+}

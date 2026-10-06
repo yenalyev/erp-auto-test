@@ -1,0 +1,23 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Focused coverage for the inventory request/approval/rejection/completion history workflow.
+
+  Run:
+    mvn test -Denv=dev -Dsuite=inventory-process -Dtcm.enabled=false -Dgoogle.sheets.enabled=false
+-->
+<suite name="Inventory Process Workflow" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+
+    <test name="Inventory Process API">
+        <classes>
+            <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
+        </classes>
+    </test>
+</suite>

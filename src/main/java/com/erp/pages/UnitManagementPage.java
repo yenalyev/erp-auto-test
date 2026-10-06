@@ -104,6 +104,8 @@ public class UnitManagementPage extends BasePage {
             page.waitForCondition(
                     () -> isOpenInventoryButtonVisible()
                             || isCloseInventoryButtonVisible()
+                            || isInventoryRequestButtonVisible()
+                            || isInventoryRequestPendingVisible()
                             || isConductInventoryButtonVisible(),
                     new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
         }
@@ -141,6 +143,47 @@ public class UnitManagementPage extends BasePage {
 
     public boolean isConductInventoryButtonVisible() {
         return conductButton().count() > 0 && conductButton().first().isVisible();
+    }
+
+    public boolean isInventoryRequestButtonVisible() {
+        Locator button = page.getByTestId("inventory-request-open");
+        return button.count() > 0 && button.first().isVisible();
+    }
+
+    public boolean isInventoryRequestPendingVisible() {
+        Locator button = page.getByTestId("inventory-request-pending");
+        return button.count() > 0 && button.first().isVisible();
+    }
+
+    public UnitManagementPage openInventoryRequestDialog() {
+        page.getByTestId("inventory-request-open").click();
+        page.getByTestId("inventory-request-dialog").waitFor(
+                new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isInventoryRequestSubmitEnabled() {
+        return page.getByTestId("inventory-request-submit").isEnabled();
+    }
+
+    public UnitManagementPage submitInventoryRequest(String reason) {
+        page.getByTestId("inventory-request-comment").fill(reason);
+        page.waitForResponse(
+                response -> response.url().contains("/storages/inventory")
+                        && "POST".equals(response.request().method())
+                        && response.status() >= 200
+                        && response.status() < 300,
+                () -> page.getByTestId("inventory-request-submit").click());
+        page.getByTestId("inventory-request-pending").waitFor(
+                new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public boolean isRejectedInventoryRequestButtonVisible() {
+        Locator button = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                .setName("Запит на інвентаризацію відхилено")
+                .setExact(true));
+        return button.count() > 0 && button.first().isVisible();
     }
 
     public boolean isExportToExcelButtonVisible() {
@@ -351,8 +394,15 @@ public class UnitManagementPage extends BasePage {
     }
 
     public UnitManagementPage waitForSessionOpenState(boolean open) {
-        String label = open ? CLOSE_INVENTORY_BUTTON_TEXT : OPEN_INVENTORY_BUTTON_TEXT;
-        inventoryToggleButton(label).waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        if (open) {
+            conductButton().waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(uiTimeoutMs()));
+        } else {
+            page.waitForCondition(
+                    () -> isInventoryRequestButtonVisible() || isInventoryRequestPendingVisible(),
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        }
         return this;
     }
 

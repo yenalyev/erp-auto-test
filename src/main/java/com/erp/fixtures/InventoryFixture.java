@@ -5,11 +5,14 @@ import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.data.RequestBodyFactory;
 import com.erp.data.factories.ResourceDataFactory;
 import com.erp.data.factories.inventory.InventoryDataFactory;
+import com.erp.models.request.InventoryProcessRequest;
 import com.erp.models.request.ResourceRequest;
 import com.erp.test_context.ContextKey;
 import com.erp.enums.UserRole;
 import com.erp.models.request.InventoryRequest;
 import com.erp.models.response.InventorySessionStatus;
+import com.erp.models.response.InventoryProcessResponse;
+import com.erp.models.response.InventoryStateResponse;
 import com.erp.models.response.MultiLocationStorageItemResponse;
 import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.ResourceHistoryGroupResponse;
@@ -35,11 +38,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 public class InventoryFixture extends BaseFixture {
+
+    private static final String OPEN = "OPEN";
+    private static final String REQUESTED = "REQUESTED";
+    private final Map<Long, Long> openedInventoryIds = new ConcurrentHashMap<>();
 
     public InventoryFixture(TestContext testContext, ApiExecutor apiExecutor) {
         super(testContext, apiExecutor);
@@ -224,24 +232,52 @@ public class InventoryFixture extends BaseFixture {
                 role,
                 String.valueOf(storageId));
         validateSuccess(response, "GET inventory session status");
-        return response.as(InventorySessionStatus.class);
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_GET);
+        InventoryStateResponse state = response.as(InventoryStateResponse.class);
+        return legacyStatus(OPEN.equals(state.getState()));
     }
 
-    @Step("API: PUT статус сесії open={open} на складі {storageId}")
+    @Step("API: змінити стан процесу інвентаризації open={open} на складі {storageId}")
     public Response putStatus(long storageId, UserRole role, boolean open) {
-        InventorySessionStatus request = InventorySessionStatus.builder().open(open).build();
-        return apiExecutor.execute(
-                ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_PUT,
-                role,
-                request,
-                String.valueOf(storageId));
+        if (!open) {
+            Long processId = resolveOpenInventoryId(storageId, UserRole.ADMIN);
+            if (processId == null) {
+                return apiExecutor.execute(
+                        ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_GET,
+                        role,
+                        String.valueOf(storageId));
+            }
+            return apiExecutor.execute(
+                    ApiEndpointDefinition.STORAGE_INVENTORY_CLOSE_DELETE,
+                    role,
+                    null,
+                    String.valueOf(processId));
+        }
+
+        InventoryStateResponse current = getInventoryState(storageId, UserRole.ADMIN);
+        if (!OPEN.equals(current.getState()) && !REQUESTED.equals(current.getState())) {
+            Response requested = requestInventoryRaw(
+                    storageId,
+                    role,
+                    "automation inventory request");
+            if (requested.statusCode() < 200 || requested.statusCode() >= 300) {
+                return requested;
+            }
+        }
+        return approveInventoryRaw(storageId, role, "automation inventory approval");
     }
 
     @Step("API: Закрити сесію інвентаризації на складі {storageId}, якщо відкрита")
     public void ensureClosed(long storageId) {
-        InventorySessionStatus status = getStatus(storageId, UserRole.ADMIN);
-        if (Boolean.TRUE.equals(status.getOpen())) {
+        InventoryStateResponse state = getInventoryState(storageId, UserRole.ADMIN);
+        if (OPEN.equals(state.getState())) {
             closeSession(storageId);
+        } else if (REQUESTED.equals(state.getState())) {
+            Response response = apiExecutor.execute(
+                    ApiEndpointDefinition.STORAGE_INVENTORY_REJECT_DELETE,
+                    UserRole.ADMIN,
+                    inventoryProcessRequest(storageId, "automation cleanup"));
+            validateSuccess(response, "DELETE reject pending inventory request");
         }
     }
 
@@ -250,18 +286,174 @@ public class InventoryFixture extends BaseFixture {
         Response response = putStatus(storageId, UserRole.ADMIN, true);
         validateSuccess(response, "PUT open inventory session");
         SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_PUT);
-        InventorySessionStatus body = response.as(InventorySessionStatus.class);
-        assertThat(body.getOpen()).isTrue();
-        return body;
+        InventoryProcessResponse process = response.as(InventoryProcessResponse.class);
+        assertThat(process.getState()).isEqualTo(OPEN);
+        if (process.getId() != null) {
+            openedInventoryIds.put(storageId, process.getId());
+        }
+        return legacyStatus(true);
     }
 
     @Step("API: Закрити сесію інвентаризації на складі {storageId}")
     public InventorySessionStatus closeSession(long storageId) {
-        Response response = putStatus(storageId, UserRole.ADMIN, false);
-        validateSuccess(response, "PUT close inventory session");
-        InventorySessionStatus body = response.as(InventorySessionStatus.class);
-        assertThat(body.getOpen()).isFalse();
-        return body;
+        InventoryStateResponse current = getInventoryState(storageId, UserRole.ADMIN);
+        if (!OPEN.equals(current.getState())) {
+            openedInventoryIds.remove(storageId);
+            return legacyStatus(false);
+        }
+
+        Long processId = resolveOpenInventoryId(storageId, UserRole.ADMIN);
+        if (processId == null) {
+            throw new IllegalStateException("Open inventory process id not found for storage " + storageId);
+        }
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_CLOSE_DELETE,
+                UserRole.ADMIN,
+                null,
+                String.valueOf(processId));
+        validateSuccess(response, "DELETE close inventory session");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_CLOSE_DELETE);
+        InventoryProcessResponse process = response.as(InventoryProcessResponse.class);
+        assertThat(process.getState()).isEqualTo("CLOSED");
+        openedInventoryIds.remove(storageId);
+        return legacyStatus(false);
+    }
+
+    @Step("API: створити запит на інвентаризацію складу {storageId}")
+    public Response requestInventoryRaw(long storageId, UserRole role) {
+        return requestInventoryRaw(storageId, role, "automation inventory request");
+    }
+
+    @Step("API: створити запит на інвентаризацію складу {storageId} з причиною")
+    public Response requestInventoryRaw(long storageId, UserRole role, String reason) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_REQUEST_POST,
+                role,
+                inventoryProcessRequest(storageId, reason));
+    }
+
+    @Step("API: створити запит на інвентаризацію складу {storageId} з причиною")
+    public InventoryProcessResponse requestInventory(long storageId, UserRole role, String reason) {
+        Response response = requestInventoryRaw(storageId, role, reason);
+        validateSuccess(response, "POST request inventory process");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_REQUEST_POST);
+        InventoryProcessResponse process = response.as(InventoryProcessResponse.class);
+        assertThat(process.getState()).isEqualTo(REQUESTED);
+        assertThat(process.getRequestedComment()).isEqualTo(reason);
+        return process;
+    }
+
+    @Step("API: відкрити погоджений процес інвентаризації складу {storageId}")
+    public Response openRequestedInventoryRaw(long storageId, UserRole role) {
+        return approveInventoryRaw(storageId, role, "automation inventory approval");
+    }
+
+    @Step("API: погодити запит на інвентаризацію складу {storageId}")
+    public Response approveInventoryRaw(long storageId, UserRole role, String comment) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_PUT,
+                role,
+                inventoryProcessRequest(storageId, comment));
+    }
+
+    @Step("API: погодити запит на інвентаризацію складу {storageId}")
+    public InventoryProcessResponse approveInventory(long storageId, UserRole role, String comment) {
+        Response response = approveInventoryRaw(storageId, role, comment);
+        validateSuccess(response, "PUT approve inventory process");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_PUT);
+        InventoryProcessResponse process = response.as(InventoryProcessResponse.class);
+        assertThat(process.getState()).isEqualTo(OPEN);
+        if (process.getId() != null) {
+            openedInventoryIds.put(storageId, process.getId());
+        }
+        return process;
+    }
+
+    @Step("API: відхилити запит на інвентаризацію складу {storageId}")
+    public Response rejectInventoryRaw(long storageId, UserRole role, String explanation) {
+        return apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_REJECT_DELETE,
+                role,
+                inventoryProcessRequest(storageId, explanation));
+    }
+
+    @Step("API: відхилити запит на інвентаризацію складу {storageId}")
+    public InventoryProcessResponse rejectInventory(long storageId, UserRole role, String explanation) {
+        Response response = rejectInventoryRaw(storageId, role, explanation);
+        validateSuccess(response, "DELETE reject inventory process");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_REJECT_DELETE);
+        InventoryProcessResponse process = response.as(InventoryProcessResponse.class);
+        assertThat(process.getState()).isEqualTo("REJECTED");
+        return process;
+    }
+
+    @Step("API: отримати поточний стан інвентаризації складу {storageId}")
+    public InventoryStateResponse getInventoryState(long storageId, UserRole role) {
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_GET,
+                role,
+                String.valueOf(storageId));
+        validateSuccess(response, "GET inventory process state");
+        SchemaRegistry.validateIfSuccess(response, ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_GET);
+        return response.as(InventoryStateResponse.class);
+    }
+
+    @Step("API: список процесів інвентаризації")
+    public List<InventoryProcessResponse> listInventoryProcesses(UserRole role, Map<String, ?> queryParams) {
+        Response response = apiExecutor.executeWithQueryParams(
+                ApiEndpointDefinition.STORAGE_INVENTORY_PROCESSES_GET,
+                role,
+                queryParams);
+        validateSuccess(response, "GET inventory processes");
+        List<InventoryProcessResponse> processes = response.jsonPath()
+                .getList("content", InventoryProcessResponse.class);
+        return processes != null ? processes : List.of();
+    }
+
+    @Step("API: знайти процес інвентаризації {processId}")
+    public InventoryProcessResponse requireInventoryProcess(long processId, UserRole role) {
+        return listInventoryProcesses(role, Map.of(
+                "page", 0,
+                "size", 100,
+                "sort", "requestedAt,desc")).stream()
+                .filter(process -> Objects.equals(processId, process.getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Inventory process " + processId + " not found"));
+    }
+
+    private Long resolveOpenInventoryId(long storageId, UserRole role) {
+        Long cached = openedInventoryIds.get(storageId);
+        if (cached != null) {
+            return cached;
+        }
+        return listInventoryProcesses(role, Map.of(
+                "parentStorageId", storageId,
+                "states", OPEN,
+                "page", 0,
+                "size", 100,
+                "sort", "requestedAt,desc")).stream()
+                .filter(process -> OPEN.equals(process.getState()))
+                .filter(process -> process.getStorage() != null
+                        && Objects.equals(storageId, process.getStorage().getId()))
+                .map(InventoryProcessResponse::getId)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static InventoryProcessRequest inventoryProcessRequest(long storageId, String comment) {
+        return InventoryProcessRequest.builder()
+                .storageId(storageId)
+                .comment(comment)
+                .build();
+    }
+
+    private static InventorySessionStatus legacyStatus(boolean open) {
+        return InventorySessionStatus.builder()
+                .open(open)
+                .supported(true)
+                .build();
     }
 
     @Step("API: Статус сесії інвентаризації обладнання на складі {storageId}")
@@ -323,7 +515,7 @@ public class InventoryFixture extends BaseFixture {
         return response.as(StorageResponse.class);
     }
 
-    @Step("API: Провести інвентаризацію (очікуваний HTTP {expectedStatus})")
+    @Step("API: Провести інвентаризацію та повернути raw response")
     public Response conductInventoryRaw(long storageId, UserRole role, InventoryRequest request) {
         return apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_INVENTORY_PUT,

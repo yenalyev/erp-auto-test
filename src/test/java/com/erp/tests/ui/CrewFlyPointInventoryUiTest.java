@@ -376,19 +376,22 @@ public class CrewFlyPointInventoryUiTest extends BaseUITest {
     @TestCaseId("TC-UI-FLY-INV-002")
     @Description(StorageRegionsAllureDescriptions.TC_UI_FLY_INV_002)
     @Severity(SeverityLevel.CRITICAL)
-    public void adminTogglesInventorySessionOnFlyPointDeepLink() {
+    public void adminUsesOpenedInventoryProcessOnFlyPointDeepLink() {
         CrewRegionScenario scenario = crewFixture.prepareFlyPointScenario("ui-fp-tog-");
         long flyPointId = scenario.flyPoint().getId();
         inventoryFixture.ensureClosed(flyPointId);
+        inventoryFixture.openSession(flyPointId);
+        sessionStorageId = flyPointId;
 
         injectRoleSession(UserRole.ADMIN, scenario.unit().getId());
         UnitManagementPage stock = new UnitManagementPage(page).openWithStorageIdQuery(flyPointId);
-        stock.clickOpenInventory();
-        assertThat(stock.isCloseInventoryButtonVisible()).isTrue();
         assertThat(stock.isConductInventoryButtonEnabled()).isTrue();
-        stock.clickCloseInventory();
-        assertThat(stock.isOpenInventoryButtonVisible()).isTrue();
+
+        inventoryFixture.closeSession(flyPointId);
+        sessionStorageId = null;
+        stock.refreshInventoryTable();
         assertThat(stock.isConductInventoryButtonEnabled()).isFalse();
+        assertThat(stock.isInventoryRequestButtonVisible()).isTrue();
     }
 
     @Test(priority = 61)

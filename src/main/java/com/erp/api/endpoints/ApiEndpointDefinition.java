@@ -2136,23 +2136,63 @@ public enum ApiEndpointDefinition {
     ),
 
     STORAGE_INVENTORY_STATUS_GET(
-            "/api/v1/storages/{id}/inventory/status",
+            "/api/v1/storages/{id}/inventory/state",
             Method.GET,
-            "schemas/inventory/inventory-session-status-schema.json",
-            "Get material inventory session status",
+            "schemas/inventory/inventory-state-response-schema.json",
+            "Get material inventory process state",
             null,
-            new TypeReference<InventorySessionStatus>() {},
+            new TypeReference<InventoryStateResponse>() {},
             null
     ),
 
+    STORAGE_INVENTORY_REQUEST_POST(
+            "/api/v1/storages/inventory",
+            Method.POST,
+            "schemas/inventory/inventory-process-response-schema.json",
+            "Request material inventory process",
+            new TypeReference<InventoryProcessRequest>() {},
+            new TypeReference<InventoryProcessResponse>() {},
+            "REQUEST_INVENTORY_SESSION"
+    ),
+
     STORAGE_INVENTORY_STATUS_PUT(
-            "/api/v1/storages/{id}/inventory/status",
+            "/api/v1/storages/inventory",
             Method.PUT,
-            "schemas/inventory/inventory-session-status-schema.json",
-            "Open or close material inventory session",
-            new TypeReference<InventorySessionStatus>() {},
-            new TypeReference<InventorySessionStatus>() {},
+            "schemas/inventory/inventory-process-response-schema.json",
+            "Approve and open material inventory process",
+            new TypeReference<InventoryProcessRequest>() {},
+            new TypeReference<InventoryProcessResponse>() {},
             "OPEN_INVENTORY_SESSION"
+    ),
+
+    STORAGE_INVENTORY_REJECT_DELETE(
+            "/api/v1/storages/inventory",
+            Method.DELETE,
+            "schemas/inventory/inventory-process-response-schema.json",
+            "Reject material inventory request",
+            new TypeReference<InventoryProcessRequest>() {},
+            new TypeReference<InventoryProcessResponse>() {},
+            "REJECT_INVENTORY_SESSION"
+    ),
+
+    STORAGE_INVENTORY_CLOSE_DELETE(
+            "/api/v1/storages/inventory/{id}",
+            Method.DELETE,
+            "schemas/inventory/inventory-process-response-schema.json",
+            "Close material inventory process",
+            null,
+            new TypeReference<InventoryProcessResponse>() {},
+            "CLOSE_INVENTORY_SESSION"
+    ),
+
+    STORAGE_INVENTORY_PROCESSES_GET(
+            "/api/v1/storages/inventory/processes",
+            Method.GET,
+            null,
+            "List material inventory processes",
+            null,
+            new TypeReference<List<InventoryProcessResponse>>() {},
+            null
     ),
 
     STORAGE_EQUIPMENT_INVENTORY_STATUS_GET(
