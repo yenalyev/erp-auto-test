@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Селектор локацій (my-units) для ролей з обмеженою видимістю UNIT.
+ * Селектор доступних локацій для бухгалтерії та інших ролей.
  */
 @Slf4j
 @Epic("Authentication & Authorization")
@@ -36,11 +36,11 @@ public class RoleStorageSelectorApiTest extends CrewApiTestBase {
     @Test(priority = 10)
     @TestCaseId("TC-ACC-API-001")
     @Description("""
-            ACCOUNTANT: GET /storages/names/my-units не містить локацій з функцією ORDERS.
+            Бухгалтер бачить доступні локації підрозділів із функцією замовлень.
             """)
     @Severity(SeverityLevel.CRITICAL)
-    public void testAccountantMyUnitsExcludesOrdersLocations() {
-        assertNoOrdersLocationsInMyUnits(UserRole.ACCOUNTANT);
+    public void testAccountantMyUnitsIncludesOrdersLocations() {
+        assertOrdersLocationsInMyUnits(UserRole.ACCOUNTANT);
     }
 
     @Test(priority = 20)
@@ -58,7 +58,7 @@ public class RoleStorageSelectorApiTest extends CrewApiTestBase {
         assertThat(response.statusCode()).isEqualTo(403);
     }
 
-    private void assertNoOrdersLocationsInMyUnits(UserRole role) {
+    private void assertOrdersLocationsInMyUnits(UserRole role) {
         Response response = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_MY_UNITS, role);
         assertThat(response.statusCode()).isEqualTo(200);
 
@@ -70,7 +70,7 @@ public class RoleStorageSelectorApiTest extends CrewApiTestBase {
                 .toList();
 
         assertThat(ordersLocations)
-                .as("Роль %s не повинна бачити локації з ORDERS у my-units", role)
-                .isEmpty();
+                .as("Роль %s повинна бачити доступні локації підрозділів у my-units", role)
+                .isNotEmpty();
     }
 }

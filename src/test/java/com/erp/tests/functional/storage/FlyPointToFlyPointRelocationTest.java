@@ -176,9 +176,70 @@ public class FlyPointToFlyPointRelocationTest extends CrewApiTestBase {
                 beforeCrew, afterCrew, crewId, resourceId, "відхилений send не чіпає CREW");
     }
 
+    @Test(priority = 30)
+    @TestCaseId("TC-FLY-FP-003")
+    @Description("""
+            Видачу між точками вильоту в статусі «В дорозі» не можна перенаправити на підрозділ:
+            для передачі з точки вильоту отримувачем має лишатися доступна точка вильоту.
+            Відмова зберігає початкового отримувача й залишки.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testCannotRedirectFlyPointSendToUnit() {
+        CrewRegionScenario scenario = crewFixture.prepareTwoFlyPointsScenario("fp2fp-edit-neg-");
+        Long fpA = scenario.flyPoint().getId();
+        Long fpB = scenario.flyPointB().getId();
+        Long unitId = scenario.unit().getId();
+
+        seedStockOnFlyPoint(fpA);
+        RelocationResponse sent = relocationFixture.createSend(
+                FP_SENDER, fpA, fpB, resourceId, ISSUE_AMOUNT);
+        assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+
+        ProductionStockAssertions.StockSnapshot senderBefore = RelocationStockAssertions.capture(
+                apiExecutor, fpA, STOCK_READER, Set.of(resourceId), "FP_A before rejected edit");
+        ProductionStockAssertions.StockSnapshot unitBefore = RelocationStockAssertions.capture(
+                apiExecutor, unitId, STOCK_READER, Set.of(resourceId), "UNIT before rejected edit");
+
+        Response rejected = relocationFixture.editSendRaw(
+                FP_SENDER, sent.getId(), fpA,
+                RelocationDataFactory.buildSendEditRequest(
+                        resourceId, ISSUE_AMOUNT, "redirect FP to UNIT", unitId));
+        try {
+            assertThat(rejected.statusCode()).isEqualTo(403);
+
+            RelocationResponse still = relocationFixture.findInTransitById(
+                    FP_SENDER, fpA, sent.getId());
+            assertThat(still).isNotNull();
+            assertThat(still.getState()).isEqualTo(RelocationState.CREATED);
+            assertThat(still.getRecipient().getId()).isEqualTo(fpB);
+
+            ProductionStockAssertions.StockSnapshot senderAfter = RelocationStockAssertions.capture(
+                    apiExecutor, fpA, STOCK_READER, Set.of(resourceId), "FP_A after rejected edit");
+            ProductionStockAssertions.StockSnapshot unitAfter = RelocationStockAssertions.capture(
+                    apiExecutor, unitId, STOCK_READER, Set.of(resourceId), "UNIT after rejected edit");
+            RelocationStockAssertions.assertUnchanged(
+                    senderBefore, senderAfter, fpA, resourceId, "відхилена правка не змінює точку-відправник");
+            RelocationStockAssertions.assertUnchanged(
+                    unitBefore, unitAfter, unitId, resourceId, "відхилена правка не змінює підрозділ");
+        } finally {
+            Long currentRecipientId = rejected.statusCode() >= 200 && rejected.statusCode() < 300
+                    ? unitId : fpB;
+            Response cancelled = relocationFixture.resolveRaw(
+                    FP_SENDER, sent.getId(), currentRecipientId, RelocationState.CANCELLED);
+            if (cancelled.statusCode() == 200) {
+                Response returned = relocationFixture.resolveRaw(
+                        FP_SENDER, sent.getId(), fpA, RelocationState.RETURNED);
+                if (returned.statusCode() != 200) {
+                    log.warn("TC-FLY-FP-003 cleanup: return failed with status {}", returned.statusCode());
+                }
+            } else {
+                log.warn("TC-FLY-FP-003 cleanup: cancellation failed with status {}", cancelled.statusCode());
+            }
+        }
+    }
     private void seedStockOnFlyPoint(Long flyPointId) {
         relocationFixture.createSendAndFinishBySender(
-                UserRole.OWNER_1,
+                UserRole.ADMIN,
                 owner1StorageId,
                 flyPointId,
                 resourceId,

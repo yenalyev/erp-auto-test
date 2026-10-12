@@ -375,7 +375,8 @@ public class ProductionTest extends BaseFunctionalTest {
     @TestCaseId({
             "TC-PRD-005",
             "TC-MFG-012",
-            "TC-MFG-013"
+            "TC-MFG-013",
+            "TC-MFG-002-01-03A"
     })
     @Story("Production batches — merge")
     @Description("""
@@ -478,7 +479,8 @@ public class ProductionTest extends BaseFunctionalTest {
     @TestCaseId({
             "TC-PRD-006",
             "TC-MFG-014",
-            "TC-MFG-003-04"
+            "TC-MFG-003-04",
+            "TC-MFG-002-01-03B"
     })
     @Story("Update production amount")
     @Description("""
@@ -583,7 +585,8 @@ public class ProductionTest extends BaseFunctionalTest {
     @TestCaseId({
             "TC-PRD-007",
             "TC-MFG-015",
-            "TC-MFG-003-02"
+            "TC-MFG-003-02",
+            "TC-MFG-002-01-03C"
     })
     @Story("Delete production")
     @Description("""

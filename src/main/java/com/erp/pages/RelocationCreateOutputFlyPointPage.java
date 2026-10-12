@@ -87,6 +87,18 @@ public class RelocationCreateOutputFlyPointPage extends BasePage {
         return this;
     }
 
+    /** The archive flow preselects the point's remaining stock. */
+    public RelocationCreateOutputFlyPointPage waitForPrefilledStock(String resourceName, String amount) {
+        page.waitForCondition(() -> {
+            Locator resource = page.getByPlaceholder(RESOURCE_PLACEHOLDER);
+            Locator quantity = page.getByPlaceholder(QUANTITY_PLACEHOLDER);
+            return resource.count() > 0 && quantity.count() > 0
+                    && resource.inputValue().contains(resourceName)
+                    && amount.equals(quantity.inputValue());
+        }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
     public RelocationCreateOutputFlyPointPage fillIssuer(String name, String rank) {
         page.getByText("Видав Ім'я та Прізвище")
                 .locator("xpath=following::input[1]")
@@ -112,6 +124,17 @@ public class RelocationCreateOutputFlyPointPage extends BasePage {
                         && "POST".equals(response.request().method()),
                 () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(SUBMIT)).click());
         return new RelocationPage(page).waitForLoaded();
+    }
+
+    public FlyPointClosePage submitAndWaitForReturn() {
+        page.waitForResponse(
+                response -> response.url().contains("/relocations/send")
+                        && "POST".equals(response.request().method()),
+                () -> page.getByRole(AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(SUBMIT)).click());
+        page.waitForURL(url -> url.contains("/fly-points/close/"),
+                new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
+        return new FlyPointClosePage(page);
     }
 
     public RelocationCreateOutputFlyPointPage open() {

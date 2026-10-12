@@ -41,6 +41,7 @@
         "properties": {
           "batchUuid": { "type": "string", "format": "uuid" },
           "batchNumber": { "type": ["string", "null"] },
+          "origin": { "type": ["string", "null"], "enum": ["REGULAR", "UNKNOWN", null] },
           "isProduced": { "type": ["boolean", "null"] },
           "amount": { "type": ["number", "null"] }
         }

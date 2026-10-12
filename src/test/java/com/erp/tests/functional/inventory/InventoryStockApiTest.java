@@ -4,11 +4,14 @@ import com.erp.annotations.TestCaseId;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.InventoryFixture;
+import com.erp.fixtures.ResourceFixture;
 import com.erp.models.response.MultiLocationStorageItemResponse;
 import com.erp.models.response.ProductionProcessTagStatisticResponse;
 import com.erp.models.response.StorageItemResponse;
 import com.erp.models.response.ResourceResponse;
+import com.erp.models.response.ResourceCategoryResponse;
 import com.erp.utils.helpers.XlsxContentAssertions;
+import com.erp.utils.helpers.XlsxWorkbookReader;
 import com.erp.validators.SchemaRegistry;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -157,7 +160,92 @@ public class InventoryStockApiTest extends InventoryApiTestBase {
             assertThat(XlsxContentAssertions.zipContainsText(xlsx, zero.getName()))
                     .as("З нулями XLSX містить вичерпаний ресурс")
                     .isTrue();
+            assertWorkbookResourceAmount(xlsx, "Залишок", zero.getName(), 1, 2, "0");
+            assertWorkbookResourceAmount(xlsx, "По складах", zero.getName(), 0, 1, "0");
         });
+    }
+
+    private static void assertWorkbookResourceAmount(byte[] xlsx, String sheetName,
+                                                     String resourceName, int nameColumn,
+                                                     int amountColumn, String expectedAmount) {
+        List<List<String>> rows = XlsxWorkbookReader.sheets(xlsx).get(sheetName);
+        assertThat(rows).as("Аркуш %s у книзі залишків", sheetName).isNotNull();
+        List<String> resourceRow = rows.stream().skip(1)
+                .filter(row -> row.size() > amountColumn && resourceName.equals(row.get(nameColumn)))
+                .findFirst().orElseThrow(() -> new AssertionError(
+                        "Аркуш " + sheetName + " не містить ресурс " + resourceName));
+        assertThat(new java.math.BigDecimal(resourceRow.get(amountColumn)))
+                .as("Кількість ресурсу %s на аркуші %s", resourceName, sheetName)
+                .isEqualByComparingTo(expectedAmount);
+    }
+
+    @Test(priority = 56)
+    @TestCaseId("TC-WMS-007-025")
+    @Story("Per-storage Excel follows search, category, tag and zero-stock filters")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Обидва аркуші Excel відповідають пошуку, вибраній категорії, тегу та "
+            + "перемикачу нульових залишків: у файлі є потрібні ресурси й немає зайвих.")
+    public void perStorageExcelUsesCurrentFiltersAndZeroStockMode() {
+        InventoryFixture.TagOrFilterSeed tagged =
+                inventoryFixture.seedTagOrFilterResources(owner1StorageId, relocationFixture);
+        for (ResourceResponse resource : List.of(
+                tagged.resourceA(), tagged.resourceB(), tagged.resourceC())) {
+            trackStorageResourceForCleanup(resource.getId());
+        }
+        ResourceFixture resources = new ResourceFixture(testContext, apiExecutor);
+        List<ResourceCategoryResponse> categories = apiExecutor.execute(
+                        ApiEndpointDefinition.RESOURCE_CATEGORY_GET_ALL, UserRole.ADMIN)
+                .jsonPath().getList("", ResourceCategoryResponse.class);
+        Long selectedCategory = tagged.resourceA().getCategory().getId();
+        Long otherCategory = categories.stream().map(ResourceCategoryResponse::getId)
+                .filter(id -> !id.equals(selectedCategory)).findFirst().orElseThrow();
+        ResourceResponse other = resources.createUniqueResource("inv-excel-other-category-", otherCategory);
+        trackStorageResourceForCleanup(other.getId());
+        relocationFixture.seedExactStock(owner1StorageId, other.getId(), 5.0);
+        ResourceResponse depleted = resources.createUniqueResource("inv-excel-zero-");
+        trackStorageResourceForCleanup(depleted.getId());
+        relocationFixture.seedExactStock(owner1StorageId, depleted.getId(), 3.0);
+        inventoryFixture.depleteToZero(owner1StorageId, depleted.getId());
+
+        assertWorkbookResourceSelection(
+                inventoryFixture.exportRemaindersHierarchy(UserRole.ADMIN, owner1StorageId,
+                        Map.of("searchTerm", tagged.resourceA().getName())),
+                tagged.resourceA().getName(), tagged.resourceB().getName());
+        assertWorkbookResourceSelection(
+                inventoryFixture.exportRemaindersHierarchy(UserRole.ADMIN, owner1StorageId,
+                        Map.of("categories", List.of(selectedCategory))),
+                tagged.resourceA().getName(), other.getName());
+        assertWorkbookResourceSelection(
+                inventoryFixture.exportRemaindersHierarchy(UserRole.ADMIN, owner1StorageId,
+                        Map.of("tags", List.of(tagged.tagA()))),
+                tagged.resourceA().getName(), tagged.resourceB().getName());
+        assertWorkbookResourceSelection(
+                inventoryFixture.exportRemaindersHierarchy(UserRole.ADMIN, owner1StorageId,
+                        Map.of("searchTerm", depleted.getName(), "showZeroStock", true)),
+                depleted.getName(), tagged.resourceA().getName());
+
+        Response withoutZeros = inventoryFixture.exportRemaindersHierarchy(
+                UserRole.ADMIN, owner1StorageId,
+                Map.of("searchTerm", depleted.getName(), "showZeroStock", false));
+        assertThat(withoutZeros.statusCode()).isEqualTo(200);
+        Map<String, List<List<String>>> workbook = XlsxWorkbookReader.sheets(withoutZeros.asByteArray());
+        for (String sheet : List.of("Залишок", "По складах")) {
+            assertThat(workbook.get(sheet)).as("Вичерпаний ресурс без показу нулів: %s", sheet)
+                    .noneMatch(row -> row.contains(depleted.getName()));
+        }
+    }
+
+    private static void assertWorkbookResourceSelection(
+            Response response, String expectedResource, String excludedResource) {
+        assertThat(response.statusCode()).isEqualTo(200);
+        Map<String, List<List<String>>> workbook = XlsxWorkbookReader.sheets(response.asByteArray());
+        for (String sheet : List.of("Залишок", "По складах")) {
+            assertThat(workbook.get(sheet)).as("Аркуш %s", sheet).isNotNull();
+            assertThat(workbook.get(sheet))
+                    .as("Фільтри Excel на аркуші %s", sheet)
+                    .anyMatch(row -> row.contains(expectedResource))
+                    .noneMatch(row -> row.contains(excludedResource));
+        }
     }
 
     @Test(priority = 60)

@@ -9,6 +9,9 @@ import com.erp.models.response.UserMeResponse;
 import com.erp.pages.AppSidebarPage;
 import com.erp.pages.UnitAnalyticsPage;
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -28,12 +31,11 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * UI: REQ-UA-001 Обороти — вкладки на /unit-analytics для користувача з perm unit-analytics.
+ * UI: обороти й поточні залишки в аналітиці підрозділів.
  */
 @Slf4j
 @Epic("Аналітика підрозділів")
-@Feature("Обороти")
-@Story("Вкладки оборотів для юзера з permission")
+@Feature("Аналітика підрозділів")
 public class UnitAnalyticsUiTest extends BaseUITest {
 
     private StorageFixture storageFixture;
@@ -286,6 +288,38 @@ public class UnitAnalyticsUiTest extends BaseUITest {
             }
             return false;
         });
+    }
+
+    @Test(priority = 4)
+    @TestCaseId("TC-UI-UA-004")
+    @Severity(SeverityLevel.CRITICAL)
+    @Story("Поточні залишки не залежать від періоду")
+    @Description("REQ-UA-002 / AC-01: після зміни періоду вкладка «Залишки» показує ті самі поточні залишки підрозділів.")
+    public void stockTabShowsCurrentAmountsForAnyPeriod() {
+        loginAsUnitAnalyst();
+        UnitAnalyticsPage analytics = new UnitAnalyticsPage(page).open();
+        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Залишки")).click();
+
+        Locator stockCard = page.getByText("Поточний залишок", new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=ancestor::div[contains(@class,'p-4')][1]");
+        Locator stockRows = stockCard.locator("table tbody tr");
+        assertThat(stockRows.count()).as("У вкладці залишків є підрозділи для порівняння").isGreaterThan(0);
+        List<String> before = stockRows.allInnerTexts();
+        assertThat(stockCard.getByText("Стан на зараз, період не враховується").isVisible()).isTrue();
+
+        Locator periodButton = page.getByText("Період", new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=..").locator("button");
+        com.microsoft.playwright.Response refreshed = page.waitForResponse(
+                response -> response.url().contains("/api/v1/unit-analytics")
+                        && response.request().method().equals("GET"),
+                () -> {
+                    periodButton.click();
+                    page.getByText("1 день", new Page.GetByTextOptions().setExact(true)).click();
+                });
+        assertThat(refreshed.status()).isEqualTo(200);
+        page.waitForCondition(() -> !stockCard.getByText("Завантаження...").isVisible());
+        assertThat(stockRows.allInnerTexts()).as("Поточні залишки після зміни періоду").isEqualTo(before);
+        analytics.attachScreenshot("TC-UI-UA-004 — залишки після зміни періоду");
     }
 
     private void loginAsUnitAnalyst() {

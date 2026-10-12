@@ -10,6 +10,7 @@
       "date": { "type": ["string", "null"], "format": "date-time" },
       "batchUuid": { "type": "string", "format": "uuid" },
       "batchNumber": { "type": ["string", "null"] },
+      "origin": { "type": "string", "enum": ["REGULAR", "UNKNOWN"] },
       "isProduced": { "type": "boolean" },
       "techmap": {
         "type": ["object", "null"],
@@ -30,7 +31,7 @@
         "additionalProperties": true
       }
     },
-    "required": ["batchUuid"],
+    "required": ["batchUuid", "origin"],
     "additionalProperties": true
   }
 }

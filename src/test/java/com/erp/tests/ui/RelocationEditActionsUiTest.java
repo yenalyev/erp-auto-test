@@ -118,7 +118,7 @@ public class RelocationEditActionsUiTest extends BaseUITest {
     }
 
     @Test(priority = 21)
-    @TestCaseId("TC-UI-REL-019")
+    @TestCaseId({"TC-UI-REL-019", "TC-UI-WMS-JOURNAL-007"})
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             REQ-EDIT_REL-007 AC-06: отримувач на «В дорозі» бачить «Прийняти» / «Скасувати»,

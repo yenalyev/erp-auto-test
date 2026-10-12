@@ -7,10 +7,10 @@ import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.models.response.ResourceResponse;
 import com.erp.pages.RelocationCreateOutputPage;
-import com.erp.pages.RelocationPage;
 import com.erp.test_context.ContextKey;
 import com.erp.tests.functional.storage.StorageRegionsAllureDescriptions;
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -43,6 +43,7 @@ public class RelocationSendFormItemsUiTest extends BaseUITest {
     private long storageId;
     private Long resourceId;
     private String resourceName;
+    private String resourceUnit;
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -58,6 +59,7 @@ public class RelocationSendFormItemsUiTest extends BaseUITest {
         ResourceResponse resource = resourceFixture.createUniqueResource(RESOURCE_PREFIX);
         resourceId = resource.getId();
         resourceName = resource.getName();
+        resourceUnit = resource.getUnit().getShortName();
         testContext.set(ContextKey.RELOCATION_RESOURCE_ID, resourceId);
 
         injectOwner1Session();
@@ -69,7 +71,7 @@ public class RelocationSendFormItemsUiTest extends BaseUITest {
     }
 
     @Test(priority = 5)
-    @TestCaseId("TC-WMS-004")
+    @TestCaseId({"TC-WMS-004", "TC-UI-WMS-ITEM-002", "TC-UI-WMS-ITEM-003"})
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             REQ-WMS-001-01-03 AC-01: у формі «Видача» поле «Список продукції» показує
@@ -87,6 +89,125 @@ public class RelocationSendFormItemsUiTest extends BaseUITest {
         assertThat(options)
                 .as("Autocomplete «Список продукції» містить ресурс із залишком на БЮ")
                 .anyMatch(label -> label.contains(resourceName) || label.contains(searchTerm));
+        assertThat(options)
+                .as("Пошук за частиною назви показує назву, доступну кількість і одиницю виміру")
+                .anyMatch(label -> label.contains(resourceName)
+                        && label.contains("доступно:")
+                        && label.contains(resourceUnit));
+    }
+
+    @Test(priority = 7)
+    @TestCaseId("TC-UI-WMS-ITEM-005")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Обраний ресурс не пропонується повторно в іншому рядку тієї самої видачі.")
+    public void selectedResourceIsNotOfferedInSecondRow() {
+        RelocationCreateOutputPage form = openSendForm();
+        form.selectOutputResourceByName(resourceName);
+        form.clickAddPosition();
+
+        String searchTerm = resourceName.length() > 12
+                ? resourceName.substring(0, 12)
+                : resourceName;
+        List<String> secondRowOptions = form.searchAndCollectResourceOptions(1, searchTerm);
+
+        assertThat(secondRowOptions)
+                .as("Той самий ресурс не можна додати до видачі вдруге")
+                .noneMatch(label -> label.contains(resourceName));
+    }
+
+    @Test(priority = 7)
+    @TestCaseId("TC-UI-WMS-ITEM-006")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Одиниця виміру з'являється в рядку видачі після вибору ресурсу.")
+    public void unitAppearsAfterResourceSelection() {
+        RelocationCreateOutputPage form = openSendForm();
+        assertThat(form.getOutputUnitText(0)).as("До вибору ресурсу одиниця виміру порожня")
+                .isEmpty();
+
+        form.selectOutputResourceByName(resourceName);
+        assertThat(form.getOutputUnitText(0)).as("Одиниця виміру вибраного ресурсу")
+                .isEqualTo(resourceUnit);
+    }
+
+    @Test(priority = 7)
+    @TestCaseId("TC-UI-WMS-ITEM-004")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Дробову кількість у видачі можна ввести з крапкою або комою.")
+    public void decimalQuantityAcceptsBothKeyboardSeparators() {
+        RelocationCreateOutputPage form = openSendForm();
+        form.selectOutputResourceByName(resourceName);
+        var quantity = page.getByPlaceholder("Кількість").first();
+
+        quantity.fill("1.5");
+        assertThat(form.getOutputQuantityValue(0)).isEqualTo("1.5");
+
+        quantity.fill("");
+        quantity.press("1");
+        quantity.press("Comma");
+        quantity.press("5");
+        assertThat(form.getOutputQuantityValue(0))
+                .as("Кома з української розкладки означає дробову частину")
+                .isEqualTo("1.5");
+    }
+
+    @Test(priority = 8)
+    @TestCaseId("TC-UI-WMS-ITEM-009")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Видачу без жодного рядка продукції неможливо підтвердити.")
+    public void issueWithoutProductRowsIsRejected() {
+        RelocationCreateOutputPage form = openSendForm();
+        List<String> recipients = form.openRecipientDropdown().collectRecipientOptionLabels();
+        assertThat(recipients).as("Доступний одержувач для форми видачі").isNotEmpty();
+        form.selectRecipientByLabel(recipients.getFirst());
+
+        page.locator("button:has(i.fa-trash-alt)").first().click();
+        assertThat(form.productRowCount()).isZero();
+        assertThat(page.getByRole(AriaRole.BUTTON, new com.microsoft.playwright.Page.GetByRoleOptions()
+                .setName("Підтвердити")).isEnabled())
+                .as("Порожню видачу неможливо підтвердити")
+                .isFalse();
+        assertThat(page.url()).contains(RelocationCreateOutputPage.PATH);
+    }
+
+    @Test(priority = 9)
+    @TestCaseId("TC-UI-WMS-ITEM-007")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Видалення одного рядка залишає інший ресурс доступним для оформлення видачі.")
+    public void removingOneProductRowPreservesTheOther() {
+        ResourceResponse second = resourceFixture.createUniqueResource("ui-rel-items-second-");
+        relocationFixture.ensureStock(storageId, second.getId(), 10.0);
+
+        RelocationCreateOutputPage form = openSendForm();
+        form.selectOutputResourceByName(resourceName);
+        form.clickAddPosition();
+        form.selectOutputResourceByName(1, second.getName());
+
+        page.locator("button:has(i.fa-trash-alt)").first().click();
+
+        assertThat(form.productRowCount()).isEqualTo(1);
+        assertThat(form.getSelectedResourceValue(0)).contains(second.getName());
+        form.fillOutputQuantity("1");
+        assertThat(form.getOutputQuantityValue(0)).isEqualTo("1");
+    }
+
+    @Test(priority = 11)
+    @TestCaseId("TC-UI-WMS-ITEM-008")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Видачу понад доступний залишок неможливо підтвердити.")
+    public void quantityAboveAvailableStockBlocksIssue() {
+        RelocationCreateOutputPage form = openSendForm();
+        List<String> recipients = form.openRecipientDropdown().collectRecipientOptionLabels();
+        assertThat(recipients).as("Доступний одержувач для форми видачі").isNotEmpty();
+        form.selectRecipientByLabel(recipients.getFirst());
+        form.selectOutputResourceByName(resourceName);
+        form.fillOutputQuantity("1");
+
+        var confirm = page.getByRole(AriaRole.BUTTON,
+                new com.microsoft.playwright.Page.GetByRoleOptions().setName("Підтвердити"));
+        assertThat(confirm.isEnabled()).as("Кількість у межах залишку дозволена").isTrue();
+
+        form.fillOutputQuantity("1000000");
+        assertThat(confirm.isEnabled()).as("Кількість понад залишок заборонена").isFalse();
     }
 
     @Test(priority = 10)
@@ -166,7 +287,9 @@ public class RelocationSendFormItemsUiTest extends BaseUITest {
     }
 
     private RelocationCreateOutputPage openSendForm() {
-        return new RelocationPage(page).open().clickSend();
+        RelocationCreateOutputPage form = new RelocationCreateOutputPage(page);
+        form.navigateTo(ConfigProvider.getBaseUrl() + RelocationCreateOutputPage.PATH, "Форма видачі");
+        return form.waitForLoaded();
     }
 
     private void injectOwner1Session() {

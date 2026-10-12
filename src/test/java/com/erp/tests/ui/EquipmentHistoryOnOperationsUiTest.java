@@ -207,23 +207,21 @@ public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
             Після send рядок «Відправлено» є в «Історія операцій»;
             після скасування відправником у журналі (UI RETURNED з версією форми) рядок зникає.
 
-            Відомий дефект: EquipmentHistoryService пише SENT на send і не видаляє запис при RETURNED;
-            GET /equipment/history не фільтрує за станом relocation — рядок «Відправлено» лишається.
-            Очікувана поведінка (REQ-OPER-HIST AC-11): після UI RETURNED рядка SENT немає.
+            Підтверджене правило (REQ-OPER-HIST AC-11): після UI RETURNED рядка SENT немає.
             """)
     public void cancelledEquipmentRelocationRemovedFromOperationHistory() {
         EquipmentResponse equipment = Allure.step("API: створити обладнання на Owner 1 і видати на Owner 2", () -> {
             EquipmentResponse created = equipmentFixture.createEquipmentOnStorage(
                     UserRole.ADMIN, owner1StorageId, categoryId);
             equipmentFixture.sendEquipment(
-                    UserRole.OWNER_1, owner1StorageId, owner2StorageId, created.getId());
+                    UserRole.ADMIN, owner1StorageId, owner2StorageId, created.getId());
             return created;
         });
 
         Allure.parameter("equipmentName", equipment.getName());
         Allure.parameter("inventoryNumber", equipment.getInventoryNumber());
 
-        injectRoleSession(UserRole.OWNER_1, owner1StorageId);
+        injectRoleSession(UserRole.ADMIN, owner1StorageId);
         page = browserContext.newPage();
 
         OperationHistoryPage historyPage = Allure.step("Відкрити /history на складі відправника", () ->
@@ -358,6 +356,62 @@ public class EquipmentHistoryOnOperationsUiTest extends BaseUITest {
             assertThat(afterDelete.equipmentHistoryContains(equipment.getInventoryNumber()))
                     .as("Після видалення отримання інв.№ в історії не має бути")
                     .isFalse();
+        });
+    }
+
+    @Test
+    @TestCaseId("TC-UI-HIST-EQ-007")
+    @Story("In-transit equipment shipment cannot be deleted")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Відправлення обладнання в дорозі видно в «Історії операцій».
+            Спроба видалення відхиляється; чинний рядок «Відправлено» залишається.
+            """)
+    public void inTransitEquipmentSendCannotBeDeletedAndRemainsInHistory() {
+        long[] relocationId = new long[1];
+        EquipmentResponse equipment = Allure.step("Створити обладнання і відправити його на інший склад", () -> {
+            EquipmentResponse created = equipmentFixture.createEquipmentOnStorage(
+                    UserRole.ADMIN, owner1StorageId, categoryId);
+            RelocationResponse sent = equipmentFixture.sendEquipment(
+                    UserRole.ADMIN, owner1StorageId, owner2StorageId, created.getId());
+            relocationId[0] = sent.getId();
+            assertThat(sent.getState()).isEqualTo(RelocationState.CREATED);
+            return created;
+        });
+
+        injectRoleSession(UserRole.ADMIN, owner1StorageId);
+        page = browserContext.newPage();
+        OperationHistoryPage historyPage = new OperationHistoryPage(page).open();
+
+        Allure.step("Перевірити, що відправлення є в історії операцій", () -> {
+            assertThat(historyPage.equipmentTableHasOperation(
+                    equipment.getInventoryNumber(), OperationHistoryPage.EQUIPMENT_OP_SENT)
+                    || historyPage.equipmentTableHasOperation(
+                    equipment.getName(), OperationHistoryPage.EQUIPMENT_OP_SENT))
+                    .as("Відправлене обладнання має бути в історії")
+                    .isTrue();
+        });
+
+        Allure.step("Спробувати видалити обладнання, яке ще в дорозі", () -> {
+            var response = equipmentFixture.deleteRelocationRaw(
+                    UserRole.ADMIN, relocationId[0], owner1StorageId);
+            assertThat(response.statusCode())
+                    .as("Відправлення обладнання в дорозі не можна видалити")
+                    .isEqualTo(400);
+            assertThat(response.jsonPath().getString("errors[0].field"))
+                    .as("Відмова стосується стану переміщення")
+                    .isEqualTo("state");
+        });
+
+        Allure.step("Перевірити, що чинне відправлення залишилося в історії", () -> {
+            historyPage.open();
+            historyPage.attachScreenshot("TC-UI-HIST-EQ-007 — in-transit send remains after rejected delete");
+            assertThat(historyPage.equipmentTableHasOperation(
+                    equipment.getInventoryNumber(), OperationHistoryPage.EQUIPMENT_OP_SENT)
+                    || historyPage.equipmentTableHasOperation(
+                    equipment.getName(), OperationHistoryPage.EQUIPMENT_OP_SENT))
+                    .as("Відхилене видалення не прибирає відправлення з історії")
+                    .isTrue();
         });
     }
 

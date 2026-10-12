@@ -38,7 +38,7 @@ public class BusinessActorSetupFixture {
 
     /**
      * Battalion keeper setup: UNIT children with INTERNAL relation and no milUnitType,
-     * plus a fresh user with DB-backed «Керівник локації» and «Екіпажі: перегляд» access roles.
+     * plus a fresh user with DB-backed «Керівник локації» and «Екіпажі: облік» access roles.
      */
     public BusinessActorSetup createUnitKomirnik(int locationCount) {
         return create(BusinessRole.UNIT_KOMIRNIK, LocationProfile.BATTALION_UNIT, locationCount);

@@ -107,7 +107,7 @@ CASES: list[tuple[str, str, str, str, str, str]] = [
     ("AC-10", "TC-ORD-REG-002", "Звичайна relocation send з джерела з hold → 400", "CRITICAL", "CRITICAL", "REGRESSION"),
     ("AC-10", "TC-ORD-REG-003", "Receive/rollback що ламає hold → 400", "HIGH", "MAJOR", "REGRESSION"),
     ("AC-10", "TC-ORD-REG-004", "Defect/брак нижче броні → 400", "CRITICAL", "CRITICAL", "REGRESSION"),
-    ("AC-10", "TC-ORD-REG-005", "Production input нижче броні → 400", "CRITICAL", "CRITICAL", "REGRESSION"),
+    ("AC-10", "TC-ORD-REG-005", "Виготовлення не може використати ресурс, зарезервований для замовлення", "CRITICAL", "CRITICAL", "REGRESSION"),
     ("AC-10", "TC-ORD-REG-006", "Після RELEASED/FULFILLED списання знову OK", "HIGH", "MAJOR", "REGRESSION"),
     ("AC-10", "TC-ORD-REG-007", "Редагування видачі в частині заброньованого залишку → 400", "HIGH", "MAJOR", "REGRESSION"),
     ("AC-10", "TC-ORD-UI-026", "UI — «Редагування видачі»: заброньовано недоступно", "HIGH", "MAJOR", "UI"),

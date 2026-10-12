@@ -619,23 +619,20 @@ public class StorageResourceVisibilityTest extends StorageApiTestBase {
                 UserRole.ADMIN, setup.unit().getId(), hidden.getName(), hidden.getId(), false))
                 .isFalse();
 
-        try {
-            RelocationStockSeeder.receiveFromSupplier(
-                    apiExecutor,
-                    UserRole.ADMIN,
-                    setup.unit().getId(),
-                    Map.of(hidden.getId(), 3.0));
-        } catch (IllegalStateException e) {
-            log.info("TC-STR-RES-009: supplier receive відхилено: {}", e.getMessage());
-            assertThat(e.getMessage()).contains("Relocation receive failed");
-            return;
-        }
+        RelocationStockSeeder.receiveFromSupplier(
+                apiExecutor,
+                UserRole.ADMIN,
+                setup.unit().getId(),
+                Map.of(hidden.getId(), 3.0));
 
         boolean visibleAfter = resourceFixture.isPresentInAutocompleteForStorage(
                 UserRole.ADMIN, setup.unit().getId(), hidden.getName(), hidden.getId(), false);
         assertThat(visibleAfter)
-                .as("Після supplier receive: або 400 (4.1), або auto-grant у селектор (2.2)")
+                .as("Після отримання від постачальника ресурс доступний у підрозділі")
                 .isTrue();
+        assertThat(inventoryFixture.getResourceStock(
+                setup.unit().getId(), hidden.getId(), UserRole.ADMIN))
+                .isCloseTo(3.0, within(0.01));
     }
 
     @Test(priority = 91)

@@ -15,6 +15,9 @@ import com.erp.models.response.OrderResponse;
 import com.erp.models.response.SimpleEntityResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.RelocationResponse;
+import com.erp.models.response.MultiLocationStorageItemResponse;
+import com.erp.models.response.StorageAmountResponse;
+import com.erp.utils.helpers.XlsxWorkbookReader;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
@@ -23,7 +26,15 @@ import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +51,72 @@ public class OrderBookingApiTest extends OrderApiTestBase {
     @Override
     protected int requiredResourceCount() {
         return 3;
+    }
+
+    @Test(priority = 6)
+    @TestCaseId("TC-WMS-007-026")
+    @Story("Excel залишків показує бронь і дробові кількості за складами")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Для ресурсу з дробовими залишками на двох складах після бронювання "
+            + "аркуш «По складах» показує загальний залишок, суму броні та залишок кожного складу числами.")
+    public void inventoryExportShowsFractionalStockAndBookingByStorage() throws IOException {
+        pinGatheringOnHand(7.5);
+        OrderResponse order = prepareManagedInProgress(1.25);
+        inventoryFixture.resetResourceStock(requesterStorageId, resourceId, 2.5, MANAGER);
+        BookingResponse booking = orderFixture.book(
+                MANAGER, order.getId(), requesterStorageId, resourceId, 1.25);
+        assertThat(booking.getState()).isEqualTo(BookingState.ACTIVE);
+
+        Response inventory = inventoryFixture.getMultiLocationInventory(
+                MANAGER, gatheringStorageId + "," + requesterStorageId);
+        assertThat(inventory.statusCode()).isEqualTo(200);
+        List<MultiLocationStorageItemResponse> items = inventory.jsonPath()
+                .getList("content", MultiLocationStorageItemResponse.class);
+        MultiLocationStorageItemResponse item = items.stream()
+                .filter(row -> row.getResource() != null && resourceId.equals(row.getResource().getId()))
+                .findFirst().orElseThrow();
+        StorageAmountResponse gathering = item.getLocations().stream()
+                .filter(location -> gatheringStorageId.equals(location.getStorage().getId()))
+                .findFirst().orElseThrow();
+        StorageAmountResponse requester = item.getLocations().stream()
+                .filter(location -> requesterStorageId.equals(location.getStorage().getId()))
+                .findFirst().orElseThrow();
+        assertThat(gathering.getAmount()).isEqualTo(7.5);
+        assertThat(requester.getAmount()).isEqualTo(2.5);
+        assertThat(gathering.getBookedAmount()).isEqualTo(1.25);
+        assertThat(requester.getBookedAmount() == null ? 0.0 : requester.getBookedAmount()).isZero();
+
+        Response export = inventoryFixture.exportRemaindersByLocations(
+                MANAGER, List.of(gatheringStorageId, requesterStorageId),
+                Map.of("searchTerm", resourceName));
+        assertThat(export.statusCode()).isEqualTo(200);
+        byte[] xlsx = export.asByteArray();
+        assertThat(XlsxWorkbookReader.sheetNames(xlsx)).contains("Залишок", "По складах");
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsx))) {
+            Sheet sheet = workbook.getSheet("По складах");
+            DataFormatter formatter = new DataFormatter();
+            Row header = sheet.getRow(0);
+            List<String> headings = java.util.stream.IntStream.range(0, header.getLastCellNum())
+                    .mapToObj(index -> formatter.formatCellValue(header.getCell(index)).trim())
+                    .toList();
+            List<Row> resourceRows = java.util.stream.IntStream.rangeClosed(1, sheet.getLastRowNum())
+                    .mapToObj(sheet::getRow)
+                    .filter(java.util.Objects::nonNull)
+                    .filter(row -> resourceName.equals(formatter.formatCellValue(row.getCell(0))))
+                    .toList();
+            assertThat(resourceRows).hasSize(1);
+            Row row = resourceRows.getFirst();
+            assertNumericAmount(row.getCell(XlsxWorkbookReader.columnIndex(headings, "Залишок")), 10.0);
+            assertNumericAmount(row.getCell(XlsxWorkbookReader.columnIndex(headings, "Заброньовано")), 1.25);
+            assertNumericAmount(row.getCell(XlsxWorkbookReader.columnIndex(headings, gathering.getStorage().getName())), 7.5);
+            assertNumericAmount(row.getCell(XlsxWorkbookReader.columnIndex(headings, requester.getStorage().getName())), 2.5);
+        }
+    }
+
+    private static void assertNumericAmount(Cell cell, double expected) {
+        assertThat(cell).isNotNull();
+        assertThat(cell.getCellType()).isEqualTo(CellType.NUMERIC);
+        assertThat(cell.getNumericCellValue()).isEqualTo(expected);
     }
 
     @Test(priority = 5)

@@ -2,10 +2,12 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.data.factories.relocation.RelocationDataFactory;
+import com.erp.data.factories.relocation.RelocationStockSeeder;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.models.request.RelocationInputEditRequest;
+import com.erp.models.request.RelocationInputRequest;
 import com.erp.models.response.RelocationResponse;
 import com.erp.pages.RelocationPage;
 import com.erp.test_context.ContextKey;
@@ -16,6 +18,7 @@ import com.erp.utils.helpers.RelocationStockAssertions;
 import com.erp.utils.helpers.RelocationBatchAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
 import io.qameta.allure.*;
+import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -95,6 +98,50 @@ public class RelocationUITest extends BaseUITest {
 
         relocationPage.open().openReceivedHistoryTab();
         relocationPage.attachScreenshot("History after receive");
+    }
+
+    @Test
+    @TestCaseId("TC-WMS-005-001")
+    @Story("Supplier invoice number in received history")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("""
+            Зовнішнє отримання: номер накладної постачальника є необов'язковим.
+            Коли його вказано, журнал «Отримано» показує номер звичайним текстом,
+            без посилання на завантаження.
+            """)
+    public void supplierInvoiceNumberIsPlainTextInReceivedHistory() {
+        Long supplierId = RelocationStockSeeder.resolveSupplierStorageId(apiExecutor, UserRole.OWNER_1);
+        String invoiceNumber = "SUP-" + RelocationDataFactory.uniqueInvoiceNumber();
+
+        RelocationInputRequest numberedReceive = RelocationDataFactory.buildReceiveRequest(
+                        supplierId, storageId, resourceId, 1.0,
+                        RelocationDataFactory.uniqueBatchNumber())
+                .toBuilder()
+                .invoiceNumber(invoiceNumber)
+                .build();
+        Response numberedResponse = apiExecutor.executeRelocationReceive(numberedReceive, UserRole.OWNER_1);
+        assertThat(numberedResponse.statusCode()).isBetween(200, 299);
+        assertThat(numberedResponse.as(RelocationResponse.class).getInvoiceNumber())
+                .isEqualTo(invoiceNumber);
+
+        RelocationInputRequest unnumberedReceive = RelocationDataFactory.buildReceiveRequest(
+                        supplierId, storageId, resourceId, 1.0,
+                        RelocationDataFactory.uniqueBatchNumber())
+                .toBuilder()
+                .invoiceNumber(null)
+                .build();
+        Response unnumberedResponse = apiExecutor.executeRelocationReceive(unnumberedReceive, UserRole.OWNER_1);
+        assertThat(unnumberedResponse.statusCode())
+                .as("Зовнішнє отримання без номера накладної дозволене")
+                .isBetween(200, 299);
+
+        RelocationPage journal = new RelocationPage(page).open().openReceivedHistoryTab();
+        assertThat(journal.isInvoiceNumberVisibleInRow(invoiceNumber, invoiceNumber))
+                .as("Номер накладної постачальника видно в історії отримань")
+                .isTrue();
+        assertThat(journal.isInvoiceLinkVisible(invoiceNumber))
+                .as("Номер без прикріпленого файлу відображається звичайним текстом")
+                .isFalse();
     }
 
     @Test

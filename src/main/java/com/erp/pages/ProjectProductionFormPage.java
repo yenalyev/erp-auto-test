@@ -295,4 +295,21 @@ public class ProjectProductionFormPage extends BasePage {
         navigateTo(url, TITLE_EDIT);
         return waitForEditLoaded();
     }
+
+    public ProjectProductionFormPage saveStageActualUsageFromBatch(int order, String amount,
+                                                                    String batchUuid) {
+        ensureStageExpanded(order);
+        Locator card = stageCard(order);
+        card.getByPlaceholder("Використано").first().fill(amount);
+        Locator option = card.locator("select option[value='" + batchUuid + "']").first();
+        option.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.ATTACHED)
+                .setTimeout(uiTimeoutMs()));
+        option.locator("xpath=..").selectOption(batchUuid);
+        page.waitForResponse(response -> response.url().contains("/project-production")
+                        && "PUT".equals(response.request().method()),
+                () -> card.getByRole(AriaRole.BUTTON,
+                        new Locator.GetByRoleOptions().setName("Зберегти етап")).click());
+        return this;
+    }
 }

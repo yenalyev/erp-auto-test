@@ -132,7 +132,7 @@ public class RelocationTest extends BaseFunctionalTest {
     // --- B: Send ---
 
     @Test(priority = 10)
-    @TestCaseId("TC-REL-010")
+    @TestCaseId({"TC-REL-010", "TC-WMS-001-001"})
     @Story("Send storage to storage")
     @Severity(SeverityLevel.CRITICAL)
     public void testSendStorageToStorage() {
@@ -158,6 +158,77 @@ public class RelocationTest extends BaseFunctionalTest {
                 senderBefore, senderAfter, owner1Storage, resourceId, amount, "CREATED send");
         RelocationStockAssertions.assertUnchanged(
                 recipientBefore, recipientAfter, owner2Storage, resourceId, "recipient waits resolve");
+    }
+
+    @Test(priority = 15)
+    @TestCaseId("TC-WMS-001-002")
+    @Story("Cannot issue resources to the same storage")
+    @Description("""
+            Склад не може видати ресурс самому собі. Сервер має відхилити
+            таку видачу, а залишок складу має лишитися незмінним.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testSendToSameStorageRejected() {
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+        ProductionStockAssertions.StockSnapshot before = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ДО видачі самому собі");
+
+        Response response = fixture.sendRaw(UserRole.OWNER_1,
+                RelocationDataFactory.buildSendRequest(
+                        owner1Storage, owner1Storage, resourceId, 1.0));
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
+            RelocationResponse unexpected = response.as(RelocationResponse.class);
+            if (unexpected.getId() != null) {
+                fixture.resolve(UserRole.OWNER_1, unexpected.getId(), owner1Storage,
+                        RelocationState.CANCELLED);
+                fixture.resolve(UserRole.OWNER_1, unexpected.getId(), owner1Storage,
+                        RelocationState.RETURNED);
+            }
+        }
+        assertThat(response.statusCode())
+                .as("Видача на той самий склад має бути заборонена")
+                .isEqualTo(400);
+
+        ProductionStockAssertions.StockSnapshot after = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ПІСЛЯ відхиленої видачі");
+        RelocationStockAssertions.assertUnchanged(
+                before, after, owner1Storage, resourceId, "видача самому собі");
+    }
+
+    @Test(priority = 16)
+    @TestCaseId("TC-WMS-001-004")
+    @Story("Issue requires positive quantity")
+    @Description("""
+            Видача нульової або від’ємної кількості ресурсу відхиляється.
+            Залишки відправника та отримувача після кожної спроби незмінні.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testSendRejectsNonPositiveQuantity() {
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+        ProductionStockAssertions.StockSnapshot senderBefore = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "відправник ДО");
+        ProductionStockAssertions.StockSnapshot recipientBefore = RelocationStockAssertions.capture(
+                apiExecutor, owner2Storage, UserRole.OWNER_2, tracked, "отримувач ДО");
+
+        for (double amount : new double[]{0.0, -1.0}) {
+            Response response = fixture.sendRaw(UserRole.OWNER_1,
+                    RelocationDataFactory.buildSendRequest(
+                            owner1Storage, owner2Storage, resourceId, amount));
+            assertThat(response.statusCode())
+                    .as("Кількість %.0f не можна видати", amount)
+                    .isEqualTo(400);
+
+            ProductionStockAssertions.StockSnapshot senderAfter = RelocationStockAssertions.capture(
+                    apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "відправник ПІСЛЯ " + amount);
+            ProductionStockAssertions.StockSnapshot recipientAfter = RelocationStockAssertions.capture(
+                    apiExecutor, owner2Storage, UserRole.OWNER_2, tracked, "отримувач ПІСЛЯ " + amount);
+            RelocationStockAssertions.assertUnchanged(
+                    senderBefore, senderAfter, owner1Storage, resourceId,
+                    "відхилена видача " + amount);
+            RelocationStockAssertions.assertUnchanged(
+                    recipientBefore, recipientAfter, owner2Storage, resourceId,
+                    "відхилена видача " + amount);
+        }
     }
 
     @Test(priority = 11)
@@ -214,7 +285,7 @@ public class RelocationTest extends BaseFunctionalTest {
     // --- C: External receive ---
 
     @Test(priority = 20)
-    @TestCaseId("TC-REL-020")
+    @TestCaseId({"TC-REL-020", "TC-WMS-002-001"})
     @Story("External receive")
     @Severity(SeverityLevel.CRITICAL)
     public void testExternalReceive() {
@@ -236,7 +307,7 @@ public class RelocationTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 21)
-    @TestCaseId("TC-REL-021")
+    @TestCaseId({"TC-REL-021", "TC-WMS-002-002"})
     @Story("Receive creates batch")
     public void testReceiveCreatesBatch() {
         double amount = 12.0;
@@ -249,6 +320,37 @@ public class RelocationTest extends BaseFunctionalTest {
         RelocationBatchAssertions.BatchSnapshot after = RelocationBatchAssertions.captureBatch(
                 apiExecutor, owner1Storage, UserRole.OWNER_1, resourceId, batchNumber, false, "ПІСЛЯ receive");
         RelocationBatchAssertions.assertBatchCredited(before, after, amount, "new batch on receive");
+    }
+
+    @Test(priority = 23)
+    @TestCaseId("TC-WMS-002-003")
+    @Story("Receive requires positive quantity")
+    @Description("""
+            Отримання від зовнішнього постачальника з нульовою або від’ємною
+            кількістю відхиляється. Залишок складу після кожної спроби не змінюється.
+            """)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testExternalReceiveRejectsNonPositiveQuantity() {
+        Set<Long> tracked = fixture.trackedResource(resourceId);
+        ProductionStockAssertions.StockSnapshot before = RelocationStockAssertions.capture(
+                apiExecutor, owner1Storage, UserRole.OWNER_1, tracked, "ДО некоректного отримання");
+
+        for (double amount : new double[]{0.0, -1.0}) {
+            RelocationInputRequest request = RelocationDataFactory.buildReceiveRequest(
+                    supplierId, owner1Storage, resourceId, amount,
+                    RelocationDataFactory.uniqueBatchNumber());
+            Response response = apiExecutor.executeRelocationReceive(request, UserRole.OWNER_1);
+            assertThat(response.statusCode())
+                    .as("Кількість %.0f не можна прийняти", amount)
+                    .isEqualTo(400);
+
+            ProductionStockAssertions.StockSnapshot after = RelocationStockAssertions.capture(
+                    apiExecutor, owner1Storage, UserRole.OWNER_1, tracked,
+                    "ПІСЛЯ відхиленого отримання " + amount);
+            RelocationStockAssertions.assertUnchanged(
+                    before, after, owner1Storage, resourceId,
+                    "зовнішнє отримання з кількістю " + amount);
+        }
     }
 
     @Test(priority = 22)

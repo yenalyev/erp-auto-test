@@ -18,10 +18,12 @@ import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.models.response.UserMeResponse;
 import com.erp.pages.OrderListPage;
+import com.erp.pages.UnitManagementPage;
 import com.erp.tests.ui.BaseUITest;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Description;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.Test;
 
@@ -40,9 +42,11 @@ public class OrderDynamicFixtureSmokeTest extends BaseUITest {
     private static final UserRole GATHERER = UserRole.ORDER_ISOLATED_GATHERER;
 
     @Test
-    @TestCaseId(value = "TC-ORD-FIXTURE-001", roles = {
+    @TestCaseId(value = {"TC-ORD-FIXTURE-001", "TC-WMS-007-029"}, roles = {
             BusinessRole.BUSINESS_UNIT_OWNER, BusinessRole.ORDER_ADMIN},
             locationProfiles = LocationProfile.BATTALION_UNIT)
+    @Description("Замовлення бронює 2 із 5 одиниць ресурсу на складі. Користувач складу "
+            + "копіює залишки та отримує доступну кількість 3 в окремому числовому полі.")
     public void dynamicUnitAndGatheringStorageSupportOrderWorkflow() {
         LocationProfileFixture locations = new LocationProfileFixture(testContext, apiExecutor);
         StorageFixture storages = new StorageFixture(testContext, apiExecutor);
@@ -118,6 +122,37 @@ public class OrderDynamicFixtureSmokeTest extends BaseUITest {
             orders.setGathering(ORDER_ADMIN, orderId, requester.getId(), gathering.getId());
             BookingResponse booking = orders.book(ORDER_ADMIN, orderId, requester.getId(), resource.getId(), 2.0);
             bookingId = booking.getId();
+            assertThat(booking.getAmount()).isEqualByComparingTo("2");
+            assertThat(inventory.getResourceStock(gathering.getId(), resource.getId(), GATHERER))
+                    .as("Загальний залишок складу до копіювання")
+                    .isEqualTo(5.0);
+
+            injectSessionCookies(
+                    authService.getSessionForUser(gathererActor.username(), gathererActor.password()),
+                    sessionCookieDomain());
+            injectWorkspaceView(gathererActor.username(), gathering.getId());
+            UnitManagementPage stockPage = new UnitManagementPage(page)
+                    .openForStorage(gathering.getId())
+                    .waitForLoaded()
+                    .searchAndWaitForResource(resource.getName(), resource.getName())
+                    .installClipboardCapture()
+                    .clickCopyRemainders()
+                    .waitForCopiedFeedback();
+            List<String> copiedRows = stockPage.getCapturedClipboardText().lines()
+                    .filter(line -> !line.isBlank())
+                    .toList();
+            String copiedResourceName = resource.getName();
+            String copiedResource = copiedRows.stream()
+                    .filter(line -> line.startsWith(copiedResourceName + "\t"))
+                    .findFirst().orElseThrow(() -> new AssertionError(
+                            "Скопійовані залишки не містять ресурс із бронюванням: " + copiedRows));
+            String[] columns = copiedResource.split("\t", -1);
+            assertThat(columns).hasSize(3);
+            assertThat(columns[0]).isEqualTo(resource.getName());
+            assertThat(Double.parseDouble(columns[1]))
+                    .as("Доступна кількість у буфері = 5 на складі мінус 2 заброньовано")
+                    .isEqualTo(3.0);
+            assertThat(columns[2]).isEqualTo(resource.getUnit().getShortName());
             assertThat(orders.setPrepared(GATHERER, orderId, bookingId, true).isPrepared()).isTrue();
         } finally {
             Long requesterId = requester == null ? null : requester.getId();

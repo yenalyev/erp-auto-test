@@ -183,7 +183,7 @@ public class TechnologicalMapHashtagApiTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 60)
-    @TestCaseId("TC-TM-TAG-006")
+    @TestCaseId({"TC-TM-TAG-006", "TC-TM-TAG-007"})
     @Story("Cyrillic tags")
     @Severity(SeverityLevel.NORMAL)
     @Description("Тег #контроль з кирилицею парситься і фільтрується.")

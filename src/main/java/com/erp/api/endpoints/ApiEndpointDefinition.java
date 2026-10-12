@@ -472,6 +472,26 @@ public enum ApiEndpointDefinition {
     // RESOURCE ENDPOINTS
     // ========================================
 
+    RESOURCE_BATCH_SELECTION_GET(
+            "/api/v1/storages/{storageId}/batch-selection-resources",
+            Method.GET,
+            null,
+            "Get resources requiring manual batch selection at a location",
+            null,
+            new TypeReference<List<Long>>() {},
+            null
+    ),
+
+    RESOURCE_BATCH_SELECTION_PUT(
+            "/api/v1/storages/{storageId}/batch-selection-resources/{resourceId}",
+            Method.PUT,
+            null,
+            "Set manual batch selection for a resource at a location",
+            new TypeReference<ResourceBatchSelectionRequest>() {},
+            new TypeReference<Void>() {},
+            "UPDATE_RESOURCE_BATCH_SELECTION"
+    ),
+
     RESOURCE_GET_ALL(
             "/api/v1/resources",
             Method.GET,

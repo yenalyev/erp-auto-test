@@ -20,7 +20,7 @@ businessRoles:
       - "Екіпажі: облік"
   UNIT_KOMIRNIK:
     accessRoles:
-      - "Екіпажі: перегляд"
+      - "Екіпажі: облік"
   ORDER_ADMIN:
     accessRoles:
       - "Замовлення: адміністратор"

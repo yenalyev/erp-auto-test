@@ -246,6 +246,42 @@ public class RelocationInTransitEditTest extends BaseFunctionalTest {
         assertThat(still.getRecipient().getId()).isEqualTo(owner2Storage);
     }
 
+    @Test(priority = 79)
+    @TestCaseId("TC-REL-092")
+    @Story("Redirect in-transit resources to an internal unit, crew, or fly point")
+    @Description("""
+            REQ-EDIT_REL-007 AC-03: тип внутрішнього отримувача сам по собі не забороняє
+            перенаправлення видачі в дорозі. Після зміни на підрозділ, екіпаж або точку
+            вильоту видача залишається в дорозі й очікує підтвердження.
+            """)
+    public void testEditInTransitRedirectToInternalUnitCrewAndFlyPoint() {
+        StorageResponse parent = storageFixture.resolveParentUnit();
+        StorageResponse unit = storageFixture.createUnitStorage(parent.getId(), "rel-it-unit-");
+        StorageResponse crew = storageFixture.createCrewStorage(unit.getId(), "rel-it-crew-");
+        StorageResponse flyPoint = storageFixture.createFlyPointStorage(unit.getId(), "rel-it-fp-");
+
+        for (StorageResponse recipient : List.of(unit, crew, flyPoint)) {
+            String marker = "redirect-kind-" + recipient.getKind() + "-" + System.currentTimeMillis();
+            RelocationResponse sent = fixture.createSendWithDescription(
+                    UserRole.ADMIN, owner1Storage, owner2Storage, resourceId, 8.0, marker);
+
+            RelocationResponse updated = fixture.editSend(
+                    UserRole.ADMIN, sent.getId(), owner1Storage,
+                    RelocationDataFactory.buildSendEditRequest(
+                            resourceId, 8.0, marker, recipient.getId()));
+
+            assertThat(updated.getState()).as("стан після перенаправлення до %s", recipient.getKind())
+                    .isEqualTo(RelocationState.CREATED);
+            assertThat(updated.getRecipient().getId()).as("новий отримувач %s", recipient.getKind())
+                    .isEqualTo(recipient.getId());
+            assertThat(fixture.findInTransitByDescription(UserRole.ADMIN, owner1Storage, marker))
+                    .as("видача до %s лишається в дорозі", recipient.getKind())
+                    .isNotNull();
+            fixture.resolve(UserRole.ADMIN, sent.getId(), recipient.getId(), RelocationState.CANCELLED);
+            fixture.resolve(UserRole.ADMIN, sent.getId(), owner1Storage, RelocationState.RETURNED);
+        }
+    }
+
     @Test(priority = 80)
     @TestCaseId("TC-REL-080")
     @Story("Replace nomenclature on in-transit send")

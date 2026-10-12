@@ -17,6 +17,7 @@ import com.erp.models.response.InventorySessionStatus;
 import com.erp.tests.functional.storage.StorageApiTestBase;
 import com.erp.validators.SchemaRegistry;
 import com.erp.utils.helpers.XlsxContentAssertions;
+import com.erp.utils.helpers.XlsxWorkbookReader;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -30,6 +31,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -256,6 +258,62 @@ public class InventoryHierarchyApiTest extends StorageApiTestBase {
                 .as("Export of parent must NOT include child-only resource «%s» (no hierarchy in export API)",
                         childRes.getName())
                 .isFalse();
+    }
+
+    @Test(priority = 65)
+    @TestCaseId("TC-WMS-007-024")
+    @Story("Per-storage Excel columns follow the selected hierarchy")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Коли користувач експортує залишки батьківського складу, аркуш «По складах» "
+            + "показує окремі колонки складів із залишками та приховує порожній склад. За вибору "
+            + "лише одного складу в книзі залишається його колонка й відповідний загальний залишок.")
+    public void perStorageExcelShowsHierarchyThenOnlySelectedStorage() {
+        StorageResponse parent = storageFixture.createUniqueStorage("hier-excel-parent-");
+        StorageResponse child = storageFixture.createChildStorage(parent.getId(), "hier-excel-child-");
+        StorageResponse emptyChild = storageFixture.createChildStorage(parent.getId(), "hier-excel-empty-");
+        ResourceResponse resource = resourceFixture.createUniqueResource("hier-excel-resource-");
+        relocationFixture.seedExactStock(parent.getId(), resource.getId(), 4.0);
+        relocationFixture.seedExactStock(child.getId(), resource.getId(), 9.0);
+
+        Response inventory = inventoryFixture.getHierarchyInventory(
+                parent.getId(), UserRole.ADMIN, Map.of("searchTerm", resource.getName()));
+        assertThat(inventory.statusCode()).isEqualTo(200);
+        List<MultiLocationStorageItemResponse> sourceRows =
+                inventory.jsonPath().getList("content", MultiLocationStorageItemResponse.class);
+        MultiLocationStorageItemResponse source = requireResourceRow(sourceRows, resource.getId());
+        assertLocationAmount(source, parent.getId(), 4.0);
+        assertLocationAmount(source, child.getId(), 9.0);
+
+        Response hierarchy = inventoryFixture.exportRemaindersHierarchy(
+                UserRole.ADMIN, parent.getId(), Map.of("searchTerm", resource.getName()));
+        Response single = inventoryFixture.exportRemaindersByLocations(
+                UserRole.ADMIN, List.of(parent.getId()), Map.of("searchTerm", resource.getName()));
+        assertThat(hierarchy.statusCode()).isEqualTo(200);
+        assertThat(single.statusCode()).isEqualTo(200);
+
+        List<List<String>> hierarchyRows = XlsxWorkbookReader.sheets(hierarchy.asByteArray())
+                .get("По складах");
+        List<List<String>> singleRows = XlsxWorkbookReader.sheets(single.asByteArray())
+                .get("По складах");
+        assertThat(hierarchyRows).as("Аркуш для ієрархії").hasSize(2);
+        assertThat(singleRows).as("Аркуш для одного складу").hasSize(2);
+        List<String> hierarchyHeader = hierarchyRows.getFirst();
+        List<String> singleHeader = singleRows.getFirst();
+        assertThat(hierarchyHeader).contains(parent.getName(), child.getName());
+        assertThat(hierarchyHeader).doesNotContain(emptyChild.getName());
+        assertThat(singleHeader).contains(parent.getName()).doesNotContain(child.getName());
+        assertThat(hierarchyHeader.subList(5, hierarchyHeader.size())).hasSize(2);
+        assertThat(singleHeader.subList(5, singleHeader.size())).hasSize(1);
+        assertThat(hierarchyRows.get(1).get(0)).isEqualTo(resource.getName());
+        assertThat(singleRows.get(1).get(0)).isEqualTo(resource.getName());
+        assertThat(new BigDecimal(hierarchyRows.get(1).get(1))).isEqualByComparingTo("13");
+        assertThat(new BigDecimal(singleRows.get(1).get(1))).isEqualByComparingTo("4");
+        assertThat(new BigDecimal(hierarchyRows.get(1).get(
+                XlsxWorkbookReader.columnIndex(hierarchyHeader, parent.getName()))))
+                .isEqualByComparingTo("4");
+        assertThat(new BigDecimal(hierarchyRows.get(1).get(
+                XlsxWorkbookReader.columnIndex(hierarchyHeader, child.getName()))))
+                .isEqualByComparingTo("9");
     }
 
     @Test(priority = 70)

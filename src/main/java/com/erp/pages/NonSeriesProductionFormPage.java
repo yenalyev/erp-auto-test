@@ -143,6 +143,15 @@ public class NonSeriesProductionFormPage extends BasePage {
                 .setUsageAmountInLastRow(amountPerUnit);
     }
 
+    public NonSeriesProductionFormPage selectRawBatch(java.util.UUID batchUuid) {
+        Locator option = rawMaterialsCard().locator("select option[value='" + batchUuid + "']").first();
+        option.waitFor(new Locator.WaitForOptions()
+                .setState(WaitForSelectorState.ATTACHED)
+                .setTimeout(uiTimeoutMs()));
+        option.locator("xpath=..").selectOption(batchUuid.toString());
+        return this;
+    }
+
     public NonSeriesProductionFormPage selectResourceInLastRow(String resourceName) {
         String trimmedName = resourceName == null ? "" : resourceName.trim();
 

@@ -47,7 +47,7 @@ public class InventoryBatchTechMapUiTest extends BaseUITest {
     }
 
     @Test(priority = 10)
-    @TestCaseId("TC-WMS-011-002")
+    @TestCaseId({"TC-WMS-011-002", "TC-WMS-011-006"})
     @Story("Tech map column and missing value")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
@@ -79,7 +79,7 @@ public class InventoryBatchTechMapUiTest extends BaseUITest {
     }
 
     @Test(priority = 20)
-    @TestCaseId("TC-WMS-011-003")
+    @TestCaseId({"TC-WMS-011-003", "TC-WMS-011-007"})
     @Story("Tech map chips OR filter and reset")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""

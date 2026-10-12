@@ -2,6 +2,10 @@ package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
 import com.erp.enums.UserRole;
+import com.erp.enums.RelocationState;
+import com.erp.api.endpoints.ApiEndpointDefinition;
+import com.erp.models.request.EquipmentRelocationSendEditRequest;
+import com.erp.models.response.EquipmentHistoryResponse;
 import com.erp.fixtures.EquipmentFixture;
 import com.erp.fixtures.RelocationFixture;
 import com.erp.fixtures.StorageFixture;
@@ -17,6 +21,9 @@ import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -280,30 +287,25 @@ public class EquipmentUnitHistoryUiTest extends BaseUITest {
     @Story("Cancelled send removes Відправлено from unit history")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Після UI send і UI-скасування (Повернено) діалог одиниці не показує «Відправлено».
+            Після скасування непідтвердженого передавання діалог одиниці не показує «Відправлено».
             «Додано» лишається.
 
-            Відомий дефект: SENT лишається в GET /equipment/{id}/history після RETURNED
-            (REQ-EQU-004 docs). Очікувана поведінка (AC-04): немає «Відправлено».
+            AC-04: скасоване передавання не лишає «Відправлено» в історії.
             """)
     public void cancelledSendRemovesSentFromUnitHistory() {
-        String name = uniqueEquipmentName();
+        var equipment = equipmentFixture.createEquipmentOnStorage(
+                UserRole.ADMIN, owner1StorageId, testContext.get(ContextKey.EQUIPMENT_CATEGORY_ID));
+        String name = equipment.getName();
+        var relocation = equipmentFixture.sendEquipment(
+                UserRole.ADMIN, owner1StorageId, owner2StorageId, equipment.getId());
 
-        injectRoleSession(UserRole.OWNER_1, owner1StorageId);
+        injectRoleSession(UserRole.ADMIN, owner1StorageId);
         page = browserContext.newPage();
-
-        Allure.step("UI: створити обладнання і передати Owner1→Owner2", () -> {
-            createEquipmentViaUi(name);
-            sendToOwner2(name);
-        });
 
         Allure.parameter("equipmentName", name);
 
-        Allure.step("UI: скасувати відправлення на «В дорозі»", () -> {
-            RelocationPage journal = new RelocationPage(page).open().openInTransitTab();
-            journal.attachScreenshot("TC-UI-EQ-HIST-006 — in transit before cancel");
-            journal.cancelInTransitAsSender(name, "ui-eq-hist-006-cancel");
-        });
+        equipmentFixture.resolveEquipment(
+                UserRole.ADMIN, relocation.getId(), owner1StorageId, RelocationState.RETURNED);
 
         EquipmentDetailDialog dialog = Allure.step("Відкрити діалог одиниці на /equipment", () ->
                 new EquipmentListPage(page)
@@ -311,7 +313,7 @@ public class EquipmentUnitHistoryUiTest extends BaseUITest {
                         .openUnitDialog(name));
 
         Allure.step("Перевірити, що «Відправлено» немає, «Додано» є", () -> {
-            dialog.attachScreenshot("TC-UI-EQ-HIST-006 — SENT gone after UI cancel");
+            dialog.attachScreenshot("TC-UI-EQ-HIST-006 — no sent entry after cancellation");
             assertThat(dialog.isHistorySectionVisible()).isTrue();
             assertThat(dialog.hasOperation(EquipmentDetailDialog.OP_ADDED)
                     || dialog.hasOperation(EquipmentDetailDialog.OP_RECEIVED))
@@ -328,34 +330,37 @@ public class EquipmentUnitHistoryUiTest extends BaseUITest {
     @Story("Edit send does not duplicate Відправлено in unit history")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Після UI edit send (version) у діалозі одиниці не більше одного «Відправлено».
+            Редагування не дублює «Відправлено», а після скасування діалог одиниці не показує це відправлення.
 
-            Відомий дефект: edit send може писати другий SENT у GET /equipment/{id}/history
-            (REQ-EQU-004 docs). Очікувана поведінка (AC-04): не більше одного «Відправлено».
+            AC-04: після редагування є лише один запис, після скасування — жодного.
             """)
     public void editSendDoesNotDuplicateSentInUnitHistory() {
-        String name = uniqueEquipmentName();
+        var equipment = equipmentFixture.createEquipmentOnStorage(
+                UserRole.ADMIN, owner1StorageId, testContext.get(ContextKey.EQUIPMENT_CATEGORY_ID));
+        String name = equipment.getName();
+        var relocation = equipmentFixture.sendEquipment(
+                UserRole.ADMIN, owner1StorageId, owner2StorageId, equipment.getId());
 
-        injectRoleSession(UserRole.OWNER_1, owner1StorageId);
+        injectRoleSession(UserRole.ADMIN, owner1StorageId);
         page = browserContext.newPage();
-
-        Allure.step("UI: створити обладнання і передати Owner1→Owner2", () -> {
-            createEquipmentViaUi(name);
-            sendToOwner2(name);
-        });
 
         Allure.parameter("equipmentName", name);
 
-        Allure.step("UI: edit send і скасувати, щоб відкрити журнал", () -> {
-            relocationFixture.waitUntilInTransitReadyForEditByEquipment(
-                    UserRole.OWNER_1, owner1StorageId, name);
-            RelocationPage journal = new RelocationPage(page).open().openInTransitTab();
-            RelocationUpdateOutputPage form = journal.clickEditSendInRow(name);
-            form.fillDescription("ui-eq-no-dup-" + (System.currentTimeMillis() % 1_000_000))
-                    .submitVersionedEquipmentSend();
-            journal = new RelocationPage(page).open().openInTransitTab();
-            journal.cancelInTransitAsSender(name, "ui-eq-hist-007-cancel");
-        });
+        EquipmentRelocationSendEditRequest edit = EquipmentRelocationSendEditRequest.builder()
+                .toStorageId(owner2StorageId)
+                .equipmentIds(List.of(equipment.getId()))
+                .date(LocalDate.now())
+                .description("Змінений опис передавання")
+                .build();
+        equipmentFixture.editEquipmentSend(UserRole.ADMIN, relocation.getId(), owner1StorageId, edit);
+        List<EquipmentHistoryResponse> beforeCancel = apiExecutor.execute(
+                ApiEndpointDefinition.EQUIPMENT_GET_UNIT_HISTORY, UserRole.ADMIN, null, equipment.getId())
+                .jsonPath().getList("$", EquipmentHistoryResponse.class);
+        assertThat(beforeCancel.stream().filter(item -> "SENT".equals(item.getOperation())).count())
+                .as("Редагування не дублює відправлення в історії")
+                .isEqualTo(1);
+        equipmentFixture.resolveEquipment(
+                UserRole.ADMIN, relocation.getId(), owner1StorageId, RelocationState.RETURNED);
 
         EquipmentDetailDialog dialog = Allure.step("Відкрити діалог одиниці на /equipment", () ->
                 new EquipmentListPage(page)
@@ -363,11 +368,11 @@ public class EquipmentUnitHistoryUiTest extends BaseUITest {
                         .openUnitDialog(name));
 
         Allure.step("Перевірити, що «Відправлено» не задубльоване", () -> {
-            dialog.attachScreenshot("TC-UI-EQ-HIST-007 — SENT not duplicated after UI edit");
+            dialog.attachScreenshot("TC-UI-EQ-HIST-007 — no sent entry after edited transfer cancellation");
             assertThat(dialog.isHistorySectionVisible()).isTrue();
             assertThat(dialog.operationCount(EquipmentDetailDialog.OP_SENT))
-                    .as("Після send+edit не має бути двох однакових «Відправлено»")
-                    .isLessThanOrEqualTo(1);
+                    .as("Після скасування редагованого відправлення «Відправлено» не має бути")
+                    .isZero();
         });
     }
 

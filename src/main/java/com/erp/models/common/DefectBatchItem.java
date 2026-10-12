@@ -23,6 +23,7 @@ import java.util.UUID;
 public class DefectBatchItem {
     private UUID batchUuid;
     private String batchNumber;
+    private String origin;
     private Boolean isProduced;
     private BigDecimal amount;
 }

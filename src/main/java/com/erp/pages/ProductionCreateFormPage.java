@@ -165,6 +165,16 @@ public class ProductionCreateFormPage extends BasePage {
         return this;
     }
 
+    public boolean hasRawInputBatchOption(String resourceName, java.util.UUID batchUuid) {
+        return page.locator("select option[value='" + batchUuid + "']").count() > 0;
+    }
+
+    public ProductionCreateFormPage selectRawInputBatch(String resourceName, java.util.UUID batchUuid) {
+        page.locator("select option[value='" + batchUuid + "']")
+                .first().locator("xpath=..").selectOption(batchUuid.toString());
+        return this;
+    }
+
     public ProductionCreateFormPage waitForBatchRecipeLock(String batchNumber) {
         page.waitForCondition(
                 () -> getBatchRecipeHint().contains(batchNumber) && isTechMapDisabled(),

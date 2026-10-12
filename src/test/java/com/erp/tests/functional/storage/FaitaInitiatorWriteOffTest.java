@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -142,6 +143,47 @@ public class FaitaInitiatorWriteOffTest extends CrewApiTestBase {
                 AMOUNT, "Ініціатор ПМ Цукрарня списується з точки");
     }
 
+    @TestCaseId("TC-FAITA-INIT-010")
+    @Description("Ініціатор без зазначеного постачальника списується з точки вильоту")
+    @Severity(SeverityLevel.CRITICAL)
+    @Test
+    public void unspecifiedSupplierDebitsFlyPoint() {
+        ResourceResponse resource = resourceFixture.createUniqueResourceWithSupplier("init-unspecified-", "");
+        long flyPointId = scenario.flyPoint().getId();
+        relocationFixture.ensureStock(owner1StorageId, resource.getId(), 20.0);
+        relocationFixture.createSendAndFinishBySender(UserRole.ADMIN,
+                scenario.memberStorageId(), scenario.crew().getId(), resource.getId(), 10.0);
+        ProductionStockAssertions.StockSnapshot before = stock(flyPointId, resource.getId());
+        long id = seedPending("i-" + UUID.randomUUID(), resource);
+
+        complete(id);
+
+        assertThat(status(id)).isEqualTo("COMPLETED");
+        RelocationStockAssertions.assertDebitedFromSender(before,
+                stock(flyPointId, resource.getId()), flyPointId, resource.getId(),
+                AMOUNT, "Ініціатор без постачальника списується з точки");
+    }
+
+    @TestCaseId("TC-FAITA-INIT-011")
+    @Description("Кілька зіставлених ресурсів із ПМ Цукрарня списуються за звичайним правилом")
+    @Severity(SeverityLevel.CRITICAL)
+    @Test
+    public void mixedSuppliersDebitFlyPoint() {
+        long flyPointId = scenario.flyPoint().getId();
+        relocationFixture.ensureStock(owner1StorageId, inHouseResource.getId(), 20.0);
+        relocationFixture.createSendAndFinishBySender(UserRole.ADMIN,
+                scenario.memberStorageId(), scenario.crew().getId(), inHouseResource.getId(), 10.0);
+        ProductionStockAssertions.StockSnapshot before = stock(flyPointId, inHouseResource.getId());
+        long id = seedPending("i-" + UUID.randomUUID(), externalResource, inHouseResource);
+
+        complete(id);
+
+        assertThat(status(id)).isEqualTo("COMPLETED");
+        RelocationStockAssertions.assertDebitedFromSender(before,
+                stock(flyPointId, inHouseResource.getId()), flyPointId, inHouseResource.getId(),
+                AMOUNT, "Суміш постачальників із ПМ Цукрарня списується з точки");
+    }
+
     private ProductionStockAssertions.StockSnapshot stock(long storageId, long resourceId) {
         return RelocationStockAssertions.capture(apiExecutor, storageId, UserRole.ADMIN,
                 Set.of(resourceId), "initiator stock");
@@ -154,7 +196,7 @@ public class FaitaInitiatorWriteOffTest extends CrewApiTestBase {
                 response.getBody().asString()).isEqualTo(200);
     }
 
-    private long seedPending(String externalResourceId, ResourceResponse resource) {
+    private long seedPending(String externalResourceId, ResourceResponse... resources) {
         String sql = """
                 INSERT INTO storage_item_write_off
                     (date_time, storage_id, fly_point_storage_id, resources,
@@ -167,10 +209,11 @@ public class FaitaInitiatorWriteOffTest extends CrewApiTestBase {
             ps.setTimestamp(1, Timestamp.from(Instant.now()));
             ps.setLong(2, scenario.crew().getId());
             ps.setLong(3, scenario.flyPoint().getId());
-            ps.setString(4, "[{\"id\":" + resource.getId() + ",\"name\":"
-                    + new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(resource.getName()) + "}]");
+            ps.setString(4, new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                    Arrays.stream(resources).map(resource -> Map.of(
+                            "id", resource.getId(), "name", resource.getName())).toList()));
             ps.setString(5, externalResourceId);
-            ps.setString(6, resource.getName());
+            ps.setString(6, resources[0].getName());
             ps.setBigDecimal(7, java.math.BigDecimal.valueOf(AMOUNT));
             ps.setString(8, "erp-auto-test initiator supplier rule");
             ps.setString(9, "erp-auto-" + UUID.randomUUID());

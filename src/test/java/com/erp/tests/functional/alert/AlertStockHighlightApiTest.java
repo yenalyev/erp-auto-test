@@ -18,6 +18,7 @@ import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
+import io.restassured.response.Response;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -153,25 +154,50 @@ public class AlertStockHighlightApiTest extends StorageApiTestBase {
     @TestCaseId("TC-ALERT-007")
     @Story("Inventory removes a resource with a stock alert")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Вилучення ресурсу з повного snapshot інвентаризації обнуляє залишок, але зберігає поріг і видимість нульового рядка.")
-    public void inventoryRemovalKeepsAlertOnZeroStock() {
+    @Description("Ресурс із уже нульовим залишком і налаштованим сповіщенням вилучається з inventory snapshot без HTTP 500; бекенд зберігає нульовий рядок для сповіщення.")
+    public void inventoryOmitsZeroStockResourceWithAlertWithoutServerError() {
         AlertFixture.StockHighlightSeed seed = seedScenario();
         long storageId = seed.storage().getId();
         long resourceId = seed.yellow().getId();
         assertAlertedItem(storageId, resourceId, 4.0, AlertFixture.YELLOW_WEIGHT);
 
+        // Передумова регресії: StorageItem фізично існує, але його amount уже дорівнює 0.
         inventoryFixture.openSession(storageId);
         try {
-            inventoryFixture.conductInventory(storageId, UserRole.ADMIN,
-                    InventoryDataFactory.copyExcept(inventoryFixture.listItems(storageId, UserRole.ADMIN), resourceId));
+            inventoryFixture.setResourceAmount(storageId, UserRole.ADMIN, resourceId, 0.0);
         } finally {
             inventoryFixture.closeSession(storageId);
         }
 
         assertAlertedItem(storageId, resourceId, 0.0, AlertFixture.RED_WEIGHT);
-        assertThat(inventoryFixture.hierarchyContainsResource(storageId, resourceId, UserRole.ADMIN, false))
-                .as("нульовий ресурс із порогом лишається видимим")
-                .isTrue();
+        assertThat(inventoryFixture.findItemIncludingZero(storageId, resourceId, UserRole.ADMIN).getId())
+                .as("нульовий StorageItem має існувати до цільового видалення")
+                .isNotNull();
+
+        inventoryFixture.openSession(storageId);
+        Response removal;
+        try {
+            removal = inventoryFixture.conductInventoryRaw(
+                    storageId,
+                    UserRole.ADMIN,
+                    InventoryDataFactory.copyExcept(
+                            inventoryFixture.listItems(
+                                    storageId,
+                                    UserRole.ADMIN,
+                                    Map.of("showZeroStock", true, "size", 1000, "page", 0)),
+                            resourceId));
+        } finally {
+            inventoryFixture.closeSession(storageId);
+        }
+
+        assertThat(removal.statusCode())
+                .as("видалення нульового ресурсу зі сповіщенням не повинно повертати HTTP 500")
+                .isBetween(200, 299);
+        PollUtils.waitUntilTrue(
+                () -> inventoryFixture.findItemIncludingZero(storageId, resourceId, UserRole.ADMIN) != null,
+                20_000,
+                "alerted resource " + resourceId + " is preserved as zero stock after snapshot removal");
+        assertAlertedItem(storageId, resourceId, 0.0, AlertFixture.RED_WEIGHT);
     }
 
     @Test(priority = 50)

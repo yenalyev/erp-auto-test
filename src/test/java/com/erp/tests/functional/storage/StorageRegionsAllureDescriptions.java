@@ -121,9 +121,9 @@ public final class StorageRegionsAllureDescriptions {
             """ + ON_FAIL_STOCK;
 
     public static final String TC_STR_RES_009 = """
-            Що перевіряємо: вимога 4.1 — SUPPLIER receive ресурсу поза областю.
-            Тестові дані: ресурс не в області; receive з SUPPLIER на RESTRICTED unit.
-            Очікуваний результат: 400 або auto-grant (2.2) — ресурс у autocomplete після receive.
+            Що перевіряємо: отримання від постачальника розширює доступ до ресурсу.
+            Тестові дані: ресурс не в області; отримання від постачальника на підрозділ у режимі «Регіони».
+            Очікуваний результат: отримання успішне; ресурс доступний у виборі підрозділу.
             """ + ON_FAIL_API;
 
     public static final String TC_STR_RES_013 = """

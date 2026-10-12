@@ -278,6 +278,8 @@
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
             <class name="com.erp.tests.ui.ProductionBatchRecipeConsistencyUiTest"/>
+            <class name="com.erp.tests.ui.DisassembleBatchNumberUiTest"/>
+            <class name="com.erp.tests.ui.DisassembleJournalUiTest"/>
             <class name="com.erp.tests.ui.ProductionGroupsUiTest"/>
             <class name="com.erp.tests.ui.ProductionJournalFilterUITest"/>
             <class name="com.erp.tests.ui.ProductionJournalDatePickerUiTest"/>

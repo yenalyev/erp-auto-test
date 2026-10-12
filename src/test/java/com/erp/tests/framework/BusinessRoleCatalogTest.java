@@ -37,7 +37,7 @@ public class BusinessRoleCatalogTest {
     @Test
     public void unitKomirnikMappingIsCentralized() {
         assertThat(BusinessRoleCatalog.definition(BusinessRole.UNIT_KOMIRNIK).accessRoles())
-                .containsExactly("Екіпажі: перегляд");
+                .containsExactly("Екіпажі: облік");
     }
 
     @Test
@@ -62,6 +62,8 @@ public class BusinessRoleCatalogTest {
         assertThat(BusinessRoleCatalog.effectiveAccessRoles(BusinessRole.CREW_STOCK_READER))
                 .containsExactly("Керівник локації", "Екіпажі: перегляд");
         assertThat(BusinessRoleCatalog.effectiveAccessRoles(BusinessRole.CREW_INVENTORY_OPERATOR))
+                .containsExactly("Керівник локації", "Екіпажі: облік");
+        assertThat(BusinessRoleCatalog.effectiveAccessRoles(BusinessRole.UNIT_KOMIRNIK))
                 .containsExactly("Керівник локації", "Екіпажі: облік");
         assertThat(BusinessRoleCatalog.effectiveAccessRoles(BusinessRole.BUSINESS_UNIT_OWNER))
                 .containsExactly("Керівник локації");

@@ -183,7 +183,7 @@ public class InventoryMultiLocationExportApiTest extends BaseFunctionalTest {
     }
 
     @Test
-    @TestCaseId("TC-WMS-007-022")
+    @TestCaseId("TC-WMS-007-028")
     @Story("Inventory workbook contains a per-storage worksheet")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
@@ -237,6 +237,7 @@ public class InventoryMultiLocationExportApiTest extends BaseFunctionalTest {
             int bColumn = storageColumn(headings, b.getStorage().getName());
             assertThat(aColumn).isNotEqualTo(bColumn);
             assertThat(headings.subList(5, headings.size())).hasSize(2);
+            assertThat(headings.subList(5, headings.size())).isSorted();
 
             List<Row> matchingRows = java.util.stream.IntStream.rangeClosed(1, sheet.getLastRowNum())
                     .mapToObj(sheet::getRow)
@@ -267,7 +268,7 @@ public class InventoryMultiLocationExportApiTest extends BaseFunctionalTest {
 
     private static int storageColumn(List<String> headings, String storageName) {
         List<Integer> matches = java.util.stream.IntStream.range(5, headings.size())
-                .filter(index -> headings.get(index).contains(storageName))
+                .filter(index -> headings.get(index).equals(storageName))
                 .boxed().toList();
         assertThat(matches).as("Одна колонка для складу %s", storageName).hasSize(1);
         return matches.getFirst();
