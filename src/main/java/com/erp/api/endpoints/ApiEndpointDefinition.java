@@ -2422,6 +2422,27 @@ public enum ApiEndpointDefinition {
     // ========================================
     // RESOURCE VIEWER ENDPOINTS
     // ========================================
+    RESOURCE_VIEWER_LIST_NAMES_GET(
+            "/api/v1/resources-viewer/list/names", Method.GET, null,
+            "Get named tracking resource lists", null,
+            new TypeReference<List<SimpleEntityResponse>>() {}, null
+    ),
+    RESOURCE_VIEWER_LIST_GET(
+            "/api/v1/resources-viewer/list/{id}", Method.GET, null,
+            "Get named tracking resource list", null, null, null
+    ),
+    RESOURCE_VIEWER_LIST_CREATE(
+            "/api/v1/resources-viewer/list", Method.POST, null,
+            "Create named tracking resource list", null, null, null
+    ),
+    RESOURCE_VIEWER_LIST_UPDATE(
+            "/api/v1/resources-viewer/list/{id}", Method.PUT, null,
+            "Update named tracking resource list", null, null, null
+    ),
+    RESOURCE_VIEWER_LIST_DELETE(
+            "/api/v1/resources-viewer/list/{id}", Method.DELETE, null,
+            "Delete named tracking resource list", null, null, null
+    ),
     /**
      * Journal page + aggregated {@code sums} in one response.
      * Separate {@code /relocations/sum} was removed from the backend — clients read {@code sums}

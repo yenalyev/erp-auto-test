@@ -32,12 +32,14 @@
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerExportApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerNamedListsApiTest"/>
         </classes>
     </test>
 
     <test name="Resource Viewer UI">
         <classes>
             <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
+            <class name="com.erp.tests.ui.ResourceViewerNamedListsUiTest"/>
         </classes>
     </test>
 </suite>
