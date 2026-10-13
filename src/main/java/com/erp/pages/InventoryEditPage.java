@@ -3,6 +3,7 @@ package com.erp.pages;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Response;
 import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
@@ -36,7 +37,10 @@ public class InventoryEditPage extends BasePage {
 
     public InventoryEditPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        page.getByText(TITLE_PREFIX).waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions()
+                        .setName(TITLE_PREFIX)
+                        .setExact(true))
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         // h1 renders while Skeleton is still showing; Card (comment + rows) appears after GET stock.
         commentField().waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
@@ -166,13 +170,21 @@ public class InventoryEditPage extends BasePage {
 
     /** PUT inventory success only — use when navigation history is not /inventory list (e.g. direct /inventory/{crewId}). */
     public InventoryEditPage saveChanges() {
-        page.waitForResponse(
+        Response response = saveChangesRaw();
+        if (response.status() != 200) {
+            throw new AssertionError("Inventory save returned HTTP " + response.status());
+        }
+        return this;
+    }
+
+    /** Captures the inventory PUT regardless of status so regression tests can report a server-side 500. */
+    public Response saveChangesRaw() {
+        return page.waitForResponse(
                 response -> response.url().contains("/inventory")
                         && !response.url().contains("/status")
-                        && "PUT".equals(response.request().method())
-                        && response.status() == 200,
+                        && !response.url().contains("/state")
+                        && "PUT".equals(response.request().method()),
                 () -> page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Зберегти")).click());
-        return this;
     }
 
     public InventoryEditPage save() {

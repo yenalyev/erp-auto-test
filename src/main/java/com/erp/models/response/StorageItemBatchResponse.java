@@ -20,6 +20,7 @@ public class StorageItemBatchResponse {
     private Instant date;
     private UUID batchUuid;
     private String batchNumber;
+    private String origin;
     private Boolean isProduced;
     private SimpleEntityResponse techmap;
     private SimpleEntityResponse storage;

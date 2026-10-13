@@ -123,6 +123,19 @@ public class FlyPointsPage extends BasePage {
         return card.count() > 0 && card.first().isVisible();
     }
 
+    /** Archive action must be rendered inside the matching fly-point card. */
+    public boolean hasArchiveActionOnPointCard(long id) {
+        Locator action = pointCard(id).getByTestId("fly-point-" + id + "-archive");
+        return action.count() > 0 && action.first().isVisible();
+    }
+
+    public FlyPointClosePage clickArchiveOnPointCard(long id) {
+        pointCard(id).getByTestId("fly-point-" + id + "-archive").click();
+        page.waitForURL(url -> url.contains("/fly-points/close/" + id),
+                new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));
+        return new FlyPointClosePage(page).waitForReady();
+    }
+
     public boolean hasCrewCard(long id) {
         Locator card = crewCard(id);
         return card.count() > 0 && card.first().isVisible();

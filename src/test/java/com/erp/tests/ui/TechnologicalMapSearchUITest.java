@@ -14,6 +14,8 @@ import com.erp.models.response.TechnologicalMapResponse;
 import com.erp.pages.TechnologicalMapsListPage;
 import com.erp.pages.AppSidebarPage;
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -31,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -121,7 +124,7 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
     }
 
     @Test(priority = 5)
-    @TestCaseId("TC-MFG-002")
+    @TestCaseId({"TC-MFG-002", "TC-UI-MFG-VIEW-001"})
     @Story("Tech maps list page smoke")
     @Severity(SeverityLevel.NORMAL)
     @Description("""
@@ -137,10 +140,50 @@ public class TechnologicalMapSearchUITest extends BaseUITest {
             assertThat(listPage.isIngredientSearchVisible()).as("Пошук за сировиною").isTrue();
             assertThat(listPage.isNewTechMapButtonVisible()).as("Кнопка «Нова тех. карта»").isTrue();
             assertThat(listPage.getDisplayedTechMapNames())
-                    .as("Є хоча б одна активна техкарта (підготовлена фікстурою)")
-                    .isNotEmpty();
+                    .as("Активні техкарти вибраної локації доступні для перегляду")
+                    .anyMatch(name -> name.contains(mapA.getName()))
+                    .anyMatch(name -> name.contains(mapB.getName()));
             listPage.attachScreenshot("TC-MFG-002 — tech maps list chrome");
         });
+    }
+
+    @Test(priority = 6)
+    @TestCaseId("TC-UI-MFG-VIEW-002")
+    @Story("Перегляд техкарт адміністратором")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Адміністратор вибирає локацію та бачить її активні техкарти.")
+    public void adminSeesActiveTechMapsForSelectedLocation() {
+        TechnologicalMapsListPage listPage = openListAs(UserRole.ADMIN);
+        assertThat(listPage.getDisplayedTechMapNames())
+                .as("Адміністратор бачить активні техкарти вибраної локації")
+                .anyMatch(name -> name.contains(mapA.getName()))
+                .anyMatch(name -> name.contains(mapB.getName()));
+    }
+
+    @Test(priority = 7)
+    @TestCaseId("TC-UI-MFG-VIEW-003")
+    @Story("Перегляд складу техкарти")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Власник відкриває техкарту зі списку та бачить склад, кількості й групу взаємозамінних ресурсів без редагування.")
+    public void techMapCardShowsComponentsAndAlternatives() {
+        TechnologicalMapsListPage listPage = openListAs(UserRole.OWNER_1);
+        listPage.clickTechMapAction(mapWithAlternatives.getName(), "Переглянути версії");
+
+        page.getByRole(AriaRole.HEADING,
+                new Page.GetByRoleOptions().setName(Pattern.compile("Історія версій:"))).waitFor();
+        assertThat(page.url()).contains("/technological-maps/versions/");
+        assertThat(page.getByText(mapWithAlternatives.getName()).count()).isPositive();
+        assertThat(page.getByText("Витрати").isVisible()).isTrue();
+        assertThat(page.getByText("Вихід продукції").isVisible()).isTrue();
+        assertThat(page.getByText("Групи альтернативних ресурсів").isVisible()).isTrue();
+        assertThat(page.getByText(sharedOther.getName()).count()).isPositive();
+        assertThat(page.getByText(alternativeDefault.getName()).count()).isPositive();
+        assertThat(page.getByText(alternativeOther.getName()).count()).isPositive();
+        assertThat(page.locator("span.bg-indigo-50").count())
+                .as("Для взаємозамінних ресурсів показані норми та одиниці виміру")
+                .isPositive();
+        assertThat(page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Зберегти")).count()).isZero();
     }
 
     @Test(dataProvider = "adminAndOwnerRoles", priority = 10)

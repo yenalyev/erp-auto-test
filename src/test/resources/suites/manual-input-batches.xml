@@ -1,0 +1,17 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Manual Input Batches" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="Manual batch API and UI">
+        <classes>
+            <class name="com.erp.tests.functional.production.ManualInputBatchAccountingApiTest"/>
+            <class name="com.erp.tests.functional.storage.ManualBatchCrewReceiveApiTest"/>
+            <class name="com.erp.tests.ui.ManualInputBatchAccountingUiTest"/>
+        </classes>
+    </test>
+</suite>

@@ -237,6 +237,13 @@ public class RelocationCreateOutputPage extends BasePage {
         return page.getByPlaceholder(QUANTITY_PLACEHOLDER).nth(rowIndex).inputValue();
     }
 
+    public String getOutputUnitText(int rowIndex) {
+        return page.getByPlaceholder(QUANTITY_PLACEHOLDER).nth(rowIndex)
+                .locator("xpath=..")
+                .locator("xpath=following-sibling::div[1]")
+                .innerText().trim();
+    }
+
     public boolean isBundleBadgeVisible(String bundleName) {
         return bundleBadge(bundleName).count() > 0 && bundleBadge(bundleName).first().isVisible();
     }
@@ -324,6 +331,18 @@ public class RelocationCreateOutputPage extends BasePage {
 
     public RelocationCreateOutputPage waitForAvailableBatchChips(int rowIndex) {
         page.waitForCondition(() -> visibleAvailableBatchChipCount(rowIndex) > 0);
+        return this;
+    }
+
+    public RelocationCreateOutputPage selectAvailableBatch(int rowIndex, String batchName) {
+        availableBatchChipsContainer(rowIndex).locator("button")
+                .filter(new Locator.FilterOptions().setHasText(batchName)).first().click();
+        return this;
+    }
+
+    public RelocationCreateOutputPage fillSelectedBatchAmount(String batchName, String amount) {
+        page.getByText("Партія: " + batchName)
+                .locator("xpath=..").locator("input[type='number']").fill(amount);
         return this;
     }
 

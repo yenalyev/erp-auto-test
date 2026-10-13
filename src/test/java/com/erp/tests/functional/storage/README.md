@@ -79,7 +79,7 @@ RESTRICTED підрозділ = `accessMode=REGIONS`; фільтр номенк�
 | **TC-STR-RES-012** | `StorageResourceVisibilityTest` | CREW наслідує RESOURCES-область parent UNIT (autocomplete + inventory API) | Critical |
 | **TC-UI-STR-RES-012** | `CrewResourceVisibilityUiTest` | UI: додати ресурс з області parent на формі інвентаризації CREW | Critical |
 | **TC-STR-RES-011** | `StorageResourceVisibilityTest` | INTERNAL→INTERNAL receive: outOfScope додається до видимості + stock | Critical |
-| **TC-STR-RES-009** | `StorageResourceVisibilityTest` | SUPPLIER receive невидимого ресурсу (4.1 / auto-grant 2.2) | Normal |
+| **TC-STR-RES-009** | `StorageResourceVisibilityTest` | Отримання від постачальника відкриває ресурс підрозділу | Normal |
 | **TC-STR-RES-013** | `StorageResourceVisibilityTest` | UNIT type=UNIT: autocomplete + GET page лише granted | Critical |
 | **TC-STR-RES-014** | `StorageResourceVisibilityTest` | UNIT scoped GET page + categoryIds фільтр | Normal |
 | **TC-STR-RES-015** | `StorageResourceVisibilityTest` | Global vs scoped dictionary width для UNIT | Normal |

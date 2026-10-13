@@ -96,7 +96,7 @@ public class TechnologicalMapTest extends BaseFunctionalTest {
 
     @Test(priority = 10)
 
-    @TestCaseId("TC-MFG-018")
+    @TestCaseId({"TC-MFG-018", "TC-MFG-ACCESS-005A"})
 
     @Story("Create tech map — edit allowed")
 
@@ -181,7 +181,7 @@ public class TechnologicalMapTest extends BaseFunctionalTest {
 
     @Test(priority = 20)
 
-    @TestCaseId("TC-MFG-019")
+    @TestCaseId({"TC-MFG-019", "TC-MFG-ACCESS-005B"})
 
 
     @Story("Create tech map — edit forbidden")
@@ -314,7 +314,7 @@ public class TechnologicalMapTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 32)
-    @TestCaseId("TC-MFG-022")
+    @TestCaseId({"TC-MFG-022", "TC-MFG-ACCESS-003"})
     @Story("Deactivate tech map — edit allowed")
     @Description("ADMIN відкриває редагування, Owner1 успішно деактивує (архівує) техкарту")
     @Severity(SeverityLevel.CRITICAL)
@@ -343,6 +343,30 @@ public class TechnologicalMapTest extends BaseFunctionalTest {
         long activeCountAfter = techMapFixture.countActiveTechMapsByName(
                 storageId, UserRole.ADMIN, source.getName());
         assertThat(activeCountAfter).isEqualTo(activeCountBefore - 1);
+    }
+
+    @Test(priority = 33)
+    @TestCaseId("TC-MFG-ACCESS-004")
+    @Story("Адміністратор архівує техкарту локації")
+    @Description("Адміністратор може архівувати техкарту локації, навіть коли її керівникові дозволено лише перегляд.")
+    @Severity(SeverityLevel.CRITICAL)
+    public void adminCanDeactivateLocationTechMapInReadOnlyMode() {
+        techMapFixture.setMode(storageId, StorageTechnologicalMapMode.READ_ONLY);
+        TechnologicalMapResponse source = techMapFixture.createTechMapAs(UserRole.ADMIN, storageId);
+        long activeCountBefore = techMapFixture.countActiveTechMapsByName(
+                storageId, UserRole.ADMIN, source.getName());
+
+        Response response = apiExecutor.execute(
+                ApiEndpointDefinition.TECH_MAP_DEACTIVATE,
+                UserRole.ADMIN,
+                null,
+                String.valueOf(source.getId()),
+                String.valueOf(storageId));
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(techMapFixture.countActiveTechMapsByName(storageId, UserRole.ADMIN, source.getName()))
+                .as("Після архівації техкарта не входить до активного списку локації")
+                .isEqualTo(activeCountBefore - 1);
     }
 
     @Test(priority = 40)

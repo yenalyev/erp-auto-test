@@ -204,7 +204,7 @@ public class InventoryUiTest extends BaseUITest {
     }
 
     @Test(priority = 20)
-    @TestCaseId("TC-INV-PROC-UI-002")
+    @TestCaseId({"TC-INV-PROC-UI-002", "TC-WMS-003-001"})
     @Story("Admin approves request from inventory sidebar page")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
@@ -257,7 +257,7 @@ public class InventoryUiTest extends BaseUITest {
     }
 
     @Test(priority = 40)
-    @TestCaseId("TC-INV-PROC-UI-004")
+    @TestCaseId({"TC-INV-PROC-UI-004", "TC-WMS-003-004"})
     @Story("All locations mode does not allow inventory request")
     @Severity(SeverityLevel.NORMAL)
     @Description("""

@@ -126,7 +126,7 @@ public class RelocationExtendedTest extends BaseFunctionalTest {
     }
 
     @Test(priority = 14)
-    @TestCaseId("TC-REL-014")
+    @TestCaseId({"TC-REL-014", "TC-WMS-001-003"})
     @Story("Send insufficient stock")
     public void testSendInsufficientStockRejected() {
         double current = fixture.getResourceStock(owner1Storage, resourceId, UserRole.OWNER_1);

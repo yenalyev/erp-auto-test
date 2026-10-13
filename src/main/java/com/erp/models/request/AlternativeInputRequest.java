@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -15,4 +16,5 @@ public class AlternativeInputRequest {
     private Long groupId;
     private Long resourceId;
     private Double amount;
+    private UUID batchUuid;
 }

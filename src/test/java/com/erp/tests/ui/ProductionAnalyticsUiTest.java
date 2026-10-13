@@ -36,6 +36,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.playwright.Response;
 import com.microsoft.playwright.Route;
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.Page;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -57,6 +60,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -833,11 +837,19 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
         assertThat(analytics.isExcelExportButtonVisible()).isTrue();
         assertThat(analytics.isExcelExportButtonEnabled()).isTrue();
 
+        List<String> contentDispositions = new ArrayList<>();
+        page.onResponse(response -> {
+            if (response.url().contains("/api/v1/production/analytic/export")) {
+                contentDispositions.add(response.headers().getOrDefault("content-disposition", "<none>"));
+            }
+        });
         ProductionAnalyticsPage.ExportDownloadResult export = analytics.exportStatisticsToExcel();
         try {
             UiDownloadAssertions.assertNonEmptyXlsx(
                     export.path(), export.sizeBytes(), "Production Analytics multi-sheet Excel");
-            assertThat(export.suggestedFilename()).endsWithIgnoringCase(".xlsx");
+            assertThat(export.suggestedFilename())
+                    .as("Назва завантаження; Content-Disposition=%s", contentDispositions)
+                    .endsWithIgnoringCase(".xlsx");
             assertThat(XlsxWorkbookReader.sheetNames(Files.readAllBytes(export.path())))
                     .isNotEmpty();
         } finally {
@@ -1278,6 +1290,157 @@ public class ProductionAnalyticsUiTest extends BaseUITest {
                 filterQuery(List.of(secondLocation.getId()), null, null));
         assertLocationMarkers(firstExport, true, false);
         assertLocationMarkers(secondExport, false, true);
+    }
+
+    @Test(priority = 96)
+    @TestCaseId("TC-ANL-UI-029")
+    @Story("Statistics — one download while Excel is being prepared")
+    @Severity(SeverityLevel.CRITICAL)
+    public void repeatedExportClickStartsOnlyOneDownload() throws Exception {
+        String exportRoute = "**/api/v1/production/analytic/export**";
+        AtomicInteger requests = new AtomicInteger();
+        AtomicInteger downloads = new AtomicInteger();
+        page.onDownload(download -> downloads.incrementAndGet());
+        page.route(exportRoute, route -> {
+            requests.incrementAndGet();
+            try {
+                Thread.sleep(700);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while delaying Excel response", e);
+            }
+            route.resume();
+        });
+        try {
+            ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
+            analytics.periodPicker().selectPreset(DateRangePickerComponent.PRESET_7_DAYS);
+            analytics.openStatisticsTab();
+            var download = page.waitForDownload(() -> page.evaluate("""
+                    () => {
+                      const button = document.querySelector('[data-testid="production-analytics-export-excel"]');
+                      button.click();
+                      setTimeout(() => button.click(), 100);
+                    }
+                    """));
+            assertThat(download.failure()).isNull();
+            try {
+                UiDownloadAssertions.assertNonEmptyXlsx(
+                        download.path(), Files.size(download.path()), "Single analytics export");
+            } finally {
+                Files.deleteIfExists(download.path());
+            }
+            assertThat(requests.get()).as("Один запит на експорт під час генерації").isEqualTo(1);
+            assertThat(downloads.get()).as("Один завантажений файл").isEqualTo(1);
+        } finally {
+            page.unroute(exportRoute);
+        }
+    }
+
+    @Test(priority = 97)
+    @TestCaseId("TC-ANL-UI-030")
+    @Story("Statistics — calendar period is stable across browser time zones")
+    @Severity(SeverityLevel.CRITICAL)
+    public void excelPeriodHasSameBoundaryRecordsInDifferentTimeZones() throws Exception {
+        LocalDate from = LocalDate.now().minusDays(1);
+        LocalDate to = from.plusDays(1);
+        ResourceResponse firstDay = createSerialExportMarker("analytics-zone-start-", from);
+        ResourceResponse lastDay = createSerialExportMarker("analytics-zone-end-", to);
+        ResourceResponse before = createSerialExportMarker(
+                "analytics-zone-before-", from.minusDays(1), UserRole.ADMIN);
+        new ProductionAnalyticsPage(page).open();
+        String storageState = browserContext.storageState();
+        for (String timezone : List.of("Pacific/Honolulu", "Pacific/Kiritimati")) {
+            Browser browser = getPlaywrightSessionProvider().getBrowser();
+            try (BrowserContext zoneContext = browser.newContext(new Browser.NewContextOptions()
+                    .setIgnoreHTTPSErrors(true)
+                    .setAcceptDownloads(true)
+                    .setStorageState(storageState)
+                    .setTimezoneId(timezone))) {
+                Page zonePage = zoneContext.newPage();
+                ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(zonePage).open();
+                analytics.periodPicker().setRange(from, to);
+                analytics.openStatisticsTab();
+                var export = analytics.exportStatisticsToExcel();
+                try {
+                    assertThat(export.requestUrl())
+                            .as("Період запиту в часовому поясі %s", timezone)
+                            .contains("fromDate=" + from, "toDate=" + to);
+                    String content = workbookText(XlsxWorkbookReader.sheets(Files.readAllBytes(export.path())));
+                    assertThat(content)
+                            .as("Календарні межі у файлі для %s", timezone)
+                            .contains(firstDay.getName(), lastDay.getName())
+                            .doesNotContain(before.getName());
+                } finally {
+                    Files.deleteIfExists(export.path());
+                }
+            }
+        }
+    }
+
+    @Test(priority = 98)
+    @TestCaseId("TC-ANL-UI-031")
+    @Story("Statistics — fractional amounts retain precision in Excel")
+    @Severity(SeverityLevel.CRITICAL)
+    public void fractionalProductionExpenseKeepsItsExactExcelValue() throws Exception {
+        ResourceResponse fractionalMaterial = trackResource(
+                resources.createUniqueResource("analytics-fractional-material-"));
+        new RelocationFixture(testContext, apiExecutor)
+                .seedExactStock(location.getId(), fractionalMaterial.getId(), 10.0, ACTOR);
+        createNonSeriesProduction(
+                "analytics-fractional-product-" + System.nanoTime(),
+                1.25,
+                fractionalMaterial,
+                0.5);
+        ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
+        analytics.periodPicker().selectPreset(DateRangePickerComponent.PRESET_7_DAYS);
+        Response expenses = page.waitForResponse(
+                response -> response.url().contains("/production/analytic/non-serial/input?"),
+                analytics::openNonSeriesExpenses);
+        JsonNode materialRow = findResourceRow(JSON.readTree(expenses.text()), fractionalMaterial.getId());
+        BigDecimal expectedAmount = new BigDecimal("0.625");
+        assertThat(new BigDecimal(materialRow.path("totalAmount").asText()))
+                .as("Підсумок аналітики для дробової витрати")
+                .isEqualByComparingTo(expectedAmount);
+        analytics.searchExpensesByName(fractionalMaterial.getName());
+        analytics.waitForExpenseResource(fractionalMaterial.getName());
+        assertThat(analytics.expenseResourceRowText(fractionalMaterial.getName()))
+                .contains(fractionalMaterial.getName());
+        byte[] bytes = downloadCurrentWorkbook(analytics);
+        String sheet = EXPECTED_EXPORT_SHEETS.get(4);
+        List<List<String>> rows = XlsxWorkbookReader.sheets(bytes).get(sheet);
+        List<Integer> matchingRowIndices = new ArrayList<>();
+        for (int i = 1; i < rows.size(); i++) {
+            if (rows.get(i).contains(fractionalMaterial.getName())) {
+                matchingRowIndices.add(i);
+            }
+        }
+        assertThat(matchingRowIndices).as("Один рядок дробового матеріалу").hasSize(1);
+        assertThat(XlsxWorkbookReader.numericColumnValues(bytes, sheet, "Обсяг")
+                .get(matchingRowIndices.getFirst() - 1))
+                .as("1,25 виробу × 0,5 матеріалу = 0,625")
+                .isEqualByComparingTo(expectedAmount);
+    }
+
+    @Test(priority = 99)
+    @TestCaseId("TC-ANL-UI-032")
+    @Story("Statistics — retry Excel export after connection loss")
+    @Severity(SeverityLevel.CRITICAL)
+    public void interruptedExcelExportCanBeRetried() throws Exception {
+        String exportRoute = "**/api/v1/production/analytic/export**";
+        page.route(exportRoute, route -> route.abort("internetdisconnected"));
+        ProductionAnalyticsPage analytics = new ProductionAnalyticsPage(page).open();
+        analytics.periodPicker().selectPreset(DateRangePickerComponent.PRESET_7_DAYS);
+        analytics.openStatisticsTab();
+        try {
+            assertThat(analytics.clickExcelExportAndWaitForError()).isTrue();
+        } finally {
+            page.unroute(exportRoute);
+        }
+        byte[] retry = downloadCurrentWorkbook(analytics);
+        assertThat(XlsxWorkbookReader.sheetNames(retry))
+                .containsExactlyElementsOf(EXPECTED_EXPORT_SHEETS);
+        assertThat(workbookText(XlsxWorkbookReader.sheets(retry)))
+                .contains(journalProduction.getProduct().getName());
     }
 
     private Response waitForTimelineResponse(Runnable action) {

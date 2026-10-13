@@ -36,6 +36,12 @@ public class FlyPointClosePage extends BasePage {
                 && page.getByTestId(testId).isVisible();
     }
 
+    public FlyPointClosePage waitForArchiveConfirmation() {
+        waitForReady();
+        page.getByTestId("fly-point-close-confirm-archive").waitFor();
+        return this;
+    }
+
     public FlyPointClosePage cancel() {
         page.getByTestId("fly-point-close-cancel").click();
         return this;
@@ -66,12 +72,19 @@ public class FlyPointClosePage extends BasePage {
         return this;
     }
 
+    public FlyPointClosePage archiveCrew(long crewId) {
+        page.getByTestId("fly-point-close-crew-" + crewId + "-archive").click();
+        page.getByTestId("fly-point-close-crew-" + crewId)
+                .getByText("Архівовано").waitFor();
+        return this;
+    }
+
     public FlyPointClosePage doneWithCrews() {
         page.getByTestId("fly-point-close-crews-done").click();
         page.getByRole(AriaRole.HEADING,
                 new Page.GetByRoleOptions().setName("Архівування точки вильоту"))
                 .waitFor();
-        return this;
+        return waitForReady();
     }
 
     public FlyPointClosePage openRelocation() {

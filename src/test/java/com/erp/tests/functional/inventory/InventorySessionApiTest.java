@@ -74,6 +74,22 @@ public class InventorySessionApiTest extends InventoryApiTestBase {
                 .isEqualTo("OPEN");
     }
 
+    @Test(priority = 25)
+    @TestCaseId("TC-WMS-003-002")
+    @Story("Admin closes an open inventory session")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Адміністратор закриває відкриту сесію інвентаризації обраної локації.")
+    public void adminClosesInventorySession() {
+        inventoryFixture.openSession(owner1StorageId);
+        assertThat(inventoryFixture.getInventoryState(owner1StorageId, UserRole.ADMIN).getState())
+                .isEqualTo("OPEN");
+
+        inventoryFixture.closeSession(owner1StorageId);
+
+        assertThat(inventoryFixture.getInventoryState(owner1StorageId, UserRole.ADMIN).getState())
+                .isEqualTo("CLOSED");
+    }
+
     @Test(priority = 30)
     @TestCaseId("TC-INV-PROC-003")
     @Story("Admin rejects a pending inventory request with an explanation")
@@ -100,7 +116,7 @@ public class InventorySessionApiTest extends InventoryApiTestBase {
     }
 
     @Test(priority = 40)
-    @TestCaseId("TC-INV-PROC-004")
+    @TestCaseId({"TC-INV-PROC-004", "TC-WMS-003-003"})
     @Story("Location owner cannot approve a request")
     @Severity(SeverityLevel.CRITICAL)
     public void ownerCannotApproveInventoryRequest() {
@@ -116,6 +132,17 @@ public class InventorySessionApiTest extends InventoryApiTestBase {
         assertThat(response.statusCode()).isEqualTo(403);
         assertThat(inventoryFixture.getInventoryState(owner1StorageId, UserRole.ADMIN).getState())
                 .isEqualTo("REQUESTED");
+
+        InventoryProcessResponse opened = inventoryFixture.approveInventory(
+                owner1StorageId, UserRole.ADMIN, "Погоджено адміністратором");
+        Response closeByOwner = apiExecutor.execute(
+                ApiEndpointDefinition.STORAGE_INVENTORY_CLOSE_DELETE,
+                UserRole.OWNER_1,
+                null,
+                String.valueOf(opened.getId()));
+        assertThat(closeByOwner.statusCode()).isEqualTo(403);
+        assertThat(inventoryFixture.getInventoryState(owner1StorageId, UserRole.ADMIN).getState())
+                .isEqualTo("OPEN");
     }
 
     @Test(priority = 50)

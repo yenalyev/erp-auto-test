@@ -7,7 +7,7 @@ import com.erp.fixtures.LocationPermissionSupport;
 import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.UserFixture;
 import com.erp.models.request.ManufacturingListRequest;
-import com.erp.models.response.InventorySessionStatus;
+import com.erp.models.request.InventoryProcessRequest;
 import com.erp.tests.functional.BaseFunctionalTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -143,8 +143,7 @@ public class LocationScopedAccessTest extends BaseFunctionalTest {
         Response response = apiExecutor.execute(
                 ApiEndpointDefinition.STORAGE_INVENTORY_STATUS_PUT,
                 UserRole.LOCATION_MIXED,
-                InventorySessionStatus.builder().open(true).build(),
-                String.valueOf(storageId));
+                InventoryProcessRequest.builder().storageId(storageId).build());
         assertThat(response.statusCode())
                 .as("PUT inventory status on RO %s (%s) must be 403", label, storageId)
                 .isEqualTo(403);

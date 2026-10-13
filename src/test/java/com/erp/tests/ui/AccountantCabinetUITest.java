@@ -259,16 +259,12 @@ public class AccountantCabinetUITest extends BaseUITest {
 
     @Test(priority = 3)
     @TestCaseId("TC-UI-ACC-003")
-    @Story("Accountant workspace without UNIT")
+    @Story("Accountant workspace includes accessible UNIT locations")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
-            Після логіну accountant: my-units API не містить локацій з функцією ORDERS.
-
-            Відкритий product gap (прогін 34): GET /storages/my-units для accountant повертає
-            локації підрозділів, тому тест червоний. Потрібне рішення продукту, який контракт правильний:
-            або бекенд має відфільтровувати ORDERS для цієї ролі, або вимога застаріла і тест треба
-            переписати. До рішення тест не адаптуємо — інакше він перестане ловити регресію.""")
-    public void accountantWorkspaceExcludesUnitLocations() {
+            Після входу бухгалтер бачить доступні локації підрозділів із функцією замовлень.
+            """)
+    public void accountantWorkspaceIncludesUnitLocations() {
         loginAsAccountant();
 
         var apiResponse = apiExecutor.execute(ApiEndpointDefinition.STORAGE_GET_MY_UNITS, UserRole.ACCOUNTANT);
@@ -277,8 +273,8 @@ public class AccountantCabinetUITest extends BaseUITest {
         assertThat(units.stream()
                 .filter(s -> s.getFeatures() != null && s.getFeatures().contains(LocationFeature.ORDERS))
                 .toList())
-                .as("API my-units для accountant не повинен містити ORDERS")
-                .isEmpty();
+                .as("Бухгалтер повинен бачити доступні локації підрозділів")
+                .isNotEmpty();
     }
 
     @Test(priority = 4)

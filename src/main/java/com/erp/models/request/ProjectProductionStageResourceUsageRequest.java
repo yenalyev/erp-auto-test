@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Mirrors backend {@code org.pm.tk.dto.request.projectproduction.ProjectProductionStageResourceUsageRequest}.
@@ -21,4 +22,5 @@ public class ProjectProductionStageResourceUsageRequest {
     private Long resourceId;
     private BigDecimal amountNeeded;
     private BigDecimal amountUsed;
+    private UUID batchUuid;
 }

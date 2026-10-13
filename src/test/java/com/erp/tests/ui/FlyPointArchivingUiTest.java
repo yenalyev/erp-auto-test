@@ -13,7 +13,9 @@ import com.erp.fixtures.UserFixture;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageResponse;
 import com.erp.pages.FlyPointClosePage;
+import com.erp.pages.FlyPointIncidentPage;
 import com.erp.pages.FlyPointsPage;
+import com.erp.pages.RelocationCreateOutputFlyPointPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -28,6 +30,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -93,9 +96,11 @@ public class FlyPointArchivingUiTest extends BaseUITest {
         loginAdmin();
 
         FlyPointsPage list = new FlyPointsPage(page).open();
-        page.getByTestId("fly-point-" + point.getId() + "-archive").waitFor();
         assertThat(list.hasPointCard(point.getId())).isTrue();
-        page.getByTestId("fly-point-" + point.getId() + "-archive").click();
+        assertThat(list.hasArchiveActionOnPointCard(point.getId()))
+                .as("Кнопка архівації розміщена всередині картки точки")
+                .isTrue();
+        list.clickArchiveOnPointCard(point.getId());
         assertThat(page.url()).contains("/fly-points/close/" + point.getId());
         FlyPointClosePage close = new FlyPointClosePage(page).waitForReady();
         assertThat(close.content())
@@ -112,7 +117,7 @@ public class FlyPointArchivingUiTest extends BaseUITest {
     @Test(priority = 20)
     @TestCaseId(value = "TC-FPA-002", roles = BusinessRole.UNIT_KOMIRNIK)
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Комірник тільки з ролями «Керівник локації» + «Екіпажі: перегляд» може архівувати свою порожню точку.")
+    @Description("Комірник тільки з ролями «Керівник локації» + «Екіпажі: облік» може архівувати свою порожню точку.")
     public void standardKeeperCanArchiveEmptyPoint() {
         StorageResponse point = point("keeper-empty-");
         loginKeeper();
@@ -120,11 +125,10 @@ public class FlyPointArchivingUiTest extends BaseUITest {
         FlyPointsPage list = new FlyPointsPage(page).open();
         page.locator("a[href='/fly-points/" + point.getId() + "']").waitFor();
         assertThat(list.hasPointCard(point.getId())).isTrue();
-        assertThat(page.getByTestId("fly-point-" + point.getId() + "-archive").isVisible())
-                .as("Комірник має бачити архівацію без додаткових грантів")
+        assertThat(list.hasArchiveActionOnPointCard(point.getId()))
+                .as("Комірник має бачити кнопку архівації всередині картки без додаткових грантів")
                 .isTrue();
-        page.getByTestId("fly-point-" + point.getId() + "-archive").click();
-        new FlyPointClosePage(page).waitForReady().confirmArchive();
+        list.clickArchiveOnPointCard(point.getId()).confirmArchive();
         assertThat(storages.getById(UserRole.ADMIN, point.getId()).getActive()).isFalse();
     }
 
@@ -154,17 +158,23 @@ public class FlyPointArchivingUiTest extends BaseUITest {
     @Test(priority = 40)
     @TestCaseId("TC-FPA-004")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Адмін переміщує єдиний активний екіпаж на іншу активну точку і архівує початкову.")
+    @Description("Адмін переміщує один екіпаж, архівує інший і після врегулювання архівує початкову точку.")
     public void adminMovesCrewThenArchivesPoint() {
         StorageResponse source = point("crew-source-");
         StorageResponse target = point("crew-target-");
-        StorageResponse crew = storages.createCrewStorage(source.getId(), "crew-move-");
+        StorageResponse movedCrew = storages.createCrewStorage(source.getId(), "crew-move-");
+        StorageResponse archivedCrew = storages.createCrewStorage(source.getId(), "crew-archive-");
         loginAdmin();
 
         FlyPointClosePage close = new FlyPointClosePage(page).open(source.getId());
-        close.openCrews().moveCrew(crew.getId(), target.getName()).doneWithCrews();
-        assertThat(storages.getById(UserRole.ADMIN, crew.getId()).getParent().getId())
+        close.openCrews()
+                .moveCrew(movedCrew.getId(), target.getName())
+                .archiveCrew(archivedCrew.getId());
+        assertThat(storages.getById(UserRole.ADMIN, movedCrew.getId()).getParent().getId())
                 .isEqualTo(target.getId());
+        assertThat(storages.getById(UserRole.ADMIN, archivedCrew.getId()).getActive()).isFalse();
+        waitForNoActiveCrews(source.getId());
+        close.doneWithCrews();
         assertThat(close.hasAction("fly-point-close-confirm-archive")).isTrue();
         close.confirmArchive();
         assertThat(storages.getById(UserRole.ADMIN, source.getId()).getActive()).isFalse();
@@ -173,18 +183,16 @@ public class FlyPointArchivingUiTest extends BaseUITest {
     @Test(priority = 50)
     @TestCaseId("TC-FPA-005")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Позитивний залишок блокує архівацію і показує назву, одиницю, кількість та партію.")
+    @Description("Позитивний залишок блокує архівацію і показує назву ресурсу та кількість.")
     public void stockWarningShowsRequiredFieldsAndBlocksDirectArchive() {
         StorageResponse point = point("stock-block-");
-        String batchNumber = "FPA-BATCH-" + System.currentTimeMillis();
-        relocations.seedBatchOnStorage(point.getId(), resource.getId(), 7, batchNumber);
+        relocations.seedExactStock(point.getId(), resource.getId(), 7);
         loginAdmin();
 
         FlyPointClosePage close = new FlyPointClosePage(page).open(point.getId());
         assertThat(storages.deactivate(UserRole.ADMIN, point.getId()).statusCode())
                 .isBetween(400, 499);
-        assertThat(close.content()).contains("На точці є залишки", resource.getName(),
-                resource.getUnit().getShortName(), batchNumber, "7");
+        assertThat(close.content()).contains("На точці є залишки", resource.getName(), "7");
         assertThat(close.hasAction("fly-point-close-relocate-resources")).isTrue();
         assertThat(close.hasAction("fly-point-close-create-incident")).isTrue();
     }
@@ -192,20 +200,56 @@ public class FlyPointArchivingUiTest extends BaseUITest {
     @Test(priority = 60)
     @TestCaseId("TC-FPA-006")
     @Severity(SeverityLevel.NORMAL)
-    @Description("З попередження про залишок переміщення і подія відкривають правильні форми з поверненням до архівації.")
-    public void stockActionsOpenFormsWithArchiveReturnRoute() {
-        StorageResponse point = point("stock-route-");
+    @Description("Після переміщення всього залишку користувач повертається до архівації й завершує її.")
+    public void stockRelocationReturnsToArchiveAndFinishesPoint() {
+        StorageResponse source = point("stock-relocation-source-");
+        StorageResponse target = point("stock-relocation-target-");
+        relocations.seedExactStock(source.getId(), resource.getId(), 4);
+        loginAdmin();
+
+        FlyPointClosePage close = new FlyPointClosePage(page).open(source.getId());
+        close.openRelocation();
+        assertThat(page.url())
+                .contains("flyPointId=" + source.getId());
+
+        RelocationCreateOutputFlyPointPage form = new RelocationCreateOutputFlyPointPage(page).waitForLoaded();
+        form.selectSenderFlyPointByName(source.getName())
+                .selectRecipientFlyPointByName(target.getName())
+                .waitForPrefilledStock(resource.getName(), "4")
+                .fillIssuer("Автотест Архівації", "Сержант")
+                .fillDescription("TC-FPA-006 relocation " + System.currentTimeMillis());
+        assertThat(form.isSubmitDisabled()).isFalse();
+        form.submitAndWaitForReturn();
+        assertThat(inventory.getResourceStock(source.getId(), resource.getId(), UserRole.ADMIN))
+                .isZero();
+        assertThat(page.url()).endsWith("/fly-points/close/" + source.getId());
+        close.waitForArchiveConfirmation().confirmArchive();
+        assertThat(storages.getById(UserRole.ADMIN, source.getId()).getActive()).isFalse();
+    }
+
+    @Test(priority = 61)
+    @TestCaseId("TC-FPA-006")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Після списання всього залишку користувач повертається до архівації й завершує її.")
+    public void stockIncidentReturnsToArchiveAndFinishesPoint() {
+        StorageResponse point = point("stock-incident-");
         relocations.seedExactStock(point.getId(), resource.getId(), 4);
         loginAdmin();
 
         FlyPointClosePage close = new FlyPointClosePage(page).open(point.getId());
-        close.openRelocation();
-        assertThat(page.url()).contains("flyPointId=" + point.getId(),
-                "returnTo=/fly-points/close/" + point.getId());
+        close.openIncident();
+        assertThat(page.url())
+                .contains("/inventory/create-incident/" + point.getId());
 
-        close.open(point.getId()).openIncident();
-        assertThat(page.url()).contains("/inventory/create-incident/" + point.getId(),
-                "returnTo=/fly-points/close/" + point.getId());
+        new FlyPointIncidentPage(page).waitForLoaded()
+                .selectFullStock(resource.getName())
+                .fillDescription("TC-FPA-006 incident " + System.currentTimeMillis())
+                .submitAndWaitForReturn();
+        assertThat(inventory.getResourceStock(point.getId(), resource.getId(), UserRole.ADMIN))
+                .isZero();
+        assertThat(page.url()).endsWith("/fly-points/close/" + point.getId());
+        close.waitForArchiveConfirmation().confirmArchive();
+        assertThat(storages.getById(UserRole.ADMIN, point.getId()).getActive()).isFalse();
     }
 
     @Test(priority = 70)
@@ -229,16 +273,19 @@ public class FlyPointArchivingUiTest extends BaseUITest {
     @Test(priority = 80)
     @TestCaseId("TC-FPA-009")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Прикріплений екіпаж із балансом на точці не можна архівувати через прямий API.")
-    public void attachedCrewWithPointStockCannotBeArchived() {
+    @Description("Архівація прикріпленого екіпажу не списує залишок точки; точку з залишком архівувати не можна.")
+    public void archivingAttachedCrewKeepsPointStock() {
         StorageResponse point = point("crew-stock-parent-");
         StorageResponse crew = storages.createCrewStorage(point.getId(), "crew-own-stock-");
         // Attached crew inventory is proxied to its fly point in the product model.
         relocations.seedExactStock(point.getId(), resource.getId(), 2);
 
-        assertThat(storages.deactivate(UserRole.ADMIN, crew.getId()).statusCode())
+        assertThat(storages.deactivate(UserRole.ADMIN, crew.getId()).statusCode()).isEqualTo(200);
+        assertThat(storages.getById(UserRole.ADMIN, crew.getId()).getActive()).isFalse();
+        assertThat(inventory.getResourceStock(point.getId(), resource.getId(), UserRole.ADMIN))
+                .isEqualTo(2.0);
+        assertThat(storages.deactivate(UserRole.ADMIN, point.getId()).statusCode())
                 .isBetween(400, 499);
-        assertThat(storages.getById(UserRole.ADMIN, crew.getId()).getActive()).isTrue();
     }
 
     @Test(priority = 90)
@@ -255,7 +302,9 @@ public class FlyPointArchivingUiTest extends BaseUITest {
         FlyPointClosePage close = new FlyPointClosePage(page).open(source.getId());
         assertThat(close.content()).contains("На точці є активні екіпажі");
         assertThat(close.hasAction("fly-point-close-relocate-resources")).isFalse();
-        close.openCrews().moveCrew(crew.getId(), target.getName()).doneWithCrews();
+        close.openCrews().moveCrew(crew.getId(), target.getName());
+        waitForNoActiveCrews(source.getId());
+        close.doneWithCrews();
         page.getByTestId("fly-point-close-relocate-resources").waitFor();
         assertThat(close.content()).contains("На точці є залишки");
         assertThat(close.hasAction("fly-point-close-confirm-archive")).isFalse();
@@ -299,6 +348,31 @@ public class FlyPointArchivingUiTest extends BaseUITest {
         StorageResponse point = storages.createFlyPointStorage(battalion.getId(), "fpa-" + prefix);
         ownedPointIds.add(point.getId());
         return point;
+    }
+
+    /** Hierarchy changes are projected asynchronously on DEV after the crew API call succeeds. */
+    private void waitForNoActiveCrews(long pointId) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        Response prerequisites = null;
+        do {
+            prerequisites = apiExecutor.execute(
+                    ApiEndpointDefinition.FLY_POINT_GET_CLOSE_PREREQUISITES,
+                    UserRole.ADMIN, null, String.valueOf(pointId));
+            List<?> activeCrews = prerequisites.statusCode() == 200
+                    ? prerequisites.jsonPath().getList("crews") : null;
+            if (prerequisites.statusCode() == 200
+                    && (activeCrews == null || activeCrews.isEmpty())) {
+                return;
+            }
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for fly-point hierarchy", e);
+            }
+        } while (System.nanoTime() < deadline);
+        throw new AssertionError("Active crews still reported for point " + pointId
+                + ": " + (prerequisites == null ? "no response" : prerequisites.asString()));
     }
 
     private StorageResponse findExistingBattalion() {

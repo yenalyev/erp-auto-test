@@ -1,6 +1,8 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
 import com.erp.data.factories.production.ProductionDataFactory;
 import com.erp.enums.StorageTechnologicalMapMode;
 import com.erp.enums.BusinessRole;
@@ -19,6 +21,7 @@ import com.erp.models.response.StorageResponse;
 import com.erp.models.response.ResourceUsageResponse;
 import com.erp.pages.ProductionCreateFormPage;
 import com.erp.pages.ProductionUpdateFormPage;
+import com.erp.pages.AppSidebarPage;
 import com.erp.utils.config.ConfigProvider;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
@@ -34,6 +37,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +66,8 @@ public class ProductionBatchRecipeConsistencyUiTest extends BaseUITest {
     private final Set<Long> createdResourceIds = new LinkedHashSet<>();
     private UserFixture.BusinessActor ownerActor;
     private Long storageId;
+    private String storageName;
+    private StorageResponse otherStorage;
     private TechnologicalMapResponse firstMap;
     private TechnologicalMapResponse secondMap;
     private String productName;
@@ -75,9 +82,13 @@ public class ProductionBatchRecipeConsistencyUiTest extends BaseUITest {
         StorageResponse storage = storageFixture.createProductionStorage(
                 ConfigProvider.getOwner1StorageId(), "ui-prd-recipe-");
         storageId = storage.getId();
+        storageName = storage.getName();
+        otherStorage = storageFixture.createProductionStorage(
+                ConfigProvider.getOwner1StorageId(), "ui-prd-recipe-other-");
         userFixture = new UserFixture(testContext, apiExecutor);
         ownerActor = userFixture.createBusinessActor(
-                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(storage));
+                getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER,
+                List.of(storage, otherStorage));
         apiExecutor.setSessionForRole(UserRole.OWNER_1, ownerActor.username(), ownerActor.password());
         shiftFixture = new ShiftFixture(testContext, apiExecutor);
         shiftId = shiftFixture.create(UserRole.ADMIN, storageId,
@@ -308,6 +319,103 @@ public class ProductionBatchRecipeConsistencyUiTest extends BaseUITest {
         assertThat(form.getBatchNumber()).isEqualTo(batch);
         assertThat(form.hasImmutableBatchHint()).isTrue();
         form.attachScreenshot("TC-UI-PROD-BATCH-005 — immutable edit fields");
+    }
+
+    @Test(priority = 30)
+    @TestCaseId("TC-UI-PROD-BATCH-006")
+    @Story("Default batch number follows date, location and product")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Форма спочатку пропонує номер за датою й локацією, а після вибору продукту додає його до номера.")
+    public void defaultBatchNumberIncludesSelectedProduct() {
+        ProductionCreateFormPage form = new ProductionCreateFormPage(page).open().ensureShiftSelected();
+        Locator batchInput = page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Номер партії"))
+                .locator("xpath=following-sibling::input[1]").first();
+        String beforeProduct = batchInput.inputValue();
+        long productId = firstMap.getOutput().getFirst().getResource().getId();
+
+        assertThat(batchInput.isEnabled()).isTrue();
+        assertThat(beforeProduct).endsWith("-" + storageId);
+        form.selectProduct(productName);
+
+        String expected = beforeProduct + "-" + productId;
+        page.waitForCondition(() -> expected.equals(batchInput.inputValue()),
+                new Page.WaitForConditionOptions().setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000L));
+        assertThat(batchInput.inputValue()).isEqualTo(expected);
+    }
+
+    @Test(priority = 31)
+    @TestCaseId("TC-UI-PROD-BATCH-007")
+    @Story("Manually entered batch number survives product selection")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Вибір продукту не замінює номер партії, який керівник локації ввів вручну.")
+    public void selectingProductKeepsManualBatchNumber() {
+        ProductionCreateFormPage form = new ProductionCreateFormPage(page).open().ensureShiftSelected();
+        Locator batchInput = page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Номер партії"))
+                .locator("xpath=following-sibling::input[1]").first();
+        String manualNumber = "manual-batch-" + System.currentTimeMillis() % 1_000_000;
+
+        form.fillBatchNumber(manualNumber);
+        assertThat(batchInput.inputValue()).isEqualTo(manualNumber);
+
+        form.selectProduct(productName);
+        assertThat(batchInput.inputValue()).isEqualTo(manualNumber);
+    }
+
+    @Test(priority = 32)
+    @TestCaseId("TC-UI-PROD-BATCH-008")
+    @Story("Changing date regenerates batch number")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("Після зміни дати форма замінює вручну введений номер новим початковим номером.")
+    public void changingDateRegeneratesBatchNumber() {
+        ProductionCreateFormPage form = openFormForProduct();
+        Locator dateInput = page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Дата"))
+                .locator("xpath=following-sibling::input[1]").first();
+        Locator batchInput = page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Номер партії"))
+                .locator("xpath=following-sibling::input[1]").first();
+        LocalDate changedDate = LocalDate.parse(dateInput.inputValue()).minusDays(1);
+        String manualNumber = "manual-batch-" + System.currentTimeMillis() % 1_000_000;
+        form.fillBatchNumber(manualNumber);
+        assertThat(batchInput.inputValue()).isEqualTo(manualNumber);
+
+        dateInput.fill(changedDate.toString());
+
+        long productId = firstMap.getOutput().getFirst().getResource().getId();
+        String expected = changedDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                + "-" + storageId + "-" + productId;
+        page.waitForCondition(() -> expected.equals(batchInput.inputValue()),
+                new Page.WaitForConditionOptions().setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000L));
+        assertThat(batchInput.inputValue()).isEqualTo(expected);
+    }
+
+    @Test(priority = 33)
+    @TestCaseId("TC-UI-PROD-BATCH-009")
+    @Story("Changing location updates only the suggested batch number")
+    @Severity(SeverityLevel.NORMAL)
+    @Description("При зміні робочої локації запропонований номер оновлюється, а власний номер зберігається.")
+    public void changingLocationPreservesManualBatchNumber() {
+        new ProductionCreateFormPage(page).open().ensureShiftSelected();
+        Locator batchInput = page.locator("label")
+                .filter(new Locator.FilterOptions().setHasText("Номер партії"))
+                .locator("xpath=following-sibling::input[1]").first();
+        String firstLocationNumber = batchInput.inputValue();
+        assertThat(firstLocationNumber).endsWith("-" + storageId);
+
+        AppSidebarPage sidebar = new AppSidebarPage(page);
+        sidebar.selectWorkspaceByName(otherStorage.getName());
+        String secondLocationNumber = firstLocationNumber.replaceFirst(
+                "-" + storageId + "$", "-" + otherStorage.getId());
+        page.waitForCondition(() -> secondLocationNumber.equals(batchInput.inputValue()),
+                new Page.WaitForConditionOptions().setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000L));
+        assertThat(batchInput.inputValue()).isEqualTo(secondLocationNumber);
+
+        String manualNumber = "manual-location-" + System.currentTimeMillis() % 1_000_000;
+        batchInput.fill(manualNumber);
+        sidebar.selectWorkspaceByName(storageName);
+        assertThat(batchInput.inputValue()).isEqualTo(manualNumber);
     }
 
     private ProductionCreateFormPage openFormForProduct() {

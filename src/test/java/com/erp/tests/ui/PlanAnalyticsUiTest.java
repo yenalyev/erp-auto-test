@@ -234,7 +234,7 @@ public class PlanAnalyticsUiTest extends BaseUITest {
     }
 
     @Test(priority = 40)
-    @TestCaseId("TC-PLAN-ANL-UI-004")
+    @TestCaseId({"TC-PLAN-ANL-UI-004", "TC-PLAN-ANL-UI-007"})
     @Story("Supplier options and repeated query")
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
@@ -298,6 +298,9 @@ public class PlanAnalyticsUiTest extends BaseUITest {
                 .containsExactlyInAnyOrder(SUPPLIER_MOU, SUPPLIER_OTHER);
         assertThat(analytics.hasDataRowFor(first.getName())).isTrue();
         assertThat(analytics.hasDataRowFor(second.getName())).isTrue();
+        assertThat(analytics.hasColumnHeaders())
+                .as("Після вибору кількох постачальників колонки звіту залишаються доступними")
+                .isTrue();
         analytics.attachScreenshot("TC-PLAN-ANL-UI-004 — supplier OR");
     }
 

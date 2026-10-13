@@ -127,6 +127,46 @@ public class ResourcesListPage extends BasePage {
         return page.getByText(EMPTY_STATE_TEXT).isVisible();
     }
 
+    public boolean isResourceRowVisible(String resourceName) {
+        return page.locator("table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(resourceName)).count() > 0;
+    }
+
+    public boolean isManualBatchAccounting(String resourceName) {
+        return "checked".equals(batchAccountingSwitch(resourceName).getAttribute("data-state"));
+    }
+
+    public ResourcesListPage setManualBatchAccounting(String resourceName, boolean enabled) {
+        Locator toggle = batchAccountingSwitch(resourceName);
+        if (isManualBatchAccounting(resourceName) != enabled) {
+            page.waitForResponse(response -> response.url().contains("/batch-selection-resources/")
+                            && "PUT".equalsIgnoreCase(response.request().method()),
+                    new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()), toggle::click);
+            page.waitForCondition(() -> isManualBatchAccounting(resourceName) == enabled,
+                    new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        }
+        return this;
+    }
+
+    public ResourcesListPage selectBatchAccountingFilter(String option) {
+        page.locator("button[data-slot='select-trigger']")
+                .filter(new Locator.FilterOptions().setHasText(
+                        Pattern.compile("Усі способи обліку|Обліковувати попартійно|Не попартійно")))
+                .click();
+        Locator selected = page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(option));
+        page.waitForResponse(response -> response.url().contains("/api/v1/resources?")
+                        && "GET".equalsIgnoreCase(response.request().method()),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()), selected::click);
+        waitForLoadingFinished();
+        return this;
+    }
+
+    private Locator batchAccountingSwitch(String resourceName) {
+        return page.locator("table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(resourceName))
+                .locator("button[role='switch']").first();
+    }
+
     private Locator propertyFilterButton() {
         return page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
                 .setName(PROPERTIES_BUTTON)

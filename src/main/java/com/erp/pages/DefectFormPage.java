@@ -46,6 +46,12 @@ public class DefectFormPage extends BasePage {
         return waitForLoaded();
     }
 
+    public DefectFormPage openEdit(long defectId) {
+        navigateTo(ConfigProvider.getBaseUrl() + "/defects/update/" + defectId,
+                "Редагування запису браку " + defectId);
+        return waitForLoaded();
+    }
+
     public DefectFormPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         typeSelectTrigger().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
@@ -147,6 +153,20 @@ public class DefectFormPage extends BasePage {
         return this;
     }
 
+    public DefectFormPage fillStorageBatchAmount(String batchNumber, String amount) {
+        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Партії"))
+                .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        page.locator("table tbody tr")
+                .filter(new Locator.FilterOptions().setHasText(batchNumber))
+                .locator("input[type='number']").first().fill(amount);
+        return this;
+    }
+
+    public boolean isUnknownBatchUnavailableWarningVisible() {
+        return page.getByText("«Невідома партія» недоступна: на цій локації немає її залишку.")
+                .isVisible();
+    }
+
     public DefectFormPage fillDescription(String description) {
         descriptionInput().fill(description);
         return this;
@@ -215,7 +235,8 @@ public class DefectFormPage extends BasePage {
 
     public DefectsPage submitAndWaitForList() {
         page.waitForResponse(
-                r -> r.url().contains("/defects") && "POST".equals(r.request().method()),
+                r -> r.url().contains("/defects")
+                        && ("POST".equals(r.request().method()) || "PUT".equals(r.request().method())),
                 () -> submitButton().click());
         page.waitForURL(url -> url.contains("/defects") && !url.contains("/create"),
                 new Page.WaitForURLOptions().setTimeout(uiTimeoutMs()));

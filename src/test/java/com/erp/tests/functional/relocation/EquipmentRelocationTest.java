@@ -574,11 +574,12 @@ public class EquipmentRelocationTest extends BaseFunctionalTest {
 
     @Test
     @TestCaseId("TC-EQ-IT-004")
-    @Story("Cannot redirect in-transit equipment to UNIT")
+    @Story("Cannot redirect in-transit equipment to a location without equipment accounting")
     @Description("""
-            REQ-EDIT_REL-007 AC-05: CREATED обладнання не можна перенаправити на UNIT.
+            REQ-EDIT_REL-007 AC-05: обладнання в дорозі не можна перенаправити на
+            підрозділ без функції обліку обладнання. Тип UNIT сам по собі не є забороною.
             """)
-    public void cannotRedirectInTransitEquipmentToUnit() {
+    public void cannotRedirectInTransitEquipmentToUnitWithoutEquipmentAccounting() {
         Long equipmentId = equipmentFixture.createEquipmentOnStorage(
                 UserRole.ADMIN, owner1Storage, categoryId).getId();
         RelocationResponse relocation = equipmentFixture.sendEquipment(

@@ -11,8 +11,11 @@ import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.StorageItemResponse;
+import com.erp.pages.InventoryEditPage;
 import com.erp.pages.UnitManagementPage;
 import com.erp.utils.config.ConfigProvider;
+import com.erp.utils.helpers.PollUtils;
+import com.microsoft.playwright.Response;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -194,6 +197,69 @@ public class AlertStockHighlightUiTest extends BaseUITest {
                 .waitForResourceAbsentFromTable(seed.red().getName());
         assertThat(stock.isShowZeroStockOn()).isFalse();
         stock.attachScreenshot("TC-UI-ALERT-005 — alert removed");
+    }
+
+    @Test(priority = 40)
+    @TestCaseId("TC-UI-ALERT-008")
+    @Story("Inventory removes a zero-stock resource with a stock alert")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Через UI вилучити з інвентаризації ресурс з amount=0 і налаштованим сповіщенням: PUT не повертає HTTP 500, нульовий рядок і поріг сповіщення зберігаються.")
+    public void inventoryUiOmitsZeroStockResourceWithAlertWithoutServerError() {
+        AlertFixture.StockHighlightSeed seed = alertFixture.seedHighlightScenario(
+                storageFixture, resourceFixture, relocationFixture, inventoryFixture);
+        long storageId = seed.storage().getId();
+        long resourceId = seed.yellow().getId();
+
+        inventoryFixture.openSession(storageId);
+        try {
+            inventoryFixture.setResourceAmount(storageId, UserRole.ADMIN, resourceId, 0.0);
+        } finally {
+            inventoryFixture.closeSession(storageId);
+        }
+
+        StorageItemResponse zeroItem = inventoryFixture.findItemIncludingZero(
+                storageId, resourceId, UserRole.ADMIN);
+        assertThat(zeroItem).as("нульовий StorageItem існує перед UI-видаленням").isNotNull();
+        assertThat(zeroItem.getId()).isNotNull();
+        assertThat(zeroItem.getAmount()).isZero();
+        assertThat(zeroItem.getAlertLimit()).isCloseTo(AlertFixture.DEFAULT_LIMIT, org.assertj.core.data.Offset.offset(0.01));
+
+        inventoryFixture.openSession(storageId);
+        injectRoleSession(UserRole.ADMIN, storageId);
+        page = browserContext.newPage();
+        InventoryEditPage inventory = new InventoryEditPage(page).open(storageId);
+
+        assertThat(inventory.isResourceListed(seed.yellow().getName()))
+                .as("нульовий ресурс зі сповіщенням показаний у формі інвентаризації")
+                .isTrue();
+        assertThat(Double.parseDouble(inventory.getResourceAmountInputValue(seed.yellow().getName())))
+                .isZero();
+
+        inventory.removeResource(seed.yellow().getName());
+        assertThat(inventory.isResourceListed(seed.yellow().getName()))
+                .as("ресурс вилучений з UI snapshot перед збереженням")
+                .isFalse();
+
+        Response saveResponse = inventory.saveChangesRaw();
+        String requestBody = saveResponse.request().postData();
+        assertThat(requestBody)
+                .as("PUT snapshot не містить вилучений resourceId")
+                .doesNotContain("\"resourceId\":" + resourceId);
+        assertThat(saveResponse.status())
+                .as("UI-видалення нульового ресурсу зі сповіщенням не повинно повертати HTTP 500")
+                .isBetween(200, 299);
+
+        PollUtils.waitUntilTrue(
+                () -> inventoryFixture.findItemIncludingZero(storageId, resourceId, UserRole.ADMIN) != null,
+                20_000,
+                "alerted resource " + resourceId + " remains available as zero stock");
+        StorageItemResponse preserved = inventoryFixture.findItemIncludingZero(
+                storageId, resourceId, UserRole.ADMIN);
+        assertThat(preserved.getAmount()).isZero();
+        assertThat(preserved.getAlertLimit())
+                .as("поріг сповіщення збережений")
+                .isCloseTo(AlertFixture.DEFAULT_LIMIT, org.assertj.core.data.Offset.offset(0.01));
+        inventory.attachScreenshot("TC-UI-ALERT-008 — zero resource removed without 500");
     }
 
     private OpenedInventory openHighlightedInventory() {

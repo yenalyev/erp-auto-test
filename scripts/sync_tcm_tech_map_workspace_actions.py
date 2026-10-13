@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge CPMA-895 documentation into existing TCM features without changing their metadata."""
+"""Sync business rules for workspace actions into their dedicated TCM feature."""
 from __future__ import annotations
 
 import argparse
@@ -12,23 +12,9 @@ from pathlib import Path
 from sync_tcm_relocation_batch_accounting import TcmClient
 
 ROOT = Path(__file__).resolve().parent.parent
-START = "<!-- CPMA-895:START -->"
-END = "<!-- CPMA-895:END -->"
-FEATURES = ("REQ-MFG-001", "REQ-MFG-001-01", "REQ-MFG-001-02", "REQ-MFG-001-03")
+FEATURES = ("REQ-MFG-001-05",)
 UNCHANGED_FIELDS = ("id", "featureId", "title", "description", "module", "priority",
                     "status", "parentFeatureId", "acceptanceCriteria")
-
-
-def merge_documentation(existing: str, section: str) -> str:
-    block = f"{START}\n{section}\n{END}"
-    if START not in existing and END not in existing:
-        return existing + "\n\n" + block
-    if existing.count(START) != 1 or existing.count(END) != 1:
-        raise ValueError("Ambiguous CPMA-895 documentation markers")
-    start, end = existing.index(START), existing.index(END)
-    if end < start:
-        raise ValueError("Invalid CPMA-895 documentation marker order")
-    return existing[:start] + block + existing[end + len(END):]
 
 
 def main() -> None:
@@ -45,25 +31,11 @@ def main() -> None:
         parser.error(f"Missing {args.token_env}")
     client = TcmClient(args.base_url, token, args.insecure)
     source = (ROOT / "docs/REQ-MFG-WORKSPACE-ACTIONS.md").read_text(encoding="utf-8-sig").strip()
-    summary = (
-        "## CPMA-895: дії з техкартою при виборі Цукрарні\n\n"
-        "Якщо обрано Цукрарню, техкарти дочірніх локацій видно у списку, але для редагування "
-        "або клонування потрібно перейти на відповідну локацію. Після натискання дії та "
-        "помилки завантаження UI показує спливне повідомлення: «Для вибраної Технологічної "
-        "карти виберіть одну з наступних локацій: {назви локацій}» і повертає до списку. "
-        "Це toast після натискання; він не надає права змінювати карту з Цукрарні. "
-        "Оригінал не змінюється, копія чи нова версія не створюється.\n\n"
-        "Після вибору вказаної локації через сайдбар користувач повторює дію. "
-        "Потрібні відповідні права та відкритий режим редагування EDIT_ALLOWED. "
-        "Повні критерії й автоматизовані сценарії — у REQ-MFG-001-03, розділ CPMA-895. "
-        "На dev 2026-09-26 пройшли 4/4 UI-сценарії; це не є прогоном на production ERP."
-    )
     prepared = []
     for feature_id in FEATURES:
         path = f"/api/ai/projects/{args.project_id}/features/{feature_id}"
         before = client.request("GET", path)
-        section = source if feature_id == "REQ-MFG-001-03" else summary
-        merged = merge_documentation(before.get("documentation") or "", section)
+        merged = source
         prepared.append((path, before, merged))
     report = {"baseUrl": args.base_url, "projectId": args.project_id,
               "timestamp": datetime.now(timezone.utc).isoformat(), "applied": args.apply, "features": []}

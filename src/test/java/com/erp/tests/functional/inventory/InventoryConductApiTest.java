@@ -126,7 +126,7 @@ public class InventoryConductApiTest extends InventoryApiTestBase {
     }
 
     @Test(priority = 20)
-    @TestCaseId("TC-WMS-003-006")
+    @TestCaseId({"TC-WMS-003-006", "TC-WMS-003-020"})
     @Story("Owner updates resource amount")
     @Severity(SeverityLevel.CRITICAL)
     public void ownerUpdatesResourceAmount() {
@@ -138,6 +138,29 @@ public class InventoryConductApiTest extends InventoryApiTestBase {
 
         assertThat(inventoryFixture.getResourceStock(owner1StorageId, anchorResourceId, UserRole.OWNER_1))
                 .isCloseTo(target, within(0.01));
+    }
+
+    @Test(priority = 25)
+    @TestCaseId("TC-WMS-003-021")
+    @Story("Negative inventory amount is rejected")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Від’ємний фактичний залишок під час інвентаризації відхиляється; обліковий залишок не змінюється.")
+    public void negativeInventoryAmountIsRejected() {
+        inventoryFixture.openSession(owner1StorageId);
+        double before = inventoryFixture.getResourceStock(
+                owner1StorageId, anchorResourceId, UserRole.ADMIN);
+        List<StorageItemResponse> items = inventoryFixture.listItems(owner1StorageId, UserRole.ADMIN);
+        InventoryRequest request = InventoryDataFactory.mergeWithExisting(
+                items, Map.of(anchorResourceId, -1.0));
+
+        Response response = inventoryFixture.conductInventoryRaw(
+                owner1StorageId, UserRole.ADMIN, request);
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(inventoryFixture.getResourceStock(owner1StorageId, anchorResourceId, UserRole.ADMIN))
+                .as("Відхилена інвентаризація не змінює залишок")
+                .isCloseTo(before, within(0.01));
+        assertThat(inventoryFixture.getInventoryState(owner1StorageId, UserRole.ADMIN).getState())
+                .isEqualTo("OPEN");
     }
 
     @Test(priority = 30)

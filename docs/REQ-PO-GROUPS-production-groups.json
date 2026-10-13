@@ -18,7 +18,7 @@
     {
       "featureId": "REQ-PO-GROUPS",
       "acKey": "AC-02",
-      "text": "Інвентаризацію на виробничій групі провести не можна — через інтерфейс чи прямий API-виклик; власний залишок не виникає. Група не може бути локацією призначення ВЗ."
+      "text": "Виробнича група не має власного залишку: на ній не можна провести інвентаризацію або призначити її місцем виконання виробничого замовлення."
     },
     {
       "featureId": "REQ-PO-GROUPS",
@@ -256,7 +256,8 @@
       "severity": "MAJOR",
       "status": "ACTIVE",
       "testType": "FUNCTIONAL",
-      "tags": "production-groups,business-requirements"
+      "tags": "production-groups,business-requirements",
+      "uiAutomationIds": ["TC-PG-006"]
     },
     {
       "featureId": "REQ-PO-GROUPS",
@@ -870,7 +871,8 @@
       "severity": "MAJOR",
       "status": "ACTIVE",
       "testType": "FUNCTIONAL",
-      "tags": "production-groups,business-requirements"
+      "tags": "production-groups,business-requirements",
+      "uiAutomationIds": ["TC-PG-026"]
     },
     {
       "featureId": "REQ-PO-GROUPS",
@@ -902,7 +904,8 @@
       "severity": "MAJOR",
       "status": "ACTIVE",
       "testType": "FUNCTIONAL",
-      "tags": "production-groups,business-requirements"
+      "tags": "production-groups,business-requirements",
+      "uiAutomationIds": ["TC-PG-027"]
     },
     {
       "featureId": "REQ-PO-GROUPS",
@@ -934,7 +937,8 @@
       "severity": "MAJOR",
       "status": "ACTIVE",
       "testType": "FUNCTIONAL",
-      "tags": "production-groups,business-requirements"
+      "tags": "production-groups,business-requirements",
+      "uiAutomationIds": ["TC-PG-028"]
     },
     {
       "featureId": "REQ-PO-GROUPS",
@@ -961,7 +965,8 @@
       "severity": "MAJOR",
       "status": "ACTIVE",
       "testType": "FUNCTIONAL",
-      "tags": "production-groups,business-requirements"
+      "tags": "production-groups,business-requirements",
+      "uiAutomationIds": ["TC-PG-029"]
     },
     {
       "featureId": "REQ-PO-GROUPS",
