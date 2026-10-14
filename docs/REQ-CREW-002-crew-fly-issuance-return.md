@@ -112,6 +112,7 @@ Page objects: `RelocationPage.clickReceiveFromCrew()`, `RelocationCreateInputCre
 | TC-UI-CREW-RET-001 | `CrewReturnUITest.receiveFromCrewButtonVisible` | CTA видима |
 | TC-UI-CREW-RET-002 | `CrewReturnUITest.happyPathUnattachedCrewReturn` | UI unattached + stock |
 | TC-UI-CREW-RET-003 | `CrewReturnUITest.happyPathAttachedCrewReturnDebitsFlyPoint` | UI attached + FP debit |
+| TC-UI-CREW-RET-004 | `CrewReturnUITest.searchFlyPointByTextInCrewReturn` | Пошук точки вильоту у формі отримання |
 
 **AC-24:** після DELETE повернення attached — залишок на FLY_POINT, не на CREW; unattached — на CREW.
 
@@ -137,8 +138,11 @@ AC-01…AC-21 — видача UNIT→CREW/FLY, journal, RBAC, UI «Видати
 | TC-UI-CREW-026 | `testProductListLabelShowsFlyPointForAttachedCrew` | Attached CREW — точна назва точки після лейбла |
 | TC-UI-CREW-027 | `testProductListLabelShowsNoFlyPointForUnattachedCrew` | Unattached CREW — повідомлення про відсутність точки |
 | TC-UI-CREW-028 | `testProductListLabelUpdatesWhenCrewChanges` | Перемикання attached→unattached очищує стару точку |
+| TC-UI-CREW-029 | `testFlyPointTextSearchInCrewIssuance` | Пошук точки вильоту у формі видачі |
 
 Page object: `RelocationCreateOutputCrewPage#getProductListLabel`. Повний submit-flow після зміни покриває `TC-UI-CREW-002`.
+
+Текстовий пошук точки вильоту в обох формах описано окремо: [план перевірки](FLY_POINT_TEXT_SEARCH_TEST_PLAN.md) і [тест-кейси](FLY_POINT_TEXT_SEARCH_TEST_CASES.md).
 
 ---
 

@@ -14,6 +14,10 @@ import com.erp.models.response.RelocationResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.pages.*;
 import com.erp.utils.config.ConfigProvider;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Route;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
+import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.*;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
@@ -241,6 +245,59 @@ public class CrewIssuanceUITest extends BaseUITest {
                 .as("Після зміни екіпажу заголовок не повинен містити стару точку")
                 .isEqualTo("Список продукції (точки вильоту немає)")
                 .doesNotContain(attachedScenario.flyPoint().getName());
+    }
+
+    @Test(priority = 49)
+    @TestCaseId("TC-UI-CREW-029")
+    @Story("Search fly points in crew issuance")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Видача на екіпаж: пошук точки за частиною назви фільтрує список; очищення відновлює варіанти; знайдену точку можна обрати.")
+    public void testFlyPointTextSearchInCrewIssuance() {
+        String otherName = "ui-crew-search-other";
+
+        // Search is client-side; serve a deterministic tree so this test does not depend on
+        // the dev account's current crew-unit grants.
+        String units = """
+                [{"id":%d,"name":"%s","kind":"LOCATION","children":[
+                  {"id":%d,"name":"%s","kind":"FLY_POINT","children":[]},
+                  {"id":99999999,"name":"%s","kind":"FLY_POINT","children":[]}
+                ]}]
+                """.formatted(attachedScenario.unit().getId(), attachedScenario.unit().getName(),
+                attachedScenario.flyPoint().getId(), attachedScenario.flyPoint().getName(),
+                otherName);
+        page.route("**/api/v1/storages/names/crew-units**", route -> route.fulfill(
+                new Route.FulfillOptions().setContentType("application/json").setBody(units)));
+
+        new RelocationCreateOutputCrewPage(page).open();
+        Locator trigger = page.locator("form button[role='combobox']").first();
+        trigger.click();
+        Locator popup = page.locator("[data-radix-popper-content-wrapper]");
+        Locator target = popup.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName(attachedScenario.flyPoint().getName()).setExact(true));
+        Locator other = popup.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName(otherName).setExact(true));
+        PlaywrightAssertions.assertThat(target).isVisible();
+        PlaywrightAssertions.assertThat(other).isVisible();
+
+        Locator search = popup.locator("[data-testid='hierarchical-storage-select-search']");
+        PlaywrightAssertions.assertThat(search).hasCount(1);
+        String name = attachedScenario.flyPoint().getName();
+        String uniquePart = "ui-crew-label-fp-";
+        search.fill(uniquePart);
+        PlaywrightAssertions.assertThat(target).isVisible();
+        PlaywrightAssertions.assertThat(other).isHidden();
+
+        search.fill("no-such-fly-point-" + System.nanoTime());
+        PlaywrightAssertions.assertThat(target).isHidden();
+        PlaywrightAssertions.assertThat(other).isHidden();
+        PlaywrightAssertions.assertThat(popup.getByText("Нічого не знайдено")).isVisible();
+
+        search.clear();
+        PlaywrightAssertions.assertThat(target).isVisible();
+        PlaywrightAssertions.assertThat(other).isVisible();
+        search.fill(uniquePart);
+        target.click();
+        PlaywrightAssertions.assertThat(trigger).containsText(name);
     }
 
     @Test(priority = 50)

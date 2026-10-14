@@ -20,6 +20,10 @@ import com.erp.pages.RelocationPage;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
 import com.erp.utils.helpers.RelocationStockAssertions;
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Route;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
+import com.microsoft.playwright.options.AriaRole;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -245,6 +249,56 @@ public class CrewReturnUITest extends BaseUITest {
         RelocationStockAssertions.assertCreditedToRecipient(
                 beforeWarehouse, afterWarehouse, memberStorageId, resourceId, RETURN_AMOUNT,
                 "UI attached — зарахування на склад");
+    }
+
+    @Test(priority = 40)
+    @TestCaseId("TC-UI-CREW-RET-004")
+    @Story("Search fly points in crew return")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Отримання з точки вильоту: пошук за частиною назви фільтрує точки; порожній результат і очищення працюють; знайдену точку можна обрати.")
+    public void searchFlyPointByTextInCrewReturn() {
+        String otherName = "ui-ret-search-other";
+        String units = """
+                [{"id":%d,"name":"%s","kind":"LOCATION","children":[
+                  {"id":%d,"name":"%s","kind":"FLY_POINT","children":[]},
+                  {"id":99999998,"name":"%s","kind":"FLY_POINT","children":[]}
+                ]}]
+                """.formatted(attachedScenario.unit().getId(), attachedScenario.unit().getName(),
+                attachedScenario.flyPoint().getId(), attachedScenario.flyPoint().getName(),
+                otherName);
+        page.route("**/api/v1/storages/names/crew-units**", route -> route.fulfill(
+                new Route.FulfillOptions().setContentType("application/json").setBody(units)));
+
+        new RelocationCreateInputCrewPage(page).open();
+        Locator trigger = page.locator("form button[role='combobox']").first();
+        trigger.click();
+        Locator popup = page.locator("[data-radix-popper-content-wrapper]");
+        Locator target = popup.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName(attachedScenario.flyPoint().getName()).setExact(true));
+        Locator other = popup.getByRole(AriaRole.BUTTON,
+                new Locator.GetByRoleOptions().setName(otherName).setExact(true));
+        PlaywrightAssertions.assertThat(target).isVisible();
+        PlaywrightAssertions.assertThat(other).isVisible();
+
+        Locator search = popup.locator("[data-testid='hierarchical-storage-select-search']");
+        PlaywrightAssertions.assertThat(search).hasCount(1);
+        String name = attachedScenario.flyPoint().getName();
+        String uniquePart = "ui-ret-a-fp-";
+        search.fill(uniquePart);
+        PlaywrightAssertions.assertThat(target).isVisible();
+        PlaywrightAssertions.assertThat(other).isHidden();
+
+        search.fill("no-such-fly-point-" + System.nanoTime());
+        PlaywrightAssertions.assertThat(target).isHidden();
+        PlaywrightAssertions.assertThat(other).isHidden();
+        PlaywrightAssertions.assertThat(popup.getByText("Нічого не знайдено")).isVisible();
+
+        search.clear();
+        PlaywrightAssertions.assertThat(target).isVisible();
+        PlaywrightAssertions.assertThat(other).isVisible();
+        search.fill(uniquePart);
+        target.click();
+        PlaywrightAssertions.assertThat(trigger).containsText(name);
     }
 
     private void injectRoleSession(UserRole role, long selectedStorageId) {
