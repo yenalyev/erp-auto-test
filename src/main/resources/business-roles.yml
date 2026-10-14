@@ -27,3 +27,6 @@ businessRoles:
   RESOURCE_VIEWER:
     accessRoles:
       - "Відстеження ресурсів"
+  LOGIST:
+    accessRoles:
+      - "Логістика: загальний перегляд"

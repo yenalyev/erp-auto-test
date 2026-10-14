@@ -2481,6 +2481,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    RELOCATION_GET_TOTALS(
+            "/api/v1/relocations/totals",
+            Method.GET,
+            "schemas/relocations/relocation-totals-response-schema.json",
+            "Get filtered relocation totals by measurement unit",
+            null,
+            new TypeReference<Map<String, Object>>() {},
+            null
+    ),
+
     /** @deprecated use {@link #RELOCATION_GET_PAGE} */
     @Deprecated
     RELOCATION_GET_ALL_BY_STORE_ID(

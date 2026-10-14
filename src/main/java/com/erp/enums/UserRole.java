@@ -49,6 +49,8 @@ public enum UserRole {
     ORDER_PRODUCTION_WORKER,
     /** Runtime-only slot for a freshly created location head; never resolves configured credentials. */
     DYNAMIC_LOCATION_OWNER,
+    /** Runtime-only slot for a freshly created global business actor. */
+    DYNAMIC_GLOBAL_ACTOR,
     ANONYMOUS;
 
     public String getUsername() {
@@ -72,7 +74,7 @@ public enum UserRole {
             case ORDER_SOURCE_KEEPER -> "order-source-keeper";
             case ORDER_ISOLATED_GATHERER -> "order-isolated-gatherer";
             case ORDER_PRODUCTION_WORKER -> "order-production-worker";
-            case DYNAMIC_LOCATION_OWNER -> "";
+            case DYNAMIC_LOCATION_OWNER, DYNAMIC_GLOBAL_ACTOR -> "";
             case ANONYMOUS       -> "";
         };
     }
@@ -98,7 +100,7 @@ public enum UserRole {
             case ORDER_SOURCE_KEEPER -> "";
             case ORDER_ISOLATED_GATHERER -> "";
             case ORDER_PRODUCTION_WORKER -> "";
-            case DYNAMIC_LOCATION_OWNER -> "";
+            case DYNAMIC_LOCATION_OWNER, DYNAMIC_GLOBAL_ACTOR -> "";
             case ANONYMOUS       -> "";
         };
     }
@@ -106,7 +108,7 @@ public enum UserRole {
     /** Returns the primary storage ID that belongs to this role, as a String path param. */
     public String getStoreId() {
         return switch (this) {
-            case ADMIN, RESOURCE_VIEWER, ACCOUNTANT, LOGIST, ORDER_ADMIN,
+            case ADMIN, RESOURCE_VIEWER, ACCOUNTANT, LOGIST, DYNAMIC_GLOBAL_ACTOR, ORDER_ADMIN,
                     ORDER_SOURCE_KEEPER, ORDER_ISOLATED_GATHERER,
                     ORDER_PRODUCTION_WORKER -> "all";
             case OWNER_1, PROJECT_ADMIN, PROJECT_MANAGER, LOCATION_MIXED

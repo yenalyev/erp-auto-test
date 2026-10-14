@@ -21,6 +21,7 @@
             <class name="com.erp.tests.functional.relocation.RelocationBatchAccountingTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationUsedBatchEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationTotalsApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationPartialDeliveryIncidentTest"/>
@@ -49,6 +50,12 @@
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.BattalionRelocationEditUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.LogisticsJournalUiTest">
+                <methods>
+                    <include name="logisticsTotalsFollowTabsAndFilters"/>
+                    <include name="relocationTotalsFollowTabs"/>
+                </methods>
+            </class>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
             <class name="com.erp.tests.ui.ResourceBundleApplyUiTest"/>
