@@ -236,6 +236,37 @@ public class UsersAdminPage extends BasePage {
         return this;
     }
 
+    public boolean isRoleFilterVisible() {
+        return roleFilterInput().isVisible();
+    }
+
+    public UsersAdminPage selectRoleFilter(String roleName) {
+        roleFilterInput().click();
+        Locator option = page.getByRole(AriaRole.OPTION,
+                new Page.GetByRoleOptions().setName(roleName).setExact(true));
+        page.waitForResponse(response -> isUsersPageResponse(response), option.first()::click);
+        waitForLoadingFinished();
+        return this;
+    }
+
+    public UsersAdminPage clearFilters() {
+        page.keyboard().press("Escape");
+        Locator clearButton = page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName(CLEAR_FILTERS_BUTTON).setExact(true));
+        page.waitForResponse(response -> isUsersPageResponse(response), clearButton::click);
+        waitForLoadingFinished();
+        return this;
+    }
+
+    private Locator roleFilterInput() {
+        return page.getByTestId("users-filter-role");
+    }
+
+    private static boolean isUsersPageResponse(com.microsoft.playwright.Response response) {
+        return response.url().contains("/api/v1/users?")
+                && "GET".equals(response.request().method());
+    }
+
     public boolean isUsernameVisibleInTable(String username) {
         Locator link = page.locator("table tbody").getByRole(AriaRole.LINK, new Locator.GetByRoleOptions().setName(username));
         if (link.count() > 0 && link.first().isVisible()) {

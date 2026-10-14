@@ -95,6 +95,48 @@ public class UsersAdminUiTest extends BaseUITest {
     }
 
     @Test
+    @TestCaseId("TC-UI-USR-011")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Очікуваний контракт: фільтр «Роль» на /users підтримує мультивибір "
+            + "(об'єднання користувачів вибраних ролей), поєднання з пошуком і очищення.")
+    public void roleFilterSupportsMultipleRolesAndClear() {
+        String prefix = UI_USER_PREFIX + "role-filter-" + System.currentTimeMillis() + "-";
+        UserModelResponse viewer = arrangeUser(prefix + "viewer-");
+        UserModelResponse crewReader = arrangeUser(prefix + "crew-");
+        UserModelResponse withoutRole = arrangeUser(prefix + "none-");
+        long storageId = ConfigProvider.getOwner1StorageId();
+        accessFixture.ensureGrants(viewer.getId(),
+                List.of(UserFixture.BUSINESS_UNIT_VIEWER_ROLE_NAME), List.of(),
+                GrantScopeKind.LOCATION, storageId);
+        accessFixture.ensureGrants(crewReader.getId(),
+                List.of(UserFixture.CREW_READ_ROLE_NAME), List.of(),
+                GrantScopeKind.LOCATION, storageId);
+
+        prepareAdminSession();
+        UsersAdminPage usersPage = new UsersAdminPage(page).open().searchByUsername(prefix);
+        assertThat(usersPage.isUsernameVisibleInTable(viewer.getUsername())).isTrue();
+        assertThat(usersPage.isUsernameVisibleInTable(crewReader.getUsername())).isTrue();
+        assertThat(usersPage.isUsernameVisibleInTable(withoutRole.getUsername())).isTrue();
+        assertThat(usersPage.isRoleFilterVisible())
+                .as("На сторінці «Доступ: Користувачі» має бути фільтр «Роль»")
+                .isTrue();
+
+        usersPage.selectRoleFilter(UserFixture.BUSINESS_UNIT_VIEWER_ROLE_NAME);
+        assertThat(usersPage.isUsernameVisibleInTable(viewer.getUsername())).isTrue();
+        assertThat(usersPage.isUsernameVisibleInTable(crewReader.getUsername())).isFalse();
+        assertThat(usersPage.isUsernameVisibleInTable(withoutRole.getUsername())).isFalse();
+
+        usersPage.selectRoleFilter(UserFixture.CREW_READ_ROLE_NAME);
+        assertThat(usersPage.isUsernameVisibleInTable(viewer.getUsername())).isTrue();
+        assertThat(usersPage.isUsernameVisibleInTable(crewReader.getUsername())).isTrue();
+        assertThat(usersPage.isUsernameVisibleInTable(withoutRole.getUsername())).isFalse();
+
+        usersPage.clearFilters().searchByUsername(prefix);
+        assertThat(usersPage.isUsernameVisibleInTable(withoutRole.getUsername())).isTrue();
+        usersPage.attachScreenshot("TC-UI-USR-011 — role multiselect and clear");
+    }
+
+    @Test
     @TestCaseId("TC-UI-USR-004")
     @Severity(SeverityLevel.CRITICAL)
     @Description("ADMIN: створення користувача — діалог з credentials, redirect на /users, login у таблиці")
