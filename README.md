@@ -78,6 +78,9 @@ mvn clean test -Denv=dev -Dsuite=regression
 
 Тематичні набори обираються через `-Dsuite=<назва XML без розширення>`:
 
+Експорт **Несерійне виробництво → Excel** за активними фільтрами: [фіча, 7 АС і 11 автокейсів](docs/REQ-NSP-EXCEL.md).
+API/UI-класи `NonSeriesExcelExportApiTest` і `NonSeriesExcelExportUiTest` входять до `non-series-production` та `regression`.
+
 Підказки редагування техкарт за дозволом `global-plan::update`: [вимоги](docs/REQ-GP-HINT.md),
 [тест-план і 10 автокейсів](docs/GLOBAL_PLAN_TECH_MAP_HINTS_TEST_PLAN.md).
 Окремий набір — `-Dsuite=global-plan-tech-map-hints`.

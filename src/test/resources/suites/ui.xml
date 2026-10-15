@@ -19,6 +19,7 @@
     <test name="Non-Series Production resource filter UI">
         <classes>
             <class name="com.erp.tests.ui.NonSeriesResourceFilterUiTest"/>
+            <class name="com.erp.tests.ui.NonSeriesExcelExportUiTest"/>
         </classes>
     </test>
 
