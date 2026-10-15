@@ -1,0 +1,231 @@
+{
+  "date": "2026-10-15",
+  "environment": "dev",
+  "completedAt": "2026-10-15T14:32:23+03:00",
+  "requirementsRevision": "Aligned with implementation at the user request",
+  "feature": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "configurationFailures": 0
+  },
+  "cases": [
+    {
+      "testCaseId": "TC-GP-HINT-UI-001",
+      "method": "updaterSeesWarningAndCanCancelModal",
+      "status": "PASS",
+      "durationMs": 11276,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-002",
+      "method": "nonUpdaterDoesNotSeeEditWarning",
+      "status": "PASS",
+      "durationMs": 12931,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-003",
+      "method": "nonUpdaterSavesStructuralEditWithoutModal",
+      "status": "PASS",
+      "durationMs": 10042,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-004",
+      "method": "updaterSeesOrangeExclamationInsteadOfCount",
+      "status": "PASS",
+      "durationMs": 8792,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-005",
+      "method": "nonUpdaterDoesNotSeeExclamation",
+      "status": "PASS",
+      "durationMs": 9428,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-006",
+      "method": "globalPlansHintListsAffectedPlansAndMaps",
+      "status": "PASS",
+      "durationMs": 26825,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-007",
+      "method": "renameDoesNotInvalidateDistribution",
+      "status": "PASS",
+      "durationMs": 9245,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-008",
+      "method": "regenerationClearsOnlyRepairedPlanHint",
+      "status": "PASS",
+      "durationMs": 21734,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-009",
+      "method": "unusedMapSavesWithoutWarningOrModal",
+      "status": "PASS",
+      "durationMs": 8153,
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-010",
+      "method": "granularPermissionControlsHintsIndependentlyOfAdminRole",
+      "status": "PASS",
+      "durationMs": 35028,
+      "errorMessage": null
+    }
+  ],
+  "framework": {
+    "total": 85,
+    "passed": 85,
+    "failed": 0,
+    "skipped": 0,
+    "configurationFailures": 0
+  },
+  "httpColdJvm": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "configurationFailures": 0
+  },
+  "frameworkTimeoutTimings": [
+    {
+      "kind": "FILE",
+      "clientInitializationMs": 0,
+      "preflightMs": 28,
+      "timeoutRequestMs": 1015,
+      "configuredTimeoutMs": 1000
+    },
+    {
+      "kind": "JSON",
+      "clientInitializationMs": 626,
+      "preflightMs": 2171,
+      "timeoutRequestMs": 1026,
+      "configuredTimeoutMs": 1000
+    },
+    {
+      "kind": "POST",
+      "clientInitializationMs": 1,
+      "preflightMs": 218,
+      "timeoutRequestMs": 1035,
+      "configuredTimeoutMs": 1000
+    },
+    {
+      "kind": "PUT",
+      "clientInitializationMs": 2,
+      "preflightMs": 45,
+      "timeoutRequestMs": 1017,
+      "configuredTimeoutMs": 1000
+    }
+  ],
+  "coldJvmTimeoutTimings": [
+    {
+      "kind": "FILE",
+      "clientInitializationMs": 2,
+      "preflightMs": 34,
+      "timeoutRequestMs": 1021,
+      "configuredTimeoutMs": 1000
+    },
+    {
+      "kind": "JSON",
+      "clientInitializationMs": 1322,
+      "preflightMs": 2381,
+      "timeoutRequestMs": 1033,
+      "configuredTimeoutMs": 1000
+    },
+    {
+      "kind": "POST",
+      "clientInitializationMs": 1,
+      "preflightMs": 272,
+      "timeoutRequestMs": 1038,
+      "configuredTimeoutMs": 1000
+    },
+    {
+      "kind": "PUT",
+      "clientInitializationMs": 1,
+      "preflightMs": 46,
+      "timeoutRequestMs": 1025,
+      "configuredTimeoutMs": 1000
+    }
+  ],
+  "sources": [
+    "target/global-plan-hints-timeout-fix/feature-testng-results.xml",
+    "target/global-plan-hints-timeout-fix/framework-testng-results.xml",
+    "target/global-plan-hints-timeout-fix/http-cold-jvm-testng-results.xml"
+  ],
+  "evidence": [
+    {
+      "testCaseId": "TC-GP-HINT-UI-001",
+      "name": "TC-GP-HINT-UI-001 — confirmation",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-001-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-002",
+      "name": "TC-GP-HINT-UI-002 — owner edit form",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-002-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-003",
+      "name": "TC-GP-HINT-UI-003 — save outcome",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-003-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-004",
+      "name": "TC-GP-HINT-UI-004 — production plans badge",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-004-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-005",
+      "name": "TC-GP-HINT-UI-005 — no owner badge",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-005-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-006",
+      "name": "TC-GP-HINT-UI-006 — invalid distribution hints",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-006-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-006",
+      "name": "TC-GP-HINT-UI-006 — expanded tech-map list",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-006-02.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-007",
+      "name": "TC-GP-HINT-UI-007 — renamed map does not invalidate plan",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-007-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-008",
+      "name": "TC-GP-HINT-UI-008 — before recovery",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-008-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-008",
+      "name": "TC-GP-HINT-UI-008 — after recovery",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-008-02.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-009",
+      "name": "TC-GP-HINT-UI-009 — unused map saved",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-009-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-010",
+      "name": "TC-GP-HINT-UI-010 — non-admin granted update",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-010-01.png"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-010",
+      "name": "TC-GP-HINT-UI-010 — update revoked, direct save",
+      "path": "global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-010-02.png"
+    }
+  ]
+}

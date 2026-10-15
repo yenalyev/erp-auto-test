@@ -78,6 +78,10 @@ mvn clean test -Denv=dev -Dsuite=regression
 
 Тематичні набори обираються через `-Dsuite=<назва XML без розширення>`:
 
+Підказки редагування техкарт за дозволом `global-plan::update`: [вимоги](docs/REQ-GP-HINT.md),
+[тест-план і 10 автокейсів](docs/GLOBAL_PLAN_TECH_MAP_HINTS_TEST_PLAN.md).
+Окремий набір — `-Dsuite=global-plan-tech-map-hints`.
+
 ```bash
 mvn test -Denv=dev -Dsuite=inventory
 mvn test -Denv=dev -Dsuite=inventory-process

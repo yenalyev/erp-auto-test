@@ -1,0 +1,300 @@
+{
+  "feature": {
+    "projectId": 1,
+    "featureId": "REQ-GP-HINT",
+    "parentFeatureId": "REQ-GLOBAL-PLAN",
+    "module": "GLOBAL",
+    "priority": "HIGH",
+    "title": "Підказки редагування техкарт за правом global plan update",
+    "description": "Warning/modal, помаранчевий warning-бейдж ! і підказка недійсного розподілу зі списком техкарт доступні за global-plan::update.",
+    "documentation": "## Вимоги\n\n# Підказки редагування техкарт за правом global plan update\n\nФіча обмежує повідомлення про вплив редагування техкарти на глобальні плани користувачами з дозволом `global-plan::update`. Дозвіл є визначальним; назва ролі «адміністратор» сама по собі не є умовою показу.\n\nУ каталозі доступів канонічний grant `global-plan.manage` розгортається у дозволи create/update/delete. Саме його надання та відкликання використовує сценарій із non-admin; окремий grant `global-plan.update` у каталозі відсутній.\n\n## Поведінка\n\nТехкарта, використана в розподілі поточного або майбутнього глобального плану, може мати нову версію після зміни ресурсів, норм або альтернативних груп. Збережений розподіл продовжує посилатися на попередню версію, доки користувач не призначить ресурс знову та не перегенерує плани локацій.\n\nПідказка у формі редагування та модалка підтвердження доступні лише з `global-plan::update`. Користувач без цього дозволу, який має окреме право редагувати техкарту, зберігає зміни без цієї модалки. Скасування модалки не створює нової версії.\n\nКоли чинний розподіл став недійсним, у «Виробничі плани» для користувача з дозволом показується помаранчевий warning-бейдж `!` замість цифр. На сторінці «Глобальні плани» він бачить жовту підказку з трьох частин:\n\n1. Заголовок: «Розподіл у глобальних планах ${liveGlobalPlans.map(planLabel).join(', ')} став недійсним для техкарт:».\n2. Маркований список назв змінених техкарт. Довгий список можна розгорнути кнопкою «+N ще» та згорнути кнопкою «Згорнути».\n3. Окрема інструкція: «Відкрийте кожен план, призначте ресурс знову й повторно згенеруйте плани на локації.»\n\nШаблонні вставки замінюються реальними значеннями. У цій підказці `planLabel` — опис плану; для порожнього опису використовується місяць/рік. Місяць/рік у дужках до непорожнього опису не додаються. Назви планів є посиланнями й розділені комами. Перелік карт містить змінені техкарти; незмінені карти та плани не додаються. Тести перевіряють заголовок, посилання, маркований список та точний текст окремої інструкції.\n\n15 жовтня 2026 року користувач погодив приведення вимог до фактичної реалізації: помаранчевий індикатор, описи планів без додаткового періоду та підказку зі списком. Попередній звіт зберігає результати перевірки первісної редакції вимог.\n\n## Критерії приймання\n\n- **AC-01.** Жовту підказку та модалку структурного редагування техкарти з актуальним глобальним планом бачить лише користувач із global-plan::update. Назва ролі не замінює перевірку дозволу.\n- **AC-02.** Після зміни техкарти, що робить чинний розподіл недійсним, користувач із global-plan::update бачить помаранчевий warning-бейдж ! замість числового лічильника у «Виробничі плани». Користувач без дозволу цього бейджа не бачить.\n- **AC-03.** На сторінці «Глобальні плани» користувач із global-plan::update бачить жовту підказку: заголовок «Розподіл у глобальних планах … став недійсним для техкарт:» із посиланнями-описами планів без доданого періоду, маркований список змінених техкарт та окрему точну інструкцію повторного призначення й генерації.\n- **AC-04.** Перейменування та редагування невикористаної техкарти не роблять розподіл недійсним. Повторне призначення нової версії та generate прибирають повідомлення лише для виправленого плану.\n\n## Межі перевірки\n\nЗміна лише назви не створює нову версію та не робить розподіл недійсним. Карта без live snapshot не потребує попередження про вплив на глобальні плани. Виправлення одного плану не прибирає повідомлення про інший невиправлений план. Чужі плани та ресурси не змінюються.\n\nАвтоматизація використовує справжні сесії ADMIN, OWNER_1 та окремого non-admin із прямим дозволом global-plan update. Права перевіряються через /users/me. Для окремого користувача перевіряється також відкликання update та новий вхід. Автоматичне оновлення прав без нового входу, суто історичні плани та великий перелік карт не входять до десяти нових сценаріїв. Історичні snapshots мають окрему регресію GlobalPlanHistoricalTechMapUiTest. Ці межі не означають перевірку всіх комбінацій прав.\n\n## Запуск\n\n```powershell\n$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD='1'\nmvn -o test '-Denv=dev' '-Dsuite=global-plan-tech-map-hints' '-Dframework.browser.channel=chrome' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false'\n```\n\nКлас також входить у `global-plans`, `ui` і `regression`. Сценарії створюють ізольовані ресурси, техкарти й плани у вільних майбутніх місяцях. Cleanup видаляє лише власні GP і location plans, архівує активні версії власних карт та ресурси, відновлює початковий режим техкарт локації.\n\nКоманда використовує встановлений Chrome і вимикає зовнішню публікацію результатів під час прогону. Пакет для TCM dev і prod міститься в `docs/audits/2026-10-15/global-plan-tech-map-hints-tcm-payload.json`: фіча `REQ-GP-HINT` під `REQ-GLOBAL-PLAN`, чотири критерії та десять автоматизованих UI-кейсів. Опубліковані результати описують перевірку ERP dev; вони не є прогоном ERP production.\n\nТест-план і кроки: GLOBAL_PLAN_TECH_MAP_HINTS_TEST_PLAN.md (репозиторій erp-auto-test: GLOBAL_PLAN_TECH_MAP_HINTS_TEST_PLAN.md).\n\nПоточна редакція: повний повтор на dev — 10/10, framework — 85/85 (репозиторій erp-auto-test: audits/2026-10-15/global-plan-tech-map-hints-full-dev-report.md).\n\nПопередній частковий прогін: перевірка двох узгоджених кейсів (репозиторій erp-auto-test: audits/2026-10-15/global-plan-tech-map-hints-aligned-dev-report.md).\n\nПопередня редакція: історичний звіт dev (репозиторій erp-auto-test: audits/2026-10-15/global-plan-tech-map-hints-dev-test-report.md).\n\n---\n\n## Тест-план та автоматизовані кейси\n\n# Тест план підказок редагування техкарт\n\n## Мета і середовище\n\nПеревірити три вимоги: обмеження warning/modal дозволом global-plan update, помаранчевий warning-бейдж !, жовта підказка недійсного розподілу на сторінці глобальних планів. Редакцію вимог узгоджено з фактичною реалізацією за вказівкою користувача 15 жовтня 2026 року. Середовище — dev, https://dev.cukerochka.sbs; браузер Chromium; Java TestNG + Playwright + RestAssured.\n\n## Підготовка і критерій завершення\n\nВикористати ADMIN з global-plan::update та OWNER_1 без нього, який може редагувати техкарти власної локації. Реальні права перевіряти через API. Для позитивних сценаріїв створити ізольовані техкарти й generated GP зі snapshot, виконати структурну зміну та знову відкрити UI. Для негативних — незмінена карта, name-only PUT та карта без GP.\n\nУсі десять сценаріїв повинні виконатися без FAIL, SKIP і configuration failures. Підтвердження — TestNG XML та Allure screenshots; TCM-результати публікуються після дозволеного створення записів. Звіт відокремлює дефект продукту від помилки підготовки чи автотесту. Передумова має підтверджуватися до негативного assert; прихований/незавантажений екран не є доказом відсутності підказки.\n\n## Тест кейси\n\n### TC-GP-HINT-UI-001 Редактор глобальних планів бачить підказку і може скасувати модалку\n\nКритерій: AC-01. Пріоритет: HIGH. Автотест: `GlobalPlanTechMapHintsUiTest#updaterSeesWarningAndCanCancelModal`.\n\nПередумови: ADMIN; /users/me містить global-plan::update; EDIT_ALLOWED; generated майбутній GP із M1.\n\nКроки: Відкрити M1; перевірити посилання GP; змінити input amount; Зберегти; Скасувати.\n\nОчікувано: Warning і confirmation видимі; кнопки та recovery text правильні; cancel не змінює version/input/snapshot.\n\n### TC-GP-HINT-UI-002 Користувач без global-plan update не бачить підказку редагування\n\nКритерій: AC-01. Пріоритет: HIGH. Автотест: `GlobalPlanTechMapHintsUiTest#nonUpdaterDoesNotSeeEditWarning`.\n\nПередумови: OWNER_1 має право редагувати M1, але не global-plan::update; M1 у live snapshot.\n\nКроки: Відкрити прямий URL update M1; дочекатися даних форми та live references.\n\nОчікувано: Warning і confirmation відсутні; форма доступна.\n\n### TC-GP-HINT-UI-003 Збереження техкарти без global-plan update не відкриває модалку\n\nКритерій: AC-01. Пріоритет: HIGH. Автотест: `GlobalPlanTechMapHintsUiTest#nonUpdaterSavesStructuralEditWithoutModal`.\n\nПередумови: OWNER_1 без global-plan::update; EDIT_ALLOWED; M1 у generated live GP.\n\nКроки: Змінити input amount у формі M1; натиснути Зберегти; прочитати active map і GP.\n\nОчікувано: Без confirmation збережено нову активну version+1 із новою нормою; snapshot GP містить M1.\n\n### TC-GP-HINT-UI-004 Редактор бачить помаранчевий знак оклику замість числового бейджа\n\nКритерій: AC-02. Пріоритет: HIGH. Автотест: `GlobalPlanTechMapHintsUiTest#updaterSeesOrangeExclamationInsteadOfCount`.\n\nПередумови: ADMIN із global-plan::update; generated live GP із M1.\n\nКроки: Structural PUT M1→M2; відкрити Глобальні плани; перевірити Виробничі плани в sidebar.\n\nОчікувано: Один помаранчевий warning-бейдж !; числового лічильника в цьому пункті немає. Перевіряється саме помаранчевий відтінок, а не лише перевага червоного RGB-каналу.\n\n### TC-GP-HINT-UI-005 Користувач без global-plan update не бачить знак оклику\n\nКритерій: AC-02. Пріоритет: HIGH. Автотест: `GlobalPlanTechMapHintsUiTest#nonUpdaterDoesNotSeeExclamation`.\n\nПередумови: OWNER_1 без global-plan::update; розподіл GP недійсний після M1→M2.\n\nКроки: Відкрити M2; дочекатися sidebar; перевірити Виробничі плани.\n\nОчікувано: Пункт доступний; бейдж ! і повідомлення про недійсний розподіл відсутні.\n\n### TC-GP-HINT-UI-006 Жовта підказка перелічує змінені карти та актуальні плани\n\nКритерій: AC-03. Пріоритет: HIGH. Автотест: `GlobalPlanTechMapHintsUiTest#globalPlansHintListsAffectedPlansAndMaps`.\n\nПередумови: ADMIN; два generated майбутні GP з окремими M1/M2; третій generated GP із незміненою картою.\n\nКроки: Структурно змінити M1/M2; відкрити Глобальні плани; прочитати підказки.\n\nОчікувано: Жовта підказка має заголовок «Розподіл у глобальних планах … став недійсним для техкарт:». Посилання містять описи обох планів без доданого місяця/року в дужках. Після розгортання маркований список містить назви обох змінених карт. Окремо показано точну інструкцію «Відкрийте кожен план, призначте ресурс знову й повторно згенеруйте плани на локації.». Третій план/карта не згадані; немає шаблонних ${...}, null, undefined.\n\n### TC-GP-HINT-UI-007 Перейменування техкарти не створює повідомлення про недійсний розподіл\n\nКритерій: AC-04. Пріоритет: MEDIUM. Автотест: `GlobalPlanTechMapHintsUiTest#renameDoesNotInvalidateDistribution`.\n\nПередумови: ADMIN; M1 у generated live GP.\n\nКроки: Name-only PUT M1; відкрити Глобальні плани; прочитати snapshot.\n\nОчікувано: id/version незмінні; hint не згадує цей GP/карту; snapshot збережений.\n\n### TC-GP-HINT-UI-008 Перегенерація прибирає підказку лише для виправленого плану\n\nКритерій: AC-04. Пріоритет: HIGH. Автотест: `GlobalPlanTechMapHintsUiTest#regenerationClearsOnlyRepairedPlanHint`.\n\nПередумови: ADMIN; два недійсні GP після структурних змін двох карт.\n\nКроки: Перевірити hint до виправлення; reassign+decompose+generate першого; reload; повторити для другого.\n\nОчікувано: Спершу перший hint зникає, другий лишається; snapshots переходять на нові id лише після відповідного generate; після другого generate обидва власні hint відсутні.\n\n### TC-GP-HINT-UI-009 Невикористана техкарта зберігається без попередження та модалки\n\nКритерій: AC-04. Пріоритет: MEDIUM. Автотест: `GlobalPlanTechMapHintsUiTest#unusedMapSavesWithoutWarningOrModal`.\n\nПередумови: ADMIN із global-plan::update; EDIT_ALLOWED; M1 не використовується жодним GP.\n\nКроки: Відкрити M1; змінити input amount; Зберегти.\n\nОчікувано: Warning і confirmation відсутні; створена активна version+1 з новим id.\n\n### TC-GP-HINT-UI-010 Дозвіл працює незалежно від admin ролі\n\nКритерій: AC-01. Пріоритет: HIGH. Автотест: `GlobalPlanTechMapHintsUiTest#granularPermissionControlsHintsIndependentlyOfAdminRole`.\n\nПередумови: ізольований керівник локації; isAdmin=false; прямі grants global-plan.read та global-plan.manage (надає global-plan::update); техкарта у live snapshot.\n\nКроки: увійти цим користувачем; відкрити техкарту, змінити input amount і викликати модалку; скасувати; відкликати grant global-plan.manage, лишивши global-plan.read; увійти знову; повторити збереження.\n\nОчікувано: за наявності update warning/modal видимі; після відкликання обидва приховані й техкарта зберігається без модалки з version+1. Роль користувача не змінюється. Snapshot лишається на попередній версії. Після тесту відкликаються grants і деактивується лише створений користувач.\n\n## Ізоляція і відновлення\n\nОдин тест не змінює чужих сутностей. Для кількох планів перевіряється незмінений сусід або збереження невиправленого snapshot. Після кожного сценарію прибрати власні GP/location plans, активні версії техкарт і ресурси; відновити початковий tech-map mode. Cleanup failure робить прогін невдалим. Дані спільного dev можуть містити інші недійсні плани: тести зіставляють повідомлення з власними plan id/description та назвами карт.\n\n## Запуски\n\n- Цільовий dev: `mvn -o test '-Denv=dev' '-Dsuite=global-plan-tech-map-hints' '-Dframework.browser.channel=chrome' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false'`; перед запуском установити `$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD='1'`.\n- Фреймворк і повнота regression: `mvn -o test '-Dsuite=framework' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false'`.\n- Вимоги та межі покриття: REQ-GP-HINT.md (репозиторій erp-auto-test: REQ-GP-HINT.md).\n\nПовний повтор після виправлення HTTP-timeout: 10/10 PASS на dev, framework 85/85 (репозиторій erp-auto-test: audits/2026-10-15/global-plan-tech-map-hints-full-dev-report.md).\n\nПопередній частковий прогін двох змінених кейсів: звіт dev (репозиторій erp-auto-test: audits/2026-10-15/global-plan-tech-map-hints-aligned-dev-report.md).\n\n---\n\n## Підтверджений прогін ERP dev і виправлення HTTP-timeout\n\n# Повторний прогін підказок техкарт і виправлення HTTP-timeout\n\nДата: 15 жовтня 2026 року. Середовище фічі: https://dev.cukerochka.sbs, встановлений Chrome. Перевіряється погоджена редакція REQ-GP-HINT (репозиторій erp-auto-test: ../../REQ-GP-HINT.md): помаранчевий `!`, посилання-описи планів, список змінених техкарт та окрема інструкція відновлення.\n\n## Причина та виправлення\n\nУ попередньому framework-прогоні `HttpClientInfrastructureTest#allRequestTypesRespectTheConfiguredTimeout(JSON)` завершився правильним `SocketTimeoutException`, але перевірка загальної тривалості отримала 5206 мс за порогу <5000 мс. Таймер охоплював створення клієнта, перше завантаження HTTP-стека/серіалізатора/фільтрів та виконання асертів.\n\nВиправлено вимірювання в `src/test/java/com/erp/tests/framework/HttpClientInfrastructureTest.java`:\n\n- Клієнт створюється перед початком вимірювання.\n- Для кожного типу запиту той самий клієнт спочатку виконує успішний `/echo`, щоб ініціалізувати відповідний HTTP-шлях.\n- Тривалість `/slow` фіксується відразу після повернення винятку, до асертів і запису діагностики.\n- Allure містить окремі таймінги створення клієнта, попереднього запиту та запиту з таймаутом.\n\nНалаштований таймаут **1 секунда**, верхній поріг **<5000 мс** та вимога `SocketTimeoutException` збережені для JSON, multipart POST, multipart PUT і файлу. Локальний сервер відповідає на `/slow` через 1700 мс: якщо транспортний таймаут перестане працювати, перевірка обов'язкового винятку впаде. Налаштування HTTP-клієнта не змінювалися.\n\n## Перевірки фреймворку\n\nПовний suite `framework`: **85 PASS, 0 FAIL, 0 SKIP**. `RegressionSuiteCompletenessTest` — **PASS**. Окремий повтор `HttpClientInfrastructureTest` у свіжій JVM: **11 PASS, 0 FAIL, 0 SKIP**.\n\nВиміряний `/slow` у повному framework suite: JSON — **1026 мс**, POST — **1035 мс**, PUT — **1017 мс**, FILE — **1015 мс**. Окремий запуск у свіжій JVM: JSON — **1033 мс**, POST — **1038 мс**, PUT — **1025 мс**, FILE — **1021 мс**.\n\nУ свіжій JVM створення першого JSON-клієнта зайняло **1322 мс**, успішний попередній JSON-запит — **2381 мс**; ці витрати тепер видно окремо від транспортного таймауту. Перевірки виконані послідовно, в ізольованому build-каталозі.\n\n## Повний прогін фічі на dev\n\n**10 PASS, 0 FAIL, 0 SKIP, 0 configuration failures.** Один повний запуск suite `global-plan-tech-map-hints`, без вибіркових повторів. Завершено о **14:32:23 Europe/Kiev**; тривалість TestNG suite — **228,7 с**.\n\n- **TC-GP-HINT-UI-001 — PASS:** підказка й модалка доступні редактору; скасування зберігає версію, input і snapshot.\n- **TC-GP-HINT-UI-002 — PASS:** без global-plan update підказка редагування відсутня.\n- **TC-GP-HINT-UI-003 — PASS:** структурне редагування без global-plan update зберігається без модалки.\n- **TC-GP-HINT-UI-004 — PASS:** редактор бачить помаранчевий `!` замість числового бейджа.\n- **TC-GP-HINT-UI-005 — PASS:** користувач без дозволу не бачить `!`.\n- **TC-GP-HINT-UI-006 — PASS:** точний заголовок, посилання-описи планів, список змінених карт, окрема інструкція й жовтий фон; незмінений план не зачеплено.\n- **TC-GP-HINT-UI-007 — PASS:** перейменування не робить розподіл недійсним.\n- **TC-GP-HINT-UI-008 — PASS:** повторне призначення й генерація прибирають підказку лише для виправленого плану.\n- **TC-GP-HINT-UI-009 — PASS:** невикористана техкарта зберігається без попередження та модалки.\n- **TC-GP-HINT-UI-010 — PASS:** показ визначає дозвіл, незалежно від admin-ролі; відкликання перевірено після нового входу.\n\nCleanup завершився успішно: власні глобальні й location plans видалено, активні версії власних техкарт та ресурси архівовано, тестового користувача деактивовано, початковий режим техкарт відновлено. Падінь HTTP-timeout у цьому прогоні немає.\n\nМашинні результати всіх прогонів і таймінги (репозиторій erp-auto-test: global-plan-tech-map-hints-full-results.json). Збережено 13 скриншотів; відповідність кейсам є в полі `evidence` JSON. Приклади: бейдж (репозиторій erp-auto-test: global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-004-01.png), підказка (репозиторій erp-auto-test: global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-006-02.png), після відновлення (репозиторій erp-auto-test: global-plan-tech-map-hints-full-evidence/TC-GP-HINT-UI-008-02.png).\n\nЦей прогін охоплює десять сценаріїв із тест-плану; він не розширює задокументовані межі перевірки до всіх комбінацій прав, історичних планів чи довгих списків. Зовнішню публікацію TCM/Google Sheets вимкнено.\n\n## Відтворення й артефакти\n\n```powershell\nmvn -o test '-Dsuite=framework' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false' '-Dtest.output.directory=target/global-plan-hints-timeout-fix' '-Dallure.results.directory=target/global-plan-hints-timeout-fix/framework-allure'\n# Зберегти surefire-reports/testng-results.xml як framework-testng-results.xml.\nmvn -o surefire:test '-Dtest=HttpClientInfrastructureTest' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false' '-Dtest.output.directory=target/global-plan-hints-timeout-fix' '-Dallure.results.directory=target/global-plan-hints-timeout-fix/http-cold-jvm-allure'\n# Зберегти surefire-reports/testng-results.xml як http-cold-jvm-testng-results.xml.\n$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD='1'\nmvn -o surefire:test '-Denv=dev' '-Dsuite=global-plan-tech-map-hints' '-Dframework.browser.channel=chrome' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false' '-Dtest.output.directory=target/global-plan-hints-timeout-fix' '-Dallure.results.directory=target/global-plan-hints-timeout-fix/feature-allure'\n```\n\n- Framework XML: `target/global-plan-hints-timeout-fix/framework-testng-results.xml`.\n- Окремий HTTP XML: `target/global-plan-hints-timeout-fix/http-cold-jvm-testng-results.xml`.\n- Повний dev XML: `target/global-plan-hints-timeout-fix/feature-testng-results.xml`.\n- Framework-логи: `target/global-plan-hints-timeout-fix-framework.log`, `target/global-plan-hints-timeout-fix-http-cold-jvm.log`.\n- Dev-лог: `target/global-plan-hints-timeout-fix-dev.log`.\n- Allure: окремі `framework-allure`, `http-cold-jvm-allure`, `feature-allure` в build-каталозі вище.\n\nТест-план (репозиторій erp-auto-test: ../../GLOBAL_PLAN_TECH_MAP_HINTS_TEST_PLAN.md). Попередній частковий прогін після узгодження вимог (репозиторій erp-auto-test: global-plan-tech-map-hints-aligned-dev-report.md).\n"
+  },
+  "acceptanceCriteria": [
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "acKey": "AC-01",
+      "text": "Жовту підказку та модалку структурного редагування техкарти з актуальним глобальним планом бачить лише користувач із global-plan::update. Назва ролі не замінює перевірку дозволу."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "acKey": "AC-02",
+      "text": "Після зміни техкарти, що робить чинний розподіл недійсним, користувач із global-plan::update бачить помаранчевий warning-бейдж ! замість числового лічильника у «Виробничі плани». Користувач без дозволу цього бейджа не бачить."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "acKey": "AC-03",
+      "text": "На сторінці «Глобальні плани» користувач із global-plan::update бачить жовту підказку: заголовок «Розподіл у глобальних планах … став недійсним для техкарт:» із посиланнями-описами планів без доданого періоду, маркований список змінених техкарт та окрему точну інструкцію повторного призначення й генерації."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "acKey": "AC-04",
+      "text": "Перейменування та редагування невикористаної техкарти не роблять розподіл недійсним. Повторне призначення нової версії та generate прибирають повідомлення лише для виправленого плану."
+    }
+  ],
+  "cases": [
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-001",
+      "acKey": "AC-01",
+      "title": "Редактор глобальних планів бачить підказку і може скасувати модалку",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#updaterSeesWarningAndCanCancelModal; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ADMIN; /users/me містить global-plan::update; EDIT_ALLOWED; generated майбутній GP із M1.",
+      "expectedResult": "Warning і confirmation видимі; кнопки та recovery text правильні; cancel не змінює version/input/snapshot.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-001"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити M1; перевірити посилання GP; змінити input amount; Зберегти; Скасувати.",
+          "expectedText": "Warning і confirmation видимі; кнопки та recovery text правильні; cancel не змінює version/input/snapshot."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-002",
+      "acKey": "AC-01",
+      "title": "Користувач без global-plan update не бачить підказку редагування",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#nonUpdaterDoesNotSeeEditWarning; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "OWNER_1 має право редагувати M1, але не global-plan::update; M1 у live snapshot.",
+      "expectedResult": "Warning і confirmation відсутні; форма доступна.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-002"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити прямий URL update M1; дочекатися даних форми та live references.",
+          "expectedText": "Warning і confirmation відсутні; форма доступна."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-003",
+      "acKey": "AC-01",
+      "title": "Збереження техкарти без global-plan update не відкриває модалку",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#nonUpdaterSavesStructuralEditWithoutModal; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "OWNER_1 без global-plan::update; EDIT_ALLOWED; M1 у generated live GP.",
+      "expectedResult": "Без confirmation збережено нову активну version+1 із новою нормою; snapshot GP містить M1.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-003"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Змінити input amount у формі M1; натиснути Зберегти; прочитати active map і GP.",
+          "expectedText": "Без confirmation збережено нову активну version+1 із новою нормою; snapshot GP містить M1."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-004",
+      "acKey": "AC-02",
+      "title": "Редактор бачить помаранчевий знак оклику замість числового бейджа",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#updaterSeesOrangeExclamationInsteadOfCount; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ADMIN із global-plan::update; generated live GP із M1.",
+      "expectedResult": "Один помаранчевий warning-бейдж !; числового лічильника в цьому пункті немає.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-004"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Structural PUT M1→M2; відкрити Глобальні плани; перевірити Виробничі плани в sidebar.",
+          "expectedText": "Один помаранчевий warning-бейдж !; числового лічильника в цьому пункті немає."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-005",
+      "acKey": "AC-02",
+      "title": "Користувач без global-plan update не бачить знак оклику",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#nonUpdaterDoesNotSeeExclamation; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "OWNER_1 без global-plan::update; розподіл GP недійсний після M1→M2.",
+      "expectedResult": "Пункт доступний; бейдж ! і повідомлення про недійсний розподіл відсутні.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-005"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити M2; дочекатися sidebar; перевірити Виробничі плани.",
+          "expectedText": "Пункт доступний; бейдж ! і повідомлення про недійсний розподіл відсутні."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-006",
+      "acKey": "AC-03",
+      "title": "Жовта підказка перелічує змінені карти та актуальні плани",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#globalPlansHintListsAffectedPlansAndMaps; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ADMIN; два generated майбутні GP з окремими M1/M2; третій generated GP із незміненою картою.",
+      "expectedResult": "Жовта підказка: заголовок «Розподіл у глобальних планах … став недійсним для техкарт:» із посиланнями-описами обох планів без доданого періоду; маркований список обох змінених карт; окрема точна інструкція повторного призначення та генерації. Незмінений третій план/карта відсутні.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-006"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Структурно змінити M1/M2; відкрити Глобальні плани; розгорнути список карт; перевірити заголовок, посилання, список та окрему інструкцію.",
+          "expectedText": "Жовта підказка: заголовок «Розподіл у глобальних планах … став недійсним для техкарт:» із посиланнями-описами обох планів без доданого періоду; маркований список обох змінених карт; окрема точна інструкція повторного призначення та генерації. Незмінений третій план/карта відсутні."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-007",
+      "acKey": "AC-04",
+      "title": "Перейменування техкарти не створює повідомлення про недійсний розподіл",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#renameDoesNotInvalidateDistribution; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "MEDIUM",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ADMIN; M1 у generated live GP.",
+      "expectedResult": "id/version незмінні; hint не згадує цей GP/карту; snapshot збережений.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-007"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Name-only PUT M1; відкрити Глобальні плани; прочитати snapshot.",
+          "expectedText": "id/version незмінні; hint не згадує цей GP/карту; snapshot збережений."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-008",
+      "acKey": "AC-04",
+      "title": "Перегенерація прибирає підказку лише для виправленого плану",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#regenerationClearsOnlyRepairedPlanHint; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ADMIN; два недійсні GP після структурних змін двох карт.",
+      "expectedResult": "Спершу перший hint зникає, другий лишається; snapshots переходять на нові id лише після відповідного generate; після другого generate обидва власні hint відсутні.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-008"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Перевірити hint до виправлення; reassign+decompose+generate першого; reload; повторити для другого.",
+          "expectedText": "Спершу перший hint зникає, другий лишається; snapshots переходять на нові id лише після відповідного generate; після другого generate обидва власні hint відсутні."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-009",
+      "acKey": "AC-04",
+      "title": "Невикористана техкарта зберігається без попередження та модалки",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#unusedMapSavesWithoutWarningOrModal; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "MEDIUM",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ADMIN із global-plan::update; EDIT_ALLOWED; M1 не використовується жодним GP.",
+      "expectedResult": "Warning і confirmation відсутні; створена активна version+1 з новим id.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-009"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити M1; змінити input amount; Зберегти.",
+          "expectedText": "Warning і confirmation відсутні; створена активна version+1 з новим id."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-GP-HINT",
+      "testId": "TC-GP-HINT-UI-010",
+      "acKey": "AC-01",
+      "title": "Дозвіл працює незалежно від admin ролі та після відкликання",
+      "description": "Автотест com.erp.tests.ui.GlobalPlanTechMapHintsUiTest#granularPermissionControlsHintsIndependentlyOfAdminRole; suites global-plan-tech-map-hints, global-plans, ui, regression.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "Ізольований non-admin керівник локації; isAdmin=false; прямі global-plan.read/manage grants; manage надає global-plan::update; M1 у live snapshot.",
+      "expectedResult": "З update warning/modal видимі; після відкликання приховані; збережено version+1 без модалки; GP snapshot містить M1; тестовий користувач деактивується.",
+      "tags": "global-plan,tech-map,hint,rbac,automated",
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-010"
+      ],
+      "apiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Увійти; викликати та скасувати модалку; відкликати global-plan.manage, лишивши read; увійти знову; зберегти structural edit.",
+          "expectedText": "З update warning/modal видимі; після відкликання приховані; збережено version+1 без модалки; GP snapshot містить M1; тестовий користувач деактивується."
+        }
+      ]
+    }
+  ]
+}

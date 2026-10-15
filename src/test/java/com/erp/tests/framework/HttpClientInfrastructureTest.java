@@ -146,13 +146,28 @@ public class HttpClientInfrastructureTest {
 
     @Test(dataProvider = "requestKinds")
     public void allRequestTypesRespectTheConfiguredTimeout(String kind) {
+        long initializationStart = System.nanoTime();
+        SessionClient client = new SessionClient();
+        long initializationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - initializationStart);
+        // Initialize the serializer, filters and HTTP stack for this request kind before
+        // measuring the configured transport timeout (especially in a fresh JVM).
+        long preflightStart = System.nanoTime();
+        Response preflight = send(client, kind, "/echo");
+        long preflightMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - preflightStart);
+        assertThat(preflight.statusCode()).isEqualTo(200);
+        assertThat(ConfigProvider.getTimeout()).isEqualTo(1);
+
         long start = System.nanoTime();
-        Throwable thrown = catchThrowable(() -> send(kind, "/slow"));
+        Throwable thrown = catchThrowable(() -> send(client, kind, "/slow"));
+        long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+        Allure.addAttachment("HTTP timeout timing", "text/plain", String.format(
+                "kind=%s%nclientInitializationMs=%d%npreflightMs=%d%ntimeoutRequestMs=%d%nconfiguredTimeoutMs=1000%n",
+                kind, initializationMs, preflightMs, elapsedMs));
         assertThat(thrown).as("Expected timeout for %s", kind).isNotNull();
         Throwable root = thrown;
         while (root.getCause() != null) root = root.getCause();
         assertThat(root).isInstanceOf(SocketTimeoutException.class);
-        assertThat((System.nanoTime() - start) / 1_000_000).isLessThan(5000);
+        assertThat(elapsedMs).as("Timeout request duration for %s (ms)", kind).isLessThan(5000);
         assertThat(RequestDiagnostics.lastRequest()).contains("/slow").doesNotContain(COOKIE);
         assertThat(thrown.getMessage()).doesNotContain("serialize multipart");
     }
@@ -166,7 +181,10 @@ public class HttpClientInfrastructureTest {
     }
 
     private Response send(String kind, String path) {
-        SessionClient client = new SessionClient();
+        return send(new SessionClient(), kind, path);
+    }
+
+    private Response send(SessionClient client, String kind, String path) {
         Map<String, String> cookies = Map.of("SESSION", COOKIE);
         return switch (kind) {
             case "JSON" -> client.executeWithCookies(Method.POST, path, Map.of("value", "payload-kept", "password", PASSWORD), cookies);

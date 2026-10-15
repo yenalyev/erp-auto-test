@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-15",
+  "environment": "dev",
+  "requirementsRevision": "Aligned with implementation at the user's request",
+  "total": 2,
+  "passed": 2,
+  "failed": 0,
+  "skipped": 0,
+  "cases": [
+    {
+      "method": "updaterSeesOrangeExclamationInsteadOfCount",
+      "status": "PASS",
+      "durationMs": 11093,
+      "errorMessage": null,
+      "testCaseId": "TC-GP-HINT-UI-004"
+    },
+    {
+      "method": "globalPlansHintListsAffectedPlansAndMaps",
+      "status": "PASS",
+      "durationMs": 26944,
+      "errorMessage": null,
+      "testCaseId": "TC-GP-HINT-UI-006"
+    }
+  ],
+  "sources": [
+    "target/global-plan-hints-aligned/surefire-reports/testng-results-initial.xml (TC-004)",
+    "target/global-plan-hints-aligned/surefire-reports/testng-results-hint-rerun.xml (TC-006)"
+  ],
+  "framework": {
+    "total": 85,
+    "passed": 84,
+    "failed": 1,
+    "skipped": 0,
+    "regressionSuiteCompleteness": "PASS",
+    "failures": [
+      {
+        "method": "allRequestTypesRespectTheConfiguredTimeout",
+        "parameter": "JSON",
+        "errorMessage": "\nExpecting actual:\n  5206L\nto be less than:\n  5000L "
+      }
+    ]
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "endpoint": "http://tcm.lab",
+  "projectId": 1,
+  "featureId": "REQ-GP-HINT",
+  "featureDbId": 155,
+  "parentFeatureId": "REQ-GLOBAL-PLAN",
+  "documentationVerified": true,
+  "documentationLength": 19858,
+  "acceptanceCriteriaVerified": 4,
+  "casesVerified": 10,
+  "cases": [
+    {
+      "testId": "TC-GP-HINT-UI-001",
+      "id": 1838,
+      "acId": "AC-01",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-001"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-002",
+      "id": 1839,
+      "acId": "AC-01",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-002"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-003",
+      "id": 1840,
+      "acId": "AC-01",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-003"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-004",
+      "id": 1841,
+      "acId": "AC-02",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-004"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-005",
+      "id": 1842,
+      "acId": "AC-02",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-005"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-006",
+      "id": 1843,
+      "acId": "AC-03",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-006"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-007",
+      "id": 1844,
+      "acId": "AC-04",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-007"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-008",
+      "id": 1845,
+      "acId": "AC-04",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-008"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-009",
+      "id": 1846,
+      "acId": "AC-04",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-009"
+      ],
+      "fieldsVerified": true
+    },
+    {
+      "testId": "TC-GP-HINT-UI-010",
+      "id": 1847,
+      "acId": "AC-01",
+      "automation": true,
+      "uiAutomationIds": [
+        "TC-GP-HINT-UI-010"
+      ],
+      "fieldsVerified": true
+    }
+  ],
+  "executionEnvironment": "ERP dev",
+  "testResults": {
+    "feature": "10/10 PASS",
+    "framework": "85/85 PASS",
+    "httpColdJvm": "11/11 PASS"
+  },
+  "method": "tcm-ai-prod MCP read-create-read",
+  "completedAt": "2026-10-15T11:48:04.672Z"
+}
