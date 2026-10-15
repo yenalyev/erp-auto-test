@@ -61,6 +61,7 @@
         "techMap": { "$ref": "#/definitions/simpleEntity" },
         "resource": { "$ref": "#/definitions/simpleEntity" },
         "batchName": { "type": ["string", "null"] },
+        "selection": { "type": ["string", "null"], "enum": ["FIFO", "MANUAL", null] },
         "amount": { "type": "number" },
         "unit": { "type": ["string", "null"] }
       },

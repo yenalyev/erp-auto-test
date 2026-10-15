@@ -37,9 +37,12 @@ public class PlaywrightSessionProvider implements AutoCloseable {
     public PlaywrightSessionProvider(String backendUrl) {
         this.backendUrl = backendUrl.replaceAll("/+$", "");
         this.playwright = Playwright.create();
-        this.browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions().setHeadless(true)
-        );
+        BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions().setHeadless(true);
+        String channel = System.getProperty("framework.browser.channel");
+        if (channel != null && !channel.isBlank()) {
+            launchOptions.setChannel(channel);
+        }
+        this.browser = playwright.chromium().launch(launchOptions);
         log.info("🎭 Playwright browser initialized (headless Chromium), backend={}", this.backendUrl);
     }
 

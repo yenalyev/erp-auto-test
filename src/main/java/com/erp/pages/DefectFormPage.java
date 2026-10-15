@@ -154,7 +154,8 @@ public class DefectFormPage extends BasePage {
     }
 
     public DefectFormPage fillStorageBatchAmount(String batchNumber, String amount) {
-        page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("Партії"))
+        page.locator("[data-slot='card-title']")
+                .filter(new Locator.FilterOptions().setHasText("Партії"))
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         page.locator("table tbody tr")
                 .filter(new Locator.FilterOptions().setHasText(batchNumber))

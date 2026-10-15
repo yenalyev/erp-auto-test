@@ -59,6 +59,7 @@ public class BatchInspectionResponse {
         private SimpleEntityResponse techMap;
         private SimpleEntityResponse resource;
         private String batchName;
+        private String selection;
         private BigDecimal amount;
         private String unit;
     }

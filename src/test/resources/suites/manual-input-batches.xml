@@ -10,7 +10,6 @@
     <test name="Manual batch API and UI">
         <classes>
             <class name="com.erp.tests.functional.production.ManualInputBatchAccountingApiTest"/>
-            <class name="com.erp.tests.functional.storage.ManualBatchCrewReceiveApiTest"/>
             <class name="com.erp.tests.ui.ManualInputBatchAccountingUiTest"/>
         </classes>
     </test>

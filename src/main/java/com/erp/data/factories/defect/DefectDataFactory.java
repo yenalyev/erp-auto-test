@@ -55,7 +55,7 @@ public final class DefectDataFactory {
                 .build();
     }
 
-    /** Storage defect with explicit produced batches (isProduced = true). */
+    /** Storage defect with explicit batches; the top-level flag enables batch mode even for raw stock. */
     public static DefectRequest buildStorageExplicitBatchesDefect(Long storageId,
                                                                   Long resourceId,
                                                                   double totalAmount,

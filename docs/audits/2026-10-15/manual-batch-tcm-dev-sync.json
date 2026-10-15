@@ -1,0 +1,11 @@
+{
+  "environment": "local-dev-tcm",
+  "baseUrl": "http://localhost:18100",
+  "featureId": "REQ-WMS-013",
+  "applied": true,
+  "changed": true,
+  "beforeDocumentationSha256": "f68746e40073fc2646cd8d7b4ad4fd60b69dcda28ce8992d8727c4866e895148",
+  "expectedDocumentationSha256": "8154853cb9fa08d4937520ed59fe99c9424c40f9ec4f78905bfb6047ea266d3f",
+  "afterDocumentationSha256": "8154853cb9fa08d4937520ed59fe99c9424c40f9ec4f78905bfb6047ea266d3f",
+  "acceptanceCriteriaUnchanged": true
+}

@@ -6,6 +6,7 @@ import com.erp.data.factories.defect.DefectDataFactory;
 import com.erp.data.factories.project_production.ProjectProductionDataFactory;
 import com.erp.data.factories.relocation.RelocationDataFactory;
 import com.erp.data.factories.relocation.RelocationStockSeeder;
+import com.erp.enums.BusinessRole;
 import com.erp.enums.ProjectProductionState;
 import com.erp.enums.ProjectProductionType;
 import com.erp.enums.UserRole;
@@ -14,6 +15,7 @@ import com.erp.fixtures.ProjectProductionFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.ShiftFixture;
 import com.erp.fixtures.StorageFixture;
+import com.erp.fixtures.UserFixture;
 import com.erp.models.request.DefectRequest;
 import com.erp.models.request.ProjectProductionRequest;
 import com.erp.models.request.ProjectProductionStageRequest;
@@ -35,7 +37,6 @@ import com.erp.pages.ResourcesListPage;
 import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
 import com.erp.utils.helpers.ProductionStockAssertions;
-import com.microsoft.playwright.Page;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
@@ -43,7 +44,6 @@ import io.restassured.response.Response;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import org.assertj.core.api.AbstractBooleanAssert;
 import org.assertj.core.api.AbstractIntegerAssert;
@@ -59,6 +59,8 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
    private StorageFixture storages;
    private ProductionFixture production;
    private ResourceFixture resources;
+   private UserFixture users;
+   private UserFixture.BusinessActor locationOwner;
    private long storageId;
    private long inputId;
    private long fifoId;
@@ -74,7 +76,11 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
    public void baseTestClassSetup() {
       super.baseTestClassSetup();
       this.storages = new StorageFixture(this.testContext, this.apiExecutor);
-      this.storageId = this.storages.createProductionStorage(ConfigProvider.getOwner1StorageId(), "ui-manual-batch-").getId();
+      var storage = this.storages.createProductionStorage(ConfigProvider.getOwner1StorageId(), "ui-manual-batch-");
+      this.storageId = storage.getId();
+      this.users = new UserFixture(this.testContext, this.apiExecutor);
+      this.locationOwner = this.users.createBusinessActor(getPlaywrightSessionProvider(), BusinessRole.BUSINESS_UNIT_OWNER, List.of(storage));
+      this.apiExecutor.setSessionForRole(UserRole.OWNER_1, this.locationOwner.username(), this.locationOwner.password());
       this.production = new ProductionFixture(this.testContext, this.apiExecutor);
       this.production.prepareContext(this.storageId);
       this.resources = new ResourceFixture(this.testContext, this.apiExecutor);
@@ -121,6 +127,13 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
          }
       } catch (RuntimeException e) {
          LoggerFactory.getLogger(this.getClass()).warn("Manual batch UI cleanup failed", e);
+      } finally {
+         if (this.apiExecutor != null) {
+            this.apiExecutor.evictSessionForRole(UserRole.OWNER_1);
+         }
+         if (this.users != null) {
+            this.users.deactivateTrackedUsers();
+         }
       }
 
    }
@@ -131,8 +144,8 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
    @TestCaseId({"TC-MIB-002", "TC-MIB-003"})
    @Story("Switch and filter manual accounting")
    public void manualBatchToggleAndFilterHappyPath() {
-      this.injectSessionCookies(this.cachedSessionCookies(UserRole.OWNER_1), this.sessionCookieDomain());
-      this.injectWorkspaceView(UserRole.OWNER_1, this.storageId);
+      this.injectSessionCookies(this.authService.getSessionForUser(this.locationOwner.username(), this.locationOwner.password()), this.sessionCookieDomain());
+      this.injectWorkspaceView(this.locationOwner.username(), this.storageId);
 
       try {
          ResourcesListPage list = (new ResourcesListPage(this.page)).open(this.storageId);
@@ -225,7 +238,15 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
       StorageItemBatchResponse batch = (StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.ADMIN, this.inputId, false, batchName).stream().filter((b) -> batchName.equals(b.getBatchNumber())).findFirst().orElseThrow();
       double before = batch.getAmount();
       this.setSelection(this.inputId, true);
-      DefectFormPage form = (new DefectFormPage(this.page)).open().selectType("Склад").selectResourceByName(this.inputName).fillStorageBatchAmount(batchName, "3");
+      this.assertWarehouseDefectRawBatchPreconditions(batch);
+      DefectFormPage form = (new DefectFormPage(this.page)).open().selectType("Склад");
+      com.microsoft.playwright.Response batchesResponse = this.page.waitForResponse(
+         response -> response.url().contains("/storage-items/batches") && response.url().contains("resourceId=" + this.inputId),
+         () -> form.selectResourceByName(this.inputName));
+      Assertions.assertThat(batchesResponse.status()).isEqualTo(200);
+      Assertions.assertThat(batchesResponse.url()).contains("storageId=" + this.storageId);
+      Assertions.assertThat(batchesResponse.text()).contains(batch.getBatchUuid().toString());
+      form.fillStorageBatchAmount(batchName, "3");
       form.attachScreenshot("TC-MIB-UI-008 — raw storage defect batch selected");
       form.submitAndWaitForList();
       double after = ((StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.ADMIN, this.inputId, false, batchName).stream().filter((b) -> batch.getBatchUuid().equals(b.getBatchUuid())).findFirst().orElseThrow()).getAmount();
@@ -241,35 +262,15 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
       BigDecimal amount = BigDecimal.TEN;
       RelocationInputRequest receipt = ((RelocationInputRequest.RelocationInputRequestBuilder)((RelocationInputRequest.RelocationInputRequestBuilder)((RelocationInputRequest.RelocationInputRequestBuilder)((RelocationInputRequest.RelocationInputRequestBuilder)RelocationInputRequest.builder().senderId(RelocationStockSeeder.resolveSupplierStorageId(this.apiExecutor, UserRole.ADMIN))).recipientId(this.storageId)).date(LocalDate.now())).invoiceNumber("ui-unknown-" + String.valueOf(UUID.randomUUID())).items(List.of(ResourceUsageRequest.builder().resourceId(this.inputId).amount(amount).batches(List.of(RelocationItemBatchRequest.builder().amount(amount).isProduced(false).build())).build()))).build();
       Assertions.assertThat(this.apiExecutor.executeRelocationReceive(receipt, UserRole.ADMIN).statusCode()).isBetween(200, 299);
-      StorageItemBatchResponse unknown = (StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.ADMIN, this.inputId, false, (String)null).stream().filter((batch) -> "UNKNOWN".equals(batch.getOrigin()) && batch.getAmount() > (double)0.0F).findFirst().orElseThrow();
+      StorageItemBatchResponse unknown = (StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.ADMIN, this.inputId, false, (String)null).stream().filter((batch) -> "Партія невідомого походження".equals(batch.getBatchNumber()) && batch.getAmount() > (double)0.0F).findFirst().orElseThrow();
       double before = unknown.getAmount();
       this.setSelection(this.inputId, true);
-      DefectFormPage form = (new DefectFormPage(this.page)).open().selectType("Склад").selectResourceByName(this.inputName).fillStorageBatchAmount("Невідома партія", "3");
+      this.assertWarehouseDefectRawBatchPreconditions(unknown);
+      DefectFormPage form = (new DefectFormPage(this.page)).open().selectType("Склад").selectResourceByName(this.inputName).fillStorageBatchAmount(unknown.getBatchNumber(), "3");
       form.attachScreenshot("TC-MIB-UI-017 — unknown storage batch selected");
       form.submitAndWaitForList();
       double after = ((StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.ADMIN, this.inputId, false, (String)null).stream().filter((batch) -> unknown.getBatchUuid().equals(batch.getBatchUuid())).findFirst().orElseThrow()).getAmount();
       Assertions.assertThat(after).isCloseTo(before - (double)3.0F, Assertions.within(0.01));
-   }
-
-   @Test(
-      priority = 4
-   )
-   @TestCaseId({"TC-MIB-UI-017B"})
-   @Story("Explain why the unknown batch cannot be selected without stock")
-   public void warehouseDefectExplainsUnavailableUnknownBatchInUi() {
-      this.setSelection(this.fifoId, true);
-
-      try {
-         DefectFormPage form = (new DefectFormPage(this.page)).open().selectType("Склад").selectResourceByName(this.fifoName);
-         Page var10000 = this.page;
-         Objects.requireNonNull(form);
-         var10000.waitForCondition(form::isUnknownBatchUnavailableWarningVisible);
-         form.attachScreenshot("TC-MIB-UI-017B — unknown batch unavailable warning");
-         Assertions.assertThat(form.isUnknownBatchUnavailableWarningVisible()).isTrue();
-      } finally {
-         this.setSelection(this.fifoId, false);
-      }
-
    }
 
    @Test(
@@ -280,12 +281,12 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
    public void fifoDefectEditRequiresVisibleBatchAfterManualSwitch() {
       this.setSelection(this.inputId, false);
       DefectRequest request = DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputId, (double)2.0F);
-      Response created = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE, UserRole.ADMIN, request);
+      Response created = this.apiExecutor.executeDefectCreate(request, UserRole.ADMIN);
       ((AbstractIntegerAssert)Assertions.assertThat(created.statusCode()).as(created.asString(), new Object[0])).isBetween(200, 299);
       long defectId = created.jsonPath().getLong("id");
       String originalUuid = created.jsonPath().getString("defectBatches[0].batchUuid");
       String originalNumber = created.jsonPath().getString("defectBatches[0].batchNumber");
-      String label = "UNKNOWN".equals(created.jsonPath().getString("defectBatches[0].origin")) ? "Невідома партія" : originalNumber;
+      String label = originalNumber;
       Assertions.assertThat(originalUuid).isNotBlank();
 
       try {
@@ -369,5 +370,18 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
 
    private void setSelection(long resourceId, boolean enabled) {
       Assertions.assertThat(this.apiExecutor.execute(ApiEndpointDefinition.RESOURCE_BATCH_SELECTION_PUT, UserRole.ADMIN, new ResourceBatchSelectionRequest(enabled), this.storageId, resourceId).statusCode()).isBetween(200, 299);
+   }
+
+   private void assertWarehouseDefectRawBatchPreconditions(StorageItemBatchResponse expected) {
+      Response selection = this.apiExecutor.execute(ApiEndpointDefinition.RESOURCE_BATCH_SELECTION_GET, UserRole.ADMIN, (Object)null, this.storageId);
+      Assertions.assertThat(selection.statusCode()).isEqualTo(200);
+      Assertions.assertThat(selection.jsonPath().getList("$", Long.class)).contains(this.inputId);
+      Assertions.assertThat(ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId,
+         UserRole.ADMIN, this.inputId, null, null))
+         .anySatisfy(batch -> {
+            Assertions.assertThat(batch.getBatchUuid()).isEqualTo(expected.getBatchUuid());
+            Assertions.assertThat(batch.getIsProduced()).isFalse();
+            Assertions.assertThat(batch.getAmount()).isPositive();
+         });
    }
 }

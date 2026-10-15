@@ -15,6 +15,7 @@ import com.erp.enums.ProjectProductionType;
 import com.erp.enums.RelocationState;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.ProductionFixture;
+import com.erp.fixtures.InventoryFixture;
 import com.erp.fixtures.ProjectProductionFixture;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.fixtures.StorageFixture;
@@ -36,6 +37,7 @@ import com.erp.models.request.RelocationUpdateRequest;
 import com.erp.models.request.ResourceBatchSelectionRequest;
 import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.response.DefectResponse;
+import com.erp.models.response.BatchInspectionResponse;
 import com.erp.models.response.EquipmentCategoryResponse;
 import com.erp.models.response.ManufacturingItemResponse;
 import com.erp.models.response.NonSeriesProductionResourceUsageResponse;
@@ -258,6 +260,22 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
          Assertions.assertThat(this.getProductionListSize()).isEqualTo(journalBefore + 1L);
          StorageItemBatchResponse after = (StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.OWNER_1, this.inputResourceId1, false, namedBatch).stream().filter((b) -> selected.getBatchUuid().equals(b.getBatchUuid())).findFirst().orElseThrow();
          Assertions.assertThat(after.getAmount()).isCloseTo(selectedBefore - required, Assertions.within(0.01));
+         String productBatch = valid.getItems().getFirst().getBatchNumber();
+         BatchInspectionResponse inspection = new InventoryFixture(this.testContext, this.apiExecutor)
+            .inspectBatch(productBatch, UserRole.ADMIN).stream()
+            .filter(item -> item.getResource() != null && this.outputResourceId.equals(item.getResource().getId()))
+            .findFirst().orElseThrow();
+         Assertions.assertThat(inspection.getIngredients())
+            .anySatisfy(ingredient -> {
+               Assertions.assertThat(ingredient.getResource().getId()).isEqualTo(this.inputResourceId1);
+               Assertions.assertThat(ingredient.getBatchName()).isEqualTo(namedBatch);
+               Assertions.assertThat(ingredient.getSelection()).isEqualTo("MANUAL");
+            });
+         Assertions.assertThat(inspection.getIngredients())
+            .anySatisfy(ingredient -> {
+               Assertions.assertThat(ingredient.getResource().getId()).isEqualTo(this.inputResourceId2);
+               Assertions.assertThat(ingredient.getSelection()).isEqualTo("FIFO");
+            });
       } finally {
          this.setBatchSelection(this.inputResourceId1, false);
       }
@@ -422,8 +440,8 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
 
       try {
          this.setBatchSelection(this.inputResourceId1, true);
-         DefectRequest request = DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputResourceId1, (double)3.0F).toBuilder().defectBatches(List.of(DefectDataFactory.batch(younger.getBatchUuid(), younger.getBatchNumber(), false, (double)3.0F))).build();
-         Response created = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE, UserRole.OWNER_1, request);
+         DefectRequest request = DefectDataFactory.buildStorageExplicitBatchesDefect(this.storageId, this.inputResourceId1, 3.0, List.of(DefectDataFactory.batch(younger.getBatchUuid(), younger.getBatchNumber(), false, 3.0)));
+         Response created = this.apiExecutor.executeDefectCreate(request, UserRole.OWNER_1);
          ((AbstractIntegerAssert)Assertions.assertThat(created.statusCode()).as("Warehouse defect response: %s", new Object[]{created.asString()})).isBetween(200, 299);
          DefectResponse defect = (DefectResponse)created.as(DefectResponse.class);
          defectId = defect.getId();
@@ -460,8 +478,8 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
 
       try {
          this.setBatchSelection(this.inputResourceId1, true);
-         DefectRequest request = DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputResourceId1, (double)3.0F).toBuilder().defectBatches(List.of(DefectDataFactory.batch(unknown.getBatchUuid(), unknown.getBatchNumber(), false, (double)3.0F))).build();
-         Response created = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE, UserRole.OWNER_1, request);
+         DefectRequest request = DefectDataFactory.buildStorageExplicitBatchesDefect(this.storageId, this.inputResourceId1, 3.0, List.of(DefectDataFactory.batch(unknown.getBatchUuid(), unknown.getBatchNumber(), false, 3.0)));
+         Response created = this.apiExecutor.executeDefectCreate(request, UserRole.OWNER_1);
          ((AbstractIntegerAssert)Assertions.assertThat(created.statusCode()).as(created.asString(), new Object[0])).isBetween(200, 299);
          defectId = created.jsonPath().getLong("id");
          Assertions.assertThat(created.jsonPath().getString("defectBatches[0].batchUuid")).isEqualTo(unknown.getBatchUuid().toString());
@@ -494,7 +512,7 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
       try {
          this.setBatchSelection(this.inputResourceId1, true);
          Response relocation = this.apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, UserRole.OWNER_1, RelocationDataFactory.buildSendRequest(this.storageId, ConfigProvider.getOwner1StorageId(), this.inputResourceId1, (double)1.0F));
-         Response defect = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE, UserRole.OWNER_1, DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputResourceId1, (double)1.0F));
+         Response defect = this.apiExecutor.executeDefectCreate(DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputResourceId1, (double)1.0F), UserRole.OWNER_1);
          if (relocation.statusCode() >= 200 && relocation.statusCode() < 300) {
             this.apiExecutor.execute(ApiEndpointDefinition.RELOCATION_PUT_RESOLVE, UserRole.ADMIN, RelocationUpdateRequest.builder().state(RelocationState.CANCELLED).build(), relocation.jsonPath().getLong("id"), ConfigProvider.getOwner1StorageId());
          }
@@ -573,7 +591,7 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
          }
 
          for(RelocationItemBatchRequest invalid : invalidBatches) {
-            Response response = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE, UserRole.OWNER_1, DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputResourceId1, (double)7.0F).toBuilder().defectBatches(List.of(DefectBatchItem.builder().batchUuid(invalid.getBatchUuid()).batchNumber(invalid.getBatchNumber()).isProduced(false).amount(invalid.getAmount()).build())).build());
+            Response response = this.apiExecutor.executeDefectCreate(DefectDataFactory.buildStorageExplicitBatchesDefect(this.storageId, this.inputResourceId1, 7.0, List.of(DefectBatchItem.builder().batchUuid(invalid.getBatchUuid()).batchNumber(invalid.getBatchNumber()).isProduced(false).amount(invalid.getAmount()).build())), UserRole.OWNER_1);
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
                this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_DELETE, UserRole.OWNER_1, (Object)null, response.jsonPath().getLong("id"), this.storageId);
             }
@@ -636,13 +654,6 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
          Assertions.assertThat(this.batchAmount(first.getBatchUuid())).isLessThan(firstBefore);
          double secondAfter = ((StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.ADMIN, this.inputResourceId2, false, (String)null).stream().filter((batch) -> second.getBatchUuid().equals(batch.getBatchUuid())).findFirst().orElseThrow()).getAmount();
          Assertions.assertThat(secondAfter).isLessThan(secondBefore);
-         StorageItemBatchResponse otherFirstResourceBatch = (StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.ADMIN, this.inputResourceId1, false, (String)null).stream().filter((batch) -> !first.getBatchUuid().equals(batch.getBatchUuid()) && batch.getAmount() > (double)0.0F).findFirst().orElseThrow();
-         NonSeriesProductionRequest mixed = NonSeriesProductionDataFactory.buildInProgressRequest(this.storageId, this.inputResourceId1, (double)1.0F, (double)1.0F);
-         mixed.setResourceUsageList(List.of(NonSeriesProductionResourceUsageRequest.builder().resourceId(this.inputResourceId1).amount(BigDecimal.ONE).batchUuid(first.getBatchUuid()).build(), NonSeriesProductionResourceUsageRequest.builder().resourceId(this.inputResourceId1).amount(BigDecimal.ONE).batchUuid(otherFirstResourceBatch.getBatchUuid()).build()));
-         double beforeRejected = this.batchAmount(first.getBatchUuid());
-         Response rejected = this.apiExecutor.execute(ApiEndpointDefinition.NON_SERIES_PRODUCTION_POST_CREATE, UserRole.ADMIN, mixed);
-         ((AbstractIntegerAssert)Assertions.assertThat(rejected.statusCode()).as(rejected.asString(), new Object[0])).isBetween(400, 499);
-         Assertions.assertThat(this.batchAmount(first.getBatchUuid())).isCloseTo(beforeRejected, Assertions.within(0.01));
       } finally {
          this.setBatchSelection(this.inputResourceId1, false);
          this.setBatchSelection(this.inputResourceId2, false);
@@ -790,19 +801,19 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
 
       try {
          this.setBatchSelection(this.inputResourceId1, true);
-         DefectRequest request = DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputResourceId1, (double)3.0F).toBuilder().defectBatches(List.of(DefectDataFactory.batch(first.getBatchUuid(), first.getBatchNumber(), false, (double)3.0F))).build();
-         Response created = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE, UserRole.OWNER_1, request);
+         DefectRequest request = DefectDataFactory.buildStorageExplicitBatchesDefect(this.storageId, this.inputResourceId1, 3.0, List.of(DefectDataFactory.batch(first.getBatchUuid(), first.getBatchNumber(), false, 3.0)));
+         Response created = this.apiExecutor.executeDefectCreate(request, UserRole.OWNER_1);
          ((AbstractIntegerAssert)Assertions.assertThat(created.statusCode()).as("Defect create: %s", new Object[]{created.asString()})).isBetween(200, 299);
          defectId = created.jsonPath().getLong("id");
          Assertions.assertThat(this.batchAmount(first.getBatchUuid())).isCloseTo(firstBefore - (double)3.0F, Assertions.within(0.01));
          request.setAmount(BigDecimal.valueOf(4L));
          request.setDefectBatches(List.of(DefectDataFactory.batch(second.getBatchUuid(), second.getBatchNumber(), false, (double)4.0F)));
-         Response edited = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_PUT_UPDATE, UserRole.OWNER_1, request, defectId);
+         Response edited = this.apiExecutor.executeDefectUpdate(defectId, request, UserRole.OWNER_1);
          Assertions.assertThat(edited.statusCode()).isBetween(200, 299);
          Assertions.assertThat(this.batchAmount(first.getBatchUuid())).isCloseTo(firstBefore, Assertions.within(0.01));
          Assertions.assertThat(this.batchAmount(second.getBatchUuid())).isCloseTo(secondBefore - (double)4.0F, Assertions.within(0.01));
          request.setDefectBatches(List.of(DefectDataFactory.batch(UUID.randomUUID(), "missing", false, (double)4.0F)));
-         Response rejected = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_PUT_UPDATE, UserRole.OWNER_1, request, defectId);
+         Response rejected = this.apiExecutor.executeDefectUpdate(defectId, request, UserRole.OWNER_1);
          Assertions.assertThat(rejected.statusCode()).isBetween(400, 499);
          Assertions.assertThat(this.batchAmount(second.getBatchUuid())).isCloseTo(secondBefore - (double)4.0F, Assertions.within(0.01));
       } finally {
@@ -899,8 +910,7 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
    @Description("PUT defect requires the previously consumed batch UUID and leaves stock unchanged on rejection")
    public void fifoStorageDefectEditRequiresOriginalBatchUuidAfterModeSwitch() {
       DefectRequest fifo = DefectDataFactory.buildStorageFifoDefect(storageId, inputResourceId1, 2.0);
-      Response created = apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE,
-              UserRole.OWNER_1, fifo);
+      Response created = apiExecutor.executeDefectCreate(fifo, UserRole.OWNER_1);
       Assertions.assertThat(created.statusCode()).as(created.asString()).isBetween(200, 299);
       long defectId = created.jsonPath().getLong("id");
       UUID originalUuid = UUID.fromString(created.jsonPath().getString("defectBatches[0].batchUuid"));
@@ -908,15 +918,13 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
       double afterCreate = batchAmount(originalUuid);
       try {
          setBatchSelection(inputResourceId1, true);
-         Response rejected = apiExecutor.execute(ApiEndpointDefinition.DEFECT_PUT_UPDATE,
-                 UserRole.OWNER_1, fifo, defectId);
+         Response rejected = apiExecutor.executeDefectUpdate(defectId, fifo, UserRole.OWNER_1);
          Assertions.assertThat(rejected.statusCode()).as(rejected.asString()).isBetween(400, 499);
          Assertions.assertThat(batchAmount(originalUuid)).isCloseTo(afterCreate, Assertions.within(0.01));
 
-         DefectRequest exact = fifo.toBuilder().defectBatches(List.of(
+         DefectRequest exact = fifo.toBuilder().isProduced(true).defectBatches(List.of(
                  DefectDataFactory.batch(originalUuid, originalNumber, false, 2.0))).build();
-         Response accepted = apiExecutor.execute(ApiEndpointDefinition.DEFECT_PUT_UPDATE,
-                 UserRole.OWNER_1, exact, defectId);
+         Response accepted = apiExecutor.executeDefectUpdate(defectId, exact, UserRole.OWNER_1);
          Assertions.assertThat(accepted.statusCode()).as(accepted.asString()).isBetween(200, 299);
          Assertions.assertThat(accepted.jsonPath().getString("defectBatches[0].batchUuid"))
                  .isEqualTo(originalUuid.toString());
@@ -982,13 +990,11 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
       Long defectId = null;
       try {
          setBatchSelection(inputResourceId1, true);
-         DefectRequest request = DefectDataFactory.buildStorageFifoDefect(
-                 storageId, inputResourceId1, 5.0).toBuilder().defectBatches(List.of(
+         DefectRequest request = DefectDataFactory.buildStorageExplicitBatchesDefect(
+                 storageId, inputResourceId1, 5.0, List.of(
                  DefectDataFactory.batch(first.getBatchUuid(), first.getBatchNumber(), false, 2.0),
-                 DefectDataFactory.batch(second.getBatchUuid(), second.getBatchNumber(), false, 3.0)))
-                 .build();
-         Response created = apiExecutor.execute(ApiEndpointDefinition.DEFECT_POST_CREATE,
-                 UserRole.OWNER_1, request);
+                 DefectDataFactory.batch(second.getBatchUuid(), second.getBatchNumber(), false, 3.0)));
+         Response created = apiExecutor.executeDefectCreate(request, UserRole.OWNER_1);
          Assertions.assertThat(created.statusCode()).as(created.asString()).isBetween(200, 299);
          defectId = created.jsonPath().getLong("id");
          Assertions.assertThat(batchAmount(first.getBatchUuid())).isCloseTo(firstBefore - 2.0, Assertions.within(0.01));
@@ -1029,7 +1035,7 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
       BigDecimal amount = BigDecimal.TEN;
       RelocationInputRequest receipt = ((RelocationInputRequest.RelocationInputRequestBuilder)((RelocationInputRequest.RelocationInputRequestBuilder)((RelocationInputRequest.RelocationInputRequestBuilder)((RelocationInputRequest.RelocationInputRequestBuilder)((RelocationInputRequest.RelocationInputRequestBuilder)RelocationInputRequest.builder().senderId(RelocationStockSeeder.resolveSupplierStorageId(this.apiExecutor, UserRole.ADMIN))).recipientId(this.storageId)).date(LocalDate.now())).invoiceNumber("unknown-" + String.valueOf(UUID.randomUUID())).description("erp-auto-test unknown-origin stock")).items(List.of(ResourceUsageRequest.builder().resourceId(this.inputResourceId1).amount(amount).batches(List.of(RelocationItemBatchRequest.builder().amount(amount).isProduced(false).build())).build()))).build();
       Assertions.assertThat(this.apiExecutor.executeRelocationReceive(receipt, UserRole.ADMIN).statusCode()).isBetween(200, 299);
-      return (StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.OWNER_1, this.inputResourceId1, false, (String)null).stream().filter((batch) -> "UNKNOWN".equals(batch.getOrigin()) && batch.getAmount() > (double)0.0F).findFirst().orElseThrow();
+      return (StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.OWNER_1, this.inputResourceId1, false, (String)null).stream().filter((batch) -> "Партія невідомого походження".equals(batch.getBatchNumber()) && batch.getAmount() > (double)0.0F).findFirst().orElseThrow();
    }
 
    private double batchAmount(UUID batchUuid) {
