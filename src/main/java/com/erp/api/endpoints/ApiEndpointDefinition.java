@@ -1771,6 +1771,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    NON_SERIES_PRODUCTION_EXPORT(
+            "/api/v1/non-series-production/export",
+            Method.GET,
+            null,
+            "Export non-series production with journal filters",
+            null,
+            null,
+            null
+    ),
+
     NON_SERIES_PRODUCTION_GET_TOTAL(
             "/api/v1/non-series-production/total",
             Method.GET,

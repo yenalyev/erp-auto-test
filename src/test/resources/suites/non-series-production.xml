@@ -12,12 +12,14 @@
     <test name="Non-Series Production API">
         <classes>
             <class name="com.erp.tests.functional.non_series_production.NonSeriesProductionTest"/>
+            <class name="com.erp.tests.functional.non_series_production.NonSeriesResourceFilterApiTest"/>
         </classes>
     </test>
 
     <test name="Non-Series Production UI">
         <classes>
             <class name="com.erp.tests.ui.NonSeriesProductionUITest"/>
+            <class name="com.erp.tests.ui.NonSeriesResourceFilterUiTest"/>
         </classes>
     </test>
 </suite>

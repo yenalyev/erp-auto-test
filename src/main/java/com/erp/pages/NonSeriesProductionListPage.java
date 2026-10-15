@@ -9,6 +9,13 @@ import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,6 +84,71 @@ public class NonSeriesProductionListPage extends BasePage {
         page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName(statusLabel)).click();
         waitForTotalApiResponse();
         return this;
+    }
+
+    /** Both requests must carry the same term; waits are installed before the UI action. */
+    public NonSeriesProductionListPage awaitResourceFilter(String term, Runnable action) {
+        page.waitForResponse(r -> matchesFilter(r.url(), true, term) && r.status() == 200, () ->
+                page.waitForResponse(r -> matchesFilter(r.url(), false, term) && r.status() == 200, action));
+        return this;
+    }
+
+    public NonSeriesProductionListPage filterByResource(String term) {
+        return awaitResourceFilter(term, () -> resourceSearchInput().fill(term));
+    }
+
+    public NonSeriesProductionListPage clearAllFilters(String currentResourceTerm) {
+        // A different resource term ensures that a real filter change is awaited.
+        if (currentResourceTerm == null || currentResourceTerm.isEmpty()) {
+            page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Очистити").setExact(true)).click();
+            return waitForLoaded();
+        }
+        return awaitResourceFilter("", () -> page.getByRole(AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Очистити").setExact(true)).click());
+    }
+
+    public Locator resourceSearchInput() {
+        return page.getByTestId("non-series-production-resource-search")
+                .or(page.getByPlaceholder("Назва матеріалу...")).first();
+    }
+
+    public NonSeriesProductionListPage expectProducts(List<String> products) {
+        if (products.isEmpty()) {
+            com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat(
+                    page.getByText("Записів не знайдено", new Page.GetByTextOptions().setExact(true))).isVisible();
+        }
+        page.waitForCondition(() -> {
+            List<String> actual = page.locator("tbody tr td:nth-child(2)").allTextContents()
+                    .stream().map(String::trim).sorted().toList();
+            return actual.equals(products.stream().sorted().toList());
+        }, new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public byte[] exportFiltered(String resourceTerm) throws IOException {
+        var download = page.waitForDownload(() -> page.waitForResponse(
+                r -> URI.create(r.url()).getPath().endsWith("/api/v1/non-series-production/export")
+                        && resourceTerm.equals(queryValue(r.url(), "resourceSearch")) && r.status() == 200,
+                () -> page.getByTestId("non-series-production-export").click()));
+        if (download.failure() != null) {
+            throw new IllegalStateException("Non-series export failed: " + download.failure());
+        }
+        try { return Files.readAllBytes(download.path()); }
+        finally { Files.deleteIfExists(download.path()); }
+    }
+
+    private static boolean matchesFilter(String url, boolean total, String term) {
+        String suffix = "/api/v1/non-series-production" + (total ? "/total" : "");
+        return URI.create(url).getPath().endsWith(suffix) && term.equals(queryValue(url, "resourceSearch"));
+    }
+
+    private static String queryValue(String url, String name) {
+        String query = URI.create(url).getRawQuery();
+        if (query == null) return "";
+        return Arrays.stream(query.split("&")).map(pair -> pair.split("=", 2))
+                .filter(pair -> URLDecoder.decode(pair[0], StandardCharsets.UTF_8).equals(name))
+                .map(pair -> pair.length == 2 ? URLDecoder.decode(pair[1], StandardCharsets.UTF_8) : "")
+                .findFirst().orElse("");
     }
 
     public BigDecimal getDisplayedTotalVolume() {

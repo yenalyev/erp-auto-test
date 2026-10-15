@@ -16,6 +16,12 @@
         </classes>
     </test>
 
+    <test name="Non-Series Production resource filter UI">
+        <classes>
+            <class name="com.erp.tests.ui.NonSeriesResourceFilterUiTest"/>
+        </classes>
+    </test>
+
     <test name="Resources UI">
         <classes>
             <class name="com.erp.tests.ui.ResourceAutocompleteUiTest"/>
