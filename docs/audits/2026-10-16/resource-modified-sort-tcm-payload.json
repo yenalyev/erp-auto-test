@@ -1,0 +1,136 @@
+{
+  "feature": {
+    "featureId": "REQ-RES-SORT",
+    "title": "Сортування ресурсів за датою зміни",
+    "parentFeatureId": "REQ-RES",
+    "module": "RES",
+    "priority": "HIGH",
+    "description": "Регресія дефекту «500 помилка — Ресурси — сортування по Змінено»: обидва напрямки, обмежений каталог, пагінація, пошук і UI."
+  },
+  "acceptanceCriteria": [
+    {
+      "acKey": "AC-01",
+      "text": "Загальний каталог повертає HTTP 200 для ASC і DESC за датою зміни; порядок відповідає updatedAt, включно з ресурсом, відредагованим після створення інших ресурсів."
+    },
+    {
+      "acKey": "AC-02",
+      "text": "Каталог обмеженої локації підтримує сортування за датою зміни разом із пошуком і пагінацією без пропусків та дублів для різних дат; порожній результат повертає HTTP 200, content=[] і totalElements=0. Скидання повертає порядок за назвою."
+    },
+    {
+      "acKey": "AC-03",
+      "text": "Кліки Змінено перемикають ASC, DESC і початковий порядок за назвою; видимі рядки та дати відповідають API й часовому поясу браузера. Запити списку не повертають 5xx."
+    }
+  ],
+  "cases": [
+    {
+      "testId": "TC-RES-SORT-API-001",
+      "title": "Ресурси — сортування за Змінено у загальному каталозі ASC та DESC",
+      "apiAutomationIds": [
+        "TC-RES-SORT-API-001"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET /api/v1/resources без storageId, name=<маркер>, isActive=true, page=0, size=10, sort=updated_at,ASC.",
+          "expectedText": "HTTP 200, JSON; точні ID, назви та updatedAt у порядку B, A, C; page.totalElements=3."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Повторити запит із sort=updated_at,DESC.",
+          "expectedText": "HTTP 200; точний порядок C, A, B, часові мітки незмінні."
+        }
+      ],
+      "expectedResult": "Обидва напрямки працюють без HTTP 500; сортування враховує редагування, а не лише створення.",
+      "preconditions": "Dev доступний. Роль ADMIN. Створено три власні ресурси C, B, A з унікальним маркером, після A змінено примітку C. updatedAt різні: B < A < C. Є власна локація REGIONS, регіон RESOURCES і доступ лише до трьох ресурсів. Після тесту видалити регіон, архівувати локацію, деактивувати власні ресурси.",
+      "priority": "HIGH",
+      "severity": "CRITICAL",
+      "testType": "REGRESSION",
+      "status": "ACTIVE",
+      "tags": "resources,sorting,updated_at,regression,http500",
+      "description": "Регресія дефекту «500 помилка — Ресурси — сортування по Змінено».",
+      "testData": "Унікальний маркер res-mod-sort-<UUID>; три ресурси з різними updatedAt; без залишків та переміщень.",
+      "featureId": "REQ-RES-SORT",
+      "acKey": "AC-01"
+    },
+    {
+      "testId": "TC-RES-SORT-API-002",
+      "title": "Ресурси — сортування обмеженого каталогу з пагінацією та пошуком",
+      "apiAutomationIds": [
+        "TC-RES-SORT-API-002"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET /api/v1/resources для власного storageId, name=<маркер>, isActive=true, size=1, sort=updated_at,ASC; прочитати page=0,1,2.",
+          "expectedText": "Усі відповіді HTTP 200, по одному рядку; totalElements=3, totalPages=3; разом точний порядок B, A, C."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Повторити усі сторінки з sort=updated_at,DESC.",
+          "expectedText": "HTTP 200; точний порядок C, A, B без дублів та пропусків."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Для ASC і DESC шукати name=<маркер>-missing.",
+          "expectedText": "HTTP 200, content=[], page.totalElements=0."
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "Прибрати sort; name=<маркер>, size=10.",
+          "expectedText": "HTTP 200; три ресурси у початковому порядку за назвою."
+        }
+      ],
+      "expectedResult": "Native query обмеженого каталогу підтримує сортування, пошук, пагінацію та порожній результат без 500.",
+      "preconditions": "Dev доступний. Роль ADMIN. Створено три власні ресурси C, B, A з унікальним маркером, після A змінено примітку C. updatedAt різні: B < A < C. Є власна локація REGIONS, регіон RESOURCES і доступ лише до трьох ресурсів. Після тесту видалити регіон, архівувати локацію, деактивувати власні ресурси.",
+      "priority": "HIGH",
+      "severity": "CRITICAL",
+      "testType": "REGRESSION",
+      "status": "ACTIVE",
+      "tags": "resources,sorting,updated_at,regression,http500",
+      "description": "Регресія дефекту «500 помилка — Ресурси — сортування по Змінено».",
+      "testData": "Унікальний маркер res-mod-sort-<UUID>; три ресурси з різними updatedAt; без залишків та переміщень.",
+      "featureId": "REQ-RES-SORT",
+      "acKey": "AC-02"
+    },
+    {
+      "testId": "TC-RES-SORT-UI-001",
+      "title": "Ресурси — кліки Змінено перемикають ASC, DESC і скидання без 500",
+      "uiAutomationIds": [
+        "TC-RES-SORT-UI-001"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Увійти ADMIN, обрати власну обмежену локацію, відкрити /resources, шукати маркер.",
+          "expectedText": "Відображено три контрольні ресурси."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Натиснути заголовок Змінено.",
+          "expectedText": "GET sort=updated_at,ASC → 200; API та UI мають порядок B, A, C; дати dd.MM.yyyy HH:mm відповідають updatedAt і часовому поясу браузера."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Натиснути Змінено вдруге.",
+          "expectedText": "GET sort=updated_at,DESC → 200; API та UI мають порядок C, A, B і правильні дати."
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "Натиснути Змінено втретє.",
+          "expectedText": "GET без sort → 200; повернення до порядку за назвою. Жодний GET списку упродовж тесту не повернув 5xx."
+        }
+      ],
+      "expectedResult": "Таблиця працює після кожного кліку; порядок і дати відповідають серверним даним.",
+      "preconditions": "Dev доступний. Роль ADMIN. Створено три власні ресурси C, B, A з унікальним маркером, після A змінено примітку C. updatedAt різні: B < A < C. Є власна локація REGIONS, регіон RESOURCES і доступ лише до трьох ресурсів. Після тесту видалити регіон, архівувати локацію, деактивувати власні ресурси.",
+      "priority": "HIGH",
+      "severity": "CRITICAL",
+      "testType": "REGRESSION",
+      "status": "ACTIVE",
+      "tags": "resources,sorting,updated_at,regression,http500",
+      "description": "Регресія дефекту «500 помилка — Ресурси — сортування по Змінено».",
+      "testData": "Унікальний маркер res-mod-sort-<UUID>; три ресурси з різними updatedAt; без залишків та переміщень.",
+      "featureId": "REQ-RES-SORT",
+      "acKey": "AC-03"
+    }
+  ]
+}

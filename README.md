@@ -2,6 +2,9 @@ ERP API Test Automation Framework
  
 Data-Driven фреймворк для автоматизації тестування REST API, з фокусом на перевірці безпеки (RBAC) та контрактному тестуванні (Contract Testing).
 
+Сортування ресурсів за «Змінено»: [вимоги, тест-кейси та запуск](docs/REQ-RES-SORT.md).
+Окремий набір API/UI — `-Dsuite=resource-modified-sort`.
+
 Технологічний стек
 Java 21
 RestAssured — API клієнт.

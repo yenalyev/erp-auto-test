@@ -1,0 +1,26 @@
+{
+  "remoteRunId": "resource-modified-sort-dev-final-20261016-174901",
+  "runName": "Resources modified sort - dev - 2026-10-16",
+  "environment": "dev",
+  "suite": "resource-modified-sort",
+  "results": [
+    {
+      "testCaseId": "TC-RES-SORT-API-001",
+      "status": "PASS",
+      "durationMs": 828,
+      "executedAt": "2026-10-16T17:49:31"
+    },
+    {
+      "testCaseId": "TC-RES-SORT-API-002",
+      "status": "PASS",
+      "durationMs": 3632,
+      "executedAt": "2026-10-16T17:49:32"
+    },
+    {
+      "testCaseId": "TC-RES-SORT-UI-001",
+      "status": "PASS",
+      "durationMs": 5153,
+      "executedAt": "2026-10-16T17:49:43"
+    }
+  ]
+}
