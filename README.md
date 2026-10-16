@@ -78,6 +78,11 @@ mvn clean test -Denv=dev -Dsuite=regression
 
 Тематичні набори обираються через `-Dsuite=<назва XML без розширення>`:
 
+Вимоги й API/UI-покриття експорту **Аналітика → Для плану → Експорт в Excel** описані в
+[REQ-PLAN-ANL-EXCEL](docs/REQ-PLAN-ANL-EXCEL.md).
+Початковий вибір категорії «Боєприпас», очищення та повторне відкриття описані в
+[контракті початкової категорії](docs/REQ-PLAN-ANL-DEFAULT-CATEGORY.md).
+
 Експорт **Несерійне виробництво → Excel** за активними фільтрами: [фіча, 7 АС і 11 автокейсів](docs/REQ-NSP-EXCEL.md).
 API/UI-класи `NonSeriesExcelExportApiTest` і `NonSeriesExcelExportUiTest` входять до `non-series-production` та `regression`.
 

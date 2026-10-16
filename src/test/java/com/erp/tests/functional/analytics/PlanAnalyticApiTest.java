@@ -120,7 +120,8 @@ public class PlanAnalyticApiTest extends BaseFunctionalTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             REQ-PLAN-ANL / AC-01.
-            tk-ui PlanAnalyticsPage не шле rows без resourceIds/categoryIds.
+            Після явного очищення категорії «Боєприпас» UI не шле rows без resourceIds/categoryIds.
+            Початковий вибір категорії — стан UI; API не додає його до запиту без фільтрів.
             GET /analytics/plan/rows без вибору має повернути порожні content і totals
             (не агрегат по всьому каталогу). Anonymous — 401/403.
 

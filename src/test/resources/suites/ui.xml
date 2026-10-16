@@ -163,6 +163,7 @@
         <classes>
             <class name="com.erp.tests.ui.ProductionAnalyticsUiTest"/>
             <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
+            <class name="com.erp.tests.ui.PlanAnalyticsExcelExportUiTest"/>
         </classes>
     </test>
 

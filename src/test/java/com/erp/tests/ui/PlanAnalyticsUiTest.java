@@ -1,6 +1,7 @@
 package com.erp.tests.ui;
 
 import com.erp.annotations.TestCaseId;
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
 import com.erp.fixtures.ResourceFixture;
 import com.erp.models.response.ResourceResponse;
@@ -73,7 +74,7 @@ public class PlanAnalyticsUiTest extends BaseUITest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("""
             REQ-PLAN-ANL / AC-03.
-            Сайдбар «Аналітика» → «Для плану». Без вибору — порожній стан.
+            Сайдбар «Аналітика» → «Для плану». За замовчуванням — категорія «Боєприпас».
             Пресети «Місяць» (попередній повний місяць) і «3 місяці».
             Після вибору ресурсу — підсумки Вироблено / Відвантажено / Використано /
             Залишок усього / Залишок (Цукрарня); розгортання рядка — Цукрарня / Інші локації.
@@ -86,10 +87,10 @@ public class PlanAnalyticsUiTest extends BaseUITest {
 
         PlanAnalyticsPage analytics = new PlanAnalyticsPage(page).waitForLoaded();
         assertThat(page.url()).contains("/analytics/plan");
-        assertThat(analytics.isEmptyStateVisible())
-                .as("Порожній стан без вибору ресурсу/категорії")
-                .isTrue();
-        analytics.attachScreenshot("TC-PLAN-ANL-UI-001 — empty state");
+        page.waitForCondition(() -> analytics.selectedCategoryNames().contains(PlanAnalyticsPage.DEFAULT_CATEGORY));
+        assertThat(analytics.selectedCategoryNames()).containsExactly(PlanAnalyticsPage.DEFAULT_CATEGORY);
+        assertThat(analytics.isEmptyStateVisible()).isFalse();
+        analytics.attachScreenshot("TC-PLAN-ANL-UI-001 — default category");
 
         DateRangePickerComponent picker = analytics.periodPicker();
         assertThat(picker.isVisible()).as("DateRangePicker «Період»").isTrue();
@@ -118,7 +119,7 @@ public class PlanAnalyticsUiTest extends BaseUITest {
         picker.clickPreset(DateRangePickerComponent.PRESET_MONTH);
         picker.waitUntilRange(monthFrom, monthTo);
 
-        analytics.selectFirstResource();
+        analytics.clearCategories().selectFirstResource();
         analytics.attachScreenshot("TC-PLAN-ANL-UI-001 — resource selected");
         assertThat(analytics.hasTotals())
                 .as("Підсумки Вироблено / Відвантажено / Використано / залишки")
@@ -213,6 +214,7 @@ public class PlanAnalyticsUiTest extends BaseUITest {
         });
 
         PlanAnalyticsPage analytics = new PlanAnalyticsPage(page).open()
+                .clearCategories()
                 .selectResourcesByName(first.getName(), second.getName());
         page.waitForCondition(
                 () -> requestedIds.get().containsAll(Set.of(first.getId(), second.getId()))
@@ -265,6 +267,7 @@ public class PlanAnalyticsUiTest extends BaseUITest {
         });
 
         PlanAnalyticsPage analytics = new PlanAnalyticsPage(page).open()
+                .clearCategories()
                 .selectResourcesByName(first.getName(), second.getName());
         List<String> options = analytics.supplierOptions();
         assertThat(options)
@@ -327,6 +330,7 @@ public class PlanAnalyticsUiTest extends BaseUITest {
         });
 
         PlanAnalyticsPage analytics = new PlanAnalyticsPage(page).open()
+                .clearCategories()
                 .selectResourceByName(resource.getName())
                 .selectSuppliers(SUPPLIER_MOU);
         page.waitForCondition(() -> requestedSuppliers.get().equals(List.of(SUPPLIER_MOU)));
@@ -347,23 +351,20 @@ public class PlanAnalyticsUiTest extends BaseUITest {
         int beforeReload = rowsCalls.get();
         page.reload();
         analytics.waitForLoaded();
-        page.waitForCondition(() -> analytics.isEmptyStateVisible() && analytics.isSupplierFilterEmpty());
-        assertThat(rowsCalls.get()).as("reload без resource/category не викликає rows").isEqualTo(beforeReload);
+        page.waitForCondition(() -> rowsCalls.get() > beforeReload && analytics.isSupplierFilterEmpty()
+                && analytics.selectedCategoryNames().equals(List.of(PlanAnalyticsPage.DEFAULT_CATEGORY)));
+        assertThat(requestedSuppliers.get()).isEmpty();
 
-        analytics.selectResourceByName(resource.getName());
-        page.waitForCondition(
-                () -> rowsCalls.get() > beforeReload && requestedSuppliers.get().isEmpty());
-
+        // The restored category already supplies a target for the next supplier selection.
         analytics.selectSuppliers(SUPPLIER_MOU);
         page.waitForCondition(() -> requestedSuppliers.get().equals(List.of(SUPPLIER_MOU)));
         page.navigate(ConfigProvider.getBaseUrl() + "/production");
         page.waitForLoadState();
         int beforeReopen = rowsCalls.get();
         analytics.open();
-        page.waitForCondition(() -> analytics.isEmptyStateVisible() && analytics.isSupplierFilterEmpty());
-        assertThat(rowsCalls.get())
-                .as("повторне відкриття без resource/category не викликає rows")
-                .isEqualTo(beforeReopen);
+        page.waitForCondition(() -> rowsCalls.get() > beforeReopen && analytics.isSupplierFilterEmpty()
+                && analytics.selectedCategoryNames().equals(List.of(PlanAnalyticsPage.DEFAULT_CATEGORY)));
+        assertThat(requestedSuppliers.get()).isEmpty();
     }
 
     @Test(priority = 60)
@@ -388,18 +389,102 @@ public class PlanAnalyticsUiTest extends BaseUITest {
                     .setBody(analyticPage(List.of(analyticRow(resource, FIRST_UNIT_VALUES)))));
         });
 
-        PlanAnalyticsPage analytics = new PlanAnalyticsPage(page).open();
+        PlanAnalyticsPage analytics = new PlanAnalyticsPage(page).open().clearCategories();
+        page.waitForCondition(analytics::isEmptyStateVisible);
+        int beforeSupplier = rowsCalls.get();
         analytics.selectSuppliers(SUPPLIER_MOU);
-        assertThat(rowsCalls.get()).as("supplier сам не формує вибірку").isZero();
+        assertThat(rowsCalls.get()).as("supplier сам не формує вибірку після очищення категорії")
+                .isEqualTo(beforeSupplier);
         assertThat(analytics.isEmptyStateVisible()).isTrue();
 
         analytics.selectResourceByName(resource.getName());
         page.waitForCondition(
-                () -> rowsCalls.get() == 1
+                () -> rowsCalls.get() > beforeSupplier
                         && requestedSuppliers.get().equals(List.of(SUPPLIER_MOU)),
                 new com.microsoft.playwright.Page.WaitForConditionOptions()
                         .setTimeout(ConfigProvider.getUiTimeoutSeconds() * 1000));
         assertThat(requestedSuppliers.get()).containsExactly(SUPPLIER_MOU);
+    }
+
+    @Test(priority = 70)
+    @TestCaseId("TC-PLAN-ANL-UI-008")
+    @Story("Default ammunition category loads real analytics")
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("REQ-PLAN-ANL / AC-03. Без кліків за фільтрами вибрано тільки Боєприпас; "
+            + "rows автоматично передає ID з довідника та попередній повний місяць. Реальний backend.")
+    public void defaultAmmunitionCategoryRequestsRowsAutomatically() throws Exception {
+        var categories = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CATEGORY_GET_ALL, UserRole.ADMIN);
+        assertThat(categories.statusCode()).isEqualTo(200);
+        var matches = JSON.readTree(categories.asString()).findValues("name");
+        assertThat(matches.stream().filter(n -> PlanAnalyticsPage.DEFAULT_CATEGORY.equals(n.asText())).count())
+                .as("Однозначна категорія Боєприпас у довіднику").isEqualTo(1);
+        String expectedId = null;
+        for (JsonNode category : JSON.readTree(categories.asString())) {
+            if (PlanAnalyticsPage.DEFAULT_CATEGORY.equals(category.path("name").asText())) {
+                expectedId = category.path("id").asText();
+            }
+        }
+        assertThat(expectedId).isNotBlank();
+        PlanAnalyticsPage analytics = new PlanAnalyticsPage(page);
+        Response rows = page.waitForResponse(r -> r.url().contains("/api/v1/analytics/plan/rows")
+                && r.request().method().equals("GET"), analytics::open);
+        assertThat(rows.status()).isEqualTo(200);
+        page.waitForCondition(() -> analytics.selectedCategoryNames().equals(List.of(PlanAnalyticsPage.DEFAULT_CATEGORY)));
+        assertThat(queryValues(rows.url(), "categoryIds")).containsExactly(expectedId);
+        assertThat(queryValues(rows.url(), "resourceIds")).isEmpty();
+        assertThat(queryValues(rows.url(), "fromDate"))
+                .containsExactly(PlanAnalyticsPage.lastFullMonthFrom(analytics.browserToday()).toString());
+        assertThat(queryValues(rows.url(), "toDate"))
+                .containsExactly(PlanAnalyticsPage.lastFullMonthTo(analytics.browserToday()).toString());
+        JsonNode body = JSON.readTree(rows.text());
+        for (JsonNode row : body.path("content")) {
+            assertThat(row.path("resourceCategoryId").asText()).isEqualTo(expectedId);
+        }
+        page.waitForCondition(analytics::hasTotals);
+        assertThat(analytics.isEmptyStateVisible()).isFalse();
+        analytics.attachScreenshot("TC-PLAN-ANL-UI-008 — automatic ammunition selection");
+    }
+
+    @Test(priority = 80)
+    @TestCaseId("TC-PLAN-ANL-UI-009")
+    @Story("Explicit category selection overrides the initial default")
+    @Description("REQ-PLAN-ANL / AC-03. Очищення категорії показує порожній стан; зміна періоду "
+            + "не повертає дефолт. Інша категорія замінює вибір, reload/reopen повертають Боєприпас.")
+    public void defaultCategoryCanBeClearedReplacedAndRestoredOnReopen() throws Exception {
+        var categories = apiExecutor.execute(ApiEndpointDefinition.RESOURCE_CATEGORY_GET_ALL, UserRole.ADMIN);
+        assertThat(categories.statusCode()).isEqualTo(200);
+        JsonNode other = null;
+        for (JsonNode category : JSON.readTree(categories.asString())) {
+            if (!PlanAnalyticsPage.DEFAULT_CATEGORY.equals(category.path("name").asText())) {
+                other = category;
+                break;
+            }
+        }
+        assertThat(other).as("Інша категорія для перевірки ручного вибору").isNotNull();
+        String otherName = other.path("name").asText();
+        String otherId = other.path("id").asText();
+        AtomicInteger calls = new AtomicInteger();
+        page.onRequest(r -> { if (r.url().contains("/api/v1/analytics/plan/rows")) calls.incrementAndGet(); });
+        PlanAnalyticsPage analytics = new PlanAnalyticsPage(page).open().clearCategories();
+        page.waitForCondition(analytics::isEmptyStateVisible);
+        int afterClear = calls.get();
+        analytics.periodPicker().clickPreset(DateRangePickerComponent.PRESET_3_MONTHS);
+        assertThat(analytics.selectedCategoryNames()).isEmpty();
+        assertThat(analytics.isEmptyStateVisible()).isTrue();
+        assertThat(calls.get()).isEqualTo(afterClear);
+        Response rows = page.waitForResponse(r -> r.url().contains("/api/v1/analytics/plan/rows"),
+                () -> analytics.selectCategory(otherName));
+        assertThat(rows.status()).isEqualTo(200);
+        assertThat(queryValues(rows.url(), "categoryIds")).containsExactly(otherId);
+        assertThat(analytics.selectedCategoryNames()).containsExactly(otherName);
+        page.reload();
+        analytics.waitForLoaded();
+        page.waitForCondition(() -> analytics.selectedCategoryNames().equals(List.of(PlanAnalyticsPage.DEFAULT_CATEGORY)));
+        analytics.clearCategories();
+        page.navigate(ConfigProvider.getBaseUrl() + "/production");
+        analytics.open();
+        page.waitForCondition(() -> analytics.selectedCategoryNames().equals(List.of(PlanAnalyticsPage.DEFAULT_CATEGORY)));
+        analytics.attachScreenshot("TC-PLAN-ANL-UI-009 — default restored");
     }
 
     private static String unitLabel(ResourceResponse resource) {

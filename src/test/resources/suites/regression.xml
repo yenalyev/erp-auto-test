@@ -141,6 +141,7 @@
             <class name="com.erp.tests.functional.shift.ShiftCrudApiTest"/>
             <class name="com.erp.tests.functional.analytics.AnalyticsAuditApiTest"/>
             <class name="com.erp.tests.functional.analytics.PlanAnalyticApiTest"/>
+            <class name="com.erp.tests.functional.analytics.PlanAnalyticsExcelExportApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessComponentTechMapsApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
@@ -297,6 +298,7 @@
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
             <class name="com.erp.tests.ui.ProductionAnalyticsUiTest"/>
             <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
+            <class name="com.erp.tests.ui.PlanAnalyticsExcelExportUiTest"/>
             <class name="com.erp.tests.ui.PlanExecutionImprovementUiTest"/>
         </classes>
     </test>

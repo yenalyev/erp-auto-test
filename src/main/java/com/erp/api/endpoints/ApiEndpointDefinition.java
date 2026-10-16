@@ -3191,6 +3191,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    PLAN_ANALYTIC_EXPORT_GET(
+            "/api/v1/analytics/plan/export",
+            Method.GET,
+            null,
+            "Plan analytics XLSX: totals and all filtered resources",
+            null,
+            null,
+            null
+    ),
+
     PLAN_ANALYTIC_STOCK_GET(
             "/api/v1/analytics/plan/stock/{resourceId}",
             Method.GET,

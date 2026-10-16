@@ -18,6 +18,7 @@
             <class name="com.erp.tests.framework.RegressionSuiteCompletenessTest"/>
             <class name="com.erp.tests.framework.BatchIdentityContractTest"/>
             <class name="com.erp.tests.framework.XlsxColumnContractTest"/>
+            <class name="com.erp.tests.framework.PlanAnalyticsExportContractTest"/>
             <class name="com.erp.tests.framework.NonSeriesExportContractTest"/>
             <class name="com.erp.utils.helpers.InventorySnapshotContractTest"/>
         </classes>
