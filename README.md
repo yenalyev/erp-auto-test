@@ -100,6 +100,9 @@ mvn test -Denv=dev -Dsuite=relocations
 mvn test -Denv=dev -Dsuite=ui
 ```
 
+Інвентаризація під час паралельної видачі: [контракт фікса та 7 API/UI сценаріїв](docs/REQ-WMS-003-concurrent-issue.md).
+Запуск: `-Dsuite=inventory-concurrent-issue`.
+
 Для разового запуску класу або методу використовуйте `-Dtest`, без створення нового XML:
 
 ```bash

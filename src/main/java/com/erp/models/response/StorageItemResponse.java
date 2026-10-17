@@ -17,4 +17,5 @@ public class StorageItemResponse {
     private Double amount;
     private Integer weight;
     private Double alertLimit;
+    private Long version;
 }

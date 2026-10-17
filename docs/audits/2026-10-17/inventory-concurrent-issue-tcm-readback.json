@@ -1,0 +1,122 @@
+{
+  "feature": {
+    "featureId": "REQ-WMS-003",
+    "id": 10,
+    "documentationPresent": true,
+    "criteria": [
+      {
+        "id": 781,
+        "acId": "AC-21",
+        "text": "Якщо після відкриття форми інвентаризації відбулася видача ресурсу, збереження застарілих залишків відхиляється з 412 та актуальним snapshot і переліком конфліктних ресурсів. Відхилений запит не змінює жодного залишку, не створює інвентаризаційних операцій та не закриває процес. Часткова й повна видача, видача редагованого ресурсу та повторна видача після узгодження захищені однаково.",
+        "featureDbId": 10,
+        "featureId": "REQ-WMS-003",
+        "featureTitle": "Інвентаризація",
+        "testIds": [
+          "TC-INV-CONCURRENT-API-001",
+          "TC-INV-CONCURRENT-API-003",
+          "TC-INV-CONCURRENT-API-004"
+        ]
+      },
+      {
+        "id": 782,
+        "acId": "AC-22",
+        "text": "Форма показує конфліктні ресурси й кількості «було / зараз / ваше» та блокує збереження до узгодження. Можна прийняти всі актуальні кількості, узгодити ресурси окремо або свідомо залишити своє значення. Коментар і неконфліктні зміни зберігаються. Після прийняття актуальних залишків видані ресурси не відновлюються й не потрапляють у розбіжності; при явному виборі свого значення різниця обчислюється від актуального залишку.",
+        "featureDbId": 10,
+        "featureId": "REQ-WMS-003",
+        "featureTitle": "Інвентаризація",
+        "testIds": [
+          "TC-INV-CONCURRENT-API-002",
+          "TC-INV-CONCURRENT-UI-001",
+          "TC-INV-CONCURRENT-UI-002",
+          "TC-INV-CONCURRENT-UI-003"
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "testId": "TC-INV-CONCURRENT-API-001",
+        "acId": "AC-21",
+        "apiAutomationIds": [
+          "TC-INV-CONCURRENT-API-001"
+        ],
+        "uiAutomationIds": [],
+        "steps": 4
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "testId": "TC-INV-CONCURRENT-API-002",
+        "acId": "AC-22",
+        "apiAutomationIds": [
+          "TC-INV-CONCURRENT-API-002"
+        ],
+        "uiAutomationIds": [],
+        "steps": 4
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "testId": "TC-INV-CONCURRENT-API-003",
+        "acId": "AC-21",
+        "apiAutomationIds": [
+          "TC-INV-CONCURRENT-API-003"
+        ],
+        "uiAutomationIds": [],
+        "steps": 4
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "testId": "TC-INV-CONCURRENT-API-004",
+        "acId": "AC-21",
+        "apiAutomationIds": [
+          "TC-INV-CONCURRENT-API-004"
+        ],
+        "uiAutomationIds": [],
+        "steps": 4
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "testId": "TC-INV-CONCURRENT-UI-001",
+        "acId": "AC-22",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-INV-CONCURRENT-UI-001"
+        ],
+        "steps": 5
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "testId": "TC-INV-CONCURRENT-UI-002",
+        "acId": "AC-22",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-INV-CONCURRENT-UI-002"
+        ],
+        "steps": 4
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "testId": "TC-INV-CONCURRENT-UI-003",
+        "acId": "AC-22",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-INV-CONCURRENT-UI-003"
+        ],
+        "steps": 4
+      }
+    }
+  ]
+}

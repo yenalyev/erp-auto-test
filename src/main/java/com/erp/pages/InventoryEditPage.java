@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Page Object for inventory conduct form.
@@ -38,8 +39,7 @@ public class InventoryEditPage extends BasePage {
     public InventoryEditPage waitForLoaded() {
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions()
-                        .setName(TITLE_PREFIX)
-                        .setExact(true))
+                        .setName(Pattern.compile("^" + TITLE_PREFIX + "(?:\\s|$)")))
                 .waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
         // h1 renders while Skeleton is still showing; Card (comment + rows) appears after GET stock.
         commentField().waitFor(new Locator.WaitForOptions()
@@ -200,6 +200,35 @@ public class InventoryEditPage extends BasePage {
 
     public boolean hasSaveError() {
         return page.locator("[role='alert']").isVisible();
+    }
+
+    public InventoryEditPage waitForConflicts() {
+        page.getByTestId("inventory-conflicts").waitFor();
+        return this;
+    }
+
+    public String conflictText(long resourceId) {
+        return page.getByTestId("inventory-conflict-" + resourceId).innerText();
+    }
+
+    public int conflictCount() {
+        return page.locator("[data-testid^='inventory-conflict-']")
+                .filter(new Locator.FilterOptions().setHas(page.locator("p.font-medium"))).count();
+    }
+
+    public InventoryEditPage takeAllCurrentAmounts() {
+        page.getByTestId("inventory-conflicts-take-all").click();
+        return this;
+    }
+
+    public InventoryEditPage takeCurrentAmount(long resourceId) {
+        page.getByTestId("inventory-conflict-" + resourceId + "-take").click();
+        return this;
+    }
+
+    public InventoryEditPage keepOwnAmount(long resourceId) {
+        page.getByTestId("inventory-conflict-" + resourceId + "-keep").click();
+        return this;
     }
 
     private void fillAutocompleteSearch(Locator search, String searchToken) {

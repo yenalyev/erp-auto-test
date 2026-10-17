@@ -20,4 +20,7 @@ public class InventoryRequest {
 
     /** Optional free-text note copied onto inventory history rows (ADDED_INV / REMOVED_INV). */
     private String comment;
+
+    /** Resource ids present when the form was loaded (optimistic inventory concurrency check). */
+    private List<Long> knownResourceIds;
 }

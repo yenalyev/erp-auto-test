@@ -132,6 +132,7 @@
 
     <test name="Inventory UI">
         <classes>
+            <class name="com.erp.tests.ui.InventoryConcurrentIssueUiTest"/>
             <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>
             <class name="com.erp.tests.ui.BatchInspectorUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>

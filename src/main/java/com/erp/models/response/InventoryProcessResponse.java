@@ -25,5 +25,7 @@ public class InventoryProcessResponse {
     private Instant closedAt;
     private String resolutionComment;
     private String resolutionBy;
+    private String completedBy;
+    private String completedComment;
     private JsonNode diff;
 }
