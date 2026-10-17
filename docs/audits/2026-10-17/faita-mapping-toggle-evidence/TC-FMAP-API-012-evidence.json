@@ -1,0 +1,15 @@
+{
+  "kind" : "INITIATORS",
+  "scenario" : "DANGLING_RESOURCE_ID",
+  "sourceId" : 301,
+  "controlSourceId" : 330,
+  "targetVisibleBefore" : true,
+  "aliasId" : 328,
+  "storedResourceId" : 10024437524,
+  "aliasListedWithNullResource" : true,
+  "targetVisibleWithInvalidAlias" : false,
+  "controlVisibleDuring" : true,
+  "targetVisibleAfterCleanup" : true,
+  "controlVisibleAfterCleanup" : true,
+  "ownedAliasesRemoved" : true
+}

@@ -1,0 +1,80 @@
+{
+  "method": "Static review of current local SUT sources plus read-only dev catalog inspection; no import executed",
+  "scope": "Built-in FaitaImportJob and FaitaImportRepository; external database restore/ETL/manual scripts are not verified",
+  "importCreatesAliases": false,
+  "importUpdatesAliasResourceId": false,
+  "importDeletesErpResources": false,
+  "importWriteTargets": [
+    "faita.ammo_agg_v3",
+    "faita.ammunition",
+    "faita.initiators"
+  ],
+  "materializedViewsRefreshed": [
+    "faita.vw_ammo_usage",
+    "analytics.vw_faita_by_day"
+  ],
+  "aliasWrites": "Mapping facade save paths resolve an existing ERP resource; controller validator rejects NULL and missing resource IDs",
+  "deletion": "Ordinary resource DELETE uses softDelete: is_active=false; row and alias reference remain",
+  "caveat": "Import replaces FAITA dictionaries, so a source ammunition/initiator may disappear while an alias survives. That is a source-side reference and does not create NULL/dangling public.resource references.",
+  "dbProtection": "Dev resource_id columns nullable, no alias foreign keys; no non-internal triggers on inspected import, alias or resource tables",
+  "conclusion": "No path found in the reviewed standard import that creates this invalid resource reference; pre-existing bad aliases would survive it",
+  "classification": {
+    "type": "Conditional robustness defect for inconsistent/legacy data",
+    "priority": "LOW",
+    "severity": "MINOR",
+    "releaseBlocker": false,
+    "reason": "No naturally existing invalid alias found on dev; standard UI/API reject it; reviewed import does not create it; previous reproduction used JDBC fixtures"
+  },
+  "sources": [
+    {
+      "role": "job",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/java/org/pm/tk/fight/process/FaitaImportJob.java",
+      "sha256": "e4b350c419f6e566a4861b4b7325ea3c567b240fb0829ac21efc6452689a1505"
+    },
+    {
+      "role": "importRepository",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/java/org/pm/tk/fight/dao/FaitaImportRepository.java",
+      "sha256": "2b1a7de86acf2603aa115f6336d8a7a898e0a562440f7f25e108259620fb65cb"
+    },
+    {
+      "role": "mappingFacade",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/java/org/pm/tk/facade/faitamapping/FaitaMappingFacade.java",
+      "sha256": "389ca28be6e17fd4d7d7ad2a2be290d84ed9d56f5b9e53e30fc01cb908af2806"
+    },
+    {
+      "role": "validator",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/java/org/pm/tk/controller/faitamapping/FaitaMappingValidator.java",
+      "sha256": "e819f2a4a4fe21c8bbbf405b15d9f6ad04ec5d065e9dee459d55834f46fa6a25"
+    },
+    {
+      "role": "resourceService",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/java/org/pm/tk/service/ResourceService.java",
+      "sha256": "5d3f4f6a61fa34ba35d44f85539e945d23821035bfd05652acd611f9753be277"
+    },
+    {
+      "role": "resourceController",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/java/org/pm/tk/controller/ResourceController.java",
+      "sha256": "d99477ac41caa80d851cdb4d55acf2ccc1ed67a76b50a3a8de66ac908dc55c2e"
+    },
+    {
+      "role": "aliasEntity",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/java/org/pm/tk/entity/faitamapping/ResourceAlias.java",
+      "sha256": "6fec12658973d1a94199f3c9211c918a78439a40ccc27d5949d6690cbc8ac719"
+    },
+    {
+      "role": "initiatorAliasEntity",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/java/org/pm/tk/entity/faitamapping/InitiatorAlias.java",
+      "sha256": "189f34085c7005dff38b04b8fbdf1db52b9c64fa4cdf36e62b31b479b09db9a5"
+    },
+    {
+      "role": "viewDefinition",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/resources/db/migration/V149__faita_schema.sql",
+      "sha256": "538641d62ede92eb2b5b252e11fcfd711d6d65edb773e92ee512b88b15c38d38"
+    },
+    {
+      "role": "aliasMigration",
+      "path": "C:/Users/gigam/IdeaProjects/tk/src/main/resources/db/migration/V156__faita_mapping.sql",
+      "sha256": "30eaa104f6f1857f15e049f1cfb11f078f357ad786a8c2a3f14daaed0e363c74"
+    }
+  ]
+}

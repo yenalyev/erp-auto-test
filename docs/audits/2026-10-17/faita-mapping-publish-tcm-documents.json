@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-17",
+  "source": "docs/REQ-FAITA-MAP.md",
+  "sourceSha256": "85cb8380c94ca9f28bbc09766561be7e99e1f04c8f33ba4fd9980dfdd6dba98d",
+  "operation": "Documentation refresh before commit and push; read before update, read after update, compare exact source text.",
+  "dev": {
+    "url": "http://localhost:18100",
+    "projectId": 1,
+    "features": [
+      {
+        "featureId": "REQ-FAITA-MAP",
+        "documentationMatchesSource": true,
+        "acCount": 1
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-AUDIT",
+        "documentationMatchesSource": true,
+        "acCount": 2
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-AMMO",
+        "documentationMatchesSource": true,
+        "acCount": 8
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-INIT",
+        "documentationMatchesSource": true,
+        "acCount": 8
+      }
+    ],
+    "verification": "scripts/sync_tcm_faita_expense_mapping.py --refresh-docs-only completed successfully"
+  },
+  "prod": {
+    "url": "http://tcm.lab",
+    "projectId": 1,
+    "features": [
+      {
+        "featureId": "REQ-FAITA-MAP",
+        "documentationMatchesSource": true,
+        "acCount": 1
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-AUDIT",
+        "documentationMatchesSource": true,
+        "acCount": 2
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-AMMO",
+        "documentationMatchesSource": true,
+        "acCount": 8
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-INIT",
+        "documentationMatchesSource": true,
+        "acCount": 8
+      }
+    ]
+  },
+  "testExecutionEnvironment": "ERP dev; this documentation refresh does not execute tests against ERP prod."
+}

@@ -460,4 +460,11 @@
         </classes>
     </test>
 
+    <test name="FAITA expense mapping dictionaries (JDBC required)">
+        <classes>
+            <class name="com.erp.tests.functional.storage.FaitaExpenseMappingDbTest"/>
+            <class name="com.erp.tests.functional.storage.FaitaExpenseMappingApiTest"/>
+            <class name="com.erp.tests.ui.FaitaExpenseMappingUiTest"/>
+        </classes>
+    </test>
 </suite>

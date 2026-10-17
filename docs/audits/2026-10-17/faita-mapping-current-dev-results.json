@@ -1,0 +1,252 @@
+{
+  "environment": "dev",
+  "sourceAllureDirectory": "target\\faita-mapping-current-review-allure",
+  "counts": {
+    "PASS": 27
+  },
+  "results": [
+    {
+      "testCaseId": "TC-FMAP-API-001",
+      "status": "PASS",
+      "durationMs": 329,
+      "executedAt": "2026-10-17T13:03:00",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-002",
+      "status": "PASS",
+      "durationMs": 323,
+      "executedAt": "2026-10-17T13:03:04",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-003",
+      "status": "PASS",
+      "durationMs": 1638,
+      "executedAt": "2026-10-17T13:02:57",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-004",
+      "status": "PASS",
+      "durationMs": 1616,
+      "executedAt": "2026-10-17T13:03:02",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-005",
+      "status": "PASS",
+      "durationMs": 2403,
+      "executedAt": "2026-10-17T13:02:55",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-006",
+      "status": "PASS",
+      "durationMs": 1295,
+      "executedAt": "2026-10-17T13:03:00",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-007",
+      "status": "PASS",
+      "durationMs": 949,
+      "executedAt": "2026-10-17T13:02:59",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-008",
+      "status": "PASS",
+      "durationMs": 983,
+      "executedAt": "2026-10-17T13:03:03",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-001",
+      "status": "PASS",
+      "durationMs": 574,
+      "executedAt": "2026-10-17T12:59:59",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-002",
+      "status": "PASS",
+      "durationMs": 226,
+      "executedAt": "2026-10-17T13:00:02",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-003",
+      "status": "PASS",
+      "durationMs": 1349,
+      "executedAt": "2026-10-17T13:00:00",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-004",
+      "status": "PASS",
+      "durationMs": 1237,
+      "executedAt": "2026-10-17T13:00:01",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-001",
+      "status": "PASS",
+      "durationMs": 1641,
+      "executedAt": "2026-10-17T13:02:47",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-001.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-002",
+      "status": "PASS",
+      "durationMs": 18969,
+      "executedAt": "2026-10-17T13:00:10",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-002.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-003",
+      "status": "PASS",
+      "durationMs": 7250,
+      "executedAt": "2026-10-17T13:01:38",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-003.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-004",
+      "status": "PASS",
+      "durationMs": 10589,
+      "executedAt": "2026-10-17T13:00:41",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-004.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-005",
+      "status": "PASS",
+      "durationMs": 9654,
+      "executedAt": "2026-10-17T13:01:56",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-005.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-006",
+      "status": "PASS",
+      "durationMs": 10655,
+      "executedAt": "2026-10-17T13:00:53",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-006.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-007",
+      "status": "PASS",
+      "durationMs": 9696,
+      "executedAt": "2026-10-17T13:02:06",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-007.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-008",
+      "status": "PASS",
+      "durationMs": 10752,
+      "executedAt": "2026-10-17T13:01:25",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-008.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-009",
+      "status": "PASS",
+      "durationMs": 10065,
+      "executedAt": "2026-10-17T13:02:35",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-009.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-010",
+      "status": "PASS",
+      "durationMs": 8941,
+      "executedAt": "2026-10-17T13:01:05",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-010.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-011",
+      "status": "PASS",
+      "durationMs": 7131,
+      "executedAt": "2026-10-17T13:02:17",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-011.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-012",
+      "status": "PASS",
+      "durationMs": 8504,
+      "executedAt": "2026-10-17T13:01:16",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-012.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-013",
+      "status": "PASS",
+      "durationMs": 8065,
+      "executedAt": "2026-10-17T13:02:26",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-013.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-014",
+      "status": "PASS",
+      "durationMs": 8171,
+      "executedAt": "2026-10-17T13:00:32",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-014.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-015",
+      "status": "PASS",
+      "durationMs": 7726,
+      "executedAt": "2026-10-17T13:01:46",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "screenshot": "faita-mapping-current-evidence/TC-FMAP-UI-015.png"
+    }
+  ],
+  "retiredCaseIds": [
+    "TC-FMAP-API-009",
+    "TC-FMAP-API-010",
+    "TC-FMAP-API-011",
+    "TC-FMAP-API-012"
+  ],
+  "configurationFailureCount": 0,
+  "frameworkPass": 90,
+  "historicalRunsPreserved": {
+    "dev": 198,
+    "prod": 120
+  }
+}

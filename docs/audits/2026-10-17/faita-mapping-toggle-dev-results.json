@@ -1,0 +1,433 @@
+{
+  "environment": "dev",
+  "url": "https://dev.cukerochka.sbs/faita-mapping",
+  "timezone": "Europe/Kyiv (+03:00 on 2026-10-17)",
+  "counts": {
+    "PASS": 27,
+    "FAIL": 4
+  },
+  "results": [
+    {
+      "testCaseId": "TC-FMAP-API-001",
+      "status": "PASS",
+      "durationMs": 366,
+      "executedAt": "2026-10-17T10:50:00",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-002",
+      "status": "PASS",
+      "durationMs": 325,
+      "executedAt": "2026-10-17T10:50:05",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-003",
+      "status": "PASS",
+      "durationMs": 1756,
+      "executedAt": "2026-10-17T10:49:58",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-004",
+      "status": "PASS",
+      "durationMs": 1668,
+      "executedAt": "2026-10-17T10:50:02",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-005",
+      "status": "PASS",
+      "durationMs": 2322,
+      "executedAt": "2026-10-17T10:49:55",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-006",
+      "status": "PASS",
+      "durationMs": 1387,
+      "executedAt": "2026-10-17T10:50:01",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-007",
+      "status": "PASS",
+      "durationMs": 1010,
+      "executedAt": "2026-10-17T10:49:59",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-008",
+      "status": "PASS",
+      "durationMs": 900,
+      "executedAt": "2026-10-17T10:50:04",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-009",
+      "status": "FAIL",
+      "durationMs": 4378,
+      "executedAt": "2026-10-17T10:50:12",
+      "errorMessage": "[AMMO source 3197 has no usable ERP resource and must remain in the unmapped queue; evidence={kind=AMMO, scenario=NULL_RESOURCE_ID, sourceId=3197, controlSourceId=4538, targetVisibleBefore=true, aliasId=2886, storedResourceId=null, aliasListedWithNullResource=true, targetVisibleWithInvalidAlias=false, controlVisibleDuring=true, targetVisibleAfterCleanup=true, controlVisibleAfterCleanup=true, ownedAliasesRemoved=true}] \r\nExpecting value to be true but was false",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "failed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "integrityEvidence": {
+        "kind": "AMMO",
+        "scenario": "NULL_RESOURCE_ID",
+        "sourceId": 3197,
+        "controlSourceId": 4538,
+        "targetVisibleBefore": true,
+        "aliasId": 2886,
+        "storedResourceId": null,
+        "aliasListedWithNullResource": true,
+        "targetVisibleWithInvalidAlias": false,
+        "controlVisibleDuring": true,
+        "targetVisibleAfterCleanup": true,
+        "controlVisibleAfterCleanup": true,
+        "ownedAliasesRemoved": true
+      },
+      "integrityEvidenceFile": "faita-mapping-toggle-evidence/TC-FMAP-API-009-evidence.json"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-010",
+      "status": "FAIL",
+      "durationMs": 3979,
+      "executedAt": "2026-10-17T10:50:21",
+      "errorMessage": "[INITIATORS source 301 has no usable ERP resource and must remain in the unmapped queue; evidence={kind=INITIATORS, scenario=NULL_RESOURCE_ID, sourceId=301, controlSourceId=330, targetVisibleBefore=true, aliasId=329, storedResourceId=null, aliasListedWithNullResource=true, targetVisibleWithInvalidAlias=false, controlVisibleDuring=true, targetVisibleAfterCleanup=true, controlVisibleAfterCleanup=true, ownedAliasesRemoved=true}] \r\nExpecting value to be true but was false",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "failed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "integrityEvidence": {
+        "kind": "INITIATORS",
+        "scenario": "NULL_RESOURCE_ID",
+        "sourceId": 301,
+        "controlSourceId": 330,
+        "targetVisibleBefore": true,
+        "aliasId": 329,
+        "storedResourceId": null,
+        "aliasListedWithNullResource": true,
+        "targetVisibleWithInvalidAlias": false,
+        "controlVisibleDuring": true,
+        "targetVisibleAfterCleanup": true,
+        "controlVisibleAfterCleanup": true,
+        "ownedAliasesRemoved": true
+      },
+      "integrityEvidenceFile": "faita-mapping-toggle-evidence/TC-FMAP-API-010-evidence.json"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-011",
+      "status": "FAIL",
+      "durationMs": 4922,
+      "executedAt": "2026-10-17T10:50:07",
+      "errorMessage": "[AMMO source 3197 has no usable ERP resource and must remain in the unmapped queue; evidence={kind=AMMO, scenario=DANGLING_RESOURCE_ID, sourceId=3197, controlSourceId=4538, targetVisibleBefore=true, aliasId=2885, storedResourceId=9049429428, aliasListedWithNullResource=true, targetVisibleWithInvalidAlias=false, controlVisibleDuring=true, targetVisibleAfterCleanup=true, controlVisibleAfterCleanup=true, ownedAliasesRemoved=true}] \r\nExpecting value to be true but was false",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "failed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "integrityEvidence": {
+        "kind": "AMMO",
+        "scenario": "DANGLING_RESOURCE_ID",
+        "sourceId": 3197,
+        "controlSourceId": 4538,
+        "targetVisibleBefore": true,
+        "aliasId": 2885,
+        "storedResourceId": 9049429428,
+        "aliasListedWithNullResource": true,
+        "targetVisibleWithInvalidAlias": false,
+        "controlVisibleDuring": true,
+        "targetVisibleAfterCleanup": true,
+        "controlVisibleAfterCleanup": true,
+        "ownedAliasesRemoved": true
+      },
+      "integrityEvidenceFile": "faita-mapping-toggle-evidence/TC-FMAP-API-011-evidence.json"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-012",
+      "status": "FAIL",
+      "durationMs": 4164,
+      "executedAt": "2026-10-17T10:50:17",
+      "errorMessage": "[INITIATORS source 301 has no usable ERP resource and must remain in the unmapped queue; evidence={kind=INITIATORS, scenario=DANGLING_RESOURCE_ID, sourceId=301, controlSourceId=330, targetVisibleBefore=true, aliasId=328, storedResourceId=10024437524, aliasListedWithNullResource=true, targetVisibleWithInvalidAlias=false, controlVisibleDuring=true, targetVisibleAfterCleanup=true, controlVisibleAfterCleanup=true, ownedAliasesRemoved=true}] \r\nExpecting value to be true but was false",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "failed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "integrityEvidence": {
+        "kind": "INITIATORS",
+        "scenario": "DANGLING_RESOURCE_ID",
+        "sourceId": 301,
+        "controlSourceId": 330,
+        "targetVisibleBefore": true,
+        "aliasId": 328,
+        "storedResourceId": 10024437524,
+        "aliasListedWithNullResource": true,
+        "targetVisibleWithInvalidAlias": false,
+        "controlVisibleDuring": true,
+        "targetVisibleAfterCleanup": true,
+        "controlVisibleAfterCleanup": true,
+        "ownedAliasesRemoved": true
+      },
+      "integrityEvidenceFile": "faita-mapping-toggle-evidence/TC-FMAP-API-012-evidence.json"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-001",
+      "status": "PASS",
+      "durationMs": 508,
+      "executedAt": "2026-10-17T10:47:18",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-002",
+      "status": "PASS",
+      "durationMs": 235,
+      "executedAt": "2026-10-17T10:47:21",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-003",
+      "status": "PASS",
+      "durationMs": 1238,
+      "executedAt": "2026-10-17T10:47:18",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-004",
+      "status": "PASS",
+      "durationMs": 1225,
+      "executedAt": "2026-10-17T10:47:19",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-001",
+      "status": "PASS",
+      "durationMs": 2406,
+      "executedAt": "2026-10-17T10:49:47",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-001.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-002",
+      "status": "PASS",
+      "durationMs": 10184,
+      "executedAt": "2026-10-17T10:47:26",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-002.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-003",
+      "status": "PASS",
+      "durationMs": 6420,
+      "executedAt": "2026-10-17T10:48:40",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-003.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-004",
+      "status": "PASS",
+      "durationMs": 10801,
+      "executedAt": "2026-10-17T10:47:46",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-004.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-005",
+      "status": "PASS",
+      "durationMs": 9480,
+      "executedAt": "2026-10-17T10:48:56",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-005.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-006",
+      "status": "PASS",
+      "durationMs": 10998,
+      "executedAt": "2026-10-17T10:47:58",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-006.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-007",
+      "status": "PASS",
+      "durationMs": 9324,
+      "executedAt": "2026-10-17T10:49:07",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-007.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-008",
+      "status": "PASS",
+      "durationMs": 10127,
+      "executedAt": "2026-10-17T10:48:29",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-008.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-009",
+      "status": "PASS",
+      "durationMs": 10760,
+      "executedAt": "2026-10-17T10:49:35",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-009.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-010",
+      "status": "PASS",
+      "durationMs": 7485,
+      "executedAt": "2026-10-17T10:48:11",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-010.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-011",
+      "status": "PASS",
+      "durationMs": 7052,
+      "executedAt": "2026-10-17T10:49:17",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-011.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-012",
+      "status": "PASS",
+      "durationMs": 8067,
+      "executedAt": "2026-10-17T10:48:19",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-012.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-013",
+      "status": "PASS",
+      "durationMs": 7760,
+      "executedAt": "2026-10-17T10:49:26",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-013.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-014",
+      "status": "PASS",
+      "durationMs": 7180,
+      "executedAt": "2026-10-17T10:47:38",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-014.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-015",
+      "status": "PASS",
+      "durationMs": 6837,
+      "executedAt": "2026-10-17T10:48:48",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "rawAllureStatus": "passed",
+      "sourceAllureDirectory": "target\\faita-mapping-toggle-final-allure",
+      "screenshot": "faita-mapping-toggle-evidence/TC-FMAP-UI-015.png"
+    }
+  ],
+  "configurationFailureCount": 0,
+  "frameworkPass": 90,
+  "requirementRevision": "User accepted ammunition label, independent search fields and mutually exclusive unmapped/mapped mode toggle.",
+  "existingDataAudit": {
+    "source": "faita-mapping-existing-data-audit.json",
+    "snapshot": {
+      "read_only": "on",
+      "isolation": "repeatable read",
+      "captured_at": "2026-10-17 12:52:22.134936+03"
+    },
+    "ammo": {
+      "total_aliases": 2364,
+      "null_resource_id": 0,
+      "dangling_resource_id": 0,
+      "inactive_existing_resource": 539,
+      "test_marker_aliases": 0
+    },
+    "initiators": {
+      "total_aliases": 106,
+      "null_resource_id": 0,
+      "dangling_resource_id": 0,
+      "inactive_existing_resource": 51,
+      "test_marker_aliases": 0
+    }
+  },
+  "bugTriage": {
+    "type": "Conditional robustness defect for inconsistent/legacy data",
+    "priority": "LOW",
+    "severity": "MINOR",
+    "releaseBlocker": false,
+    "reason": "No naturally existing invalid alias found on dev; standard UI/API reject it; reviewed import does not create it; previous reproduction used JDBC fixtures"
+  },
+  "importReviewSource": "faita-mapping-import-review.json"
+}

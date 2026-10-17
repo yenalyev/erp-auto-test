@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-17",
+  "baseCommit": "a3ae15531efdab7b49aa27aab0b82c393fbd4536",
+  "validatedTree": "2ecdbe45d3b8c91961d5eebb6a2d8cba6dd95636",
+  "compilation": "PASS: main and all test sources",
+  "framework": {
+    "total": 77,
+    "passed": 76,
+    "failed": 1,
+    "errors": 0,
+    "skipped": 0,
+    "failureClass": "com.erp.tests.framework.RegressionSuiteCompletenessTest",
+    "failureMethod": "allRunnableErpTestsAreRegisteredInRegressionSuite",
+    "missingRegressionClasses": [
+      "com.erp.tests.functional.equipment.EquipmentUnitHistoryApiTest",
+      "com.erp.tests.functional.resource_viewer.ResourceViewerNamedListsApiTest",
+      "com.erp.tests.functional.resource_viewer.ResourceViewerPm414ApiTest",
+      "com.erp.tests.functional.storage.ManualBatchCrewReceiveApiTest",
+      "com.erp.tests.ui.RelocationFutureDateUiTest",
+      "com.erp.tests.ui.ResourceViewerNamedListsUiTest"
+    ],
+    "baselineHasIdenticalMissingClasses": true,
+    "verification": "Applied the exact source-discovery rules to git archive snapshots of remote base and selected tree. The six missing non-FAITA classes are identical and match the actual test failure."
+  },
+  "devExecution": {
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0,
+    "tcmDevRun": 200,
+    "tcmProdRun": 122
+  },
+  "logs": [
+    "target/faita-publish-framework.log"
+  ],
+  "scope": "No unrelated regression registrations changed. Existing full-workspace framework result (90 PASS) and ERP dev result (31 PASS) remain historical facts; isolated selected tree has the baseline failure recorded above."
+}

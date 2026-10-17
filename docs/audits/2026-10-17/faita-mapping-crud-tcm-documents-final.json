@@ -1,0 +1,51 @@
+{
+  "source": "docs/REQ-FAITA-MAP.md",
+  "sourceSha256": "85cb8380c94ca9f28bbc09766561be7e99e1f04c8f33ba4fd9980dfdd6dba98d",
+  "projectId": 1,
+  "local": {
+    "baseUrl": "http://localhost:18100",
+    "features": [
+      {
+        "featureId": "REQ-FAITA-MAP",
+        "documentationMatchesSource": true
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-AUDIT",
+        "documentationMatchesSource": true
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-AMMO",
+        "documentationMatchesSource": true
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-INIT",
+        "documentationMatchesSource": true
+      }
+    ],
+    "verification": "sync_tcm_faita_expense_mapping.py --refresh-docs-only; GET after every PUT asserted exact documentation"
+  },
+  "production": {
+    "baseUrl": "http://tcm.lab",
+    "features": [
+      {
+        "featureId": "REQ-FAITA-MAP",
+        "documentationMatchesSource": true
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-AUDIT",
+        "documentationMatchesSource": true
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-AMMO",
+        "documentationMatchesSource": true
+      },
+      {
+        "featureId": "REQ-FAITA-MAP-INIT",
+        "documentationMatchesSource": true
+      }
+    ],
+    "verification": "tcm-ai-prod MCP GET/PUT/GET; exact documentation verified"
+  },
+  "activeCases": 31,
+  "acceptanceCriteria": 19
+}

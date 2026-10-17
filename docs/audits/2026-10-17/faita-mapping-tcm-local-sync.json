@@ -1,0 +1,450 @@
+[
+  {
+    "baseUrl": "http://localhost:18100",
+    "feature": {
+      "created": true,
+      "updated": false
+    },
+    "acceptanceCriteria": {
+      "created": [
+        "AC-01"
+      ],
+      "updated": []
+    },
+    "testCases": {
+      "created": [
+        "TC-FMAP-UI-001"
+      ],
+      "updated": []
+    },
+    "verification": {
+      "featureId": "REQ-FAITA-MAP",
+      "parentFeatureId": null,
+      "status": "ACTIVE",
+      "documentationLength": 8266,
+      "documentationSha256": "60d857739c424dd498c4869f22bed3c6d1fe213ba4a93541f774ce09c30b6247",
+      "sourceDocumentationSha256": "60d857739c424dd498c4869f22bed3c6d1fe213ba4a93541f774ce09c30b6247",
+      "requiredAcPresent": true,
+      "managedAcCount": 1,
+      "managedCaseCount": 1,
+      "automatedCaseCount": 1,
+      "manualCaseCount": 0,
+      "allCasesPresent": true,
+      "documentationMatchesSource": true,
+      "testCases": {
+        "TC-FMAP-UI-001": {
+          "featureId": "REQ-FAITA-MAP",
+          "acId": "AC-01",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-001"
+          ],
+          "stepCount": 2
+        }
+      }
+    }
+  },
+  {
+    "baseUrl": "http://localhost:18100",
+    "feature": {
+      "created": true,
+      "updated": false
+    },
+    "acceptanceCriteria": {
+      "created": [
+        "AC-01",
+        "AC-02"
+      ],
+      "updated": []
+    },
+    "testCases": {
+      "created": [
+        "TC-FMAP-DB-001",
+        "TC-FMAP-DB-002",
+        "TC-FMAP-DB-003",
+        "TC-FMAP-DB-004"
+      ],
+      "updated": []
+    },
+    "verification": {
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "parentFeatureId": "REQ-FAITA-MAP",
+      "status": "ACTIVE",
+      "documentationLength": 8266,
+      "documentationSha256": "60d857739c424dd498c4869f22bed3c6d1fe213ba4a93541f774ce09c30b6247",
+      "sourceDocumentationSha256": "60d857739c424dd498c4869f22bed3c6d1fe213ba4a93541f774ce09c30b6247",
+      "requiredAcPresent": true,
+      "managedAcCount": 2,
+      "managedCaseCount": 4,
+      "automatedCaseCount": 4,
+      "manualCaseCount": 0,
+      "allCasesPresent": true,
+      "documentationMatchesSource": true,
+      "testCases": {
+        "TC-FMAP-DB-001": {
+          "featureId": "REQ-FAITA-MAP-AUDIT",
+          "acId": "AC-01",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-DB-001"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-DB-002": {
+          "featureId": "REQ-FAITA-MAP-AUDIT",
+          "acId": "AC-02",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-DB-002"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-DB-003": {
+          "featureId": "REQ-FAITA-MAP-AUDIT",
+          "acId": "AC-01",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-DB-003"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-DB-004": {
+          "featureId": "REQ-FAITA-MAP-AUDIT",
+          "acId": "AC-02",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-DB-004"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        }
+      }
+    }
+  },
+  {
+    "baseUrl": "http://localhost:18100",
+    "feature": {
+      "created": true,
+      "updated": false
+    },
+    "acceptanceCriteria": {
+      "created": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06"
+      ],
+      "updated": []
+    },
+    "testCases": {
+      "created": [
+        "TC-FMAP-UI-002",
+        "TC-FMAP-UI-004",
+        "TC-FMAP-UI-006",
+        "TC-FMAP-UI-008",
+        "TC-FMAP-UI-010",
+        "TC-FMAP-UI-012",
+        "TC-FMAP-UI-014",
+        "TC-FMAP-API-001",
+        "TC-FMAP-API-003",
+        "TC-FMAP-API-005",
+        "TC-FMAP-API-007"
+      ],
+      "updated": []
+    },
+    "verification": {
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "parentFeatureId": "REQ-FAITA-MAP",
+      "status": "ACTIVE",
+      "documentationLength": 8266,
+      "documentationSha256": "60d857739c424dd498c4869f22bed3c6d1fe213ba4a93541f774ce09c30b6247",
+      "sourceDocumentationSha256": "60d857739c424dd498c4869f22bed3c6d1fe213ba4a93541f774ce09c30b6247",
+      "requiredAcPresent": true,
+      "managedAcCount": 6,
+      "managedCaseCount": 11,
+      "automatedCaseCount": 11,
+      "manualCaseCount": 0,
+      "allCasesPresent": true,
+      "documentationMatchesSource": true,
+      "testCases": {
+        "TC-FMAP-UI-002": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-01",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-002"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-004": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-02",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-004"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-006": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-02",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-006"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-008": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-03",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-008"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-010": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-04",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-010"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-012": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-05",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-012"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-014": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-06",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-014"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-API-001": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-01",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-API-001"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-API-003": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-02",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-API-003"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-API-005": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-05",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-API-005"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-API-007": {
+          "featureId": "REQ-FAITA-MAP-AMMO",
+          "acId": "AC-06",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-API-007"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        }
+      }
+    }
+  },
+  {
+    "baseUrl": "http://localhost:18100",
+    "feature": {
+      "created": true,
+      "updated": false
+    },
+    "acceptanceCriteria": {
+      "created": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06"
+      ],
+      "updated": []
+    },
+    "testCases": {
+      "created": [
+        "TC-FMAP-UI-003",
+        "TC-FMAP-UI-005",
+        "TC-FMAP-UI-007",
+        "TC-FMAP-UI-009",
+        "TC-FMAP-UI-011",
+        "TC-FMAP-UI-013",
+        "TC-FMAP-UI-015",
+        "TC-FMAP-API-002",
+        "TC-FMAP-API-004",
+        "TC-FMAP-API-006",
+        "TC-FMAP-API-008"
+      ],
+      "updated": []
+    },
+    "verification": {
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "parentFeatureId": "REQ-FAITA-MAP",
+      "status": "ACTIVE",
+      "documentationLength": 9910,
+      "documentationSha256": "5608bba5500bfe46ad5dd98908481af88998ecbc1d5596fd6ba260cda65b9d6f",
+      "sourceDocumentationSha256": "5608bba5500bfe46ad5dd98908481af88998ecbc1d5596fd6ba260cda65b9d6f",
+      "requiredAcPresent": true,
+      "managedAcCount": 6,
+      "managedCaseCount": 11,
+      "automatedCaseCount": 11,
+      "manualCaseCount": 0,
+      "allCasesPresent": true,
+      "documentationMatchesSource": true,
+      "testCases": {
+        "TC-FMAP-UI-003": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-01",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-003"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-005": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-02",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-005"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-007": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-02",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-007"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-009": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-03",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-009"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-011": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-04",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-011"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-013": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-05",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-013"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-UI-015": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-06",
+          "status": "ACTIVE",
+          "apiAutomationIds": [],
+          "uiAutomationIds": [
+            "TC-FMAP-UI-015"
+          ],
+          "stepCount": 2
+        },
+        "TC-FMAP-API-002": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-01",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-API-002"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-API-004": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-02",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-API-004"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-API-006": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-05",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-API-006"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        },
+        "TC-FMAP-API-008": {
+          "featureId": "REQ-FAITA-MAP-INIT",
+          "acId": "AC-06",
+          "status": "ACTIVE",
+          "apiAutomationIds": [
+            "TC-FMAP-API-008"
+          ],
+          "uiAutomationIds": [],
+          "stepCount": 2
+        }
+      }
+    }
+  }
+]
