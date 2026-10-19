@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Page Object for the Resources dictionary page.
@@ -68,6 +70,49 @@ public class ResourcesListPage extends BasePage {
         input.fill(text);
         waitForLoadingFinished();
         return this;
+    }
+
+    public ResourcesListPage searchAndWait(String text) {
+        page.waitForResponse(response -> isResourceListResponse(response)
+                        && decodedUrl(response).contains("name=" + text),
+                new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                () -> page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(text));
+        waitForLoadingFinished();
+        return this;
+    }
+
+    /** UI cycle: ASC -> DESC -> default name sort. Returns the actual server response. */
+    public com.microsoft.playwright.Response clickModifiedSort(String direction) {
+        var response = page.waitForResponse(candidate -> {
+                    if (!isResourceListResponse(candidate)) return false;
+                    String url = decodedUrl(candidate);
+                    return direction == null ? !url.contains("sort=")
+                            : url.contains("sort=updated_at," + direction);
+                }, new Page.WaitForResponseOptions().setTimeout(uiTimeoutMs()),
+                () -> page.getByRole(AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName("Змінено").setExact(true)).click());
+        waitForLoadingFinished();
+        return response;
+    }
+
+    public List<String> getVisibleModifiedValues() {
+        Locator headers = page.locator("table thead th");
+        for (int i = 0; i < headers.count(); i++) {
+            if ("Змінено".equals(headers.nth(i).innerText().trim())) {
+                return page.locator("table tbody tr td:nth-child(" + (i + 1) + ")").allTextContents()
+                        .stream().map(String::trim).toList();
+            }
+        }
+        throw new IllegalStateException("Колонку Змінено не знайдено");
+    }
+
+    private static boolean isResourceListResponse(com.microsoft.playwright.Response response) {
+        return response.url().contains("/api/v1/resources?")
+                && "GET".equalsIgnoreCase(response.request().method());
+    }
+
+    private static String decodedUrl(com.microsoft.playwright.Response response) {
+        return URLDecoder.decode(response.url(), StandardCharsets.UTF_8);
     }
 
     public boolean isPropertyFilterVisible() {

@@ -1,0 +1,50 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "features": [
+    "REQ-PLAN-ANL",
+    "REQ-PLAN-ANL-SUPPLIER",
+    "REQ-PLAN-ANL-EXCEL"
+  ],
+  "acceptanceCriteria": [
+    "461",
+    "464",
+    "603"
+  ],
+  "created": [
+    "TC-PLAN-ANL-UI-008",
+    "TC-PLAN-ANL-UI-009",
+    "TC-PLAN-ANL-XLSX-UI-003"
+  ],
+  "updated": [
+    "TC-PLAN-ANL-UI-001",
+    "TC-PLAN-ANL-UI-005",
+    "TC-PLAN-ANL-UI-006",
+    "TC-PLAN-ANL-XLSX-UI-001",
+    "TC-PLAN-ANL-UI-003",
+    "TC-PLAN-ANL-UI-004",
+    "TC-PLAN-ANL-UI-007",
+    "TC-PLAN-ANL-XLSX-UI-002",
+    "TC-PLAN-ANL-001"
+  ],
+  "verified": [
+    "/api/ai/projects/1/features/REQ-PLAN-ANL",
+    "/api/ai/projects/1/features/REQ-PLAN-ANL-SUPPLIER",
+    "/api/ai/projects/1/features/REQ-PLAN-ANL-EXCEL",
+    "/api/ai/projects/1/acceptance-criteria/461",
+    "/api/ai/projects/1/acceptance-criteria/464",
+    "/api/ai/projects/1/acceptance-criteria/603",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-UI-001",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-UI-005",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-UI-006",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-XLSX-UI-001",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-UI-003",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-UI-004",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-UI-007",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-XLSX-UI-002",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-001",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-UI-008",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-UI-009",
+    "/api/ai/projects/1/test-cases/TC-PLAN-ANL-XLSX-UI-003"
+  ],
+  "sourceSha256": "7fb00201931505fb0665f4a8403e0a58e40972bd438ca76e4fa0109f416b371e"
+}

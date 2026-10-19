@@ -20,6 +20,7 @@ public class ResourceUsageRequest {
     private Long resourceId;
     private BigDecimal amount;
     private UUID batchUuid;
+    private Long version;
     @Builder.Default
     private List<RelocationItemBatchRequest> batches = new ArrayList<>();
 

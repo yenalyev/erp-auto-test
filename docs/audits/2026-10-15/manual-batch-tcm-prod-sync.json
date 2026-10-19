@@ -1,0 +1,12 @@
+{
+  "environment": "production-tcm",
+  "featureId": "REQ-WMS-013",
+  "change": "Append ERP dev verification status and backend/frontend defect classification to feature documentation",
+  "erpEnvironmentVerified": "dev",
+  "productionErpVerified": false,
+  "beforeDocumentationChars": 492,
+  "afterDocumentationChars": 1859,
+  "documentationReadBackMatches": true,
+  "acceptanceCriteriaUnchanged": true,
+  "testCasesChanged": false
+}

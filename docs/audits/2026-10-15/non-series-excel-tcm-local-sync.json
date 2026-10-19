@@ -1,0 +1,163 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06",
+      "AC-07"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-NSP-XLSX-API-001",
+      "TC-NSP-XLSX-API-002",
+      "TC-NSP-XLSX-API-003",
+      "TC-NSP-XLSX-API-004",
+      "TC-NSP-XLSX-API-005",
+      "TC-NSP-XLSX-API-006",
+      "TC-NSP-XLSX-API-007",
+      "TC-NSP-XLSX-UI-001",
+      "TC-NSP-XLSX-UI-002",
+      "TC-NSP-XLSX-UI-003",
+      "TC-NSP-XLSX-UI-004"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-NSP-EXCEL",
+    "parentFeatureId": "REQ-NON-SER-MAN",
+    "status": "ACTIVE",
+    "documentationLength": 12682,
+    "documentationSha256": "7aa01ac0b52d917e4a1456c904ec5594bfab58c383c6a562da693840ee974640",
+    "sourceDocumentationSha256": "7aa01ac0b52d917e4a1456c904ec5594bfab58c383c6a562da693840ee974640",
+    "requiredAcPresent": true,
+    "managedAcCount": 7,
+    "managedCaseCount": 11,
+    "automatedCaseCount": 11,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-NSP-XLSX-API-001": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NSP-XLSX-API-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NSP-XLSX-API-002": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NSP-XLSX-API-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NSP-XLSX-API-003": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NSP-XLSX-API-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-NSP-XLSX-API-004": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NSP-XLSX-API-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NSP-XLSX-API-005": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NSP-XLSX-API-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NSP-XLSX-API-006": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NSP-XLSX-API-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-NSP-XLSX-API-007": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-07",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-NSP-XLSX-API-007"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-NSP-XLSX-UI-001": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-NSP-XLSX-UI-001"
+        ],
+        "stepCount": 3
+      },
+      "TC-NSP-XLSX-UI-002": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-NSP-XLSX-UI-002"
+        ],
+        "stepCount": 3
+      },
+      "TC-NSP-XLSX-UI-003": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-NSP-XLSX-UI-003"
+        ],
+        "stepCount": 3
+      },
+      "TC-NSP-XLSX-UI-004": {
+        "featureId": "REQ-NSP-EXCEL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-NSP-XLSX-UI-004"
+        ],
+        "stepCount": 3
+      }
+    }
+  },
+  "completedAt": "2026-10-15T12:28:59.885535+00:00"
+}

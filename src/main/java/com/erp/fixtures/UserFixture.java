@@ -244,6 +244,42 @@ public class UserFixture extends BaseFixture {
         return new BusinessActor(created.getId(), username, permanentPassword, businessRole, List.of());
     }
 
+    /** Assigns existing global system roles by name to a fresh actor, without copying them. */
+    @Step("FIXTURE: створити глобального актора {businessRole} з системними ролями")
+    public BusinessActor createGlobalBusinessActorWithSystemRoles(
+            PlaywrightSessionProvider playwright,
+            BusinessRole businessRole) {
+        if (playwright == null) {
+            throw new IllegalStateException("PlaywrightSessionProvider is required to bootstrap actor password");
+        }
+        BusinessRoleCatalog.Definition definition = BusinessRoleCatalog.definition(businessRole);
+        if (definition.accessRoles().isEmpty()) {
+            throw new IllegalStateException("Global business actor requires a system role: " + businessRole);
+        }
+        for (String roleName : definition.accessRoles()) {
+            AccessRoleResponse role = accessFixture.roleByName(roleName);
+            if (!role.isSystem() || role.getScopeKind() != AccessScopeKind.GLOBAL) {
+                throw new IllegalStateException("Expected a global system role: " + roleName);
+            }
+        }
+        String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String username = "autotest-" + businessRole.name().toLowerCase().replace('_', '-') + "-" + suffix;
+        String password = "Autotest1!" + suffix;
+        UserModelResponse created = createUserProfile(
+                username, "Autotest", businessRole.name(), playwright, password);
+        trackForCleanup(created.getId());
+        accessFixture.ensureGrants(created.getId(), definition.accessRoles(),
+                definition.permissionKeys(), GrantScopeKind.ALL, null);
+        LinkedHashSet<String> expectedPermissions = new LinkedHashSet<>(definition.permissionKeys());
+        definition.accessRoles().stream().map(accessFixture::roleByName)
+                .forEach(role -> expectedPermissions.addAll(role.getPermissionKeys()));
+        assertBusinessActorAccess(created.getId(), businessRole, definition.accessRoles(),
+                List.of(), expectedPermissions);
+        log.info("Created global business actor username={} businessRole={} systemRoles={}",
+                username, businessRole, definition.accessRoles());
+        return new BusinessActor(created.getId(), username, password, businessRole, List.of());
+    }
+
     /**
      * Explicit escape hatch for permission-denied scenarios. Normal business actors must use
      * {@link #createBusinessActor(PlaywrightSessionProvider, BusinessRole, List)}.

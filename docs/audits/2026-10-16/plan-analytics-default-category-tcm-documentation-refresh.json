@@ -1,0 +1,51 @@
+{
+  "updatedAt": "2026-10-16T10:22:03.004122+00:00",
+  "environments": {
+    "dev": {
+      "baseUrl": "http://localhost:18100",
+      "features": [
+        {
+          "featureId": "REQ-PLAN-ANL",
+          "source": "docs/REQ-PLAN-ANL-DEFAULT-CATEGORY.md",
+          "documentationMatchesSource": true,
+          "documentationSha256": "def49291307af8673f2c1ba6b7da2ce67e84c74a874fd1617ae71ae1620b6479"
+        },
+        {
+          "featureId": "REQ-PLAN-ANL-SUPPLIER",
+          "source": "docs/REQ-PLAN-ANL-SUPPLIER-FILTER.md",
+          "documentationMatchesSource": true,
+          "documentationSha256": "8fb99291f152ed306d05debb6d3c1fd2bc3f70e7bcf7236728e41745d11198f6"
+        },
+        {
+          "featureId": "REQ-PLAN-ANL-EXCEL",
+          "source": "docs/REQ-PLAN-ANL-EXCEL.md",
+          "documentationMatchesSource": true,
+          "documentationSha256": "394ecf85d4d7de5032650e61c36157d564dc060420b98d133759165d36420670"
+        }
+      ]
+    },
+    "prod": {
+      "baseUrl": "http://tcm.lab",
+      "features": [
+        {
+          "featureId": "REQ-PLAN-ANL",
+          "source": "docs/REQ-PLAN-ANL-DEFAULT-CATEGORY.md",
+          "documentationMatchesSource": true,
+          "documentationSha256": "def49291307af8673f2c1ba6b7da2ce67e84c74a874fd1617ae71ae1620b6479"
+        },
+        {
+          "featureId": "REQ-PLAN-ANL-SUPPLIER",
+          "source": "docs/REQ-PLAN-ANL-SUPPLIER-FILTER.md",
+          "documentationMatchesSource": true,
+          "documentationSha256": "8fb99291f152ed306d05debb6d3c1fd2bc3f70e7bcf7236728e41745d11198f6"
+        },
+        {
+          "featureId": "REQ-PLAN-ANL-EXCEL",
+          "source": "docs/REQ-PLAN-ANL-EXCEL.md",
+          "documentationMatchesSource": true,
+          "documentationSha256": "394ecf85d4d7de5032650e61c36157d564dc060420b98d133759165d36420670"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "baseUrl": "http://127.0.0.1:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-RES-SORT-API-001",
+      "TC-RES-SORT-API-002",
+      "TC-RES-SORT-UI-001"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-RES-SORT",
+    "parentFeatureId": "REQ-RES",
+    "status": "ACTIVE",
+    "documentationLength": 4910,
+    "documentationSha256": "224383502ea966b96d6c5f4564fa2a5aa68da24094d3723ee02300d618cf6ca5",
+    "sourceDocumentationSha256": "224383502ea966b96d6c5f4564fa2a5aa68da24094d3723ee02300d618cf6ca5",
+    "requiredAcPresent": true,
+    "managedAcCount": 3,
+    "managedCaseCount": 3,
+    "automatedCaseCount": 3,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-RES-SORT-API-001": {
+        "featureId": "REQ-RES-SORT",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-RES-SORT-API-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-RES-SORT-API-002": {
+        "featureId": "REQ-RES-SORT",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-RES-SORT-API-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 4
+      },
+      "TC-RES-SORT-UI-001": {
+        "featureId": "REQ-RES-SORT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-RES-SORT-UI-001"
+        ],
+        "stepCount": 4
+      }
+    },
+    "featureDbId": 156,
+    "allCaseFieldsMatchSource": true,
+    "fullCaseChecks": [
+      {
+        "testId": "TC-RES-SORT-API-001",
+        "acId": "AC-01",
+        "automated": true,
+        "mismatches": []
+      },
+      {
+        "testId": "TC-RES-SORT-API-002",
+        "acId": "AC-02",
+        "automated": true,
+        "mismatches": []
+      },
+      {
+        "testId": "TC-RES-SORT-UI-001",
+        "acId": "AC-03",
+        "automated": true,
+        "mismatches": []
+      }
+    ]
+  },
+  "completedAt": "2026-10-16T14:49:44.023389+00:00",
+  "result": "SUCCESS"
+}

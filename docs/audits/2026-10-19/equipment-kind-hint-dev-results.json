@@ -1,0 +1,166 @@
+{
+  "environment": "dev",
+  "frontend": "https://dev.cukerochka.sbs",
+  "suite": "equipment-kind-hint",
+  "timeZone": "Europe/Kyiv",
+  "counts": {
+    "PASS": 8,
+    "FAIL": 1
+  },
+  "results": [
+    {
+      "testCaseId": "TC-EQ-HINT-UI-001",
+      "status": "PASS",
+      "durationMs": 2745,
+      "executedAt": "2026-10-19T12:23:13",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.ownerSeesAdviceBeforeEnteringEquipment",
+      "screenshots": [
+        {
+          "name": "TC-EQ-HINT-UI-001 — відповідальний, початковий стан",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-001-1.png"
+        },
+        {
+          "name": "TC-EQ-HINT-UI-001 - final state",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-001-2.png"
+        }
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-002",
+      "status": "PASS",
+      "durationMs": 10144,
+      "executedAt": "2026-10-19T12:22:38",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.adminCanReadExamplesAndContact",
+      "screenshots": [
+        {
+          "name": "TC-EQ-HINT-UI-002 — повний текст",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-002-1.png"
+        },
+        {
+          "name": "TC-EQ-HINT-UI-002 - final state",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-002-2.png"
+        }
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-003",
+      "status": "FAIL",
+      "durationMs": 11309,
+      "executedAt": "2026-10-19T12:22:48",
+      "errorMessage": "Locator expected to contain text: ресурс\nReceived: Засоби захисту та засоби побутового користування, пакування і т.д. не входять в обладнанняПриклад:Захисні окуляри - Засоби захисту, не обладнанняНоутбук HP ZBook Power G7 - ОбладнанняУ разі сумнівів або неясності зверніться до адміністратора Цукерочки.Згорнути\n\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"[data-slot='card']\").first().locator(\"internal:attr=[data-testid=\\\"equipment-kind-hint-collapse\\\"]\").locator(\"../..\")\n    9 × locator resolved to <div class=\"space-y-2\">…</div>\n      - unexpected value \"Засоби захисту та засоби побутового користування, пакування і т.д. не входять в обладнанняПриклад:Захисні окуляри - Засоби захисту, не обладнанняНоутбук HP ZBook Power G7 - ОбладнанняУ разі сумнівів або неясності зверніться до адміністратора Цукерочки.Згорнути\"",
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.adviceExplainsResourceEntryThroughAdministrator",
+      "screenshots": [
+        {
+          "name": "TC-EQ-HINT-UI-003 - failure",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-003-1.png"
+        }
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-004",
+      "status": "PASS",
+      "durationMs": 3174,
+      "executedAt": "2026-10-19T12:23:15",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.repeatedTogglingPreservesInputAndDoesNotSubmit",
+      "screenshots": [
+        {
+          "name": "TC-EQ-HINT-UI-004 - final state",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-004-1.png"
+        }
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-005",
+      "status": "PASS",
+      "durationMs": 3652,
+      "executedAt": "2026-10-19T12:22:59",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.batchItemsHaveIndependentAdvice",
+      "screenshots": [
+        {
+          "name": "TC-EQ-HINT-UI-005 — дві незалежні підказки",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-005-1.png"
+        },
+        {
+          "name": "TC-EQ-HINT-UI-005 - final state",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-005-2.png"
+        }
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-006",
+      "status": "PASS",
+      "durationMs": 2128,
+      "executedAt": "2026-10-19T12:23:10",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.keyboardActivatesBothAdviceControls",
+      "screenshots": [
+        {
+          "name": "TC-EQ-HINT-UI-006 - final state",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-006-1.png"
+        }
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-007",
+      "status": "PASS",
+      "durationMs": 2828,
+      "executedAt": "2026-10-19T12:23:07",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.expandedAdviceIsReadableAtDesktopAndNarrowViewport",
+      "screenshots": [
+        {
+          "name": "TC-EQ-HINT-UI-007 — 1280px",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-007-1.png"
+        },
+        {
+          "name": "TC-EQ-HINT-UI-007 — 390px",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-007-2.png"
+        },
+        {
+          "name": "TC-EQ-HINT-UI-007 - final state",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-007-3.png"
+        }
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-008",
+      "status": "PASS",
+      "durationMs": 4387,
+      "executedAt": "2026-10-19T12:23:03",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.cancellationDoesNotCreateEquipmentAndReopenRestoresAdvice",
+      "screenshots": [
+        {
+          "name": "TC-EQ-HINT-UI-008 - final state",
+          "path": "equipment-kind-hint-evidence/TC-EQ-HINT-UI-008-1.png"
+        }
+      ]
+    },
+    {
+      "testCaseId": "TC-UI-EQ-002",
+      "status": "PASS",
+      "durationMs": 9398,
+      "executedAt": "2026-10-19T12:23:30",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentCreateUITest.createSeveralEquipmentInOneRelocation",
+      "screenshots": [
+        {
+          "name": "TC-UI-EQ-002 — form with 2 items",
+          "path": "equipment-kind-hint-evidence/TC-UI-EQ-002-1.png"
+        },
+        {
+          "name": "TC-UI-EQ-002 — list after batch create",
+          "path": "equipment-kind-hint-evidence/TC-UI-EQ-002-2.png"
+        },
+        {
+          "name": "TC-UI-EQ-002 - final state",
+          "path": "equipment-kind-hint-evidence/TC-UI-EQ-002-3.png"
+        }
+      ]
+    }
+  ]
+}

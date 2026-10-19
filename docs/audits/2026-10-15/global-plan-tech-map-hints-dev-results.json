@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-15",
+  "environment": "dev",
+  "baseUrl": "https://dev.cukerochka.sbs",
+  "suite": "global-plan-tech-map-hints",
+  "total": 10,
+  "passed": 8,
+  "failed": 2,
+  "skipped": 0,
+  "configurationFailures": 0,
+  "cases": [
+    {
+      "testCaseId": "TC-GP-HINT-UI-006",
+      "method": "globalPlansHintListsAffectedPlansAndMaps",
+      "status": "FAIL",
+      "durationMs": 31158,
+      "errorMessage": "\nExpecting actual:\n  \"Розподіл у глобальних планах Жовтень 2026, GP-1/2027-1792061354712, GP-2/2027-1792061363380 став недійсним для техкарт:Кришка ОЯБ-89 3,0ммЗаготовка корпусу ОЯБ-89-3 89х6ммЗаготовка корпусу ОЯБ-89-4 89х6ммЗаготовка корпусу ОЯБ-89-5 89х6ммЗаготовка мідної лінзи ОЯБ-125 3,0ммЗаготовка мідної лінзи ОЯБ-89 3,0ммКришка ОЯБ-125 3,0ммКорзина(Корпус ініціатора ЦБ-60)Заготовка корпусу КОБ-2,0 76х3ммКорпус ініціатора ЦБ-60ОЯБ-125-10(ТГА-15)v2Заготовка корпусу КОБ-1,4 76х3ммГном-2,5Комплект деталей 3 мм(7 позицій)(БФНД-85)Hint-first-1792061352405Hint-second-1792061361343ЗгорнутиВідкрийте кожен план, призначте ресурс знову й повторно згенеруйте плани на локації.\"\nto contain:\n  [\"GP-1/2027-1792061354712 (Січень 2027)\",\n    \"GP-2/2027-1792061363380 (Лютий 2027)\",\n    \"Hint-first-1792061352405\",\n    \"Hint-second-1792061361343\",\n    \"Розподіл у глобальних планах\",\n    \"став недійсним для тех карт\",\n    \". Відкрийте кожен план, призначте ресурс знову й повторно згенеруйте плани на локації.\"]\nbut could not find:\n  [\"GP-1/2027-1792061354712 (Січень 2027)\",\n    \"GP-2/2027-1792061363380 (Лютий 2027)\",\n    \"став недійсним для тех карт\",\n    \". Відкрийте кожен план, призначте ресурс знову й повторно згенеруйте плани на локації.\"]\n ",
+      "sourceRun": "full-suite"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-010",
+      "method": "granularPermissionControlsHintsIndependentlyOfAdminRole",
+      "status": "PASS",
+      "durationMs": 37317,
+      "errorMessage": null,
+      "sourceRun": "full-suite"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-002",
+      "method": "nonUpdaterDoesNotSeeEditWarning",
+      "status": "PASS",
+      "durationMs": 13921,
+      "errorMessage": null,
+      "sourceRun": "full-suite"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-005",
+      "method": "nonUpdaterDoesNotSeeExclamation",
+      "status": "PASS",
+      "durationMs": 12203,
+      "errorMessage": null,
+      "sourceRun": "full-suite"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-003",
+      "method": "nonUpdaterSavesStructuralEditWithoutModal",
+      "status": "PASS",
+      "durationMs": 11715,
+      "errorMessage": null,
+      "sourceRun": "full-suite"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-008",
+      "method": "regenerationClearsOnlyRepairedPlanHint",
+      "status": "PASS",
+      "durationMs": 29333,
+      "errorMessage": null,
+      "sourceRun": "full-suite"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-007",
+      "method": "renameDoesNotInvalidateDistribution",
+      "status": "PASS",
+      "durationMs": 10837,
+      "errorMessage": null,
+      "sourceRun": "full-suite"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-009",
+      "method": "unusedMapSavesWithoutWarningOrModal",
+      "status": "PASS",
+      "durationMs": 8693,
+      "errorMessage": null,
+      "sourceRun": "full-suite"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-004",
+      "method": "updaterSeesRedExclamationInsteadOfCount",
+      "status": "FAIL",
+      "durationMs": 21064,
+      "errorMessage": "[Red badge hue (degrees around red=0), actual rgb(254, 154, 0)] \nExpecting actual:\n  36.37795275590551\nto be less than or equal to:\n  15.0 ",
+      "sourceRun": "badge-verification"
+    },
+    {
+      "testCaseId": "TC-GP-HINT-UI-001",
+      "method": "updaterSeesWarningAndCanCancelModal",
+      "status": "PASS",
+      "durationMs": 13252,
+      "errorMessage": null,
+      "sourceRun": "full-suite"
+    }
+  ],
+  "framework": {
+    "total": 81,
+    "passed": 80,
+    "failed": 1,
+    "skipped": 0,
+    "failures": [
+      {
+        "method": "allRequestTypesRespectTheConfiguredTimeout",
+        "parameter": "JSON",
+        "errorMessage": "\nExpecting actual:\n  5800L\nto be less than:\n  5000L "
+      }
+    ]
+  },
+  "executionType": "CONSOLIDATED",
+  "runs": [
+    {
+      "name": "full-suite",
+      "total": 10,
+      "passed": 9,
+      "failed": 1,
+      "skipped": 0,
+      "source": "target/global-plan-hints-dev-final/surefire-reports/testng-results-full.xml",
+      "note": "TC-004 superseded by badge verification after tightening the hue assertion."
+    },
+    {
+      "name": "badge-verification",
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "source": "target/global-plan-hints-dev-final/surefire-reports/testng-results-badge.xml"
+    }
+  ]
+}

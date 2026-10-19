@@ -3,6 +3,7 @@ package com.erp.pages;
 import com.erp.pages.components.DateRangePickerComponent;
 import com.erp.utils.config.ConfigProvider;
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.AriaRole;
@@ -24,6 +25,7 @@ public class PlanAnalyticsPage extends BasePage {
     private static final String PATH = "/analytics/plan";
     public static final String EMPTY_STATE = "Оберіть ресурс або категорію, щоб побачити дані";
     public static final String RESOURCES_PLACEHOLDER = "Оберіть ресурси";
+    public static final String DEFAULT_CATEGORY = "Боєприпас";
     public static final String SUPPLIER_LABEL = "Постачальник";
     public static final String STOCK_IN_ROOT_LABEL = "Залишок (Цукрарня)";
     public static final String ROOT_GROUP = "Цукрарня";
@@ -86,6 +88,74 @@ public class PlanAnalyticsPage extends BasePage {
     public int dataRowCount() {
         Locator rows = tableBodyRows();
         return rows.count();
+    }
+
+    public List<List<String>> dataRowCells() {
+        return tableBodyRows().all().stream()
+                .map(row -> row.getByRole(AriaRole.CELL).allInnerTexts()).toList();
+    }
+
+    public boolean isExportVisible() {
+        return page.getByTestId("plan-analytics-export").isVisible();
+    }
+
+    @Step("Експортувати аналітику плану в Excel")
+    public Download exportExcel() {
+        return page.waitForDownload(() -> page.getByTestId("plan-analytics-export").click());
+    }
+
+    @Step("Показувати по {size} рядків")
+    public PlanAnalyticsPage setPageSize(int size) {
+        page.getByText("Показувати по:", new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=parent::*").getByRole(AriaRole.COMBOBOX).click();
+        page.getByRole(AriaRole.OPTION,
+                new Page.GetByRoleOptions().setName(String.valueOf(size)).setExact(true)).click();
+        return this;
+    }
+
+    public PlanAnalyticsPage nextTablePage() {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Наступна").setExact(true)).click();
+        return this;
+    }
+
+    @Step("Обрати категорію «{categoryName}»")
+    public PlanAnalyticsPage selectCategory(String categoryName) {
+        Locator group = page.getByText("Категорії", new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=parent::*");
+        Locator trigger = group.getByRole(AriaRole.COMBOBOX);
+        trigger.click();
+        trigger.fill("");
+        page.getByRole(AriaRole.OPTION,
+                new Page.GetByRoleOptions().setName(categoryName).setExact(true)).click();
+        Locator selected = group.getByText(categoryName, new Locator.GetByTextOptions().setExact(true));
+        selected.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        // Finish the selection as a user does: commit the chip, then close by clicking outside.
+        periodLabel().click();
+        page.waitForCondition(() -> selected.isVisible()
+                        && !"true".equals(trigger.getAttribute("aria-expanded")),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+        return this;
+    }
+
+    public List<String> selectedCategoryNames() {
+        return categoryFilterGroup().locator("[data-slot='combobox-chip']").allInnerTexts()
+                .stream().map(String::trim).toList();
+    }
+
+    @Step("Прибрати вибрані категорії аналітики плану")
+    public PlanAnalyticsPage clearCategories() {
+        Locator remove = categoryFilterGroup().locator("[data-slot='combobox-chip-remove']");
+        remove.first().waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        while (remove.count() > 0) {
+            remove.first().click();
+        }
+        page.waitForCondition(() -> selectedCategoryNames().isEmpty());
+        return this;
+    }
+
+    private Locator categoryFilterGroup() {
+        return page.getByText("Категорії", new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=parent::*");
     }
 
     @Step("Фільтр ресурсів: обрати перший доступний")
@@ -176,12 +246,13 @@ public class PlanAnalyticsPage extends BasePage {
         openSupplierPicker();
         for (String supplierName : supplierNames) {
             openSupplierPicker();
-            supplierSearch().fill(supplierName);
+            supplierSearch().fill("");
             Locator option = exactSupplierOption(supplierName);
             option.waitFor(new Locator.WaitForOptions()
                     .setState(WaitForSelectorState.VISIBLE)
                     .setTimeout(uiTimeoutMs()));
             option.click();
+            page.waitForCondition(() -> isSupplierSelected(supplierName));
         }
         closeSupplierPicker();
         return this;
@@ -195,12 +266,13 @@ public class PlanAnalyticsPage extends BasePage {
         openSupplierPicker();
         for (String supplierName : supplierNames) {
             openSupplierPicker();
-            supplierSearch().fill(supplierName);
+            supplierSearch().fill("");
             Locator option = exactSupplierOption(supplierName);
             option.waitFor(new Locator.WaitForOptions()
                     .setState(WaitForSelectorState.VISIBLE)
                     .setTimeout(uiTimeoutMs()));
             option.click();
+            page.waitForCondition(() -> !isSupplierSelected(supplierName));
         }
         closeSupplierPicker();
         return this;
@@ -293,9 +365,8 @@ public class PlanAnalyticsPage extends BasePage {
     }
 
     private void openResourcePicker() {
-        Locator trigger = page.getByRole(AriaRole.COMBOBOX)
-                .filter(new Locator.FilterOptions().setHasText(RESOURCES_PLACEHOLDER))
-                .first();
+        Locator trigger = page.getByText("Ресурси", new Page.GetByTextOptions().setExact(true))
+                .locator("xpath=parent::*").getByRole(AriaRole.COMBOBOX).first();
         trigger.waitFor(new Locator.WaitForOptions()
                 .setState(WaitForSelectorState.VISIBLE)
                 .setTimeout(uiTimeoutMs()));

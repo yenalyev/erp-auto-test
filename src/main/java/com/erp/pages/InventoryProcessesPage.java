@@ -40,6 +40,31 @@ public class InventoryProcessesPage extends BasePage {
         return row.count() > 0 && row.first().isVisible();
     }
 
+    public InventoryProcessesPage showClosed() {
+        page.getByTestId("inventory-processes-tab-closed").click();
+        return this;
+    }
+
+    public String resultCellText(long processId) {
+        return processCell(processId, "Розбіжності").innerText();
+    }
+
+    public String completionCellText(long processId) {
+        return processCell(processId, "Проведено користувачем").innerText();
+    }
+
+    private Locator processCell(long processId, String header) {
+        Locator row = page.getByTestId("inventory-process-row-" + processId);
+        row.waitFor(new Locator.WaitForOptions().setTimeout(uiTimeoutMs()));
+        Locator table = row.locator("xpath=ancestor::table");
+        int column = table.locator("thead th").allInnerTexts().stream()
+                .map(String::trim).toList().indexOf(header);
+        if (column < 0) {
+            throw new AssertionError("Inventory history column not found: " + header);
+        }
+        return row.locator("td").nth(column);
+    }
+
     public InventoryProcessesPage approve(long processId, String comment) {
         page.getByTestId("inventory-process-row-" + processId + "-open").click();
         page.getByTestId("inventory-process-open-comment").fill(comment);

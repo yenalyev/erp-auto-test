@@ -1,0 +1,266 @@
+{
+  "date": "2026-10-19",
+  "environment": "dev",
+  "baseUrl": "https://dev.cukerochka.sbs",
+  "suite": "manual-input-batches",
+  "build": "SUCCESS",
+  "mavenExitCode": 0,
+  "finishedAt": "2026-10-19T14:28:08+03:00",
+  "counts": {
+    "uiTotal": 8,
+    "failed": 0,
+    "apiTotal": 22,
+    "apiPassed": 22,
+    "total": 30,
+    "uiPassed": 8,
+    "passed": 30,
+    "configurationFailures": 0,
+    "skipped": 0
+  },
+  "fixTestIds": [
+    "TC-MIB-009",
+    "TC-MIB-019",
+    "TC-MIB-020",
+    "TC-MIB-UI-008",
+    "TC-MIB-UI-015",
+    "TC-MIB-UI-017"
+  ],
+  "coverageImprovements": [
+    "TC-MIB-009 compares all source batch UUIDs and balances immediately after each request, before cleanup, and verifies cleanup restoration.",
+    "TC-MIB-UI-015 changes quantity from 2 to 3, verifies saved total and batch quantity, one additional unit debited from the original batch, other batches unchanged, and restoration after deletion."
+  ],
+  "initialAttempt": {
+    "executedTestBodies": 0,
+    "reason": "Sandbox denied network/DNS access and Playwright browser download. Retried with network access and installed Chrome.",
+    "result": "INFRASTRUCTURE_BLOCKED"
+  },
+  "tcmPublished": false,
+  "googleSheetsPublished": false,
+  "testngReport": "target/manual-input-batches-dev-20261019-network-retest/surefire-reports/testng-results.xml",
+  "screenshots": [
+    {
+      "path": "docs/audits/2026-10-19/manual-input-batches-evidence/TC-MIB-UI-008.png",
+      "testId": "TC-MIB-UI-008"
+    },
+    {
+      "path": "docs/audits/2026-10-19/manual-input-batches-evidence/TC-MIB-UI-017.png",
+      "testId": "TC-MIB-UI-017"
+    },
+    {
+      "path": "docs/audits/2026-10-19/manual-input-batches-evidence/TC-MIB-UI-015.png",
+      "testId": "TC-MIB-UI-015"
+    }
+  ],
+  "results": [
+    {
+      "name": "[TC-MIB-001] batchSelectionIsScopedToLocationAndFiltersResources",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.batchSelectionIsScopedToLocationAndFiltersResources",
+      "status": "passed",
+      "startEpochMs": 1792408992678,
+      "stopEpochMs": 1792409005240
+    },
+    {
+      "name": "[TC-MIB-002, TC-MIB-003] manualBatchToggleAndFilterHappyPath",
+      "fullName": "com.erp.tests.ui.ManualInputBatchAccountingUiTest.manualBatchToggleAndFilterHappyPath",
+      "status": "passed",
+      "startEpochMs": 1792409218154,
+      "stopEpochMs": 1792409230836
+    },
+    {
+      "name": "[TC-MIB-004] serialProductionRequiresAndConsumesSelectedRawBatch",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.serialProductionRequiresAndConsumesSelectedRawBatch",
+      "status": "passed",
+      "startEpochMs": 1792409006183,
+      "stopEpochMs": 1792409015795
+    },
+    {
+      "name": "[TC-MIB-005] nonSeriesProductionRequiresAndConsumesSelectedRawBatch",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.nonSeriesProductionRequiresAndConsumesSelectedRawBatch",
+      "status": "passed",
+      "startEpochMs": 1792409018247,
+      "stopEpochMs": 1792409023918
+    },
+    {
+      "name": "[TC-MIB-006] projectStageRequiresSelectedBatchOnlyForActualUsage",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.projectStageRequiresSelectedBatchOnlyForActualUsage",
+      "status": "passed",
+      "startEpochMs": 1792409024887,
+      "stopEpochMs": 1792409035270
+    },
+    {
+      "name": "[TC-MIB-007] relocationConsumesSelectedBatchAndReceivesItAtDestination",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.relocationConsumesSelectedBatchAndReceivesItAtDestination",
+      "status": "passed",
+      "startEpochMs": 1792409036158,
+      "stopEpochMs": 1792409046167
+    },
+    {
+      "name": "[TC-MIB-008] warehouseDefectConsumesSelectedBatchAndCancelRestoresIt",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.warehouseDefectConsumesSelectedBatchAndCancelRestoresIt",
+      "status": "passed",
+      "startEpochMs": 1792409047004,
+      "stopEpochMs": 1792409055087
+    },
+    {
+      "name": "[TC-MIB-009] relocationAndWarehouseDefectRejectMissingBatchWithoutStockChange",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.relocationAndWarehouseDefectRejectMissingBatchWithoutStockChange",
+      "status": "passed",
+      "startEpochMs": 1792409064300,
+      "stopEpochMs": 1792409073925
+    },
+    {
+      "name": "[TC-MIB-010] serialProductionRejectsForeignMissingAndInsufficientBatches",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.serialProductionRejectsForeignMissingAndInsufficientBatches",
+      "status": "passed",
+      "startEpochMs": 1792409086182,
+      "stopEpochMs": 1792409092416
+    },
+    {
+      "name": "[TC-MIB-011] mixedManualAndFifoInputsStayAtomic",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.mixedManualAndFifoInputsStayAtomic",
+      "status": "passed",
+      "startEpochMs": 1792409093254,
+      "stopEpochMs": 1792409100053
+    },
+    {
+      "name": "[TC-MIB-012] repeatedBatchNumberKeepsStableUuidAndDebitsIt",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.repeatedBatchNumberKeepsStableUuidAndDebitsIt",
+      "status": "passed",
+      "startEpochMs": 1792409126190,
+      "stopEpochMs": 1792409131475
+    },
+    {
+      "name": "[TC-MIB-013] staleBatchSelectionCannotOverdraw",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.staleBatchSelectionCannotOverdraw",
+      "status": "passed",
+      "startEpochMs": 1792409110553,
+      "stopEpochMs": 1792409115769
+    },
+    {
+      "name": "[TC-MIB-014] fifoManualFifoSwitchPreservesEarlierBatchDebits",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.fifoManualFifoSwitchPreservesEarlierBatchDebits",
+      "status": "passed",
+      "startEpochMs": 1792409117927,
+      "stopEpochMs": 1792409124031
+    },
+    {
+      "name": "[TC-MIB-015] nonSeriesEditMovesDebitToNewBatchOnceAndRejectsInvalidEdit",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.nonSeriesEditMovesDebitToNewBatchOnceAndRejectsInvalidEdit",
+      "status": "passed",
+      "startEpochMs": 1792409133712,
+      "stopEpochMs": 1792409144021
+    },
+    {
+      "name": "[TC-MIB-016] manualBatchKeepsFractionAndRejectsExhaustedSelection",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.manualBatchKeepsFractionAndRejectsExhaustedSelection",
+      "status": "passed",
+      "startEpochMs": 1792409156374,
+      "stopEpochMs": 1792409161652
+    },
+    {
+      "name": "[TC-MIB-017] warehouseDefectSelectsOnlyExistingUnknownBatch",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.warehouseDefectSelectsOnlyExistingUnknownBatch",
+      "status": "passed",
+      "startEpochMs": 1792409055946,
+      "stopEpochMs": 1792409063463
+    },
+    {
+      "name": "[TC-MIB-018] separateManualResourcesCanEachUseTheirOwnBatch",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.separateManualResourcesCanEachUseTheirOwnBatch",
+      "status": "passed",
+      "startEpochMs": 1792409102292,
+      "stopEpochMs": 1792409108314
+    },
+    {
+      "name": "[TC-MIB-019] relocationEditRequiresExplicitSenderBatchAfterModeSwitch",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.relocationEditRequiresExplicitSenderBatchAfterModeSwitch",
+      "status": "passed",
+      "startEpochMs": 1792409162500,
+      "stopEpochMs": 1792409167796
+    },
+    {
+      "name": "[TC-MIB-020] fifoStorageDefectEditRequiresOriginalBatchUuidAfterModeSwitch",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.fifoStorageDefectEditRequiresOriginalBatchUuidAfterModeSwitch",
+      "status": "passed",
+      "startEpochMs": 1792409168640,
+      "stopEpochMs": 1792409172425
+    },
+    {
+      "name": "[TC-MIB-022] relocationSplitAcrossTwoBatchesRestoresOnReturn",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.relocationSplitAcrossTwoBatchesRestoresOnReturn",
+      "status": "passed",
+      "startEpochMs": 1792409173247,
+      "stopEpochMs": 1792409182397
+    },
+    {
+      "name": "[TC-MIB-023] storageDefectSplitAcrossTwoBatchesRestoresOnDelete",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.storageDefectSplitAcrossTwoBatchesRestoresOnDelete",
+      "status": "passed",
+      "startEpochMs": 1792409183268,
+      "stopEpochMs": 1792409191028
+    },
+    {
+      "name": "[TC-MIB-024] relocationAndDefectRejectInvalidBatchBreakdowns",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.relocationAndDefectRejectInvalidBatchBreakdowns",
+      "status": "passed",
+      "startEpochMs": 1792409074807,
+      "stopEpochMs": 1792409085349
+    },
+    {
+      "name": "[TC-MIB-025] warehouseDefectEditMovesDebitAndRejectsInvalidBatch",
+      "fullName": "com.erp.tests.functional.production.ManualInputBatchAccountingApiTest.warehouseDefectEditMovesDebitAndRejectsInvalidBatch",
+      "status": "passed",
+      "startEpochMs": 1792409144874,
+      "stopEpochMs": 1792409155528
+    },
+    {
+      "name": "[TC-MIB-UI-004] serialProductionPicksYoungerBatchInUiHappyPath",
+      "fullName": "com.erp.tests.ui.ManualInputBatchAccountingUiTest.serialProductionPicksYoungerBatchInUiHappyPath",
+      "status": "passed",
+      "startEpochMs": 1792409230980,
+      "stopEpochMs": 1792409236727
+    },
+    {
+      "name": "[TC-MIB-UI-005] nonSeriesProductionPicksRawBatchInUiHappyPath",
+      "fullName": "com.erp.tests.ui.ManualInputBatchAccountingUiTest.nonSeriesProductionPicksRawBatchInUiHappyPath",
+      "status": "passed",
+      "startEpochMs": 1792409265927,
+      "stopEpochMs": 1792409271179
+    },
+    {
+      "name": "[TC-MIB-UI-006] projectStagePicksRawBatchInUiHappyPath",
+      "fullName": "com.erp.tests.ui.ManualInputBatchAccountingUiTest.projectStagePicksRawBatchInUiHappyPath",
+      "status": "passed",
+      "startEpochMs": 1792409271313,
+      "stopEpochMs": 1792409279766
+    },
+    {
+      "name": "[TC-MIB-UI-007] relocationPicksYoungerBatchInUiHappyPath",
+      "fullName": "com.erp.tests.ui.ManualInputBatchAccountingUiTest.relocationPicksYoungerBatchInUiHappyPath",
+      "status": "passed",
+      "startEpochMs": 1792409236867,
+      "stopEpochMs": 1792409244579
+    },
+    {
+      "name": "[TC-MIB-UI-008] warehouseDefectPicksRawBatchInUiHappyPath",
+      "fullName": "com.erp.tests.ui.ManualInputBatchAccountingUiTest.warehouseDefectPicksRawBatchInUiHappyPath",
+      "status": "passed",
+      "startEpochMs": 1792409252389,
+      "stopEpochMs": 1792409258916
+    },
+    {
+      "name": "[TC-MIB-UI-015] fifoDefectEditRequiresVisibleBatchAfterManualSwitch",
+      "fullName": "com.erp.tests.ui.ManualInputBatchAccountingUiTest.fifoDefectEditRequiresVisibleBatchAfterManualSwitch",
+      "status": "passed",
+      "startEpochMs": 1792409244723,
+      "stopEpochMs": 1792409252244
+    },
+    {
+      "name": "[TC-MIB-UI-017] warehouseDefectPicksUnknownBatchInUiHappyPath",
+      "fullName": "com.erp.tests.ui.ManualInputBatchAccountingUiTest.warehouseDefectPicksUnknownBatchInUiHappyPath",
+      "status": "passed",
+      "startEpochMs": 1792409259069,
+      "stopEpochMs": 1792409265802
+    }
+  ]
+}

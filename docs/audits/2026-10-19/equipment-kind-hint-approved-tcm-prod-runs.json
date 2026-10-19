@@ -1,0 +1,157 @@
+[
+  {
+    "featureId": "REQ-EQU-HINT",
+    "importResult": {
+      "runId": 131,
+      "matched": 8,
+      "created": 8,
+      "updated": 0,
+      "skippedManual": 0,
+      "skippedOutOfScope": 0,
+      "unmatched": [],
+      "outOfScope": []
+    },
+    "readback": {
+      "id": 131,
+      "name": "AUTO Dev — погоджений текст підказки — hint",
+      "status": "COMPLETED",
+      "environment": "dev",
+      "version": null,
+      "assignee": "autotest",
+      "testPlanId": 30,
+      "testPlanName": "AUTO TP REQ-EQU-HINT",
+      "startedAt": "2026-10-19T09:43:24.678242",
+      "completedAt": "2026-10-19T09:43:25.0794",
+      "createdAt": "2026-10-19T09:43:24.678378",
+      "items": [
+        {
+          "id": 18866,
+          "testId": "TC-EQ-HINT-UI-001",
+          "title": "Відповідальний бачить підказку до введення даних",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-EQ-HINT-UI-001",
+          "executedAt": "2026-10-19T12:41:53"
+        },
+        {
+          "id": 18867,
+          "testId": "TC-EQ-HINT-UI-002",
+          "title": "Адміністратор читає повні приклади та контакт",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-EQ-HINT-UI-002",
+          "executedAt": "2026-10-19T12:41:18"
+        },
+        {
+          "id": 18868,
+          "testId": "TC-EQ-HINT-UI-003",
+          "title": "Відповідальний читає погоджений текст підказки",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-EQ-HINT-UI-003",
+          "executedAt": "2026-10-19T12:41:50"
+        },
+        {
+          "id": 18869,
+          "testId": "TC-EQ-HINT-UI-004",
+          "title": "Повторні перемикання зберігають поля та не записують дані",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-EQ-HINT-UI-004",
+          "executedAt": "2026-10-19T12:41:55"
+        },
+        {
+          "id": 18870,
+          "testId": "TC-EQ-HINT-UI-005",
+          "title": "Незалежні підказки при пакетному внесенні",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-EQ-HINT-UI-005",
+          "executedAt": "2026-10-19T12:41:31"
+        },
+        {
+          "id": 18871,
+          "testId": "TC-EQ-HINT-UI-006",
+          "title": "Клавіатурне керування підказкою",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-EQ-HINT-UI-006",
+          "executedAt": "2026-10-19T12:41:47"
+        },
+        {
+          "id": 18872,
+          "testId": "TC-EQ-HINT-UI-007",
+          "title": "Читабельність повного тексту на 1280 та 390 px",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-EQ-HINT-UI-007",
+          "executedAt": "2026-10-19T12:41:44"
+        },
+        {
+          "id": 18873,
+          "testId": "TC-EQ-HINT-UI-008",
+          "title": "Скасування без створення та повторне відкриття",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-EQ-HINT-UI-008",
+          "executedAt": "2026-10-19T12:41:39"
+        }
+      ]
+    }
+  },
+  {
+    "featureId": "REQ-EQU-002",
+    "importResult": {
+      "runId": 132,
+      "matched": 1,
+      "created": 1,
+      "updated": 0,
+      "skippedManual": 0,
+      "skippedOutOfScope": 0,
+      "unmatched": [],
+      "outOfScope": []
+    },
+    "readback": {
+      "id": 132,
+      "name": "AUTO Dev — погоджений текст підказки — create",
+      "status": "COMPLETED",
+      "environment": "dev",
+      "version": null,
+      "assignee": "autotest",
+      "testPlanId": 31,
+      "testPlanName": "AUTO TP REQ-EQU-002",
+      "startedAt": "2026-10-19T09:43:27.79926",
+      "completedAt": "2026-10-19T09:43:27.874511",
+      "createdAt": "2026-10-19T09:43:27.79938",
+      "items": [
+        {
+          "id": 18874,
+          "testId": "TC-UI-EQ-002",
+          "title": "Create Several Equipment In One Relocation",
+          "status": "PASS",
+          "actualResult": null,
+          "comment": null,
+          "defectId": null,
+          "automationTestId": "TC-UI-EQ-002",
+          "executedAt": "2026-10-19T12:42:09"
+        }
+      ]
+    }
+  }
+]

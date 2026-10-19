@@ -51,6 +51,7 @@
             <class name="com.erp.tests.functional.access.AccessManagementApiTest"/>
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
+            <class name="com.erp.tests.functional.resource.ResourceModifiedSortApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceImageApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourcePhoto50MbApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>
@@ -134,12 +135,14 @@
             <class name="com.erp.tests.functional.production.ProductionHashtagApiTest"/>
             <class name="com.erp.tests.functional.production.ProductionAlternativeInputsTest"/>
             <class name="com.erp.tests.functional.production.ProductionBatchRecipeConsistencyTest"/>
+            <class name="com.erp.tests.functional.production.ManualInputBatchAccountingApiTest"/>
             <class name="com.erp.tests.functional.production_order.ProductionOrderApiTest"/>
             <class name="com.erp.tests.functional.production_order.ProductionGroupApiTest"/>
             <class name="com.erp.tests.functional.disassemble.DisassembleCrudApiTest"/>
             <class name="com.erp.tests.functional.shift.ShiftCrudApiTest"/>
             <class name="com.erp.tests.functional.analytics.AnalyticsAuditApiTest"/>
             <class name="com.erp.tests.functional.analytics.PlanAnalyticApiTest"/>
+            <class name="com.erp.tests.functional.analytics.PlanAnalyticsExcelExportApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessComponentTechMapsApiTest"/>
             <class name="com.erp.tests.functional.assembly_readiness.AssemblyReadinessAlternativeGroupsApiTest"/>
@@ -152,6 +155,8 @@
     <test name="Non-Series Production API">
         <classes>
             <class name="com.erp.tests.functional.non_series_production.NonSeriesProductionTest"/>
+            <class name="com.erp.tests.functional.non_series_production.NonSeriesResourceFilterApiTest"/>
+            <class name="com.erp.tests.functional.non_series_production.NonSeriesExcelExportApiTest"/>
         </classes>
     </test>
 
@@ -200,6 +205,7 @@
             <class name="com.erp.tests.functional.relocation.RelocationUsedBatchEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationTotalsApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationPartialDeliveryIncidentTest"/>
@@ -219,6 +225,7 @@
         <classes>
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryConcurrentIssueApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryCommentApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryStockApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryBatchTechMapApiTest"/>
@@ -278,6 +285,7 @@
         <classes>
             <class name="com.erp.tests.ui.ProductionUITest"/>
             <class name="com.erp.tests.ui.ProductionBatchRecipeConsistencyUiTest"/>
+            <class name="com.erp.tests.ui.ManualInputBatchAccountingUiTest"/>
             <class name="com.erp.tests.ui.DisassembleBatchNumberUiTest"/>
             <class name="com.erp.tests.ui.DisassembleJournalUiTest"/>
             <class name="com.erp.tests.ui.ProductionGroupsUiTest"/>
@@ -292,6 +300,7 @@
             <class name="com.erp.tests.ui.CoverageGapUiSmokeTest"/>
             <class name="com.erp.tests.ui.ProductionAnalyticsUiTest"/>
             <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
+            <class name="com.erp.tests.ui.PlanAnalyticsExcelExportUiTest"/>
             <class name="com.erp.tests.ui.PlanExecutionImprovementUiTest"/>
         </classes>
     </test>
@@ -299,6 +308,8 @@
     <test name="UI Non-Series Production">
         <classes>
             <class name="com.erp.tests.ui.NonSeriesProductionUITest"/>
+            <class name="com.erp.tests.ui.NonSeriesResourceFilterUiTest"/>
+            <class name="com.erp.tests.ui.NonSeriesExcelExportUiTest"/>
         </classes>
     </test>
 
@@ -306,6 +317,7 @@
         <classes>
             <class name="com.erp.tests.ui.ResourceAutocompleteUiTest"/>
             <class name="com.erp.tests.ui.ResourcePhotoUiTest"/>
+            <class name="com.erp.tests.ui.ResourceModifiedSortUiTest"/>
             <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
         </classes>
     </test>
@@ -324,6 +336,12 @@
             <class name="com.erp.tests.ui.RelocationSupplierDefectEditUiTest"/>
             <class name="com.erp.tests.ui.BattalionRelocationEditUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.LogisticsJournalUiTest">
+                <methods>
+                    <include name="logisticsTotalsFollowTabsAndFilters"/>
+                    <include name="relocationTotalsFollowTabs"/>
+                </methods>
+            </class>
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationVisibilityUiTest"/>
@@ -342,6 +360,7 @@
         <classes>
             <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
+            <class name="com.erp.tests.ui.EquipmentKindHintUiTest"/>
             <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
             <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest"/>
         </classes>
@@ -350,6 +369,7 @@
     <test name="UI Inventory">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.InventoryConcurrentIssueUiTest"/>
             <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>
             <class name="com.erp.tests.ui.BatchInspectorUiTest"/>
             <class name="com.erp.tests.ui.InventoryMultiLocationExportUiTest"/>
@@ -394,6 +414,7 @@
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanHistoricalTechMapUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanTechMapEditUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanTechMapHintsUiTest"/>
             <class name="com.erp.tests.ui.PlanExecutionUiTest"/>
             <class name="com.erp.tests.ui.PlanDisassembleUiTest"/>
             <class name="com.erp.tests.ui.PlanNeededResourcesUiTest"/>

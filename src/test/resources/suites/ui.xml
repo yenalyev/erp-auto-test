@@ -16,10 +16,18 @@
         </classes>
     </test>
 
+    <test name="Non-Series Production resource filter UI">
+        <classes>
+            <class name="com.erp.tests.ui.NonSeriesResourceFilterUiTest"/>
+            <class name="com.erp.tests.ui.NonSeriesExcelExportUiTest"/>
+        </classes>
+    </test>
+
     <test name="Resources UI">
         <classes>
             <class name="com.erp.tests.ui.ResourceAutocompleteUiTest"/>
             <class name="com.erp.tests.ui.ResourcePhotoUiTest"/>
+            <class name="com.erp.tests.ui.ResourceModifiedSortUiTest"/>
             <class name="com.erp.tests.ui.UnitResourceDictionaryUiTest"/>
             <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
             <class name="com.erp.tests.ui.FaitaResourcesUiTest"/>
@@ -41,6 +49,12 @@
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.LogisticsJournalUiTest">
+                <methods>
+                    <include name="logisticsTotalsFollowTabsAndFilters"/>
+                    <include name="relocationTotalsFollowTabs"/>
+                </methods>
+            </class>
             <class name="com.erp.tests.ui.EquipmentRelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationIncidentUITest"/>
             <class name="com.erp.tests.ui.ResourceBundleApplyUiTest"/>
@@ -52,6 +66,7 @@
         <classes>
             <class name="com.erp.tests.ui.EquipmentAssigneeFilterUITest"/>
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
+            <class name="com.erp.tests.ui.EquipmentKindHintUiTest"/>
             <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
             <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest"/>
         </classes>
@@ -69,6 +84,7 @@
             <class name="com.erp.tests.ui.GlobalPlanEditAmountUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanHistoricalTechMapUiTest"/>
             <class name="com.erp.tests.ui.GlobalPlanTechMapEditUiTest"/>
+            <class name="com.erp.tests.ui.GlobalPlanTechMapHintsUiTest"/>
         </classes>
     </test>
 
@@ -117,6 +133,7 @@
 
     <test name="Inventory UI">
         <classes>
+            <class name="com.erp.tests.ui.InventoryConcurrentIssueUiTest"/>
             <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>
             <class name="com.erp.tests.ui.BatchInspectorUiTest"/>
             <class name="com.erp.tests.ui.InventoryHierarchyUiTest"/>
@@ -149,6 +166,7 @@
         <classes>
             <class name="com.erp.tests.ui.ProductionAnalyticsUiTest"/>
             <class name="com.erp.tests.ui.PlanAnalyticsUiTest"/>
+            <class name="com.erp.tests.ui.PlanAnalyticsExcelExportUiTest"/>
         </classes>
     </test>
 

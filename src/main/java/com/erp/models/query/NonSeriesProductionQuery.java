@@ -14,7 +14,7 @@ import java.util.Map;
  * Query parameters for {@code GET /api/v1/non-series-production} and {@code /total}.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class NonSeriesProductionQuery {
 
     private static final String BASE_PATH = "/api/v1/non-series-production";
@@ -22,15 +22,20 @@ public class NonSeriesProductionQuery {
 
     Long storageId;
     String productSearch;
+    String resourceSearch;
     LocalDate startDate;
     LocalDate endDate;
     @Builder.Default
     List<NonSeriesProductionStatus> statuses = List.of();
     Integer pageSize;
+    Integer page;
 
     public Map<String, Object> toListQueryParams() {
         Map<String, Object> params = baseParams();
         params.put("size", pageSize != null ? pageSize : 500);
+        if (page != null) {
+            params.put("page", page);
+        }
         return params;
     }
 
@@ -54,6 +59,9 @@ public class NonSeriesProductionQuery {
         params.put("storageIds", storageId);
         if (productSearch != null && !productSearch.isBlank()) {
             params.put("productSearch", productSearch);
+        }
+        if (resourceSearch != null) {
+            params.put("resourceSearch", resourceSearch);
         }
         if (startDate != null) {
             params.put("startDate", startDate.format(ISO_DATE));

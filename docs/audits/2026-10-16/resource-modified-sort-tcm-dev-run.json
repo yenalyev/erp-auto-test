@@ -1,0 +1,9 @@
+{
+  "remoteRunId": "resource-modified-sort-dev-final-20261016-174901",
+  "documentationAndCasesVerified": true,
+  "executionImportConfirmed": false,
+  "attempts": [
+    { "endpoint": "/api/ai/projects/1/test-runs/import", "httpStatus": 405 },
+    { "endpoint": "/api/autotest/runs", "httpStatus": 500 }
+  ]
+}

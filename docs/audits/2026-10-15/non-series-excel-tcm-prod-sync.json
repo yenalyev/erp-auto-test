@@ -1,0 +1,106 @@
+{
+  "featureId": "REQ-NSP-EXCEL",
+  "featureDbId": 154,
+  "documentationMatchesSource": true,
+  "documentationLength": 12682,
+  "documentationUpdatedOn": "2026-10-15",
+  "fullRecordsCaseVerified": true,
+  "criteria": [
+    {
+      "key": "AC-01",
+      "id": 726
+    },
+    {
+      "key": "AC-02",
+      "id": 727
+    },
+    {
+      "key": "AC-03",
+      "id": 728
+    },
+    {
+      "key": "AC-04",
+      "id": 729
+    },
+    {
+      "key": "AC-05",
+      "id": 730
+    },
+    {
+      "key": "AC-06",
+      "id": 731
+    },
+    {
+      "key": "AC-07",
+      "id": 732
+    }
+  ],
+  "cases": [
+    {
+      "testId": "TC-NSP-XLSX-API-001",
+      "ac": "AC-06",
+      "automation": true,
+      "stepCount": 3
+    },
+    {
+      "testId": "TC-NSP-XLSX-API-002",
+      "ac": "AC-01",
+      "automation": true,
+      "stepCount": 3
+    },
+    {
+      "testId": "TC-NSP-XLSX-API-003",
+      "ac": "AC-01",
+      "automation": true,
+      "stepCount": 2
+    },
+    {
+      "testId": "TC-NSP-XLSX-API-004",
+      "ac": "AC-01",
+      "automation": true,
+      "stepCount": 3
+    },
+    {
+      "testId": "TC-NSP-XLSX-API-005",
+      "ac": "AC-02",
+      "automation": true,
+      "stepCount": 3
+    },
+    {
+      "testId": "TC-NSP-XLSX-API-006",
+      "ac": "AC-04",
+      "automation": true,
+      "stepCount": 2
+    },
+    {
+      "testId": "TC-NSP-XLSX-API-007",
+      "ac": "AC-07",
+      "automation": true,
+      "stepCount": 3
+    },
+    {
+      "testId": "TC-NSP-XLSX-UI-001",
+      "ac": "AC-01",
+      "automation": true,
+      "stepCount": 3
+    },
+    {
+      "testId": "TC-NSP-XLSX-UI-002",
+      "ac": "AC-03",
+      "automation": true,
+      "stepCount": 3
+    },
+    {
+      "testId": "TC-NSP-XLSX-UI-003",
+      "ac": "AC-04",
+      "automation": true,
+      "stepCount": 3
+    },
+    {
+      "testId": "TC-NSP-XLSX-UI-004",
+      "ac": "AC-05",
+      "automation": true,
+      "stepCount": 3
+    }
+  ]
+}

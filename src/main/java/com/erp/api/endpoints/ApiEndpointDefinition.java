@@ -1771,6 +1771,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    NON_SERIES_PRODUCTION_EXPORT(
+            "/api/v1/non-series-production/export",
+            Method.GET,
+            null,
+            "Export non-series production with journal filters",
+            null,
+            null,
+            null
+    ),
+
     NON_SERIES_PRODUCTION_GET_TOTAL(
             "/api/v1/non-series-production/total",
             Method.GET,
@@ -2422,6 +2432,27 @@ public enum ApiEndpointDefinition {
     // ========================================
     // RESOURCE VIEWER ENDPOINTS
     // ========================================
+    RESOURCE_VIEWER_LIST_NAMES_GET(
+            "/api/v1/resources-viewer/list/names", Method.GET, null,
+            "Get named tracking resource lists", null,
+            new TypeReference<List<SimpleEntityResponse>>() {}, null
+    ),
+    RESOURCE_VIEWER_LIST_GET(
+            "/api/v1/resources-viewer/list/{id}", Method.GET, null,
+            "Get named tracking resource list", null, null, null
+    ),
+    RESOURCE_VIEWER_LIST_CREATE(
+            "/api/v1/resources-viewer/list", Method.POST, null,
+            "Create named tracking resource list", null, null, null
+    ),
+    RESOURCE_VIEWER_LIST_UPDATE(
+            "/api/v1/resources-viewer/list/{id}", Method.PUT, null,
+            "Update named tracking resource list", null, null, null
+    ),
+    RESOURCE_VIEWER_LIST_DELETE(
+            "/api/v1/resources-viewer/list/{id}", Method.DELETE, null,
+            "Delete named tracking resource list", null, null, null
+    ),
     /**
      * Journal page + aggregated {@code sums} in one response.
      * Separate {@code /relocations/sum} was removed from the backend — clients read {@code sums}
@@ -2457,6 +2488,16 @@ public enum ApiEndpointDefinition {
             "Get relocations page",
             null,
             new TypeReference<PagedRelocationResponse>() {},
+            null
+    ),
+
+    RELOCATION_GET_TOTALS(
+            "/api/v1/relocations/totals",
+            Method.GET,
+            "schemas/relocations/relocation-totals-response-schema.json",
+            "Get filtered relocation totals by measurement unit",
+            null,
+            new TypeReference<Map<String, Object>>() {},
             null
     ),
 
@@ -3145,6 +3186,16 @@ public enum ApiEndpointDefinition {
             Method.GET,
             "schemas/plan-analytic/plan-analytic-page-schema.json",
             "Plan analytics rows: produced / relocated / used / stock for a resource or category selection",
+            null,
+            null,
+            null
+    ),
+
+    PLAN_ANALYTIC_EXPORT_GET(
+            "/api/v1/analytics/plan/export",
+            Method.GET,
+            null,
+            "Plan analytics XLSX: totals and all filtered resources",
             null,
             null,
             null

@@ -1,0 +1,304 @@
+{
+  "featureId": "REQ-WMS-013",
+  "documentation": "## Ручний вибір партії\n\nДля ресурсу на конкретній локації можна налаштувати ручний вибір партії або автоматичне списання за чергою надходження. Коли ручний вибір увімкнено, у виробництві, проєктному виробництві, видачі та списанні браку користувач указує партію фактичної витрати. Система списує лише вибрану партію і не дозволяє використати чужу, відсутню або недостатню партію. Зміна режиму не повинна переписувати вже виконані списання. Помилка одного рядка не змінює залишки інших рядків.\n\n## Стан перевірки на ERP dev — 19.10.2026\n\nПовний прогін `manual-input-batches` після відновлення dev завершився о 15:17 за Києвом: **30/30, 0 падінь, 0 пропусків, BUILD SUCCESS** (API 22/22, UI 8/8). Попередній повний прогін о 14:28 також мав 30/30. Усі раніше проблемні сценарії `TC-MIB-009/019/020` та `TC-MIB-UI-008/015/017` пройшли. `TC-MIB-009` тепер перевіряє всі партії до очищення; `TC-MIB-UI-015` перевіряє зміну кількості 2 → 3 і правильний перерахунок усіх залишків. Чотири перелічені нижче дефекти повторним прогоном на dev не відтворилися. Деталі й артефакти — у [dev-звіті](MANUAL_RESOURCE_BATCH_ACCOUNTING_DEV_REPORT.md).\n\n30 виконаних методів відповідають 31 TCM-кейсу: TC-MIB-002 і TC-MIB-003 перевіряються одним методом. Прогін стосується ERP dev; перевірки ERP production не виконувалися. TC-MIB-021 і TC-MIB-UI-017B не виконувалися в цьому наборі та не позначаються PASS.\n\n## Історичний стан перевірки на ERP dev — 15.10.2026\n\nПовний прогін `manual-input-batches`: **30 тестів, 24 пройшли, 6 впали** (API 19/22, UI 5/8). Порівняно з 14.10 набір падінь не змінився. Цей результат стосується **ERP dev**; публікація документації в production TCM не означає перевірку ERP production.\n\nВідкриті дефекти розділено за компонентом:\n\n- **Бекенд, передача** (`TC-MIB-009`, `TC-MIB-019`): створення та редагування відправлення ресурсу в MANUAL без явної партії повертають `200` замість відхилення.\n- **Бекенд, складський брак** (`TC-MIB-009`, `TC-MIB-020`): створення та редагування складського браку в MANUAL без явної партії повертають `200` замість відхилення.\n- **Фронтенд, створення складського браку** (`TC-MIB-UI-008`, `TC-MIB-UI-017`): для невиробленої партії сировини (`isProduced=false`) з додатним залишком форма не показує таблицю «Партії», хоча MANUAL увімкнено й API повертає партію. Контрольний сценарій із `isProduced=true` таблицю показує.\n- **Фронтенд, редагування складського браку** (`TC-MIB-UI-015`): після створення браку у FIFO та перемикання ресурсу на MANUAL форма редагування не показує вибір партії.\n\nПриймання фічі потребує явного вибору партії в усіх п'яти операціях витрати та успішного повторного прогону всіх 30 тестів. Детальні відповіді API й скриншоти наведено в [dev-звіті](MANUAL_RESOURCE_BATCH_ACCOUNTING_DEV_REPORT.md).\n",
+  "casePatches": [
+    {
+      "testId": "TC-MIB-009",
+      "title": "Операція без обов'язкової партії",
+      "description": "Автотест ManualInputBatchAccountingApiTest#relocationAndWarehouseDefectRejectMissingBatchWithoutStockChange. Окремо перевіряє передачу та складський брак без партії у MANUAL; усі залишки знімаються до очищення.",
+      "preconditions": "Dev ERP; керівник окремої виробничої локації; ресурс із кількома партіями та додатним залишком, включно зі старішою FIFO-партією.",
+      "testData": "Кількість передачі — 1; кількість складського браку — 1. Перед запитами ввімкнути MANUAL для пари ресурс + локація. Тіла запитів не містять явного вибору партії.",
+      "expectedResult": "Обидва запити повертають 4xx; UUID і кількості всіх партій незмінні одразу після кожного запиту, до очищення. Очищення не може приховати побічне списання.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати кілька партій ресурсу, увімкнути MANUAL та зберегти UUID і залишки всіх партій.",
+          "expectedText": "Є додатний залишок і початковий знімок усіх партій."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Виконати POST /relocations/send на 1 одиницю без партії. До скасування порівняти всі партії зі знімком.",
+          "expectedText": "4xx; склад UUID та залишок кожної партії незмінні. Якщо запит помилково прийнятий, перевірка все одно фіксує збій до скасування."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "У finally скасувати помилково створену передачу; зняти окремий знімок і виконати multipart POST /defects типу STORAGE на 1 без партії.",
+          "expectedText": "4xx; усі партії незмінні до видалення помилково створеного браку."
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "У finally видалити помилково створений брак; звірити всі партії з початковим знімком та повернути FIFO.",
+          "expectedText": "Залишки відновлені; статуси відмов перевірені незалежно від очищення."
+        }
+      ],
+      "apiAutomationIds": [
+        "TC-MIB-009"
+      ]
+    },
+    {
+      "testId": "TC-MIB-UI-015",
+      "title": "Правка браку після перемикання режиму",
+      "description": "Автотест ManualInputBatchAccountingUiTest#fifoDefectEditRequiresVisibleBatchAfterManualSwitch. Редагує FIFO-брак після переходу на MANUAL зі зміною кількості 2 → 3, перевіряє збережені дані та залишки всіх партій.",
+      "preconditions": "Dev ERP; ресурс на окремій виробничій локації має доступну сировинну партію з достатнім залишком для FIFO-списання 2 та наступного збільшення до 3; режим спочатку FIFO.",
+      "testData": "Початкова кількість браку 2; нова кількість 3; використовувати початковий UUID партії.",
+      "expectedResult": "Таблиця «Партії» доступна; збережені загальна й партійна кількості дорівнюють 3 з початковим UUID. З цієї партії списана лише 1 додаткова одиниця, інші партії незмінні; видалення відновлює початкові залишки.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Зняти UUID і залишки всіх партій, створити STORAGE-брак у FIFO на 2 одиниці.",
+          "expectedText": "Початкова партія зменшилась рівно на 2; інші партії незмінні."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Увімкнути MANUAL, відкрити редагування цього браку та в таблиці «Партії» вказати 3 для початкової партії.",
+          "expectedText": "Таблиця видима, початкову партію можна вибрати й змінити кількість."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Зберегти через UI, перечитати брак через API та звірити всі залишки.",
+          "expectedText": "Загальна кількість 3; рівно одна партія з початковим UUID і кількістю 3. Додаткове списання — 1; інші партії незмінні."
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "У finally видалити брак і повернути FIFO.",
+          "expectedText": "Усі залишки повернулися до знімка перед створенням."
+        }
+      ],
+      "uiAutomationIds": [
+        "TC-MIB-UI-015"
+      ]
+    }
+  ],
+  "run": {
+    "projectId": 1,
+    "featureId": 138,
+    "environment": "dev",
+    "remoteRunId": "manual-input-batches-dev-20261019-151750-post-recovery",
+    "runName": "Manual input batches — dev 2026-10-19 15:17 — 30 methods / 31 cases PASS",
+    "suite": "manual-input-batches",
+    "buildName": "manual-input-batches-dev-20261019-post-recovery",
+    "results": [
+      {
+        "testCaseId": "TC-MIB-001",
+        "status": "PASS",
+        "durationMs": 11568,
+        "executedAt": "2026-10-19T15:12:40.353",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-002",
+        "status": "PASS",
+        "durationMs": 12427,
+        "executedAt": "2026-10-19T15:16:39.580",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-003",
+        "status": "PASS",
+        "durationMs": 12427,
+        "executedAt": "2026-10-19T15:16:39.580",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-004",
+        "status": "PASS",
+        "durationMs": 9206,
+        "executedAt": "2026-10-19T15:12:52.914",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-005",
+        "status": "PASS",
+        "durationMs": 5292,
+        "executedAt": "2026-10-19T15:13:04.901",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-006",
+        "status": "PASS",
+        "durationMs": 11229,
+        "executedAt": "2026-10-19T15:13:11.207",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-007",
+        "status": "PASS",
+        "durationMs": 11006,
+        "executedAt": "2026-10-19T15:13:23.404",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-008",
+        "status": "PASS",
+        "durationMs": 8390,
+        "executedAt": "2026-10-19T15:13:35.506",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-009",
+        "status": "PASS",
+        "durationMs": 7806,
+        "executedAt": "2026-10-19T15:13:53.999",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-010",
+        "status": "PASS",
+        "durationMs": 6865,
+        "executedAt": "2026-10-19T15:14:15.107",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-011",
+        "status": "PASS",
+        "durationMs": 7745,
+        "executedAt": "2026-10-19T15:14:24.678",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-012",
+        "status": "PASS",
+        "durationMs": 5835,
+        "executedAt": "2026-10-19T15:15:03.646",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-013",
+        "status": "PASS",
+        "durationMs": 5386,
+        "executedAt": "2026-10-19T15:14:46.720",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-014",
+        "status": "PASS",
+        "durationMs": 6698,
+        "executedAt": "2026-10-19T15:14:54.516",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-015",
+        "status": "PASS",
+        "durationMs": 10796,
+        "executedAt": "2026-10-19T15:15:11.895",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-016",
+        "status": "PASS",
+        "durationMs": 5587,
+        "executedAt": "2026-10-19T15:15:34.056",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-017",
+        "status": "PASS",
+        "durationMs": 7986,
+        "executedAt": "2026-10-19T15:13:45.019",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-018",
+        "status": "PASS",
+        "durationMs": 7824,
+        "executedAt": "2026-10-19T15:14:36.389",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-019",
+        "status": "PASS",
+        "durationMs": 6442,
+        "executedAt": "2026-10-19T15:15:40.534",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-020",
+        "status": "PASS",
+        "durationMs": 4122,
+        "executedAt": "2026-10-19T15:15:47.924",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-022",
+        "status": "PASS",
+        "durationMs": 10613,
+        "executedAt": "2026-10-19T15:15:52.953",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-023",
+        "status": "PASS",
+        "durationMs": 8172,
+        "executedAt": "2026-10-19T15:16:04.702",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-024",
+        "status": "PASS",
+        "durationMs": 11375,
+        "executedAt": "2026-10-19T15:14:02.805",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-025",
+        "status": "PASS",
+        "durationMs": 9640,
+        "executedAt": "2026-10-19T15:15:23.545",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-UI-004",
+        "status": "PASS",
+        "durationMs": 5674,
+        "executedAt": "2026-10-19T15:16:52.183",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-UI-005",
+        "status": "PASS",
+        "durationMs": 5676,
+        "executedAt": "2026-10-19T15:17:27.750",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-UI-006",
+        "status": "PASS",
+        "durationMs": 8239,
+        "executedAt": "2026-10-19T15:17:33.575",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-UI-007",
+        "status": "PASS",
+        "durationMs": 7088,
+        "executedAt": "2026-10-19T15:16:58.003",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-UI-008",
+        "status": "PASS",
+        "durationMs": 6702,
+        "executedAt": "2026-10-19T15:17:14.065",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-UI-015",
+        "status": "PASS",
+        "durationMs": 8639,
+        "executedAt": "2026-10-19T15:17:05.283",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MIB-UI-017",
+        "status": "PASS",
+        "durationMs": 6683,
+        "executedAt": "2026-10-19T15:17:20.911",
+        "errorMessage": null
+      }
+    ]
+  },
+  "unexecutedCaseIds": [
+    "TC-MIB-021",
+    "TC-MIB-UI-017B"
+  ]
+}

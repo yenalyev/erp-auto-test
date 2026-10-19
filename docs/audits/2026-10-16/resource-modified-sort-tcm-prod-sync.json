@@ -1,0 +1,45 @@
+{
+  "featureId": "REQ-RES-SORT",
+  "id": 159,
+  "documentationMatchesSource": true,
+  "criteria": [
+    {
+      "acId": "AC-01",
+      "testIds": [
+        "TC-RES-SORT-API-001"
+      ]
+    },
+    {
+      "acId": "AC-02",
+      "testIds": [
+        "TC-RES-SORT-API-002"
+      ]
+    },
+    {
+      "acId": "AC-03",
+      "testIds": [
+        "TC-RES-SORT-UI-001"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "testId": "TC-RES-SORT-API-001",
+      "acId": "AC-01",
+      "automated": true,
+      "mismatches": []
+    },
+    {
+      "testId": "TC-RES-SORT-API-002",
+      "acId": "AC-02",
+      "automated": true,
+      "mismatches": []
+    },
+    {
+      "testId": "TC-RES-SORT-UI-001",
+      "acId": "AC-03",
+      "automated": true,
+      "mismatches": []
+    }
+  ]
+}

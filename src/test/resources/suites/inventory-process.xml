@@ -18,6 +18,12 @@
         <classes>
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
+            <class name="com.erp.tests.functional.inventory.InventoryConcurrentIssueApiTest"/>
+        </classes>
+    </test>
+    <test name="Inventory Concurrent Issue UI">
+        <classes>
+            <class name="com.erp.tests.ui.InventoryConcurrentIssueUiTest"/>
         </classes>
     </test>
 </suite>

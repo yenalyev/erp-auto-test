@@ -1,0 +1,231 @@
+[
+  {
+    "name": "[TC-PLAN-ANL-UI-006] supplierAloneDoesNotRequestRowsAndIsAppliedWhenTargetAppears",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsUiTest.supplierAloneDoesNotRequestRowsAndIsAppliedWhenTargetAppears",
+    "status": "passed",
+    "start": 1792144927825,
+    "stop": 1792144933448,
+    "statusMessage": null,
+    "source": "target/allure-results\\0b1fff36-0505-4a10-bf1b-519462c8ee28-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-006",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-UI-004, TC-PLAN-ANL-UI-007] supplierOptionsSearchAndRepeatedQueryFilterRows",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsUiTest.supplierOptionsSearchAndRepeatedQueryFilterRows",
+    "status": "passed",
+    "start": 1792144880807,
+    "stop": 1792144887682,
+    "statusMessage": null,
+    "source": "target/allure-results\\0b3e5968-6a95-4362-a0e2-e55359b1c732-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-004",
+        "type": "tms"
+      },
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-007",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-UI-005] supplierSurvivesPeriodChangeButNotClearReloadOrReopen",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsUiTest.supplierSurvivesPeriodChangeButNotClearReloadOrReopen",
+    "status": "passed",
+    "start": 1792145116819,
+    "stop": 1792145132147,
+    "statusMessage": null,
+    "source": "target/allure-results\\57b50221-c25c-4e69-a4e6-2df93d7fb8f5-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-005",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-UI-001] planAnalyticsPageShowsMonthAndThreeMonthProductFigures",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsUiTest.planAnalyticsPageShowsMonthAndThreeMonthProductFigures",
+    "status": "passed",
+    "start": 1792144862862,
+    "stop": 1792144868394,
+    "statusMessage": null,
+    "source": "target/allure-results\\476d8bd9-9201-46f4-afd0-169c6740a9a9-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-001",
+        "type": "tms"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-XLSX-UI-002] downloadedWorkbookMatchesUiFiltersAndAllPages",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsExcelExportUiTest.downloadedWorkbookMatchesUiFiltersAndAllPages",
+    "status": "passed",
+    "start": 1792144840184,
+    "stop": 1792144860371,
+    "statusMessage": null,
+    "source": "target/allure-results\\59351fb2-5d5c-427a-83cc-ca712b14d1b0-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-XLSX-UI-002",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-UI-002] creatingPlanShowsInsightsForSelectedProduct",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsUiTest.creatingPlanShowsInsightsForSelectedProduct",
+    "status": "passed",
+    "start": 1792144868491,
+    "stop": 1792144873031,
+    "statusMessage": null,
+    "source": "target/allure-results\\75577bb7-219b-465f-90b0-8d6a4d570801-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-002",
+        "type": "tms"
+      },
+      {
+        "name": "Новий глобальний план",
+        "url": "https://dev.cukerochka.sbs/global-plans/create"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-XLSX-UI-001] exportIsUnavailableWithoutSelection",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsExcelExportUiTest.exportIsUnavailableWithoutSelection",
+    "status": "passed",
+    "start": 1792144860483,
+    "stop": 1792144862107,
+    "statusMessage": null,
+    "source": "target/allure-results\\813b13fc-9085-4b29-9f7e-baa4580a590d-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-XLSX-UI-001",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-UI-008] defaultAmmunitionCategoryRequestsRowsAutomatically",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsUiTest.defaultAmmunitionCategoryRequestsRowsAutomatically",
+    "status": "passed",
+    "start": 1792144933547,
+    "stop": 1792144937991,
+    "statusMessage": null,
+    "source": "target/allure-results\\bf9b191c-a7d2-4052-8de9-980165cdd04c-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-008",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-UI-003] totalsDoNotAddDifferentMeasurementUnits",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsUiTest.totalsDoNotAddDifferentMeasurementUnits",
+    "status": "passed",
+    "start": 1792144873129,
+    "stop": 1792144880707,
+    "statusMessage": null,
+    "source": "target/allure-results\\c34b4c89-5c50-45f0-82fc-8ea1f86ff5c7-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-003",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-UI-009] defaultCategoryCanBeClearedReplacedAndRestoredOnReopen",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsUiTest.defaultCategoryCanBeClearedReplacedAndRestoredOnReopen",
+    "status": "passed",
+    "start": 1792144938184,
+    "stop": 1792144944444,
+    "statusMessage": null,
+    "source": "target/allure-results\\db161ed4-c324-4eda-adb4-b59efc355530-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-UI-009",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  },
+  {
+    "name": "[TC-PLAN-ANL-XLSX-UI-003] defaultAmmunitionExportMatchesAllFilteredRows",
+    "fullName": "com.erp.tests.ui.PlanAnalyticsExcelExportUiTest.defaultAmmunitionExportMatchesAllFilteredRows",
+    "status": "passed",
+    "start": 1792144808582,
+    "stop": 1792144840065,
+    "statusMessage": null,
+    "source": "target/allure-results\\e6318857-4236-4a84-adc3-bdd1418fe56f-result.json",
+    "links": [
+      {
+        "name": "TestCase",
+        "url": "TC-PLAN-ANL-XLSX-UI-003",
+        "type": "tms"
+      },
+      {
+        "name": "Аналітика для плану (/analytics/plan)",
+        "url": "https://dev.cukerochka.sbs/analytics/plan"
+      }
+    ]
+  }
+]

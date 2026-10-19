@@ -9,8 +9,11 @@ import com.erp.fixtures.StorageFixture;
 import com.erp.fixtures.StorageRegionFixture;
 import com.erp.fixtures.TestArtifactCleanup;
 import com.erp.models.response.EquipmentSimpleResponse;
+import com.erp.models.response.EquipmentResponse;
+import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.models.response.RelocationResponse;
 import com.erp.pages.EquipmentCreatePage;
+import com.erp.pages.EquipmentKindHintSection;
 import com.erp.pages.EquipmentListPage;
 import com.erp.test_context.ContextKey;
 import com.erp.utils.config.ConfigProvider;
@@ -37,6 +40,7 @@ public class EquipmentCreateUITest extends BaseUITest {
     private Long supplierId;
     private String categoryName;
     private String supplierName;
+    private List<EquipmentResponse> createdEquipment = List.of();
 
     @BeforeClass(alwaysRun = true)
     @Override
@@ -58,6 +62,24 @@ public class EquipmentCreateUITest extends BaseUITest {
 
     @AfterClass(alwaysRun = true)
     public void cleanupIsolatedStorage() {
+        if (!createdEquipment.isEmpty()) {
+            long actualStorage = createdEquipment.getFirst().getStorage().getId();
+            List<String> names = createdEquipment.stream().map(EquipmentResponse::getName).toList();
+            RelocationResponse owned = equipmentFixture.findRelocationContainingEquipmentNames(
+                    UserRole.ADMIN, actualStorage, names);
+            assertThat(owned.getEquipmentItems()).hasSize(createdEquipment.size());
+            assertThat(owned.getEquipmentItems().stream().map(EquipmentSimpleResponse::getId).toList())
+                    .containsExactlyInAnyOrderElementsOf(createdEquipment.stream().map(EquipmentResponse::getId).toList());
+            equipmentFixture.deleteRelocation(UserRole.ADMIN, owned.getId(), actualStorage);
+            for (EquipmentResponse item : createdEquipment) {
+                assertThat(apiExecutor.execute(ApiEndpointDefinition.EQUIPMENT_GET_BY_ID,
+                        UserRole.ADMIN, null, item.getId()).statusCode())
+                        .as("Owned equipment %s removed", item.getId()).isEqualTo(404);
+            }
+            Allure.addAttachment("Owned equipment cleanup", "Deleted receive " + owned.getId()
+                    + "; equipment IDs " + createdEquipment.stream().map(EquipmentResponse::getId).toList()
+                    + "; all GET by ID returned 404");
+        }
         TestArtifactCleanup.cleanupRegionsAndStorages(regionFixture, storageFixture);
     }
 
@@ -85,7 +107,8 @@ public class EquipmentCreateUITest extends BaseUITest {
         Allure.parameter("equipmentA", nameA);
         Allure.parameter("equipmentB", nameB);
 
-        injectRoleSession(UserRole.OWNER_1, storageId);
+        // ADMIN can select the isolated child location. OWNER_1 may only select its home.
+        injectRoleSession(UserRole.ADMIN, storageId);
 
         EquipmentListPage listPage = Allure.step("UI: створити 2 позиції обладнання з постачальником", () -> {
             EquipmentCreatePage createPage = new EquipmentCreatePage(page)
@@ -100,7 +123,21 @@ public class EquipmentCreateUITest extends BaseUITest {
                     .isEqualTo(2);
 
             createPage.attachScreenshot("TC-UI-EQ-002 — form with 2 items");
-            return createPage.submitAll(2);
+            EquipmentKindHintSection hint = new EquipmentKindHintSection(page, 1);
+            hint.expand();
+            hint.collapse();
+            com.microsoft.playwright.Response createdResponse = page.waitForResponse(
+                    r -> r.url().matches(".*/api/v1/equipment(?:\\?.*)?$")
+                            && "POST".equals(r.request().method()) && r.ok(),
+                    () -> createPage.submitAll(2));
+            Allure.addAttachment("UI equipment create response", "application/json", createdResponse.text());
+            createdEquipment = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
+                    createdResponse.body(), new com.fasterxml.jackson.core.type.TypeReference<List<EquipmentResponse>>() {});
+            assertThat(createdEquipment).hasSize(2);
+            for (var item : createdEquipment) {
+                assertThat(item.getStorage().getId()).as("UI must create on the isolated location").isEqualTo(storageId);
+            }
+            return new EquipmentListPage(page).waitForLoaded();
         });
 
         Allure.step("UI: обидві назви видимі в журналі обладнання", () -> {

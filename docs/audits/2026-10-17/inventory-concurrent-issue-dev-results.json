@@ -1,0 +1,51 @@
+[
+  {
+    "testCaseId": "TC-INV-CONCURRENT-API-001",
+    "status": "PASS",
+    "durationMs": 3222,
+    "executedAt": "2026-10-17T15:55:19",
+    "errorMessage": null
+  },
+  {
+    "testCaseId": "TC-INV-CONCURRENT-API-002",
+    "status": "PASS",
+    "durationMs": 6282,
+    "executedAt": "2026-10-17T15:54:53",
+    "errorMessage": null
+  },
+  {
+    "testCaseId": "TC-INV-CONCURRENT-API-003",
+    "status": "PASS",
+    "durationMs": 7672,
+    "executedAt": "2026-10-17T15:55:12",
+    "errorMessage": null
+  },
+  {
+    "testCaseId": "TC-INV-CONCURRENT-API-004",
+    "status": "PASS",
+    "durationMs": 4802,
+    "executedAt": "2026-10-17T15:55:01",
+    "errorMessage": null
+  },
+  {
+    "testCaseId": "TC-INV-CONCURRENT-UI-001",
+    "status": "PASS",
+    "durationMs": 14252,
+    "executedAt": "2026-10-17T15:56:28",
+    "errorMessage": null
+  },
+  {
+    "testCaseId": "TC-INV-CONCURRENT-UI-002",
+    "status": "PASS",
+    "durationMs": 15055,
+    "executedAt": "2026-10-17T15:55:50",
+    "errorMessage": null
+  },
+  {
+    "testCaseId": "TC-INV-CONCURRENT-UI-003",
+    "status": "PASS",
+    "durationMs": 12074,
+    "executedAt": "2026-10-17T15:56:08",
+    "errorMessage": null
+  }
+]

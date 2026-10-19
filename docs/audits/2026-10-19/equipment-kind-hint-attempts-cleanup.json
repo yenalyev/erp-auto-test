@@ -1,0 +1,25 @@
+[ {
+  "name" : "ui-eq-batch-A-298337",
+  "relocationId" : 24889,
+  "id" : 2148,
+  "storageId" : 1,
+  "getAfterDelete" : 404
+}, {
+  "name" : "ui-eq-batch-B-298337",
+  "relocationId" : 24889,
+  "id" : 2149,
+  "storageId" : 1,
+  "getAfterDelete" : 404
+}, {
+  "name" : "ui-eq-batch-A-594631",
+  "relocationId" : 24890,
+  "id" : 2150,
+  "storageId" : 4278,
+  "getAfterDelete" : 404
+}, {
+  "name" : "ui-eq-batch-B-594631",
+  "relocationId" : 24890,
+  "id" : 2151,
+  "storageId" : 4278,
+  "getAfterDelete" : 404
+} ]

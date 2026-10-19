@@ -1,0 +1,44 @@
+{
+  "featureId": "REQ-EQU-HINT",
+  "featureDbId": 165,
+  "documentationMatchesSource": true,
+  "acceptanceCriterionCount": 4,
+  "managedCases": 9,
+  "automatedCases": 8,
+  "draftCases": 1,
+  "regressionCase": "TC-UI-EQ-002",
+  "runIds": [
+    129,
+    130
+  ],
+  "environment": "dev",
+  "resultsReadBackMatch": true,
+  "imports": [
+    {
+      "featureId": "REQ-EQU-HINT",
+      "result": {
+        "runId": 129,
+        "matched": 8,
+        "created": 8,
+        "updated": 0,
+        "skippedManual": 0,
+        "skippedOutOfScope": 0,
+        "unmatched": [],
+        "outOfScope": []
+      }
+    },
+    {
+      "featureId": "REQ-EQU-002",
+      "result": {
+        "runId": 130,
+        "matched": 1,
+        "created": 1,
+        "updated": 0,
+        "skippedManual": 0,
+        "skippedOutOfScope": 0,
+        "unmatched": [],
+        "outOfScope": []
+      }
+    }
+  ]
+}

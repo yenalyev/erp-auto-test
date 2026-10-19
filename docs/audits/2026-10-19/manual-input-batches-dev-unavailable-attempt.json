@@ -1,0 +1,20 @@
+{
+  "environment": "dev",
+  "suite": "manual-input-batches",
+  "finishedAt": "2026-10-19T15:11:03+03:00",
+  "outcome": "INFRASTRUCTURE_FAILURE",
+  "mavenExitCode": 1,
+  "testBodies": {
+    "total": 30,
+    "skipped": 22,
+    "passed": 8,
+    "failed": 0
+  },
+  "cause": "API class setup could not log in while /server/login returned HTTP 503; all 22 API tests were skipped. After recovery, all 8 UI tests passed and cleanup completed.",
+  "recoveryProbes": {
+    "unauthenticatedUsersMe": 401,
+    "login": 302
+  },
+  "testngReport": "target/manual-input-batches-dev-20261019-repeat/surefire-reports/testng-results.xml",
+  "supersededBy": "target/manual-input-batches-dev-20261019-post-recovery"
+}

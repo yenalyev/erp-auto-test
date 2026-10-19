@@ -284,6 +284,19 @@ public class TechnologicalMapFormPage extends BasePage {
         return liveGlobalPlanWarning().innerText().trim();
     }
 
+    public boolean isLiveGlobalPlanWarningVisible() {
+        return liveGlobalPlanWarning().isVisible();
+    }
+
+    /** Save may either open the permission-gated modal or send PUT immediately. */
+    public void saveAndWaitForConfirmationOrUpdate() {
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                .setName(SUBMIT_BUTTON_TEXT).setExact(true)).click();
+        page.waitForCondition(() -> isReassignConfirmationVisible()
+                        || !page.url().contains("/technological-maps/update/"),
+                new Page.WaitForConditionOptions().setTimeout(uiTimeoutMs()));
+    }
+
     public String getGlobalPlanLinkHref(long globalPlanId) {
         return liveGlobalPlanWarning()
                 .locator("a[href='/global-plans/" + globalPlanId + "']")

@@ -1,0 +1,131 @@
+[
+  {
+    "id": 201,
+    "name": "AUTO Dev — підказка класифікації обладнання — hint",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 31,
+    "testPlanName": "AUTO TP REQ-EQU-HINT",
+    "startedAt": "2026-10-19T09:25:11.9681",
+    "completedAt": "2026-10-19T09:25:12.390236",
+    "createdAt": "2026-10-19T09:25:11.969362",
+    "items": [
+      {
+        "id": 20802,
+        "testId": "TC-EQ-HINT-UI-001",
+        "title": "Відповідальний бачить підказку до введення даних",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQ-HINT-UI-001",
+        "executedAt": "2026-10-19T12:23:13"
+      },
+      {
+        "id": 20803,
+        "testId": "TC-EQ-HINT-UI-002",
+        "title": "Адміністратор читає повні приклади та контакт",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQ-HINT-UI-002",
+        "executedAt": "2026-10-19T12:22:38"
+      },
+      {
+        "id": 20804,
+        "testId": "TC-EQ-HINT-UI-003",
+        "title": "Пояснення внесення через адміністратора в ресурси",
+        "status": "FAIL",
+        "actualResult": "Locator expected to contain text: ресурс\nReceived: Засоби захисту та засоби побутового користування, пакування і т.д. не входять в обладнанняПриклад:Захисні окуляри - Засоби захисту, не обладнанняНоутбук HP ZBook Power G7 - ОбладнанняУ разі сумнівів або неясності зверніться до адміністратора Цукерочки.Згорнути\n\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"[data-slot='card']\").first().locator(\"internal:attr=[data-testid=\\\"equipment-kind-hint-collapse\\\"]\").locator(\"../..\")\n    9 × locator resolved to <div class=\"space-y-2\">…</div>\n      - unexpected value \"Засоби захисту та засоби побутового користування, пакування і т.д. не входять в обладнанняПриклад:Захисні окуляри - Засоби захисту, не обладнанняНоутбук HP ZBook Power G7 - ОбладнанняУ разі сумнівів або неясності зверніться до адміністратора Цукерочки.Згорнути\"",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQ-HINT-UI-003",
+        "executedAt": "2026-10-19T12:22:48"
+      },
+      {
+        "id": 20805,
+        "testId": "TC-EQ-HINT-UI-004",
+        "title": "Повторні перемикання зберігають поля та не записують дані",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQ-HINT-UI-004",
+        "executedAt": "2026-10-19T12:23:15"
+      },
+      {
+        "id": 20806,
+        "testId": "TC-EQ-HINT-UI-005",
+        "title": "Незалежні підказки при пакетному внесенні",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQ-HINT-UI-005",
+        "executedAt": "2026-10-19T12:22:59"
+      },
+      {
+        "id": 20807,
+        "testId": "TC-EQ-HINT-UI-006",
+        "title": "Клавіатурне керування підказкою",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQ-HINT-UI-006",
+        "executedAt": "2026-10-19T12:23:10"
+      },
+      {
+        "id": 20808,
+        "testId": "TC-EQ-HINT-UI-007",
+        "title": "Читабельність повного тексту на 1280 та 390 px",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQ-HINT-UI-007",
+        "executedAt": "2026-10-19T12:23:07"
+      },
+      {
+        "id": 20809,
+        "testId": "TC-EQ-HINT-UI-008",
+        "title": "Скасування без створення та повторне відкриття",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQ-HINT-UI-008",
+        "executedAt": "2026-10-19T12:23:03"
+      }
+    ]
+  },
+  {
+    "id": 202,
+    "name": "AUTO Dev — підказка класифікації обладнання — create",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 32,
+    "testPlanName": "AUTO TP REQ-EQU-002",
+    "startedAt": "2026-10-19T09:25:12.648614",
+    "completedAt": "2026-10-19T09:25:12.684767",
+    "createdAt": "2026-10-19T09:25:12.648935",
+    "items": [
+      {
+        "id": 20810,
+        "testId": "TC-UI-EQ-002",
+        "title": "Create Several Equipment In One Relocation",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-UI-EQ-002",
+        "executedAt": "2026-10-19T12:23:30"
+      }
+    ]
+  }
+]

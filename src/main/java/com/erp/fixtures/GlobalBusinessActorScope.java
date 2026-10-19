@@ -29,10 +29,22 @@ public class GlobalBusinessActorScope {
 
     @Step("FIXTURE: створити й підключити глобального актора {businessRole} як {role}")
     public UserFixture.BusinessActor acquire(UserRole role, BusinessRole businessRole) {
+        return acquire(role, businessRole, false);
+    }
+
+    @Step("FIXTURE: підключити глобального актора {businessRole} із системними ролями як {role}")
+    public UserFixture.BusinessActor acquireWithSystemRoles(UserRole role, BusinessRole businessRole) {
+        return acquire(role, businessRole, true);
+    }
+
+    private UserFixture.BusinessActor acquire(UserRole role, BusinessRole businessRole,
+                                              boolean systemRoles) {
         if (boundRole != null) {
             throw new IllegalStateException("Global actor scope is already bound to " + boundRole);
         }
-        actor = userFixture.createGlobalBusinessActor(playwright, businessRole);
+        actor = systemRoles
+                ? userFixture.createGlobalBusinessActorWithSystemRoles(playwright, businessRole)
+                : userFixture.createGlobalBusinessActor(playwright, businessRole);
         apiExecutor.setSessionForRole(role, actor.username(), actor.password());
         boundRole = role;
         log.info("Bound global actor {} businessRole={} to {}", actor.username(), businessRole, role);

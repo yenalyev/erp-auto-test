@@ -1,0 +1,78 @@
+{
+  "featureId": "REQ-WMS-003",
+  "runPayload": {
+    "featureId": 10,
+    "projectId": 1,
+    "remoteRunId": "inventory-concurrent-issue-dev-20261017-155415-final",
+    "environment": "dev",
+    "runName": "Inventory concurrent issue — dev — 7 API/UI regressions — 2026-10-17",
+    "suite": "inventory-concurrent-issue",
+    "results": [
+      {
+        "testCaseId": "TC-INV-CONCURRENT-API-001",
+        "status": "PASS",
+        "durationMs": 3222,
+        "executedAt": "2026-10-17T15:55:19",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-CONCURRENT-API-002",
+        "status": "PASS",
+        "durationMs": 6282,
+        "executedAt": "2026-10-17T15:54:53",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-CONCURRENT-API-003",
+        "status": "PASS",
+        "durationMs": 7672,
+        "executedAt": "2026-10-17T15:55:12",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-CONCURRENT-API-004",
+        "status": "PASS",
+        "durationMs": 4802,
+        "executedAt": "2026-10-17T15:55:01",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-CONCURRENT-UI-001",
+        "status": "PASS",
+        "durationMs": 14252,
+        "executedAt": "2026-10-17T15:56:28",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-CONCURRENT-UI-002",
+        "status": "PASS",
+        "durationMs": 15055,
+        "executedAt": "2026-10-17T15:55:50",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-CONCURRENT-UI-003",
+        "status": "PASS",
+        "durationMs": 12074,
+        "executedAt": "2026-10-17T15:56:08",
+        "errorMessage": null
+      }
+    ]
+  },
+  "importResponse": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"runId\": 125,\n  \"matched\": 7,\n  \"created\": 7,\n  \"updated\": 0,\n  \"skippedManual\": 0,\n  \"skippedOutOfScope\": 0,\n  \"unmatched\": [],\n  \"outOfScope\": []\n}"
+      }
+    ]
+  },
+  "verifiedRun": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"id\": 125,\n  \"name\": \"AUTO Inventory concurrent issue — dev — 7 API/UI regressions — 2026-10-17\",\n  \"status\": \"COMPLETED\",\n  \"environment\": \"dev\",\n  \"version\": null,\n  \"assignee\": \"autotest\",\n  \"testPlanId\": 20,\n  \"testPlanName\": \"AUTO TP REQ-WMS-003\",\n  \"startedAt\": \"2026-10-17T12:57:16.346674\",\n  \"completedAt\": \"2026-10-17T12:57:16.703382\",\n  \"createdAt\": \"2026-10-17T12:57:16.346787\",\n  \"items\": [\n    {\n      \"id\": 18840,\n      \"testId\": \"TC-INV-CONCURRENT-API-001\",\n      \"title\": \"Застаріла інвентаризація після часткової й повної видачі відхиляється атомарно\",\n      \"status\": \"PASS\",\n      \"actualResult\": null,\n      \"comment\": null,\n      \"defectId\": null,\n      \"automationTestId\": \"TC-INV-CONCURRENT-API-001\",\n      \"executedAt\": \"2026-10-17T15:55:19\"\n    },\n    {\n      \"id\": 18841,\n      \"testId\": \"TC-INV-CONCURRENT-API-002\",\n      \"title\": \"Прийняття актуальних залишків не повертає видані ресурси й не додає їх до diff\",\n      \"status\": \"PASS\",\n      \"actualResult\": null,\n      \"comment\": null,\n      \"defectId\": null,\n      \"automationTestId\": \"TC-INV-CONCURRENT-API-002\",\n      \"executedAt\": \"2026-10-17T15:54:53\"\n    },\n    {\n      \"id\": 18842,\n      \"testId\": \"TC-INV-CONCURRENT-API-003\",\n      \"title\": \"Повторна видача після узгодження знову захищає інвентаризацію\",\n      \"status\": \"PASS\",\n      \"actualResult\": null,\n      \"comment\": null,\n      \"defectId\": null,\n      \"automationTestId\": \"TC-INV-CONCURRENT-API-003\",\n      \"executedAt\": \"2026-10-17T15:55:12\"\n    },\n    {\n      \"id\": 18843,\n      \"testId\": \"TC-INV-CONCURRENT-API-004\",\n      \"title\": \"Видача редагованого ресурсу вимагає явного узгодження\",\n      \"status\": \"PASS\",\n      \"actualResult\": null,\n      \"comment\": null,\n      \"defectId\": null,\n      \"automationTestId\": \"TC-INV-CONCURRENT-API-004\",\n      \"executedAt\": \"2026-10-17T15:55:01\"\n    },\n    {\n      \"id\": 18844,\n      \"testId\": \"TC-INV-CONCURRENT-UI-001\",\n      \"title\": \"Дві вкладки: прийняти всі актуальні залишки після змішаної видачі\",\n      \"status\": \"PASS\",\n      \"actualResult\": null,\n      \"comment\": null,\n      \"defectId\": null,\n      \"automationTestId\": \"TC-INV-CONCURRENT-UI-001\",\n      \"executedAt\": \"2026-10-17T15:56:28\"\n    },\n    {\n      \"id\": 18845,\n      \"testId\": \"TC-INV-CONCURRENT-UI-002\",\n      \"title\": \"Окреме узгодження конфліктних ресурсів зберігає чернетку\",\n      \"status\": \"PASS\",\n      \"actualResult\": null,\n      \"comment\": null,\n      \"defectId\": null,\n      \"automationTestId\": \"TC-INV-CONCURRENT-UI-002\",\n      \"executedAt\": \"2026-10-17T15:55:50\"\n    },\n    {\n      \"id\": 18846,\n      \"testId\": \"TC-INV-CONCURRENT-UI-003\",\n      \"title\": \"Свідоме «Залишити моє» використовує різницю від поточного залишку\",\n      \"status\": \"PASS\",\n      \"actualResult\": null,\n      \"comment\": null,\n      \"defectId\": null,\n      \"automationTestId\": \"TC-INV-CONCURRENT-UI-003\",\n      \"executedAt\": \"2026-10-17T15:56:08\"\n    }\n  ]\n}"
+      }
+    ]
+  }
+}

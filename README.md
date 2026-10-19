@@ -2,6 +2,9 @@ ERP API Test Automation Framework
  
 Data-Driven фреймворк для автоматизації тестування REST API, з фокусом на перевірці безпеки (RBAC) та контрактному тестуванні (Contract Testing).
 
+Сортування ресурсів за «Змінено»: [вимоги, тест-кейси та запуск](docs/REQ-RES-SORT.md).
+Окремий набір API/UI — `-Dsuite=resource-modified-sort`.
+
 Технологічний стек
 Java 21
 RestAssured — API клієнт.
@@ -78,12 +81,30 @@ mvn clean test -Denv=dev -Dsuite=regression
 
 Тематичні набори обираються через `-Dsuite=<назва XML без розширення>`:
 
+Підказка класифікації при внесенні обладнання: [план](docs/REQ-EQU-HINT.md),
+[кейси](docs/EQUIPMENT_KIND_HINT_TEST_CASES.md); запуск `-Dsuite=equipment-kind-hint`.
+
+Вимоги й API/UI-покриття експорту **Аналітика → Для плану → Експорт в Excel** описані в
+[REQ-PLAN-ANL-EXCEL](docs/REQ-PLAN-ANL-EXCEL.md).
+Початковий вибір категорії «Боєприпас», очищення та повторне відкриття описані в
+[контракті початкової категорії](docs/REQ-PLAN-ANL-DEFAULT-CATEGORY.md).
+
+Експорт **Несерійне виробництво → Excel** за активними фільтрами: [фіча, 7 АС і 11 автокейсів](docs/REQ-NSP-EXCEL.md).
+API/UI-класи `NonSeriesExcelExportApiTest` і `NonSeriesExcelExportUiTest` входять до `non-series-production` та `regression`.
+
+Підказки редагування техкарт за дозволом `global-plan::update`: [вимоги](docs/REQ-GP-HINT.md),
+[тест-план і 10 автокейсів](docs/GLOBAL_PLAN_TECH_MAP_HINTS_TEST_PLAN.md).
+Окремий набір — `-Dsuite=global-plan-tech-map-hints`.
+
 ```bash
 mvn test -Denv=dev -Dsuite=inventory
 mvn test -Denv=dev -Dsuite=inventory-process
 mvn test -Denv=dev -Dsuite=relocations
 mvn test -Denv=dev -Dsuite=ui
 ```
+
+Інвентаризація під час паралельної видачі: [контракт фікса та 7 API/UI сценаріїв](docs/REQ-WMS-003-concurrent-issue.md).
+Запуск: `-Dsuite=inventory-concurrent-issue`.
 
 Для разового запуску класу або методу використовуйте `-Dtest`, без створення нового XML:
 
