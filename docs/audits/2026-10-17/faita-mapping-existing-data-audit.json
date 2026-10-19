@@ -1,0 +1,69 @@
+{
+  "environment" : "dev",
+  "fixturesCreated" : false,
+  "importExecuted" : false,
+  "queries" : {
+    "snapshot" : "SELECT current_setting('transaction_read_only') AS read_only, current_setting('transaction_isolation') AS isolation, now()::text AS captured_at",
+    "ammoSummary" : "SELECT count(*) AS total_aliases, count(*) FILTER (WHERE a.resource_id IS NULL) AS null_resource_id, count(*) FILTER (WHERE a.resource_id IS NOT NULL AND r.id IS NULL) AS dangling_resource_id, count(*) FILTER (WHERE r.id IS NOT NULL AND NOT r.is_active) AS inactive_existing_resource, count(*) FILTER (WHERE a.name LIKE '%fmap-%') AS test_marker_aliases FROM faita.resource_alias_with_ammo a LEFT JOIN public.resource r ON r.id=a.resource_id",
+    "ammoInvalidAliases" : "SELECT a.id, a.name, a.ammunition_id AS faita_id, a.resource_id, a.created_by, a.updated_by, a.created_at::text, a.updated_at::text, CASE WHEN a.resource_id IS NULL THEN 'NULL_RESOURCE_ID' ELSE 'DANGLING_RESOURCE_ID' END AS scenario FROM faita.resource_alias_with_ammo a LEFT JOIN public.resource r ON r.id=a.resource_id WHERE r.id IS NULL ORDER BY a.id",
+    "initiatorsSummary" : "SELECT count(*) AS total_aliases, count(*) FILTER (WHERE a.resource_id IS NULL) AS null_resource_id, count(*) FILTER (WHERE a.resource_id IS NOT NULL AND r.id IS NULL) AS dangling_resource_id, count(*) FILTER (WHERE r.id IS NOT NULL AND NOT r.is_active) AS inactive_existing_resource, count(*) FILTER (WHERE a.name LIKE '%fmap-%') AS test_marker_aliases FROM faita.resource_alias_with_initiators a LEFT JOIN public.resource r ON r.id=a.resource_id",
+    "initiatorsInvalidAliases" : "SELECT a.id, a.name, a.initiator_id AS faita_id, a.resource_id, a.created_by, a.updated_by, a.created_at::text, a.updated_at::text, CASE WHEN a.resource_id IS NULL THEN 'NULL_RESOURCE_ID' ELSE 'DANGLING_RESOURCE_ID' END AS scenario FROM faita.resource_alias_with_initiators a LEFT JOIN public.resource r ON r.id=a.resource_id WHERE r.id IS NULL ORDER BY a.id",
+    "aliasResourceColumns" : "SELECT table_name,column_name,is_nullable,data_type FROM information_schema.columns WHERE table_schema='faita' AND table_name IN ('resource_alias_with_ammo','resource_alias_with_initiators') AND column_name='resource_id' ORDER BY table_name",
+    "aliasConstraints" : "SELECT c.conrelid::regclass::text AS table_name,c.conname,c.contype::text, pg_get_constraintdef(c.oid) AS definition FROM pg_constraint c WHERE c.conrelid IN ('faita.resource_alias_with_ammo'::regclass, 'faita.resource_alias_with_initiators'::regclass) ORDER BY table_name,c.conname",
+    "importAndAliasTriggers" : "SELECT n.nspname AS schema_name,c.relname AS table_name,t.tgname, pg_get_triggerdef(t.oid) AS definition,pg_get_functiondef(t.tgfoid) AS function_definition FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE NOT t.tgisinternal AND ((n.nspname='faita' AND c.relname IN ('resource_alias_with_ammo','resource_alias_with_initiators','ammo_agg_v3','ammunition','initiators')) OR (n.nspname='public' AND c.relname='resource')) ORDER BY n.nspname,c.relname,t.tgname"
+  },
+  "snapshot" : [ {
+    "read_only" : "on",
+    "isolation" : "repeatable read",
+    "captured_at" : "2026-10-17 12:52:22.134936+03"
+  } ],
+  "ammoSummary" : [ {
+    "total_aliases" : 2364,
+    "null_resource_id" : 0,
+    "dangling_resource_id" : 0,
+    "inactive_existing_resource" : 539,
+    "test_marker_aliases" : 0
+  } ],
+  "ammoInvalidAliases" : [ ],
+  "initiatorsSummary" : [ {
+    "total_aliases" : 106,
+    "null_resource_id" : 0,
+    "dangling_resource_id" : 0,
+    "inactive_existing_resource" : 51,
+    "test_marker_aliases" : 0
+  } ],
+  "initiatorsInvalidAliases" : [ ],
+  "aliasResourceColumns" : [ {
+    "table_name" : "resource_alias_with_ammo",
+    "column_name" : "resource_id",
+    "is_nullable" : "YES",
+    "data_type" : "bigint"
+  }, {
+    "table_name" : "resource_alias_with_initiators",
+    "column_name" : "resource_id",
+    "is_nullable" : "YES",
+    "data_type" : "bigint"
+  } ],
+  "aliasConstraints" : [ {
+    "table_name" : "faita.resource_alias_with_ammo",
+    "conname" : "pk_faita_resource_alias_with_ammo",
+    "contype" : "p",
+    "definition" : "PRIMARY KEY (id)"
+  }, {
+    "table_name" : "faita.resource_alias_with_ammo",
+    "conname" : "uq_faita_resource_alias_with_ammo_ammunition_id",
+    "contype" : "u",
+    "definition" : "UNIQUE (ammunition_id)"
+  }, {
+    "table_name" : "faita.resource_alias_with_initiators",
+    "conname" : "pk_faita_resource_alias_with_initiators",
+    "contype" : "p",
+    "definition" : "PRIMARY KEY (id)"
+  }, {
+    "table_name" : "faita.resource_alias_with_initiators",
+    "conname" : "uq_faita_resource_alias_with_initiators_initiator_id",
+    "contype" : "u",
+    "definition" : "UNIQUE (initiator_id)"
+  } ],
+  "importAndAliasTriggers" : [ ]
+}

@@ -1,0 +1,15 @@
+{
+  "kind" : "INITIATORS",
+  "scenario" : "NULL_RESOURCE_ID",
+  "sourceId" : 301,
+  "controlSourceId" : 330,
+  "targetVisibleBefore" : true,
+  "aliasId" : 245,
+  "storedResourceId" : null,
+  "aliasListedWithNullResource" : true,
+  "targetVisibleWithInvalidAlias" : false,
+  "controlVisibleDuring" : true,
+  "targetVisibleAfterCleanup" : true,
+  "controlVisibleAfterCleanup" : true,
+  "ownedAliasesRemoved" : true
+}

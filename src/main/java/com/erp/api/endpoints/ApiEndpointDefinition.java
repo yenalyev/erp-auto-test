@@ -3121,6 +3121,27 @@ public enum ApiEndpointDefinition {
     // ========================================
     // ANALYTICS / AUDIT ENDPOINTS
     // ========================================
+    FAITA_MAPPING_AMMO_GET("/api/v1/faita-mapping/ammunition", Method.GET,
+            null, "FAITA ammunition aliases", null, null, null),
+    FAITA_MAPPING_INITIATORS_GET("/api/v1/faita-mapping/initiators", Method.GET,
+            null, "FAITA initiator aliases", null, null, null),
+    FAITA_MAPPING_AMMO_UNMAPPED_GET("/api/v1/faita-mapping/ammunition/unmapped", Method.GET,
+            null, "FAITA ammunition without usable mappings", null, null, null),
+    FAITA_MAPPING_INITIATORS_UNMAPPED_GET("/api/v1/faita-mapping/initiators/unmapped", Method.GET,
+            null, "FAITA initiators without usable mappings", null, null, null),
+    FAITA_MAPPING_AMMO_UPDATE("/api/v1/faita-mapping/ammunition/{id}", Method.PUT,
+            null, "Update FAITA ammunition alias", null, null, null),
+    FAITA_MAPPING_INITIATORS_UPDATE("/api/v1/faita-mapping/initiators/{id}", Method.PUT,
+            null, "Update FAITA initiator alias", null, null, null),
+    FAITA_MAPPING_AMMO_CREATE("/api/v1/faita-mapping/ammunition", Method.POST,
+            null, "Create FAITA ammunition alias", null, null, null),
+    FAITA_MAPPING_INITIATORS_CREATE("/api/v1/faita-mapping/initiators", Method.POST,
+            null, "Create FAITA initiator alias", null, null, null),
+    FAITA_MAPPING_AMMO_DELETE("/api/v1/faita-mapping/ammunition/{id}", Method.DELETE,
+            null, "Delete FAITA ammunition alias", null, null, null),
+    FAITA_MAPPING_INITIATORS_DELETE("/api/v1/faita-mapping/initiators/{id}", Method.DELETE,
+            null, "Delete FAITA initiator alias", null, null, null),
+
     PRODUCTION_ANALYTIC_SUMMARY_GET(
             "/api/v1/production/analytic/summary",
             Method.GET,

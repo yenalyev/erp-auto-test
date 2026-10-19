@@ -1,0 +1,298 @@
+{
+  "environment": "dev",
+  "url": "https://dev.cukerochka.sbs/faita-mapping",
+  "timezone": "Europe/Kyiv (+03:00 on 2026-10-17)",
+  "counts": {
+    "PASS": 20,
+    "FAIL": 7
+  },
+  "configurationFailureCount": 0,
+  "results": [
+    {
+      "testCaseId": "TC-FMAP-API-001",
+      "status": "PASS",
+      "durationMs": 312,
+      "executedAt": "2026-10-17T09:24:46",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-002",
+      "status": "PASS",
+      "durationMs": 279,
+      "executedAt": "2026-10-17T09:24:50",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-003",
+      "status": "PASS",
+      "durationMs": 1736,
+      "executedAt": "2026-10-17T09:24:44",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-004",
+      "status": "PASS",
+      "durationMs": 1446,
+      "executedAt": "2026-10-17T09:24:48",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-005",
+      "status": "PASS",
+      "durationMs": 2298,
+      "executedAt": "2026-10-17T09:24:42",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-006",
+      "status": "PASS",
+      "durationMs": 1405,
+      "executedAt": "2026-10-17T09:24:47",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-007",
+      "status": "PASS",
+      "durationMs": 2549,
+      "executedAt": "2026-10-17T09:26:13",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-api-final-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-API-008",
+      "status": "PASS",
+      "durationMs": 866,
+      "executedAt": "2026-10-17T09:24:49",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-001",
+      "status": "PASS",
+      "durationMs": 533,
+      "executedAt": "2026-10-17T09:20:44",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-002",
+      "status": "PASS",
+      "durationMs": 222,
+      "executedAt": "2026-10-17T09:20:47",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-003",
+      "status": "PASS",
+      "durationMs": 1222,
+      "executedAt": "2026-10-17T09:20:44",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-DB-004",
+      "status": "PASS",
+      "durationMs": 1258,
+      "executedAt": "2026-10-17T09:20:46",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "sourceAllureDirectory": "target\\faita-mapping-verified-allure",
+      "rawAllureStatus": "passed"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-001",
+      "status": "FAIL",
+      "durationMs": 7493,
+      "executedAt": "2026-10-17T09:27:40",
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(Pattern.compile(\"^БЧ(?:\\\\s*\\\\d+)?$\")))",
+      "featureId": "REQ-FAITA-MAP",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "failed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-001.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-002",
+      "status": "PASS",
+      "durationMs": 9420,
+      "executedAt": "2026-10-17T09:24:36",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "passed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-002.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-003",
+      "status": "PASS",
+      "durationMs": 7462,
+      "executedAt": "2026-10-17T09:26:07",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "passed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-003.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-004",
+      "status": "FAIL",
+      "durationMs": 10136,
+      "executedAt": "2026-10-17T09:24:56",
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByPlaceholder(Pattern.compile(\"Пошук\"))",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "failed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-004.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-005",
+      "status": "FAIL",
+      "durationMs": 11491,
+      "executedAt": "2026-10-17T09:26:26",
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByPlaceholder(Pattern.compile(\"Пошук\"))",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "failed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-005.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-006",
+      "status": "FAIL",
+      "durationMs": 11288,
+      "executedAt": "2026-10-17T09:25:07",
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByPlaceholder(Pattern.compile(\"Пошук\"))",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "failed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-006.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-007",
+      "status": "FAIL",
+      "durationMs": 11136,
+      "executedAt": "2026-10-17T09:26:39",
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByPlaceholder(Pattern.compile(\"Пошук\"))",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "failed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-007.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-008",
+      "status": "FAIL",
+      "durationMs": 10547,
+      "executedAt": "2026-10-17T09:25:55",
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName(\"Неспівставлені\").setExact(true))",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "failed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-008.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-009",
+      "status": "FAIL",
+      "durationMs": 10570,
+      "executedAt": "2026-10-17T09:27:29",
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName(\"Неспівставлені\").setExact(true))",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "failed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-009.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-010",
+      "status": "PASS",
+      "durationMs": 9750,
+      "executedAt": "2026-10-17T09:27:49",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-sort-final-allure",
+      "rawAllureStatus": "passed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-010.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-011",
+      "status": "PASS",
+      "durationMs": 7673,
+      "executedAt": "2026-10-17T09:28:08",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-sort-final-allure",
+      "rawAllureStatus": "passed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-011.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-012",
+      "status": "PASS",
+      "durationMs": 7266,
+      "executedAt": "2026-10-17T09:28:00",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-sort-final-allure",
+      "rawAllureStatus": "passed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-012.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-013",
+      "status": "PASS",
+      "durationMs": 7431,
+      "executedAt": "2026-10-17T09:28:17",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-sort-final-allure",
+      "rawAllureStatus": "passed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-013.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-014",
+      "status": "PASS",
+      "durationMs": 8017,
+      "executedAt": "2026-10-17T09:24:47",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "passed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-014.png"
+    },
+    {
+      "testCaseId": "TC-FMAP-UI-015",
+      "status": "PASS",
+      "durationMs": 9148,
+      "executedAt": "2026-10-17T09:26:16",
+      "errorMessage": null,
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "sourceAllureDirectory": "target\\faita-mapping-ui-final-allure",
+      "rawAllureStatus": "passed",
+      "screenshot": "faita-mapping-evidence/TC-FMAP-UI-015.png"
+    }
+  ],
+  "note": "Latest actual execution per ID: full 27-case suite plus targeted UI/sort/API reruns after locator and name-only payload corrections. Earlier discovery attempts are not counted."
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- REQ-FAITA-MAP. JDBC is mandatory; UI seeds only after the real sidebar entry opens.
+     mvn test -Denv=dev -Dsuite=faita-expense-mapping -Duse.database=true
+     Legacy audit ALTERs execute only on transaction-local TEMP tables and roll back.
+-->
+<suite name="FAITA Expense Mapping" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+    </listeners>
+    <test name="FAITA mapping deployed schema and backfill">
+        <classes>
+            <class name="com.erp.tests.functional.storage.FaitaExpenseMappingDbTest"/>
+        </classes>
+    </test>
+    <test name="FAITA mapping UI">
+        <classes>
+            <class name="com.erp.tests.ui.FaitaExpenseMappingUiTest"/>
+        </classes>
+    </test>
+    <test name="FAITA mapping API">
+        <classes>
+            <class name="com.erp.tests.functional.storage.FaitaExpenseMappingApiTest"/>
+        </classes>
+    </test>
+</suite>

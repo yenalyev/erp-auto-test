@@ -1,0 +1,187 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "projectId": 1,
+  "features": [
+    {
+      "featureId": "REQ-FAITA-MAP",
+      "documentationAndAllAcTextsVerified": true
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "documentationAndAllAcTextsVerified": true
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "documentationAndAllAcTextsVerified": true
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "documentationAndAllAcTextsVerified": true
+    }
+  ],
+  "activeCases": [
+    {
+      "testId": "TC-FMAP-DB-001",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-DB-002",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-DB-003",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-DB-004",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-001",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-002",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-003",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-004",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-005",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-006",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-007",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-008",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-009",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-010",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-011",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-012",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-013",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-014",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-015",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-001",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-003",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-005",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-007",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-002",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-004",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-006",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-008",
+      "allFieldsAndStepsVerified": true
+    }
+  ],
+  "retiredCases": [
+    {
+      "testId": "TC-FMAP-API-009",
+      "status": "DEPRECATED",
+      "automationUnlinked": true,
+      "historyPreserved": true
+    },
+    {
+      "testId": "TC-FMAP-API-010",
+      "status": "DEPRECATED",
+      "automationUnlinked": true,
+      "historyPreserved": true
+    },
+    {
+      "testId": "TC-FMAP-API-011",
+      "status": "DEPRECATED",
+      "automationUnlinked": true,
+      "historyPreserved": true
+    },
+    {
+      "testId": "TC-FMAP-API-012",
+      "status": "DEPRECATED",
+      "automationUnlinked": true,
+      "historyPreserved": true
+    }
+  ],
+  "resolvedAutomationIds": [
+    "TC-FMAP-API-001",
+    "TC-FMAP-API-002",
+    "TC-FMAP-API-003",
+    "TC-FMAP-API-004",
+    "TC-FMAP-API-005",
+    "TC-FMAP-API-006",
+    "TC-FMAP-API-007",
+    "TC-FMAP-API-008",
+    "TC-FMAP-DB-001",
+    "TC-FMAP-DB-002",
+    "TC-FMAP-DB-003",
+    "TC-FMAP-DB-004",
+    "TC-FMAP-UI-001",
+    "TC-FMAP-UI-002",
+    "TC-FMAP-UI-003",
+    "TC-FMAP-UI-004",
+    "TC-FMAP-UI-005",
+    "TC-FMAP-UI-006",
+    "TC-FMAP-UI-007",
+    "TC-FMAP-UI-008",
+    "TC-FMAP-UI-009",
+    "TC-FMAP-UI-010",
+    "TC-FMAP-UI-011",
+    "TC-FMAP-UI-012",
+    "TC-FMAP-UI-013",
+    "TC-FMAP-UI-014",
+    "TC-FMAP-UI-015"
+  ]
+}

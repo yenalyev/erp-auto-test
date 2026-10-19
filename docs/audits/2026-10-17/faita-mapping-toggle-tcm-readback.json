@@ -1,0 +1,147 @@
+{
+  "features": [
+    {
+      "featureId": "REQ-FAITA-MAP",
+      "documentationAndAllAcTextsVerified": true
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "documentationAndAllAcTextsVerified": true
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "documentationAndAllAcTextsVerified": true
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "documentationAndAllAcTextsVerified": true
+    }
+  ],
+  "cases": [
+    {
+      "testId": "TC-FMAP-DB-001",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-DB-002",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-DB-003",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-DB-004",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-001",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-002",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-003",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-004",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-005",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-006",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-007",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-008",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-009",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-010",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-011",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-012",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-013",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-014",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-UI-015",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-001",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-003",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-005",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-007",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-002",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-004",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-006",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-008",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-009",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-010",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-011",
+      "allFieldsAndStepsVerified": true
+    },
+    {
+      "testId": "TC-FMAP-API-012",
+      "allFieldsAndStepsVerified": true
+    }
+  ],
+  "documentationSha256": "fcbcac6d5e872edda4950ef2ec1d27d33188f552ab7e8f98a5c3b65b9369425b"
+}

@@ -1,0 +1,1071 @@
+{
+  "features": [
+    {
+      "featureId": "REQ-FAITA-MAP",
+      "parentFeatureId": null,
+      "title": "Словник мапінгу Файта — Цукерка для витрат",
+      "acceptanceCriteria": [
+        {
+          "acKey": "AC-01",
+          "text": "Сайдбар містить «Словники Файти»; перехід відкриває вкладки «Амуніція» та «Ініціатори». Назву «Амуніція» погоджено користувачем 17.10.2026."
+        }
+      ]
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "parentFeatureId": "REQ-FAITA-MAP",
+      "title": "Автор змін і міграція словників Файти",
+      "acceptanceCriteria": [
+        {
+          "acKey": "AC-01",
+          "text": "resource_alias_with_ammo містить текстове updated_by; старі записи отримують system без втрати id, name, resource_id, multiplier і match_by_name."
+        },
+        {
+          "acKey": "AC-02",
+          "text": "resource_alias_with_initiators містить текстове updated_by; старі записи отримують system без втрати id, name і resource_id."
+        }
+      ]
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "parentFeatureId": "REQ-FAITA-MAP",
+      "title": "Словники Файти — Амуніція",
+      "acceptanceCriteria": [
+        {
+          "acKey": "AC-01",
+          "text": "Вкладка «Амуніція» показує name як «Назва Файти» та назву ресурсу за resource_id; БЧ додатково показує multiplier, включно з дробовими збереженими значеннями."
+        },
+        {
+          "acKey": "AC-02",
+          "text": "Погоджено два незалежні поля «Назва Файти» і «Ресурс»: кожне шукає у своєму полі, разом діють як AND. Відсутній збіг дає порожній набір; очищення одного поля зберігає інший фільтр; очищення обох відновлює список. Погоджено користувачем 17.10.2026."
+        },
+        {
+          "acKey": "AC-03",
+          "text": "Погоджено взаємовиключні режими «Неспівставлені» / «Співставлені». Перший показує чергу витрат Файти: назва, остання витрата, дія «Співставити», для амуніції також виробник. Пошук назви звужує чергу; відсутній збіг дає нуль, очищення відновлює список. Ресурсний пошук, колонки aliases та їх сортування доступні у «Співставлені»; повернення відновлює aliases згідно з фільтрами. Погоджено 17.10.2026."
+        },
+        {
+          "acKey": "AC-04",
+          "text": "Типово обрано «Назва Файти»; ASC/DESC застосовує name, потім resource_name в тому самому напрямі."
+        },
+        {
+          "acKey": "AC-05",
+          "text": "Сортування «Ресурс» ASC/DESC застосовує resource_name, потім name в тому самому напрямі."
+        },
+        {
+          "acKey": "AC-06",
+          "text": "Кнопка з PencilIcon відкриває редагування відповідного запису. Закриття без збереження не змінює даних. Додаткова перевірка чинного PUT-контракту: зміни зберігаються з автором без зміни сусіднього запису."
+        },
+        {
+          "acKey": "AC-07",
+          "text": "Створення: у Неспівставлені дія Співставити відкриває форму вибраного FAITA ID. Без ресурсу збереження недоступне; Скасувати не створює alias. З вибраним ресурсом і для амуніції множником 1.75 збереження створює рівно один alias з правильними FAITA ID/resource_id та created_by/updated_by поточного користувача. Для амуніції matchByName=false. Запис видимий у Співставлені після reload, ціль зникає з черги; сусідні aliases не змінюються."
+        },
+        {
+          "acKey": "AC-08",
+          "text": "Видалення: дія в рядку Співставлені відкриває підтвердження з назвою й ресурсом вибраного alias. Скасувати залишає запис незмінним. Підтвердження видаляє лише вибраний alias: GET і SQL не знаходять його, після reload рядка немає, сусідній alias незмінний. Перерахунок витрат/оновлення materialized views не є частиною цього сценарію."
+        }
+      ]
+    },
+    {
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "parentFeatureId": "REQ-FAITA-MAP",
+      "title": "Словники Файти — Ініціатори",
+      "acceptanceCriteria": [
+        {
+          "acKey": "AC-01",
+          "text": "Вкладка «Ініціатори» показує name як «Назва Файти» та назву ресурсу за resource_id; колонки множника немає."
+        },
+        {
+          "acKey": "AC-02",
+          "text": "Погоджено два незалежні поля «Назва Файти» і «Ресурс»: кожне шукає у своєму полі, разом діють як AND. Відсутній збіг дає порожній набір; очищення одного поля зберігає інший фільтр; очищення обох відновлює список. Погоджено користувачем 17.10.2026."
+        },
+        {
+          "acKey": "AC-03",
+          "text": "Погоджено взаємовиключні режими «Неспівставлені» / «Співставлені». Перший показує чергу витрат Файти: назва, остання витрата, дія «Співставити», для амуніції також виробник. Пошук назви звужує чергу; відсутній збіг дає нуль, очищення відновлює список. Ресурсний пошук, колонки aliases та їх сортування доступні у «Співставлені»; повернення відновлює aliases згідно з фільтрами. Погоджено 17.10.2026."
+        },
+        {
+          "acKey": "AC-04",
+          "text": "Типово обрано «Назва Файти»; ASC/DESC застосовує name, потім resource_name в тому самому напрямі."
+        },
+        {
+          "acKey": "AC-05",
+          "text": "Сортування «Ресурс» ASC/DESC застосовує resource_name, потім name в тому самому напрямі."
+        },
+        {
+          "acKey": "AC-06",
+          "text": "Кнопка з PencilIcon відкриває редагування відповідного запису. Закриття без збереження не змінює даних. Додаткова перевірка чинного PUT-контракту: зміни зберігаються з автором без зміни сусіднього запису."
+        },
+        {
+          "acKey": "AC-07",
+          "text": "Створення: у Неспівставлені дія Співставити відкриває форму вибраного FAITA ID. Без ресурсу збереження недоступне; Скасувати не створює alias. З вибраним ресурсом і для амуніції множником 1.75 збереження створює рівно один alias з правильними FAITA ID/resource_id та created_by/updated_by поточного користувача. Для амуніції matchByName=false. Запис видимий у Співставлені після reload, ціль зникає з черги; сусідні aliases не змінюються."
+        },
+        {
+          "acKey": "AC-08",
+          "text": "Видалення: дія в рядку Співставлені відкриває підтвердження з назвою й ресурсом вибраного alias. Скасувати залишає запис незмінним. Підтвердження видаляє лише вибраний alias: GET і SQL не знаходять його, після reload рядка немає, сусідній alias незмінний. Перерахунок витрат/оновлення materialized views не є частиною цього сценарію."
+        }
+      ]
+    }
+  ],
+  "testCases": [
+    {
+      "testId": "TC-FMAP-DB-001",
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "acKey": "AC-01",
+      "title": "БЧ: поле updated_by на dev",
+      "description": "Автоматизація: FaitaExpenseMappingDbTest#ammoHasUpdatedBy. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Існуючі dev aliases; запити тільки SELECT.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Прочитати information_schema.columns і підрахувати порожні/системні updated_by у відповідній таблиці.",
+          "expectedText": "updated_by є текстовим полем; немає NULL/порожніх авторів; статистика додана в Allure."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "updated_by є текстовим полем; немає NULL/порожніх авторів; статистика додана в Allure.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-DB-001"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-DB-002",
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "acKey": "AC-02",
+      "title": "Ініціатори: поле updated_by на dev",
+      "description": "Автоматизація: FaitaExpenseMappingDbTest#initiatorsHaveUpdatedBy. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Існуючі dev aliases; запити тільки SELECT.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Прочитати information_schema.columns і підрахувати порожні/системні updated_by у відповідній таблиці.",
+          "expectedText": "updated_by є текстовим полем; немає NULL/порожніх авторів; статистика додана в Allure."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "updated_by є текстовим полем; немає NULL/порожніх авторів; статистика додана в Allure.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-DB-002"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-DB-003",
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "acKey": "AC-01",
+      "title": "БЧ: V156 заповнює legacy автора system",
+      "description": "Автоматизація: FaitaExpenseMappingDbTest#ammoLegacyRowsBackfilledWithoutDataLoss. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "TEMP id=1 resource_id=41 FAITA ID=101; id=2 resource_id=NULL FAITA ID=102; для БЧ multiplier=1.5 і 3, match_by_name=true/false.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Створити TEMP копії legacy таблиць із mapped/unmapped записами; виконати реальні alias ALTER statements із V156, замінивши тільки схему на pg_temp; прочитати рядки; rollback.",
+          "expectedText": "Обидва старі записи отримали system; ID, name, resource_id, ammunition_id/initiator_id та множник/ознака для БЧ збережені; немає втрати/дублів рядків. Реальні faita таблиці не змінювалися."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Обидва старі записи отримали system; ID, name, resource_id, ammunition_id/initiator_id та множник/ознака для БЧ збережені; немає втрати/дублів рядків. Реальні faita таблиці не змінювалися.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-DB-003"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-DB-004",
+      "featureId": "REQ-FAITA-MAP-AUDIT",
+      "acKey": "AC-02",
+      "title": "Ініціатори: V156 заповнює legacy автора system",
+      "description": "Автоматизація: FaitaExpenseMappingDbTest#initiatorLegacyRowsBackfilledWithoutDataLoss. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "TEMP id=1 resource_id=41 FAITA ID=101; id=2 resource_id=NULL FAITA ID=102; для БЧ multiplier=1.5 і 3, match_by_name=true/false.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Створити TEMP копії legacy таблиць із mapped/unmapped записами; виконати реальні alias ALTER statements із V156, замінивши тільки схему на pg_temp; прочитати рядки; rollback.",
+          "expectedText": "Обидва старі записи отримали system; ID, name, resource_id, ammunition_id/initiator_id та множник/ознака для БЧ збережені; немає втрати/дублів рядків. Реальні faita таблиці не змінювалися."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Обидва старі записи отримали system; ID, name, resource_id, ammunition_id/initiator_id та множник/ознака для БЧ збережені; немає втрати/дублів рядків. Реальні faita таблиці не змінювалися.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-DB-004"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-UI-001",
+      "featureId": "REQ-FAITA-MAP",
+      "acKey": "AC-01",
+      "title": "Навігація та назви вкладок",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#sidebarAndBothTabs. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "ADMIN; fixture даних не потрібний.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "У сайдбарі перейти через Словники Файти; перевірити назви обох вкладок.",
+          "expectedText": "Є погоджені вкладки Амуніція та Ініціатори; показаний довідник /faita-mapping."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Є погоджені вкладки Амуніція та Ініціатори; показаний довідник /faita-mapping.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-001"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-002",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-01",
+      "title": "Амуніція: Колонки і джерело даних",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoColumnsAndData. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити вкладку, прочитати всі власні рядки й заголовки.",
+          "expectedText": "name і ресурс відповідають fixture; NULL прив'язка видима; для БЧ числові множники збережені, для Ініціаторів множника немає."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "name і ресурс відповідають fixture; NULL прив'язка видима; для БЧ числові множники збережені, для Ініціаторів множника немає.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-002"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-003",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-01",
+      "title": "Ініціатори: Колонки і джерело даних",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorColumnsAndData. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити вкладку, прочитати всі власні рядки й заголовки.",
+          "expectedText": "name і ресурс відповідають fixture; NULL прив'язка видима; для БЧ числові множники збережені, для Ініціаторів множника немає."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "name і ресурс відповідають fixture; NULL прив'язка видима; для БЧ числові множники збережені, для Ініціаторів множника немає.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-003"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-004",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-02",
+      "title": "Амуніція: Окреме поле Назва Файти та незалежне очищення",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoSearchByAlias. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "У полі Назва Файти знайти назву Б, відсутній збіг і marker. Додати фільтр Ресурс=ERP prefix; очистити назву, потім відновити marker й очистити ресурс.",
+          "expectedText": "Один рядок, нуль, усі п'ять; після додавання ресурсу чотири; очищення назви зберігає ресурсний фільтр; очищення ресурсу повертає п'ять."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Один рядок, нуль, усі п'ять; після додавання ресурсу чотири; очищення назви зберігає ресурсний фільтр; очищення ресурсу повертає п'ять.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-004"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-005",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-02",
+      "title": "Ініціатори: Окреме поле Назва Файти та незалежне очищення",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorSearchByAlias. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "У полі Назва Файти знайти назву Б, відсутній збіг і marker. Додати фільтр Ресурс=ERP prefix; очистити назву, потім відновити marker й очистити ресурс.",
+          "expectedText": "Один рядок, нуль, усі п'ять; після додавання ресурсу чотири; очищення назви зберігає ресурсний фільтр; очищення ресурсу повертає п'ять."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Один рядок, нуль, усі п'ять; після додавання ресурсу чотири; очищення назви зберігає ресурсний фільтр; очищення ресурсу повертає п'ять.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-005"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-006",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-02",
+      "title": "Амуніція: Окреме поле Ресурс, AND та скидання",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoSearchByResource. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Знайти ресурс A, потім ERP prefix. У Назва Файти ввести Б, а в Ресурс — A; перевірити порожній AND. Перевірити відсутній ресурс і очистити його.",
+          "expectedText": "Два aliases A, потім чотири mapped; суперечливі фільтри і відсутній ресурс дають нуль; очищення ресурсу з marker у назві повертає п'ять."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Два aliases A, потім чотири mapped; суперечливі фільтри і відсутній ресурс дають нуль; очищення ресурсу з marker у назві повертає п'ять.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-006"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-007",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-02",
+      "title": "Ініціатори: Окреме поле Ресурс, AND та скидання",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorSearchByResource. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Знайти ресурс A, потім ERP prefix. У Назва Файти ввести Б, а в Ресурс — A; перевірити порожній AND. Перевірити відсутній ресурс і очистити його.",
+          "expectedText": "Два aliases A, потім чотири mapped; суперечливі фільтри і відсутній ресурс дають нуль; очищення ресурсу з marker у назві повертає п'ять."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Два aliases A, потім чотири mapped; суперечливі фільтри і відсутній ресурс дають нуль; очищення ресурсу з marker у назві повертає п'ять.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-007"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-008",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-03",
+      "title": "Амуніція: Перемикач режимів, пошук і повернення до aliases",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoUnmatchedAndSearch. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "У Співставлені перевірити 5 власних aliases. Очистити назву, перемкнути Неспівставлені; отримати реальну назву з GET /unmapped. Знайти її, перевірити відсутній збіг і очищення пошуку. Повернутися до Співставлені та знайти власний marker.",
+          "expectedText": "Режими взаємовиключні. У черзі є реальна позиція, Назва Файти, Остання витрата та Співставити; Виробник є лише для амуніції, ресурсної колонки й множника немає; пошук ресурсу відсутній. Пошук назви знаходить позицію; відсутній збіг дає нуль; очищення повертає позицію. Після повернення є ресурсний пошук, колонки aliases та всі 5 власних рядків."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Режими взаємовиключні. У черзі є реальна позиція, Назва Файти, Остання витрата та Співставити; Виробник є лише для амуніції, ресурсної колонки й множника немає; пошук ресурсу відсутній. Пошук назви знаходить позицію; відсутній збіг дає нуль; очищення повертає позицію. Після повернення є ресурсний пошук, колонки aliases та всі 5 власних рядків.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-008"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-009",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-03",
+      "title": "Ініціатори: Перемикач режимів, пошук і повернення до aliases",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorUnmatchedAndSearch. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "У Співставлені перевірити 5 власних aliases. Очистити назву, перемкнути Неспівставлені; отримати реальну назву з GET /unmapped. Знайти її, перевірити відсутній збіг і очищення пошуку. Повернутися до Співставлені та знайти власний marker.",
+          "expectedText": "Режими взаємовиключні. У черзі є реальна позиція, Назва Файти, Остання витрата та Співставити; Виробник є лише для амуніції, ресурсної колонки й множника немає; пошук ресурсу відсутній. Пошук назви знаходить позицію; відсутній збіг дає нуль; очищення повертає позицію. Після повернення є ресурсний пошук, колонки aliases та всі 5 власних рядків."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Режими взаємовиключні. У черзі є реальна позиція, Назва Файти, Остання витрата та Співставити; Виробник є лише для амуніції, ресурсної колонки й множника немає; пошук ресурсу відсутній. Пошук назви знаходить позицію; відсутній збіг дає нуль; очищення повертає позицію. Після повернення є ресурсний пошук, колонки aliases та всі 5 власних рядків.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-009"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-010",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-04",
+      "title": "Амуніція: Назва Файти: ASC/DESC і другий ключ",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoSortByAliasWithResourceTieBreaker. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "На чотирьох mapped aliases перемкнути Назва Файти DESC, потім ASC.",
+          "expectedText": "Обидва напрями відповідають name і resource_name; однакові назви розташовані за ресурсом у тому самому напрямі."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Обидва напрями відповідають name і resource_name; однакові назви розташовані за ресурсом у тому самому напрямі.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-010"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-011",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-04",
+      "title": "Ініціатори: Назва Файти: ASC/DESC і другий ключ",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorSortByAliasWithResourceTieBreaker. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "На чотирьох mapped aliases перемкнути Назва Файти DESC, потім ASC.",
+          "expectedText": "Обидва напрями відповідають name і resource_name; однакові назви розташовані за ресурсом у тому самому напрямі."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Обидва напрями відповідають name і resource_name; однакові назви розташовані за ресурсом у тому самому напрямі.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-011"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-012",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-05",
+      "title": "Амуніція: Ресурс: ASC/DESC і другий ключ",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoSortByResourceWithAliasTieBreaker. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "На чотирьох mapped aliases перемкнути Ресурс ASC, потім DESC.",
+          "expectedText": "Обидва напрями відповідають resource_name і name; aliases одного ресурсу впорядковані за name у тому самому напрямі."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Обидва напрями відповідають resource_name і name; aliases одного ресурсу впорядковані за name у тому самому напрямі.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-012"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-013",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-05",
+      "title": "Ініціатори: Ресурс: ASC/DESC і другий ключ",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorSortByResourceWithAliasTieBreaker. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "На чотирьох mapped aliases перемкнути Ресурс ASC, потім DESC.",
+          "expectedText": "Обидва напрями відповідають resource_name і name; aliases одного ресурсу впорядковані за name у тому самому напрямі."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Обидва напрями відповідають resource_name і name; aliases одного ресурсу впорядковані за name у тому самому напрямі.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-013"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-014",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-06",
+      "title": "Амуніція: Олівець відкриває редактор",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoEditPencilOpensForm. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Натиснути PencilIcon першого рядка; відкрити редактор; закрити Escape без збереження.",
+          "expectedText": "У редакторі назва й ресурс саме вибраного рядка; для амуніції множник початковий, для ініціаторів поля множника немає. Після Escape значення й порядок рядків залишилися початковими."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "У редакторі назва й ресурс саме вибраного рядка; для амуніції множник початковий, для ініціаторів поля множника немає. Після Escape значення й порядок рядків залишилися початковими.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-014"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-015",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-06",
+      "title": "Ініціатори: Олівець відкриває редактор",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorEditPencilOpensForm. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Натиснути PencilIcon першого рядка; відкрити редактор; закрити Escape без збереження.",
+          "expectedText": "У редакторі назва й ресурс саме вибраного рядка; для амуніції множник початковий, для ініціаторів поля множника немає. Після Escape значення й порядок рядків залишилися початковими."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "У редакторі назва й ресурс саме вибраного рядка; для амуніції множник початковий, для ініціаторів поля множника немає. Після Escape значення й порядок рядків залишилися початковими.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-015"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-API-001",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-01",
+      "title": "БЧ: API: значення та типове сортування",
+      "description": "Автоматизація: FaitaExpenseMappingApiTest#ammoValuesAndDefaultOrder. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET aliases без sort із faitaName=marker.",
+          "expectedText": "Рівно 5 власних рядків у name/resource ASC; resource.id/name і multiplier для БЧ відповідають fixture."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Рівно 5 власних рядків у name/resource ASC; resource.id/name і multiplier для БЧ відповідають fixture.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-API-001"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-API-003",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-02",
+      "title": "БЧ: API: окремі пошуки та AND",
+      "description": "Автоматизація: FaitaExpenseMappingApiTest#ammoFiltersAndReset. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET за faitaName; окремо за resourceName; відсутній збіг; суперечливий AND; скинути фільтри.",
+          "expectedText": "Повний відповідний набір, порожній результат для суперечності, після скидання всі 5; погоджений контракт двох незалежних параметрів."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Повний відповідний набір, порожній результат для суперечності, після скидання всі 5; погоджений контракт двох незалежних параметрів.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-API-003"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-API-005",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-05",
+      "title": "БЧ: API: обидва ключі й напрями",
+      "description": "Автоматизація: FaitaExpenseMappingApiTest#ammoBothSortKeysAndDirections. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET sort=name,ASC/DESC і resourceName,ASC/DESC на mapped aliases.",
+          "expectedText": "Точні ID у правильному порядку двох ключів; жодного пропущеного/зайвого рядка."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Точні ID у правильному порядку двох ключів; жодного пропущеного/зайвого рядка.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-API-005"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-API-007",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-06",
+      "title": "БЧ: API: зміна мапінгу, автор та ізоляція",
+      "description": "Автоматизація: FaitaExpenseMappingApiTest#ammoUpdatePersistsAuthorAndPreservesSibling. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відтворити PUT з FaitaAliasDialog: resourceId, для БЧ також multiplier=7.5 і matchByName=true для name-only alias; GET; SQL updated_by; звірити сусідній рядок.",
+          "expectedText": "Зміна збережена; для амуніції multiplier=7.5 і matchByName=true підтверджені GET; updated_by поточний ADMIN; назва збережена; сусідній alias ідентичний snapshot; власний target відновлено."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Зміна збережена; для амуніції multiplier=7.5 і matchByName=true підтверджені GET; updated_by поточний ADMIN; назва збережена; сусідній alias ідентичний snapshot; власний target відновлено.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-API-007"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-API-002",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-01",
+      "title": "Ініціатори: API: значення та типове сортування",
+      "description": "Автоматизація: FaitaExpenseMappingApiTest#initiatorValuesAndDefaultOrder. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET aliases без sort із faitaName=marker.",
+          "expectedText": "Рівно 5 власних рядків у name/resource ASC; resource.id/name і multiplier для БЧ відповідають fixture."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Рівно 5 власних рядків у name/resource ASC; resource.id/name і multiplier для БЧ відповідають fixture.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-API-002"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-API-004",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-02",
+      "title": "Ініціатори: API: окремі пошуки та AND",
+      "description": "Автоматизація: FaitaExpenseMappingApiTest#initiatorFiltersAndReset. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET за faitaName; окремо за resourceName; відсутній збіг; суперечливий AND; скинути фільтри.",
+          "expectedText": "Повний відповідний набір, порожній результат для суперечності, після скидання всі 5; погоджений контракт двох незалежних параметрів."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Повний відповідний набір, порожній результат для суперечності, після скидання всі 5; погоджений контракт двох незалежних параметрів.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-API-004"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-API-006",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-05",
+      "title": "Ініціатори: API: обидва ключі й напрями",
+      "description": "Автоматизація: FaitaExpenseMappingApiTest#initiatorBothSortKeysAndDirections. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET sort=name,ASC/DESC і resourceName,ASC/DESC на mapped aliases.",
+          "expectedText": "Точні ID у правильному порядку двох ключів; жодного пропущеного/зайвого рядка."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Точні ID у правильному порядку двох ключів; жодного пропущеного/зайвого рядка.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-API-006"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-API-008",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-06",
+      "title": "Ініціатори: API: зміна мапінгу, автор та ізоляція",
+      "description": "Автоматизація: FaitaExpenseMappingApiTest#initiatorUpdatePersistsAuthorAndPreservesSibling. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Дві власні ERP-назви A/B; 5 aliases: однакові назви з різними ресурсами, однаковий ресурс із різними назвами, один resource_id=NULL; множники 2/1.5/1/3/0.25.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відтворити PUT з FaitaAliasDialog: resourceId, для БЧ також multiplier=7.5 і matchByName=true для name-only alias; GET; SQL updated_by; звірити сусідній рядок.",
+          "expectedText": "Зміна збережена; для амуніції multiplier=7.5 і matchByName=true підтверджені GET; updated_by поточний ADMIN; назва збережена; сусідній alias ідентичний snapshot; власний target відновлено."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Зміна збережена; для амуніції multiplier=7.5 і matchByName=true підтверджені GET; updated_by поточний ADMIN; назва збережена; сусідній alias ідентичний snapshot; власний target відновлено.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [
+        "TC-FMAP-API-008"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-FMAP-UI-016",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-07",
+      "title": "Амуніція: створення зіставлення, скасування й збереження",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoCreateMapping. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Реальна наявна plain-позиція Файти, лише читання джерела; власний UUID ERP-ресурс і aliases. Немає змін подій, вихідних довідників, stock або refresh views. Cleanup прив’язаний до FAITA ID + власного resource_id.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Вибрати наявну неспівставлену позицію з FAITA ID без alias і без ризику takeover однойменного name-only alias. Через Співставити перевірити вимкнене Зберегти без ресурсу, вибрати власний ERP-ресурс, для амуніції multiplier=1.75; скасувати й перевірити SQL count=0. Повторити зі збереженням через UI. Перевірити POST, GET, SQL авторів і посилань, чергу та список Співставлені після reload; звірити snapshot сусіда.",
+          "expectedText": "Скасування не створило запису. POST створив рівно один alias для вибраного FAITA ID з власним ресурсом; для амуніції multiplier=1.75 і matchByName=false. created_by/updated_by поточний ADMIN. Ціль зникає з Неспівставлені й показана у Співставлені після reload; сусід не змінений. Власне зіставлення та ресурси очищені після тесту."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Скасування не створило запису. POST створив рівно один alias для вибраного FAITA ID з власним ресурсом; для амуніції multiplier=1.75 і matchByName=false. created_by/updated_by поточний ADMIN. Ціль зникає з Неспівставлені й показана у Співставлені після reload; сусід не змінений. Власне зіставлення та ресурси очищені після тесту.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-016"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-018",
+      "featureId": "REQ-FAITA-MAP-AMMO",
+      "acKey": "AC-08",
+      "title": "Амуніція: видалення зіставлення, скасування й підтвердження",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#ammoDeleteMapping. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Власне валідне зіставлення, створене через API; реальний незайнятий FAITA ID і власний UUID ERP-ресурс. Ресурс/FAITA позиція не видаляються; видаляється лише alias. Stock, події й materialized views не змінюються.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Через штатний POST створити власне валідне зіставлення до наявного вільного FAITA ID. Знайти його у Співставлені, натиснути видалення й перевірити назву/ресурс у підтвердженні. Скасувати: SQL snapshot і GET збережені. Повторити з підтвердженням; перевірити DELETE саме alias ID, GET/SQL відсутність, reload і незмінність сусіднього запису.",
+          "expectedText": "Скасування зберігає запис повністю. Підтверджений DELETE видаляє лише вибране власне зіставлення; воно відсутнє в API, SQL і після reload. Сусідній alias незмінний; власні дані очищені. Негайне повернення в чергу після refresh витрат цим кейсом не заявляється."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Скасування зберігає запис повністю. Підтверджений DELETE видаляє лише вибране власне зіставлення; воно відсутнє в API, SQL і після reload. Сусідній alias незмінний; власні дані очищені. Негайне повернення в чергу після refresh витрат цим кейсом не заявляється.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-018"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-017",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-07",
+      "title": "Ініціатори: створення зіставлення, скасування й збереження",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorCreateMapping. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Реальна наявна plain-позиція Файти, лише читання джерела; власний UUID ERP-ресурс і aliases. Немає змін подій, вихідних довідників, stock або refresh views. Cleanup прив’язаний до FAITA ID + власного resource_id.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Вибрати наявну неспівставлену позицію з FAITA ID без alias і без ризику takeover однойменного name-only alias. Через Співставити перевірити вимкнене Зберегти без ресурсу, вибрати власний ERP-ресурс, для амуніції multiplier=1.75; скасувати й перевірити SQL count=0. Повторити зі збереженням через UI. Перевірити POST, GET, SQL авторів і посилань, чергу та список Співставлені після reload; звірити snapshot сусіда.",
+          "expectedText": "Скасування не створило запису. POST створив рівно один alias для вибраного FAITA ID з власним ресурсом; для амуніції multiplier=1.75 і matchByName=false. created_by/updated_by поточний ADMIN. Ціль зникає з Неспівставлені й показана у Співставлені після reload; сусід не змінений. Власне зіставлення та ресурси очищені після тесту."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Скасування не створило запису. POST створив рівно один alias для вибраного FAITA ID з власним ресурсом; для амуніції multiplier=1.75 і matchByName=false. created_by/updated_by поточний ADMIN. Ціль зникає з Неспівставлені й показана у Співставлені після reload; сусід не змінений. Власне зіставлення та ресурси очищені після тесту.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-017"
+      ]
+    },
+    {
+      "testId": "TC-FMAP-UI-019",
+      "featureId": "REQ-FAITA-MAP-INIT",
+      "acKey": "AC-08",
+      "title": "Ініціатори: видалення зіставлення, скасування й підтвердження",
+      "description": "Автоматизація: FaitaExpenseMappingUiTest#initiatorDeleteMapping. Відмінності реалізації від вимог не вважаються PASS.",
+      "preconditions": "Dev ERP, ADMIN із faita-mapping permissions, доступний PostgreSQL. Для UI — реальна OAuth-сесія. Mutable fixtures створюють лише власні aliases/ресурси; після сценарію виконати cleanup.",
+      "testData": "Власне валідне зіставлення, створене через API; реальний незайнятий FAITA ID і власний UUID ERP-ресурс. Ресурс/FAITA позиція не видаляються; видаляється лише alias. Stock, події й materialized views не змінюються.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Через штатний POST створити власне валідне зіставлення до наявного вільного FAITA ID. Знайти його у Співставлені, натиснути видалення й перевірити назву/ресурс у підтвердженні. Скасувати: SQL snapshot і GET збережені. Повторити з підтвердженням; перевірити DELETE саме alias ID, GET/SQL відсутність, reload і незмінність сусіднього запису.",
+          "expectedText": "Скасування зберігає запис повністю. Підтверджений DELETE видаляє лише вибране власне зіставлення; воно відсутнє в API, SQL і після reload. Сусідній alias незмінний; власні дані очищені. Негайне повернення в чергу після refresh витрат цим кейсом не заявляється."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити фактичні значення/порядок та виконати cleanup власних даних.",
+          "expectedText": "Очікуваний набір без сторонніх рядків; створені aliases видалені, власні ресурси деактивовані; для TEMP — rollback."
+        }
+      ],
+      "expectedResult": "Скасування зберігає запис повністю. Підтверджений DELETE видаляє лише вибране власне зіставлення; воно відсутнє в API, SQL і після reload. Сусідній alias незмінний; власні дані очищені. Негайне повернення в чергу після refresh витрат цим кейсом не заявляється.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "tags": "faita,mapping,expenses,automated,regression",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-FMAP-UI-019"
+      ]
+    }
+  ]
+}
