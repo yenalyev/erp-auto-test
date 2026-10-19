@@ -506,25 +506,36 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
    @TestCaseId({"TC-MIB-009"})
    @Story("Manual mode requires explicit batches for every stock operation")
    public void relocationAndWarehouseDefectRejectMissingBatchWithoutStockChange() {
-      StorageItemBatchResponse batch = this.seedNamedInputBatch("missing-" + String.valueOf(UUID.randomUUID()), 10);
-      double before = this.batchAmount(batch.getBatchUuid());
+      this.seedNamedInputBatch("missing-" + String.valueOf(UUID.randomUUID()), 10);
+      Map<UUID, Double> before = this.inputBatchAmounts();
+      SoftAssertions checks = new SoftAssertions();
 
       try {
          this.setBatchSelection(this.inputResourceId1, true);
          Response relocation = this.apiExecutor.execute(ApiEndpointDefinition.RELOCATION_POST_SEND, UserRole.OWNER_1, RelocationDataFactory.buildSendRequest(this.storageId, ConfigProvider.getOwner1StorageId(), this.inputResourceId1, (double)1.0F));
+         try {
+            checks.assertThat(relocation.statusCode()).as("Relocation without selected batch").isBetween(400, 499);
+            this.assertInputBatchAmountsUnchanged(checks, before, "Immediately after relocation, before cleanup");
+         } finally {
+            if (relocation.statusCode() >= 200 && relocation.statusCode() < 300) {
+               Response cancelled = this.apiExecutor.execute(ApiEndpointDefinition.RELOCATION_PUT_RESOLVE, UserRole.ADMIN, RelocationUpdateRequest.builder().state(RelocationState.CANCELLED).build(), relocation.jsonPath().getLong("id"), ConfigProvider.getOwner1StorageId());
+               checks.assertThat(cancelled.statusCode()).as("Cancel unexpectedly accepted relocation").isBetween(200, 299);
+            }
+         }
+
+         Map<UUID, Double> beforeDefect = this.inputBatchAmounts();
          Response defect = this.apiExecutor.executeDefectCreate(DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputResourceId1, (double)1.0F), UserRole.OWNER_1);
-         if (relocation.statusCode() >= 200 && relocation.statusCode() < 300) {
-            this.apiExecutor.execute(ApiEndpointDefinition.RELOCATION_PUT_RESOLVE, UserRole.ADMIN, RelocationUpdateRequest.builder().state(RelocationState.CANCELLED).build(), relocation.jsonPath().getLong("id"), ConfigProvider.getOwner1StorageId());
+         try {
+            checks.assertThat(defect.statusCode()).as("Warehouse defect without selected batch").isBetween(400, 499);
+            this.assertInputBatchAmountsUnchanged(checks, beforeDefect, "Immediately after warehouse defect, before cleanup");
+         } finally {
+            if (defect.statusCode() >= 200 && defect.statusCode() < 300) {
+               Response deleted = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_DELETE, UserRole.OWNER_1, (Object)null, defect.jsonPath().getLong("id"), this.storageId);
+               checks.assertThat(deleted.statusCode()).as("Delete unexpectedly accepted warehouse defect").isBetween(200, 299);
+            }
          }
 
-         if (defect.statusCode() >= 200 && defect.statusCode() < 300) {
-            this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_DELETE, UserRole.OWNER_1, (Object)null, defect.jsonPath().getLong("id"), this.storageId);
-         }
-
-         SoftAssertions checks = new SoftAssertions();
-         ((IntegerAssert)checks.assertThat(relocation.statusCode()).as("Relocation without selected batch", new Object[0])).isBetween(400, 499);
-         ((IntegerAssert)checks.assertThat(defect.statusCode()).as("Warehouse defect without selected batch", new Object[0])).isBetween(400, 499);
-         ((DoubleAssert)checks.assertThat(this.batchAmount(batch.getBatchUuid())).as("Stock after rejected missing-batch requests", new Object[0])).isCloseTo(before, Assertions.within(0.01));
+         this.assertInputBatchAmountsUnchanged(checks, before, "All batches restored after cleanup");
          checks.assertAll();
       } finally {
          this.setBatchSelection(this.inputResourceId1, false);
@@ -1040,6 +1051,19 @@ public class ManualInputBatchAccountingApiTest extends BaseFunctionalTest {
 
    private double batchAmount(UUID batchUuid) {
       return ((StorageItemBatchResponse)ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId, UserRole.OWNER_1, this.inputResourceId1, false, (String)null).stream().filter((b) -> batchUuid.equals(b.getBatchUuid())).findFirst().orElseThrow()).getAmount();
+   }
+
+   private Map<UUID, Double> inputBatchAmounts() {
+      return ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId,
+         UserRole.OWNER_1, this.inputResourceId1, null, null).stream()
+         .collect(Collectors.toMap(StorageItemBatchResponse::getBatchUuid, StorageItemBatchResponse::getAmount));
+   }
+
+   private void assertInputBatchAmountsUnchanged(SoftAssertions checks, Map<UUID, Double> before, String phase) {
+      Map<UUID, Double> after = this.inputBatchAmounts();
+      checks.assertThat(after.keySet()).as("%s: batch UUIDs", phase).isEqualTo(before.keySet());
+      before.forEach((uuid, amount) -> checks.assertThat(after.get(uuid))
+         .as("%s: batch %s", phase, uuid).isCloseTo(amount, Assertions.within(0.01)));
    }
 
    private List<Long> selectedResourceIds(Long locationId) {

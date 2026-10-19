@@ -1,0 +1,389 @@
+{
+  "environment": "local-tcm",
+  "baseUrl": "http://localhost:18100",
+  "featureId": "REQ-WMS-013",
+  "featureDocumentationVerified": true,
+  "acceptanceCriteriaUnchanged": true,
+  "caseUpdates": [
+    {
+      "testId": "TC-MIB-009",
+      "verified": true
+    },
+    {
+      "testId": "TC-MIB-UI-015",
+      "verified": true
+    }
+  ],
+  "importResponse": {
+    "runId": 206,
+    "matched": 31,
+    "created": 31,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 206,
+    "name": "AUTO Manual input batches — dev 2026-10-19 15:17 — 30 methods / 31 cases PASS",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 34,
+    "testPlanName": "AUTO TP REQ-WMS-013",
+    "startedAt": "2026-10-19T14:04:38.928766",
+    "completedAt": "2026-10-19T14:04:39.99494",
+    "createdAt": "2026-10-19T14:04:38.929356",
+    "items": [
+      {
+        "id": 20822,
+        "testId": "TC-MIB-001",
+        "title": "Режим обліку партії на локації",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-001",
+        "executedAt": "2026-10-19T15:12:40.353"
+      },
+      {
+        "id": 20823,
+        "testId": "TC-MIB-002",
+        "title": "Перемикач ручного вибору партії",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-002",
+        "executedAt": "2026-10-19T15:16:39.58"
+      },
+      {
+        "id": 20824,
+        "testId": "TC-MIB-003",
+        "title": "Фільтр ресурсів за режимом партій",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-003",
+        "executedAt": "2026-10-19T15:16:39.58"
+      },
+      {
+        "id": 20825,
+        "testId": "TC-MIB-004",
+        "title": "Вибір партії в серійному виробництві",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-004",
+        "executedAt": "2026-10-19T15:12:52.914"
+      },
+      {
+        "id": 20826,
+        "testId": "TC-MIB-005",
+        "title": "Вибір партії в несерійному виробництві",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-005",
+        "executedAt": "2026-10-19T15:13:04.901"
+      },
+      {
+        "id": 20827,
+        "testId": "TC-MIB-006",
+        "title": "Вибір партії на етапі проєкту",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-006",
+        "executedAt": "2026-10-19T15:13:11.207"
+      },
+      {
+        "id": 20828,
+        "testId": "TC-MIB-007",
+        "title": "Партія у видачі ресурсу",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-007",
+        "executedAt": "2026-10-19T15:13:23.404"
+      },
+      {
+        "id": 20829,
+        "testId": "TC-MIB-008",
+        "title": "Партія складського браку",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-008",
+        "executedAt": "2026-10-19T15:13:35.506"
+      },
+      {
+        "id": 20830,
+        "testId": "TC-MIB-009",
+        "title": "Операція без обов'язкової партії",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-009",
+        "executedAt": "2026-10-19T15:13:53.999"
+      },
+      {
+        "id": 20831,
+        "testId": "TC-MIB-010",
+        "title": "Непридатна партія не списується",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-010",
+        "executedAt": "2026-10-19T15:14:15.107"
+      },
+      {
+        "id": 20832,
+        "testId": "TC-MIB-011",
+        "title": "Спільна операція ручних та автоматичних ресурсів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-011",
+        "executedAt": "2026-10-19T15:14:24.678"
+      },
+      {
+        "id": 20833,
+        "testId": "TC-MIB-012",
+        "title": "Стабільність партії з повторним номером",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-012",
+        "executedAt": "2026-10-19T15:15:03.646"
+      },
+      {
+        "id": 20834,
+        "testId": "TC-MIB-013",
+        "title": "Застарілий вибір партії",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-013",
+        "executedAt": "2026-10-19T15:14:46.72"
+      },
+      {
+        "id": 20835,
+        "testId": "TC-MIB-014",
+        "title": "Перемикання режиму не змінює старі списання",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-014",
+        "executedAt": "2026-10-19T15:14:54.516"
+      },
+      {
+        "id": 20836,
+        "testId": "TC-MIB-015",
+        "title": "Правка несерійного виробництва з іншою партією",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-015",
+        "executedAt": "2026-10-19T15:15:11.895"
+      },
+      {
+        "id": 20837,
+        "testId": "TC-MIB-016",
+        "title": "Дробова кількість партії",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-016",
+        "executedAt": "2026-10-19T15:15:34.056"
+      },
+      {
+        "id": 20838,
+        "testId": "TC-MIB-017",
+        "title": "Брак із партії без номера",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-017",
+        "executedAt": "2026-10-19T15:13:45.019"
+      },
+      {
+        "id": 20839,
+        "testId": "TC-MIB-018",
+        "title": "Окремі партії різних ручних ресурсів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-018",
+        "executedAt": "2026-10-19T15:14:36.389"
+      },
+      {
+        "id": 20840,
+        "testId": "TC-MIB-019",
+        "title": "Правка видачі після зміни режиму",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-019",
+        "executedAt": "2026-10-19T15:15:40.534"
+      },
+      {
+        "id": 20841,
+        "testId": "TC-MIB-020",
+        "title": "Правка браку після зміни режиму",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-020",
+        "executedAt": "2026-10-19T15:15:47.924"
+      },
+      {
+        "id": 20842,
+        "testId": "TC-MIB-022",
+        "title": "Видача з двох партій і повернення",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-022",
+        "executedAt": "2026-10-19T15:15:52.953"
+      },
+      {
+        "id": 20843,
+        "testId": "TC-MIB-023",
+        "title": "Брак із двох партій і відновлення",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-023",
+        "executedAt": "2026-10-19T15:16:04.702"
+      },
+      {
+        "id": 20844,
+        "testId": "TC-MIB-024",
+        "title": "Невірний поділ партій у видачі та браку",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-024",
+        "executedAt": "2026-10-19T15:14:02.805"
+      },
+      {
+        "id": 20845,
+        "testId": "TC-MIB-025",
+        "title": "Правка складського браку з іншою партією",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-025",
+        "executedAt": "2026-10-19T15:15:23.545"
+      },
+      {
+        "id": 20846,
+        "testId": "TC-MIB-UI-004",
+        "title": "Вибір партії у формі серійного виробництва",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-UI-004",
+        "executedAt": "2026-10-19T15:16:52.183"
+      },
+      {
+        "id": 20847,
+        "testId": "TC-MIB-UI-005",
+        "title": "Вибір партії у формі несерійного виробництва",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-UI-005",
+        "executedAt": "2026-10-19T15:17:27.75"
+      },
+      {
+        "id": 20848,
+        "testId": "TC-MIB-UI-006",
+        "title": "Вибір партії на етапі проєкту в інтерфейсі",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-UI-006",
+        "executedAt": "2026-10-19T15:17:33.575"
+      },
+      {
+        "id": 20849,
+        "testId": "TC-MIB-UI-007",
+        "title": "Вибір партії у формі видачі",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-UI-007",
+        "executedAt": "2026-10-19T15:16:58.003"
+      },
+      {
+        "id": 20850,
+        "testId": "TC-MIB-UI-008",
+        "title": "Вибір партії у формі браку",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-UI-008",
+        "executedAt": "2026-10-19T15:17:14.065"
+      },
+      {
+        "id": 20851,
+        "testId": "TC-MIB-UI-015",
+        "title": "Правка браку після перемикання режиму",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-UI-015",
+        "executedAt": "2026-10-19T15:17:05.283"
+      },
+      {
+        "id": 20852,
+        "testId": "TC-MIB-UI-017",
+        "title": "Вибір наявної партії без номера",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MIB-UI-017",
+        "executedAt": "2026-10-19T15:17:20.911"
+      }
+    ]
+  },
+  "executedCaseResults": 31,
+  "testMethods": 30,
+  "unexecutedCaseIds": [
+    "TC-MIB-021",
+    "TC-MIB-UI-017B"
+  ]
+}

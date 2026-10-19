@@ -24,6 +24,7 @@ import com.erp.models.request.RelocationItemBatchRequest;
 import com.erp.models.request.ResourceBatchSelectionRequest;
 import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.response.EquipmentCategoryResponse;
+import com.erp.models.response.DefectResponse;
 import com.erp.models.response.ResourceResponse;
 import com.erp.models.response.ResourceUsageResponse;
 import com.erp.models.response.StorageItemBatchResponse;
@@ -44,7 +45,10 @@ import io.restassured.response.Response;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.assertj.core.api.AbstractBooleanAssert;
 import org.assertj.core.api.AbstractIntegerAssert;
 import org.assertj.core.api.Assertions;
@@ -280,26 +284,39 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
    @Story("Edit a FIFO warehouse defect after switching the resource to MANUAL")
    public void fifoDefectEditRequiresVisibleBatchAfterManualSwitch() {
       this.setSelection(this.inputId, false);
+      Map<UUID, Double> beforeCreate = this.inputBatchAmounts();
       DefectRequest request = DefectDataFactory.buildStorageFifoDefect(this.storageId, this.inputId, (double)2.0F);
       Response created = this.apiExecutor.executeDefectCreate(request, UserRole.ADMIN);
       ((AbstractIntegerAssert)Assertions.assertThat(created.statusCode()).as(created.asString(), new Object[0])).isBetween(200, 299);
       long defectId = created.jsonPath().getLong("id");
-      String originalUuid = created.jsonPath().getString("defectBatches[0].batchUuid");
-      String originalNumber = created.jsonPath().getString("defectBatches[0].batchNumber");
-      String label = originalNumber;
-      Assertions.assertThat(originalUuid).isNotBlank();
-
       try {
+         UUID originalUuid = UUID.fromString(created.jsonPath().getString("defectBatches[0].batchUuid"));
+         String label = created.jsonPath().getString("defectBatches[0].batchNumber");
+         Map<UUID, Double> expected = new HashMap<>(beforeCreate);
+         expected.compute(originalUuid, (uuid, amount) -> amount - 2.0);
+         this.assertInputBatchAmounts(expected, "Initial FIFO defect debits exactly two units");
          this.setSelection(this.inputId, true);
-         DefectFormPage form = (new DefectFormPage(this.page)).openEdit(defectId).fillStorageBatchAmount(label, "2");
+         DefectFormPage form = (new DefectFormPage(this.page)).openEdit(defectId).fillStorageBatchAmount(label, "3");
          form.attachScreenshot("TC-MIB-UI-015 — FIFO defect after manual switch");
          form.submitAndWaitForList();
          Response reloaded = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_GET_BY_ID, UserRole.ADMIN, (Object)null, defectId, this.storageId);
          Assertions.assertThat(reloaded.statusCode()).isEqualTo(200);
-         Assertions.assertThat(reloaded.jsonPath().getString("defectBatches[0].batchUuid")).isEqualTo(originalUuid);
+         DefectResponse saved = reloaded.as(DefectResponse.class);
+         Assertions.assertThat(saved.getAmount()).isEqualByComparingTo("3");
+         Assertions.assertThat(saved.getDefectBatches()).singleElement().satisfies(batch -> {
+            Assertions.assertThat(batch.getBatchUuid()).isEqualTo(originalUuid);
+            Assertions.assertThat(batch.getAmount()).isEqualByComparingTo("3");
+         });
+         expected.put(originalUuid, beforeCreate.get(originalUuid) - 3.0);
+         this.assertInputBatchAmounts(expected, "Edit from two to three debits only one extra unit; other batches unchanged");
       } finally {
-         this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_DELETE, UserRole.ADMIN, (Object)null, defectId, this.storageId);
-         this.setSelection(this.inputId, false);
+         try {
+            Response deleted = this.apiExecutor.execute(ApiEndpointDefinition.DEFECT_DELETE, UserRole.ADMIN, (Object)null, defectId, this.storageId);
+            Assertions.assertThat(deleted.statusCode()).as("Delete edited warehouse defect").isBetween(200, 299);
+            this.assertInputBatchAmounts(beforeCreate, "Deleting the defect restores all batch balances");
+         } finally {
+            this.setSelection(this.inputId, false);
+         }
       }
 
    }
@@ -370,6 +387,19 @@ public class ManualInputBatchAccountingUiTest extends BaseUITest {
 
    private void setSelection(long resourceId, boolean enabled) {
       Assertions.assertThat(this.apiExecutor.execute(ApiEndpointDefinition.RESOURCE_BATCH_SELECTION_PUT, UserRole.ADMIN, new ResourceBatchSelectionRequest(enabled), this.storageId, resourceId).statusCode()).isBetween(200, 299);
+   }
+
+   private Map<UUID, Double> inputBatchAmounts() {
+      return ProductionStockAssertions.queryBatches(this.apiExecutor, this.storageId,
+         UserRole.ADMIN, this.inputId, null, null).stream()
+         .collect(Collectors.toMap(StorageItemBatchResponse::getBatchUuid, StorageItemBatchResponse::getAmount));
+   }
+
+   private void assertInputBatchAmounts(Map<UUID, Double> expected, String phase) {
+      Map<UUID, Double> actual = this.inputBatchAmounts();
+      Assertions.assertThat(actual.keySet()).as("%s: batch UUIDs", phase).isEqualTo(expected.keySet());
+      expected.forEach((uuid, amount) -> Assertions.assertThat(actual.get(uuid))
+         .as("%s: batch %s", phase, uuid).isCloseTo(amount, Assertions.within(0.01)));
    }
 
    private void assertWarehouseDefectRawBatchPreconditions(StorageItemBatchResponse expected) {
