@@ -20,6 +20,9 @@
       RBAC matrix (RbacAccessMatrixTest) parked — do not add back until YAML/schema/5xx are stable.
       FabergeNeededResourcesDevProbeTest and FabergeMalutkaPlanProbeTest are dev-only diagnostics,
       not maintained regression tests.
+      ManualBatchCrewReceiveApiTest (TC-MIB-021) is a legacy scenario outside the agreed MANUAL scope;
+      fly points cannot enable MANUAL because they do not support production. See
+      docs/MANUAL_RESOURCE_BATCH_ACCOUNTING_DEV_REPORT.md (14-15.10.2026 scope correction).
       Hierarchy inventory (TC-WMS-007-010+) is in Inventory API/UI.
       TC-CREW-FIGHT-* skip when Fight write-off probe fails (GET short-stats ≠ 200).
 -->
@@ -113,6 +116,8 @@
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerExportApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerNamedListsApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerPm414ApiTest"/>
         </classes>
     </test>
 
@@ -213,6 +218,7 @@
             <class name="com.erp.tests.functional.equipment.EquipmentSelectorContractTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentInventoryCreateTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentCategoryCrudApiTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentUnitHistoryApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertCrudApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertOwnerSaveApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
@@ -319,6 +325,7 @@
             <class name="com.erp.tests.ui.ResourcePhotoUiTest"/>
             <class name="com.erp.tests.ui.ResourceModifiedSortUiTest"/>
             <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
+            <class name="com.erp.tests.ui.ResourceViewerNamedListsUiTest"/>
         </classes>
     </test>
 
@@ -326,6 +333,7 @@
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationReceivedDateUiTest"/>
+            <class name="com.erp.tests.ui.RelocationFutureDateUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
             <class name="com.erp.tests.ui.RelocationLocationSelectorsUiTest"/>
             <class name="com.erp.tests.ui.RelocationRegionAliasFeatureUiTest"/>

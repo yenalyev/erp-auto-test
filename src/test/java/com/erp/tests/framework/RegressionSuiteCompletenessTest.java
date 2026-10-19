@@ -22,6 +22,8 @@ public class RegressionSuiteCompletenessTest {
     private static final Pattern SUITE_CLASS = Pattern.compile("<class\\s+name=\"([^\"]+)\"\\s*(?:/?>)");
 
     private static final Set<String> DOCUMENTED_EXCEPTIONS = Set.of(
+            // Legacy TC-MIB-021 is outside the MANUAL scope; documented next to regression.xml.
+            "com.erp.tests.functional.storage.ManualBatchCrewReceiveApiTest",
             "com.erp.tests.functional.storage.FaitaCrewSyncCleanupAuditTest",
             "com.erp.tests.functional.statistics.FabergeMalutkaPlanProbeTest",
             "com.erp.tests.functional.statistics.FabergeNeededResourcesDevProbeTest",
