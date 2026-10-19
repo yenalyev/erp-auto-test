@@ -1,0 +1,18 @@
+{
+  "featureId": "REQ-EQU-HINT",
+  "featureDbId": 165,
+  "acId": 788,
+  "testId": "TC-EQ-HINT-UI-003",
+  "testDbId": 1954,
+  "idsPreserved": true,
+  "documentationMatchesSource": true,
+  "criterionMatchesSource": true,
+  "caseStepsMatchSource": true,
+  "latestExecutionStatus": "PASS",
+  "environment": "dev",
+  "runIds": [
+    131,
+    132
+  ],
+  "statusesReadBackVerified": true
+}

@@ -1,0 +1,87 @@
+[
+  {
+    "featureBusinessId": "REQ-EQU-HINT",
+    "projectId": 1,
+    "environment": "dev",
+    "suite": "equipment-kind-hint",
+    "buildName": "dev ERP — equipment classification advice — 2026-10-19",
+    "remoteRunId": "eq-kind-hint-dev-20261019-verified-hint",
+    "runName": "Dev — підказка класифікації обладнання — hint",
+    "results": [
+      {
+        "testCaseId": "TC-EQ-HINT-UI-001",
+        "status": "PASS",
+        "durationMs": 2745,
+        "executedAt": "2026-10-19T12:23:13",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-002",
+        "status": "PASS",
+        "durationMs": 10144,
+        "executedAt": "2026-10-19T12:22:38",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-003",
+        "status": "FAIL",
+        "durationMs": 11309,
+        "executedAt": "2026-10-19T12:22:48",
+        "errorMessage": "Locator expected to contain text: ресурс\nReceived: Засоби захисту та засоби побутового користування, пакування і т.д. не входять в обладнанняПриклад:Захисні окуляри - Засоби захисту, не обладнанняНоутбук HP ZBook Power G7 - ОбладнанняУ разі сумнівів або неясності зверніться до адміністратора Цукерочки.Згорнути\n\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"[data-slot='card']\").first().locator(\"internal:attr=[data-testid=\\\"equipment-kind-hint-collapse\\\"]\").locator(\"../..\")\n    9 × locator resolved to <div class=\"space-y-2\">…</div>\n      - unexpected value \"Засоби захисту та засоби побутового користування, пакування і т.д. не входять в обладнанняПриклад:Захисні окуляри - Засоби захисту, не обладнанняНоутбук HP ZBook Power G7 - ОбладнанняУ разі сумнівів або неясності зверніться до адміністратора Цукерочки.Згорнути\""
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-004",
+        "status": "PASS",
+        "durationMs": 3174,
+        "executedAt": "2026-10-19T12:23:15",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-005",
+        "status": "PASS",
+        "durationMs": 3652,
+        "executedAt": "2026-10-19T12:22:59",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-006",
+        "status": "PASS",
+        "durationMs": 2128,
+        "executedAt": "2026-10-19T12:23:10",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-007",
+        "status": "PASS",
+        "durationMs": 2828,
+        "executedAt": "2026-10-19T12:23:07",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-008",
+        "status": "PASS",
+        "durationMs": 4387,
+        "executedAt": "2026-10-19T12:23:03",
+        "errorMessage": null
+      }
+    ]
+  },
+  {
+    "featureBusinessId": "REQ-EQU-002",
+    "projectId": 1,
+    "environment": "dev",
+    "suite": "equipment-kind-hint",
+    "buildName": "dev ERP — equipment classification advice — 2026-10-19",
+    "remoteRunId": "eq-kind-hint-dev-20261019-verified-create",
+    "runName": "Dev — підказка класифікації обладнання — create",
+    "results": [
+      {
+        "testCaseId": "TC-UI-EQ-002",
+        "status": "PASS",
+        "durationMs": 9398,
+        "executedAt": "2026-10-19T12:23:30",
+        "errorMessage": null
+      }
+    ]
+  }
+]

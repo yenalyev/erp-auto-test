@@ -1,0 +1,119 @@
+{
+  "environment": "dev",
+  "timeZone": "Europe/Kyiv",
+  "suite": "equipment-kind-hint",
+  "counts": {
+    "PASS": 9
+  },
+  "configurationErrors": [],
+  "results": [
+    {
+      "testCaseId": "TC-EQ-HINT-UI-001",
+      "status": "PASS",
+      "durationMs": 2123,
+      "executedAt": "2026-10-19T12:41:53",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.ownerSeesAdviceBeforeEnteringEquipment",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-001-1.png",
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-001-2.png"
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-002",
+      "status": "PASS",
+      "durationMs": 13010,
+      "executedAt": "2026-10-19T12:41:18",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.adminCanReadExamplesAndContact",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-002-1.png",
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-002-2.png"
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-003",
+      "status": "PASS",
+      "durationMs": 2846,
+      "executedAt": "2026-10-19T12:41:50",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.ownerReadsApprovedClassificationText",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-003-1.png",
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-003-2.png"
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-004",
+      "status": "PASS",
+      "durationMs": 2706,
+      "executedAt": "2026-10-19T12:41:55",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.repeatedTogglingPreservesInputAndDoesNotSubmit",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-004-1.png"
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-005",
+      "status": "PASS",
+      "durationMs": 7723,
+      "executedAt": "2026-10-19T12:41:31",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.batchItemsHaveIndependentAdvice",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-005-1.png",
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-005-2.png"
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-006",
+      "status": "PASS",
+      "durationMs": 2799,
+      "executedAt": "2026-10-19T12:41:47",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.keyboardActivatesBothAdviceControls",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-006-1.png"
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-007",
+      "status": "PASS",
+      "durationMs": 3335,
+      "executedAt": "2026-10-19T12:41:44",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.expandedAdviceIsReadableAtDesktopAndNarrowViewport",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-007-1.png",
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-007-2.png",
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-007-3.png"
+      ]
+    },
+    {
+      "testCaseId": "TC-EQ-HINT-UI-008",
+      "status": "PASS",
+      "durationMs": 4467,
+      "executedAt": "2026-10-19T12:41:39",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentKindHintUiTest.cancellationDoesNotCreateEquipmentAndReopenRestoresAdvice",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-EQ-HINT-UI-008-1.png"
+      ]
+    },
+    {
+      "testCaseId": "TC-UI-EQ-002",
+      "status": "PASS",
+      "durationMs": 9425,
+      "executedAt": "2026-10-19T12:42:09",
+      "errorMessage": null,
+      "method": "com.erp.tests.ui.EquipmentCreateUITest.createSeveralEquipmentInOneRelocation",
+      "screenshots": [
+        "equipment-kind-hint-approved-evidence/TC-UI-EQ-002-1.png",
+        "equipment-kind-hint-approved-evidence/TC-UI-EQ-002-2.png",
+        "equipment-kind-hint-approved-evidence/TC-UI-EQ-002-3.png"
+      ]
+    }
+  ],
+  "acceptedTextDecision": "Користувач погодив поточний текст 19.10.2026; додаткову фразу про внесення в ресурси не вимагаємо."
+}

@@ -81,6 +81,9 @@ mvn clean test -Denv=dev -Dsuite=regression
 
 Тематичні набори обираються через `-Dsuite=<назва XML без розширення>`:
 
+Підказка класифікації при внесенні обладнання: [план](docs/REQ-EQU-HINT.md),
+[кейси](docs/EQUIPMENT_KIND_HINT_TEST_CASES.md); запуск `-Dsuite=equipment-kind-hint`.
+
 Вимоги й API/UI-покриття експорту **Аналітика → Для плану → Експорт в Excel** описані в
 [REQ-PLAN-ANL-EXCEL](docs/REQ-PLAN-ANL-EXCEL.md).
 Початковий вибір категорії «Боєприпас», очищення та повторне відкриття описані в

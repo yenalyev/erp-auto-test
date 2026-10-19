@@ -1,0 +1,87 @@
+[
+  {
+    "projectId": 1,
+    "featureBusinessId": "REQ-EQU-HINT",
+    "environment": "dev",
+    "suite": "equipment-kind-hint",
+    "remoteRunId": "eq-kind-hint-dev-20261019-approved-hint",
+    "runName": "Dev — погоджений текст підказки — hint",
+    "buildName": "dev ERP — approved equipment hint — 2026-10-19",
+    "results": [
+      {
+        "testCaseId": "TC-EQ-HINT-UI-001",
+        "status": "PASS",
+        "durationMs": 2123,
+        "executedAt": "2026-10-19T12:41:53",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-002",
+        "status": "PASS",
+        "durationMs": 13010,
+        "executedAt": "2026-10-19T12:41:18",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-003",
+        "status": "PASS",
+        "durationMs": 2846,
+        "executedAt": "2026-10-19T12:41:50",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-004",
+        "status": "PASS",
+        "durationMs": 2706,
+        "executedAt": "2026-10-19T12:41:55",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-005",
+        "status": "PASS",
+        "durationMs": 7723,
+        "executedAt": "2026-10-19T12:41:31",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-006",
+        "status": "PASS",
+        "durationMs": 2799,
+        "executedAt": "2026-10-19T12:41:47",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-007",
+        "status": "PASS",
+        "durationMs": 3335,
+        "executedAt": "2026-10-19T12:41:44",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQ-HINT-UI-008",
+        "status": "PASS",
+        "durationMs": 4467,
+        "executedAt": "2026-10-19T12:41:39",
+        "errorMessage": null
+      }
+    ]
+  },
+  {
+    "projectId": 1,
+    "featureBusinessId": "REQ-EQU-002",
+    "environment": "dev",
+    "suite": "equipment-kind-hint",
+    "remoteRunId": "eq-kind-hint-dev-20261019-approved-create",
+    "runName": "Dev — погоджений текст підказки — create",
+    "buildName": "dev ERP — approved equipment hint — 2026-10-19",
+    "results": [
+      {
+        "testCaseId": "TC-UI-EQ-002",
+        "status": "PASS",
+        "durationMs": 9425,
+        "executedAt": "2026-10-19T12:42:09",
+        "errorMessage": null
+      }
+    ]
+  }
+]

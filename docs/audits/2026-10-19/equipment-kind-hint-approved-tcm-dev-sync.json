@@ -1,0 +1,141 @@
+{
+  "baseUrl": "http://127.0.0.1:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-EQ-HINT-UI-001",
+      "TC-EQ-HINT-UI-002",
+      "TC-EQ-HINT-UI-003",
+      "TC-EQ-HINT-UI-004",
+      "TC-EQ-HINT-UI-005",
+      "TC-EQ-HINT-UI-006",
+      "TC-EQ-HINT-UI-007",
+      "TC-EQ-HINT-UI-008",
+      "TC-EQ-HINT-MAN-001"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-EQU-HINT",
+    "parentFeatureId": "REQ-EQU-002",
+    "status": "ACTIVE",
+    "documentationLength": 8853,
+    "documentationSha256": "1cc8f35c8e3da5829b450c65be3a711ef86e4ee9faff2a34917a4800d27c38eb",
+    "sourceDocumentationSha256": "1cc8f35c8e3da5829b450c65be3a711ef86e4ee9faff2a34917a4800d27c38eb",
+    "requiredAcPresent": true,
+    "managedAcCount": 4,
+    "managedCaseCount": 9,
+    "automatedCaseCount": 8,
+    "manualCaseCount": 1,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-EQ-HINT-UI-001": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-EQ-HINT-UI-001"
+        ],
+        "stepCount": 2
+      },
+      "TC-EQ-HINT-UI-002": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-EQ-HINT-UI-002"
+        ],
+        "stepCount": 2
+      },
+      "TC-EQ-HINT-UI-003": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-EQ-HINT-UI-003"
+        ],
+        "stepCount": 2
+      },
+      "TC-EQ-HINT-UI-004": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-EQ-HINT-UI-004"
+        ],
+        "stepCount": 3
+      },
+      "TC-EQ-HINT-UI-005": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-EQ-HINT-UI-005"
+        ],
+        "stepCount": 3
+      },
+      "TC-EQ-HINT-UI-006": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-EQ-HINT-UI-006"
+        ],
+        "stepCount": 2
+      },
+      "TC-EQ-HINT-UI-007": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-EQ-HINT-UI-007"
+        ],
+        "stepCount": 3
+      },
+      "TC-EQ-HINT-UI-008": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-EQ-HINT-UI-008"
+        ],
+        "stepCount": 2
+      },
+      "TC-EQ-HINT-MAN-001": {
+        "featureId": "REQ-EQU-HINT",
+        "acId": "AC-02",
+        "status": "DRAFT",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      }
+    }
+  },
+  "regressionCaseUpdated": {
+    "testId": "TC-UI-EQ-002",
+    "featureId": "REQ-EQU-002",
+    "acId": "AC-02",
+    "verified": true
+  }
+}
