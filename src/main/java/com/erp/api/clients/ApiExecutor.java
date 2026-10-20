@@ -274,6 +274,14 @@ public class ApiExecutor {
                 request));
     }
 
+    @Step("API: create commercial document at storage {storageId} as {role}")
+    public Response executeCommercialDocumentCreate(Long storageId, UserRole role,
+                                                     Object request, byte[] file) {
+        return executeWithSessionRetry(role, cookies -> apiClient.executeMultipartJsonFilePost(
+                ApiEndpointDefinition.COMMERCIAL_DOCUMENT_CREATE.getPath(storageId), cookies,
+                request, "files", file, "commercial-document.pdf", "application/pdf"));
+    }
+
     @Step("API Request: POST /resources/{resourceId}/image as {role}")
     public Response executeResourceImageUpload(Long resourceId, byte[] imageBytes, UserRole role) {
         String path = ApiEndpointDefinition.RESOURCE_UPLOAD_IMAGE.getPath(resourceId);

@@ -1,0 +1,648 @@
+{
+  "baseUrl": "http://tcm.lab",
+  "projectId": 1,
+  "featureId": "REQ-CD-REQ",
+  "featureDbId": 168,
+  "parentFeatureId": "REQ-DOCFLOW",
+  "criteriaVerified": 6,
+  "casesVerified": 8,
+  "apiCases": 4,
+  "uiCases": 4,
+  "automatedCases": 8,
+  "executionVariants": 25,
+  "documentationSha256": "f580305d7a2437267c38edc17d0fbe4a2d0429e7b91f60a0cfded8b3ed85c877",
+  "sourceDocumentationSha256": "f580305d7a2437267c38edc17d0fbe4a2d0429e7b91f60a0cfded8b3ed85c877",
+  "documentationMatchesSource": true,
+  "executionStatusesVerified": 8,
+  "result": "SUCCESS",
+  "feature": {
+    "id": 168,
+    "featureId": "REQ-CD-REQ",
+    "title": "Новий комерційний документ — позначити обов'язкові поля",
+    "description": "Видимі позначки обов'язкових полів, API-валідація, блокування збереження, нульова сума, скасування та повторне відкриття. 8 кейсів, 25 виконань.",
+    "documentation": "# Обов'язкові поля нового комерційного документа\n\nУ модулі **Документообіг переміщень → Облік надходжень → Комерційні документи**\nформа «Новий комерційний документ» позначає обов'язкові поля та дозволяє збереження\nлише після їх заповнення. TCM: `REQ-DOCFLOW` → `REQ-CD-REQ`, project `1`.\n\nПокриття містить **8 автоматизованих кейсів: 4 API та 4 UI**.\nAPI-параметризація дає **21 виконання**, UI — **4**, разом **25**.\n\n## Контракт форми та API\n\nВидимі `*` мають номер, дата документа, дія «Додати файли», заголовки\n«Сума за все, грн» і «Назва ресурсу за документом». Заголовки ресурсів з'являються\nпісля вибору надходження. Коментар, код номенклатури й категорія (сорт) необов'язкові\nта не мають позначки `*`. Вибір хоча б одного надходження є умовою збереження.\n\n`POST /api/v1/virtual-storage/{storageId}/commercial-documents` приймає multipart:\n\n- `request`, `application/json`: `number`, `documentDate`, `receiptIds`, `lines`;\n- `files`: щонайменше один непорожній файл;\n- кожен рядок `lines`: `resourceId`, `total`, `documentResourceName`;\n- необов'язкові значення: `comment`, `nomenclatureCode`, `grade`.\n\nНомер і назва ресурсу не можуть бути порожніми або складатися лише з пробілів.\nСума `0` допустима й відрізняється від незаповненої суми. UI обрізає крайні пробіли\nтекстових значень і не передає порожні необов'язкові поля. Дата в UI початково\nзаповнена; її відсутність перевіряється API-тестом, оскільки чинний DatePicker не має очищення.\n\nВідхилений запит повертає HTTP `400` і не створює документ, не прив'язує надходження\nта не змінює облік. Успішне створення повертає HTTP `200`; окремий GET підтверджує\nзбереження документа у стані `NEW`.\n\n## Критерії приймання\n\n- **AC-01.** На новій формі видимі позначки `*` для номера, дати, файлів, суми й назви ресурсу за документом. Необов'язкові коментар, код номенклатури та сорт не позначені.\n- **AC-02.** API відхиляє відсутні обов'язкові номер, дату та надходження. Порожній номер і номер із пробілів також відхиляються. UI блокує збереження без номера або вибраного надходження.\n- **AC-03.** Кожен вибраний ресурс потребує окремих суми та непорожньої назви за документом. Помилка другого ресурсу не дозволяє зберегти частковий документ. Нульова сума допустима.\n- **AC-04.** Для створення потрібен хоча б один непорожній файл. API відхиляє відсутній та порожній файловий part; UI блокує збереження після видалення останнього вибраного файлу.\n- **AC-05.** Документ з лише обов'язковими значеннями та total=0 успішно створюється. GET і повторне відкриття форми підтверджують збережені значення; сусіднє надходження й його облік незмінні.\n- **AC-06.** Скасування не створює документ і не змінює надходження. Нова форма після скасування має порожній номер, жодного файлу й жодного вибраного надходження; збереження заблоковане.\n\n## Дані та ізоляція\n\n`CommercialDocumentFixture` створює власну внутрішню локацію обліку, окрему зовнішню\nлокацію постачальника, два ресурси A/B, два записи обліку й надходження на 2/3 одиниці.\nЛокації є сусідами під наявною батьківською локацією. Дата надходжень — учора;\nAPI-документа — учора, UI-документа — значення DatePicker у момент збереження.\nФайл — невеликий валідний PDF `commercial-document.pdf`.\n\nПеред кожною негативною API-дією зчитуються документи, вільні надходження та облік;\nпісля дії перевіряється рівність усіх трьох знімків. Позитивні кейси контролюють\nсусідній ресурс B. Після методу видаляються створені документи, після класу —\nвласні надходження, архівуються записи обліку, ресурси та локації. Архівні сутності\nзалишаються відповідно до lifecycle ERP. Спільні надходження й документи не змінюються.\n\n## API тест-кейси\n\n### TC-CD-REQ-API-001 — Номер дата та надходження обов'язкові (AC-02)\n\nАвтотест: `CommercialDocumentRequiredFieldsApiTest#rejectMissingHeader`. **9 виконань.**\n\n1. Зберегти знімки документів, вільних надходжень та обліку власної локації.\n2. Побудувати валідний multipart `request + files` для A й змінити тільки одне поле: `number` відсутній/null/порожній/пробіли; `documentDate` відсутня/null; `receiptIds` відсутній/null/порожній масив.\n3. Надіслати запит та повторно зчитати три знімки.\n\nОчікується: HTTP 400, відповідь називає невалідне поле; всі три знімки незмінні.\n\n### TC-CD-REQ-API-002 — Сума та назва обов'язкові для кожного ресурсу (AC-03)\n\nАвтотест: `CommercialDocumentRequiredFieldsApiTest#rejectMissingLineFields`. **9 виконань.**\n\n1. Вибрати надходження A та B, підготувати валідні рядки для обох ресурсів і зберегти три знімки.\n2. Перевірити `lines` відсутній/null/порожній масив; окремо, з валідним першим рядком, прибрати total другого рядка або передати null; прибрати documentResourceName другого рядка або передати null/порожній рядок/пробіли.\n3. Надіслати multipart із непорожнім PDF та повторно зчитати три знімки.\n\nОчікується: HTTP 400, частковий документ не створений; документи, надходження та облік незмінні. Для відсутнього/null lines та невалідних полів рядка відповідь містить lines; для порожнього масиву перевіряються статус та ізоляція.\n\n### TC-CD-REQ-API-003 — Файл обов'язковий і не може бути порожнім (AC-04)\n\nАвтотест: `CommercialDocumentRequiredFieldsApiTest#rejectAbsentOrEmptyFile`. **2 виконання.**\n\n1. Підготувати валідний request і зберегти три знімки.\n2. Надіслати multipart без files; окремим виконанням передати files із нульовою довжиною.\n3. Перевірити помилку та повторно зчитати документи, надходження й облік.\n\nОчікується: HTTP 400, відповідь містить files; всі три знімки незмінні.\n\n### TC-CD-REQ-API-004 — Створення з лише обов'язковими полями та нульовою сумою (AC-05)\n\nАвтотест: `CommercialDocumentRequiredFieldsApiTest#createWithOnlyRequiredFields`. **1 виконання.**\n\n1. Зберегти облік і вільне надходження B. Підготувати документ для A з total=0 та назвою за документом, без comment, nomenclatureCode й grade.\n2. Надіслати multipart із непорожнім PDF і прочитати збережений документ окремим GET списку документів.\n3. Перевірити номер, дату, NEW, один файл, один рядок total=0 і його назву, null необов'язкових полів та зв'язок з надходженням A.\n4. Перевірити, що додано лише один документ, B залишилося вільним, його облік незмінний і receivedAmount ресурсів збережені.\n\nОчікується: HTTP 200, значення збережені; з двох надходжень документ покриває тільки A, сусід B незмінний.\n\n## UI тест-кейси\n\n### TC-CD-REQ-UI-001 — Видимі позначки обов'язкових полів (AC-01)\n\nАвтотест: `CommercialDocumentRequiredFieldsUiTest#requiredMarkersAppearOnLabelsAndResourceColumns`. **1 виконання.**\n\n1. Під ADMIN вибрати власну локацію та відкрити Облік надходжень → Комерційні документи → Додати комерційний документ.\n2. Перевірити видимі * біля Номер, Дата документа й Додати файли; перевірити відсутність * у Коментар.\n3. Вибрати надходження A; перевірити видимі * у Сума за все, грн і Назва ресурсу за документом, відсутність * у Код номенклатури та Категорія (сорт).\n4. Перевірити недоступність Зберегти й додати скріншоти початкової форми та рядка ресурсу.\n\nОчікується: усі п'ять обов'язкових полів мають видимі позначки, три необов'язкові — без них; неповна форма не зберігається.\n\n### TC-CD-REQ-UI-002 — Блокування збереження та скидання скасованої форми (AC-06)\n\nАвтотест: `CommercialDocumentRequiredFieldsUiTest#saveRequiresNumberFileAndReceiptAndCancelResetsForm`. Також AC-02, AC-04. **1 виконання.**\n\n1. Заповнити валідну форму: номер, PDF, надходження A, total=0, назва ресурсу; необов'язкові поля лишити порожніми.\n2. Окремо очистити номер, ввести пробіли, видалити файл і зняти вибір надходження. Після кожної невалідної зміни перевірити disabled Зберегти, після відновлення — enabled.\n3. Натиснути Скасувати, відкрити нову форму й перевірити порожній номер, відсутність файлів та вибраних checkbox і disabled Зберегти.\n4. Перевірити лічильник POST створення документа, список документів і знімок вільних надходжень.\n\nОчікується: збереження залежить від кожного обов'язкового значення; після скасування форма скинута, POST=0, документів немає, надходження незмінні.\n\n### TC-CD-REQ-UI-003 — Сума й непорожня назва для кожного вибраного ресурсу (AC-03)\n\nАвтотест: `CommercialDocumentRequiredFieldsUiTest#eachResourceRequiresTotalAndNonblankDocumentName`. **1 виконання.**\n\n1. Підготувати валідну форму для A й додати B. Перевірити disabled Зберегти, поки поля B порожні.\n2. Ввести B.total=0 та назву з пробілів: Зберегти лишається disabled. Ввести непорожню назву: enabled.\n3. Для кожного ресурсу окремо очистити й відновити суму та назву, перевіряючи disabled/enabled після кожної зміни.\n4. Додати скріншот валідних рядків; перевірити відсутність документів і два вільні надходження.\n\nОчікується: обидва ресурси потребують своїх суми та назви; нуль допустимий; документ не створено, обидва надходження вільні.\n\n### TC-CD-REQ-UI-004 — Збереження та повторне відкриття обов'язкових значень (AC-05)\n\nАвтотест: `CommercialDocumentRequiredFieldsUiTest#saveAndReopenRequiredFieldsOnly`. **1 виконання.**\n\n1. Зберегти облік. Заповнити номер, PDF, вибрати A, ввести total=0 і Назва з UI; запам'ятати дату DatePicker, необов'язкові поля лишити порожніми.\n2. Натиснути Зберегти, перехопити фактичний POST та прочитати документ через API.\n3. Перевірити HTTP 200, номер, дату, NEW, один файл, total=0, назву, null необов'язкових полів; B лишається вільним і його облік незмінний.\n4. Відкрити документ кнопкою Редагувати. Перевірити номер, дату, total=0, Назва з UI, порожній коментар та enabled Зберегти. Додати скріншоти до й після збереження.\n\nОчікується: документ збережений; повторна форма відтворює введені значення та дозволяє збереження з наявним файлом; сусід B незмінний.\n\n## Автоматизація та запуск\n\nJava-класи: `com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest`\nта `com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest`.\nPage Object — `CommercialDocumentPage`, дані — `CommercialDocumentFixture`.\nКожен кейс має однойменний `@TestCaseId`, API/UI automation ID і ACTIVE-статус у TCM.\nКласи зареєстровані в `commercial-document-required-fields`, `relocations`, `regression`;\nUI-клас також у `ui`. Скріншоти ключових і фінальних UI-станів доступні в Allure.\n\n```powershell\n$env:JAVA_HOME='C:\\Users\\gigam\\.jdks\\corretto-21.0.9'\n$env:PATH=\"$env:JAVA_HOME\\bin;$env:PATH\"\n$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD='1'\nmvn test -Denv=dev -Dsuite=commercial-document-required-fields -Duse.database=false -Dssh.enabled=false -Dframework.browser.channel=chrome -Dtcm.enabled=false -Dgoogle.sheets.enabled=false\n```\n\nПараметр `tcm.enabled=false` вимикає публікацію результатів конкретного запуску.\nДля публікації зі suite використовується чинна конфігурація TCM; для TCM scope потрібен\nDB ID фічі саме цільового середовища. DB ID production та local TCM не взаємозамінні.\n\n## Результати на dev 20 жовтня 2026\n\n**21/21 API та 4/4 UI виконань PASS**, framework — **100/100 PASS**.\nAPI-результати взято з `target/commercial-document-final/allure-results`, UI —\nз `target/commercial-document-final/ui-verified-allure-results` після виправлення\nселекторів у Page Object. Це підсумок двох фактичних прогонів, а не один зелений\nповний suite. Попередні невдалі UI-спроби не зараховані як фінальний результат.\nERP-середовище — `dev`; перевірки не виконувалися на production ERP.\n\nПідтвердження: `target/commercial-document-ui-verified.log`,\n`target/commercial-document-framework.log`, API-виконання у згаданих Allure JSON.\nУ фінальному UI-прогоні cleanup завершений, черга suite не містила залишків.\n\n## Синхронізація TCM\n\nДжерело документації TCM — цей файл. `scripts/sync_tcm_commercial_document_required_fields.py`\nгенерує payload для production MCP і синхронізує local TCM через `http://localhost:18100`.\nПеред зміною кожен об'єкт читається, після зміни перевіряються документація,\nкритерії, тексти кейсів, кроки та API/UI automation ID.\n\nProduction TCM — `http://tcm.lab`, local TCM — `http://localhost:18100`, project `1`.\nІєрархія в обох: `REQ-DOCFLOW` → `REQ-CD-REQ`.\nФактичні 25 виконань агрегуються в 8 результатів кейсів: PASS для параметризованого\nкейсу можливий лише коли пройшли всі його варіанти.\n\nСтан на 20.10.2026: **8/8 кейсів PASS** у кожному TCM.\n\n- Production: [фіча 168](http://tcm.lab/projects/1?feature=168), [прогін 140](http://tcm.lab/test-runs/140).\n- Local: [фіча 165](http://localhost:18100/projects/1?feature=165), [прогін 207](http://localhost:18100/test-runs/207).\n\nСередовище цих прогонів — ERP `dev`. Деталі перевірки та первинні результати збережені\nв `docs/audits/2026-10-20/commercial-document-tcm-sync-report.md` і сусідніх JSON-файлах.\n\n## Межі покриття\n\nПеревірено створення під ADMIN; окремої RBAC-матриці немає. Зміни полів чинного\nдокумента й блокування документів у додатку 24 не входять до цих восьми кейсів.\nAPI перевіряє відсутній та порожній файл; UI перевіряє наявність вибраного файлу.\nГраничні довжини, від'ємні суми, точність суми та перевірка типів вкладень цим набором\nне заявляються. SUT `tk` і `tk-ui` не змінюється.\n",
+    "module": "CD",
+    "priority": "HIGH",
+    "status": "ACTIVE",
+    "treeDepth": 1,
+    "parentFeatureId": "REQ-DOCFLOW",
+    "acceptanceCriteria": [
+      {
+        "id": 803,
+        "acId": "AC-01",
+        "text": "На новій формі видимі позначки `*` для номера, дати, файлів, суми й назви ресурсу за документом. Необов'язкові коментар, код номенклатури та сорт не позначені.",
+        "featureDbId": 168,
+        "featureId": "REQ-CD-REQ",
+        "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+        "testIds": [
+          "TC-CD-REQ-UI-001"
+        ]
+      },
+      {
+        "id": 804,
+        "acId": "AC-02",
+        "text": "API відхиляє відсутні обов'язкові номер, дату та надходження. Порожній номер і номер із пробілів також відхиляються. UI блокує збереження без номера або вибраного надходження.",
+        "featureDbId": 168,
+        "featureId": "REQ-CD-REQ",
+        "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+        "testIds": [
+          "TC-CD-REQ-API-001"
+        ]
+      },
+      {
+        "id": 805,
+        "acId": "AC-03",
+        "text": "Кожен вибраний ресурс потребує окремих суми та непорожньої назви за документом. Помилка другого ресурсу не дозволяє зберегти частковий документ. Нульова сума допустима.",
+        "featureDbId": 168,
+        "featureId": "REQ-CD-REQ",
+        "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+        "testIds": [
+          "TC-CD-REQ-API-002",
+          "TC-CD-REQ-UI-003"
+        ]
+      },
+      {
+        "id": 806,
+        "acId": "AC-04",
+        "text": "Для створення потрібен хоча б один непорожній файл. API відхиляє відсутній та порожній файловий part; UI блокує збереження після видалення останнього вибраного файлу.",
+        "featureDbId": 168,
+        "featureId": "REQ-CD-REQ",
+        "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+        "testIds": [
+          "TC-CD-REQ-API-003"
+        ]
+      },
+      {
+        "id": 807,
+        "acId": "AC-05",
+        "text": "Документ з лише обов'язковими значеннями та total=0 успішно створюється. GET і повторне відкриття форми підтверджують збережені значення; сусіднє надходження й його облік незмінні.",
+        "featureDbId": 168,
+        "featureId": "REQ-CD-REQ",
+        "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+        "testIds": [
+          "TC-CD-REQ-API-004",
+          "TC-CD-REQ-UI-004"
+        ]
+      },
+      {
+        "id": 808,
+        "acId": "AC-06",
+        "text": "Скасування не створює документ і не змінює надходження. Нова форма після скасування має порожній номер, жодного файлу й жодного вибраного надходження; збереження заблоковане.",
+        "featureDbId": 168,
+        "featureId": "REQ-CD-REQ",
+        "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+        "testIds": [
+          "TC-CD-REQ-UI-002"
+        ]
+      }
+    ]
+  },
+  "cases": {
+    "TC-CD-REQ-API-001": {
+      "id": 1985,
+      "testId": "TC-CD-REQ-API-001",
+      "title": "Номер дата та надходження обов'язкові",
+      "description": "Автотест: com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest#rejectMissingHeader. Виконань: 9. Вимоги та повна параметризація: docs/REQ-CD-REQ.md. Suite: commercial-document-required-fields, relocations, regression; UI також ui. Власні дані CommercialDocumentFixture; документи прибираються після методу, надходження, облік, ресурси й локації — після класу.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "preconditions": "ERP dev, ADMIN із доступом до власної локації. Власні локації обліку та зовнішнього постачальника, два ресурси A/B, надходження 2/3 од. Для UI — Chrome та робочий простір локації обліку.",
+      "testData": "Дата надходжень/API-документа — учора; UI — дата DatePicker. Валідний PDF commercial-document.pdf; total=0; необов'язкові поля порожні. 1. Зберегти знімки документів, вільних надходжень та обліку власної локації.\n2. Побудувати валідний multipart `request + files` для A й змінити тільки одне поле: `number` відсутній/null/порожній/пробіли; `documentDate` відсутня/null; `receiptIds` відсутній/null/порожній масив.\n3. Надіслати запит та повторно зчитати три знімки.",
+      "expectedResult": "HTTP 400, відповідь називає невалідне поле; всі три знімки незмінні.",
+      "tags": "docflow,commercial-document,required-fields,automated",
+      "author": "ai-mcp",
+      "jiraIssueKey": null,
+      "dependencies": null,
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-CD-REQ-API-001"
+      ],
+      "uiAutomationIds": [],
+      "parameterized": false,
+      "executionStatus": "PASS",
+      "executionStatusSource": "AUTO",
+      "executionStatusAt": "2026-10-20T09:44:43.529",
+      "executionStatusComment": null,
+      "acceptanceCriterionId": 804,
+      "acId": "AC-02",
+      "featureDbId": 168,
+      "featureId": "REQ-CD-REQ",
+      "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Зберегти знімки документів, вільних надходжень та обліку власної локації.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Побудувати валідний multipart `request + files` для A й змінити тільки одне поле: `number` відсутній/null/порожній/пробіли; `documentDate` відсутня/null; `receiptIds` відсутній/null/порожній масив.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Надіслати запит та повторно зчитати три знімки.",
+          "expectedText": "HTTP 400, відповідь називає невалідне поле; всі три знімки незмінні."
+        }
+      ],
+      "createdAt": "2026-10-20T06:57:04.089365",
+      "updatedAt": "2026-10-20T06:58:50.171961"
+    },
+    "TC-CD-REQ-API-002": {
+      "id": 1986,
+      "testId": "TC-CD-REQ-API-002",
+      "title": "Сума та назва обов'язкові для кожного ресурсу",
+      "description": "Автотест: com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest#rejectMissingLineFields. Виконань: 9. Вимоги та повна параметризація: docs/REQ-CD-REQ.md. Suite: commercial-document-required-fields, relocations, regression; UI також ui. Власні дані CommercialDocumentFixture; документи прибираються після методу, надходження, облік, ресурси й локації — після класу.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "preconditions": "ERP dev, ADMIN із доступом до власної локації. Власні локації обліку та зовнішнього постачальника, два ресурси A/B, надходження 2/3 од. Для UI — Chrome та робочий простір локації обліку.",
+      "testData": "Дата надходжень/API-документа — учора; UI — дата DatePicker. Валідний PDF commercial-document.pdf; total=0; необов'язкові поля порожні. 1. Вибрати надходження A та B, підготувати валідні рядки для обох ресурсів і зберегти три знімки.\n2. Перевірити `lines` відсутній/null/порожній масив; окремо, з валідним першим рядком, прибрати total другого рядка або передати null; прибрати documentResourceName другого рядка або передати null/порожній рядок/пробіли.\n3. Надіслати multipart із непорожнім PDF та повторно зчитати три знімки.",
+      "expectedResult": "HTTP 400, частковий документ не створений; документи, надходження та облік незмінні. Для відсутнього/null lines та невалідних полів рядка відповідь містить lines; для порожнього масиву перевіряються статус та ізоляція.",
+      "tags": "docflow,commercial-document,required-fields,automated",
+      "author": "ai-mcp",
+      "jiraIssueKey": null,
+      "dependencies": null,
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-CD-REQ-API-002"
+      ],
+      "uiAutomationIds": [],
+      "parameterized": false,
+      "executionStatus": "PASS",
+      "executionStatusSource": "AUTO",
+      "executionStatusAt": "2026-10-20T09:45:06.508",
+      "executionStatusComment": null,
+      "acceptanceCriterionId": 805,
+      "acId": "AC-03",
+      "featureDbId": 168,
+      "featureId": "REQ-CD-REQ",
+      "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Вибрати надходження A та B, підготувати валідні рядки для обох ресурсів і зберегти три знімки.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити `lines` відсутній/null/порожній масив; окремо, з валідним першим рядком, прибрати total другого рядка або передати null; прибрати documentResourceName другого рядка або передати null/порожній рядок/пробіли.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Надіслати multipart із непорожнім PDF та повторно зчитати три знімки.",
+          "expectedText": "HTTP 400, частковий документ не створений; документи, надходження та облік незмінні. Для відсутнього/null lines та невалідних полів рядка відповідь містить lines; для порожнього масиву перевіряються статус та ізоляція."
+        }
+      ],
+      "createdAt": "2026-10-20T06:57:05.967674",
+      "updatedAt": "2026-10-20T06:58:50.216592"
+    },
+    "TC-CD-REQ-API-003": {
+      "id": 1987,
+      "testId": "TC-CD-REQ-API-003",
+      "title": "Файл обов'язковий і не може бути порожнім",
+      "description": "Автотест: com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest#rejectAbsentOrEmptyFile. Виконань: 2. Вимоги та повна параметризація: docs/REQ-CD-REQ.md. Suite: commercial-document-required-fields, relocations, regression; UI також ui. Власні дані CommercialDocumentFixture; документи прибираються після методу, надходження, облік, ресурси й локації — після класу.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "preconditions": "ERP dev, ADMIN із доступом до власної локації. Власні локації обліку та зовнішнього постачальника, два ресурси A/B, надходження 2/3 од. Для UI — Chrome та робочий простір локації обліку.",
+      "testData": "Дата надходжень/API-документа — учора; UI — дата DatePicker. Валідний PDF commercial-document.pdf; total=0; необов'язкові поля порожні. 1. Підготувати валідний request і зберегти три знімки.\n2. Надіслати multipart без files; окремим виконанням передати files із нульовою довжиною.\n3. Перевірити помилку та повторно зчитати документи, надходження й облік.",
+      "expectedResult": "HTTP 400, відповідь містить files; всі три знімки незмінні.",
+      "tags": "docflow,commercial-document,required-fields,automated",
+      "author": "ai-mcp",
+      "jiraIssueKey": null,
+      "dependencies": null,
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-CD-REQ-API-003"
+      ],
+      "uiAutomationIds": [],
+      "parameterized": false,
+      "executionStatus": "PASS",
+      "executionStatusSource": "AUTO",
+      "executionStatusAt": "2026-10-20T09:44:36.912",
+      "executionStatusComment": null,
+      "acceptanceCriterionId": 806,
+      "acId": "AC-04",
+      "featureDbId": 168,
+      "featureId": "REQ-CD-REQ",
+      "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати валідний request і зберегти три знімки.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Надіслати multipart без files; окремим виконанням передати files із нульовою довжиною.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Перевірити помилку та повторно зчитати документи, надходження й облік.",
+          "expectedText": "HTTP 400, відповідь містить files; всі три знімки незмінні."
+        }
+      ],
+      "createdAt": "2026-10-20T06:57:08.686103",
+      "updatedAt": "2026-10-20T06:58:50.256348"
+    },
+    "TC-CD-REQ-API-004": {
+      "id": 1988,
+      "testId": "TC-CD-REQ-API-004",
+      "title": "Створення з лише обов'язковими полями та нульовою сумою",
+      "description": "Автотест: com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest#createWithOnlyRequiredFields. Виконань: 1. Вимоги та повна параметризація: docs/REQ-CD-REQ.md. Suite: commercial-document-required-fields, relocations, regression; UI також ui. Власні дані CommercialDocumentFixture; документи прибираються після методу, надходження, облік, ресурси й локації — після класу.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "preconditions": "ERP dev, ADMIN із доступом до власної локації. Власні локації обліку та зовнішнього постачальника, два ресурси A/B, надходження 2/3 од. Для UI — Chrome та робочий простір локації обліку.",
+      "testData": "Дата надходжень/API-документа — учора; UI — дата DatePicker. Валідний PDF commercial-document.pdf; total=0; необов'язкові поля порожні. 1. Зберегти облік і вільне надходження B. Підготувати документ для A з total=0 та назвою за документом, без comment, nomenclatureCode й grade.\n2. Надіслати multipart із непорожнім PDF і прочитати збережений документ окремим GET списку документів.\n3. Перевірити номер, дату, NEW, один файл, один рядок total=0 і його назву, null необов'язкових полів та зв'язок з надходженням A.\n4. Перевірити, що додано лише один документ, B залишилося вільним, його облік незмінний і receivedAmount ресурсів збережені.",
+      "expectedResult": "HTTP 200, значення збережені; з двох надходжень документ покриває тільки A, сусід B незмінний.",
+      "tags": "docflow,commercial-document,required-fields,automated",
+      "author": "ai-mcp",
+      "jiraIssueKey": null,
+      "dependencies": null,
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-CD-REQ-API-004"
+      ],
+      "uiAutomationIds": [],
+      "parameterized": false,
+      "executionStatus": "PASS",
+      "executionStatusSource": "AUTO",
+      "executionStatusAt": "2026-10-20T09:44:33.345",
+      "executionStatusComment": null,
+      "acceptanceCriterionId": 807,
+      "acId": "AC-05",
+      "featureDbId": 168,
+      "featureId": "REQ-CD-REQ",
+      "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Зберегти облік і вільне надходження B. Підготувати документ для A з total=0 та назвою за документом, без comment, nomenclatureCode й grade.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Надіслати multipart із непорожнім PDF і прочитати збережений документ окремим GET списку документів.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Перевірити номер, дату, NEW, один файл, один рядок total=0 і його назву, null необов'язкових полів та зв'язок з надходженням A.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "Перевірити, що додано лише один документ, B залишилося вільним, його облік незмінний і receivedAmount ресурсів збережені.",
+          "expectedText": "HTTP 200, значення збережені; з двох надходжень документ покриває тільки A, сусід B незмінний."
+        }
+      ],
+      "createdAt": "2026-10-20T06:57:10.580773",
+      "updatedAt": "2026-10-20T06:58:50.296571"
+    },
+    "TC-CD-REQ-UI-001": {
+      "id": 1989,
+      "testId": "TC-CD-REQ-UI-001",
+      "title": "Видимі позначки обов'язкових полів",
+      "description": "Автотест: com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest#requiredMarkersAppearOnLabelsAndResourceColumns. Виконань: 1. Вимоги та повна параметризація: docs/REQ-CD-REQ.md. Suite: commercial-document-required-fields, relocations, regression; UI також ui. Власні дані CommercialDocumentFixture; документи прибираються після методу, надходження, облік, ресурси й локації — після класу.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ERP dev, ADMIN із доступом до власної локації. Власні локації обліку та зовнішнього постачальника, два ресурси A/B, надходження 2/3 од. Для UI — Chrome та робочий простір локації обліку.",
+      "testData": "Дата надходжень/API-документа — учора; UI — дата DatePicker. Валідний PDF commercial-document.pdf; total=0; необов'язкові поля порожні. 1. Під ADMIN вибрати власну локацію та відкрити Облік надходжень → Комерційні документи → Додати комерційний документ.\n2. Перевірити видимі * біля Номер, Дата документа й Додати файли; перевірити відсутність * у Коментар.\n3. Вибрати надходження A; перевірити видимі * у Сума за все, грн і Назва ресурсу за документом, відсутність * у Код номенклатури та Категорія (сорт).\n4. Перевірити недоступність Зберегти й додати скріншоти початкової форми та рядка ресурсу.",
+      "expectedResult": "усі п'ять обов'язкових полів мають видимі позначки, три необов'язкові — без них; неповна форма не зберігається.",
+      "tags": "docflow,commercial-document,required-fields,automated",
+      "author": "ai-mcp",
+      "jiraIssueKey": null,
+      "dependencies": null,
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-CD-REQ-UI-001"
+      ],
+      "parameterized": false,
+      "executionStatus": "PASS",
+      "executionStatusSource": "AUTO",
+      "executionStatusAt": "2026-10-20T09:50:07.012",
+      "executionStatusComment": null,
+      "acceptanceCriterionId": 803,
+      "acId": "AC-01",
+      "featureDbId": 168,
+      "featureId": "REQ-CD-REQ",
+      "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Під ADMIN вибрати власну локацію та відкрити Облік надходжень → Комерційні документи → Додати комерційний документ.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити видимі * біля Номер, Дата документа й Додати файли; перевірити відсутність * у Коментар.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Вибрати надходження A; перевірити видимі * у Сума за все, грн і Назва ресурсу за документом, відсутність * у Код номенклатури та Категорія (сорт).",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "Перевірити недоступність Зберегти й додати скріншоти початкової форми та рядка ресурсу.",
+          "expectedText": "усі п'ять обов'язкових полів мають видимі позначки, три необов'язкові — без них; неповна форма не зберігається."
+        }
+      ],
+      "createdAt": "2026-10-20T06:57:26.196101",
+      "updatedAt": "2026-10-20T06:58:50.351079"
+    },
+    "TC-CD-REQ-UI-002": {
+      "id": 1990,
+      "testId": "TC-CD-REQ-UI-002",
+      "title": "Блокування збереження та скидання скасованої форми",
+      "description": "Автотест: com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest#saveRequiresNumberFileAndReceiptAndCancelResetsForm. Виконань: 1. Вимоги та повна параметризація: docs/REQ-CD-REQ.md. Suite: commercial-document-required-fields, relocations, regression; UI також ui. Додаткові критерії: AC-02, AC-04. Власні дані CommercialDocumentFixture; документи прибираються після методу, надходження, облік, ресурси й локації — після класу.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ERP dev, ADMIN із доступом до власної локації. Власні локації обліку та зовнішнього постачальника, два ресурси A/B, надходження 2/3 од. Для UI — Chrome та робочий простір локації обліку.",
+      "testData": "Дата надходжень/API-документа — учора; UI — дата DatePicker. Валідний PDF commercial-document.pdf; total=0; необов'язкові поля порожні. 1. Заповнити валідну форму: номер, PDF, надходження A, total=0, назва ресурсу; необов'язкові поля лишити порожніми.\n2. Окремо очистити номер, ввести пробіли, видалити файл і зняти вибір надходження. Після кожної невалідної зміни перевірити disabled Зберегти, після відновлення — enabled.\n3. Натиснути Скасувати, відкрити нову форму й перевірити порожній номер, відсутність файлів та вибраних checkbox і disabled Зберегти.\n4. Перевірити лічильник POST створення документа, список документів і знімок вільних надходжень.",
+      "expectedResult": "збереження залежить від кожного обов'язкового значення; після скасування форма скинута, POST=0, документів немає, надходження незмінні.",
+      "tags": "docflow,commercial-document,required-fields,automated",
+      "author": "ai-mcp",
+      "jiraIssueKey": null,
+      "dependencies": null,
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-CD-REQ-UI-002"
+      ],
+      "parameterized": false,
+      "executionStatus": "PASS",
+      "executionStatusSource": "AUTO",
+      "executionStatusAt": "2026-10-20T09:50:15.075",
+      "executionStatusComment": null,
+      "acceptanceCriterionId": 808,
+      "acId": "AC-06",
+      "featureDbId": 168,
+      "featureId": "REQ-CD-REQ",
+      "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Заповнити валідну форму: номер, PDF, надходження A, total=0, назва ресурсу; необов'язкові поля лишити порожніми.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Окремо очистити номер, ввести пробіли, видалити файл і зняти вибір надходження. Після кожної невалідної зміни перевірити disabled Зберегти, після відновлення — enabled.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Натиснути Скасувати, відкрити нову форму й перевірити порожній номер, відсутність файлів та вибраних checkbox і disabled Зберегти.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "Перевірити лічильник POST створення документа, список документів і знімок вільних надходжень.",
+          "expectedText": "збереження залежить від кожного обов'язкового значення; після скасування форма скинута, POST=0, документів немає, надходження незмінні."
+        }
+      ],
+      "createdAt": "2026-10-20T06:57:27.813275",
+      "updatedAt": "2026-10-20T06:58:50.390193"
+    },
+    "TC-CD-REQ-UI-003": {
+      "id": 1991,
+      "testId": "TC-CD-REQ-UI-003",
+      "title": "Сума й непорожня назва для кожного вибраного ресурсу",
+      "description": "Автотест: com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest#eachResourceRequiresTotalAndNonblankDocumentName. Виконань: 1. Вимоги та повна параметризація: docs/REQ-CD-REQ.md. Suite: commercial-document-required-fields, relocations, regression; UI також ui. Власні дані CommercialDocumentFixture; документи прибираються після методу, надходження, облік, ресурси й локації — після класу.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ERP dev, ADMIN із доступом до власної локації. Власні локації обліку та зовнішнього постачальника, два ресурси A/B, надходження 2/3 од. Для UI — Chrome та робочий простір локації обліку.",
+      "testData": "Дата надходжень/API-документа — учора; UI — дата DatePicker. Валідний PDF commercial-document.pdf; total=0; необов'язкові поля порожні. 1. Підготувати валідну форму для A й додати B. Перевірити disabled Зберегти, поки поля B порожні.\n2. Ввести B.total=0 та назву з пробілів: Зберегти лишається disabled. Ввести непорожню назву: enabled.\n3. Для кожного ресурсу окремо очистити й відновити суму та назву, перевіряючи disabled/enabled після кожної зміни.\n4. Додати скріншот валідних рядків; перевірити відсутність документів і два вільні надходження.",
+      "expectedResult": "обидва ресурси потребують своїх суми та назви; нуль допустимий; документ не створено, обидва надходження вільні.",
+      "tags": "docflow,commercial-document,required-fields,automated",
+      "author": "ai-mcp",
+      "jiraIssueKey": null,
+      "dependencies": null,
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-CD-REQ-UI-003"
+      ],
+      "parameterized": false,
+      "executionStatus": "PASS",
+      "executionStatusSource": "AUTO",
+      "executionStatusAt": "2026-10-20T09:50:03.043",
+      "executionStatusComment": null,
+      "acceptanceCriterionId": 805,
+      "acId": "AC-03",
+      "featureDbId": 168,
+      "featureId": "REQ-CD-REQ",
+      "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати валідну форму для A й додати B. Перевірити disabled Зберегти, поки поля B порожні.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Ввести B.total=0 та назву з пробілів: Зберегти лишається disabled. Ввести непорожню назву: enabled.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Для кожного ресурсу окремо очистити й відновити суму та назву, перевіряючи disabled/enabled після кожної зміни.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "Додати скріншот валідних рядків; перевірити відсутність документів і два вільні надходження.",
+          "expectedText": "обидва ресурси потребують своїх суми та назви; нуль допустимий; документ не створено, обидва надходження вільні."
+        }
+      ],
+      "createdAt": "2026-10-20T06:57:30.196707",
+      "updatedAt": "2026-10-20T06:58:50.426838"
+    },
+    "TC-CD-REQ-UI-004": {
+      "id": 1992,
+      "testId": "TC-CD-REQ-UI-004",
+      "title": "Збереження та повторне відкриття обов'язкових значень",
+      "description": "Автотест: com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest#saveAndReopenRequiredFieldsOnly. Виконань: 1. Вимоги та повна параметризація: docs/REQ-CD-REQ.md. Suite: commercial-document-required-fields, relocations, regression; UI також ui. Власні дані CommercialDocumentFixture; документи прибираються після методу, надходження, облік, ресурси й локації — після класу.",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "preconditions": "ERP dev, ADMIN із доступом до власної локації. Власні локації обліку та зовнішнього постачальника, два ресурси A/B, надходження 2/3 од. Для UI — Chrome та робочий простір локації обліку.",
+      "testData": "Дата надходжень/API-документа — учора; UI — дата DatePicker. Валідний PDF commercial-document.pdf; total=0; необов'язкові поля порожні. 1. Зберегти облік. Заповнити номер, PDF, вибрати A, ввести total=0 і Назва з UI; запам'ятати дату DatePicker, необов'язкові поля лишити порожніми.\n2. Натиснути Зберегти, перехопити фактичний POST та прочитати документ через API.\n3. Перевірити HTTP 200, номер, дату, NEW, один файл, total=0, назву, null необов'язкових полів; B лишається вільним і його облік незмінний.\n4. Відкрити документ кнопкою Редагувати. Перевірити номер, дату, total=0, Назва з UI, порожній коментар та enabled Зберегти. Додати скріншоти до й після збереження.",
+      "expectedResult": "документ збережений; повторна форма відтворює введені значення та дозволяє збереження з наявним файлом; сусід B незмінний.",
+      "tags": "docflow,commercial-document,required-fields,automated",
+      "author": "ai-mcp",
+      "jiraIssueKey": null,
+      "dependencies": null,
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-CD-REQ-UI-004"
+      ],
+      "parameterized": false,
+      "executionStatus": "PASS",
+      "executionStatusSource": "AUTO",
+      "executionStatusAt": "2026-10-20T09:50:09.288",
+      "executionStatusComment": null,
+      "acceptanceCriterionId": 807,
+      "acId": "AC-05",
+      "featureDbId": 168,
+      "featureId": "REQ-CD-REQ",
+      "featureTitle": "Новий комерційний документ — позначити обов'язкові поля",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Зберегти облік. Заповнити номер, PDF, вибрати A, ввести total=0 і Назва з UI; запам'ятати дату DatePicker, необов'язкові поля лишити порожніми.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Натиснути Зберегти, перехопити фактичний POST та прочитати документ через API.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Перевірити HTTP 200, номер, дату, NEW, один файл, total=0, назву, null необов'язкових полів; B лишається вільним і його облік незмінний.",
+          "expectedText": null
+        },
+        {
+          "stepOrder": 4,
+          "actionText": "Відкрити документ кнопкою Редагувати. Перевірити номер, дату, total=0, Назва з UI, порожній коментар та enabled Зберегти. Додати скріншоти до й після збереження.",
+          "expectedText": "документ збережений; повторна форма відтворює введені значення та дозволяє збереження з наявним файлом; сусід B незмінний."
+        }
+      ],
+      "createdAt": "2026-10-20T06:57:32.415471",
+      "updatedAt": "2026-10-20T06:58:50.468505"
+    }
+  },
+  "importResponse": {
+    "runId": 140,
+    "matched": 8,
+    "created": 8,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 140,
+    "name": "AUTO Обов'язкові поля комерційного документа — dev (API + UI retest)",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 36,
+    "testPlanName": "AUTO TP REQ-CD-REQ",
+    "startedAt": "2026-10-20T06:58:50.070952",
+    "completedAt": "2026-10-20T06:58:50.461856",
+    "createdAt": "2026-10-20T06:58:50.071143",
+    "items": [
+      {
+        "id": 18933,
+        "testId": "TC-CD-REQ-API-001",
+        "title": "Номер дата та надходження обов'язкові",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-API-001",
+        "executedAt": "2026-10-20T09:44:43.529"
+      },
+      {
+        "id": 18934,
+        "testId": "TC-CD-REQ-API-002",
+        "title": "Сума та назва обов'язкові для кожного ресурсу",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-API-002",
+        "executedAt": "2026-10-20T09:45:06.508"
+      },
+      {
+        "id": 18935,
+        "testId": "TC-CD-REQ-API-003",
+        "title": "Файл обов'язковий і не може бути порожнім",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-API-003",
+        "executedAt": "2026-10-20T09:44:36.912"
+      },
+      {
+        "id": 18936,
+        "testId": "TC-CD-REQ-API-004",
+        "title": "Створення з лише обов'язковими полями та нульовою сумою",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-API-004",
+        "executedAt": "2026-10-20T09:44:33.345"
+      },
+      {
+        "id": 18937,
+        "testId": "TC-CD-REQ-UI-001",
+        "title": "Видимі позначки обов'язкових полів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-UI-001",
+        "executedAt": "2026-10-20T09:50:07.012"
+      },
+      {
+        "id": 18938,
+        "testId": "TC-CD-REQ-UI-002",
+        "title": "Блокування збереження та скидання скасованої форми",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-UI-002",
+        "executedAt": "2026-10-20T09:50:15.075"
+      },
+      {
+        "id": 18939,
+        "testId": "TC-CD-REQ-UI-003",
+        "title": "Сума й непорожня назва для кожного вибраного ресурсу",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-UI-003",
+        "executedAt": "2026-10-20T09:50:03.043"
+      },
+      {
+        "id": 18940,
+        "testId": "TC-CD-REQ-UI-004",
+        "title": "Збереження та повторне відкриття обов'язкових значень",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-UI-004",
+        "executedAt": "2026-10-20T09:50:09.288"
+      }
+    ]
+  }
+}

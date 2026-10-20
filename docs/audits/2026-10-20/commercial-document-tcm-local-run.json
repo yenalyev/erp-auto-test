@@ -1,0 +1,119 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "featureDbId": 165,
+  "importResponse": {
+    "runId": 207,
+    "matched": 8,
+    "created": 8,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 207,
+    "name": "AUTO Обов'язкові поля комерційного документа — dev (API + UI retest)",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 37,
+    "testPlanName": "AUTO TP REQ-CD-REQ",
+    "startedAt": "2026-10-20T07:02:40.570518",
+    "completedAt": "2026-10-20T07:02:41.077563",
+    "createdAt": "2026-10-20T07:02:40.570827",
+    "items": [
+      {
+        "id": 20853,
+        "testId": "TC-CD-REQ-API-001",
+        "title": "Номер дата та надходження обов'язкові",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-API-001",
+        "executedAt": "2026-10-20T09:44:43.529"
+      },
+      {
+        "id": 20854,
+        "testId": "TC-CD-REQ-API-002",
+        "title": "Сума та назва обов'язкові для кожного ресурсу",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-API-002",
+        "executedAt": "2026-10-20T09:45:06.508"
+      },
+      {
+        "id": 20855,
+        "testId": "TC-CD-REQ-API-003",
+        "title": "Файл обов'язковий і не може бути порожнім",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-API-003",
+        "executedAt": "2026-10-20T09:44:36.912"
+      },
+      {
+        "id": 20856,
+        "testId": "TC-CD-REQ-API-004",
+        "title": "Створення з лише обов'язковими полями та нульовою сумою",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-API-004",
+        "executedAt": "2026-10-20T09:44:33.345"
+      },
+      {
+        "id": 20857,
+        "testId": "TC-CD-REQ-UI-001",
+        "title": "Видимі позначки обов'язкових полів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-UI-001",
+        "executedAt": "2026-10-20T09:50:07.012"
+      },
+      {
+        "id": 20858,
+        "testId": "TC-CD-REQ-UI-002",
+        "title": "Блокування збереження та скидання скасованої форми",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-UI-002",
+        "executedAt": "2026-10-20T09:50:15.075"
+      },
+      {
+        "id": 20859,
+        "testId": "TC-CD-REQ-UI-003",
+        "title": "Сума й непорожня назва для кожного вибраного ресурсу",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-UI-003",
+        "executedAt": "2026-10-20T09:50:03.043"
+      },
+      {
+        "id": 20860,
+        "testId": "TC-CD-REQ-UI-004",
+        "title": "Збереження та повторне відкриття обов'язкових значень",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-CD-REQ-UI-004",
+        "executedAt": "2026-10-20T09:50:09.288"
+      }
+    ]
+  },
+  "executionStatusesVerified": 8,
+  "result": "SUCCESS"
+}

@@ -1,0 +1,453 @@
+{
+  "featureId": "REQ-CD-REQ",
+  "environment": "dev",
+  "timezone": "Europe/Kiev",
+  "utcOffset": "+03:00",
+  "selection": "API from full attempt; UI from successful retest. Each parameter set retained once.",
+  "sources": {
+    "api": "target\\commercial-document-final\\allure-results",
+    "ui": "target\\commercial-document-final\\ui-verified-allure-results"
+  },
+  "counts": {
+    "PASS": 25
+  },
+  "executions": [
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "documentDate"
+        },
+        {
+          "name": "variant",
+          "value": "absent"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 2472,
+      "source": "target\\commercial-document-final\\allure-results\\0b70f022-23f9-4d74-85d1-4e56b17ae927-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "documentDate"
+        },
+        {
+          "name": "variant",
+          "value": "null"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 2509,
+      "source": "target\\commercial-document-final\\allure-results\\46e076c7-55c4-49e5-a9e5-69506bc1366f-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "receiptIds"
+        },
+        {
+          "name": "variant",
+          "value": "absent"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 2193,
+      "source": "target\\commercial-document-final\\allure-results\\6a8104ee-b7df-4827-9ec1-d545268fc2ec-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "number"
+        },
+        {
+          "name": "variant",
+          "value": "absent"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 2241,
+      "source": "target\\commercial-document-final\\allure-results\\6a911754-b551-466d-aa94-b6be16f90db9-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "receiptIds"
+        },
+        {
+          "name": "variant",
+          "value": "empty"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 2123,
+      "source": "target\\commercial-document-final\\allure-results\\9d894d82-7b2a-44ad-911a-6c39529ffa59-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "receiptIds"
+        },
+        {
+          "name": "variant",
+          "value": "null"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 2060,
+      "source": "target\\commercial-document-final\\allure-results\\a0e283c3-57d6-4d8b-94f1-cc0a6cffa9f6-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "number"
+        },
+        {
+          "name": "variant",
+          "value": "empty"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 2079,
+      "source": "target\\commercial-document-final\\allure-results\\d85af1c3-e60e-4506-b348-b94b28e19643-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "number"
+        },
+        {
+          "name": "variant",
+          "value": "blank"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 2266,
+      "source": "target\\commercial-document-final\\allure-results\\f5815475-8e54-4efc-b9dc-169a1373b91c-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-001",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "number"
+        },
+        {
+          "name": "variant",
+          "value": "null"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingHeader",
+      "durationMs": 4925,
+      "source": "target\\commercial-document-final\\allure-results\\f6434874-dcdc-4e7f-b66b-d7bc51bcd060-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "lines"
+        },
+        {
+          "name": "variant",
+          "value": "absent"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2170,
+      "source": "target\\commercial-document-final\\allure-results\\0850af46-8f2f-4e39-b073-01b91aa8d7b6-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "total"
+        },
+        {
+          "name": "variant",
+          "value": "absent"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2216,
+      "source": "target\\commercial-document-final\\allure-results\\0a127d55-5d2e-455b-9869-682f632c42df-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "documentResourceName"
+        },
+        {
+          "name": "variant",
+          "value": "absent"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2175,
+      "source": "target\\commercial-document-final\\allure-results\\0d5326f5-6e40-4107-8b1e-18318f4bf400-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "total"
+        },
+        {
+          "name": "variant",
+          "value": "null"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2276,
+      "source": "target\\commercial-document-final\\allure-results\\1ffc25f7-4175-4d5a-b87c-9c5430765ba5-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "documentResourceName"
+        },
+        {
+          "name": "variant",
+          "value": "blank"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2488,
+      "source": "target\\commercial-document-final\\allure-results\\20bec844-3472-4c99-8669-db193a4c75e7-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "lines"
+        },
+        {
+          "name": "variant",
+          "value": "null"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2102,
+      "source": "target\\commercial-document-final\\allure-results\\8bee7b0e-e6c5-432f-80ef-fbc6d62130ba-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "lines"
+        },
+        {
+          "name": "variant",
+          "value": "empty"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2223,
+      "source": "target\\commercial-document-final\\allure-results\\968381f8-402f-47a1-bdab-de2de7286eea-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "documentResourceName"
+        },
+        {
+          "name": "variant",
+          "value": "null"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2627,
+      "source": "target\\commercial-document-final\\allure-results\\d47962f3-c73d-4011-845d-54aeebde8788-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-002",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "field",
+          "value": "documentResourceName"
+        },
+        {
+          "name": "variant",
+          "value": "empty"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectMissingLineFields",
+      "durationMs": 2492,
+      "source": "target\\commercial-document-final\\allure-results\\f97f1321-2585-45c2-8217-6e9fdd7114fb-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-003",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "emptyPart",
+          "value": "true"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectAbsentOrEmptyFile",
+      "durationMs": 2064,
+      "source": "target\\commercial-document-final\\allure-results\\0df00b1a-5431-4ae0-93d7-1f5171e0f5e8-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-003",
+      "status": "PASS",
+      "parameters": [
+        {
+          "name": "emptyPart",
+          "value": "false"
+        }
+      ],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.rejectAbsentOrEmptyFile",
+      "durationMs": 4532,
+      "source": "target\\commercial-document-final\\allure-results\\4a0549e3-46ac-495c-a0f1-9e79374ebf6a-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-API-004",
+      "status": "PASS",
+      "parameters": [],
+      "method": "com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest.createWithOnlyRequiredFields",
+      "durationMs": 3195,
+      "source": "target\\commercial-document-final\\allure-results\\fc5ad150-6682-40ba-b716-f8bf129f11a3-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-UI-001",
+      "status": "PASS",
+      "parameters": [],
+      "method": "com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest.requiredMarkersAppearOnLabelsAndResourceColumns",
+      "durationMs": 617,
+      "source": "target\\commercial-document-final\\ui-verified-allure-results\\7c472779-e970-4db4-abb4-70f9e4a52898-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-UI-002",
+      "status": "PASS",
+      "parameters": [],
+      "method": "com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest.saveRequiresNumberFileAndReceiptAndCancelResetsForm",
+      "durationMs": 2405,
+      "source": "target\\commercial-document-final\\ui-verified-allure-results\\78eb98fa-e4cb-4114-8fa6-be2bf3adc54f-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-UI-003",
+      "status": "PASS",
+      "parameters": [],
+      "method": "com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest.eachResourceRequiresTotalAndNonblankDocumentName",
+      "durationMs": 1801,
+      "source": "target\\commercial-document-final\\ui-verified-allure-results\\0eb52093-853f-45dc-8ad7-02c00d4b49f2-result.json"
+    },
+    {
+      "testId": "TC-CD-REQ-UI-004",
+      "status": "PASS",
+      "parameters": [],
+      "method": "com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest.saveAndReopenRequiredFieldsOnly",
+      "durationMs": 3281,
+      "source": "target\\commercial-document-final\\ui-verified-allure-results\\50beefd9-79d4-480b-b831-4812b0b9dd13-result.json"
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "remoteRunId": "commercial-document-required-fields-dev-20261020",
+    "environment": "dev",
+    "suite": "commercial-document-required-fields",
+    "runName": "Обов'язкові поля комерційного документа — dev (API + UI retest)",
+    "results": [
+      {
+        "testCaseId": "TC-CD-REQ-API-001",
+        "status": "PASS",
+        "durationMs": 22868,
+        "executedAt": "2026-10-20T09:44:43.529000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-CD-REQ-API-002",
+        "status": "PASS",
+        "durationMs": 20769,
+        "executedAt": "2026-10-20T09:45:06.508000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-CD-REQ-API-003",
+        "status": "PASS",
+        "durationMs": 6596,
+        "executedAt": "2026-10-20T09:44:36.912000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-CD-REQ-API-004",
+        "status": "PASS",
+        "durationMs": 3195,
+        "executedAt": "2026-10-20T09:44:33.345000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-CD-REQ-UI-001",
+        "status": "PASS",
+        "durationMs": 617,
+        "executedAt": "2026-10-20T09:50:07.012000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-CD-REQ-UI-002",
+        "status": "PASS",
+        "durationMs": 2405,
+        "executedAt": "2026-10-20T09:50:15.075000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-CD-REQ-UI-003",
+        "status": "PASS",
+        "durationMs": 1801,
+        "executedAt": "2026-10-20T09:50:03.043000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-CD-REQ-UI-004",
+        "status": "PASS",
+        "durationMs": 3281,
+        "executedAt": "2026-10-20T09:50:09.288000",
+        "errorMessage": null
+      }
+    ]
+  }
+}

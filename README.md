@@ -1,4 +1,12 @@
 ERP API Test Automation Framework
+
+Документообіг переміщень → **Новий комерційний документ — обов'язкові поля**:
+[вимоги, 6 АС і 8 API/UI кейсів](docs/REQ-CD-REQ.md), TCM `REQ-DOCFLOW` → `REQ-CD-REQ`.
+`mvn test -Denv=dev -Dsuite=commercial-document-required-fields -Duse.database=false -Dssh.enabled=false`.
+21 API-перевірка та 4 UI-сценарії: видимі `*`, номер/дата/надходження/файл,
+сума й назва кожного ресурсу, пробіли, нульова сума, необов'язкові поля,
+скасування та повторне відкриття збереженого документа. Ізольовані дані й cleanup;
+класи також включені до `relocations`, `ui` (UI-клас) та `regression`.
  
 Data-Driven фреймворк для автоматизації тестування REST API, з фокусом на перевірці безпеки (RBAC) та контрактному тестуванні (Contract Testing).
 

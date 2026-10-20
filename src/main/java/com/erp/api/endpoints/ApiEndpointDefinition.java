@@ -26,6 +26,30 @@ import java.util.Optional;
 @Getter
 public enum ApiEndpointDefinition {
 
+    // Movement document flow: ledger entries, receipts and commercial documents.
+    VIRTUAL_STORAGE_LIST("/api/v1/virtual-storage/{storageId}", Method.GET, null,
+            "List ledger entries", null, new TypeReference<List<Map<String, Object>>>() {}, null),
+    VIRTUAL_STORAGE_CREATE("/api/v1/virtual-storage/{storageId}", Method.POST, null,
+            "Track ledger resource", new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Map<String, Object>>() {}, null),
+    VIRTUAL_STORAGE_ARCHIVE("/api/v1/virtual-storage/{storageId}/{id}/archive", Method.POST, null,
+            "Archive ledger entry", null, new TypeReference<Map<String, Object>>() {}, null),
+    VIRTUAL_RECEIPT_CREATE("/api/v1/virtual-storage/{storageId}/{id}/receipts", Method.POST, null,
+            "Add ledger receipt", new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Map<String, Object>>() {}, null),
+    VIRTUAL_RECEIPT_DELETE("/api/v1/virtual-storage/{storageId}/{id}/receipts/{receiptId}", Method.DELETE,
+            null, "Delete ledger receipt", null, null, null),
+    COMMERCIAL_DOCUMENT_LIST("/api/v1/virtual-storage/{storageId}/commercial-documents", Method.GET,
+            null, "List commercial documents", null, new TypeReference<List<Map<String, Object>>>() {}, null),
+    COMMERCIAL_DOCUMENT_CREATE("/api/v1/virtual-storage/{storageId}/commercial-documents", Method.POST,
+            null, "Create commercial document (multipart request + files)",
+            new TypeReference<Map<String, Object>>() {}, new TypeReference<Map<String, Object>>() {}, null),
+    COMMERCIAL_DOCUMENT_DELETE("/api/v1/virtual-storage/{storageId}/commercial-documents/{id}", Method.DELETE,
+            null, "Delete commercial document", null, null, null),
+    COMMERCIAL_DOCUMENT_UNCOVERED_RECEIPTS(
+            "/api/v1/virtual-storage/{storageId}/commercial-documents/uncovered-receipts", Method.GET,
+            null, "List uncovered receipts", null, new TypeReference<List<Map<String, Object>>>() {}, null),
+
     // ========================================
     // ORDER ENDPOINTS
     // ========================================
