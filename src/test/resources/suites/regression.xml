@@ -88,6 +88,7 @@
             <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest"/>
             <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
             <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
+            <class name="com.erp.tests.functional.storage.ManualBatchCrewReceiveApiTest"/>
             <class name="com.erp.tests.functional.storage.FaitaCrewSyncContractTest"/>
             <class name="com.erp.tests.functional.storage.FaitaCrewSyncE2eTest"/>
             <class name="com.erp.tests.functional.storage.FaitaInitiatorWriteOffTest"/>
@@ -113,6 +114,8 @@
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerAlternativeGroupsApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerFilterApiTest"/>
             <class name="com.erp.tests.functional.resource_viewer.ResourceViewerExportApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerNamedListsApiTest"/>
+            <class name="com.erp.tests.functional.resource_viewer.ResourceViewerPm414ApiTest"/>
         </classes>
     </test>
 
@@ -205,8 +208,10 @@
             <class name="com.erp.tests.functional.relocation.RelocationUsedBatchEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTotalsApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentUnitHistoryApiTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationPartialDeliveryIncidentTest"/>
             <class name="com.erp.tests.functional.relocation.ResourceBundleTest"/>
@@ -319,6 +324,7 @@
             <class name="com.erp.tests.ui.ResourcePhotoUiTest"/>
             <class name="com.erp.tests.ui.ResourceModifiedSortUiTest"/>
             <class name="com.erp.tests.ui.ResourceViewerUiTest"/>
+            <class name="com.erp.tests.ui.ResourceViewerNamedListsUiTest"/>
         </classes>
     </test>
 
@@ -326,6 +332,7 @@
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationReceivedDateUiTest"/>
+            <class name="com.erp.tests.ui.RelocationFutureDateUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendFormItemsUiTest"/>
             <class name="com.erp.tests.ui.RelocationLocationSelectorsUiTest"/>
             <class name="com.erp.tests.ui.RelocationRegionAliasFeatureUiTest"/>
@@ -336,6 +343,7 @@
             <class name="com.erp.tests.ui.RelocationSupplierDefectEditUiTest"/>
             <class name="com.erp.tests.ui.BattalionRelocationEditUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.RelocationSupplierFiltersUiTest"/>
             <class name="com.erp.tests.ui.LogisticsJournalUiTest">
                 <methods>
                     <include name="logisticsTotalsFollowTabsAndFilters"/>

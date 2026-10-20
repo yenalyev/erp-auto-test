@@ -1,6 +1,7 @@
 package com.erp.models.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,9 @@ public class ResourceUsageRequest {
     private BigDecimal amount;
     private UUID batchUuid;
     private Long version;
+    /** Inventory row explicitly removed by the user; retain its snapshot version for conflict detection. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean removed;
     @Builder.Default
     private List<RelocationItemBatchRequest> batches = new ArrayList<>();
 

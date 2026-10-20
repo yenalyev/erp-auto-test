@@ -2,6 +2,10 @@ ERP API Test Automation Framework
  
 Data-Driven фреймворк для автоматизації тестування REST API, з фокусом на перевірці безпеки (RBAC) та контрактному тестуванні (Contract Testing).
 
+Фільтр «Постачальник» на **Видати/Отримати**: [вимоги](docs/REQ-REL-SUPPLIER.md),
+[12 API/UI кейсів, 39 виконань](docs/RELOCATION_SUPPLIER_FILTERS_TEST_CASES.md).
+Запуск на dev: `mvn test -Denv=dev -Dsuite=relocation-supplier-filters`.
+
 Сортування ресурсів за «Змінено»: [вимоги, тест-кейси та запуск](docs/REQ-RES-SORT.md).
 Окремий набір API/UI — `-Dsuite=resource-modified-sort`.
 

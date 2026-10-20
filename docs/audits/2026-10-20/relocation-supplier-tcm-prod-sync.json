@@ -1,0 +1,26 @@
+{
+  "endpoint": "http://tcm.lab",
+  "projectId": 1,
+  "featureId": "REQ-REL-SUPPLIER",
+  "featureDbId": 166,
+  "documentationMatchesSource": true,
+  "criteriaMatchSource": true,
+  "allCaseContentMatchesSource": true,
+  "criteriaCount": 8,
+  "caseCount": 12,
+  "changedCases": [],
+  "verifiedCases": [
+    "TC-REL-SUP-API-001",
+    "TC-REL-SUP-API-002",
+    "TC-REL-SUP-API-003",
+    "TC-REL-SUP-API-004",
+    "TC-REL-SUP-API-005",
+    "TC-REL-SUP-API-006",
+    "TC-REL-SUP-API-007",
+    "TC-REL-SUP-UI-001",
+    "TC-REL-SUP-UI-002",
+    "TC-REL-SUP-UI-003",
+    "TC-REL-SUP-UI-004",
+    "TC-REL-SUP-UI-005"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["content", "page"],
+  "properties": {
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "createdAt", "createdBy", "categories"],
+        "properties": {
+          "id": {"type": "integer", "minimum": 1},
+          "name": {"type": "string", "minLength": 1},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "createdBy": {"type": ["string", "null"]},
+          "categories": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "required": ["id", "name"],
+              "properties": {"id": {"type": "integer"}, "name": {"type": "string"}}
+            }
+          }
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "required": ["size", "number", "totalPages", "totalElements"],
+      "properties": {
+        "size": {"type": "integer", "minimum": 1},
+        "number": {"type": "integer", "minimum": 0},
+        "totalPages": {"type": "integer", "minimum": 0},
+        "totalElements": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

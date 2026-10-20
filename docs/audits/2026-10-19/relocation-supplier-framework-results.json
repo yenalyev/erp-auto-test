@@ -1,0 +1,8 @@
+{
+  "source": "docs/audits/2026-10-19/relocation-supplier-framework-testng.xml",
+  "command": "mvn surefire:test -Dsuite=framework -Dtcm.enabled=false -Dgoogle.sheets.enabled=false -Dsurefire.reportsDirectory=target/supplier-framework-final/surefire-reports -Dallure.results.directory=target/supplier-framework-final/allure-results",
+  "counts": {"PASS": 100, "FAIL": 0, "SKIP": 0},
+  "finishedAt": "2026-10-19T17:29:54+03:00",
+  "timezone": "Europe/Kiev",
+  "note": "Повтор із дозволеним loopback; перший sandbox-прогін не міг запускати локальні HTTP-сервери."
+}

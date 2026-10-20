@@ -2724,6 +2724,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    EQUIPMENT_MODELS_GET_PAGE(
+            "/api/v1/equipment/models",
+            Method.GET,
+            "schemas/equipment/equipment-model-page-schema.json",
+            "Get equipment model dictionary",
+            null,
+            new TypeReference<EquipmentModelPageResponse>() {},
+            null
+    ),
+
     EQUIPMENT_GET_BY_ID(
             "/api/v1/equipment/{id}",
             Method.GET,
