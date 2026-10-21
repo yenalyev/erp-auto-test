@@ -229,6 +229,7 @@
 
     <test name="Inventory API">
         <classes>
+            <class name="com.erp.tests.functional.inventory.InventoryNameFilterApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConcurrentIssueApiTest"/>
@@ -378,6 +379,7 @@
 
     <test name="UI Inventory">
         <classes>
+            <class name="com.erp.tests.ui.InventoryNameFilterUiTest"/>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
             <class name="com.erp.tests.ui.InventoryConcurrentIssueUiTest"/>
             <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>

@@ -1,5 +1,10 @@
 ERP API Test Automation Framework
 
+**Інвентаризація → Закриті — фільтр по назві ресурсу**:
+[вимоги, 3 АС та 9 API/UI-кейсів](docs/REQ-INV-NAME.md), TCM `REQ-WMS-003` → `REQ-INV-NAME`.
+Запуск dev: `mvn test -Denv=dev -Dsuite=inventory-name-filter -Duse.database=false -Dssh.enabled=false`.
+Перевіряються точні ресурси всередині розбіжностей, пошук/скидання та актуальний Excel.
+
 Документообіг переміщень → **Новий комерційний документ — обов'язкові поля**:
 [вимоги, 6 АС і 8 API/UI кейсів](docs/REQ-CD-REQ.md), TCM `REQ-DOCFLOW` → `REQ-CD-REQ`.
 `mvn test -Denv=dev -Dsuite=commercial-document-required-fields -Duse.database=false -Dssh.enabled=false`.

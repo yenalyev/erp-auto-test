@@ -1,0 +1,129 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "featureDbId": 167,
+  "importResponse": {
+    "runId": 210,
+    "matched": 9,
+    "created": 9,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 210,
+    "name": "AUTO Інвентаризація — фільтр по назві ресурсу / dev",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 38,
+    "testPlanName": "AUTO TP REQ-INV-NAME",
+    "startedAt": "2026-10-21T06:45:13.574756",
+    "completedAt": "2026-10-21T06:45:13.826568",
+    "createdAt": "2026-10-21T06:45:13.574904",
+    "items": [
+      {
+        "id": 20887,
+        "testId": "TC-INV-NAME-API-001",
+        "title": "Повна й часткова назва, Unicode та регістр",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-API-001",
+        "executedAt": "2026-10-21T09:43:19.55"
+      },
+      {
+        "id": 20888,
+        "testId": "TC-INV-NAME-API-002",
+        "title": "Немає збігів та очищення",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-API-002",
+        "executedAt": "2026-10-21T09:43:21.991"
+      },
+      {
+        "id": 20889,
+        "testId": "TC-INV-NAME-API-003",
+        "title": "Пагінація й перетин фільтрів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-API-003",
+        "executedAt": "2026-10-21T09:43:23.893"
+      },
+      {
+        "id": 20890,
+        "testId": "TC-INV-NAME-API-004",
+        "title": "Excel за поточною назвою",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-API-004",
+        "executedAt": "2026-10-21T09:43:16.488"
+      },
+      {
+        "id": 20891,
+        "testId": "TC-INV-NAME-API-005",
+        "title": "Порожня книга, очищення й AND",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-API-005",
+        "executedAt": "2026-10-21T09:43:11.867"
+      },
+      {
+        "id": 20892,
+        "testId": "TC-INV-NAME-UI-001",
+        "title": "Видиме поле та точні розбіжності",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-UI-001",
+        "executedAt": "2026-10-21T09:44:18.654"
+      },
+      {
+        "id": 20893,
+        "testId": "TC-INV-NAME-UI-002",
+        "title": "Зміна, відсутність збігів та скидання",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-UI-002",
+        "executedAt": "2026-10-21T09:43:57.779"
+      },
+      {
+        "id": 20894,
+        "testId": "TC-INV-NAME-UI-003",
+        "title": "Кнопка Excel після зміни назви",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-UI-003",
+        "executedAt": "2026-10-21T09:44:12.087"
+      },
+      {
+        "id": 20895,
+        "testId": "TC-INV-NAME-UI-004",
+        "title": "Excel без збігів та після очищення",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-INV-NAME-UI-004",
+        "executedAt": "2026-10-21T09:44:05.831"
+      }
+    ]
+  },
+  "result": "SUCCESS"
+}

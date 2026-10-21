@@ -1,0 +1,137 @@
+{
+  "environment": "dev",
+  "timezone": "Europe/Kiev",
+  "utcOffset": "+03:00",
+  "configurationFailures": [],
+  "counts": {
+    "PASS": 9
+  },
+  "executions": [
+    {
+      "testId": "TC-INV-NAME-API-001",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\105825e0-c401-4520-a691-dc74840434b6-result.json",
+      "method": "com.erp.tests.functional.inventory.InventoryNameFilterApiTest.fullPartialAndCaseInsensitiveNamesFilterNestedDifferences"
+    },
+    {
+      "testId": "TC-INV-NAME-API-002",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\97e594e2-2ca5-46c1-9e46-15518b18ba36-result.json",
+      "method": "com.erp.tests.functional.inventory.InventoryNameFilterApiTest.noMatchAndResetRestoreAllClosedAndRejectedProcesses"
+    },
+    {
+      "testId": "TC-INV-NAME-API-003",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\a5152f56-1cef-4571-94e1-6523bbfa9cef-result.json",
+      "method": "com.erp.tests.functional.inventory.InventoryNameFilterApiTest.paginationCountsProcessesAndFiltersIntersect"
+    },
+    {
+      "testId": "TC-INV-NAME-API-004",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\5edf840d-9b97-4dbc-9056-8d390bd4e3f4-result.json",
+      "method": "com.erp.tests.functional.inventory.InventoryNameFilterApiTest.excelContainsOnlyCurrentMatchingResources"
+    },
+    {
+      "testId": "TC-INV-NAME-API-005",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\7231c7a6-334b-463f-81b4-d6dd90bbcac7-result.json",
+      "method": "com.erp.tests.functional.inventory.InventoryNameFilterApiTest.emptyExcelResetAndCombinedFiltersUseFreshSelection"
+    },
+    {
+      "testId": "TC-INV-NAME-UI-001",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\171792a3-ef5c-443e-b2f0-f3d842f539f8-result.json",
+      "method": "com.erp.tests.ui.InventoryNameFilterUiTest.fullAndPartialUnicodeNameShowOnlyMatchingDifferences"
+    },
+    {
+      "testId": "TC-INV-NAME-UI-002",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\f9014317-0597-45f2-890e-b661fbc10671-result.json",
+      "method": "com.erp.tests.ui.InventoryNameFilterUiTest.changedEmptyAndClearedNameRestoreTheCompleteTable"
+    },
+    {
+      "testId": "TC-INV-NAME-UI-003",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\82d8315f-e842-46d2-b679-c0bd1bcb4448-result.json",
+      "method": "com.erp.tests.ui.InventoryNameFilterUiTest.excelButtonUsesTheCurrentNameAfterChangingTheFilter"
+    },
+    {
+      "testId": "TC-INV-NAME-UI-004",
+      "status": "passed",
+      "source": "target\\inventory-name-filter-final-20261021\\allure-results\\b90fc616-c922-489c-b732-a548ecfded5b-result.json",
+      "method": "com.erp.tests.ui.InventoryNameFilterUiTest.emptyExcelAndResetMatchTheVisibleSelection"
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "remoteRunId": "inventory-name-filter-dev-20261021-final",
+    "environment": "dev",
+    "suite": "inventory-name-filter",
+    "runName": "Інвентаризація — фільтр по назві ресурсу / dev",
+    "results": [
+      {
+        "testCaseId": "TC-INV-NAME-API-001",
+        "status": "PASS",
+        "durationMs": 1488,
+        "executedAt": "2026-10-21T09:43:19.550000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-NAME-API-002",
+        "status": "PASS",
+        "durationMs": 912,
+        "executedAt": "2026-10-21T09:43:21.991000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-NAME-API-003",
+        "status": "PASS",
+        "durationMs": 2573,
+        "executedAt": "2026-10-21T09:43:23.893000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-NAME-API-004",
+        "status": "PASS",
+        "durationMs": 2126,
+        "executedAt": "2026-10-21T09:43:16.488000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-NAME-API-005",
+        "status": "PASS",
+        "durationMs": 3773,
+        "executedAt": "2026-10-21T09:43:11.867000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-NAME-UI-001",
+        "status": "PASS",
+        "durationMs": 4114,
+        "executedAt": "2026-10-21T09:44:18.654000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-NAME-UI-002",
+        "status": "PASS",
+        "durationMs": 6947,
+        "executedAt": "2026-10-21T09:43:57.779000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-NAME-UI-003",
+        "status": "PASS",
+        "durationMs": 5431,
+        "executedAt": "2026-10-21T09:44:12.087000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-INV-NAME-UI-004",
+        "status": "PASS",
+        "durationMs": 5096,
+        "executedAt": "2026-10-21T09:44:05.831000",
+        "errorMessage": null
+      }
+    ]
+  }
+}

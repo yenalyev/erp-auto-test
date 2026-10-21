@@ -16,6 +16,8 @@
 
     <test name="Inventory Process API">
         <classes>
+            <class name="com.erp.tests.functional.inventory.InventoryNameFilterApiTest"/>
+            <class name="com.erp.tests.ui.InventoryNameFilterUiTest"/>
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConcurrentIssueApiTest"/>

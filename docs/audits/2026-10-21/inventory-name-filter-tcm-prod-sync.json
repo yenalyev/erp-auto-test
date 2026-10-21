@@ -1,0 +1,46 @@
+{
+  "baseUrl": "http://tcm.lab",
+  "featureDbId": 171,
+  "featureId": "REQ-INV-NAME",
+  "parentFeatureId": "REQ-WMS-003",
+  "documentationMatches": true,
+  "criteriaVerified": 3,
+  "cases": [
+    {
+      "testId": "TC-INV-NAME-API-001",
+      "verified": true
+    },
+    {
+      "testId": "TC-INV-NAME-API-002",
+      "verified": true
+    },
+    {
+      "testId": "TC-INV-NAME-API-003",
+      "verified": true
+    },
+    {
+      "testId": "TC-INV-NAME-API-004",
+      "verified": true
+    },
+    {
+      "testId": "TC-INV-NAME-API-005",
+      "verified": true
+    },
+    {
+      "testId": "TC-INV-NAME-UI-001",
+      "verified": true
+    },
+    {
+      "testId": "TC-INV-NAME-UI-002",
+      "verified": true
+    },
+    {
+      "testId": "TC-INV-NAME-UI-003",
+      "verified": true
+    },
+    {
+      "testId": "TC-INV-NAME-UI-004",
+      "verified": true
+    }
+  ]
+}

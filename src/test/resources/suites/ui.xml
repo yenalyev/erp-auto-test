@@ -9,6 +9,12 @@
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
 
+    <test name="Inventory name filter UI">
+        <classes>
+            <class name="com.erp.tests.ui.InventoryNameFilterUiTest"/>
+        </classes>
+    </test>
+
     <test name="Login UI">
         <classes>
             <class name="com.erp.tests.ui.LoginUITest"/>

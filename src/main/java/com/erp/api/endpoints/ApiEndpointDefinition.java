@@ -2249,6 +2249,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    STORAGE_INVENTORY_PROCESSES_EXPORT_GET(
+            "/api/v1/storages/inventory/processes/export",
+            Method.GET,
+            null,
+            "Export filtered inventory process differences to XLSX",
+            null,
+            null,
+            null
+    ),
+
     STORAGE_EQUIPMENT_INVENTORY_STATUS_GET(
             "/api/v1/storages/{id}/equipment-inventory/status",
             Method.GET,

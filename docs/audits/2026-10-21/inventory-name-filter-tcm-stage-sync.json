@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "featureDbId": 167,
+  "featureId": "REQ-INV-NAME",
+  "criteriaVerified": 3,
+  "casesVerified": 9,
+  "automationLinksVerified": 9,
+  "documentationSha256": "d7ca30132f99237f4ce12cd2928e9e07f952d47077edb760fc88fe13da61b89e",
+  "result": "SUCCESS"
+}
