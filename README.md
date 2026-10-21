@@ -22,6 +22,9 @@ Data-Driven фреймворк для автоматизації тестува�
 Сортування ресурсів за «Змінено»: [вимоги, тест-кейси та запуск](docs/REQ-RES-SORT.md).
 Окремий набір API/UI — `-Dsuite=resource-modified-sort`.
 
+Фільтр техкарт «Категорія виробу»: [вимоги та 12 API/UI кейсів](docs/REQ-MFG-CATEGORY-FILTER.md).
+Запуск на dev: `mvn test -Denv=dev -Dsuite=tech-map-category-filter -Duse.database=false -Dframework.browser.channel=chrome`; для стейджу — `-Denv=staging`.
+
 Технологічний стек
 Java 21
 RestAssured — API клієнт.

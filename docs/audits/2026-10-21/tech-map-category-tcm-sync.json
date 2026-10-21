@@ -1,0 +1,132 @@
+{
+  "environment": "production TCM",
+  "featureId": "REQ-MFG-001-03",
+  "featureDbId": 12,
+  "acceptanceCriteria": {
+    "AC-05": 824,
+    "AC-06": 825
+  },
+  "documentationReadbackVerified": true,
+  "cases": [
+    {
+      "testId": "TC-TM-CAT-API-001",
+      "id": 2028,
+      "ac": "AC-05",
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-001"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-TM-CAT-API-002",
+      "id": 2029,
+      "ac": "AC-05",
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-002"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-TM-CAT-API-003",
+      "id": 2030,
+      "ac": "AC-06",
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-003"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-TM-CAT-API-004",
+      "id": 2031,
+      "ac": "AC-05",
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-004"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-TM-CAT-API-005",
+      "id": 2032,
+      "ac": "AC-05",
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-005"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-TM-CAT-API-006",
+      "id": 2033,
+      "ac": "AC-05",
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-006"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-TM-CAT-API-007",
+      "id": 2034,
+      "ac": "AC-05",
+      "automation": true,
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-007"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "testId": "TC-TM-CAT-UI-001",
+      "id": 2035,
+      "ac": "AC-05",
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-001"
+      ]
+    },
+    {
+      "testId": "TC-TM-CAT-UI-002",
+      "id": 2036,
+      "ac": "AC-06",
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-002"
+      ]
+    },
+    {
+      "testId": "TC-TM-CAT-UI-003",
+      "id": 2037,
+      "ac": "AC-06",
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-003"
+      ]
+    },
+    {
+      "testId": "TC-TM-CAT-UI-004",
+      "id": 2038,
+      "ac": "AC-06",
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-004"
+      ]
+    },
+    {
+      "testId": "TC-TM-CAT-UI-005",
+      "id": 2039,
+      "ac": "AC-06",
+      "automation": true,
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-005"
+      ]
+    }
+  ]
+}

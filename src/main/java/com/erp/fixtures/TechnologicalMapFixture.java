@@ -364,9 +364,13 @@ public class TechnologicalMapFixture extends BaseFixture {
 
     @Step("API: GET tag-statistics для tech maps")
     public List<ProductionProcessTagStatisticResponse> getTagStatistics(TechnologicalMapListQuery query) {
+        return getTagStatistics(UserRole.OWNER_1, query);
+    }
+
+    public List<ProductionProcessTagStatisticResponse> getTagStatistics(UserRole role, TechnologicalMapListQuery query) {
         Response response = apiExecutor.executeWithQueryParams(
                 ApiEndpointDefinition.TECH_MAP_TAG_STATISTICS_GET,
-                UserRole.OWNER_1,
+                role,
                 query.toQueryParams());
         validateSuccess(response, "Get technological map tag statistics");
         return DatabaseIntegrityValidator.extractList(response, ProductionProcessTagStatisticResponse.class);

@@ -128,6 +128,7 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapAlternativeGroupsTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapHierarchyApiTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapResourceCalculatorApiTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechMapCategoryFilterApiTest"/>
         </classes>
     </test>
 
@@ -437,6 +438,7 @@
         <classes>
             <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
+            <class name="com.erp.tests.ui.TechMapCategoryFilterUiTest"/>
             <class name="com.erp.tests.ui.TechnologicalMapHashtagUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>

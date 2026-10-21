@@ -1,0 +1,93 @@
+{
+  "remoteRunId": "tech-map-category-staging-20261021-093546",
+  "featureId": 12,
+  "environment": "staging",
+  "suite": "tech-map-category-filter",
+  "runName": "Техкарти — Категорія виробу — staging 21.10.2026",
+  "results": [
+    {
+      "testCaseId": "TC-TM-CAT-API-001",
+      "status": "FAIL",
+      "durationMs": 5048,
+      "executedAt": "2026-10-21T09:36:32",
+      "errorMessage": "ADMIN: Expecting actual:\n  [2206L, 2207L, 2209L, 2208L]\nto contain exactly in any order:\n  [2206L, 2209L]\nbut the following elements were unexpected:\n  [2207L, 2208L]\n\nOWNER_1: Fixture setup critical failure: List technological maps as OWNER_1 (status=403, body=Access Denied, request=Request method: GET Request URI: https://stage.cukerochka.sbs/server/api/v1/technological-maps?storageIds=1&page=0&size=100&name=tmcat-85d6d6e3&categoryIds=38&isActive=true&type=PRODUCTION Proxy: <none> Request params: <none> Query params: storageIds=1 page=0 size=100 name=tmcat-85d6d6e3 categoryIds=[38] isActive=true type=PRODUCTION Form params: <none> Path params: <none> Headers: Accept=application/json, application/javascript, text/javascript, text/json Content-Type=application/json Cookies: <redacted> Multiparts: <none> Body: <none>)"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-002",
+      "status": "FAIL",
+      "durationMs": 688,
+      "executedAt": "2026-10-21T09:36:26",
+      "errorMessage": "default: Expecting actual:\n  [2206L, 2207L, 2209L, 2208L]\nto contain exactly in any order:\n  [2206L, 2207L, 2209L]\nbut the following elements were unexpected:\n  [2208L]"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-003",
+      "status": "FAIL",
+      "durationMs": 808,
+      "executedAt": "2026-10-21T09:36:26",
+      "errorMessage": "default: Expecting actual:\n  [2206L, 2207L, 2209L, 2208L]\nto contain exactly (and in same order):\n  [2208L]\nbut some elements were not expected:\n  [2206L, 2207L, 2209L]"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-004",
+      "status": "FAIL",
+      "durationMs": 3226,
+      "executedAt": "2026-10-21T09:36:24",
+      "errorMessage": "default: [Multi-output карта не поєднує назву одного виходу з категорією іншого] \nExpecting empty but was: [2207L, 2209L]"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-005",
+      "status": "FAIL",
+      "durationMs": 613,
+      "executedAt": "2026-10-21T09:36:25",
+      "errorMessage": "default: Expecting empty but was: [2206L, 2207L, 2209L, 2208L]"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-006",
+      "status": "FAIL",
+      "durationMs": 614,
+      "executedAt": "2026-10-21T09:36:27",
+      "errorMessage": "default: expected: 2L\n but was: 4L"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-007",
+      "status": "FAIL",
+      "durationMs": 632,
+      "executedAt": "2026-10-21T09:42:31",
+      "errorMessage": "default: Expecting actual:\n  [\"#tmcat-3767446f-a\", \"#tmcat-3767446f-b\", \"#tmcat-3767446f-multi\"]\nto contain exactly in any order:\n  [\"#tmcat-3767446f-a\", \"#tmcat-3767446f-multi\"]\nbut the following elements were unexpected:\n  [\"#tmcat-3767446f-b\"]"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-001",
+      "status": "FAIL",
+      "durationMs": 42509,
+      "executedAt": "2026-10-21T09:40:09",
+      "errorMessage": "ADMIN: Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")\n\nOWNER_1: Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.waitForSelector (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:628:23)\n    at FrameDispatcher.waitForSelector (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:107:103)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(\"Перегляд тех. карт\")) to be visible"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-002",
+      "status": "FAIL",
+      "durationMs": 35283,
+      "executedAt": "2026-10-21T09:37:33",
+      "errorMessage": "default: Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:1021:23)\n    at FrameDispatcher.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:159:30)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-003",
+      "status": "FAIL",
+      "durationMs": 36169,
+      "executedAt": "2026-10-21T09:38:09",
+      "errorMessage": "default: Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:1021:23)\n    at FrameDispatcher.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:159:30)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-004",
+      "status": "FAIL",
+      "durationMs": 38526,
+      "executedAt": "2026-10-21T09:38:48",
+      "errorMessage": "default: Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:1021:23)\n    at FrameDispatcher.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:159:30)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-005",
+      "status": "FAIL",
+      "durationMs": 36849,
+      "executedAt": "2026-10-21T09:39:26",
+      "errorMessage": "default: Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:1021:23)\n    at FrameDispatcher.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:159:30)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "scope": "Isolated code exported from the Git index, excluding unrelated working tree changes",
+  "framework": {
+    "total": 85,
+    "passed": 85,
+    "failed": 0,
+    "skipped": 0
+  },
+  "regressionCompleteness": "PASS",
+  "pythonScriptsCompile": "PASS",
+  "source": "target/tm-category-index-check/target/surefire-reports/testng-results.xml",
+  "erpDevResult": {
+    "PASS": 13,
+    "FAIL": 1
+  },
+  "knownFailure": "TC-TM-CAT-API-007: tag statistics ignores categoryIds"
+}

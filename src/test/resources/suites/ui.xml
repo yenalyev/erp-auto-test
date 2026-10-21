@@ -114,6 +114,7 @@
         <classes>
             <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
+            <class name="com.erp.tests.ui.TechMapCategoryFilterUiTest"/>
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapHierarchyUITest"/>

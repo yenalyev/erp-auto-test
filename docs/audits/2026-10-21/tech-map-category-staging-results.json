@@ -1,0 +1,181 @@
+{
+  "environment": "staging",
+  "url": "https://stage.cukerochka.sbs",
+  "date": "2026-10-21",
+  "featureId": "REQ-MFG-001-03",
+  "suite": "tech-map-category-filter",
+  "counts": {
+    "FAIL": 14
+  },
+  "configurationFailures": [],
+  "results": [
+    {
+      "testCaseId": "TC-TM-CAT-API-004",
+      "method": "categoryIntersectsOtherSearchFields",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 3226,
+      "executedAt": "2026-10-21T09:36:24",
+      "errorMessage": "[Multi-output карта не поєднує назву одного виходу з категорією іншого] \nExpecting empty but was: [2207L, 2209L]",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-005",
+      "method": "emptyResultClearAndStateTypeIsolation",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 613,
+      "executedAt": "2026-10-21T09:36:25",
+      "errorMessage": "Expecting empty but was: [2206L, 2207L, 2209L, 2208L]",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-003",
+      "method": "expandedParentIncludesChildren",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 808,
+      "executedAt": "2026-10-21T09:36:26",
+      "errorMessage": "Expecting actual:\n  [2206L, 2207L, 2209L, 2208L]\nto contain exactly (and in same order):\n  [2208L]\nbut some elements were not expected:\n  [2206L, 2207L, 2209L]",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-002",
+      "method": "multipleCategoriesReturnDistinctUnion",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 688,
+      "executedAt": "2026-10-21T09:36:26",
+      "errorMessage": "Expecting actual:\n  [2206L, 2207L, 2209L, 2208L]\nto contain exactly in any order:\n  [2206L, 2207L, 2209L]\nbut the following elements were unexpected:\n  [2208L]",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-006",
+      "method": "paginationCountsFilteredMaps",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 614,
+      "executedAt": "2026-10-21T09:36:27",
+      "errorMessage": "expected: 2L\n but was: 4L",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-001",
+      "method": "singleCategoryUsesOutputOnly",
+      "parameters": [
+        "ADMIN"
+      ],
+      "status": "FAIL",
+      "durationMs": 592,
+      "executedAt": "2026-10-21T09:36:27",
+      "errorMessage": "Expecting actual:\n  [2206L, 2207L, 2209L, 2208L]\nto contain exactly in any order:\n  [2206L, 2209L]\nbut the following elements were unexpected:\n  [2207L, 2208L]",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-001",
+      "method": "singleCategoryUsesOutputOnly",
+      "parameters": [
+        "OWNER_1"
+      ],
+      "status": "FAIL",
+      "durationMs": 4456,
+      "executedAt": "2026-10-21T09:36:32",
+      "errorMessage": "Fixture setup critical failure: List technological maps as OWNER_1 (status=403, body=Access Denied, request=Request method: GET Request URI: https://stage.cukerochka.sbs/server/api/v1/technological-maps?storageIds=1&page=0&size=100&name=tmcat-85d6d6e3&categoryIds=38&isActive=true&type=PRODUCTION Proxy: <none> Request params: <none> Query params: storageIds=1 page=0 size=100 name=tmcat-85d6d6e3 categoryIds=[38] isActive=true type=PRODUCTION Form params: <none> Path params: <none> Headers: Accept=application/json, application/javascript, text/javascript, text/json Content-Type=application/json Cookies: <redacted> Multiparts: <none> Body: <none>)",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-002",
+      "method": "multipleSelectionToggleAndClear",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 35283,
+      "executedAt": "2026-10-21T09:37:33",
+      "errorMessage": "Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:1021:23)\n    at FrameDispatcher.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:159:30)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-003",
+      "method": "parentSelectsSubtreeAndChildCanBeRemoved",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 36169,
+      "executedAt": "2026-10-21T09:38:09",
+      "errorMessage": "Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:1021:23)\n    at FrameDispatcher.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:159:30)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-004",
+      "method": "searchIntersectionAndEmptyState",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 38526,
+      "executedAt": "2026-10-21T09:38:48",
+      "errorMessage": "Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:1021:23)\n    at FrameDispatcher.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:159:30)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-005",
+      "method": "selectionSurvivesReloadNavigationAndResetsPage",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 36849,
+      "executedAt": "2026-10-21T09:39:26",
+      "errorMessage": "Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:1021:23)\n    at FrameDispatcher.click (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:159:30)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-001",
+      "method": "singleCategoryFiltersOutput",
+      "parameters": [
+        "ADMIN"
+      ],
+      "status": "FAIL",
+      "durationMs": 10820,
+      "executedAt": "2026-10-21T09:39:37",
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"technological-maps-filter-categories\\\"]\")",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-001",
+      "method": "singleCategoryFiltersOutput",
+      "parameters": [
+        "OWNER_1"
+      ],
+      "status": "FAIL",
+      "durationMs": 31689,
+      "executedAt": "2026-10-21T09:40:09",
+      "errorMessage": "Error {\n  message='Timeout 30000ms exceeded.\n  name='TimeoutError\n  stack='TimeoutError: Timeout 30000ms exceeded.\n    at ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\progress.js:75:26)\n    at Frame.waitForSelector (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\frames.js:628:23)\n    at FrameDispatcher.waitForSelector (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\frameDispatcher.js:107:103)\n    at FrameDispatcher._handleCommand (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:94:40)\n    at DispatcherConnection.dispatch (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-17654612184582017326\\package\\lib\\server\\dispatchers\\dispatcher.js:361:39)\n}\nCall log:\n-   - waiting for getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(\"Перегляд тех. карт\")) to be visible",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-007",
+      "method": "tagStatisticsRespectCategory",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 632,
+      "executedAt": "2026-10-21T09:42:31",
+      "errorMessage": "Expecting actual:\n  [\"#tmcat-3767446f-a\", \"#tmcat-3767446f-b\", \"#tmcat-3767446f-multi\"]\nto contain exactly in any order:\n  [\"#tmcat-3767446f-a\", \"#tmcat-3767446f-multi\"]\nbut the following elements were unexpected:\n  [\"#tmcat-3767446f-b\"]",
+      "source": "target/tm-category-stats/surefire-reports/testng-results.xml"
+    }
+  ],
+  "originalStatisticsAttempt": [
+    {
+      "testCaseId": "TC-TM-CAT-API-007",
+      "method": "tagStatisticsRespectCategory",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 408,
+      "executedAt": "2026-10-21T09:36:32",
+      "errorMessage": "Fixture setup critical failure: Get technological map tag statistics (status=403, body=Access Denied, request=Request method: GET Request URI: https://stage.cukerochka.sbs/server/api/v1/technological-maps/tag-statistics?storageIds=1&page=0&size=100&name=tmcat-85d6d6e3&categoryIds=38&isActive=true&type=PRODUCTION Proxy: <none> Request params: <none> Query params: storageIds=1 page=0 size=100 name=tmcat-85d6d6e3 categoryIds=[38] isActive=true type=PRODUCTION Form params: <none> Path params: <none> Headers: Accept=application/json, application/javascript, text/javascript, text/json Content-Type=application/json Cookies: <redacted> Multiparts: <none> Body: <none>)",
+      "source": "target/tm-category-staging-retry/surefire-reports/testng-results.xml"
+    }
+  ],
+  "framework": {
+    "total": 100,
+    "passed": 100,
+    "failed": 0,
+    "skipped": 0
+  },
+  "regressionCompleteness": "PASS",
+  "tcmPublication": "Імпорт результатів у production TCM відхилено автоматичною перевіркою дозволів: payload містить внутрішні URL, діагностику й змінює постійні статуси кейсів. Потрібне явне погодження користувача. Документація та 12 автоматизованих кейсів збережені, статуси цього прогону не імпортовані."
+}
