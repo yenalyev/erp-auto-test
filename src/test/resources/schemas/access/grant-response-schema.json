@@ -12,6 +12,7 @@
     "targetScopeKind": { "enum": ["LOCATION", "GLOBAL"] },
     "scopeKind": { "enum": ["ALL", "LOCATION", "SUBTREE"] },
     "storage": { "type": ["object", "null"] },
+    "storageKinds": { "type": ["array", "null"], "items": { "enum": ["LOCATION", "CREW", "FLY_POINT"] }, "uniqueItems": true },
     "storagePath": { "type": ["string", "null"] },
     "coveredCount": { "type": ["integer", "null"] },
     "comment": { "type": ["string", "null"] },

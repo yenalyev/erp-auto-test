@@ -377,6 +377,7 @@
     <test name="UI Inventory">
         <classes>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
+            <class name="com.erp.tests.ui.CrewInventoryAccessUiTest"/>
             <class name="com.erp.tests.ui.InventoryConcurrentIssueUiTest"/>
             <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>
             <class name="com.erp.tests.ui.BatchInspectorUiTest"/>
