@@ -4,6 +4,7 @@ import com.erp.models.request.InventoryRequest;
 import com.erp.models.request.ResourceUsageRequest;
 import com.erp.models.response.StorageItemResponse;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -68,17 +69,27 @@ public class InventoryDataFactory {
         return seedAmounts(zeros);
     }
 
+    /** Match form deletion: retain the removed row's snapshot version and send an explicit tombstone. */
     public static InventoryRequest copyExcept(List<StorageItemResponse> existingItems, Long excludeResourceId) {
-        Map<Long, Double> amounts = new LinkedHashMap<>();
+        List<ResourceUsageRequest> resources = new ArrayList<>();
+        List<Long> knownResourceIds = new ArrayList<>();
         if (existingItems != null) {
             for (StorageItemResponse item : existingItems) {
-                if (item.getResource() != null && item.getResource().getId() != null
-                        && !item.getResource().getId().equals(excludeResourceId)) {
-                    amounts.put(item.getResource().getId(), item.getAmount());
+                if (item.getResource() != null && item.getResource().getId() != null) {
+                    Long resourceId = item.getResource().getId();
+                    boolean removed = resourceId.equals(excludeResourceId);
+                    knownResourceIds.add(resourceId);
+                    BigDecimal amount = item.getAmount() == null ? null : BigDecimal.valueOf(item.getAmount());
+                    resources.add(ResourceUsageRequest.builder()
+                            .resourceId(resourceId)
+                            .amount(removed ? BigDecimal.ZERO : amount)
+                            .version(item.getVersion())
+                            .removed(removed ? Boolean.TRUE : null)
+                            .build());
                 }
             }
         }
-        return seedAmounts(amounts);
+        return InventoryRequest.builder().resources(resources).knownResourceIds(knownResourceIds).build();
     }
 
     public static String commentOfExactLength(int length) {

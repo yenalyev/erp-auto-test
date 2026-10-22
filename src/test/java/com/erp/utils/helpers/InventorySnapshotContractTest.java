@@ -7,6 +7,31 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.*;
 
 public class InventorySnapshotContractTest {
+    @Test
+    public void deletedInventoryRowUsesVersionedTombstoneWithoutChangingSibling() throws Exception {
+        var removed = com.erp.models.response.StorageItemResponse.builder()
+                .resource(com.erp.models.response.ResourceResponse.builder().id(11L).build())
+                .amount(10.0).version(7L).build();
+        var sibling = com.erp.models.response.StorageItemResponse.builder()
+                .resource(com.erp.models.response.ResourceResponse.builder().id(12L).build())
+                .amount(4.0).version(8L).build();
+        var request = com.erp.data.factories.inventory.InventoryDataFactory.copyExcept(
+                java.util.List.of(removed, sibling), 11L);
+        var json = new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(request);
+        assertThat(json.path("knownResourceIds").toString()).isEqualTo("[11,12]");
+        assertThat(json.path("resources")).hasSize(2);
+        var deleted = json.path("resources").get(0);
+        assertThat(deleted.path("resourceId").asLong()).isEqualTo(11L);
+        assertThat(deleted.path("version").asLong()).isEqualTo(7L);
+        assertThat(deleted.path("amount").asDouble()).isZero();
+        assertThat(deleted.path("removed").asBoolean()).isTrue();
+        var retained = json.path("resources").get(1);
+        assertThat(retained.path("resourceId").asLong()).isEqualTo(12L);
+        assertThat(retained.path("version").asLong()).isEqualTo(8L);
+        assertThat(retained.path("amount").asDouble()).isEqualTo(4.0);
+        assertThat(retained.has("removed")).isFalse();
+    }
+
     @DataProvider
     public Object[][] failedResponses() {
         return new Object[][] {
