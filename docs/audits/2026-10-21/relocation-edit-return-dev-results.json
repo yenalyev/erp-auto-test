@@ -1,0 +1,345 @@
+{
+  "environment": "dev",
+  "featureId": "REQ-REL-EDIT-RETURN",
+  "invocationCounts": {
+    "PASS": 12
+  },
+  "rawInvocationCounts": {
+    "PASS": 12
+  },
+  "caseCounts": {
+    "PASS": 6
+  },
+  "configurationFailures": [],
+  "invocations": [
+    {
+      "testCaseId": "TC-REL-RETURN-UI-004",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792649989495,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 15740,
+      "executedAt": "2026-10-22T09:19:49",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-5db3ca73-9c5c-4812-9c31-540bcdeefd82-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-0653cc99-9b57-426f-a404-6c951c60061a-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-fd3ec7c5-1f44-4e9b-8ada-efe7d0e88e28-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-d9cf4ac7-372e-400f-93ab-36ff87034267-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-54ea6a0b-120c-49c1-a205-02f4c412e0fa-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-recheck-20261022\\allure-results\\3681f31e-e0dc-4092-aeb4-1395061b9a6e-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-003",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792649632217,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 9654,
+      "executedAt": "2026-10-22T09:13:52",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-3375a736-68ce-43e9-8645-9617f12d40a9-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-62e7f448-df9a-405a-85f6-51e6dd040bd7-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-a8f741dc-0fe4-4b74-bfd0-6377c93e1bbc-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\53354d92-67d0-48c1-b49d-46214b3deb0a-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-002",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792649779748,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 10556,
+      "executedAt": "2026-10-22T09:16:19",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-3c64b324-9971-4120-85aa-8be31512b02e-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-ae2ead0f-0c41-4ebf-945c-a2a89832ab6d-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-0d8a72bb-4569-435f-815e-420866e120e4-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\61c41d81-cfdc-4c9c-92b7-3a63ca58588e-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-003",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792649616505,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 15489,
+      "executedAt": "2026-10-22T09:13:36",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-0f4cb1ea-51b2-41e3-8d74-0fde956d051a-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-1f3ea019-cb96-4eb8-894c-c14e2f4faf76-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-cc81a8ac-ae5a-49d2-80ef-22e3110cae68-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\6634aae4-f64b-4160-9052-b65d4c776021-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-005",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792649681808,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 14121,
+      "executedAt": "2026-10-22T09:14:41",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-4fc4e76f-a450-4b8a-ab31-a34521024cca-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-7df5dfe3-d836-4764-8e64-ca07489a0b80-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-8fe1fd79-6934-483f-9565-78558080a0c7-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\8859b879-1a2c-4a4f-b294-0f75424992bb-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-002",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792649768237,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 11225,
+      "executedAt": "2026-10-22T09:16:08",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-5d876921-a616-45c6-aff8-ecdee212790a-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-0064e874-c25d-4bd6-b993-ea107d5692b6-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-baae90cf-2cf1-4c0c-bc9b-55eaf4cce57a-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\8a67b7ec-15cc-43ba-8e67-1e2fcf922a2c-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-006",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792649696186,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 9396,
+      "executedAt": "2026-10-22T09:14:56",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-472dc6c5-dbd8-4b5f-9ff9-ed16622fe0a9-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-a2c6025d-43b8-4fe0-89f0-33132bdd3d8a-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-7c3b963c-9d37-474a-b7db-cfe194c8602b-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\8c4f4ef6-0fa8-474c-8552-1785d629a2c3-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-005",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792649666769,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 14818,
+      "executedAt": "2026-10-22T09:14:26",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-74daa1aa-6891-4635-8737-21654ad53682-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-a756e460-eef1-4b61-80f6-23bd3c05d537-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-57e7ff38-fdad-48a3-b708-86aee43e9c54-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\b2855fbc-ddb4-40b7-a4b4-f23187deef99-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-001",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792649655559,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 11046,
+      "executedAt": "2026-10-22T09:14:15",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-3f822d30-b7be-4677-8c0a-e556b1168fb1-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-e582ccef-6cd3-438c-a406-04aa3cf1536e-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-97bb0c1c-cbb6-48d8-9979-356215412ee6-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\ba7d673b-4b03-4f63-b3e7-aa6707ac6926-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-006",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792649705911,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 8417,
+      "executedAt": "2026-10-22T09:15:05",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-debc6d2e-a80c-4b5a-b406-ceaed3f1d050-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-15e9c5e9-e792-4aec-a182-273984707c11-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-bc1c7250-4d42-41e4-9945-e2980048c2da-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\e31b4935-510e-4f3c-8966-1066fac6e4ba-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-004",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792649966132,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 23154,
+      "executedAt": "2026-10-22T09:19:26",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-591c7b8a-78d7-4195-8a20-a0477b80f00f-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-89846859-5bfa-4024-badd-3ed61c9a1010-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-6cde6cdb-3d1f-4e8b-8568-b875df365798-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-43946c05-3b7a-439a-bb8c-c7ebf0a70a23-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-recheck-20261022-407f5678-e5cf-4b6c-bab8-5548c14a98ee-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-recheck-20261022\\allure-results\\de612db5-1826-496d-8226-3afbec001f1b-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-001",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792649642073,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 13207,
+      "executedAt": "2026-10-22T09:14:02",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-f405ba6a-401f-449a-bf40-8cebd55dd2df-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-c17f13a4-4e52-4410-8cd3-2b122693abbb-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-20261022-e6a9c9db-cf89-4288-94ca-258299eb2dfb-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\ef5f356e-f5f5-45a0-9b44-ec980208a6c3-result.json"
+    }
+  ],
+  "sources": [
+    "C:\\Users\\gigam\\IdeaProjects\\erp-auto-test\\target\\relocation-edit-return-dev-20261022\\surefire-reports\\testng-results.xml",
+    "C:\\Users\\gigam\\IdeaProjects\\erp-auto-test\\target\\relocation-edit-return-recheck-20261022\\surefire-reports\\testng-results.xml"
+  ],
+  "buildCounts": {
+    "C:\\Users\\gigam\\IdeaProjects\\erp-auto-test\\target\\relocation-edit-return-dev-20261022": {
+      "PASS": 11,
+      "FAIL": 1
+    },
+    "C:\\Users\\gigam\\IdeaProjects\\erp-auto-test\\target\\relocation-edit-return-recheck-20261022": {
+      "PASS": 2
+    }
+  },
+  "supersededInvocations": [
+    {
+      "testCaseId": "TC-REL-RETURN-UI-004",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792649733546,
+      "status": "FAIL",
+      "rawStatus": "FAIL",
+      "classificationReason": null,
+      "durationMs": 34443,
+      "executedAt": "2026-10-22T09:15:33",
+      "errorMessage": "Timeout 30000ms exceeded",
+      "evidence": [],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\0c9b4966-9a6f-4cb3-b25f-d49c5cdf553c-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-004",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792649714564,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 18716,
+      "executedAt": "2026-10-22T09:15:14",
+      "errorMessage": null,
+      "evidence": [],
+      "source": "target\\relocation-edit-return-dev-20261022\\allure-results\\ea133fa8-9a2f-45c7-8883-d22b3780cc06-result.json"
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "remoteRunId": "relocation-edit-return-relocation-edit-return-dev-20261022",
+    "environment": "dev",
+    "runName": "Видано/Отримано — фільтри після редагування — dev — 2026-10-22",
+    "suite": "relocation-edit-return-filters",
+    "buildName": "relocation-edit-return-dev-20261022",
+    "results": [
+      {
+        "testCaseId": "TC-REL-RETURN-UI-001",
+        "status": "PASS",
+        "durationMs": 24253,
+        "executedAt": "2026-10-22T09:14:15",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-002",
+        "status": "PASS",
+        "durationMs": 21781,
+        "executedAt": "2026-10-22T09:16:19",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-003",
+        "status": "PASS",
+        "durationMs": 25143,
+        "executedAt": "2026-10-22T09:13:52",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-004",
+        "status": "PASS",
+        "durationMs": 38894,
+        "executedAt": "2026-10-22T09:19:49",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-005",
+        "status": "PASS",
+        "durationMs": 28939,
+        "executedAt": "2026-10-22T09:14:41",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-006",
+        "status": "PASS",
+        "durationMs": 17813,
+        "executedAt": "2026-10-22T09:15:05",
+        "errorMessage": null
+      }
+    ]
+  }
+}

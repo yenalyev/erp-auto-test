@@ -1,0 +1,16 @@
+before={category=[92], endDate=[2026-10-22], fromIds=[4690], include_batches=[false], productIds=[5390, 5391], startDate=[2026-10-22], states=[AUTO_FINISHED, FINISHED], suppliers=[МОУ], toIds=[4693], type=[RESOURCE]}
+after={category=[92], endDate=[2026-10-22], fromIds=[4690], page=[0], productIds=[5390, 5391], size=[100], startDate=[2026-10-22], states=[AUTO_FINISHED, FINISHED], suppliers=[МОУ], toIds=[4693], type=[RESOURCE]}
+controlsBefore={Тип=Тип Ресурси Обладнання, Від кого=Від кого rel-filter-7e71f285-src--loc_1792649596491_T1, Кому=Кому rel-filter-7e71f285-external--loc_1792649609674_T1, Категорія=Категорія rel-filter-7e71f285-category-A, Виріб=Виріб rel-filter-7e71f285-first-_1792649598237_T1 rel-filter-7e71f285-same-_1792649598590_T1, Постачальник=Постачальник МОУ, Дата відправки=Дата відправки 22.10.2026 – 22.10.2026, Статус=Статус Завершено, activeType=Ресурси}
+controlsAfter={Тип=Тип Ресурси Обладнання, Від кого=Від кого rel-filter-7e71f285-src--loc_1792649596491_T1, Кому=Кому rel-filter-7e71f285-external--loc_1792649609674_T1, Категорія=Категорія rel-filter-7e71f285-category-A, Виріб=Виріб rel-filter-7e71f285-first-_1792649598237_T1 rel-filter-7e71f285-same-_1792649598590_T1, Постачальник=Постачальник МОУ, Дата відправки=Дата відправки 22.10.2026 – 22.10.2026, Статус=Статус Завершено, activeType=Ресурси}
+returnedTable=22.10.2026	
+rel-filter-7e71f285-src--loc_1792649596491_T1
+	
+rel-filter-7e71f285-external--loc_1792649609674_T1
+	
+rel-filter-7e71f285-first-_1792649598237_T1:
+2 шт
+	—	
+Завершено
+	
+rel-filter-7e71f285-saved-74992067-0beb-4a24-92a6-c3115eea48cf
+	

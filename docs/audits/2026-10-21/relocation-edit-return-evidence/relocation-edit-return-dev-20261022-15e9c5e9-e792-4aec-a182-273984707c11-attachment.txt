@@ -1,0 +1,17 @@
+before={endDate=[2026-10-22], equipmentModelIds=[657], include_batches=[false], startDate=[2026-09-22], states=[AUTO_FINISHED, FINISHED, RETURNED], toIds=[4690], type=[EQUIPMENT]}
+after={endDate=[2026-10-22], equipmentModelIds=[657], page=[0], size=[100], startDate=[2026-09-22], states=[AUTO_FINISHED, FINISHED, RETURNED], toIds=[4690], type=[EQUIPMENT]}
+controlsBefore={Тип=Тип Ресурси Обладнання, Від кого=Від кого Усі, Кому=Кому rel-filter-7e71f285-src--loc_1792649596491_T1, Обладнання=Обладнання rel-filter-7e71f285-edit-incoming-model, Дата відправки=Дата відправки 22.09.2026 – 22.10.2026, Статус=Статус Усі, activeType=Обладнання}
+controlsAfter={Тип=Тип Ресурси Обладнання, Від кого=Від кого Усі, Кому=Кому rel-filter-7e71f285-src--loc_1792649596491_T1, Обладнання=Обладнання rel-filter-7e71f285-edit-incoming-model, Дата відправки=Дата відправки 22.09.2026 – 22.10.2026, Статус=Статус Усі, activeType=Обладнання}
+returnedTable=22.10.2026	
+Цукрарня
+	
+rel-filter-7e71f285-src--loc_1792649596491_T1
+	
+rel-filter-7e71f285-edit-incoming-model (SN-rel-filter-7e71f285-eq-in)
+	-	
+INV-EQ-GRP-612687
+	
+Завершено
+	
+rel-filter-7e71f285-saved-3eb3cb9c-3de2-4668-b63f-eb863c53ed4c
+	

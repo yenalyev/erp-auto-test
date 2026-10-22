@@ -24,6 +24,9 @@ public class RelocationFiltersPage extends BasePage {
     public RelocationFiltersPage open(String tab) {
         page.navigate(ConfigProvider.getBaseUrl() + "/relocations");
         page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("В дорозі")).waitFor();
+        // Initial authentication/workspace requests can remount the journal and
+        // discard an early tab click. Finish that bootstrap before choosing it.
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
         String label = switch (tab) {
             case "active" -> "В дорозі";
             case "sent" -> "Видано";
@@ -31,7 +34,9 @@ public class RelocationFiltersPage extends BasePage {
             case "lost" -> "Втрачено";
             default -> throw new IllegalArgumentException(tab);
         };
-        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(label).setExact(true)).click();
+        Locator selectedTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(label).setExact(true));
+        selectedTab.click();
+        page.waitForCondition(() -> "true".equals(selectedTab.getAttribute("aria-selected")));
         page.getByRole(AriaRole.TABPANEL).waitFor();
         expected.clear();
         expected.put("type", "RESOURCE");
@@ -113,6 +118,18 @@ public class RelocationFiltersPage extends BasePage {
     public void product(String name, Long id) { autocomplete("Виріб", name, id, "productIds"); }
     public void equipment(String name, Long id) { autocomplete("Обладнання", name, id, "equipmentModelIds"); }
 
+    public void historyStatus(String label) {
+        expectedStates = switch (label) {
+            case "Завершено" -> List.of("FINISHED", "AUTO_FINISHED");
+            case "Повернено" -> List.of("RETURNED");
+            case "Усі" -> List.of("FINISHED", "AUTO_FINISHED", "RETURNED");
+            default -> throw new IllegalArgumentException(label);
+        };
+        field("Статус").getByRole(AriaRole.COMBOBOX).click();
+        listAction(() -> page.getByRole(AriaRole.OPTION,
+                new Page.GetByRoleOptions().setName(label).setExact(true)).click());
+    }
+
     private void autocomplete(String label, String name, Long id, String parameter) {
         field(label).locator("button").first().click();
         popover().getByRole(AriaRole.COMBOBOX).fill(name);
@@ -144,6 +161,8 @@ public class RelocationFiltersPage extends BasePage {
             // selects and applies both bounds, including a same-day range.
             if (from.equals(to) && from.equals(picker.browserToday())) {
                 picker.selectPreset(DateRangePickerComponent.PRESET_1_DAY);
+            } else if (to.equals(picker.browserToday()) && from.equals(to.minusDays(7))) {
+                picker.selectPreset(DateRangePickerComponent.PRESET_7_DAYS);
             } else picker.setRange(from, to);
         });
     }

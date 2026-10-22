@@ -1,0 +1,13 @@
+{
+  "result": "SUCCESS",
+  "featureDbId": 175,
+  "featureId": "REQ-REL-EDIT-RETURN",
+  "documentationMatches": true,
+  "criteriaVerified": 6,
+  "casesVerified": 6,
+  "automationLinksVerified": 6,
+  "documentationSha256": "940d3e241a51875a009f846d2481bc325000d877426f3addf60521037598a0cc",
+  "verifiedAt": "2026-10-22",
+  "runId": 157,
+  "runCasesPass": 6
+}

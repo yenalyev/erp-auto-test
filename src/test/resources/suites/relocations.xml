@@ -52,6 +52,7 @@
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.BattalionRelocationEditUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.RelocationEditReturnFiltersUiTest"/>
             <class name="com.erp.tests.ui.RelocationSupplierFiltersUiTest"/>
             <class name="com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest"/>
             <class name="com.erp.tests.ui.LogisticsJournalUiTest">

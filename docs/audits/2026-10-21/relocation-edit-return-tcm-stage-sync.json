@@ -1,0 +1,108 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-REL-RETURN-UI-001",
+      "TC-REL-RETURN-UI-002",
+      "TC-REL-RETURN-UI-003",
+      "TC-REL-RETURN-UI-004",
+      "TC-REL-RETURN-UI-005",
+      "TC-REL-RETURN-UI-006"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-REL-EDIT-RETURN",
+    "parentFeatureId": "REQ-WMS-006",
+    "status": "ACTIVE",
+    "documentationLength": 7724,
+    "documentationSha256": "8f48c635de76c0ae952733da7faa7fbcf25fd204ab645e3a41c5aea0a9cdcaf6",
+    "sourceDocumentationSha256": "8f48c635de76c0ae952733da7faa7fbcf25fd204ab645e3a41c5aea0a9cdcaf6",
+    "requiredAcPresent": true,
+    "managedAcCount": 6,
+    "managedCaseCount": 6,
+    "automatedCaseCount": 6,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-REL-RETURN-UI-001": {
+        "featureId": "REQ-REL-EDIT-RETURN",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-RETURN-UI-001"
+        ],
+        "stepCount": 4
+      },
+      "TC-REL-RETURN-UI-002": {
+        "featureId": "REQ-REL-EDIT-RETURN",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-RETURN-UI-002"
+        ],
+        "stepCount": 3
+      },
+      "TC-REL-RETURN-UI-003": {
+        "featureId": "REQ-REL-EDIT-RETURN",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-RETURN-UI-003"
+        ],
+        "stepCount": 3
+      },
+      "TC-REL-RETURN-UI-004": {
+        "featureId": "REQ-REL-EDIT-RETURN",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-RETURN-UI-004"
+        ],
+        "stepCount": 3
+      },
+      "TC-REL-RETURN-UI-005": {
+        "featureId": "REQ-REL-EDIT-RETURN",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-RETURN-UI-005"
+        ],
+        "stepCount": 4
+      },
+      "TC-REL-RETURN-UI-006": {
+        "featureId": "REQ-REL-EDIT-RETURN",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-RETURN-UI-006"
+        ],
+        "stepCount": 3
+      }
+    }
+  },
+  "featureDbId": 170,
+  "result": "SUCCESS"
+}

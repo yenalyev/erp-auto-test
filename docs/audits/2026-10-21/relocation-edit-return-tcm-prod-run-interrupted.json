@@ -1,0 +1,96 @@
+{
+  "result": "SUCCESS",
+  "baseUrl": "http://tcm.lab",
+  "featureDbId": 175,
+  "importResponse": {
+    "runId": 154,
+    "matched": 6,
+    "created": 6,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 154,
+    "name": "AUTO ������/�������� � ������� ���� ����������� � dev � 2026-10-21�2026-10-22",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 44,
+    "testPlanName": "AUTO TP REQ-REL-EDIT-RETURN",
+    "startedAt": "2026-10-22T06:05:02.460007",
+    "completedAt": "2026-10-22T06:05:02.782354",
+    "createdAt": "2026-10-22T06:05:02.460271",
+    "items": [
+      {
+        "id": 19043,
+        "testId": "TC-REL-RETURN-UI-001",
+        "title": "Поєднані фільтри ресурсів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-001",
+        "executedAt": "2026-10-21T18:13:37"
+      },
+      {
+        "id": 19044,
+        "testId": "TC-REL-RETURN-UI-002",
+        "title": "Один виріб",
+        "status": "BLOCKED",
+        "actualResult": "{\"tab\": \"sent\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n\n\n{\"tab\": \"received\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-002",
+        "executedAt": "2026-10-22T09:01:39"
+      },
+      {
+        "id": 19045,
+        "testId": "TC-REL-RETURN-UI-003",
+        "title": "Очищена категорія",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-003",
+        "executedAt": "2026-10-21T18:13:11"
+      },
+      {
+        "id": 19046,
+        "testId": "TC-REL-RETURN-UI-004",
+        "title": "Актуальний знімок при повторному редагуванні",
+        "status": "BLOCKED",
+        "actualResult": "{\"tab\": \"sent\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n\n\n{\"tab\": \"received\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-004",
+        "executedAt": "2026-10-22T09:01:34"
+      },
+      {
+        "id": 19047,
+        "testId": "TC-REL-RETURN-UI-005",
+        "title": "Запис виходить за межі дати",
+        "status": "BLOCKED",
+        "actualResult": "{\"tab\": \"received\"}: Framework observer selected a late request from the hidden In Transit tab. The visible Received tab and filter controls matched the saved snapshot. Observer corrected to select history-state responses; this invocation requires re-execution. Original assertion failure retained.\n\n\r\nMultiple Failures (2 failures)\r\n-- failure 1 --\r\n[Actual list uses the saved filter snapshot] \r\nexpected: {\"endDate\"=[\"2026-10-21\"], \"fromIds\"=[\"4658\"], \"startDate\"=[\"2026-10-21\"], \"states\"=[\"AUTO_FINISHED\", \"FINISHED\", \"RETURNED\"], \"toIds\"=[\"4655\"], \"type\"=[\"RESOURCE\"]}\r\n but was: {\"isOr\"=[\"true\"], \"receiverIds\"=[\"4655\"], \"senderIds\"=[\"4655\"], \"states\"=[\"CANCELLED\", \"CREATED\"]}\r\nat RelocationEditReturnFiltersUiTest.lambda$editAndAssert$6(RelocationEditReturnFiltersUiTest.java:165)\r\n-- failure 2 --\r\n[Returned table contains exact filtered relocation IDs] \r\nExpecting actual:\r\n  [25489L]\r\nto contain exactly in any order:\r\n  []\r\nbut the following elements were unexpected:\r\n  [25489L]\r\nat RelocationEditReturnFiltersUiTest.lambda$editAndAssert$6(RelocationEditReturnFiltersUiTest.java:167)",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-005",
+        "executedAt": "2026-10-21T18:14:13"
+      },
+      {
+        "id": 19048,
+        "testId": "TC-REL-RETURN-UI-006",
+        "title": "Обладнання та модель",
+        "status": "BLOCKED",
+        "actualResult": "{\"tab\": \"received\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_NETWORK_CHANGED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_NETWORK_CHANGED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n\n\n{\"tab\": \"sent\"}: Execution crossed an overnight computer/network interruption; timeout and subsequent ERR_NETWORK_CHANGED/ERR_CONNECTION_REFUSED prevent a reliable product verdict. Requires re-execution.\n\nTimeout 30000ms exceeded",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-006",
+        "executedAt": "2026-10-22T09:01:24"
+      }
+    ]
+  }
+}

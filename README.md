@@ -1,4 +1,10 @@
 ERP API Test Automation Framework
+**Видано/Отримано — повернення зі збереженими фільтрами після редагування**:
+[вимоги, 6 AC та 6 UI-кейсів / 12 виконань](docs/REQ-REL-EDIT-RETURN.md).
+Dev: `scripts/run_relocation_edit_return_dev.ps1` або `-Dsuite=relocation-edit-return-filters`.
+Клас входить також у `relocations`, `ui` та `regression`; TCM `REQ-WMS-006` → `REQ-REL-EDIT-RETURN`.
+[Dev 22.10.2026: підсумок 12 PASS / 0 FAIL / 0 SKIP після повторної перевірки; cleanup завершено](docs/audits/2026-10-21/relocation-edit-return-dev-report.md).
+
 
 **Інвентаризація → Закриті — фільтр по назві ресурсу**:
 [вимоги, 3 АС та 9 API/UI-кейсів](docs/REQ-INV-NAME.md), TCM `REQ-WMS-003` → `REQ-INV-NAME`.

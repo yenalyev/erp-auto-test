@@ -1,0 +1,12 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Relocation edit return filters" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+    </listeners>
+    <test name="Restore journal filters after edit">
+        <classes><class name="com.erp.tests.ui.RelocationEditReturnFiltersUiTest"/></classes>
+    </test>
+</suite>

@@ -55,6 +55,7 @@
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.RelocationEditReturnFiltersUiTest"/>
             <class name="com.erp.tests.ui.RelocationSupplierFiltersUiTest"/>
             <class name="com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest"/>
             <class name="com.erp.tests.ui.LogisticsJournalUiTest">

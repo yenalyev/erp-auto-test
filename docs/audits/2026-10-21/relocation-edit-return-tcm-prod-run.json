@@ -1,0 +1,96 @@
+{
+  "result": "SUCCESS",
+  "baseUrl": "http://tcm.lab",
+  "featureDbId": 175,
+  "importResponse": {
+    "runId": 157,
+    "matched": 6,
+    "created": 6,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 157,
+    "name": "AUTO ������/�������� � ������� ���� ����������� � dev � 2026-10-22",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 44,
+    "testPlanName": "AUTO TP REQ-REL-EDIT-RETURN",
+    "startedAt": "2026-10-22T06:21:53.282099",
+    "completedAt": "2026-10-22T06:24:13.703594",
+    "createdAt": "2026-10-22T06:21:53.282213",
+    "items": [
+      {
+        "id": 19065,
+        "testId": "TC-REL-RETURN-UI-001",
+        "title": "Поєднані фільтри ресурсів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-001",
+        "executedAt": "2026-10-22T09:14:15"
+      },
+      {
+        "id": 19066,
+        "testId": "TC-REL-RETURN-UI-002",
+        "title": "Один виріб",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-002",
+        "executedAt": "2026-10-22T09:16:19"
+      },
+      {
+        "id": 19067,
+        "testId": "TC-REL-RETURN-UI-003",
+        "title": "Очищена категорія",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-003",
+        "executedAt": "2026-10-22T09:13:52"
+      },
+      {
+        "id": 19068,
+        "testId": "TC-REL-RETURN-UI-004",
+        "title": "Актуальний знімок при повторному редагуванні",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-004",
+        "executedAt": "2026-10-22T09:19:49"
+      },
+      {
+        "id": 19069,
+        "testId": "TC-REL-RETURN-UI-005",
+        "title": "Запис виходить за межі дати",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-005",
+        "executedAt": "2026-10-22T09:14:41"
+      },
+      {
+        "id": 19070,
+        "testId": "TC-REL-RETURN-UI-006",
+        "title": "Обладнання та модель",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-RETURN-UI-006",
+        "executedAt": "2026-10-22T09:15:05"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "TC-REL-RETURN-UI-005": {
+    "received": "Framework observer selected a late request from the hidden In Transit tab. The visible Received tab and filter controls matched the saved snapshot. Observer corrected to select history-state responses; this invocation requires re-execution. Original assertion failure retained."
+  },
+  "TC-REL-RETURN-UI-006": {
+    "sent": "Execution crossed an overnight computer/network interruption; timeout and subsequent ERR_NETWORK_CHANGED/ERR_CONNECTION_REFUSED prevent a reliable product verdict. Requires re-execution."
+  }
+}

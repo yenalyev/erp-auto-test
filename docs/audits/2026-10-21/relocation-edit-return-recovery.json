@@ -1,0 +1,9 @@
+{
+  "activeLocationsRemaining" : false,
+  "activeStockRemaining" : false,
+  "retainedHistoryMutationErrors" : [ "Delete equipment send 25501: java.lang.RuntimeException: Delete equipment relocation failed: 500 Something went wrong", "Delete equipment receipt 25500: java.lang.RuntimeException: Delete equipment relocation failed: 400 {\"errors\":[{\"field\":\"equipmentIds\",\"messages\":[\"Обладнання «rel-filter-78b55654-eq-out» відсутнє в локації\"]}]}" ],
+  "retainedHistoryIds" : [ 25500, 25501, 25493, 25492, 25491, 25490, 25489, 25488, 25494, 25487 ],
+  "marker" : "rel-filter-78b55654",
+  "actions" : [ "Delete equipment receipt 25499", "Delete external send 25496", "Delete external send 25498", "Delete external receipt 25495", "Delete external receipt 25497", "Remove incident 25492", "Finish owned send 25492", "Return owned send 25489", "Finish owned send 25488", "Deactivate owned resource 5379", "Deactivate owned resource 5380", "Deactivate owned resource 5381", "Delete owned category 90", "Delete owned category 91", "Archive owned location 4658", "Archive owned location 4657", "Archive owned location 4656", "Archive owned location 4655", "Archive owned location 4654", "Archive owned location 4653", "Archive owned location 4652" ],
+  "status" : "SUCCESS"
+}

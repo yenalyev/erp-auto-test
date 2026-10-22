@@ -1,0 +1,176 @@
+{
+  "status" : "CLEANED",
+  "marker" : "rel-filter-78b55654",
+  "devUrl" : "https://dev.cukerochka.sbs",
+  "reason" : "Cleanup failed after overnight interruption: Connection refused: getsockopt",
+  "objects" : {
+    "locations" : [ {
+      "id" : 4652,
+      "name" : "rel-filter-78b55654-from--loc_1792595535662_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\c8dde958-1d11-4d6b-a972-f1c6acaf8e29-attachment.txt"
+    }, {
+      "id" : 4653,
+      "name" : "rel-filter-78b55654-to--loc_1792595541176_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\e0f33a13-c05d-4fc2-a863-c2c87aed1aff-attachment.txt"
+    }, {
+      "id" : 4654,
+      "name" : "rel-filter-78b55654-alt--loc_1792595542855_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\684f0a39-613f-40eb-8169-5fc806d00a5d-attachment.txt"
+    }, {
+      "id" : 4655,
+      "name" : "rel-filter-78b55654-src--loc_1792595543321_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ffa95220-9c5e-431d-89d3-ea4ea94af15e-attachment.txt"
+    }, {
+      "id" : 4656,
+      "name" : "rel-filter-78b55654-dst--loc_1792595543871_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\e09c8978-1a51-4bf9-810f-65468cd1d73f-attachment.txt"
+    }, {
+      "id" : 4657,
+      "name" : "rel-filter-78b55654-sibling--loc_1792595544426_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ffa95220-9c5e-431d-89d3-ea4ea94af15e-attachment.txt"
+    }, {
+      "id" : 4658,
+      "name" : "rel-filter-78b55654-external--loc_1792595559846_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ecf12711-c1f6-47b0-bc0d-7f66cb6c6b42-attachment.txt"
+    } ],
+    "resources" : [ {
+      "id" : 5379,
+      "name" : "rel-filter-78b55654-first-_1792595545786_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ffa95220-9c5e-431d-89d3-ea4ea94af15e-attachment.txt"
+    }, {
+      "id" : 5380,
+      "name" : "rel-filter-78b55654-same-_1792595546238_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ffa95220-9c5e-431d-89d3-ea4ea94af15e-attachment.txt"
+    }, {
+      "id" : 5381,
+      "name" : "rel-filter-78b55654-other-_1792595546639_T1",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ffa95220-9c5e-431d-89d3-ea4ea94af15e-attachment.txt"
+    } ],
+    "categories" : [ {
+      "id" : 90,
+      "name" : "rel-filter-78b55654-category-A",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ffa95220-9c5e-431d-89d3-ea4ea94af15e-attachment.txt"
+    }, {
+      "id" : 91,
+      "name" : "rel-filter-78b55654-category-B",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ffa95220-9c5e-431d-89d3-ea4ea94af15e-attachment.txt"
+    } ],
+    "equipment" : [ {
+      "id" : 2217,
+      "name" : "rel-filter-78b55654-edit-incoming-model",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ecf12711-c1f6-47b0-bc0d-7f66cb6c6b42-attachment.txt"
+    }, {
+      "id" : 2218,
+      "name" : "rel-filter-78b55654-edit-outgoing-model",
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ecf12711-c1f6-47b0-bc0d-7f66cb6c6b42-attachment.txt"
+    } ],
+    "relocations" : [ {
+      "id" : 25487,
+      "statesObserved" : [ "AUTO_FINISHED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\0ea9b999-20d2-475f-a2a4-f73a8bf90ae5-attachment.txt",
+      "senderId" : 2360,
+      "recipientId" : 4655,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25488,
+      "statesObserved" : [ "CREATED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4656,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25489,
+      "statesObserved" : [ "CANCELLED", "CREATED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4656,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25490,
+      "statesObserved" : [ "FINISHED", "CREATED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4656,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25491,
+      "statesObserved" : [ "RETURNED", "CANCELLED", "CREATED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4656,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25492,
+      "statesObserved" : [ "LOST", "CREATED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4656,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25493,
+      "statesObserved" : [ "FINISHED", "CREATED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\03d64323-59a1-492a-95a9-546777da2981-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4657,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25494,
+      "statesObserved" : [ "FINISHED", "CREATED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4656,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25495,
+      "statesObserved" : [ "AUTO_FINISHED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\07f3a320-7685-43e2-95bd-0486b68acebb-attachment.txt",
+      "senderId" : 4658,
+      "recipientId" : 4655,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25496,
+      "statesObserved" : [ "AUTO_FINISHED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4658,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25497,
+      "statesObserved" : [ "AUTO_FINISHED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\0ea9b999-20d2-475f-a2a4-f73a8bf90ae5-attachment.txt",
+      "senderId" : 4658,
+      "recipientId" : 4655,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25498,
+      "statesObserved" : [ "AUTO_FINISHED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4658,
+      "type" : "RESOURCE"
+    }, {
+      "id" : 25499,
+      "statesObserved" : [ "AUTO_FINISHED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\0ea9b999-20d2-475f-a2a4-f73a8bf90ae5-attachment.txt",
+      "senderId" : 2151,
+      "recipientId" : 4655,
+      "type" : "EQUIPMENT"
+    }, {
+      "id" : 25500,
+      "statesObserved" : [ "AUTO_FINISHED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\0ea9b999-20d2-475f-a2a4-f73a8bf90ae5-attachment.txt",
+      "senderId" : 2151,
+      "recipientId" : 4655,
+      "type" : "EQUIPMENT"
+    }, {
+      "id" : 25501,
+      "statesObserved" : [ "AUTO_FINISHED" ],
+      "source" : "target\\relocation-edit-return-dev-final-20261021\\allure-results\\05806a9b-02c6-4a0e-baee-cbc7f4d20fef-attachment.txt",
+      "senderId" : 4655,
+      "recipientId" : 4658,
+      "type" : "EQUIPMENT"
+    } ]
+  },
+  "completedAt" : "2026-10-22",
+  "cleanupReport" : "relocation-edit-return-recovery.json"
+}

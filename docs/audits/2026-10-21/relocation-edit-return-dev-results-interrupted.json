@@ -1,0 +1,294 @@
+{
+  "environment": "dev",
+  "featureId": "REQ-REL-EDIT-RETURN",
+  "invocationCounts": {
+    "BLOCKED": 7,
+    "PASS": 5
+  },
+  "rawInvocationCounts": {
+    "FAIL": 7,
+    "PASS": 5
+  },
+  "caseCounts": {
+    "PASS": 2,
+    "BLOCKED": 4
+  },
+  "configurationFailures": [
+    {
+      "method": "cleanup",
+      "status": "FAIL",
+      "message": "\n              Connection refused: getsockopt\n            "
+    }
+  ],
+  "invocations": [
+    {
+      "testCaseId": "TC-REL-RETURN-UI-002",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792648896758,
+      "status": "BLOCKED",
+      "rawStatus": "FAIL",
+      "classificationReason": "ERP dev unavailable after network interruption; no product verdict",
+      "durationMs": 2560,
+      "executedAt": "2026-10-22T09:01:36",
+      "errorMessage": "ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n",
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-a690475b-d5b3-45c3-a089-7a8efc696d28-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\2ace5812-ce26-42df-8e30-1a6a8818b2d0-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-003",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792595591124,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 10651,
+      "executedAt": "2026-10-21T18:13:11",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-d3c8855f-4570-428e-82e5-dc9b8668d905-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-938d77a5-eeb2-4736-9647-5801c7d1c897-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-1df7a3dd-2158-491c-b7e7-d4c0d0a87fe1-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\d8453c13-fcba-4ae5-9022-78eb8b61b1fb-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-004",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792648890305,
+      "status": "BLOCKED",
+      "rawStatus": "FAIL",
+      "classificationReason": "ERP dev unavailable after network interruption; no product verdict",
+      "durationMs": 3482,
+      "executedAt": "2026-10-22T09:01:30",
+      "errorMessage": "ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n",
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-f292c326-8600-476f-98fd-e35f525dbaea-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\1d9457bd-9102-4dae-8f1e-5712956e92ad-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-005",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792595632882,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 20875,
+      "executedAt": "2026-10-21T18:13:52",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-35fea1f2-f2ca-42fd-8273-c44b15b5cce7-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-52fab5fc-fb52-4e54-9f3b-a762a5d650b9-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-3bc350ab-a5aa-46e8-9ff7-eb3f9cd98c75-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\385960f9-21e7-484a-8f1f-9c375533554c-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-001",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792595617990,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 14628,
+      "executedAt": "2026-10-21T18:13:37",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-bf34954f-4189-4121-b112-856aeae84427-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-6829a797-e8fe-427c-a1d7-a3f835603b01-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-273d7e85-1fde-48c3-b1a2-e5f42b782bdf-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\f6f68db4-e28f-4f0b-a601-9ad3965abaa0-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-003",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792595572852,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 17987,
+      "executedAt": "2026-10-21T18:12:52",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-f702e267-9b0b-4b62-a863-17c323776ca7-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-e0d61845-6f22-4536-bc0a-103fbf7f1b56-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-5311faad-b1fa-44a9-bd0e-0074251cec66-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\4224dd4f-c643-4f79-a386-c90f30243624-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-006",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792648884293,
+      "status": "BLOCKED",
+      "rawStatus": "FAIL",
+      "classificationReason": "ERP dev unavailable after network interruption; no product verdict",
+      "durationMs": 5440,
+      "executedAt": "2026-10-22T09:01:24",
+      "errorMessage": "ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_NETWORK_CHANGED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_NETWORK_CHANGED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n",
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-e960bcc8-aa83-4b6d-9867-087102c7464c-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\991abb32-c89e-41a1-802a-d9f5dcb20b23-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-002",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792648899962,
+      "status": "BLOCKED",
+      "rawStatus": "FAIL",
+      "classificationReason": "ERP dev unavailable after network interruption; no product verdict",
+      "durationMs": 2352,
+      "executedAt": "2026-10-22T09:01:39",
+      "errorMessage": "ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n",
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-e1b064b5-33eb-4f21-8431-d125915266cf-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\5c0b7ed8-5553-482c-8902-96abb734d764-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-006",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792595671842,
+      "status": "BLOCKED",
+      "rawStatus": "FAIL",
+      "classificationReason": "Execution crossed an overnight computer/network interruption; timeout and subsequent ERR_NETWORK_CHANGED/ERR_CONNECTION_REFUSED prevent a reliable product verdict. Requires re-execution.",
+      "durationMs": 53210171,
+      "executedAt": "2026-10-21T18:14:31",
+      "errorMessage": "Execution crossed an overnight computer/network interruption; timeout and subsequent ERR_NETWORK_CHANGED/ERR_CONNECTION_REFUSED prevent a reliable product verdict. Requires re-execution.\n\nTimeout 30000ms exceeded",
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-e46dae25-810e-464e-a396-55e0200fb689-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\a19f1a65-5792-4d81-9d1b-269b08ba1871-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-004",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792648894062,
+      "status": "BLOCKED",
+      "rawStatus": "FAIL",
+      "classificationReason": "ERP dev unavailable after network interruption; no product verdict",
+      "durationMs": 2360,
+      "executedAt": "2026-10-22T09:01:34",
+      "errorMessage": "ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n",
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-28693f02-1b87-423e-a9b4-a823311948c3-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\ab4999c8-1926-4e2b-a78b-a56c8634d53c-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-005",
+      "parameters": {
+        "tab": "received"
+      },
+      "start": 1792595653958,
+      "status": "BLOCKED",
+      "rawStatus": "FAIL",
+      "classificationReason": "Framework observer selected a late request from the hidden In Transit tab. The visible Received tab and filter controls matched the saved snapshot. Observer corrected to select history-state responses; this invocation requires re-execution. Original assertion failure retained.",
+      "durationMs": 17606,
+      "executedAt": "2026-10-21T18:14:13",
+      "errorMessage": "Framework observer selected a late request from the hidden In Transit tab. The visible Received tab and filter controls matched the saved snapshot. Observer corrected to select history-state responses; this invocation requires re-execution. Original assertion failure retained.\n\n\r\nMultiple Failures (2 failures)\r\n-- failure 1 --\r\n[Actual list uses the saved filter snapshot] \r\nexpected: {\"endDate\"=[\"2026-10-21\"], \"fromIds\"=[\"4658\"], \"startDate\"=[\"2026-10-21\"], \"states\"=[\"AUTO_FINISHED\", \"FINISHED\", \"RETURNED\"], \"toIds\"=[\"4655\"], \"type\"=[\"RESOURCE\"]}\r\n but was: {\"isOr\"=[\"true\"], \"receiverIds\"=[\"4655\"], \"senderIds\"=[\"4655\"], \"states\"=[\"CANCELLED\", \"CREATED\"]}\r\nat RelocationEditReturnFiltersUiTest.lambda$editAndAssert$6(RelocationEditReturnFiltersUiTest.java:165)\r\n-- failure 2 --\r\n[Returned table contains exact filtered relocation IDs] \r\nExpecting actual:\r\n  [25489L]\r\nto contain exactly in any order:\r\n  []\r\nbut the following elements were unexpected:\r\n  [25489L]\r\nat RelocationEditReturnFiltersUiTest.lambda$editAndAssert$6(RelocationEditReturnFiltersUiTest.java:167)",
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-3a54d101-2c4a-4859-a03f-b87fbed4dad6-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-9938a3ec-17b5-4982-88ff-81dbb86c8d03-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-3b69602f-4816-4c02-9baa-dbfddc89a81e-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\7a733938-1ca8-4410-a4f1-f2dc6c994185-result.json"
+    },
+    {
+      "testCaseId": "TC-REL-RETURN-UI-001",
+      "parameters": {
+        "tab": "sent"
+      },
+      "start": 1792595602037,
+      "status": "PASS",
+      "rawStatus": "PASS",
+      "classificationReason": null,
+      "durationMs": 15652,
+      "executedAt": "2026-10-21T18:13:22",
+      "errorMessage": null,
+      "evidence": [
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-d66ef1d2-f230-435c-af51-d80a7c0b32ce-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-7bc2139b-1a1b-4a02-83f7-11796458c104-attachment.txt",
+        "docs\\audits\\2026-10-21\\relocation-edit-return-evidence\\relocation-edit-return-dev-final-20261021-a6fc0c06-2a16-4e2f-8b7b-9281a5cc8617-attachment.png"
+      ],
+      "source": "target\\relocation-edit-return-dev-final-20261021\\allure-results\\dfb24b5d-f7ae-454c-8929-cb18296aa420-result.json"
+    }
+  ],
+  "source": "C:\\Users\\gigam\\IdeaProjects\\erp-auto-test\\target\\relocation-edit-return-dev-final-20261021\\surefire-reports\\testng-results.xml",
+  "tcmImport": {
+    "projectId": 1,
+    "remoteRunId": "relocation-edit-return-relocation-edit-return-dev-final-20261021",
+    "environment": "dev",
+    "runName": "Видано/Отримано — фільтри після редагування — dev — 2026-10-21…2026-10-22",
+    "suite": "relocation-edit-return-filters",
+    "buildName": "relocation-edit-return-dev-final-20261021",
+    "results": [
+      {
+        "testCaseId": "TC-REL-RETURN-UI-001",
+        "status": "PASS",
+        "durationMs": 30280,
+        "executedAt": "2026-10-21T18:13:37",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-002",
+        "status": "BLOCKED",
+        "durationMs": 4912,
+        "executedAt": "2026-10-22T09:01:39",
+        "errorMessage": "{\"tab\": \"sent\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n\n\n{\"tab\": \"received\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n"
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-003",
+        "status": "PASS",
+        "durationMs": 28638,
+        "executedAt": "2026-10-21T18:13:11",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-004",
+        "status": "BLOCKED",
+        "durationMs": 5842,
+        "executedAt": "2026-10-22T09:01:34",
+        "errorMessage": "{\"tab\": \"sent\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n\n\n{\"tab\": \"received\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n"
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-005",
+        "status": "BLOCKED",
+        "durationMs": 38481,
+        "executedAt": "2026-10-21T18:14:13",
+        "errorMessage": "{\"tab\": \"received\"}: Framework observer selected a late request from the hidden In Transit tab. The visible Received tab and filter controls matched the saved snapshot. Observer corrected to select history-state responses; this invocation requires re-execution. Original assertion failure retained.\n\n\r\nMultiple Failures (2 failures)\r\n-- failure 1 --\r\n[Actual list uses the saved filter snapshot] \r\nexpected: {\"endDate\"=[\"2026-10-21\"], \"fromIds\"=[\"4658\"], \"startDate\"=[\"2026-10-21\"], \"states\"=[\"AUTO_FINISHED\", \"FINISHED\", \"RETURNED\"], \"toIds\"=[\"4655\"], \"type\"=[\"RESOURCE\"]}\r\n but was: {\"isOr\"=[\"true\"], \"receiverIds\"=[\"4655\"], \"senderIds\"=[\"4655\"], \"states\"=[\"CANCELLED\", \"CREATED\"]}\r\nat RelocationEditReturnFiltersUiTest.lambda$editAndAssert$6(RelocationEditReturnFiltersUiTest.java:165)\r\n-- failure 2 --\r\n[Returned table contains exact filtered relocation IDs] \r\nExpecting actual:\r\n  [25489L]\r\nto contain exactly in any order:\r\n  []\r\nbut the following elements were unexpected:\r\n  [25489L]\r\nat RelocationEditReturnFiltersUiTest.lambda$editAndAssert$6(RelocationEditReturnFiltersUiTest.java:167)"
+      },
+      {
+        "testCaseId": "TC-REL-RETURN-UI-006",
+        "status": "BLOCKED",
+        "durationMs": 53215611,
+        "executedAt": "2026-10-22T09:01:24",
+        "errorMessage": "{\"tab\": \"received\"}: ERP dev unavailable after network interruption; no product verdict\n\nError {\n  message='net::ERR_NETWORK_CHANGED at https://dev.cukerochka.sbs/relocations\n  name='Error\n  stack='Error: net::ERR_NETWORK_CHANGED at https://dev.cukerochka.sbs/relocations\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-12823853736241440114\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/relocations\", waiting until \"load\"\n\n\n{\"tab\": \"sent\"}: Execution crossed an overnight computer/network interruption; timeout and subsequent ERR_NETWORK_CHANGED/ERR_CONNECTION_REFUSED prevent a reliable product verdict. Requires re-execution.\n\nTimeout 30000ms exceeded"
+      }
+    ]
+  }
+}

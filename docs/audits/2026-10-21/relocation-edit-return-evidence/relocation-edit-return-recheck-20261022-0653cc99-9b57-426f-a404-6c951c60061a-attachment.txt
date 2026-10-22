@@ -1,0 +1,18 @@
+before={category=[94], endDate=[2026-10-22], fromIds=[4700], include_batches=[false], startDate=[2026-10-22], states=[AUTO_FINISHED, FINISHED, RETURNED], toIds=[4697], type=[RESOURCE]}
+after={category=[94], endDate=[2026-10-22], fromIds=[4700], page=[0], size=[100], startDate=[2026-10-22], states=[AUTO_FINISHED, FINISHED, RETURNED], toIds=[4697], type=[RESOURCE]}
+controlsBefore={Тип=Тип Ресурси Обладнання, Від кого=Від кого rel-filter-5d38245b-external--loc_1792649958454_T1, Кому=Кому rel-filter-5d38245b-src--loc_1792649945310_T1, Категорія=Категорія rel-filter-5d38245b-category-A, Виріб=Виріб Усі, Постачальник=Постачальник, Дата відправки=Дата відправки 22.10.2026 – 22.10.2026, Статус=Статус Усі, activeType=Ресурси}
+controlsAfter={Тип=Тип Ресурси Обладнання, Від кого=Від кого rel-filter-5d38245b-external--loc_1792649958454_T1, Кому=Кому rel-filter-5d38245b-src--loc_1792649945310_T1, Категорія=Категорія rel-filter-5d38245b-category-A, Виріб=Виріб Усі, Постачальник=Постачальник, Дата відправки=Дата відправки 22.10.2026 – 22.10.2026, Статус=Статус Усі, activeType=Ресурси}
+returnedTable=22.10.2026	
+rel-filter-5d38245b-external--loc_1792649958454_T1
+	
+rel-filter-5d38245b-src--loc_1792649945310_T1
+	
+rel-filter-5d38245b-first-_1792649947109_T1:
+20 шт
+	-	
+INV-REL-c3795e49-3a13-4589-bad8-967b599dd07e
+	
+Завершено
+	
+rel-filter-5d38245b-saved-5521608e-eaeb-4bff-adff-c6d95b7fd508
+	
