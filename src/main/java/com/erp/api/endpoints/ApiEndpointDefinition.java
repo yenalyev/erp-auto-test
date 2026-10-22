@@ -2275,6 +2275,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    EXPORT_RELOCATIONS_GET(
+            "/api/v1/export-analytics/export-relocation",
+            Method.GET,
+            null,
+            "Export data: global relocation journal XLSX (start/end)",
+            null,
+            null,
+            null
+    ),
+
     EXPORT_REMAINDER_GET(
             "/api/v1/export-analytics/export-remainder",
             Method.GET,

@@ -1,5 +1,14 @@
 ERP API Test Automation Framework
- 
+
+**Експорт даних → Переміщення — колонки та регресія дублів**:
+[контракт, 6 AC та 8 API/UI кейсів](docs/REQ-REL-COL.md).
+Dev: `powershell -File scripts/run_relocation_export_columns_dev.ps1`.
+Набір `relocation-export-columns`: порядок 20 колонок, три kind, матриця 4 групи × 3 kind,
+повна пагінація Видано/Отримано та фактичний UI download. Погоджені групи — ПМ без Цукрарня / СБС без ПМ / Цукрарня / Інші;
+JDBC лише читає конфігурацію. Класи додані також до `relocations`, `ui`, `regression`.
+TCM: [prod](http://tcm.lab/projects/1?feature=176), [stage](http://localhost:18100/projects/1?feature=171).
+22.10.2026 після погодження назв: [dev — 8 PASS / 0 FAIL / 0 SKIP; cleanup успішний](docs/RELOCATION_EXPORT_COLUMNS_TEST_REPORT.md).
+
 Data-Driven фреймворк для автоматизації тестування REST API, з фокусом на перевірці безпеки (RBAC) та контрактному тестуванні (Contract Testing).
 
 Фільтр «Постачальник» на **Видати/Отримати**: [вимоги](docs/REQ-REL-SUPPLIER.md),

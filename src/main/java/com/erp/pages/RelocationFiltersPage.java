@@ -24,6 +24,8 @@ public class RelocationFiltersPage extends BasePage {
     public RelocationFiltersPage open(String tab) {
         page.navigate(ConfigProvider.getBaseUrl() + "/relocations");
         page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("В дорозі")).waitFor();
+        // Wait for authentication/workspace bootstrap before selecting the history tab.
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
         String label = switch (tab) {
             case "active" -> "В дорозі";
             case "sent" -> "Видано";
@@ -31,7 +33,9 @@ public class RelocationFiltersPage extends BasePage {
             case "lost" -> "Втрачено";
             default -> throw new IllegalArgumentException(tab);
         };
-        page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(label).setExact(true)).click();
+        Locator selectedTab = page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName(label).setExact(true));
+        selectedTab.click();
+        page.waitForCondition(() -> "true".equals(selectedTab.getAttribute("aria-selected")));
         page.getByRole(AriaRole.TABPANEL).waitFor();
         expected.clear();
         expected.put("type", "RESOURCE");
