@@ -1,6 +1,7 @@
 package com.erp.models.request;
 
 import com.erp.models.access.GrantScopeKind;
+import com.erp.enums.StorageKind;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,5 +21,6 @@ public class AccessGrantRequest {
     private List<String> permissionKeys = new ArrayList<>();
     private GrantScopeKind scopeKind;
     private Long storageId;
+    private List<StorageKind> storageKinds;
     private String comment;
 }

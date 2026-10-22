@@ -16,6 +16,12 @@
         </classes>
     </test>
 
+    <test name="Crew inventory combined roles">
+        <classes>
+            <class name="com.erp.tests.ui.CrewInventoryAccessUiTest"/>
+        </classes>
+    </test>
+
     <test name="Non-Series Production resource filter UI">
         <classes>
             <class name="com.erp.tests.ui.NonSeriesResourceFilterUiTest"/>

@@ -34,7 +34,6 @@ public class UnitManagementPage extends BasePage {
             Pattern.compile("^(Управління запасами|Ресурси та залишки)");
     private static final String OPEN_INVENTORY_BUTTON_TEXT = "Відкрити інвентаризацію";
     private static final String CLOSE_INVENTORY_BUTTON_TEXT = "Закрити інвентаризацію";
-    private static final String CONDUCT_INVENTORY_BUTTON_TEXT = "Інвентаризація";
     private static final String EXPORT_TO_EXCEL_BUTTON_TEXT = "Експорт в Excel";
     private static final String COPY_BUTTON_TEXT = "Скопіювати";
     private static final String COPIED_FEEDBACK_TEXT = "Скопійовано";
@@ -941,8 +940,7 @@ public class UnitManagementPage extends BasePage {
     }
 
     private Locator conductButton() {
-        return page.getByRole(AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName(CONDUCT_INVENTORY_BUTTON_TEXT).setExact(true));
+        return page.getByTestId("inventory-start");
     }
 
     private Locator exportToExcelButton() {

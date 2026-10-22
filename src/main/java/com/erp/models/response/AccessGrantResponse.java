@@ -2,11 +2,13 @@ package com.erp.models.response;
 
 import com.erp.models.access.AccessScopeKind;
 import com.erp.models.access.GrantScopeKind;
+import com.erp.enums.StorageKind;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 @Data
 @Builder(toBuilder = true)
@@ -23,6 +25,7 @@ public class AccessGrantResponse {
     private AccessScopeKind targetScopeKind;
     private GrantScopeKind scopeKind;
     private SimpleEntityResponse storage;
+    private List<StorageKind> storageKinds;
     private String storagePath;
     private Integer coveredCount;
     private String comment;

@@ -3,6 +3,7 @@ package com.erp.fixtures;
 import com.erp.api.clients.ApiExecutor;
 import com.erp.api.endpoints.ApiEndpointDefinition;
 import com.erp.enums.UserRole;
+import com.erp.enums.StorageKind;
 import com.erp.models.access.AccessScopeKind;
 import com.erp.models.access.GrantScopeKind;
 import com.erp.models.request.AccessGrantRequest;
@@ -129,6 +130,21 @@ public class AccessFixture extends BaseFixture {
                                                   List<String> permissionKeys,
                                                   GrantScopeKind scopeKind,
                                                   Long storageId) {
+        return ensureGrants(userId, roleNames, permissionKeys, scopeKind, storageId, null);
+    }
+
+    /** Mirrors GrantDialog: a SUBTREE can be limited to selected location kinds. */
+    @Step("Ensure kind-filtered access grants for user {userId}")
+    public List<AccessGrantResponse> ensureGrants(String userId,
+                                                List<String> roleNames,
+                                                List<String> permissionKeys,
+                                                GrantScopeKind scopeKind,
+                                                Long storageId,
+                                                List<StorageKind> storageKinds) {
+        if (scopeKind != GrantScopeKind.SUBTREE && storageKinds != null && !storageKinds.isEmpty()) {
+            throw new IllegalArgumentException("storageKinds is valid only for SUBTREE grants");
+        }
+        List<StorageKind> requestedKinds = normalizedKinds(storageKinds);
         List<String> requestedRoles = distinctNonBlank(roleNames);
         List<String> requestedKeys = distinctNonBlank(permissionKeys);
         if (requestedRoles.isEmpty() && requestedKeys.isEmpty()) {
@@ -158,11 +174,11 @@ public class AccessFixture extends BaseFixture {
 
         List<AccessGrantResponse> active = grants(userId, false);
         List<Long> missingRoleIds = resolvedRoles.stream()
-                .filter(role -> active.stream().noneMatch(grant -> sameRoleGrant(grant, role, scopeKind, storageId)))
+                .filter(role -> active.stream().noneMatch(grant -> sameRoleGrant(grant, role, scopeKind, storageId, requestedKinds)))
                 .map(AccessRoleResponse::getId)
                 .toList();
         List<String> missingKeys = requestedKeys.stream()
-                .filter(key -> active.stream().noneMatch(grant -> samePermissionGrant(grant, key, scopeKind, storageId)))
+                .filter(key -> active.stream().noneMatch(grant -> samePermissionGrant(grant, key, scopeKind, storageId, requestedKinds)))
                 .toList();
         if (missingRoleIds.isEmpty() && missingKeys.isEmpty()) {
             return List.of();
@@ -173,6 +189,7 @@ public class AccessFixture extends BaseFixture {
                 .permissionKeys(missingKeys)
                 .scopeKind(scopeKind)
                 .storageId(scopeKind == GrantScopeKind.ALL ? null : storageId)
+                .storageKinds(requestedKinds)
                 .comment("Automated test fixture")
                 .build();
         Response response = apiExecutor.execute(
@@ -216,19 +233,22 @@ public class AccessFixture extends BaseFixture {
     private static boolean sameRoleGrant(AccessGrantResponse grant,
                                          AccessRoleResponse role,
                                          GrantScopeKind requestedScope,
-                                         Long requestedStorageId) {
+                                         Long requestedStorageId,
+                                         List<StorageKind> requestedKinds) {
         if (!grant.isActive() || grant.getRole() == null || !role.getId().equals(grant.getRole().getId())) {
             return false;
         }
         GrantScopeKind expectedScope = role.getScopeKind() == com.erp.models.access.AccessScopeKind.GLOBAL
                 ? GrantScopeKind.ALL : requestedScope;
-        return sameScope(grant, expectedScope, requestedStorageId);
+        return sameScope(grant, expectedScope, requestedStorageId,
+                expectedScope == GrantScopeKind.SUBTREE ? requestedKinds : null);
     }
 
     private static boolean samePermissionGrant(AccessGrantResponse grant,
                                                String permissionKey,
                                                GrantScopeKind requestedScope,
-                                               Long requestedStorageId) {
+                                               Long requestedStorageId,
+                                               List<StorageKind> requestedKinds) {
         if (!grant.isActive() || !permissionKey.equals(grant.getPermissionKey())) {
             return false;
         }
@@ -237,18 +257,28 @@ public class AccessFixture extends BaseFixture {
         if (grant.getScopeKind() == GrantScopeKind.ALL) {
             return true;
         }
-        return sameScope(grant, requestedScope, requestedStorageId);
+        return sameScope(grant, requestedScope, requestedStorageId, requestedKinds);
     }
 
     private static boolean sameScope(AccessGrantResponse grant,
                                      GrantScopeKind expectedScope,
-                                     Long expectedStorageId) {
+                                     Long expectedStorageId,
+                                     List<StorageKind> expectedKinds) {
         if (grant.getScopeKind() != expectedScope) {
             return false;
         }
         Long actualStorageId = grant.getStorage() == null ? null : grant.getStorage().getId();
         Long normalizedExpected = expectedScope == GrantScopeKind.ALL ? null : expectedStorageId;
-        return java.util.Objects.equals(actualStorageId, normalizedExpected);
+        return java.util.Objects.equals(actualStorageId, normalizedExpected)
+                && java.util.Objects.equals(normalizedKinds(grant.getStorageKinds()), expectedKinds);
+    }
+
+    private static List<StorageKind> normalizedKinds(List<StorageKind> kinds) {
+        if (kinds == null) {
+            return null;
+        }
+        List<StorageKind> normalized = kinds.stream().filter(java.util.Objects::nonNull).distinct().sorted().toList();
+        return normalized.isEmpty() || normalized.size() == StorageKind.values().length ? null : normalized;
     }
 
     private static List<String> distinctNonBlank(List<String> values) {
