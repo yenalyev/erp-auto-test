@@ -77,6 +77,8 @@
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
             <class name="com.erp.tests.ui.EquipmentKindHintUiTest"/>
             <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
+            <class name="com.erp.tests.ui.EquipmentDictionaryUiTest"/>
+            <class name="com.erp.tests.ui.EquipmentModelArchiveUiTest"/>
             <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest"/>
         </classes>
     </test>

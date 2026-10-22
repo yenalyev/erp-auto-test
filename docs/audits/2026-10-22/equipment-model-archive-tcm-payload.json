@@ -1,0 +1,456 @@
+{
+  "feature": {
+    "projectId": 1,
+    "featureId": "REQ-EQU-ARCHIVE",
+    "parentFeatureId": "REQ-EQU-DICT",
+    "module": "EQU",
+    "title": "Архівація моделі обладнання",
+    "priority": "HIGH",
+    "description": "Архівація моделей, блокування за залишками та активним переміщенням, фільтр статусу й виключення архіву з автокомпліту.",
+    "documentation": "# Архівація моделі обладнання\n\nМодель, яку більше не використовують, можна перемістити в архів, зберігши історію обладнання. Архів відокремлений у довіднику та не пропонується під час додавання обладнання.\n\n## Критерії приймання\n- **AC-01:** У довіднику моделей обладнання доступна архівація активної моделі без несписаних одиниць. Потрібне підтвердження; скасування не змінює дані. Архівна модель зберігає історію та не має повторної дії архівації.\n- **AC-02:** Залишки несписаного обладнання та активне переміщення блокують архівацію. UI пояснює блокування, прямий API перевіряє актуальний стан; відмова не змінює модель, обладнання чи переміщення.\n- **AC-03:** Архівовані моделі не відображаються в автокомпліті назви форми додавання обладнання; активні моделі залишаються доступними для пошуку та вибору.\n- **AC-04:** Довідник має фільтр статусу: за замовчуванням активні; можна переглядати архівні й усі. Статус поєднується з назвою, категоріями та пагінацією без дублів і сторонніх записів.\n\n## Контракт і тестові дані\n\nДовідник: `/equipment-models`; форма: `/equipment/create`. API: `GET /api/v1/equipment/models` з `status=ACTIVE|ARCHIVED`, `modelName`, `categoryIds`, `page`, `size`; без status повертаються всі статуси. `PUT /api/v1/equipment/models/{id}/archive` повертає 204; при використанні чи повторній архівації — 400. `GET /api/v1/equipment/suggestions?name=...` виключає архів.\n\nУ поточному UI статуси підписані «Активна», «Архівна», «Всі статуси»; вимога «Активні» означає типовий вибір ACTIVE. Кількість рахує несписане обладнання, включно з одиницями в дорозі. RETIRED не блокує. Відновлення архівної моделі та нова матриця RBAC не входять у цю вимогу.\n\nFixture створює дві власні локації, категорію, моделі й одиниці з UUID. Cleanup завершує власні внутрішні видачі, списує обладнання, видаляє незалежні отримання, архівує моделі й деактивує власні локації. Завершені внутрішні переміщення, їхні отримання та категорія зберігаються як незмінна історія; усі моделі мають ARCHIVED та equipmentCount=0. БД не потрібна.\n\n## Автоматизовані сценарії\n\n### TC-EQA-API-001 Архівація списаної моделі зі збереженням історії\n\nКритерій: AC-01. Метод: `archivesRetiredModelAndPreservesHistory`.\n\n1. Створити модель з однією одиницею, списати її. Зберегти модель та історичну одиницю. Виконати PUT архівації.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: HTTP 204, статус ARCHIVED, equipmentCount=0; ID, назва, автор, дата, категорії й історична одиниця не змінені.\n\n### TC-EQA-API-002 Залишки AVAILABLE та IN_REPAIR блокують архівацію\n\nКритерій: AC-02. Метод: `nonRetiredStockBlocksArchive`.\n\n1. Окремо створити модель з одиницею AVAILABLE та IN_REPAIR. Надіслати прямий PUT архівації для кожної.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: Обидва запити: HTTP 400 з поясненням використання моделі. Статус ACTIVE, equipmentCount=1; повні модель та одиниця незмінні.\n\n### TC-EQA-API-003 Активне переміщення блокує архівацію\n\nКритерій: AC-02. Метод: `activeRelocationBlocksArchive`.\n\n1. Видати єдину одиницю на іншу власну локацію без підтвердження отримання. Перевірити IN_TRANSIT і виконати PUT архівації.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: HTTP 400 з поясненням використання; ACTIVE і equipmentCount=1. Модель, одиниця та активна видача збережені.\n\n### TC-EQA-API-004 Зняття останнього блокера та повторна архівація\n\nКритерій: AC-02. Метод: `clearingLastBlockerAllowsArchiveAndRepeatIsRejected`.\n\n1. Спробувати архівувати модель AVAILABLE. Списати останню одиницю, архівувати та повторити PUT.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: До списання HTTP 400, після — 204 і ARCHIVED. Повторний PUT: 400 «Модель вже в архіві», модель незмінна.\n\n### TC-EQA-API-005 Статус із назвою категорією та пагінацією\n\nКритерій: AC-04. Метод: `filtersStatusWithNameCategoryAndPagination`.\n\n1. Підготувати активну й архівну моделі однієї категорії. Запитати ACTIVE, ARCHIVED та без status; поєднати з назвою, категорією і size=1; перевірити page=1 та протилежний статус.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: Фільтри повертають точні ID та status, total=1; друга сторінка порожня. Без статусу обидві моделі; протилежний статус з точною назвою дає порожній результат.\n\n### TC-EQA-API-006 Suggestions виключає архів із результатів пошуку\n\nКритерій: AC-03. Метод: `suggestionsExcludeArchivedModels`.\n\n1. Підготувати активний контроль і списану модель. Знайти обидві через suggestions, архівувати списану та повторити пошук за спільною й точною назвою.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: До архівації обидві моделі; після — лише активний контроль; точний пошук архівної моделі повертає [].\n\n### TC-EQA-UI-001 Типовий фільтр показує активні моделі\n\nКритерій: AC-04. Метод: `defaultsToActiveModels`.\n\n1. Підготувати активну й архівну моделі. Відкрити /equipment-models і знайти їхній спільний фрагмент.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: Обрано активний статус, запити містять status=ACTIVE, рядок лише активної моделі. Поточний текст селектора — «Активна».\n\n### TC-EQA-UI-002 Перемикання статусу та перетин фільтрів\n\nКритерій: AC-04. Метод: `switchesStatusAndCombinesFilters`.\n\n1. Знайти контрольні активну й архівну моделі, обрати категорію. Перемикати Архівна, Всі статуси й Активна; знайти архівну назву з активним статусом і повернутися.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: Кожен статус має точні рядки, архівна модель без кнопки архівації; фільтри назви й категорії зберігаються; несумісна комбінація порожня, повернення відновлює активну модель.\n\n### TC-EQA-UI-003 Скасування архівації не змінює модель\n\nКритерій: AC-01. Метод: `cancelsArchiveWithoutMutation`.\n\n1. Відкрити архівацію списаної моделі. Перевірити назву в діалозі; натиснути «Скасувати».\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: Діалог закрито, PUT не відправлено, модель ACTIVE і лишається у списку.\n\n### TC-EQA-UI-004 Підтвердження архівації та збереження після reload\n\nКритерій: AC-01. Метод: `confirmsArchiveAndPersistsIt`.\n\n1. Натиснути доступну кнопку архівації списаної моделі та підтвердити. Відкрити архівні, перезавантажити сторінку і знову знайти модель.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: Реальний PUT повертає 204, рядок зникає з активних; API ARCHIVED. Після reload модель є в архіві без повторної кнопки.\n\n### TC-EQA-UI-005 Залишки та обладнання в дорозі блокують кнопку\n\nКритерій: AC-02. Метод: `stockAndTransitDisableArchive`.\n\n1. Створити модель із залишком і модель з одиницею в дорозі. Знайти обидві; перевірити кнопку, кількість та підказку.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: Для обох equipmentCount=1, кнопка disabled, підказка пояснює використання несписаним обладнанням; статус ACTIVE.\n\n### TC-EQA-UI-006 Автокомпліт форми показує лише активну модель\n\nКритерій: AC-03. Метод: `autocompleteExcludesArchivedModels`.\n\n1. У формі нового обладнання ввести спільний фрагмент активної й архівної моделі. Обрати активну; потім ввести точну назву архівної.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: Реальний suggestions 200 і список містять лише активний контроль, його вибір заповнює назву. Для архівної назви API [] та кнопки вибору немає.\n\n### TC-EQA-UI-007 Повторна валідація залишку під час підтвердження\n\nКритерій: AC-02. Метод: `revalidatesStockAtConfirmation`.\n\n1. Відкрити підтвердження архівації списаної моделі. Через API відновити одиницю в AVAILABLE. Підтвердити діалог і повторно відкрити довідник.\n2. Звірити фактичний результат із даними API; у UI-кейсі перевірити видимі елементи й реальний мережевий запит.\n\nОчікування: PUT 400; UI показує «Модель використовується обладнанням — архівація неможлива.». Модель ACTIVE; після оновлення рядок є, кнопка disabled.\n\n## Запуск і облік результатів\n\n13 кейсів, 14 виконань: 6 API-кейсів (7 виконань через AVAILABLE/IN_REPAIR) та 7 UI-кейсів. Усі мають `@TestCaseId` і відповідний automation link. Класи включено в `equipment`, `functional` (API), `ui` (UI) та `regression`.\n\nDev: `powershell -ExecutionPolicy Bypass -File scripts/run_equipment_model_archive_dev.ps1`. Або `mvn test -Denv=dev -Dsuite=equipment-model-archive -Duse.database=false -Dssh.enabled=false -Dframework.browser.channel=chrome`. Runner зберігає окремий каталог `target/equipment-model-archive-*` з Maven, Surefire та Allure.\n\nДокументація і кейси публікуються в prod та stage TCM у `REQ-EQU-DICT` → `REQ-EQU-ARCHIVE`. Виконання імпортуються з environment=dev; публікація в prod TCM не означає запуск на prod ERP. Фактичний звіт: `docs/audits/2026-10-22/equipment-model-archive-dev-report.md`.\n\n## Перевірка на dev 22 жовтня 2026\n\nОстанній успішний прогін: 2026-10-22T11:16:06 EEST — 2026-10-22T11:19:06 EEST (Europe/Kyiv). **14 PASS / 0 FAIL / 0 SKIP**, BUILD SUCCESS; setup і cleanup без помилок. Це 13 кейсів і 14 виконань через окремі AVAILABLE/IN_REPAIR. Результати з environment=dev: prod TCM Test Run 163, dev/stage TCM Test Run 224.\n\nCleanup після попереднього 503 завершено й перевірено повторними GET: видалено 6 одиниць, 6 моделей архівовано з equipmentCount=0, категорію 39 видалено, локації 4840/4841 деактивовано. Попередній регресійний прогін довідника: 13 PASS / 0 FAIL / 0 SKIP. Попередні невдалі прогони збережено в історії; останні статуси кейсів — PASS.\n"
+  },
+  "criteria": [
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-01",
+      "text": "У довіднику моделей обладнання доступна архівація активної моделі без несписаних одиниць. Потрібне підтвердження; скасування не змінює дані. Архівна модель зберігає історію та не має повторної дії архівації."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-02",
+      "text": "Залишки несписаного обладнання та активне переміщення блокують архівацію. UI пояснює блокування, прямий API перевіряє актуальний стан; відмова не змінює модель, обладнання чи переміщення."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-03",
+      "text": "Архівовані моделі не відображаються в автокомпліті назви форми додавання обладнання; активні моделі залишаються доступними для пошуку та вибору."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-04",
+      "text": "Довідник має фільтр статусу: за замовчуванням активні; можна переглядати архівні й усі. Статус поєднується з назвою, категоріями та пагінацією без дублів і сторонніх записів."
+    }
+  ],
+  "cases": [
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-01",
+      "testId": "TC-EQA-API-001",
+      "title": "Архівація списаної моделі зі збереженням історії",
+      "description": "Автоматизація: EquipmentModelArchiveApiTest#archivesRetiredModelAndPreservesHistory. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Створити модель з однією одиницею, списати її. Зберегти модель та історичну одиницю. Виконати PUT архівації.",
+          "expectedText": "HTTP 204, статус ARCHIVED, equipmentCount=0; ID, назва, автор, дата, категорії й історична одиниця не змінені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "HTTP 204, статус ARCHIVED, equipmentCount=0; ID, назва, автор, дата, категорії й історична одиниця не змінені."
+        }
+      ],
+      "expectedResult": "HTTP 204, статус ARCHIVED, equipmentCount=0; ID, назва, автор, дата, категорії й історична одиниця не змінені.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [
+        "TC-EQA-API-001"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-02",
+      "testId": "TC-EQA-API-002",
+      "title": "Залишки AVAILABLE та IN_REPAIR блокують архівацію",
+      "description": "Автоматизація: EquipmentModelArchiveApiTest#nonRetiredStockBlocksArchive. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Окремо створити модель з одиницею AVAILABLE та IN_REPAIR. Надіслати прямий PUT архівації для кожної.",
+          "expectedText": "Обидва запити: HTTP 400 з поясненням використання моделі. Статус ACTIVE, equipmentCount=1; повні модель та одиниця незмінні."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "Обидва запити: HTTP 400 з поясненням використання моделі. Статус ACTIVE, equipmentCount=1; повні модель та одиниця незмінні."
+        }
+      ],
+      "expectedResult": "Обидва запити: HTTP 400 з поясненням використання моделі. Статус ACTIVE, equipmentCount=1; повні модель та одиниця незмінні.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [
+        "TC-EQA-API-002"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-02",
+      "testId": "TC-EQA-API-003",
+      "title": "Активне переміщення блокує архівацію",
+      "description": "Автоматизація: EquipmentModelArchiveApiTest#activeRelocationBlocksArchive. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Видати єдину одиницю на іншу власну локацію без підтвердження отримання. Перевірити IN_TRANSIT і виконати PUT архівації.",
+          "expectedText": "HTTP 400 з поясненням використання; ACTIVE і equipmentCount=1. Модель, одиниця та активна видача збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "HTTP 400 з поясненням використання; ACTIVE і equipmentCount=1. Модель, одиниця та активна видача збережені."
+        }
+      ],
+      "expectedResult": "HTTP 400 з поясненням використання; ACTIVE і equipmentCount=1. Модель, одиниця та активна видача збережені.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [
+        "TC-EQA-API-003"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-02",
+      "testId": "TC-EQA-API-004",
+      "title": "Зняття останнього блокера та повторна архівація",
+      "description": "Автоматизація: EquipmentModelArchiveApiTest#clearingLastBlockerAllowsArchiveAndRepeatIsRejected. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Спробувати архівувати модель AVAILABLE. Списати останню одиницю, архівувати та повторити PUT.",
+          "expectedText": "До списання HTTP 400, після — 204 і ARCHIVED. Повторний PUT: 400 «Модель вже в архіві», модель незмінна."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "До списання HTTP 400, після — 204 і ARCHIVED. Повторний PUT: 400 «Модель вже в архіві», модель незмінна."
+        }
+      ],
+      "expectedResult": "До списання HTTP 400, після — 204 і ARCHIVED. Повторний PUT: 400 «Модель вже в архіві», модель незмінна.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [
+        "TC-EQA-API-004"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-04",
+      "testId": "TC-EQA-API-005",
+      "title": "Статус із назвою категорією та пагінацією",
+      "description": "Автоматизація: EquipmentModelArchiveApiTest#filtersStatusWithNameCategoryAndPagination. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати активну й архівну моделі однієї категорії. Запитати ACTIVE, ARCHIVED та без status; поєднати з назвою, категорією і size=1; перевірити page=1 та протилежний статус.",
+          "expectedText": "Фільтри повертають точні ID та status, total=1; друга сторінка порожня. Без статусу обидві моделі; протилежний статус з точною назвою дає порожній результат."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "Фільтри повертають точні ID та status, total=1; друга сторінка порожня. Без статусу обидві моделі; протилежний статус з точною назвою дає порожній результат."
+        }
+      ],
+      "expectedResult": "Фільтри повертають точні ID та status, total=1; друга сторінка порожня. Без статусу обидві моделі; протилежний статус з точною назвою дає порожній результат.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [
+        "TC-EQA-API-005"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-03",
+      "testId": "TC-EQA-API-006",
+      "title": "Suggestions виключає архів із результатів пошуку",
+      "description": "Автоматизація: EquipmentModelArchiveApiTest#suggestionsExcludeArchivedModels. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати активний контроль і списану модель. Знайти обидві через suggestions, архівувати списану та повторити пошук за спільною й точною назвою.",
+          "expectedText": "До архівації обидві моделі; після — лише активний контроль; точний пошук архівної моделі повертає []."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "До архівації обидві моделі; після — лише активний контроль; точний пошук архівної моделі повертає []."
+        }
+      ],
+      "expectedResult": "До архівації обидві моделі; після — лише активний контроль; точний пошук архівної моделі повертає [].",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [
+        "TC-EQA-API-006"
+      ],
+      "uiAutomationIds": []
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-04",
+      "testId": "TC-EQA-UI-001",
+      "title": "Типовий фільтр показує активні моделі",
+      "description": "Автоматизація: EquipmentModelArchiveUiTest#defaultsToActiveModels. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати активну й архівну моделі. Відкрити /equipment-models і знайти їхній спільний фрагмент.",
+          "expectedText": "Обрано активний статус, запити містять status=ACTIVE, рядок лише активної моделі. Поточний текст селектора — «Активна»."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "Обрано активний статус, запити містять status=ACTIVE, рядок лише активної моделі. Поточний текст селектора — «Активна»."
+        }
+      ],
+      "expectedResult": "Обрано активний статус, запити містять status=ACTIVE, рядок лише активної моделі. Поточний текст селектора — «Активна».",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-EQA-UI-001"
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-04",
+      "testId": "TC-EQA-UI-002",
+      "title": "Перемикання статусу та перетин фільтрів",
+      "description": "Автоматизація: EquipmentModelArchiveUiTest#switchesStatusAndCombinesFilters. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Знайти контрольні активну й архівну моделі, обрати категорію. Перемикати Архівна, Всі статуси й Активна; знайти архівну назву з активним статусом і повернутися.",
+          "expectedText": "Кожен статус має точні рядки, архівна модель без кнопки архівації; фільтри назви й категорії зберігаються; несумісна комбінація порожня, повернення відновлює активну модель."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "Кожен статус має точні рядки, архівна модель без кнопки архівації; фільтри назви й категорії зберігаються; несумісна комбінація порожня, повернення відновлює активну модель."
+        }
+      ],
+      "expectedResult": "Кожен статус має точні рядки, архівна модель без кнопки архівації; фільтри назви й категорії зберігаються; несумісна комбінація порожня, повернення відновлює активну модель.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-EQA-UI-002"
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-01",
+      "testId": "TC-EQA-UI-003",
+      "title": "Скасування архівації не змінює модель",
+      "description": "Автоматизація: EquipmentModelArchiveUiTest#cancelsArchiveWithoutMutation. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити архівацію списаної моделі. Перевірити назву в діалозі; натиснути «Скасувати».",
+          "expectedText": "Діалог закрито, PUT не відправлено, модель ACTIVE і лишається у списку."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "Діалог закрито, PUT не відправлено, модель ACTIVE і лишається у списку."
+        }
+      ],
+      "expectedResult": "Діалог закрито, PUT не відправлено, модель ACTIVE і лишається у списку.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-EQA-UI-003"
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-01",
+      "testId": "TC-EQA-UI-004",
+      "title": "Підтвердження архівації та збереження після reload",
+      "description": "Автоматизація: EquipmentModelArchiveUiTest#confirmsArchiveAndPersistsIt. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Натиснути доступну кнопку архівації списаної моделі та підтвердити. Відкрити архівні, перезавантажити сторінку і знову знайти модель.",
+          "expectedText": "Реальний PUT повертає 204, рядок зникає з активних; API ARCHIVED. Після reload модель є в архіві без повторної кнопки."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "Реальний PUT повертає 204, рядок зникає з активних; API ARCHIVED. Після reload модель є в архіві без повторної кнопки."
+        }
+      ],
+      "expectedResult": "Реальний PUT повертає 204, рядок зникає з активних; API ARCHIVED. Після reload модель є в архіві без повторної кнопки.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-EQA-UI-004"
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-02",
+      "testId": "TC-EQA-UI-005",
+      "title": "Залишки та обладнання в дорозі блокують кнопку",
+      "description": "Автоматизація: EquipmentModelArchiveUiTest#stockAndTransitDisableArchive. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Створити модель із залишком і модель з одиницею в дорозі. Знайти обидві; перевірити кнопку, кількість та підказку.",
+          "expectedText": "Для обох equipmentCount=1, кнопка disabled, підказка пояснює використання несписаним обладнанням; статус ACTIVE."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "Для обох equipmentCount=1, кнопка disabled, підказка пояснює використання несписаним обладнанням; статус ACTIVE."
+        }
+      ],
+      "expectedResult": "Для обох equipmentCount=1, кнопка disabled, підказка пояснює використання несписаним обладнанням; статус ACTIVE.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-EQA-UI-005"
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-03",
+      "testId": "TC-EQA-UI-006",
+      "title": "Автокомпліт форми показує лише активну модель",
+      "description": "Автоматизація: EquipmentModelArchiveUiTest#autocompleteExcludesArchivedModels. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "У формі нового обладнання ввести спільний фрагмент активної й архівної моделі. Обрати активну; потім ввести точну назву архівної.",
+          "expectedText": "Реальний suggestions 200 і список містять лише активний контроль, його вибір заповнює назву. Для архівної назви API [] та кнопки вибору немає."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "Реальний suggestions 200 і список містять лише активний контроль, його вибір заповнює назву. Для архівної назви API [] та кнопки вибору немає."
+        }
+      ],
+      "expectedResult": "Реальний suggestions 200 і список містять лише активний контроль, його вибір заповнює назву. Для архівної назви API [] та кнопки вибору немає.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-EQA-UI-006"
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-EQU-ARCHIVE",
+      "acKey": "AC-02",
+      "testId": "TC-EQA-UI-007",
+      "title": "Повторна валідація залишку під час підтвердження",
+      "description": "Автоматизація: EquipmentModelArchiveUiTest#revalidatesStockAtConfirmation. docs/REQ-EQU-ARCHIVE.md.",
+      "preconditions": "ADMIN з чинним доступом до dev ERP. Власні дві локації, категорія та унікальні моделі; чужі дані не змінюються.",
+      "testData": "Унікальний marker eqarchive-<uuid>; окрема одиниця на кожну модель; ACTIVE/ARCHIVED, AVAILABLE/IN_REPAIR/RETIRED/IN_TRANSIT за сценарієм.",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити підтвердження архівації списаної моделі. Через API відновити одиницю в AVAILABLE. Підтвердити діалог і повторно відкрити довідник.",
+          "expectedText": "PUT 400; UI показує «Модель використовується обладнанням — архівація неможлива.». Модель ACTIVE; після оновлення рядок є, кнопка disabled."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Звірити фактичні дані API та видимий результат UI для UI-сценарію.",
+          "expectedText": "PUT 400; UI показує «Модель використовується обладнанням — архівація неможлива.». Модель ACTIVE; після оновлення рядок є, кнопка disabled."
+        }
+      ],
+      "expectedResult": "PUT 400; UI показує «Модель використовується обладнанням — архівація неможлива.». Модель ACTIVE; після оновлення рядок є, кнопка disabled.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "equipment,model,archive,regression,automated",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-EQA-UI-007"
+      ]
+    }
+  ]
+}

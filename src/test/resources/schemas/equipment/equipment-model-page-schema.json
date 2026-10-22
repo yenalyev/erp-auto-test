@@ -7,10 +7,12 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "name", "createdAt", "createdBy", "categories"],
+        "required": ["id", "name", "status", "equipmentCount", "createdAt", "createdBy", "categories"],
         "properties": {
           "id": {"type": "integer", "minimum": 1},
           "name": {"type": "string", "minLength": 1},
+          "status": {"type": "string", "enum": ["ACTIVE", "ARCHIVED"]},
+          "equipmentCount": {"type": "integer", "minimum": 0},
           "createdAt": {"type": "string", "format": "date-time"},
           "createdBy": {"type": ["string", "null"]},
           "categories": {

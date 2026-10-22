@@ -1,0 +1,75 @@
+{
+  "environment": "prod TCM",
+  "featureDbId": 177,
+  "documentationMatchesSource": true,
+  "criteriaVerified": 4,
+  "cases": [
+    {
+      "testId": "TC-EQA-API-001",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-API-002",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-API-003",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-API-004",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-API-005",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-API-006",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-UI-001",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-UI-002",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-UI-003",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-UI-004",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-UI-005",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-UI-006",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    },
+    {
+      "testId": "TC-EQA-UI-007",
+      "status": "PASS",
+      "stepsAndAutomationMatch": true
+    }
+  ],
+  "dictionaryAc02Updated": true,
+  "lastRunId": 163
+}

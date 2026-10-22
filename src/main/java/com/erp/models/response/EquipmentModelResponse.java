@@ -10,6 +10,8 @@ import java.util.List;
 public class EquipmentModelResponse {
     private Long id;
     private String name;
+    private String status;
+    private Long equipmentCount;
     private Instant createdAt;
     private String createdBy;
     private List<SimpleEntityResponse> categories;

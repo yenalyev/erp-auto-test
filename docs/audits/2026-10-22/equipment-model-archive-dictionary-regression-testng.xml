@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="13" passed="13" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-10-22T10:24:19 EEST" name="Equipment Dictionary" finished-at="2026-10-22T10:25:47 EEST" duration-ms="88135">
+    <groups>
+    </groups>
+    <test started-at="2026-10-22T10:24:19 EEST" name="Equipment model dictionary API and UI" finished-at="2026-10-22T10:25:47 EEST" duration-ms="88135">
+      <class name="com.erp.tests.ui.EquipmentDictionaryUiTest">
+        <test-method is-config="true" signature="baseTestClassSetup()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:24:58 EEST" name="baseTestClassSetup" finished-at="2026-10-22T10:24:58 EEST" duration-ms="30" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- baseTestClassSetup -->
+        <test-method is-config="true" signature="prepareDictionary()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:24:58 EEST" name="prepareDictionary" finished-at="2026-10-22T10:25:06 EEST" depends-on-methods="com.erp.tests.ui.BaseUITest.baseTestClassSetup" duration-ms="7370" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- prepareDictionary -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:06 EEST" name="testSetup" finished-at="2026-10-22T10:25:06 EEST" duration-ms="341" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="filtersCategoriesAndCombinesWithName()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:06 EEST" name="filtersCategoriesAndCombinesWithName" finished-at="2026-10-22T10:25:18 EEST" duration-ms="11606" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- filtersCategoriesAndCombinesWithName -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:18 EEST" name="uiTestTeardown" finished-at="2026-10-22T10:25:18 EEST" duration-ms="21" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:18 EEST" name="testTeardown" finished-at="2026-10-22T10:25:18 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:18 EEST" name="testSetup" finished-at="2026-10-22T10:25:18 EEST" duration-ms="317" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="opensEquipmentTabFromResourceDictionaries()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:18 EEST" name="opensEquipmentTabFromResourceDictionaries" finished-at="2026-10-22T10:25:22 EEST" duration-ms="3696" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- opensEquipmentTabFromResourceDictionaries -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:22 EEST" name="uiTestTeardown" finished-at="2026-10-22T10:25:22 EEST" duration-ms="11" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:22 EEST" name="testTeardown" finished-at="2026-10-22T10:25:22 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:22 EEST" name="testSetup" finished-at="2026-10-22T10:25:22 EEST" duration-ms="264" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="rendersCategoriesAndModelAuditFields()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:22 EEST" name="rendersCategoriesAndModelAuditFields" finished-at="2026-10-22T10:25:26 EEST" duration-ms="3888" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rendersCategoriesAndModelAuditFields -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:26 EEST" name="uiTestTeardown" finished-at="2026-10-22T10:25:26 EEST" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:27 EEST" name="testTeardown" finished-at="2026-10-22T10:25:27 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:27 EEST" name="testSetup" finished-at="2026-10-22T10:25:27 EEST" duration-ms="243" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="searchesNameAndClearsEmptyResult()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:27 EEST" name="searchesNameAndClearsEmptyResult" finished-at="2026-10-22T10:25:32 EEST" duration-ms="5718" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- searchesNameAndClearsEmptyResult -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:33 EEST" name="uiTestTeardown" finished-at="2026-10-22T10:25:33 EEST" duration-ms="14" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:33 EEST" name="testTeardown" finished-at="2026-10-22T10:25:33 EEST" duration-ms="11" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:33 EEST" name="testSetup" finished-at="2026-10-22T10:25:33 EEST" duration-ms="336" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="showsRequiredColumnLabels()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:33 EEST" name="showsRequiredColumnLabels" finished-at="2026-10-22T10:25:36 EEST" duration-ms="3030" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- showsRequiredColumnLabels -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:37 EEST" name="uiTestTeardown" finished-at="2026-10-22T10:25:37 EEST" duration-ms="12" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:37 EEST" name="testTeardown" finished-at="2026-10-22T10:25:37 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:37 EEST" name="testSetup" finished-at="2026-10-22T10:25:37 EEST" duration-ms="281" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="sortsNamesAndCreationDatesInBothDirections()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:37 EEST" name="sortsNamesAndCreationDatesInBothDirections" finished-at="2026-10-22T10:25:42 EEST" duration-ms="4946" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- sortsNamesAndCreationDatesInBothDirections -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:43 EEST" name="uiTestTeardown" finished-at="2026-10-22T10:25:43 EEST" duration-ms="14" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:43 EEST" name="testTeardown" finished-at="2026-10-22T10:25:43 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="cleanupDictionary()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:43 EEST" name="cleanupDictionary" finished-at="2026-10-22T10:25:47 EEST" duration-ms="4777" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanupDictionary -->
+        <test-method is-config="true" signature="classTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentDictionaryUiTest@e7b265e]" started-at="2026-10-22T10:25:47 EEST" name="classTeardown" finished-at="2026-10-22T10:25:47 EEST" duration-ms="13" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- classTeardown -->
+      </class> <!-- com.erp.tests.ui.EquipmentDictionaryUiTest -->
+      <class name="com.erp.tests.functional.equipment.EquipmentDictionaryApiTest">
+        <test-method is-config="true" signature="globalSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:04 EEST" name="globalSetup" finished-at="2026-10-22T10:24:19 EEST" duration-ms="14830" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalSetup -->
+        <test-method is-config="true" signature="baseTestClassSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:19 EEST" name="baseTestClassSetup" finished-at="2026-10-22T10:24:19 EEST" duration-ms="37" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- baseTestClassSetup -->
+        <test-method is-config="true" signature="setupFunctionalContext()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:19 EEST" name="setupFunctionalContext" finished-at="2026-10-22T10:24:19 EEST" duration-ms="4" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setupFunctionalContext -->
+        <test-method is-config="true" signature="prepareDictionary()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:19 EEST" name="prepareDictionary" finished-at="2026-10-22T10:24:44 EEST" depends-on-methods="com.erp.tests.BaseTest.baseTestClassSetup" duration-ms="24476" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- prepareDictionary -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:44 EEST" name="testSetup" finished-at="2026-10-22T10:24:44 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="combinesAndClearsFilters()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:44 EEST" name="combinesAndClearsFilters" finished-at="2026-10-22T10:24:46 EEST" duration-ms="2216" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- combinesAndClearsFilters -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:46 EEST" name="testTeardown" finished-at="2026-10-22T10:24:47 EEST" duration-ms="5" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:47 EEST" name="testSetup" finished-at="2026-10-22T10:24:47 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="defaultsToUkrainianNameAscending()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:47 EEST" name="defaultsToUkrainianNameAscending" finished-at="2026-10-22T10:24:47 EEST" duration-ms="434" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- defaultsToUkrainianNameAscending -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:47 EEST" name="testTeardown" finished-at="2026-10-22T10:24:47 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:47 EEST" name="testSetup" finished-at="2026-10-22T10:24:47 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="filtersCategoriesWithoutTruncatingAggregates()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:47 EEST" name="filtersCategoriesWithoutTruncatingAggregates" finished-at="2026-10-22T10:24:49 EEST" duration-ms="1541" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- filtersCategoriesWithoutTruncatingAggregates -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:49 EEST" name="testTeardown" finished-at="2026-10-22T10:24:49 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:49 EEST" name="testSetup" finished-at="2026-10-22T10:24:49 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="modelAggregatesAllDistinctCategoriesAndMetadata()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:49 EEST" name="modelAggregatesAllDistinctCategoriesAndMetadata" finished-at="2026-10-22T10:24:49 EEST" duration-ms="331" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- modelAggregatesAllDistinctCategoriesAndMetadata -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:49 EEST" name="testTeardown" finished-at="2026-10-22T10:24:49 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:49 EEST" name="testSetup" finished-at="2026-10-22T10:24:49 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="paginatesSortedFilteredModelsWithoutDuplicates()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:49 EEST" name="paginatesSortedFilteredModelsWithoutDuplicates" finished-at="2026-10-22T10:24:50 EEST" duration-ms="960" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- paginatesSortedFilteredModelsWithoutDuplicates -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:50 EEST" name="testTeardown" finished-at="2026-10-22T10:24:50 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:50 EEST" name="testSetup" finished-at="2026-10-22T10:24:50 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="searchesNameAndHandlesNoMatches()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:50 EEST" name="searchesNameAndHandlesNoMatches" finished-at="2026-10-22T10:24:52 EEST" duration-ms="1928" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- searchesNameAndHandlesNoMatches -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:52 EEST" name="testTeardown" finished-at="2026-10-22T10:24:52 EEST" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:52 EEST" name="testSetup" finished-at="2026-10-22T10:24:52 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="supportsBothDirectionsForNameAndCreationDate()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:52 EEST" name="supportsBothDirectionsForNameAndCreationDate" finished-at="2026-10-22T10:24:53 EEST" duration-ms="1228" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- supportsBothDirectionsForNameAndCreationDate -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:53 EEST" name="testTeardown" finished-at="2026-10-22T10:24:53 EEST" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="cleanupDictionary()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:53 EEST" name="cleanupDictionary" finished-at="2026-10-22T10:24:58 EEST" duration-ms="5430" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanupDictionary -->
+        <test-method is-config="true" signature="classTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:24:58 EEST" name="classTeardown" finished-at="2026-10-22T10:24:58 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- classTeardown -->
+        <test-method is-config="true" signature="globalTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentDictionaryApiTest@1de4bee0]" started-at="2026-10-22T10:25:47 EEST" name="globalTeardown" finished-at="2026-10-22T10:25:48 EEST" duration-ms="590" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalTeardown -->
+      </class> <!-- com.erp.tests.functional.equipment.EquipmentDictionaryApiTest -->
+    </test> <!-- Equipment model dictionary API and UI -->
+  </suite> <!-- Equipment Dictionary -->
+</testng-results>

@@ -1,0 +1,248 @@
+{
+  "environment": "dev",
+  "runDirectory": "C:\\Users\\gigam\\IdeaProjects\\erp-auto-test\\target\\equipment-model-archive-dev-20261022-recovered",
+  "suite": {
+    "started-at": "2026-10-22T11:16:06 EEST",
+    "name": "Equipment Model Archive",
+    "finished-at": "2026-10-22T11:19:06 EEST",
+    "duration-ms": "180457"
+  },
+  "summary": {
+    "PASS": 14
+  },
+  "configurationFailures": [],
+  "buildSuccess": true,
+  "results": [
+    {
+      "testCaseId": "TC-EQA-API-003",
+      "method": "activeRelocationBlocksArchive",
+      "status": "PASS",
+      "durationMs": 6560,
+      "executedAt": "2026-10-22T11:16:36",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-API-001",
+      "method": "archivesRetiredModelAndPreservesHistory",
+      "status": "PASS",
+      "durationMs": 4142,
+      "executedAt": "2026-10-22T11:16:43",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-API-004",
+      "method": "clearingLastBlockerAllowsArchiveAndRepeatIsRejected",
+      "status": "PASS",
+      "durationMs": 4580,
+      "executedAt": "2026-10-22T11:16:47",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-API-005",
+      "method": "filtersStatusWithNameCategoryAndPagination",
+      "status": "PASS",
+      "durationMs": 5259,
+      "executedAt": "2026-10-22T11:16:52",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-API-002",
+      "method": "nonRetiredStockBlocksArchive",
+      "status": "PASS",
+      "durationMs": 2657,
+      "executedAt": "2026-10-22T11:16:57",
+      "parameters": [
+        "\n                AVAILABLE\n              "
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-API-002",
+      "method": "nonRetiredStockBlocksArchive",
+      "status": "PASS",
+      "durationMs": 3417,
+      "executedAt": "2026-10-22T11:17:00",
+      "parameters": [
+        "\n                IN_REPAIR\n              "
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-API-006",
+      "method": "suggestionsExcludeArchivedModels",
+      "status": "PASS",
+      "durationMs": 4685,
+      "executedAt": "2026-10-22T11:17:03",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-UI-006",
+      "method": "autocompleteExcludesArchivedModels",
+      "status": "PASS",
+      "durationMs": 9596,
+      "executedAt": "2026-10-22T11:17:38",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-UI-003",
+      "method": "cancelsArchiveWithoutMutation",
+      "status": "PASS",
+      "durationMs": 5373,
+      "executedAt": "2026-10-22T11:17:48",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-UI-004",
+      "method": "confirmsArchiveAndPersistsIt",
+      "status": "PASS",
+      "durationMs": 8018,
+      "executedAt": "2026-10-22T11:17:53",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-UI-001",
+      "method": "defaultsToActiveModels",
+      "status": "PASS",
+      "durationMs": 5902,
+      "executedAt": "2026-10-22T11:18:02",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-UI-007",
+      "method": "revalidatesStockAtConfirmation",
+      "status": "PASS",
+      "durationMs": 6950,
+      "executedAt": "2026-10-22T11:18:08",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-UI-005",
+      "method": "stockAndTransitDisableArchive",
+      "status": "PASS",
+      "durationMs": 6675,
+      "executedAt": "2026-10-22T11:18:15",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-EQA-UI-002",
+      "method": "switchesStatusAndCombinesFilters",
+      "status": "PASS",
+      "durationMs": 9829,
+      "executedAt": "2026-10-22T11:18:22",
+      "parameters": [],
+      "errorMessage": null
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "environment": "dev",
+    "suite": "equipment-model-archive",
+    "remoteRunId": "equipment-model-archive-dev-20261022-recovered",
+    "runName": "Архівація моделі обладнання — dev 22.10.2026",
+    "buildName": "equipment-model-archive-dev-20261022-recovered",
+    "results": [
+      {
+        "testCaseId": "TC-EQA-API-003",
+        "status": "PASS",
+        "durationMs": 6560,
+        "executedAt": "2026-10-22T11:16:36",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-API-001",
+        "status": "PASS",
+        "durationMs": 4142,
+        "executedAt": "2026-10-22T11:16:43",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-API-004",
+        "status": "PASS",
+        "durationMs": 4580,
+        "executedAt": "2026-10-22T11:16:47",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-API-005",
+        "status": "PASS",
+        "durationMs": 5259,
+        "executedAt": "2026-10-22T11:16:52",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-API-002",
+        "status": "PASS",
+        "durationMs": 6074,
+        "executedAt": "2026-10-22T11:16:57",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-API-006",
+        "status": "PASS",
+        "durationMs": 4685,
+        "executedAt": "2026-10-22T11:17:03",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-UI-006",
+        "status": "PASS",
+        "durationMs": 9596,
+        "executedAt": "2026-10-22T11:17:38",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-UI-003",
+        "status": "PASS",
+        "durationMs": 5373,
+        "executedAt": "2026-10-22T11:17:48",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-UI-004",
+        "status": "PASS",
+        "durationMs": 8018,
+        "executedAt": "2026-10-22T11:17:53",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-UI-001",
+        "status": "PASS",
+        "durationMs": 5902,
+        "executedAt": "2026-10-22T11:18:02",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-UI-007",
+        "status": "PASS",
+        "durationMs": 6950,
+        "executedAt": "2026-10-22T11:18:08",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-UI-005",
+        "status": "PASS",
+        "durationMs": 6675,
+        "executedAt": "2026-10-22T11:18:15",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-EQA-UI-002",
+        "status": "PASS",
+        "durationMs": 9829,
+        "executedAt": "2026-10-22T11:18:22",
+        "errorMessage": null
+      }
+    ]
+  }
+}

@@ -1,5 +1,16 @@
 ERP API Test Automation Framework
 
+**Архівація моделі обладнання**: [вимоги, 4 AC і 13 API/UI кейсів](docs/REQ-EQU-ARCHIVE.md).
+Перевіряються залишки, активне переміщення, повторна валідація під час підтвердження,
+фільтр статусу та виключення архіву з автокомпліту. 14 виконань на ізольованих даних.
+Dev: `powershell -ExecutionPolicy Bypass -File scripts/run_equipment_model_archive_dev.ps1`.
+Окремий набір `equipment-model-archive`; класи також у `equipment`, `functional`, `ui`, `regression`.
+TCM: [prod](http://tcm.lab/projects/1?feature=177), [stage](http://localhost:18100/projects/1?feature=172);
+`REQ-EQU-DICT` → `REQ-EQU-ARCHIVE`; [фактичний звіт dev](docs/audits/2026-10-22/equipment-model-archive-dev-report.md).
+22.10.2026 після відновлення dev: 14 PASS / 0 FAIL / 0 SKIP, BUILD SUCCESS; регресія довідника раніше — 13 PASS.
+Cleanup після 503 завершено: 6 одиниць видалено, моделі й локації архівовано, категорію видалено.
+Нові dev-результати імпортовано й перевірено в TCM prod/stage: прогони 163/224.
+
 **Експорт даних → Переміщення — колонки та регресія дублів**:
 [контракт, 6 AC та 8 API/UI кейсів](docs/REQ-REL-COL.md).
 Dev: `powershell -File scripts/run_relocation_export_columns_dev.ps1`.

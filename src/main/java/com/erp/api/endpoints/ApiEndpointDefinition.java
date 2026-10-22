@@ -2768,6 +2768,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    EQUIPMENT_MODEL_ARCHIVE(
+            "/api/v1/equipment/models/{id}/archive", Method.PUT, null,
+            "Archive equipment model", null, new TypeReference<Void>() {}, null
+    ),
+
+    EQUIPMENT_SUGGESTIONS(
+            "/api/v1/equipment/suggestions", Method.GET, null,
+            "Suggest active equipment models", null, new TypeReference<List<Map<String, Object>>>() {}, null
+    ),
+
     EQUIPMENT_MODELS_GET_PAGE(
             "/api/v1/equipment/models",
             Method.GET,

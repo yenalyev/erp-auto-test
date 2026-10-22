@@ -17,6 +17,8 @@
             <class name="com.erp.tests.functional.measurement_unit.MeasurementUnitTest"/>
             <class name="com.erp.tests.functional.resource.ResourceTest"/>
             <class name="com.erp.tests.functional.resource.ResourceModifiedSortApiTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentDictionaryApiTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest"/>
             <class name="com.erp.tests.functional.non_series_production.NonSeriesExcelExportApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceImageApiTest"/>
             <class name="com.erp.tests.functional.resource.ResourceAutocompleteTest"/>

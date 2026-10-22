@@ -1,0 +1,17 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Repeatable dictionary coverage; ERP API/UI classes are also in regression.xml. -->
+<suite name="Equipment Dictionary" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.GoogleSheetsReportListener"/>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="Equipment model dictionary API and UI">
+        <classes>
+            <class name="com.erp.tests.functional.equipment.EquipmentDictionaryApiTest"/>
+            <class name="com.erp.tests.ui.EquipmentDictionaryUiTest"/>
+        </classes>
+    </test>
+</suite>
