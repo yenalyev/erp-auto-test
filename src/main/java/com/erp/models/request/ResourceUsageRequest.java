@@ -21,6 +21,8 @@ public class ResourceUsageRequest {
     private BigDecimal amount;
     private UUID batchUuid;
     private Long version;
+    @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+    private Boolean removed;
     @Builder.Default
     private List<RelocationItemBatchRequest> batches = new ArrayList<>();
 
