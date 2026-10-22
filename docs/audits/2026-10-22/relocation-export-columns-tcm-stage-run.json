@@ -1,0 +1,115 @@
+{
+  "importResponse": {
+    "runId": 220,
+    "matched": 8,
+    "created": 0,
+    "updated": 8,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 220,
+    "name": "AUTO Експорт даних — Переміщення: колонки — dev — 2026-10-22",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 44,
+    "testPlanName": "AUTO TP REQ-REL-COL",
+    "startedAt": "2026-10-22T06:38:05.016729",
+    "completedAt": "2026-10-22T06:41:22.572515",
+    "createdAt": "2026-10-22T06:38:05.016951",
+    "items": [
+      {
+        "id": 20958,
+        "testId": "TC-REL-COL-API-001",
+        "title": "Назви та точний порядок колонок",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-001",
+        "executedAt": "2026-10-22T09:32:05"
+      },
+      {
+        "id": 20959,
+        "testId": "TC-REL-COL-API-002",
+        "title": "Kind отримувача в кожному рядку",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-002",
+        "executedAt": "2026-10-22T09:32:13"
+      },
+      {
+        "id": 20960,
+        "testId": "TC-REL-COL-API-003",
+        "title": "Групи отримувача для матриці 4 × 3",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-003",
+        "executedAt": "2026-10-22T09:32:33"
+      },
+      {
+        "id": 20961,
+        "testId": "TC-REL-COL-API-004",
+        "title": "Група відправника незалежна від отримувача",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-004",
+        "executedAt": "2026-10-22T09:33:17"
+      },
+      {
+        "id": 20962,
+        "testId": "TC-REL-COL-API-005",
+        "title": "Регресія дублів і звірка обох вкладок",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-005",
+        "executedAt": "2026-10-22T09:33:17"
+      },
+      {
+        "id": 20963,
+        "testId": "TC-REL-COL-API-006",
+        "title": "Включний період та виключення сусіднього дня",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-006",
+        "executedAt": "2026-10-22T09:33:21"
+      },
+      {
+        "id": 20964,
+        "testId": "TC-REL-COL-UI-001",
+        "title": "Реальний download із Експорт даних",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-UI-001",
+        "executedAt": "2026-10-22T09:35:34"
+      },
+      {
+        "id": 20965,
+        "testId": "TC-REL-COL-UI-002",
+        "title": "Звірка видимих Видано й Отримано з Excel",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-UI-002",
+        "executedAt": "2026-10-22T09:35:41"
+      }
+    ]
+  }
+}

@@ -1,5 +1,14 @@
 ERP API Test Automation Framework
 
+**Експорт даних → Переміщення — колонки та регресія дублів**:
+[контракт, 6 AC та 8 API/UI кейсів](docs/REQ-REL-COL.md).
+Dev: `powershell -File scripts/run_relocation_export_columns_dev.ps1`.
+Набір `relocation-export-columns`: порядок 20 колонок, три kind, матриця 4 групи × 3 kind,
+повна пагінація Видано/Отримано та фактичний UI download. Погоджені групи — ПМ без Цукрарня / СБС без ПМ / Цукрарня / Інші;
+JDBC лише читає конфігурацію. Класи додані також до `relocations`, `ui`, `regression`.
+TCM: [prod](http://tcm.lab/projects/1?feature=176), [stage](http://localhost:18100/projects/1?feature=171).
+22.10.2026 після погодження назв: [dev — 8 PASS / 0 FAIL / 0 SKIP; cleanup успішний](docs/audits/2026-10-22/relocation-export-columns-dev-report.md).
+
 **Інвентаризація → Закриті — фільтр по назві ресурсу**:
 [вимоги, 3 АС та 9 API/UI-кейсів](docs/REQ-INV-NAME.md), TCM `REQ-WMS-003` → `REQ-INV-NAME`.
 Запуск dev: `mvn test -Denv=dev -Dsuite=inventory-name-filter -Duse.database=false -Dssh.enabled=false`.

@@ -18,6 +18,7 @@
             <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationBatchTechMapExportTest"/>
+            <class name="com.erp.tests.functional.analytics.RelocationExportColumnsApiTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationBatchAccountingTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationUsedBatchEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
@@ -40,6 +41,7 @@
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationBatchTechMapExportUiTest"/>
+            <class name="com.erp.tests.ui.RelocationExportColumnsUiTest"/>
             <class name="com.erp.tests.ui.RelocationReceivedDateUiTest"/>
             <class name="com.erp.tests.ui.RelocationOperationHistoryCommentUiTest"/>
             <class name="com.erp.tests.ui.CrewReturnUITest"/>

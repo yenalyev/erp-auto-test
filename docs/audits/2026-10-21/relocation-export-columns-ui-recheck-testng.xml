@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="2" passed="0" failed="0" skipped="2">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-10-22T09:01:55 EEST" name="Export data relocation columns UI" finished-at="2026-10-22T09:02:06 EEST" duration-ms="10885">
+    <groups>
+    </groups>
+    <test started-at="2026-10-22T09:01:55 EEST" name="Real export download and both journal screens" finished-at="2026-10-22T09:02:06 EEST" duration-ms="10885">
+      <class name="com.erp.tests.ui.RelocationExportColumnsUiTest">
+        <test-method is-config="true" signature="globalSetup()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:01:39 EEST" name="globalSetup" finished-at="2026-10-22T09:01:55 EEST" duration-ms="15679" status="FAIL">
+          <exception class="java.lang.IllegalStateException">
+            <message>
+              <![CDATA[Configured database is unavailable. Hint: Check db.url, db.username and db.password in properties.]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.IllegalStateException: Configured database is unavailable. Hint: Check db.url, db.username and db.password in properties.
+at com.erp.tests.BaseTest.initDatabase(BaseTest.java:270)
+at com.erp.tests.BaseTest.globalSetup(BaseTest.java:121)
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:141)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethodConsideringTimeout(MethodInvocationHelper.java:71)
+at org.testng.internal.invokers.ConfigInvoker.invokeConfigurationMethod(ConfigInvoker.java:400)
+at org.testng.internal.invokers.ConfigInvoker.invokeConfigurations(ConfigInvoker.java:333)
+at org.testng.SuiteRunner.privateRun(SuiteRunner.java:358)
+at org.testng.SuiteRunner.run(SuiteRunner.java:312)
+at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:95)
+at org.testng.TestNG.runSuitesSequentially(TestNG.java:1274)
+at org.testng.TestNG.runSuitesLocally(TestNG.java:1208)
+at org.testng.TestNG.runSuites(TestNG.java:1112)
+at org.testng.TestNG.run(TestNG.java:1079)
+at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:308)
+at org.apache.maven.surefire.testng.TestNGXmlTestSuite.execute(TestNGXmlTestSuite.java:71)
+at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:113)
+at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+Caused by: java.lang.RuntimeException: Database connection failed
+at com.erp.utils.helpers.DatabaseHelper.connect(DatabaseHelper.java:58)
+at com.erp.utils.helpers.DatabaseHelper.<init>(DatabaseHelper.java:45)
+at com.erp.tests.BaseTest.initDatabase(BaseTest.java:267)
+... 22 more
+Caused by: org.postgresql.util.PSQLException: Connection to candyshop-db.dev.cukerochka.sbs:5432 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
+at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:352)
+at org.postgresql.core.ConnectionFactory.openConnection(ConnectionFactory.java:54)
+at org.postgresql.jdbc.PgConnection.<init>(PgConnection.java:273)
+at org.postgresql.Driver.makeConnection(Driver.java:446)
+at org.postgresql.Driver.connect(Driver.java:298)
+at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:683)
+at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:230)
+at com.erp.utils.helpers.DatabaseHelper.connect(DatabaseHelper.java:51)
+... 24 more
+Caused by: java.net.ConnectException: Connection refused: getsockopt
+at java.base/sun.nio.ch.Net.pollConnect(Native Method)
+at java.base/sun.nio.ch.Net.pollConnectNow(Net.java:682)
+at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:549)
+at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:592)
+at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327)
+at java.base/java.net.Socket.connect(Socket.java:751)
+at org.postgresql.core.PGStream.createSocket(PGStream.java:260)
+at org.postgresql.core.PGStream.<init>(PGStream.java:121)
+at org.postgresql.core.v3.ConnectionFactoryImpl.tryConnect(ConnectionFactoryImpl.java:140)
+at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:268)
+... 31 more
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.IllegalStateException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalSetup -->
+        <test-method is-config="true" signature="baseTestClassSetup()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:01:55 EEST" name="baseTestClassSetup" finished-at="2026-10-22T09:02:05 EEST" duration-ms="9999" status="FAIL">
+          <exception class="com.microsoft.playwright.PlaywrightException">
+            <message>
+              <![CDATA[Error {
+  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs
+  name='Error
+  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs
+    at FrameSession._navigate (C:\Users\gigam\AppData\Local\Temp\playwright-java-1437771570022277593\package\lib\server\chromium\crPage.js:496:35)
+    at async Frame._gotoAction (C:\Users\gigam\AppData\Local\Temp\playwright-java-1437771570022277593\package\lib\server\frames.js:539:28)
+}
+Call log:
+-   - navigating to "https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs", waiting until "domcontentloaded"
+]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[com.microsoft.playwright.PlaywrightException: Error {
+  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs
+  name='Error
+  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs
+    at FrameSession._navigate (C:\Users\gigam\AppData\Local\Temp\playwright-java-1437771570022277593\package\lib\server\chromium\crPage.js:496:35)
+    at async Frame._gotoAction (C:\Users\gigam\AppData\Local\Temp\playwright-java-1437771570022277593\package\lib\server\frames.js:539:28)
+}
+Call log:
+-   - navigating to "https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs", waiting until "domcontentloaded"
+
+at com.microsoft.playwright.impl.WaitableResult.get(WaitableResult.java:56)
+at com.microsoft.playwright.impl.ChannelOwner.runUntil(ChannelOwner.java:132)
+at com.microsoft.playwright.impl.Connection.sendMessage(Connection.java:130)
+at com.microsoft.playwright.impl.ChannelOwner.sendMessage(ChannelOwner.java:118)
+at com.microsoft.playwright.impl.FrameImpl.navigateImpl(FrameImpl.java:463)
+at com.microsoft.playwright.impl.PageImpl.lambda$navigate$47(PageImpl.java:943)
+at com.microsoft.playwright.impl.LoggingSupport.withLogging(LoggingSupport.java:47)
+at com.microsoft.playwright.impl.ChannelOwner.withLogging(ChannelOwner.java:97)
+at com.microsoft.playwright.impl.PageImpl.navigate(PageImpl.java:943)
+at com.microsoft.playwright.impl.PageImpl.navigate(PageImpl.java:42)
+at com.erp.utils.auth.PlaywrightSessionProvider.loginInternal(PlaywrightSessionProvider.java:100)
+at com.erp.utils.auth.PlaywrightSessionProvider.getSession(PlaywrightSessionProvider.java:61)
+at com.erp.utils.auth.AuthService.loginWithRedirectUri(AuthService.java:576)
+at com.erp.utils.auth.AuthService.getSessionForUser(AuthService.java:105)
+at com.erp.utils.auth.AuthService.getSessionForUser(AuthService.java:84)
+at com.erp.tests.ui.BaseUITest.cachedSessionCookies(BaseUITest.java:144)
+at com.erp.tests.ui.RelocationExportColumnsUiTest.baseTestClassSetup(RelocationExportColumnsUiTest.java:29)
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:141)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethodConsideringTimeout(MethodInvocationHelper.java:71)
+at org.testng.internal.invokers.ConfigInvoker.invokeConfigurationMethod(ConfigInvoker.java:400)
+at org.testng.internal.invokers.ConfigInvoker.invokeConfigurations(ConfigInvoker.java:333)
+at org.testng.internal.invokers.TestMethodWorker.invokeBeforeClassMethods(TestMethodWorker.java:188)
+at org.testng.internal.invokers.TestMethodWorker.run(TestMethodWorker.java:128)
+at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+at org.testng.TestRunner.privateRun(TestRunner.java:739)
+at org.testng.TestRunner.run(TestRunner.java:614)
+at org.testng.SuiteRunner.runTest(SuiteRunner.java:421)
+at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:413)
+at org.testng.SuiteRunner.privateRun(SuiteRunner.java:373)
+at org.testng.SuiteRunner.run(SuiteRunner.java:312)
+at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:95)
+at org.testng.TestNG.runSuitesSequentially(TestNG.java:1274)
+at org.testng.TestNG.runSuitesLocally(TestNG.java:1208)
+at org.testng.TestNG.runSuites(TestNG.java:1112)
+at org.testng.TestNG.run(TestNG.java:1079)
+at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:308)
+at org.apache.maven.surefire.testng.TestNGXmlTestSuite.execute(TestNGXmlTestSuite.java:71)
+at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:113)
+at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+Caused by: com.microsoft.playwright.impl.DriverException: Error {
+  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs
+  name='Error
+  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs
+    at FrameSession._navigate (C:\Users\gigam\AppData\Local\Temp\playwright-java-1437771570022277593\package\lib\server\chromium\crPage.js:496:35)
+    at async Frame._gotoAction (C:\Users\gigam\AppData\Local\Temp\playwright-java-1437771570022277593\package\lib\server\frames.js:539:28)
+}
+Call log:
+-   - navigating to "https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs", waiting until "domcontentloaded"
+
+at com.microsoft.playwright.impl.Connection.dispatch(Connection.java:259)
+at com.microsoft.playwright.impl.Connection.processOneMessage(Connection.java:211)
+at com.microsoft.playwright.impl.ChannelOwner.runUntil(ChannelOwner.java:130)
+... 43 more
+]]>
+            </full-stacktrace>
+          </exception> <!-- com.microsoft.playwright.PlaywrightException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- baseTestClassSetup -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:05 EEST" name="testSetup" finished-at="2026-10-22T09:02:06 EEST" duration-ms="174" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="globalExportDownloadsCorrectColumnsAndAllKinds()[pri:1, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="globalExportDownloadsCorrectColumnsAndAllKinds" finished-at="2026-10-22T09:02:06 EEST" duration-ms="1" status="SKIP">
+          <exception class="java.lang.IllegalStateException">
+            <message>
+              <![CDATA[Configured database is unavailable. Hint: Check db.url, db.username and db.password in properties.]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.IllegalStateException: Configured database is unavailable. Hint: Check db.url, db.username and db.password in properties.
+at com.erp.tests.BaseTest.initDatabase(BaseTest.java:270)
+at com.erp.tests.BaseTest.globalSetup(BaseTest.java:121)
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:141)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethodConsideringTimeout(MethodInvocationHelper.java:71)
+at org.testng.internal.invokers.ConfigInvoker.invokeConfigurationMethod(ConfigInvoker.java:400)
+at org.testng.internal.invokers.ConfigInvoker.invokeConfigurations(ConfigInvoker.java:333)
+at org.testng.SuiteRunner.privateRun(SuiteRunner.java:358)
+at org.testng.SuiteRunner.run(SuiteRunner.java:312)
+at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:95)
+at org.testng.TestNG.runSuitesSequentially(TestNG.java:1274)
+at org.testng.TestNG.runSuitesLocally(TestNG.java:1208)
+at org.testng.TestNG.runSuites(TestNG.java:1112)
+at org.testng.TestNG.run(TestNG.java:1079)
+at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:308)
+at org.apache.maven.surefire.testng.TestNGXmlTestSuite.execute(TestNGXmlTestSuite.java:71)
+at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:113)
+at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+Caused by: java.lang.RuntimeException: Database connection failed
+at com.erp.utils.helpers.DatabaseHelper.connect(DatabaseHelper.java:58)
+at com.erp.utils.helpers.DatabaseHelper.<init>(DatabaseHelper.java:45)
+at com.erp.tests.BaseTest.initDatabase(BaseTest.java:267)
+... 22 more
+Caused by: org.postgresql.util.PSQLException: Connection to candyshop-db.dev.cukerochka.sbs:5432 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
+at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:352)
+at org.postgresql.core.ConnectionFactory.openConnection(ConnectionFactory.java:54)
+at org.postgresql.jdbc.PgConnection.<init>(PgConnection.java:273)
+at org.postgresql.Driver.makeConnection(Driver.java:446)
+at org.postgresql.Driver.connect(Driver.java:298)
+at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:683)
+at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:230)
+at com.erp.utils.helpers.DatabaseHelper.connect(DatabaseHelper.java:51)
+... 24 more
+Caused by: java.net.ConnectException: Connection refused: getsockopt
+at java.base/sun.nio.ch.Net.pollConnect(Native Method)
+at java.base/sun.nio.ch.Net.pollConnectNow(Net.java:682)
+at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:549)
+at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:592)
+at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327)
+at java.base/java.net.Socket.connect(Socket.java:751)
+at org.postgresql.core.PGStream.createSocket(PGStream.java:260)
+at org.postgresql.core.PGStream.<init>(PGStream.java:121)
+at org.postgresql.core.v3.ConnectionFactoryImpl.tryConnect(ConnectionFactoryImpl.java:140)
+at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:268)
+... 31 more
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.IllegalStateException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalExportDownloadsCorrectColumnsAndAllKinds -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="uiTestTeardown" finished-at="2026-10-22T09:02:06 EEST" duration-ms="12" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="testTeardown" finished-at="2026-10-22T09:02:06 EEST" duration-ms="29" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="testSetup" finished-at="2026-10-22T09:02:06 EEST" duration-ms="132" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="sentAndReceivedScreensMatchExportedResourceAmounts()[pri:2, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="sentAndReceivedScreensMatchExportedResourceAmounts" finished-at="2026-10-22T09:02:06 EEST" duration-ms="0" status="SKIP">
+          <exception class="java.lang.IllegalStateException">
+            <message>
+              <![CDATA[Configured database is unavailable. Hint: Check db.url, db.username and db.password in properties.]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.IllegalStateException: Configured database is unavailable. Hint: Check db.url, db.username and db.password in properties.
+at com.erp.tests.BaseTest.initDatabase(BaseTest.java:270)
+at com.erp.tests.BaseTest.globalSetup(BaseTest.java:121)
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:141)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethodConsideringTimeout(MethodInvocationHelper.java:71)
+at org.testng.internal.invokers.ConfigInvoker.invokeConfigurationMethod(ConfigInvoker.java:400)
+at org.testng.internal.invokers.ConfigInvoker.invokeConfigurations(ConfigInvoker.java:333)
+at org.testng.SuiteRunner.privateRun(SuiteRunner.java:358)
+at org.testng.SuiteRunner.run(SuiteRunner.java:312)
+at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:95)
+at org.testng.TestNG.runSuitesSequentially(TestNG.java:1274)
+at org.testng.TestNG.runSuitesLocally(TestNG.java:1208)
+at org.testng.TestNG.runSuites(TestNG.java:1112)
+at org.testng.TestNG.run(TestNG.java:1079)
+at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:308)
+at org.apache.maven.surefire.testng.TestNGXmlTestSuite.execute(TestNGXmlTestSuite.java:71)
+at org.apache.maven.surefire.testng.TestNGProvider.invoke(TestNGProvider.java:113)
+at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+Caused by: java.lang.RuntimeException: Database connection failed
+at com.erp.utils.helpers.DatabaseHelper.connect(DatabaseHelper.java:58)
+at com.erp.utils.helpers.DatabaseHelper.<init>(DatabaseHelper.java:45)
+at com.erp.tests.BaseTest.initDatabase(BaseTest.java:267)
+... 22 more
+Caused by: org.postgresql.util.PSQLException: Connection to candyshop-db.dev.cukerochka.sbs:5432 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
+at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:352)
+at org.postgresql.core.ConnectionFactory.openConnection(ConnectionFactory.java:54)
+at org.postgresql.jdbc.PgConnection.<init>(PgConnection.java:273)
+at org.postgresql.Driver.makeConnection(Driver.java:446)
+at org.postgresql.Driver.connect(Driver.java:298)
+at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:683)
+at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:230)
+at com.erp.utils.helpers.DatabaseHelper.connect(DatabaseHelper.java:51)
+... 24 more
+Caused by: java.net.ConnectException: Connection refused: getsockopt
+at java.base/sun.nio.ch.Net.pollConnect(Native Method)
+at java.base/sun.nio.ch.Net.pollConnectNow(Net.java:682)
+at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:549)
+at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:592)
+at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327)
+at java.base/java.net.Socket.connect(Socket.java:751)
+at org.postgresql.core.PGStream.createSocket(PGStream.java:260)
+at org.postgresql.core.PGStream.<init>(PGStream.java:121)
+at org.postgresql.core.v3.ConnectionFactoryImpl.tryConnect(ConnectionFactoryImpl.java:140)
+at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:268)
+... 31 more
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.IllegalStateException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- sentAndReceivedScreensMatchExportedResourceAmounts -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="uiTestTeardown" finished-at="2026-10-22T09:02:06 EEST" duration-ms="8" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="testTeardown" finished-at="2026-10-22T09:02:06 EEST" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="cleanup()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="cleanup" finished-at="2026-10-22T09:02:06 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanup -->
+        <test-method is-config="true" signature="classTeardown()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="classTeardown" finished-at="2026-10-22T09:02:06 EEST" duration-ms="31" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- classTeardown -->
+        <test-method is-config="true" signature="globalTeardown()[pri:0, instance:com.erp.tests.ui.RelocationExportColumnsUiTest@4012d5bc]" started-at="2026-10-22T09:02:06 EEST" name="globalTeardown" finished-at="2026-10-22T09:02:37 EEST" duration-ms="30603" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalTeardown -->
+      </class> <!-- com.erp.tests.ui.RelocationExportColumnsUiTest -->
+    </test> <!-- Real export download and both journal screens -->
+  </suite> <!-- Export data relocation columns UI -->
+</testng-results>

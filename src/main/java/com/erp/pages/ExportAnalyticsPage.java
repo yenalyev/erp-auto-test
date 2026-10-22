@@ -15,7 +15,7 @@ public class ExportAnalyticsPage extends BasePage {
     private static final String PATH = "/export-analytics";
     private static final String PAGE_TITLE_TEXT = "Експорт даних";
     private static final String SIDEBAR_LINK_TEXT = "Експорт даних";
-    private static final String EXPORT_BUTTON_TEXT = "Завантажити в Excel";
+    private static final String EXPORT_BUTTON_TEXT = "Експорт в Excel";
     private static final String SUCCESS_TOAST_FRAGMENT = "успішно";
     private static final String ERROR_TOAST_FRAGMENT = "Не вдалося";
 
@@ -60,6 +60,31 @@ public class ExportAnalyticsPage extends BasePage {
         trigger.click();
         page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName("Залишки")).click();
         return this;
+    }
+
+    public ExportAnalyticsPage selectRelocationsExport() {
+        page.getByRole(AriaRole.MAIN).getByRole(AriaRole.COMBOBOX).click();
+        page.getByRole(AriaRole.OPTION, new Page.GetByRoleOptions().setName("Переміщення").setExact(true)).click();
+        return this;
+    }
+
+    public byte[] downloadRelocationsWorkbook(java.time.LocalDate start, java.time.LocalDate end) throws java.io.IOException {
+        var downloaded = new java.util.concurrent.atomic.AtomicReference<Download>();
+        var response = page.waitForResponse(r -> java.net.URI.create(r.url()).getPath()
+                        .endsWith("/api/v1/export-analytics/export-relocation"),
+                () -> downloaded.set(page.waitForDownload(() -> exportButton().click())));
+        org.assertj.core.api.Assertions.assertThat(response.status()).isEqualTo(200);
+        org.assertj.core.api.Assertions.assertThat(response.request().method()).isEqualTo("GET");
+        var query = java.net.URI.create(response.url()).getQuery();
+        org.assertj.core.api.Assertions.assertThat(query.split("&")).containsExactlyInAnyOrder(
+                "start=" + start, "end=" + end, "include_batches=false");
+        var download = downloaded.get();
+        org.assertj.core.api.Assertions.assertThat(download.suggestedFilename()).endsWith(".xlsx");
+        byte[] bytes = java.nio.file.Files.readAllBytes(download.path());
+        io.qameta.allure.Allure.addAttachment(download.suggestedFilename(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                new java.io.ByteArrayInputStream(bytes), "xlsx");
+        return bytes;
     }
 
     public ExportAnalyticsPage clickExport() {

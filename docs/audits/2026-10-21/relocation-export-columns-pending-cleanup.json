@@ -1,0 +1,629 @@
+{
+  "environment": "dev",
+  "sourceBuild": "target\\rel-columns-verified-20261021",
+  "status": "RECOVERED",
+  "reason": "Dev ERP/PostgreSQL refuse connections after overnight pause; completed history is immutable",
+  "storages": [
+    {
+      "id": 4663,
+      "name": "rel-columns--loc_1792595606655_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\051852b1-3347-43ba-bd65-6f2113fb35a0-attachment.txt"
+    },
+    {
+      "id": 4664,
+      "name": "rel-columns--loc_1792595607206_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\7e3b3809-651a-45f8-804b-8ecc0c837f3d-attachment.txt"
+    },
+    {
+      "id": 4665,
+      "name": "rel-columns--loc_1792595612919_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\fa65e427-5ca3-4687-a934-c4d0738509f2-attachment.txt"
+    },
+    {
+      "id": 4666,
+      "name": "rel-columns--loc_1792595617370_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\7b07c781-53b1-43d2-adbb-3a3e6e0eea91-attachment.txt"
+    },
+    {
+      "id": 4667,
+      "name": "rel-columns--loc_1792595621850_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\72d3b01d-6cc9-4bb2-98c2-6d92cd6a6462-attachment.txt"
+    },
+    {
+      "id": 4668,
+      "name": "rel-columns--loc_1792595622312_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\f5294643-d2a4-4419-994d-439594b5f798-attachment.txt"
+    },
+    {
+      "id": 4669,
+      "name": "rel-columns--loc_1792595626698_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\533ef10d-5c33-4807-b9d1-058853b014ed-attachment.txt"
+    },
+    {
+      "id": 4670,
+      "name": "rel-columns--loc_1792595631379_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\c91040e7-d521-40f1-b673-6ebe7625a7f8-attachment.txt"
+    },
+    {
+      "id": 4671,
+      "name": "rel-columns--loc_1792595635940_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\4d96ed2c-0af5-4189-b017-debaed667029-attachment.txt"
+    },
+    {
+      "id": 4672,
+      "name": "rel-columns--loc_1792595636510_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\cbc4b541-4f47-4f3e-bd9f-8ceebdd744b0-attachment.txt"
+    },
+    {
+      "id": 4673,
+      "name": "rel-columns--loc_1792595640947_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\ee2ab47f-cad0-47bf-9dc6-4459daade9c0-attachment.txt"
+    },
+    {
+      "id": 4674,
+      "name": "rel-columns--loc_1792595645506_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\c8a0b344-f233-4861-a48a-5b45878dc0e5-attachment.txt"
+    },
+    {
+      "id": 4675,
+      "name": "rel-columns--loc_1792595650463_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\427fba7d-f5f7-4138-99b3-1dc874cbf7a2-attachment.txt"
+    },
+    {
+      "id": 4676,
+      "name": "rel-columns--loc_1792595650961_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\f7d46c35-31a2-460c-8360-56b604044c8f-attachment.txt"
+    },
+    {
+      "id": 4677,
+      "name": "rel-columns--loc_1792595655382_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\f8b61f1b-68c1-4443-b0f3-de182b0e7005-attachment.txt"
+    },
+    {
+      "id": 4678,
+      "name": "rel-columns--loc_1792595659637_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\b4c9a629-e54c-479d-87aa-cbc5fb8e5dc0-attachment.txt"
+    },
+    {
+      "id": 4659,
+      "name": "rel-columns--loc_1792595578956_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\9a94a0f9-0b8f-41e9-8810-7c3b6b851be2-attachment.txt"
+    },
+    {
+      "id": 4660,
+      "name": "rel-columns--loc_1792595579486_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\727211ea-22bd-4c31-bc41-2b6d957100a7-attachment.txt"
+    },
+    {
+      "id": 4661,
+      "name": "rel-columns--loc_1792595586530_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\8a1a0aee-2fd2-4e74-94f4-b6851200f4fb-attachment.txt"
+    },
+    {
+      "id": 4662,
+      "name": "rel-columns--loc_1792595591839_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\4382c5f9-5cb2-4b4e-83c6-46cfd98101bc-attachment.txt"
+    }
+  ],
+  "resources": [
+    {
+      "id": 5384,
+      "name": "rel-columns-A-_1792595605389_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\8e28c9ed-9f16-4675-8622-9e38c44460cd-attachment.txt"
+    },
+    {
+      "id": 5385,
+      "name": "rel-columns-B-_1792595605816_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\7c448e9c-ccee-4a7a-a599-0908323e7789-attachment.txt"
+    },
+    {
+      "id": 5382,
+      "name": "rel-columns-A-_1792595577359_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\6202d612-b3ba-4ad2-b530-0abc58aaf27a-attachment.txt"
+    },
+    {
+      "id": 5383,
+      "name": "rel-columns-B-_1792595578270_T1",
+      "senderId": null,
+      "recipientId": null,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\a65c508b-eca6-4755-a716-5eb9616456d6-attachment.txt"
+    }
+  ],
+  "relocations": [
+    {
+      "id": 25518,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\c0bf659f-9556-47dc-b8a2-3fe47090248c-attachment.txt"
+    },
+    {
+      "id": 25519,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\6afa80d5-f0c6-4abe-b1ae-462ec00ca70a-attachment.txt"
+    },
+    {
+      "id": 25520,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\3b0b859a-e497-4246-afd5-39ef3d640af7-attachment.txt"
+    },
+    {
+      "id": 25521,
+      "name": null,
+      "senderId": 4663,
+      "recipientId": 4664,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\5975365e-7e03-40dc-ae56-cd40ed706c7e-attachment.txt"
+    },
+    {
+      "id": 25522,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\62f8f236-70b2-4ad7-9b10-6aa35ea4fde5-attachment.txt"
+    },
+    {
+      "id": 25523,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\17a131a9-7678-42d7-bc83-df5a2f3cfa54-attachment.txt"
+    },
+    {
+      "id": 25524,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\ffdda497-b98e-48ec-baa1-2cc5e5bc1ab3-attachment.txt"
+    },
+    {
+      "id": 25525,
+      "name": null,
+      "senderId": 4663,
+      "recipientId": 4665,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\2e51e180-f50e-4d8c-b36d-682704fc4290-attachment.txt"
+    },
+    {
+      "id": 25526,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\270ba878-d85e-43b7-9fcc-31b39f66a7dc-attachment.txt"
+    },
+    {
+      "id": 25527,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\a31dfe6b-28a9-421a-8150-f7d2a796b0b2-attachment.txt"
+    },
+    {
+      "id": 25528,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4663,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\97f77916-f10a-4187-b7eb-3f04c1f2a528-attachment.txt"
+    },
+    {
+      "id": 25529,
+      "name": null,
+      "senderId": 4663,
+      "recipientId": 4666,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\6e19d111-40ab-4dbd-b313-468845f87095-attachment.txt"
+    },
+    {
+      "id": 25530,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\461d096e-ebd5-4746-8432-ce643503779f-attachment.txt"
+    },
+    {
+      "id": 25531,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\71bedf20-26c0-4a08-a855-2f21be0b2204-attachment.txt"
+    },
+    {
+      "id": 25532,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\5649ec73-962f-4c22-9eec-9f5bc99ba18b-attachment.txt"
+    },
+    {
+      "id": 25533,
+      "name": null,
+      "senderId": 4667,
+      "recipientId": 4668,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\70e01687-8f53-4df1-8bf1-c3e515b41b25-attachment.txt"
+    },
+    {
+      "id": 25534,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\928f1dcf-9b8e-403e-a2c3-de218da5fa09-attachment.txt"
+    },
+    {
+      "id": 25535,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\1e33093b-ad58-4f59-8d11-484d1d8ae244-attachment.txt"
+    },
+    {
+      "id": 25536,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\3e30031a-5a02-46fe-833a-415088710a15-attachment.txt"
+    },
+    {
+      "id": 25537,
+      "name": null,
+      "senderId": 4667,
+      "recipientId": 4669,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\deb3d840-6364-4590-9bd9-c89f00b10d49-attachment.txt"
+    },
+    {
+      "id": 25538,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\90723d79-895b-4aea-b033-d59cb7f91282-attachment.txt"
+    },
+    {
+      "id": 25539,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\abddcb4d-bcf9-427b-90d9-0d2b3c863d92-attachment.txt"
+    },
+    {
+      "id": 25540,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4667,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\46bf5d1c-b07c-4e9f-a26c-edb038e07315-attachment.txt"
+    },
+    {
+      "id": 25541,
+      "name": null,
+      "senderId": 4667,
+      "recipientId": 4670,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\828e54e3-4881-4729-a6ac-6d92c2d003ee-attachment.txt"
+    },
+    {
+      "id": 25542,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\701a218b-5a3c-473b-8ec0-db23c97e5625-attachment.txt"
+    },
+    {
+      "id": 25543,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\59529fb5-bf7b-47b8-928c-5b601138699b-attachment.txt"
+    },
+    {
+      "id": 25544,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\6acb6a09-28d9-46c6-8928-20ebc5b05260-attachment.txt"
+    },
+    {
+      "id": 25545,
+      "name": null,
+      "senderId": 4671,
+      "recipientId": 4672,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\3d124de4-915c-42a0-96b9-6c000e8875b2-attachment.txt"
+    },
+    {
+      "id": 25546,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\e62fcbc2-0e3c-40e7-b6f6-83d6b0905222-attachment.txt"
+    },
+    {
+      "id": 25547,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\8ac1fd7b-8a31-4442-8e7c-20fcbae99749-attachment.txt"
+    },
+    {
+      "id": 25548,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\6c80cfce-566c-4ae3-925b-dc06935d1ef2-attachment.txt"
+    },
+    {
+      "id": 25549,
+      "name": null,
+      "senderId": 4671,
+      "recipientId": 4673,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\44a361e3-d280-4880-8d90-a870325436f6-attachment.txt"
+    },
+    {
+      "id": 25550,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\9c7207d1-aade-412e-b2b6-14ab5f06aad1-attachment.txt"
+    },
+    {
+      "id": 25551,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\26d389e0-4e3c-4de0-9571-706a2232b90f-attachment.txt"
+    },
+    {
+      "id": 25552,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4671,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\9ffb6e9e-ac61-4911-abf5-00ec2c64aa98-attachment.txt"
+    },
+    {
+      "id": 25553,
+      "name": null,
+      "senderId": 4671,
+      "recipientId": 4674,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\2304d30b-0f83-487f-9f8a-e3b8c47806d5-attachment.txt"
+    },
+    {
+      "id": 25554,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\9703021d-528d-4012-be64-b76f18e5f9e2-attachment.txt"
+    },
+    {
+      "id": 25555,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\570f76da-dcdc-43ef-9a11-e51630d19484-attachment.txt"
+    },
+    {
+      "id": 25556,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\66f54dd3-ec1c-4a03-a173-8bbdb8d664e2-attachment.txt"
+    },
+    {
+      "id": 25557,
+      "name": null,
+      "senderId": 4675,
+      "recipientId": 4676,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\622d8b3d-a362-4f6b-ade5-8c5a5f79da79-attachment.txt"
+    },
+    {
+      "id": 25558,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\3870d704-2531-4692-9142-bb55e6a0faf6-attachment.txt"
+    },
+    {
+      "id": 25559,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\f916a440-903f-42af-a090-5d5962cd0c57-attachment.txt"
+    },
+    {
+      "id": 25560,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\7c6c760f-f58d-4e55-a03e-c67a82f61c68-attachment.txt"
+    },
+    {
+      "id": 25561,
+      "name": null,
+      "senderId": 4675,
+      "recipientId": 4677,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\9bb05d45-76e1-4d64-9512-bce855994f10-attachment.txt"
+    },
+    {
+      "id": 25562,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\d3191ef9-d773-4073-be4e-0f49d13bf0db-attachment.txt"
+    },
+    {
+      "id": 25563,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\6da0a82b-79d8-465b-a249-62e90df12099-attachment.txt"
+    },
+    {
+      "id": 25564,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4675,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\d85fac52-e4a3-4c5e-ad58-353b4e2cae95-attachment.txt"
+    },
+    {
+      "id": 25565,
+      "name": null,
+      "senderId": 4675,
+      "recipientId": 4678,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\1d7208d5-5248-498b-9490-25a4b6d24099-attachment.txt"
+    },
+    {
+      "id": 25502,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\d0eda44e-6788-4c8b-9cdc-af4c3a886cc8-attachment.txt"
+    },
+    {
+      "id": 25503,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\63788e95-3810-45ca-953e-0bd5c28cfd44-attachment.txt"
+    },
+    {
+      "id": 25504,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\68c0f6a5-9085-40b3-b759-4ecb4af8ce0c-attachment.txt"
+    },
+    {
+      "id": 25505,
+      "name": null,
+      "senderId": 4659,
+      "recipientId": 4660,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\c096b3f4-25d5-4328-9458-8ed11afae5f0-attachment.txt"
+    },
+    {
+      "id": 25506,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\f6228500-9ff3-4e99-a378-dc3e1506ee16-attachment.txt"
+    },
+    {
+      "id": 25507,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\a78059e7-e336-46df-821d-2b6d908f5fa1-attachment.txt"
+    },
+    {
+      "id": 25508,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\a9d6ba5a-b05c-4c32-b78c-2e9f85559f78-attachment.txt"
+    },
+    {
+      "id": 25509,
+      "name": null,
+      "senderId": 4659,
+      "recipientId": 4661,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\fee2a657-3405-423f-977f-cc33045943ac-attachment.txt"
+    },
+    {
+      "id": 25510,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\f59f223a-e976-4a55-a2ad-d98648abca08-attachment.txt"
+    },
+    {
+      "id": 25511,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\13fa50e1-c302-4f15-9011-eb251b14fc13-attachment.txt"
+    },
+    {
+      "id": 25512,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\415b7df5-c4b9-4c48-8663-001b80b5d085-attachment.txt"
+    },
+    {
+      "id": 25513,
+      "name": null,
+      "senderId": 4659,
+      "recipientId": 4662,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\ef35005b-9504-4b44-96b9-ca6c3bb13293-attachment.txt"
+    },
+    {
+      "id": 25514,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\fab3068f-47e9-418b-a663-0f76abb492f8-attachment.txt"
+    },
+    {
+      "id": 25515,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\7d30f6fa-ec19-4d83-a0d3-ab387ab045de-attachment.txt"
+    },
+    {
+      "id": 25516,
+      "name": null,
+      "senderId": 2360,
+      "recipientId": 4659,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\7dc9c9b1-f128-4baa-8210-7fcecbe60adb-attachment.txt"
+    },
+    {
+      "id": 25517,
+      "name": null,
+      "senderId": 4659,
+      "recipientId": 4660,
+      "creationResponse": "target\\rel-columns-verified-20261021\\allure-results\\2e618998-0756-4172-b0fe-c90c8faac422-attachment.txt"
+    }
+  ],
+  "recoveryReport": "docs\\audits\\2026-10-21\\relocation-export-columns-cleanup-recovery.json"
+}

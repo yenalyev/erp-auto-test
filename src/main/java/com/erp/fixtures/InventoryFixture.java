@@ -423,10 +423,8 @@ public class InventoryFixture extends BaseFixture {
     }
 
     private Long resolveOpenInventoryId(long storageId, UserRole role) {
-        Long cached = openedInventoryIds.get(storageId);
-        if (cached != null) {
-            return cached;
-        }
+        // Conducting inventory closes the process automatically, including through the UI.
+        // A cached id can therefore refer to an already closed process after the next one opens.
         return listInventoryProcesses(role, Map.of(
                 "parentStorageId", storageId,
                 "states", OPEN,
