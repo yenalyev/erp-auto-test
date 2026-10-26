@@ -1,4 +1,5 @@
-param([string]$RunId = ('low-value-write-off-' + (Get-Date -Format 'yyyyMMdd-HHmmss')), [string]$RecoveryManifest)
+param([string]$RunId = ('low-value-write-off-' + (Get-Date -Format 'yyyyMMdd-HHmmss')), [string]$RecoveryManifest,
+      [ValidateSet('low-value-write-off','low-value-write-off-edit')][string]$Suite = 'low-value-write-off')
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $buildDir = Join-Path $repoRoot "target/$RunId"
@@ -15,7 +16,7 @@ try {
         $ErrorActionPreference = 'Continue'
         $recoveryArgs = @()
         if ($RecoveryManifest) { $recoveryArgs += "-Dmshp.recovery=$RecoveryManifest" }
-        & mvn -o test "-Dtest.output.directory=$buildDir" '-Denv=dev' '-Dsuite=low-value-write-off' `
+        & mvn -o test "-Dtest.output.directory=$buildDir" '-Denv=dev' "-Dsuite=$Suite" `
             '-Duse.database=false' '-Dssh.enabled=false' '-Dsuite.artifact.sweep=false' `
             '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false' '-Dframework.browser.channel=chrome' `
             "-Dallure.results.directory=$buildDir/allure-results" @recoveryArgs *> (Join-Path $buildDir 'maven.log')

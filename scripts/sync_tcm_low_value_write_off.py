@@ -16,6 +16,10 @@ from sync_tcm_commercial_document_required_fields import verify_case
 ROOT = Path(__file__).resolve().parents[1]
 FEATURE = 'REQ-MSHP'
 DOC = ROOT / 'docs/REQ-MSHP-resource-write-off.md'
+EDIT_CASE_SUFFIXES = {'API-010', 'UI-011', 'UI-012'}
+
+def case_class(suffix):
+    return 'LowValueWriteOffEditTest' if suffix in EDIT_CASE_SUFFIXES else 'LowValueWriteOffTest'
 CRITERIA = [
  ('AC-01', 'У редагуванні ресурсу ознака МШП задається через select «Облікова категорія» і зберігається. За погодженням від 26.10.2026 повна підказка в цій формі необов’язкова; пояснення МШП доступне на формі списання.'),
  ('AC-02', 'Словник ресурсів має select способу обліку з опцією LOW_VALUE_ITEM для МШП. Вибір показує лише МШП, скидання повертає повний список з урахуванням пошуку. Select замість чекбокса погоджено 26.10.2026.'),
@@ -85,6 +89,15 @@ CASES = [
  ('UI-010','AC-07','journalLocationAndPeriodFilters','UI multiselect локацій та період у комбінації з пошуком',
   ['У просторі Всі локації знайти gloves; через multiselect вибрати A, потім додати B.', 'Вибрати період 1 день, перевірити запит від/до сьогодні; скинути фільтри.'],
   'A приховує B; A+B повертає обидва рядки; реальний GET має сьогоднішні межі, після reset обидва записи видимі.'),
+ ('API-010','AC-08','fifoApiAcceptsValidEdit','API-контроль редагування FIFO: 6 із 10',
+  ['На власній локації з 10 одиницями МШП створити FIFO-списання 6; перевірити залишок 4.', 'Окремо PUT кількість 4, 6 та 10; перевірити збереження й залишок; скасувати власне списання.'],
+  'Кожен валідний PUT має HTTP 200; залишок дорівнює 10 мінус нова кількість; видалення відновлює 10.'),
+ ('UI-011','AC-08','fifoUiAcceptsValidEdit','Регресія: FIFO-редагування не блокує кількість у доступних межах',
+  ['Створити FIFO-списання 6 із 10 на власній локації; відкрити його редагування.', 'Перевірити доступно 10, очистити та повторно ввести 4, 6 або 10 через звичайне поле кількості.', 'Перевірити доступність Підтвердити, реальний PUT, збережену кількість і залишок.'],
+  'Валідна кількість не позначається перевищенням; Підтвердити активна; PUT 200; залишок 10 мінус нова кількість. Без очищення прихованих batches через JS або API-обходу форми.'),
+ ('UI-012','AC-08','batchTrackedUiAcceptsValidEdit','UI-контроль редагування списання з явним вибором партії',
+  ['Для власного МШП увімкнути ручний вибір партії; створити списання 6 із партії на 10.', 'Відкрити редагування, змінити кількість партії на 4 й підтвердити.', 'Перевірити PUT і залишок, скасувати списання та вимкнути власне налаштування.'],
+  'Партія доступна з урахуванням власних 6; кількість 4 приймається UI та PUT 200; залишок 6, після скасування 10.'),
 ]
 
 def build_doc():
@@ -107,14 +120,16 @@ def build_doc():
       '- Історія операцій містить системний опис «Списання малоцінних ресурсів #id»; користувацький коментар зберігається у деталях і журналі списань. API-пагінація журналу використовує дозволене сортування storageName,ASC; непідтримуване id не передається.',
       '- Бухгалтер має право читання списань, створення/зміна/видалення залежать від окремих permissions. Вимога надає Бухгалтеру доступ до журналу; вона не заявляє право створення.', '',
       '## Автоматизація та дані', '',
-      'Набір `low-value-write-off`, клас `com.erp.tests.ui.LowValueWriteOffTest`: 9 API + 10 UI кейсів, 32 виконання (13 негативних варіантів та 2 ролі журналу). Усі ID прив’язані до автоматизації в TCM.', '',
+      'Набір `low-value-write-off`: класи `LowValueWriteOffTest` та `LowValueWriteOffEditTest`; 10 API + 12 UI кейсів, 39 виконань. Початковий набір має 32 виконання; регресія редагування додає 7 (3 API, 3 FIFO UI, 1 попартійний UI). Усі ID прив’язані до автоматизації в TCM.', '',
+      'Окремий запуск регресії редагування: `powershell -ExecutionPolicy Bypass -File scripts/run_low_value_write_off_dev.ps1 -Suite low-value-write-off-edit`. Підготовка: 10 МШП, списання 6, залишок 4; редагування повинне дозволяти 4/6/10 з урахуванням власного списання. Розбір ручного повідомлення — [BUG-MSHP-EDIT-FIFO](BUG-MSHP-EDIT-FIFO.md).', '',
+      '26.10.2026 підтверджено BUG-MSHP-EDIT-FIFO на dev: 4/6/10 приймаються API, але FIFO UI блокує підтвердження; попартійний UI-контроль проходить. Окрема регресія: 4 PASS / 3 FAIL, помилок підготовки/очищення немає. Раніше UI-редагування FIFO не входило до початкових 32 виконань.', '',
       'Власні незалежні внутрішні A/B і external; gloves=МШП (дві партії), cloth=МШП, regular, no-stock=МШП без залишку. A: 30 gloves, 15 cloth, 10 regular; B: 20 gloves. Два базові списання: 1 gloves на A, 2 на B. Нові актори Бухгалтер та читач залишків без прав списань. Адміністратор використовує налаштовану сесію.', '',
       'Кожен успішний POST відразу реєструється, включно з помилково прийнятими негативними запитами. Manifest `low-value-write-off-owned.json` зберігається протягом підготовки й виконання. Cleanup видаляє тільки власні списання/отримання, перевіряє нульові залишки й видаляє залишені нульові рядки інвентаризацією з явними removed=true та version, архівує локації/ресурси й деактивує акторів. Точний GET inventory?resourceId знаходить навіть приховані нульові рядки. JDBC/SSH та мережеві mock не використовуються.', '',
       'Запуск: `powershell -ExecutionPolicy Bypass -File scripts/run_low_value_write_off_dev.ps1`.',
       'Прогін лише на dev; `environment=dev` зберігається і при імпорті результатів у prod/stage TCM. Prod/stage TCM — сховища тестів, це не прогін ERP на prod/stage.', '',
       '## Тест-кейси', '']
     for suffix,ac,method,title,actions,expected in CASES:
-        lines += [f'### TC-MSHP-{suffix} — {title} [{ac}]', '', f'Автотест: `LowValueWriteOffTest#{method}`.', '']
+        lines += [f'### TC-MSHP-{suffix} — {title} [{ac}]', '', f'Автотест: `{case_class(suffix)}#{method}`.', '']
         lines += [f'{i}. {action}' for i,action in enumerate(actions,1)]
         lines += ['', f'Очікування: {expected}', '']
     lines += ['## Межі покриття', '',
@@ -122,16 +137,17 @@ def build_doc():
     DOC.write_text('\n'.join(lines), encoding='utf-8')
 
 def payload():
-    source = (ROOT/'src/test/java/com/erp/tests/ui/LowValueWriteOffTest.java').read_text(encoding='utf-8-sig')
     cases = []
     for suffix,ac,method,title,actions,expected in CASES:
+        class_name=case_class(suffix)
+        source=(ROOT/f'src/test/java/com/erp/tests/ui/{class_name}.java').read_text(encoding='utf-8-sig')
         test_id = f'TC-MSHP-{suffix}'
         assert f'@TestCaseId("{test_id}")' in source and f'void {method}(' in source, test_id
         is_api = suffix.startswith('API')
         cases.append(dict(projectId=1,featureId=FEATURE,acKey=ac,testId=test_id,title=title,
-          description=f'LowValueWriteOffTest#{method}. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.',
+          description=f'{class_name}#{method}. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.' + (' Відомий дефект BUG-MSHP-EDIT-FIFO: UI блокує валідну кількість при редагуванні FIFO; API-контроль проходить.' if suffix=='UI-011' else ''),
           preconditions='ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.',
-          testData='Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.',
+          testData=('Ізольований LowValueWriteOffEditTest: cloth=10, власне списання=6, залишок=4; 4/6/10 для FIFO, окремий попартійний контроль. Cleanup відновлює 10.' if suffix in EDIT_CASE_SUFFIXES else 'Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.'),
           expectedResult=expected,status='ACTIVE',priority='HIGH',severity='MAJOR',testType='FUNCTIONAL' if is_api else 'UI',
           tags='inventory,mshp,low-value,write-off,automated,dev',apiAutomationIds=[test_id] if is_api else [],uiAutomationIds=[] if is_api else [test_id],
           steps=[dict(stepOrder=i,actionText=a,expectedText=expected if i==len(actions) else 'Крок виконаний; дані fixture збережені.') for i,a in enumerate(actions,1)]))
@@ -168,7 +184,8 @@ def import_stage(client, result_path):
     assert not report['configurationFailures'], 'Resolve configuration/cleanup failures before importing'
     body=dict(report['tcmImport'],featureId=feature['id'])
     assert body['environment']=='dev'
-    assert {r['testCaseId'] for r in body['results']}=={c['testId'] for c in payload()['cases']}
+    imported_ids={r['testCaseId'] for r in body['results']}
+    assert imported_ids in [{c['testId'] for c in payload()['cases']}, {'TC-MSHP-'+s for s in EDIT_CASE_SUFFIXES}]
     try:
         imported=client.request('POST',f'{prefix}/test-runs/import',body)
     except RuntimeError as error:
@@ -182,11 +199,11 @@ def import_stage(client, result_path):
         # Stage requires the feature's auto plan to exist before the import transaction starts.
         suite_request=urllib.request.Request(f"{client.base_url}/api/autotest/suites/features/{feature['id']}",headers=headers)
         with urllib.request.urlopen(suite_request,timeout=90) as response: suite=json.load(response)
-        assert set(suite['automationTestIds'])=={r['testCaseId'] for r in body['results']}
+        assert imported_ids <= set(suite['automationTestIds'])
         request=urllib.request.Request(f'{client.base_url}/api/autotest/runs',method='POST',
           data=json.dumps(body,ensure_ascii=False).encode('utf-8'),headers=headers)
         with urllib.request.urlopen(request,timeout=90) as response: imported=json.load(response)
-    assert imported['matched']==19 and not imported['unmatched'] and not imported['outOfScope']
+    assert imported['matched']==len(imported_ids) and not imported['unmatched'] and not imported['outOfScope']
     run=client.request('GET',f"{prefix}/test-runs/{imported['runId']}")
     assert run['environment']=='dev' and run['status']=='COMPLETED'
     assert {r['testId']:r['status'] for r in run['items']}=={r['testCaseId']:r['status'] for r in body['results']}
@@ -202,7 +219,7 @@ if __name__=='__main__':
     if args.payload:
         args.payload.parent.mkdir(parents=True,exist_ok=True)
         args.payload.write_text(json.dumps(payload(),ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-        print('Prepared 8 AC and 19 automated cases')
+        print(f'Prepared {len(CRITERIA)} AC and {len(CASES)} automated cases')
     if args.sync_stage or args.import_results:
         config=tomllib.loads((Path.home()/'.codex/config.toml').read_text(encoding='utf-8'))
         token=os.environ.get('TCM_AI_TOKEN') or config['mcp_servers']['tcm-ai']['env']['TCM_AI_TOKEN']

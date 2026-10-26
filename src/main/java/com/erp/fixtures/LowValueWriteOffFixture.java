@@ -45,6 +45,11 @@ public class LowValueWriteOffFixture {
     public static String today() { return LocalDate.now(ZoneId.of("Europe/Kyiv")).toString(); }
 
     public void prepare() {
+        prepare(15);
+    }
+
+    /** Smaller stock reproduces the manual edit scenario: 6 written off out of 10. */
+    public void prepare(double secondStock) {
         assertThat(System.getProperty("env", "dev")).as("Mutating fixture only in test environments").isIn("dev", "staging");
         recoverPreviousRun();
         resources.fetchSharedUnit(1);
@@ -60,7 +65,7 @@ public class LowValueWriteOffFixture {
                 RelocationStockSeeder.resolveSupplierStorageId(api, UserRole.ADMIN));
         seed(a, low, 20, "A");
         seed(a, low, 10, "B");
-        seed(a, second, 15, "C");
+        seed(a, second, secondStock, "C");
         seed(a, regular, 10, "D");
         seed(b, low, 20, "E");
         journalA = create(UserRole.ADMIN, body(a.getId(), List.of(asset(low.getId(), 1))));

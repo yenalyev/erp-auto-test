@@ -1,0 +1,39 @@
+{
+  "result": "VERIFIED_REPRODUCTION",
+  "bugId": "BUG-MSHP-EDIT-FIFO",
+  "bugStatus": "OPEN",
+  "environment": "dev",
+  "executionCounts": {
+    "PASS": 4,
+    "FAIL": 3
+  },
+  "caseCounts": {
+    "PASS": 2,
+    "FAIL": 1
+  },
+  "configurationFailures": 0,
+  "runs": {
+    "prod": 170,
+    "stage": 231
+  },
+  "documentationSha256": "f8136af897164565447b7bf5bafbe2f26c45c4d195ae7203c765d7095e71d11a",
+  "featureCases": 22,
+  "fullSuiteExpectedExecutions": 39,
+  "fullSuiteExecutedThisRun": false,
+  "initial32PassedRunPreserved": [
+    169,
+    230
+  ],
+  "cleanup": "SUCCESS",
+  "ownLocationsArchived": [
+    5042,
+    5043,
+    5044
+  ],
+  "ownResourcesArchived": [
+    5663,
+    5664,
+    5665,
+    5666
+  ]
+}

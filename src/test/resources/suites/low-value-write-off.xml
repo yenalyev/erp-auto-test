@@ -7,6 +7,9 @@
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
     <test name="Isolated МШП API and real UI">
-        <classes><class name="com.erp.tests.ui.LowValueWriteOffTest"/></classes>
+        <classes>
+            <class name="com.erp.tests.ui.LowValueWriteOffTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffEditTest"/>
+        </classes>
     </test>
 </suite>
