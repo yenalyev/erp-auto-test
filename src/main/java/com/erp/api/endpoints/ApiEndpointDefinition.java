@@ -26,6 +26,23 @@ import java.util.Optional;
 @Getter
 public enum ApiEndpointDefinition {
 
+    LOW_VALUE_WRITE_OFF_CREATE("/api/v1/storages/inventory/low-value-resources/write-off", Method.POST,
+            null, "Write off low-value resources", new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_LIST("/api/v1/storages/inventory/low-value-resources", Method.GET,
+            null, "Low-value write-off history", null, new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_GET("/api/v1/storages/inventory/low-value-resources/{id}?storageId={storageId}", Method.GET,
+            null, "Get low-value write-off", null, new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_UPDATE("/api/v1/storages/inventory/low-value-resources/{id}", Method.PUT,
+            null, "Update low-value write-off", new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_DELETE("/api/v1/storages/inventory/low-value-resources/{id}?storageId={storageId}", Method.DELETE,
+            null, "Cancel low-value write-off and restore stock", null, null, null),
+    LOW_VALUE_STORAGE_ITEMS("/api/v1/storages/{id}/storage-item", Method.GET,
+            null, "Available low-value resources", null, new TypeReference<List<Map<String, Object>>>() {}, null),
+    STORAGE_INVENTORY_ITEM_BY_RESOURCE("/api/v1/storages/{id}/inventory?resourceId={resourceId}", Method.GET,
+            null, "Exact inventory item including zero stock", null, new TypeReference<StorageItemResponse>() {}, null),
+
     // Movement document flow: ledger entries, receipts and commercial documents.
     VIRTUAL_STORAGE_LIST("/api/v1/virtual-storage/{storageId}", Method.GET, null,
             "List ledger entries", null, new TypeReference<List<Map<String, Object>>>() {}, null),

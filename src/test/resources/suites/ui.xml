@@ -12,6 +12,7 @@
     <test name="Inventory name filter UI">
         <classes>
             <class name="com.erp.tests.ui.InventoryNameFilterUiTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffTest"/>
         </classes>
     </test>
 

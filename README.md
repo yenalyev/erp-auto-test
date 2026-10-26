@@ -1,5 +1,17 @@
 ERP API Test Automation Framework
 
+**Списання ресурсів — МШП**: [контракт, 8 AC та 19 API/UI кейсів](docs/REQ-MSHP-resource-write-off.md).
+Набір `low-value-write-off`: 32 виконання, ознака ресурсу, фільтр, валідація й атомарність,
+точні залишки/партії, Історія операцій, журнал, дві ролі та комбіновані фільтри.
+Запуск dev: `powershell -ExecutionPolicy Bypass -File scripts/run_low_value_write_off_dev.ps1`.
+Клас входить також до `inventory`, `ui`, `regression`; дані ізольовані, JDBC/SSH не потрібні.
+TCM: [prod](http://tcm.lab/projects/1?feature=180), [stage](http://localhost:18100/projects/1?feature=175).
+[Результати dev](docs/audits/2026-10-26/low-value-write-off-dev-report.md).
+26.10.2026 погоджено поточний UI: повна підказка у редагуванні необов’язкова; фільтр МШП реалізовано select.
+Повторний dev-прогін: **32 PASS / 0 FAIL / 0 SKIP**, BUILD SUCCESS; cleanup успішний.
+Погоджені документація й кейси та результати синхронізовані в prod/stage TCM, прогони **169/230** (19 PASS кейсів).
+Попередні прогони **168/229** (30 PASS / 2 FAIL виконань за початковими очікуваннями) збережені в історії.
+
 **Архівація моделі обладнання**: [вимоги, 4 AC і 13 API/UI кейсів](docs/REQ-EQU-ARCHIVE.md).
 Перевіряються залишки, активне переміщення, повторна валідація під час підтвердження,
 фільтр статусу та виключення архіву з автокомпліту. 14 виконань на ізольованих даних.

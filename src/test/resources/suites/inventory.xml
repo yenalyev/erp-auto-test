@@ -17,6 +17,7 @@
 
     <test name="Inventory API">
         <classes>
+            <class name="com.erp.tests.ui.LowValueWriteOffTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryNameFilterApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>

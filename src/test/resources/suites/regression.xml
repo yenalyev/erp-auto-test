@@ -387,6 +387,7 @@
     <test name="UI Inventory">
         <classes>
             <class name="com.erp.tests.ui.InventoryNameFilterUiTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffTest"/>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
             <class name="com.erp.tests.ui.InventoryConcurrentIssueUiTest"/>
             <class name="com.erp.tests.ui.InventoryBatchTechMapUiTest"/>

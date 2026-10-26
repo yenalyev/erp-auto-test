@@ -1,0 +1,239 @@
+{
+  "result": "SUCCESS",
+  "baseUrl": "http://localhost:18100",
+  "featureDbId": 175,
+  "importResponse": {
+    "runId": 230,
+    "matched": 19,
+    "created": 19,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 230,
+    "name": "AUTO Списання ресурсів МШП / dev",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 49,
+    "testPlanName": "AUTO TP REQ-MSHP",
+    "startedAt": "2026-10-26T10:25:35.167895",
+    "completedAt": "2026-10-26T10:25:35.721826",
+    "createdAt": "2026-10-26T10:25:35.169175",
+    "items": [
+      {
+        "id": 21082,
+        "testId": "TC-MSHP-API-001",
+        "title": "Збереження ознаки МШП та API-фільтр",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-001",
+        "executedAt": "2026-10-26T12:22:50.677"
+      },
+      {
+        "id": 21083,
+        "testId": "TC-MSHP-API-002",
+        "title": "Доступні лише МШП із залишків вибраної локації",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-002",
+        "executedAt": "2026-10-26T12:22:49.605"
+      },
+      {
+        "id": 21084,
+        "testId": "TC-MSHP-API-003",
+        "title": "Списання кількох ресурсів і дробових кількостей",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-003",
+        "executedAt": "2026-10-26T12:24:27.563"
+      },
+      {
+        "id": 21085,
+        "testId": "TC-MSHP-API-004",
+        "title": "Матриця валідації та атомарність списання",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-004",
+        "executedAt": "2026-10-26T12:23:16.471"
+      },
+      {
+        "id": 21086,
+        "testId": "TC-MSHP-API-005",
+        "title": "Списання конкретної партії та повернення",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-005",
+        "executedAt": "2026-10-26T12:23:11.64"
+      },
+      {
+        "id": 21087,
+        "testId": "TC-MSHP-API-006",
+        "title": "Списання в Історії операцій",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-006",
+        "executedAt": "2026-10-26T12:24:42.845"
+      },
+      {
+        "id": 21088,
+        "testId": "TC-MSHP-API-007",
+        "title": "Пошук, локації, період та пагінація журналу",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-007",
+        "executedAt": "2026-10-26T12:24:03.162"
+      },
+      {
+        "id": 21089,
+        "testId": "TC-MSHP-API-008",
+        "title": "RBAC журналу та прямого створення",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-008",
+        "executedAt": "2026-10-26T12:24:11.294"
+      },
+      {
+        "id": 21090,
+        "testId": "TC-MSHP-API-009",
+        "title": "Редагування дня створення й ізоляція локацій",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-009",
+        "executedAt": "2026-10-26T12:24:37.363"
+      },
+      {
+        "id": 21091,
+        "testId": "TC-MSHP-UI-001",
+        "title": "Редагування МШП у справжній формі ресурсу",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-001",
+        "executedAt": "2026-10-26T12:24:31.135"
+      },
+      {
+        "id": 21092,
+        "testId": "TC-MSHP-UI-002",
+        "title": "Погоджене пояснення МШП на формі списання",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-002",
+        "executedAt": "2026-10-26T12:24:44.451"
+      },
+      {
+        "id": 21093,
+        "testId": "TC-MSHP-UI-003",
+        "title": "Працездатність чинного UI-фільтра МШП",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-003",
+        "executedAt": "2026-10-26T12:23:02.904"
+      },
+      {
+        "id": 21094,
+        "testId": "TC-MSHP-UI-004",
+        "title": "Погоджений select МШП у словнику ресурсів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-004",
+        "executedAt": "2026-10-26T12:23:07.818"
+      },
+      {
+        "id": 21095,
+        "testId": "TC-MSHP-UI-005",
+        "title": "Кнопка залишків, валідація кількості та скасування",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-005",
+        "executedAt": "2026-10-26T12:23:59.393"
+      },
+      {
+        "id": 21096,
+        "testId": "TC-MSHP-UI-006",
+        "title": "Вибір ресурсів: виключення непридатних та дублів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-006",
+        "executedAt": "2026-10-26T12:23:13.79"
+      },
+      {
+        "id": 21097,
+        "testId": "TC-MSHP-UI-007",
+        "title": "Наскрізне створення списання через UI",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-007",
+        "executedAt": "2026-10-26T12:22:54.299"
+      },
+      {
+        "id": 21098,
+        "testId": "TC-MSHP-UI-008",
+        "title": "Сайдбар та журнал для Адміністратора й Бухгалтера",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-008",
+        "executedAt": "2026-10-26T12:24:20.779"
+      },
+      {
+        "id": 21099,
+        "testId": "TC-MSHP-UI-009",
+        "title": "Заборона сайдбара та прямих маршрутів без права",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-009",
+        "executedAt": "2026-10-26T12:24:40.833"
+      },
+      {
+        "id": 21100,
+        "testId": "TC-MSHP-UI-010",
+        "title": "UI multiselect локацій та період у комбінації з пошуком",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-010",
+        "executedAt": "2026-10-26T12:24:06.037"
+      }
+    ]
+  }
+}

@@ -1,0 +1,676 @@
+{
+  "feature": {
+    "projectId": 1,
+    "featureId": "REQ-MSHP",
+    "module": "WMS",
+    "title": "Списання ресурсів — МШП",
+    "priority": "HIGH",
+    "description": "Ознака МШП, фільтрація, форма списання із залишків, валідація, Історія операцій, журнал, RBAC та фільтри.",
+    "documentation": "# Списання ресурсів — МШП\n\nВимога `REQ-MSHP`. Дата специфікації: 26.10.2026. Проєкт TCM: 1.\n\n## Бізнес-поведінка\n\nМШП — малоцінні та швидкозношувані предмети, які використовуються у виробництві й підлягають списанню. Ознака ресурсу зберігається незалежно від кількості та способу обліку партій. Списання зменшує фізичний залишок; це окрема операція в загальній історії та журналі списань.\n\nКористувач обирає локацію → Залишки → Списання → ресурси та кількості → Підтвердити. Скасування форми не змінює даних. В журналі доступні пошук назви ресурсу, декілька локацій та період.\n\n## Погоджена поведінка від 26.10.2026\n\nКористувач прийняв поточну реалізацію: повна підказка МШП у редагуванні ресурсу необов’язкова; select у словнику замість чекбокса є штатним елементом. Обидва пункти входять до погодженої документації й не вважаються дефектами. AC-01/AC-02 та UI-002/UI-004 оновлені зі збереженням ID. Попередні результати виконання збережені як історія; статуси нового контракту визначає окремий повторний прогін.\n\n## Критерії приймання\n\n- **AC-01:** У редагуванні ресурсу ознака МШП задається через select «Облікова категорія» і зберігається. За погодженням від 26.10.2026 повна підказка в цій формі необов’язкова; пояснення МШП доступне на формі списання.\n- **AC-02:** Словник ресурсів має select способу обліку з опцією LOW_VALUE_ITEM для МШП. Вибір показує лише МШП, скидання повертає повний список з урахуванням пошуку. Select замість чекбокса погоджено 26.10.2026.\n- **AC-03:** Кнопка списання на залишках відкриває форму вибору ресурсів як при видачі. Доступні лише МШП з позитивним залишком обраної локації; без дублів і ресурсів інших локацій.\n- **AC-04:** Валідація як у видачі: хоча б один ресурс, додатна кількість, не більше доступного залишку/партії. Неуспішний запит атомарний; успішний точно зменшує залишки всіх ресурсів.\n- **AC-05:** Успішне списання додається в Історію операцій з типом LOW_VALUE_WRITE_OFF, ресурсом, кількістю, локацією та коментарем, і має окремий підсумок.\n- **AC-06:** Сайдбар веде в історію списань. Адміністратор і Бухгалтер бачать журнал; користувач без права не отримує доступ через UI або прямий API. Показано локацію, дату, користувача та ресурси.\n- **AC-07:** Журнал підтримує пошук за назвою ресурсу, multiselect локацій (OR), період, комбінацію й скидання фільтрів; пагінація не губить і не дублює записи.\n- **AC-08:** Регресія чинного контракту: явна партія списується точно; редагування поточного дня замінює дельту; скасування повертає залишки; чужа локація не відкриває й не видаляє запис. Дата створення лише поточна.\n\n## Погоджений API/UI контракт\n\n- Ресурс: `assetCategory=REGULAR|LOW_VALUE_ITEM`, PUT/GET `/api/v1/resources/{id}`. МШП не дорівнює налаштуванню ручного вибору партій.\n- Облікова категорія ресурсу та фільтр словника реалізовані select-елементами «Облікова категорія» та «Усі способи обліку». Поточний підпис LOW_VALUE_ITEM — «МПШ (малоцінний ресурс)». UI-004 перевіряє погоджений select, UI-003 — результати фільтрації та скидання.\n- Повна підказка у редагуванні ресурсу необов’язкова. Пояснення на формі списання описує МШП і використання у виробництві; його перевіряє UI-002.\n- Кнопка залишків має текст «Списати МШП»; сайдбар/журнал — «Списання МШП», колонка автора — «Створив» замість «Користувач». Перевіряються бізнес-функція та значення автора; ці відмінності назв явно зафіксовані.\n- POST `/api/v1/storages/inventory/low-value-resources/write-off`: storageId, date, actors, comment, assets[{resourceId,batchId?,amount}]. GET списку за базовим шляхом: parentStorageId, storageIds, resourceName, fromDate, toDate, page, size, sort.\n- GET/PUT/DELETE `/api/v1/storages/inventory/low-value-resources/{id}`; GET/DELETE потребують storageId. Вихідна реалізація дозволяє зміну/видалення тільки в день створення, створення лише сьогодні. Тести не змінюють серверний годинник чи БД.\n- Вибір ресурсів: GET `/api/v1/storages/{id}/storage-item?assetCategory=LOW_VALUE_ITEM`. Історія операцій: `/api/v1/statistics/resource-operation-history`.\n- Історія операцій містить системний опис «Списання малоцінних ресурсів #id»; користувацький коментар зберігається у деталях і журналі списань. API-пагінація журналу використовує дозволене сортування storageName,ASC; непідтримуване id не передається.\n- Бухгалтер має право читання списань, створення/зміна/видалення залежать від окремих permissions. Вимога надає Бухгалтеру доступ до журналу; вона не заявляє право створення.\n\n## Автоматизація та дані\n\nНабір `low-value-write-off`, клас `com.erp.tests.ui.LowValueWriteOffTest`: 9 API + 10 UI кейсів, 32 виконання (13 негативних варіантів та 2 ролі журналу). Усі ID прив’язані до автоматизації в TCM.\n\nВласні незалежні внутрішні A/B і external; gloves=МШП (дві партії), cloth=МШП, regular, no-stock=МШП без залишку. A: 30 gloves, 15 cloth, 10 regular; B: 20 gloves. Два базові списання: 1 gloves на A, 2 на B. Нові актори Бухгалтер та читач залишків без прав списань. Адміністратор використовує налаштовану сесію.\n\nКожен успішний POST відразу реєструється, включно з помилково прийнятими негативними запитами. Manifest `low-value-write-off-owned.json` зберігається протягом підготовки й виконання. Cleanup видаляє тільки власні списання/отримання, перевіряє нульові залишки й видаляє залишені нульові рядки інвентаризацією з явними removed=true та version, архівує локації/ресурси й деактивує акторів. Точний GET inventory?resourceId знаходить навіть приховані нульові рядки. JDBC/SSH та мережеві mock не використовуються.\n\nЗапуск: `powershell -ExecutionPolicy Bypass -File scripts/run_low_value_write_off_dev.ps1`.\nПрогін лише на dev; `environment=dev` зберігається і при імпорті результатів у prod/stage TCM. Prod/stage TCM — сховища тестів, це не прогін ERP на prod/stage.\n\n## Тест-кейси\n\n### TC-MSHP-API-001 — Збереження ознаки МШП та API-фільтр [AC-01]\n\nАвтотест: `LowValueWriteOffTest#categoryPersistsAndDictionaryFilters`.\n\n1. Змінити власний ресурс REGULAR → LOW_VALUE_ITEM через PUT і повторно GET.\n2. Запитати словник за marker + assetCategory, потім зняти ознаку й повторити запит.\n\nОчікування: GET зберігає категорію; точні ID списку змінюються згідно ознаки, звичайний ресурс виключений.\n\n### TC-MSHP-API-002 — Доступні лише МШП із залишків вибраної локації [AC-03]\n\nАвтотест: `LowValueWriteOffTest#availableResourcesAreEligibleAndLocal`.\n\n1. GET storage-item з assetCategory=LOW_VALUE_ITEM для A.\n2. Повторити для B; порівняти точні resourceId та кількості.\n\nОчікування: A містить лише gloves/cloth із позитивними залишками, B лише gloves; regular і no-stock відсутні.\n\n### TC-MSHP-API-003 — Списання кількох ресурсів і дробових кількостей [AC-04]\n\nАвтотест: `LowValueWriteOffTest#multiResourceWriteOffDebitsExactAmounts`.\n\n1. Запам’ятати залишки; POST 2.5 gloves та 1.25 cloth з авторами/коментарем.\n2. GET деталі; перевірити точні дельти; DELETE власного списання.\n\nОчікування: HTTP 200, дві позиції, поточна дата, WRITE_OFF, автори й коментар збережені; точне списання та відновлення залишків.\n\n### TC-MSHP-API-004 — Матриця валідації та атомарність списання [AC-04]\n\nАвтотест: `LowValueWriteOffTest#invalidWriteOffIsAtomic`.\n\n1. Для кожного варіанта зберегти залишки, партії та ID журналу.\n2. POST: порожньо, 0, -1, без amount, перевищення, regular, no-stock, дубль, чужа UUID партії, external, вчора, завтра, 10001 символ коментаря.\n3. Порівняти стан після відмови з baseline.\n\nОчікування: Кожен запит має 400/409 та непорожні errors; жоден рядок не змінює залишки/партії та не створює операцію.\n\n### TC-MSHP-API-005 — Списання конкретної партії та повернення [AC-08]\n\nАвтотест: `LowValueWriteOffTest#explicitBatchWriteOffAndCancellation`.\n\n1. Зберегти всі партії gloves; POST 1.5 із конкретної batchId.\n2. Перевірити кожну партію; DELETE списання та повторити GET.\n\nОчікування: Лише обрана партія зменшується на 1.5; після скасування всі партії дорівнюють baseline.\n\n### TC-MSHP-API-006 — Списання в Історії операцій [AC-05]\n\nАвтотест: `LowValueWriteOffTest#writeOffAppearsInOperationHistory`.\n\n1. POST 3 cloth на A; GET resource-operation-history з фільтром cloth та поточним днем.\n2. Знайти LOW_VALUE_WRITE_OFF, перевірити ресурс, системний опис з id списання та окремий підсумок; скасувати.\n\nОчікування: Один рядок LOW_VALUE_WRITE_OFF із кількістю 3, потрібний ресурс та опис «Списання малоцінних ресурсів #id»; totalByOperations.lowValueWriteOff=3.\n\n### TC-MSHP-API-007 — Пошук, локації, період та пагінація журналу [AC-07]\n\nАвтотест: `LowValueWriteOffTest#journalFiltersAndPagination`.\n\n1. Шукати marker, cloth і gloves; вибрати A, потім A+B; поєднати з поточним днем.\n2. Задати toDate=вчора; пройти два API page з size=1.\n\nОчікування: Точні ID A/B, OR двох локацій, включені межі сьогодні, порожньо до вчора, дві сторінки без втрат/дублів.\n\n### TC-MSHP-API-008 — RBAC журналу та прямого створення [AC-06]\n\nАвтотест: `LowValueWriteOffTest#journalRbac`.\n\n1. Автентифікувати нового актора з роллю Бухгалтер; GET журнал і деталі A.\n2. Актором без write-off.read зробити GET журнал, GET деталі й POST списання.\n\nОчікування: Бухгалтер читає з HTTP 200; користувач без права отримує 403; залишок не змінюється.\n\n### TC-MSHP-API-009 — Редагування дня створення й ізоляція локацій [AC-08]\n\nАвтотест: `LowValueWriteOffTest#sameDayEditAndLocationIsolation`.\n\n1. POST 2 cloth; PUT 4 cloth; PUT понад залишок.\n2. GET та DELETE з storageId=B для запису A; видалити з правильною A.\n\nОчікування: PUT замінює дельту (15→11), невалідний PUT атомарний; неправильна локація дає 404; видалення відновлює 15.\n\n### TC-MSHP-UI-001 — Редагування МШП у справжній формі ресурсу [AC-01]\n\nАвтотест: `LowValueWriteOffTest#resourceCategoryCanBeEdited`.\n\n1. Адміністратором відкрити редагування власного no-stock.\n2. Вибрати REGULAR, зберегти та перевірити GET; повторити LOW_VALUE_ITEM.\n\nОчікування: Обидва значення успішно збережені через UI і підтверджені GET після переходу.\n\n### TC-MSHP-UI-002 — Погоджене пояснення МШП на формі списання [AC-01]\n\nАвтотест: `LowValueWriteOffTest#writeOffFormExplainsMshp`.\n\n1. Відкрити редагування ресурсу й перевірити select облікової категорії.\n2. Відкрити форму списання та перевірити пояснення МШП і використання у виробництві.\n\nОчікування: Select категорії видимий; форма списання пояснює МШП. Повна підказка у редагуванні ресурсу необов’язкова за погодженням від 26.10.2026.\n\n### TC-MSHP-UI-003 — Працездатність чинного UI-фільтра МШП [AC-02]\n\nАвтотест: `LowValueWriteOffTest#dictionaryFilterWorksAndResets`.\n\n1. Шукати marker у словнику; вибрати LOW_VALUE_ITEM у поточному select.\n2. Порівняти назви; скинути спосіб обліку.\n\nОчікування: Реальний GET містить assetCategory=LOW_VALUE_ITEM; лише 3 власні МШП; скидання повертає всі 4.\n\n### TC-MSHP-UI-004 — Погоджений select МШП у словнику ресурсів [AC-02]\n\nАвтотест: `LowValueWriteOffTest#dictionaryUsesAcceptedMshpSelect`.\n\n1. Відкрити словник і select способу обліку; перевірити опції ALL та LOW_VALUE_ITEM.\n2. Вибрати LOW_VALUE_ITEM; перевірити запит і відображення вибраного підпису.\n\nОчікування: Видимий combobox з обома опціями; вибір МШП надсилає assetCategory=LOW_VALUE_ITEM і відображає вибраний підпис. Select погоджено замість чекбокса 26.10.2026.\n\n### TC-MSHP-UI-005 — Кнопка залишків, валідація кількості та скасування [AC-04]\n\nАвтотест: `LowValueWriteOffTest#inventoryButtonAndFormValidation`.\n\n1. Натиснути реальну кнопку списання на /inventory; перевірити disabled порожньої форми.\n2. Вибрати cloth; перевірити 0, -1, перевищення, потім 1.5; Скасувати.\n\nОчікування: Форма відкривається; невалідні кількості блокують submit, 1.5 дозволена; скасування повертає на залишки без змін.\n\n### TC-MSHP-UI-006 — Вибір ресурсів: виключення непридатних та дублів [AC-03]\n\nАвтотест: `LowValueWriteOffTest#formOffersOnlyEligibleResources`.\n\n1. Відкрити форму; шукати regular та no-stock у dropdown.\n2. Вибрати cloth, додати другу позицію й шукати cloth повторно.\n\nОчікування: Звичайного, відсутнього на залишках і вже вибраного ресурсу немає серед опцій.\n\n### TC-MSHP-UI-007 — Наскрізне створення списання через UI [AC-04]\n\nАвтотест: `LowValueWriteOffTest#createWriteOffThroughUi`.\n\n1. Вибрати cloth, 1.5 і коментар; Підтвердити; зберегти id реального POST.\n2. Перевірити залишок та рядок історії; скасувати власну операцію через cleanup API.\n\nОчікування: POST 200, залишок 13.5, журнал показує ресурс/кількість/коментар; cleanup відновлює 15.\n\n### TC-MSHP-UI-008 — Сайдбар та журнал для Адміністратора й Бухгалтера [AC-06]\n\nАвтотест: `LowValueWriteOffTest#journalSidebarColumnsAndSearch`.\n\n1. Окремо обома ролями відкрити журнал через реальний sidebar link.\n2. Перевірити локацію, дату, автора та ресурс; пошук cloth приховує gloves, скидання повертає рядок.\n\nОчікування: Обидві ролі бачать журнал і потрібні колонки/дані; пошук і reset працюють; Бухгалтер не має кнопки створення.\n\n### TC-MSHP-UI-009 — Заборона сайдбара та прямих маршрутів без права [AC-06]\n\nАвтотест: `LowValueWriteOffTest#unauthorizedUserCannotOpenWriteOffPages`.\n\n1. Увійти актором location.read + inventory.read + resource.read без права списань.\n2. Перевірити відсутній sidebar link; відкрити history і form за прямими URL.\n\nОчікування: Посилання приховано; прямі маршрути показують 403, рядки журналу і submit відсутні.\n\n### TC-MSHP-UI-010 — UI multiselect локацій та період у комбінації з пошуком [AC-07]\n\nАвтотест: `LowValueWriteOffTest#journalLocationAndPeriodFilters`.\n\n1. У просторі Всі локації знайти gloves; через multiselect вибрати A, потім додати B.\n2. Вибрати період 1 день, перевірити запит від/до сьогодні; скинути фільтри.\n\nОчікування: A приховує B; A+B повертає обидва рядки; реальний GET має сьогоднішні межі, після reset обидва записи видимі.\n\n## Межі покриття\n\nОбмеження редагування списання минулого дня вимагає окремого застарілого fixture або переходу календарного дня; цей прогін перевіряє відмову створення вчора/завтра, але не заявляє автоматизоване покриття редагування застарілого запису. Конкурентне списання, подальші експорти й великі обсяги не входять у початкову вимогу.\n"
+  },
+  "criteria": [
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-01",
+      "text": "У редагуванні ресурсу ознака МШП задається через select «Облікова категорія» і зберігається. За погодженням від 26.10.2026 повна підказка в цій формі необов’язкова; пояснення МШП доступне на формі списання."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-02",
+      "text": "Словник ресурсів має select способу обліку з опцією LOW_VALUE_ITEM для МШП. Вибір показує лише МШП, скидання повертає повний список з урахуванням пошуку. Select замість чекбокса погоджено 26.10.2026."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-03",
+      "text": "Кнопка списання на залишках відкриває форму вибору ресурсів як при видачі. Доступні лише МШП з позитивним залишком обраної локації; без дублів і ресурсів інших локацій."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-04",
+      "text": "Валідація як у видачі: хоча б один ресурс, додатна кількість, не більше доступного залишку/партії. Неуспішний запит атомарний; успішний точно зменшує залишки всіх ресурсів."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-05",
+      "text": "Успішне списання додається в Історію операцій з типом LOW_VALUE_WRITE_OFF, ресурсом, кількістю, локацією та коментарем, і має окремий підсумок."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-06",
+      "text": "Сайдбар веде в історію списань. Адміністратор і Бухгалтер бачать журнал; користувач без права не отримує доступ через UI або прямий API. Показано локацію, дату, користувача та ресурси."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-07",
+      "text": "Журнал підтримує пошук за назвою ресурсу, multiselect локацій (OR), період, комбінацію й скидання фільтрів; пагінація не губить і не дублює записи."
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-08",
+      "text": "Регресія чинного контракту: явна партія списується точно; редагування поточного дня замінює дельту; скасування повертає залишки; чужа локація не відкриває й не видаляє запис. Дата створення лише поточна."
+    }
+  ],
+  "cases": [
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-01",
+      "testId": "TC-MSHP-API-001",
+      "title": "Збереження ознаки МШП та API-фільтр",
+      "description": "LowValueWriteOffTest#categoryPersistsAndDictionaryFilters. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "GET зберігає категорію; точні ID списку змінюються згідно ознаки, звичайний ресурс виключений.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-001"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Змінити власний ресурс REGULAR → LOW_VALUE_ITEM через PUT і повторно GET.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Запитати словник за marker + assetCategory, потім зняти ознаку й повторити запит.",
+          "expectedText": "GET зберігає категорію; точні ID списку змінюються згідно ознаки, звичайний ресурс виключений."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-03",
+      "testId": "TC-MSHP-API-002",
+      "title": "Доступні лише МШП із залишків вибраної локації",
+      "description": "LowValueWriteOffTest#availableResourcesAreEligibleAndLocal. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "A містить лише gloves/cloth із позитивними залишками, B лише gloves; regular і no-stock відсутні.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-002"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "GET storage-item з assetCategory=LOW_VALUE_ITEM для A.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Повторити для B; порівняти точні resourceId та кількості.",
+          "expectedText": "A містить лише gloves/cloth із позитивними залишками, B лише gloves; regular і no-stock відсутні."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-04",
+      "testId": "TC-MSHP-API-003",
+      "title": "Списання кількох ресурсів і дробових кількостей",
+      "description": "LowValueWriteOffTest#multiResourceWriteOffDebitsExactAmounts. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "HTTP 200, дві позиції, поточна дата, WRITE_OFF, автори й коментар збережені; точне списання та відновлення залишків.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-003"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Запам’ятати залишки; POST 2.5 gloves та 1.25 cloth з авторами/коментарем.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "GET деталі; перевірити точні дельти; DELETE власного списання.",
+          "expectedText": "HTTP 200, дві позиції, поточна дата, WRITE_OFF, автори й коментар збережені; точне списання та відновлення залишків."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-04",
+      "testId": "TC-MSHP-API-004",
+      "title": "Матриця валідації та атомарність списання",
+      "description": "LowValueWriteOffTest#invalidWriteOffIsAtomic. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Кожен запит має 400/409 та непорожні errors; жоден рядок не змінює залишки/партії та не створює операцію.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-004"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Для кожного варіанта зберегти залишки, партії та ID журналу.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "POST: порожньо, 0, -1, без amount, перевищення, regular, no-stock, дубль, чужа UUID партії, external, вчора, завтра, 10001 символ коментаря.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Порівняти стан після відмови з baseline.",
+          "expectedText": "Кожен запит має 400/409 та непорожні errors; жоден рядок не змінює залишки/партії та не створює операцію."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-08",
+      "testId": "TC-MSHP-API-005",
+      "title": "Списання конкретної партії та повернення",
+      "description": "LowValueWriteOffTest#explicitBatchWriteOffAndCancellation. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Лише обрана партія зменшується на 1.5; після скасування всі партії дорівнюють baseline.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-005"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Зберегти всі партії gloves; POST 1.5 із конкретної batchId.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити кожну партію; DELETE списання та повторити GET.",
+          "expectedText": "Лише обрана партія зменшується на 1.5; після скасування всі партії дорівнюють baseline."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-05",
+      "testId": "TC-MSHP-API-006",
+      "title": "Списання в Історії операцій",
+      "description": "LowValueWriteOffTest#writeOffAppearsInOperationHistory. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Один рядок LOW_VALUE_WRITE_OFF із кількістю 3, потрібний ресурс та опис «Списання малоцінних ресурсів #id»; totalByOperations.lowValueWriteOff=3.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-006"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "POST 3 cloth на A; GET resource-operation-history з фільтром cloth та поточним днем.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Знайти LOW_VALUE_WRITE_OFF, перевірити ресурс, системний опис з id списання та окремий підсумок; скасувати.",
+          "expectedText": "Один рядок LOW_VALUE_WRITE_OFF із кількістю 3, потрібний ресурс та опис «Списання малоцінних ресурсів #id»; totalByOperations.lowValueWriteOff=3."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-07",
+      "testId": "TC-MSHP-API-007",
+      "title": "Пошук, локації, період та пагінація журналу",
+      "description": "LowValueWriteOffTest#journalFiltersAndPagination. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Точні ID A/B, OR двох локацій, включені межі сьогодні, порожньо до вчора, дві сторінки без втрат/дублів.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-007"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Шукати marker, cloth і gloves; вибрати A, потім A+B; поєднати з поточним днем.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Задати toDate=вчора; пройти два API page з size=1.",
+          "expectedText": "Точні ID A/B, OR двох локацій, включені межі сьогодні, порожньо до вчора, дві сторінки без втрат/дублів."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-06",
+      "testId": "TC-MSHP-API-008",
+      "title": "RBAC журналу та прямого створення",
+      "description": "LowValueWriteOffTest#journalRbac. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Бухгалтер читає з HTTP 200; користувач без права отримує 403; залишок не змінюється.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-008"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Автентифікувати нового актора з роллю Бухгалтер; GET журнал і деталі A.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Актором без write-off.read зробити GET журнал, GET деталі й POST списання.",
+          "expectedText": "Бухгалтер читає з HTTP 200; користувач без права отримує 403; залишок не змінюється."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-08",
+      "testId": "TC-MSHP-API-009",
+      "title": "Редагування дня створення й ізоляція локацій",
+      "description": "LowValueWriteOffTest#sameDayEditAndLocationIsolation. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "PUT замінює дельту (15→11), невалідний PUT атомарний; неправильна локація дає 404; видалення відновлює 15.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [
+        "TC-MSHP-API-009"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "POST 2 cloth; PUT 4 cloth; PUT понад залишок.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "GET та DELETE з storageId=B для запису A; видалити з правильною A.",
+          "expectedText": "PUT замінює дельту (15→11), невалідний PUT атомарний; неправильна локація дає 404; видалення відновлює 15."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-01",
+      "testId": "TC-MSHP-UI-001",
+      "title": "Редагування МШП у справжній формі ресурсу",
+      "description": "LowValueWriteOffTest#resourceCategoryCanBeEdited. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Обидва значення успішно збережені через UI і підтверджені GET після переходу.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-001"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Адміністратором відкрити редагування власного no-stock.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати REGULAR, зберегти та перевірити GET; повторити LOW_VALUE_ITEM.",
+          "expectedText": "Обидва значення успішно збережені через UI і підтверджені GET після переходу."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-01",
+      "testId": "TC-MSHP-UI-002",
+      "title": "Погоджене пояснення МШП на формі списання",
+      "description": "LowValueWriteOffTest#writeOffFormExplainsMshp. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Select категорії видимий; форма списання пояснює МШП. Повна підказка у редагуванні ресурсу необов’язкова за погодженням від 26.10.2026.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-002"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити редагування ресурсу й перевірити select облікової категорії.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Відкрити форму списання та перевірити пояснення МШП і використання у виробництві.",
+          "expectedText": "Select категорії видимий; форма списання пояснює МШП. Повна підказка у редагуванні ресурсу необов’язкова за погодженням від 26.10.2026."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-02",
+      "testId": "TC-MSHP-UI-003",
+      "title": "Працездатність чинного UI-фільтра МШП",
+      "description": "LowValueWriteOffTest#dictionaryFilterWorksAndResets. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Реальний GET містить assetCategory=LOW_VALUE_ITEM; лише 3 власні МШП; скидання повертає всі 4.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-003"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Шукати marker у словнику; вибрати LOW_VALUE_ITEM у поточному select.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Порівняти назви; скинути спосіб обліку.",
+          "expectedText": "Реальний GET містить assetCategory=LOW_VALUE_ITEM; лише 3 власні МШП; скидання повертає всі 4."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-02",
+      "testId": "TC-MSHP-UI-004",
+      "title": "Погоджений select МШП у словнику ресурсів",
+      "description": "LowValueWriteOffTest#dictionaryUsesAcceptedMshpSelect. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Видимий combobox з обома опціями; вибір МШП надсилає assetCategory=LOW_VALUE_ITEM і відображає вибраний підпис. Select погоджено замість чекбокса 26.10.2026.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-004"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити словник і select способу обліку; перевірити опції ALL та LOW_VALUE_ITEM.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати LOW_VALUE_ITEM; перевірити запит і відображення вибраного підпису.",
+          "expectedText": "Видимий combobox з обома опціями; вибір МШП надсилає assetCategory=LOW_VALUE_ITEM і відображає вибраний підпис. Select погоджено замість чекбокса 26.10.2026."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-04",
+      "testId": "TC-MSHP-UI-005",
+      "title": "Кнопка залишків, валідація кількості та скасування",
+      "description": "LowValueWriteOffTest#inventoryButtonAndFormValidation. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Форма відкривається; невалідні кількості блокують submit, 1.5 дозволена; скасування повертає на залишки без змін.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-005"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Натиснути реальну кнопку списання на /inventory; перевірити disabled порожньої форми.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати cloth; перевірити 0, -1, перевищення, потім 1.5; Скасувати.",
+          "expectedText": "Форма відкривається; невалідні кількості блокують submit, 1.5 дозволена; скасування повертає на залишки без змін."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-03",
+      "testId": "TC-MSHP-UI-006",
+      "title": "Вибір ресурсів: виключення непридатних та дублів",
+      "description": "LowValueWriteOffTest#formOffersOnlyEligibleResources. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Звичайного, відсутнього на залишках і вже вибраного ресурсу немає серед опцій.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-006"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Відкрити форму; шукати regular та no-stock у dropdown.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати cloth, додати другу позицію й шукати cloth повторно.",
+          "expectedText": "Звичайного, відсутнього на залишках і вже вибраного ресурсу немає серед опцій."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-04",
+      "testId": "TC-MSHP-UI-007",
+      "title": "Наскрізне створення списання через UI",
+      "description": "LowValueWriteOffTest#createWriteOffThroughUi. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "POST 200, залишок 13.5, журнал показує ресурс/кількість/коментар; cleanup відновлює 15.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-007"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Вибрати cloth, 1.5 і коментар; Підтвердити; зберегти id реального POST.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити залишок та рядок історії; скасувати власну операцію через cleanup API.",
+          "expectedText": "POST 200, залишок 13.5, журнал показує ресурс/кількість/коментар; cleanup відновлює 15."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-06",
+      "testId": "TC-MSHP-UI-008",
+      "title": "Сайдбар та журнал для Адміністратора й Бухгалтера",
+      "description": "LowValueWriteOffTest#journalSidebarColumnsAndSearch. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Обидві ролі бачать журнал і потрібні колонки/дані; пошук і reset працюють; Бухгалтер не має кнопки створення.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-008"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Окремо обома ролями відкрити журнал через реальний sidebar link.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити локацію, дату, автора та ресурс; пошук cloth приховує gloves, скидання повертає рядок.",
+          "expectedText": "Обидві ролі бачать журнал і потрібні колонки/дані; пошук і reset працюють; Бухгалтер не має кнопки створення."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-06",
+      "testId": "TC-MSHP-UI-009",
+      "title": "Заборона сайдбара та прямих маршрутів без права",
+      "description": "LowValueWriteOffTest#unauthorizedUserCannotOpenWriteOffPages. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "Посилання приховано; прямі маршрути показують 403, рядки журналу і submit відсутні.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-009"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Увійти актором location.read + inventory.read + resource.read без права списань.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перевірити відсутній sidebar link; відкрити history і form за прямими URL.",
+          "expectedText": "Посилання приховано; прямі маршрути показують 403, рядки журналу і submit відсутні."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-MSHP",
+      "acKey": "AC-07",
+      "testId": "TC-MSHP-UI-010",
+      "title": "UI multiselect локацій та період у комбінації з пошуком",
+      "description": "LowValueWriteOffTest#journalLocationAndPeriodFilters. Suite low-value-write-off; docs/REQ-MSHP-resource-write-off.md.",
+      "preconditions": "ERP dev; Chrome; LowValueWriteOffFixture ізолює ресурси, локації, партії та нових акторів. JDBC/SSH не потрібні.",
+      "testData": "Власні A/B/external; gloves/cloth LOW_VALUE_ITEM, regular REGULAR, no-stock без залишку; A gloves=29 після базового списання, cloth=15; B gloves=18. Незалежні кейси з cleanup.",
+      "expectedResult": "A приховує B; A+B повертає обидва рядки; реальний GET має сьогоднішні межі, після reset обидва записи видимі.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,mshp,low-value,write-off,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-MSHP-UI-010"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "У просторі Всі локації знайти gloves; через multiselect вибрати A, потім додати B.",
+          "expectedText": "Крок виконаний; дані fixture збережені."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати період 1 день, перевірити запит від/до сьогодні; скинути фільтри.",
+          "expectedText": "A приховує B; A+B повертає обидва рядки; реальний GET має сьогоднішні межі, після reset обидва записи видимі."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "result": "SUCCESS",
+  "acceptedContract": "2026-10-26: full resource-edit hint optional; dictionary select accepted instead of checkbox",
+  "executionCounts": {
+    "PASS": 32
+  },
+  "caseCounts": {
+    "PASS": 19
+  },
+  "configurationFailures": 0,
+  "build": "SUCCESS",
+  "runs": {
+    "prod": 169,
+    "stage": 230
+  },
+  "documentationSha256": "08b35dde452c73ff67f71becf6c167697d23bc176443ea3f29297584fb742190",
+  "documentationVerifiedIn": [
+    "prod",
+    "stage"
+  ],
+  "all19CaseStatusesVerified": true,
+  "ownLocationsArchived": [
+    5036,
+    5037,
+    5038
+  ],
+  "ownResourcesArchived": [
+    5655,
+    5656,
+    5657,
+    5658
+  ],
+  "previousRunsPreserved": [
+    168,
+    229
+  ],
+  "previousArtifacts": "low-value-write-off-before-acceptance"
+}
