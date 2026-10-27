@@ -871,8 +871,8 @@ public enum ApiEndpointDefinition {
     TECH_MAP_UPDATE_NAME(
             "/api/v1/technological-maps/{id}",
             Method.PUT,
-            "schemas/technological-maps/technological-map-response-schema.json",
-            "Update name in technological map",
+            "schemas/technological-maps/technological-map-update-response-schema.json",
+            "Update technological map (resource references; read display metadata via GET)",
             new TypeReference<TechnologicalMapRequest>() {},
             new TypeReference<TechnologicalMapResponse>() {},
             "UPDATE_TECH_MAP_NAME"

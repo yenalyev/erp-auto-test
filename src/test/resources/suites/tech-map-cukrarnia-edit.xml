@@ -1,0 +1,15 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Tech maps — edit from Cukrarnia" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.TcmScopeListener"/>
+        <listener class-name="com.erp.listeners.TcmReportListener"/>
+        <listener class-name="com.erp.listeners.RunProgressListener"/>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+    </listeners>
+    <test name="Cukrarnia edit API">
+        <classes><class name="com.erp.tests.functional.tech_map.TechMapCukrarniaEditApiTest"/></classes>
+    </test>
+    <test name="Cukrarnia edit UI">
+        <classes><class name="com.erp.tests.ui.TechMapCukrarniaEditUiTest"/></classes>
+    </test>
+</suite>
