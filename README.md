@@ -1,5 +1,10 @@
 ERP API Test Automation Framework
 
+**Admin sidebar location filters in relocation history**: suite `relocation-sidebar-location`.
+Five UI scenarios cover sender/recipient prefill, workspace changes, all locations,
+manual selection and reload across the Issued and Received tabs.
+Run: `mvn test -Denv=dev -Dsuite=relocation-sidebar-location -Duse.database=false -Dssh.enabled=false -Dframework.browser.channel=chrome`.
+
 **Архівація моделі обладнання**: [вимоги, 4 AC і 13 API/UI кейсів](docs/REQ-EQU-ARCHIVE.md).
 Перевіряються залишки, активне переміщення, повторна валідація під час підтвердження,
 фільтр статусу та виключення архіву з автокомпліту. 14 виконань на ізольованих даних.
