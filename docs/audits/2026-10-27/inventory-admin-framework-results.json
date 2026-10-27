@@ -1,0 +1,10 @@
+{
+  "suite": "framework",
+  "runDirectory": "target/inventory-admin-framework-20261027-verified",
+  "counts": {
+    "PASS": 112,
+    "FAIL": 0,
+    "SKIP": 0
+  },
+  "result": "SUCCESS"
+}

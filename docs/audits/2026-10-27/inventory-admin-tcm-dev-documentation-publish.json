@@ -1,0 +1,9 @@
+{
+  "environment": "dev",
+  "baseUrl": "http://localhost:18100",
+  "featureDbId": 174,
+  "featureId": "REQ-INV-ADMIN",
+  "documentationSha256": "f2b768d661e27e6b756255080261bd4fc6c78a87f93b1144c04df05e42f6c049",
+  "readbackVerified": true,
+  "result": "SUCCESS"
+}

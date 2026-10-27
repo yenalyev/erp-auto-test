@@ -1,0 +1,968 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="112" passed="112" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-10-27T11:16:55 EET" name="Framework infrastructure" finished-at="2026-10-27T11:17:18 EET" duration-ms="23464">
+    <groups>
+    </groups>
+    <test started-at="2026-10-27T11:16:55 EET" name="HTTP clients and TCM reporting" finished-at="2026-10-27T11:17:18 EET" duration-ms="23464">
+      <class name="com.erp.tests.framework.NonSeriesExportContractTest">
+        <test-method signature="acceptsExactWorkbook()[pri:0, instance:com.erp.tests.framework.NonSeriesExportContractTest@48da64f2]" started-at="2026-10-27T11:17:16 EET" name="acceptsExactWorkbook" finished-at="2026-10-27T11:17:16 EET" duration-ms="36" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- acceptsExactWorkbook -->
+        <test-method signature="rejectsForeignMaterials()[pri:0, instance:com.erp.tests.framework.NonSeriesExportContractTest@48da64f2]" started-at="2026-10-27T11:17:16 EET" name="rejectsForeignMaterials" finished-at="2026-10-27T11:17:16 EET" duration-ms="26" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsForeignMaterials -->
+        <test-method signature="rejectsForeignProducts()[pri:0, instance:com.erp.tests.framework.NonSeriesExportContractTest@48da64f2]" started-at="2026-10-27T11:17:16 EET" name="rejectsForeignProducts" finished-at="2026-10-27T11:17:16 EET" duration-ms="37" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsForeignProducts -->
+        <test-method signature="rejectsTextInsteadOfNumber()[pri:0, instance:com.erp.tests.framework.NonSeriesExportContractTest@48da64f2]" started-at="2026-10-27T11:17:16 EET" name="rejectsTextInsteadOfNumber" finished-at="2026-10-27T11:17:16 EET" duration-ms="39" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsTextInsteadOfNumber -->
+      </class> <!-- com.erp.tests.framework.NonSeriesExportContractTest -->
+      <class name="com.erp.tests.framework.LocationProfileCatalogTest">
+        <test-method signature="battalionParentPoolUsesConfiguredLocationIds()[pri:0, instance:com.erp.tests.framework.LocationProfileCatalogTest@183ef89a]" started-at="2026-10-27T11:17:08 EET" name="battalionParentPoolUsesConfiguredLocationIds" finished-at="2026-10-27T11:17:08 EET" duration-ms="55" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- battalionParentPoolUsesConfiguredLocationIds -->
+        <test-method signature="battalionUnitProfileDefinesLocationWithoutMilitaryType()[pri:0, instance:com.erp.tests.framework.LocationProfileCatalogTest@183ef89a]" started-at="2026-10-27T11:17:08 EET" name="battalionUnitProfileDefinesLocationWithoutMilitaryType" finished-at="2026-10-27T11:17:08 EET" duration-ms="72" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- battalionUnitProfileDefinesLocationWithoutMilitaryType -->
+        <test-method signature="tsukProfilesUseSharedParentPool()[pri:0, instance:com.erp.tests.framework.LocationProfileCatalogTest@183ef89a]" started-at="2026-10-27T11:17:08 EET" name="tsukProfilesUseSharedParentPool" finished-at="2026-10-27T11:17:08 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- tsukProfilesUseSharedParentPool -->
+      </class> <!-- com.erp.tests.framework.LocationProfileCatalogTest -->
+      <class name="com.erp.tests.framework.RegressionSuiteCompletenessTest">
+        <test-method signature="allRunnableErpTestsAreRegisteredInRegressionSuite()[pri:0, instance:com.erp.tests.framework.RegressionSuiteCompletenessTest@558127d2]" started-at="2026-10-27T11:17:11 EET" name="allRunnableErpTestsAreRegisteredInRegressionSuite" finished-at="2026-10-27T11:17:11 EET" duration-ms="163" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- allRunnableErpTestsAreRegisteredInRegressionSuite -->
+      </class> <!-- com.erp.tests.framework.RegressionSuiteCompletenessTest -->
+      <class name="com.erp.tests.framework.TcmReportListenerTest">
+        <test-method is-config="true" signature="startLocalTcm()[pri:0, instance:com.erp.tests.framework.TcmReportListenerTest@351e86b2]" started-at="2026-10-27T11:17:08 EET" name="startLocalTcm" finished-at="2026-10-27T11:17:08 EET" duration-ms="19" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- startLocalTcm -->
+        <test-method signature="emptyNewSuiteDoesNotImportOldPass(org.testng.ITestContext)[pri:0, instance:com.erp.tests.framework.TcmReportListenerTest@351e86b2]" started-at="2026-10-27T11:17:08 EET" name="emptyNewSuiteDoesNotImportOldPass" finished-at="2026-10-27T11:17:08 EET" duration-ms="22" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[org.testng.TestRunner@6cb6a38c]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- emptyNewSuiteDoesNotImportOldPass -->
+        <test-method signature="preservesExplicitRunnerId(org.testng.ITestContext)[pri:0, instance:com.erp.tests.framework.TcmReportListenerTest@351e86b2]" started-at="2026-10-27T11:17:08 EET" name="preservesExplicitRunnerId" finished-at="2026-10-27T11:17:08 EET" duration-ms="174" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[org.testng.TestRunner@6cb6a38c]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- preservesExplicitRunnerId -->
+        <test-method signature="scopedEmptySuiteStillFailsEvenWithForeignOutbox(org.testng.ITestContext)[pri:0, instance:com.erp.tests.framework.TcmReportListenerTest@351e86b2]" started-at="2026-10-27T11:17:08 EET" name="scopedEmptySuiteStillFailsEvenWithForeignOutbox" finished-at="2026-10-27T11:17:08 EET" duration-ms="14" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[org.testng.TestRunner@6cb6a38c]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- scopedEmptySuiteStillFailsEvenWithForeignOutbox -->
+        <test-method signature="sequentialSuitesUseDistinctIdsAndOnlyCurrentResults(org.testng.ITestContext)[pri:0, instance:com.erp.tests.framework.TcmReportListenerTest@351e86b2]" started-at="2026-10-27T11:17:08 EET" name="sequentialSuitesUseDistinctIdsAndOnlyCurrentResults" finished-at="2026-10-27T11:17:08 EET" duration-ms="79" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[org.testng.TestRunner@6cb6a38c]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- sequentialSuitesUseDistinctIdsAndOnlyCurrentResults -->
+        <test-method is-config="true" signature="stopLocalTcm()[pri:0, instance:com.erp.tests.framework.TcmReportListenerTest@351e86b2]" started-at="2026-10-27T11:17:08 EET" name="stopLocalTcm" finished-at="2026-10-27T11:17:08 EET" duration-ms="12" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- stopLocalTcm -->
+      </class> <!-- com.erp.tests.framework.TcmReportListenerTest -->
+      <class name="com.erp.tests.framework.BusinessRoleCatalogTest">
+        <test-method signature="businessUnitOwnerNeedsNoAdditionalGrant()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="businessUnitOwnerNeedsNoAdditionalGrant" finished-at="2026-10-27T11:17:08 EET" duration-ms="203" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- businessUnitOwnerNeedsNoAdditionalGrant -->
+        <test-method signature="catalogDefinesEveryBusinessRole()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="catalogDefinesEveryBusinessRole" finished-at="2026-10-27T11:17:08 EET" duration-ms="15" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- catalogDefinesEveryBusinessRole -->
+        <test-method signature="orderAdminMappingUsesExactDevRoleName()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="orderAdminMappingUsesExactDevRoleName" finished-at="2026-10-27T11:17:08 EET" duration-ms="4" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- orderAdminMappingUsesExactDevRoleName -->
+        <test-method signature="productionGroupDirectorUsesExactRole()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="productionGroupDirectorUsesExactRole" finished-at="2026-10-27T11:17:08 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- productionGroupDirectorUsesExactRole -->
+        <test-method signature="projectOwnerMappingUsesGranularPermissions()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="projectOwnerMappingUsesGranularPermissions" finished-at="2026-10-27T11:17:08 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- projectOwnerMappingUsesGranularPermissions -->
+        <test-method signature="regularActorsReceiveLocationHeadBeforeAdditionalRoles()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="regularActorsReceiveLocationHeadBeforeAdditionalRoles" finished-at="2026-10-27T11:17:08 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- regularActorsReceiveLocationHeadBeforeAdditionalRoles -->
+        <test-method signature="resourceViewerMappingUsesGlobalTrackerRoleOnly()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="resourceViewerMappingUsesGlobalTrackerRoleOnly" finished-at="2026-10-27T11:17:08 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- resourceViewerMappingUsesGlobalTrackerRoleOnly -->
+        <test-method signature="testCaseMetadataCarriesBusinessRoles()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="testCaseMetadataCarriesBusinessRoles" finished-at="2026-10-27T11:17:08 EET" duration-ms="21" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testCaseMetadataCarriesBusinessRoles -->
+        <test-method signature="unitKomirnikMappingIsCentralized()[pri:0, instance:com.erp.tests.framework.BusinessRoleCatalogTest@4bb9f7d4]" started-at="2026-10-27T11:17:08 EET" name="unitKomirnikMappingIsCentralized" finished-at="2026-10-27T11:17:08 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- unitKomirnikMappingIsCentralized -->
+      </class> <!-- com.erp.tests.framework.BusinessRoleCatalogTest -->
+      <class name="com.erp.tests.framework.ForBossReportContractTest">
+        <test-method signature="deltaRejectsCancelledContributionAndChangesToUnrelatedGroups()[pri:0, instance:com.erp.tests.framework.ForBossReportContractTest@7846913f]" started-at="2026-10-27T11:17:14 EET" name="deltaRejectsCancelledContributionAndChangesToUnrelatedGroups" finished-at="2026-10-27T11:17:16 EET" duration-ms="1614" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- deltaRejectsCancelledContributionAndChangesToUnrelatedGroups -->
+        <test-method signature="excelReadsIndependentBlocksAndRejectsCancelledAmountsInFormulas()[pri:0, instance:com.erp.tests.framework.ForBossReportContractTest@7846913f]" started-at="2026-10-27T11:17:16 EET" name="excelReadsIndependentBlocksAndRejectsCancelledAmountsInFormulas" finished-at="2026-10-27T11:17:16 EET" duration-ms="315" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- excelReadsIndependentBlocksAndRejectsCancelledAmountsInFormulas -->
+        <test-method signature="snapshotsRejectMissingFieldsAndDuplicateRowsInsteadOfTreatingThemAsZero()[pri:0, instance:com.erp.tests.framework.ForBossReportContractTest@7846913f]" started-at="2026-10-27T11:17:16 EET" name="snapshotsRejectMissingFieldsAndDuplicateRowsInsteadOfTreatingThemAsZero" finished-at="2026-10-27T11:17:16 EET" duration-ms="8" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- snapshotsRejectMissingFieldsAndDuplicateRowsInsteadOfTreatingThemAsZero -->
+      </class> <!-- com.erp.tests.framework.ForBossReportContractTest -->
+      <class name="com.erp.tests.framework.HttpClientInfrastructureTest">
+        <test-method is-config="true" signature="startLocalServer()[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:16:56 EET" name="startLocalServer" finished-at="2026-10-27T11:16:58 EET" duration-ms="1463" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- startLocalServer -->
+        <test-method signature="allRequestTypesRespectTheConfiguredTimeout(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:16:58 EET" name="allRequestTypesRespectTheConfiguredTimeout" data-provider="requestKinds" finished-at="2026-10-27T11:17:01 EET" duration-ms="3767" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[JSON]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- allRequestTypesRespectTheConfiguredTimeout -->
+        <test-method signature="allRequestTypesRespectTheConfiguredTimeout(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:01 EET" name="allRequestTypesRespectTheConfiguredTimeout" data-provider="requestKinds" finished-at="2026-10-27T11:17:03 EET" duration-ms="1244" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[POST]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- allRequestTypesRespectTheConfiguredTimeout -->
+        <test-method signature="allRequestTypesRespectTheConfiguredTimeout(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:03 EET" name="allRequestTypesRespectTheConfiguredTimeout" data-provider="requestKinds" finished-at="2026-10-27T11:17:04 EET" duration-ms="1083" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[PUT]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- allRequestTypesRespectTheConfiguredTimeout -->
+        <test-method signature="allRequestTypesRespectTheConfiguredTimeout(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:04 EET" name="allRequestTypesRespectTheConfiguredTimeout" data-provider="requestKinds" finished-at="2026-10-27T11:17:05 EET" duration-ms="1065" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[FILE]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- allRequestTypesRespectTheConfiguredTimeout -->
+        <test-method signature="allRequestTypesRespectTheConfiguredTimeout(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:05 EET" name="allRequestTypesRespectTheConfiguredTimeout" data-provider="requestKinds" finished-at="2026-10-27T11:17:06 EET" duration-ms="1057" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[JSON_FILE]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- allRequestTypesRespectTheConfiguredTimeout -->
+        <test-method signature="masksEscapedJsonAndCaseInsensitiveHeaders()[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:06 EET" name="masksEscapedJsonAndCaseInsensitiveHeaders" finished-at="2026-10-27T11:17:06 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- masksEscapedJsonAndCaseInsensitiveHeaders -->
+        <test-method signature="preservesJsonAndMultipartPayloads(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:06 EET" name="preservesJsonAndMultipartPayloads" data-provider="requestKinds" finished-at="2026-10-27T11:17:06 EET" duration-ms="28" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[JSON]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- preservesJsonAndMultipartPayloads -->
+        <test-method signature="preservesJsonAndMultipartPayloads(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:06 EET" name="preservesJsonAndMultipartPayloads" data-provider="requestKinds" finished-at="2026-10-27T11:17:06 EET" duration-ms="24" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[POST]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- preservesJsonAndMultipartPayloads -->
+        <test-method signature="preservesJsonAndMultipartPayloads(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:06 EET" name="preservesJsonAndMultipartPayloads" data-provider="requestKinds" finished-at="2026-10-27T11:17:06 EET" duration-ms="25" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[PUT]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- preservesJsonAndMultipartPayloads -->
+        <test-method signature="preservesJsonAndMultipartPayloads(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:06 EET" name="preservesJsonAndMultipartPayloads" data-provider="requestKinds" finished-at="2026-10-27T11:17:06 EET" duration-ms="23" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[FILE]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- preservesJsonAndMultipartPayloads -->
+        <test-method signature="preservesJsonAndMultipartPayloads(java.lang.String)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:06 EET" name="preservesJsonAndMultipartPayloads" data-provider="requestKinds" finished-at="2026-10-27T11:17:06 EET" duration-ms="26" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[JSON_FILE]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- preservesJsonAndMultipartPayloads -->
+        <test-method signature="redactsArtifactsAndLogsWithoutChangingTheWire(boolean)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:06 EET" name="redactsArtifactsAndLogsWithoutChangingTheWire" data-provider="verbose" finished-at="2026-10-27T11:17:07 EET" duration-ms="1311" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[false]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- redactsArtifactsAndLogsWithoutChangingTheWire -->
+        <test-method signature="redactsArtifactsAndLogsWithoutChangingTheWire(boolean)[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:07 EET" name="redactsArtifactsAndLogsWithoutChangingTheWire" data-provider="verbose" finished-at="2026-10-27T11:17:08 EET" duration-ms="100" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[true]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- redactsArtifactsAndLogsWithoutChangingTheWire -->
+        <test-method is-config="true" signature="stopLocalServer()[pri:0, instance:com.erp.tests.framework.HttpClientInfrastructureTest@59c862af]" started-at="2026-10-27T11:17:08 EET" name="stopLocalServer" finished-at="2026-10-27T11:17:08 EET" duration-ms="19" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- stopLocalServer -->
+      </class> <!-- com.erp.tests.framework.HttpClientInfrastructureTest -->
+      <class name="com.erp.tests.framework.IntegrationPrerequisitesTest">
+        <test-method signature="connectionFailureKeepsItsOriginalCause()[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="connectionFailureKeepsItsOriginalCause" finished-at="2026-10-27T11:17:10 EET" duration-ms="10" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- connectionFailureKeepsItsOriginalCause -->
+        <test-method signature="enabledHealthyIntegrationRuns()[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="enabledHealthyIntegrationRuns" finished-at="2026-10-27T11:17:10 EET" duration-ms="6" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- enabledHealthyIntegrationRuns -->
+        <test-method signature="enabledIntegrationFailuresNeverBecomeSkips(int,java.lang.String)[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="enabledIntegrationFailuresNeverBecomeSkips" data-provider="failedProbes" finished-at="2026-10-27T11:17:10 EET" duration-ms="8" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[403]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[{}]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- enabledIntegrationFailuresNeverBecomeSkips -->
+        <test-method signature="enabledIntegrationFailuresNeverBecomeSkips(int,java.lang.String)[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="enabledIntegrationFailuresNeverBecomeSkips" data-provider="failedProbes" finished-at="2026-10-27T11:17:10 EET" duration-ms="4" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[404]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[{}]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- enabledIntegrationFailuresNeverBecomeSkips -->
+        <test-method signature="enabledIntegrationFailuresNeverBecomeSkips(int,java.lang.String)[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="enabledIntegrationFailuresNeverBecomeSkips" data-provider="failedProbes" finished-at="2026-10-27T11:17:10 EET" duration-ms="3" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[500]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[{}]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- enabledIntegrationFailuresNeverBecomeSkips -->
+        <test-method signature="enabledIntegrationFailuresNeverBecomeSkips(int,java.lang.String)[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="enabledIntegrationFailuresNeverBecomeSkips" data-provider="failedProbes" finished-at="2026-10-27T11:17:10 EET" duration-ms="3" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[201]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[{}]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- enabledIntegrationFailuresNeverBecomeSkips -->
+        <test-method signature="enabledIntegrationFailuresNeverBecomeSkips(int,java.lang.String)[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="enabledIntegrationFailuresNeverBecomeSkips" data-provider="failedProbes" finished-at="2026-10-27T11:17:10 EET" duration-ms="3" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[200]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[<html>login</html>]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- enabledIntegrationFailuresNeverBecomeSkips -->
+        <test-method signature="enabledIntegrationFailuresNeverBecomeSkips(int,java.lang.String)[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="enabledIntegrationFailuresNeverBecomeSkips" data-provider="failedProbes" finished-at="2026-10-27T11:17:10 EET" duration-ms="4" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[200]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[not json]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- enabledIntegrationFailuresNeverBecomeSkips -->
+        <test-method signature="enabledIntegrationFailuresNeverBecomeSkips(int,java.lang.String)[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="enabledIntegrationFailuresNeverBecomeSkips" data-provider="failedProbes" finished-at="2026-10-27T11:17:10 EET" duration-ms="3" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[200]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- enabledIntegrationFailuresNeverBecomeSkips -->
+        <test-method signature="explicitlyDisabledIntegrationDoesNotProbe()[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:10 EET" name="explicitlyDisabledIntegrationDoesNotProbe" finished-at="2026-10-27T11:17:10 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- explicitlyDisabledIntegrationDoesNotProbe -->
+        <test-method signature="htmlLoginPageIsAFailureForEveryJsonConsumer()[pri:0, instance:com.erp.tests.framework.IntegrationPrerequisitesTest@11582db6]" started-at="2026-10-27T11:17:11 EET" name="htmlLoginPageIsAFailureForEveryJsonConsumer" finished-at="2026-10-27T11:17:11 EET" duration-ms="4" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- htmlLoginPageIsAFailureForEveryJsonConsumer -->
+      </class> <!-- com.erp.tests.framework.IntegrationPrerequisitesTest -->
+      <class name="com.erp.tests.framework.PlanAnalyticsExportContractTest">
+        <test-method signature="acceptsDecimalsZeroesAndSeparateUnits()[pri:0, instance:com.erp.tests.framework.PlanAnalyticsExportContractTest@1d5bb5c]" started-at="2026-10-27T11:17:13 EET" name="acceptsDecimalsZeroesAndSeparateUnits" finished-at="2026-10-27T11:17:14 EET" duration-ms="137" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- acceptsDecimalsZeroesAndSeparateUnits -->
+        <test-method signature="rejectsBrokenExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.PlanAnalyticsExportContractTest@1d5bb5c]" started-at="2026-10-27T11:17:14 EET" name="rejectsBrokenExport" data-provider="regressions" finished-at="2026-10-27T11:17:14 EET" duration-ms="135" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[missing row]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsBrokenExport -->
+        <test-method signature="rejectsBrokenExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.PlanAnalyticsExportContractTest@1d5bb5c]" started-at="2026-10-27T11:17:14 EET" name="rejectsBrokenExport" data-provider="regressions" finished-at="2026-10-27T11:17:14 EET" duration-ms="110" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[extra row]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsBrokenExport -->
+        <test-method signature="rejectsBrokenExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.PlanAnalyticsExportContractTest@1d5bb5c]" started-at="2026-10-27T11:17:14 EET" name="rejectsBrokenExport" data-provider="regressions" finished-at="2026-10-27T11:17:14 EET" duration-ms="114" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[wrong total]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsBrokenExport -->
+        <test-method signature="rejectsBrokenExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.PlanAnalyticsExportContractTest@1d5bb5c]" started-at="2026-10-27T11:17:14 EET" name="rejectsBrokenExport" data-provider="regressions" finished-at="2026-10-27T11:17:14 EET" duration-ms="134" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[text number]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsBrokenExport -->
+        <test-method signature="rejectsBrokenExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.PlanAnalyticsExportContractTest@1d5bb5c]" started-at="2026-10-27T11:17:14 EET" name="rejectsBrokenExport" data-provider="regressions" finished-at="2026-10-27T11:17:14 EET" duration-ms="79" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[swapped sheets]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsBrokenExport -->
+        <test-method signature="rejectsBrokenExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.PlanAnalyticsExportContractTest@1d5bb5c]" started-at="2026-10-27T11:17:14 EET" name="rejectsBrokenExport" data-provider="regressions" finished-at="2026-10-27T11:17:14 EET" duration-ms="109" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[wrong category]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsBrokenExport -->
+        <test-method signature="rejectsBrokenExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.PlanAnalyticsExportContractTest@1d5bb5c]" started-at="2026-10-27T11:17:14 EET" name="rejectsBrokenExport" data-provider="regressions" finished-at="2026-10-27T11:17:14 EET" duration-ms="115" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[wrong resource amount]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsBrokenExport -->
+      </class> <!-- com.erp.tests.framework.PlanAnalyticsExportContractTest -->
+      <class name="com.erp.tests.framework.RemainderExportContractTest">
+        <test-method signature="acceptsCorrectRowsWithReorderedColumns()[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:17 EET" name="acceptsCorrectRowsWithReorderedColumns" finished-at="2026-10-27T11:17:17 EET" duration-ms="414" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- acceptsCorrectRowsWithReorderedColumns -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:17 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:17 EET" duration-ms="36" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[missing-header]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:17 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:17 EET" duration-ms="32" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[duplicate-header]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:17 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:17 EET" duration-ms="44" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[swapped-kind]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:17 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:17 EET" duration-ms="47" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[swapped-affiliation]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:17 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:18 EET" duration-ms="94" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[duplicate-row]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:18 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:18 EET" duration-ms="70" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[foreign-row]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:18 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:18 EET" duration-ms="53" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[missing-row]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:18 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:18 EET" duration-ms="40" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[text-amount]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+        <test-method signature="rejectsCorruptedExport(java.lang.String)[pri:0, instance:com.erp.tests.framework.RemainderExportContractTest@70f91ae3]" started-at="2026-10-27T11:17:18 EET" name="rejectsCorruptedExport" data-provider="corruptions" finished-at="2026-10-27T11:17:18 EET" duration-ms="45" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[wrong-amount]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsCorruptedExport -->
+      </class> <!-- com.erp.tests.framework.RemainderExportContractTest -->
+      <class name="com.erp.tests.framework.DefectExportContractTest">
+        <test-method signature="acceptsDecimalsAndHeaderOnlyEmptyResult()[pri:0, instance:com.erp.tests.framework.DefectExportContractTest@60b553f]" started-at="2026-10-27T11:17:16 EET" name="acceptsDecimalsAndHeaderOnlyEmptyResult" finished-at="2026-10-27T11:17:17 EET" duration-ms="74" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- acceptsDecimalsAndHeaderOnlyEmptyResult -->
+        <test-method signature="acceptsGlobalExportAndChecksOwnedSubset()[pri:0, instance:com.erp.tests.framework.DefectExportContractTest@60b553f]" started-at="2026-10-27T11:17:17 EET" name="acceptsGlobalExportAndChecksOwnedSubset" finished-at="2026-10-27T11:17:17 EET" duration-ms="53" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- acceptsGlobalExportAndChecksOwnedSubset -->
+        <test-method signature="rejectsGlobalRowsOutsidePeriodEvenIfTheyAreNotOwned()[pri:0, instance:com.erp.tests.framework.DefectExportContractTest@60b553f]" started-at="2026-10-27T11:17:17 EET" name="rejectsGlobalRowsOutsidePeriodEvenIfTheyAreNotOwned" finished-at="2026-10-27T11:17:17 EET" duration-ms="39" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsGlobalRowsOutsidePeriodEvenIfTheyAreNotOwned -->
+        <test-method signature="rejectsMissingDuplicateForeignOrStaleRows()[pri:0, instance:com.erp.tests.framework.DefectExportContractTest@60b553f]" started-at="2026-10-27T11:17:17 EET" name="rejectsMissingDuplicateForeignOrStaleRows" finished-at="2026-10-27T11:17:17 EET" duration-ms="193" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsMissingDuplicateForeignOrStaleRows -->
+        <test-method signature="rejectsUnfilteredRowsInEmptyExport()[pri:0, instance:com.erp.tests.framework.DefectExportContractTest@60b553f]" started-at="2026-10-27T11:17:17 EET" name="rejectsUnfilteredRowsInEmptyExport" finished-at="2026-10-27T11:17:17 EET" duration-ms="28" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rejectsUnfilteredRowsInEmptyExport -->
+      </class> <!-- com.erp.tests.framework.DefectExportContractTest -->
+      <class name="com.erp.tests.framework.UserMeResponsePermissionTest">
+        <test-method signature="aggregatePermissionsUseGrantScopeToSeparateFullAndReadOnlyLocations()[pri:0, instance:com.erp.tests.framework.UserMeResponsePermissionTest@673a9db4]" started-at="2026-10-27T11:17:08 EET" name="aggregatePermissionsUseGrantScopeToSeparateFullAndReadOnlyLocations" finished-at="2026-10-27T11:17:08 EET" duration-ms="22" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- aggregatePermissionsUseGrantScopeToSeparateFullAndReadOnlyLocations -->
+        <test-method signature="explicitLocationGrantIsAuthoritativeWhenAllowedStorageIdsLagsBehind()[pri:0, instance:com.erp.tests.framework.UserMeResponsePermissionTest@673a9db4]" started-at="2026-10-27T11:17:08 EET" name="explicitLocationGrantIsAuthoritativeWhenAllowedStorageIdsLagsBehind" finished-at="2026-10-27T11:17:08 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- explicitLocationGrantIsAuthoritativeWhenAllowedStorageIdsLagsBehind -->
+        <test-method signature="legacyPerLocationPermissionsRemainSupported()[pri:0, instance:com.erp.tests.framework.UserMeResponsePermissionTest@673a9db4]" started-at="2026-10-27T11:17:08 EET" name="legacyPerLocationPermissionsRemainSupported" finished-at="2026-10-27T11:17:08 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- legacyPerLocationPermissionsRemainSupported -->
+      </class> <!-- com.erp.tests.framework.UserMeResponsePermissionTest -->
+      <class name="com.erp.utils.helpers.InventorySnapshotContractTest">
+        <test-method signature="failuresCannotBecomeZeroStock(int,java.lang.String,java.lang.String)[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="failuresCannotBecomeZeroStock" data-provider="failedResponses" finished-at="2026-10-27T11:17:18 EET" duration-ms="11" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[403]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[text/plain]]>
+              </value>
+            </param>
+            <param index="2">
+              <value>
+                <![CDATA[Forbidden]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- failuresCannotBecomeZeroStock -->
+        <test-method signature="failuresCannotBecomeZeroStock(int,java.lang.String,java.lang.String)[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="failuresCannotBecomeZeroStock" data-provider="failedResponses" finished-at="2026-10-27T11:17:18 EET" duration-ms="4" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[404]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[application/json]]>
+              </value>
+            </param>
+            <param index="2">
+              <value>
+                <![CDATA[{"content":[]}]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- failuresCannotBecomeZeroStock -->
+        <test-method signature="failuresCannotBecomeZeroStock(int,java.lang.String,java.lang.String)[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="failuresCannotBecomeZeroStock" data-provider="failedResponses" finished-at="2026-10-27T11:17:18 EET" duration-ms="4" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[500]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[text/html]]>
+              </value>
+            </param>
+            <param index="2">
+              <value>
+                <![CDATA[<html>Unavailable</html>]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- failuresCannotBecomeZeroStock -->
+        <test-method signature="failuresCannotBecomeZeroStock(int,java.lang.String,java.lang.String)[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="failuresCannotBecomeZeroStock" data-provider="failedResponses" finished-at="2026-10-27T11:17:18 EET" duration-ms="3" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[500]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[application/json]]>
+              </value>
+            </param>
+            <param index="2">
+              <value>
+                <![CDATA[{"content":[]}]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- failuresCannotBecomeZeroStock -->
+        <test-method signature="failuresCannotBecomeZeroStock(int,java.lang.String,java.lang.String)[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="failuresCannotBecomeZeroStock" data-provider="failedResponses" finished-at="2026-10-27T11:17:18 EET" duration-ms="3" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[200]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[text/html]]>
+              </value>
+            </param>
+            <param index="2">
+              <value>
+                <![CDATA[<html>Login</html>]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- failuresCannotBecomeZeroStock -->
+        <test-method signature="failuresCannotBecomeZeroStock(int,java.lang.String,java.lang.String)[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="failuresCannotBecomeZeroStock" data-provider="failedResponses" finished-at="2026-10-27T11:17:18 EET" duration-ms="42" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[200]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[application/json]]>
+              </value>
+            </param>
+            <param index="2">
+              <value>
+                <![CDATA[{}]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- failuresCannotBecomeZeroStock -->
+        <test-method signature="failuresCannotBecomeZeroStock(int,java.lang.String,java.lang.String)[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="failuresCannotBecomeZeroStock" data-provider="failedResponses" finished-at="2026-10-27T11:17:18 EET" duration-ms="39" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[200]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA[application/json]]>
+              </value>
+            </param>
+            <param index="2">
+              <value>
+                <![CDATA[{"content":null}]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- failuresCannotBecomeZeroStock -->
+        <test-method signature="missingResponseIsAnError()[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="missingResponseIsAnError" finished-at="2026-10-27T11:17:18 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- missingResponseIsAnError -->
+        <test-method signature="validEmptyPageRepresentsZeroStock()[pri:0, instance:com.erp.utils.helpers.InventorySnapshotContractTest@601d9f3a]" started-at="2026-10-27T11:17:18 EET" name="validEmptyPageRepresentsZeroStock" finished-at="2026-10-27T11:17:18 EET" duration-ms="77" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- validEmptyPageRepresentsZeroStock -->
+      </class> <!-- com.erp.utils.helpers.InventorySnapshotContractTest -->
+      <class name="com.erp.tests.framework.XlsxColumnContractTest">
+        <test-method signature="numericCountCannotHideTextAmountInAnyRow()[pri:0, instance:com.erp.tests.framework.XlsxColumnContractTest@388e4c25]" started-at="2026-10-27T11:17:12 EET" name="numericCountCannotHideTextAmountInAnyRow" finished-at="2026-10-27T11:17:13 EET" duration-ms="1460" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- numericCountCannotHideTextAmountInAnyRow -->
+        <test-method signature="selectsNamedColumnAndChecksEveryAmount()[pri:0, instance:com.erp.tests.framework.XlsxColumnContractTest@388e4c25]" started-at="2026-10-27T11:17:13 EET" name="selectsNamedColumnAndChecksEveryAmount" finished-at="2026-10-27T11:17:13 EET" duration-ms="46" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- selectsNamedColumnAndChecksEveryAmount -->
+      </class> <!-- com.erp.tests.framework.XlsxColumnContractTest -->
+      <class name="com.erp.utils.config.DotEnvLoaderTest">
+        <test-method signature="mapsContainerEnvironmentWithoutOverridingCliProperties()[pri:0, instance:com.erp.utils.config.DotEnvLoaderTest@44106e25]" started-at="2026-10-27T11:17:11 EET" name="mapsContainerEnvironmentWithoutOverridingCliProperties" finished-at="2026-10-27T11:17:11 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- mapsContainerEnvironmentWithoutOverridingCliProperties -->
+      </class> <!-- com.erp.utils.config.DotEnvLoaderTest -->
+      <class name="com.erp.tests.framework.BatchIdentityContractTest">
+        <test-method signature="sendPreservesExistingBatchUuidAndRejectsMissingIdentity()[pri:0, instance:com.erp.tests.framework.BatchIdentityContractTest@646d58cd]" started-at="2026-10-27T11:17:12 EET" name="sendPreservesExistingBatchUuidAndRejectsMissingIdentity" finished-at="2026-10-27T11:17:12 EET" duration-ms="31" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- sendPreservesExistingBatchUuidAndRejectsMissingIdentity -->
+        <test-method signature="writeOffPreservesDistinctUuidsForBatchesWithTheSameName()[pri:0, instance:com.erp.tests.framework.BatchIdentityContractTest@646d58cd]" started-at="2026-10-27T11:17:12 EET" name="writeOffPreservesDistinctUuidsForBatchesWithTheSameName" finished-at="2026-10-27T11:17:12 EET" duration-ms="38" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- writeOffPreservesDistinctUuidsForBatchesWithTheSameName -->
+        <test-method signature="writeOffRejectsResponseThatLostBatchIdentity()[pri:0, instance:com.erp.tests.framework.BatchIdentityContractTest@646d58cd]" started-at="2026-10-27T11:17:12 EET" name="writeOffRejectsResponseThatLostBatchIdentity" finished-at="2026-10-27T11:17:12 EET" duration-ms="6" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- writeOffRejectsResponseThatLostBatchIdentity -->
+      </class> <!-- com.erp.tests.framework.BatchIdentityContractTest -->
+      <class name="com.erp.tests.framework.CleanupIsolationTest">
+        <test-method signature="cleanupCannotClaimAnExistingStorageOrTouchItsStock()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:08 EET" name="cleanupCannotClaimAnExistingStorageOrTouchItsStock" finished-at="2026-10-27T11:17:08 EET" duration-ms="103" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanupCannotClaimAnExistingStorageOrTouchItsStock -->
+        <test-method signature="concurrentRegistrationsAreRetainedAndMalformedCreatesCannotClaimOwnership()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:08 EET" name="concurrentRegistrationsAreRetainedAndMalformedCreatesCannotClaimOwnership" finished-at="2026-10-27T11:17:10 EET" duration-ms="1288" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- concurrentRegistrationsAreRetainedAndMalformedCreatesCannotClaimOwnership -->
+        <test-method signature="holdCleanupSkipsForeignOrdersAndFindsOwnedOrdersBeyondFirstPage()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:10 EET" name="holdCleanupSkipsForeignOrdersAndFindsOwnedOrdersBeyondFirstPage" finished-at="2026-10-27T11:17:10 EET" duration-ms="246" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- holdCleanupSkipsForeignOrdersAndFindsOwnedOrdersBeyondFirstPage -->
+        <test-method signature="onlySuccessfulCreatesConferOwnershipAcrossExecutors()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:10 EET" name="onlySuccessfulCreatesConferOwnershipAcrossExecutors" finished-at="2026-10-27T11:17:10 EET" duration-ms="37" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- onlySuccessfulCreatesConferOwnershipAcrossExecutors -->
+        <test-method signature="prefixPurgeCannotDeleteOtherRunsIdenticallyNamedRegions()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:10 EET" name="prefixPurgeCannotDeleteOtherRunsIdenticallyNamedRegions" finished-at="2026-10-27T11:17:10 EET" duration-ms="55" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- prefixPurgeCannotDeleteOtherRunsIdenticallyNamedRegions -->
+        <test-method signature="queryParameterExecutionAlsoTracksSuccessfulCreates()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:10 EET" name="queryParameterExecutionAlsoTracksSuccessfulCreates" finished-at="2026-10-27T11:17:10 EET" duration-ms="35" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- queryParameterExecutionAlsoTracksSuccessfulCreates -->
+        <test-method signature="rawDeleteAndUnarchiveUpdatePendingCleanupWithoutLosingOwnership()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:10 EET" name="rawDeleteAndUnarchiveUpdatePendingCleanupWithoutLosingOwnership" finished-at="2026-10-27T11:17:10 EET" duration-ms="48" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- rawDeleteAndUnarchiveUpdatePendingCleanupWithoutLosingOwnership -->
+        <test-method signature="regionCleanupRetainsFailuresAndDoesNotNeedCatalogSearch()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:10 EET" name="regionCleanupRetainsFailuresAndDoesNotNeedCatalogSearch" finished-at="2026-10-27T11:17:10 EET" duration-ms="69" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- regionCleanupRetainsFailuresAndDoesNotNeedCatalogSearch -->
+        <test-method signature="storageSweepUsesRegisteredIdsAndRetriesFailures()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:10 EET" name="storageSweepUsesRegisteredIdsAndRetriesFailures" finished-at="2026-10-27T11:17:10 EET" duration-ms="29" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- storageSweepUsesRegisteredIdsAndRetriesFailures -->
+        <test-method signature="visibilityPurgeLeavesForeignMembershipsAndGrantsUntouched()[pri:0, instance:com.erp.tests.framework.CleanupIsolationTest@5a8b42a3]" started-at="2026-10-27T11:17:10 EET" name="visibilityPurgeLeavesForeignMembershipsAndGrantsUntouched" finished-at="2026-10-27T11:17:10 EET" duration-ms="116" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- visibilityPurgeLeavesForeignMembershipsAndGrantsUntouched -->
+      </class> <!-- com.erp.tests.framework.CleanupIsolationTest -->
+      <class name="com.erp.tests.framework.TcmResultOutboxTest">
+        <test-method signature="concurrentAppendsProduceCompleteRecords()[pri:0, instance:com.erp.tests.framework.TcmResultOutboxTest@7c0b0bd9]" started-at="2026-10-27T11:16:55 EET" name="concurrentAppendsProduceCompleteRecords" finished-at="2026-10-27T11:16:56 EET" duration-ms="1035" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- concurrentAppendsProduceCompleteRecords -->
+        <test-method signature="defaultPathsAreIsolatedByRunId()[pri:0, instance:com.erp.tests.framework.TcmResultOutboxTest@7c0b0bd9]" started-at="2026-10-27T11:16:56 EET" name="defaultPathsAreIsolatedByRunId" finished-at="2026-10-27T11:16:56 EET" duration-ms="48" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- defaultPathsAreIsolatedByRunId -->
+        <test-method signature="deliveryMarkerBelongsToItsRun()[pri:0, instance:com.erp.tests.framework.TcmResultOutboxTest@7c0b0bd9]" started-at="2026-10-27T11:16:56 EET" name="deliveryMarkerBelongsToItsRun" finished-at="2026-10-27T11:16:56 EET" duration-ms="42" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- deliveryMarkerBelongsToItsRun -->
+        <test-method signature="filtersForeignAndLegacyResultsWhenAnExplicitPathIsReused()[pri:0, instance:com.erp.tests.framework.TcmResultOutboxTest@7c0b0bd9]" started-at="2026-10-27T11:16:56 EET" name="filtersForeignAndLegacyResultsWhenAnExplicitPathIsReused" finished-at="2026-10-27T11:16:56 EET" duration-ms="26" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- filtersForeignAndLegacyResultsWhenAnExplicitPathIsReused -->
+        <test-method signature="roundTripsControlCharactersAndRecoversCompleteRecords()[pri:0, instance:com.erp.tests.framework.TcmResultOutboxTest@7c0b0bd9]" started-at="2026-10-27T11:16:56 EET" name="roundTripsControlCharactersAndRecoversCompleteRecords" finished-at="2026-10-27T11:16:56 EET" duration-ms="32" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- roundTripsControlCharactersAndRecoversCompleteRecords -->
+        <test-method signature="runnerCanForwardResultRowsToStrictTcmDto()[pri:0, instance:com.erp.tests.framework.TcmResultOutboxTest@7c0b0bd9]" started-at="2026-10-27T11:16:56 EET" name="runnerCanForwardResultRowsToStrictTcmDto" finished-at="2026-10-27T11:16:56 EET" duration-ms="105" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runnerCanForwardResultRowsToStrictTcmDto -->
+      </class> <!-- com.erp.tests.framework.TcmResultOutboxTest -->
+      <class name="com.erp.tests.framework.TechMapUpdateContractTest">
+        <test-method signature="formPayloadOmitsDatabaseRowIdsAndKeepsBusinessValues()[pri:0, instance:com.erp.tests.framework.TechMapUpdateContractTest@4552f905]" started-at="2026-10-27T11:17:11 EET" name="formPayloadOmitsDatabaseRowIdsAndKeepsBusinessValues" finished-at="2026-10-27T11:17:11 EET" duration-ms="34" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- formPayloadOmitsDatabaseRowIdsAndKeepsBusinessValues -->
+        <test-method signature="mutationStillRejectsBrokenBusinessFields(java.lang.String)[pri:0, instance:com.erp.tests.framework.TechMapUpdateContractTest@4552f905]" started-at="2026-10-27T11:17:11 EET" name="mutationStillRejectsBrokenBusinessFields" data-provider="invalidMutations" finished-at="2026-10-27T11:17:12 EET" duration-ms="958" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[resourceId]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- mutationStillRejectsBrokenBusinessFields -->
+        <test-method signature="mutationStillRejectsBrokenBusinessFields(java.lang.String)[pri:0, instance:com.erp.tests.framework.TechMapUpdateContractTest@4552f905]" started-at="2026-10-27T11:17:12 EET" name="mutationStillRejectsBrokenBusinessFields" data-provider="invalidMutations" finished-at="2026-10-27T11:17:12 EET" duration-ms="37" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[amount]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- mutationStillRejectsBrokenBusinessFields -->
+        <test-method signature="mutationStillRejectsBrokenBusinessFields(java.lang.String)[pri:0, instance:com.erp.tests.framework.TechMapUpdateContractTest@4552f905]" started-at="2026-10-27T11:17:12 EET" name="mutationStillRejectsBrokenBusinessFields" data-provider="invalidMutations" finished-at="2026-10-27T11:17:12 EET" duration-ms="18" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[defaultFlag]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- mutationStillRejectsBrokenBusinessFields -->
+        <test-method signature="mutationStillRejectsBrokenBusinessFields(java.lang.String)[pri:0, instance:com.erp.tests.framework.TechMapUpdateContractTest@4552f905]" started-at="2026-10-27T11:17:12 EET" name="mutationStillRejectsBrokenBusinessFields" data-provider="invalidMutations" finished-at="2026-10-27T11:17:12 EET" duration-ms="20" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[version]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- mutationStillRejectsBrokenBusinessFields -->
+        <test-method signature="readsStillRequirePopulatedMetadata()[pri:0, instance:com.erp.tests.framework.TechMapUpdateContractTest@4552f905]" started-at="2026-10-27T11:17:12 EET" name="readsStillRequirePopulatedMetadata" finished-at="2026-10-27T11:17:12 EET" duration-ms="23" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- readsStillRequirePopulatedMetadata -->
+        <test-method signature="updateAcceptsResourceReferences()[pri:0, instance:com.erp.tests.framework.TechMapUpdateContractTest@4552f905]" started-at="2026-10-27T11:17:12 EET" name="updateAcceptsResourceReferences" finished-at="2026-10-27T11:17:12 EET" duration-ms="22" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- updateAcceptsResourceReferences -->
+      </class> <!-- com.erp.tests.framework.TechMapUpdateContractTest -->
+    </test> <!-- HTTP clients and TCM reporting -->
+  </suite> <!-- Framework infrastructure -->
+</testng-results>
