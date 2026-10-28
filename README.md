@@ -1,9 +1,75 @@
 ERP API Test Automation Framework
+
+**Списання ресурсів — МШП**: [контракт, 8 AC та 22 API/UI кейси](docs/REQ-MSHP-resource-write-off.md).
+Набір `low-value-write-off`: 39 виконань, ознака ресурсу, фільтр, валідація й атомарність,
+точні залишки/партії, Історія операцій, журнал, дві ролі та комбіновані фільтри.
+Запуск dev: `powershell -ExecutionPolicy Bypass -File scripts/run_low_value_write_off_dev.ps1`.
+Клас входить також до `inventory`, `ui`, `regression`; дані ізольовані, JDBC/SSH не потрібні.
+TCM: [prod](http://tcm.lab/projects/1?feature=180), [stage](http://localhost:18100/projects/1?feature=175).
+[Результати dev](docs/audits/2026-10-26/low-value-write-off-dev-report.md).
+26.10.2026 погоджено поточний UI: повна підказка у редагуванні необов’язкова; фільтр МШП реалізовано select.
+Повторний dev-прогін: **32 PASS / 0 FAIL / 0 SKIP**, BUILD SUCCESS; cleanup успішний.
+Погоджені документація й кейси та результати синхронізовані в prod/stage TCM, прогони **169/230** (19 PASS кейсів).
+Попередні прогони **168/229** (30 PASS / 2 FAIL виконань за початковими очікуваннями) збережені в історії.
+Регресія ручного [BUG-MSHP-EDIT-FIFO](docs/BUG-MSHP-EDIT-FIFO.md): окремий набір `low-value-write-off-edit`.
+Dev: **4 PASS / 3 FAIL / 0 SKIP**, cleanup успішний — валідні 4/6/10 блокуються у FIFO UI, API та попартійний UI проходять.
+[Звіт регресії](docs/audits/2026-10-26/low-value-write-off-edit-dev-report.md). Повний новий набір із 39 виконань цим окремим прогоном не запускався.
+
+**Інвентаризація для адміна — «Всі локації»**: [вимоги, 3 AC та 8 API/UI кейсів](docs/REQ-INV-ADMIN.md).
+Ролі: Адміністратор і Адміністратор: перегляд; реальний сайдбар, повна пагінація запитів,
+незалежні/дочірні локації та повернення глобального списку після перемикання.
+Dev: `powershell -ExecutionPolicy Bypass -File scripts/run_inventory_admin_dev.ps1`.
+TCM: [prod](http://tcm.lab/projects/1?feature=179), [stage](http://localhost:18100/projects/1?feature=174).
+[Фактичний результат dev](docs/audits/2026-10-27/inventory-admin-dev-report.md).
+27.10.2026: історичний прогін 7 PASS / 1 FAIL — глобальний розділ і повний список доступні обом ролям.
+Погоджена вимога: таблиця адміністратора залишається глобальною також після вибору конкретної локації;
+попередній FAIL очікував локальний фільтр і не означає дефект за новим контрактом. UI-005 ще потребує оновлення автоматизації.
+Cleanup перевірено, framework 112 PASS. Результати dev опубліковано в TCM prod/stage, прогони 175/236.
+
+**Архівація моделі обладнання**: [вимоги, 4 AC і 13 API/UI кейсів](docs/REQ-EQU-ARCHIVE.md).
+Перевіряються залишки, активне переміщення, повторна валідація під час підтвердження,
+фільтр статусу та виключення архіву з автокомпліту. 14 виконань на ізольованих даних.
+Dev: `powershell -ExecutionPolicy Bypass -File scripts/run_equipment_model_archive_dev.ps1`.
+Окремий набір `equipment-model-archive`; класи також у `equipment`, `functional`, `ui`, `regression`.
+TCM: [prod](http://tcm.lab/projects/1?feature=177), [stage](http://localhost:18100/projects/1?feature=172);
+`REQ-EQU-DICT` → `REQ-EQU-ARCHIVE`; [фактичний звіт dev](docs/audits/2026-10-22/equipment-model-archive-dev-report.md).
+22.10.2026 після відновлення dev: 14 PASS / 0 FAIL / 0 SKIP, BUILD SUCCESS; регресія довідника раніше — 13 PASS.
+Cleanup після 503 завершено: 6 одиниць видалено, моделі й локації архівовано, категорію видалено.
+Нові dev-результати імпортовано й перевірено в TCM prod/stage: прогони 163/224.
+
+**Експорт даних → Переміщення — колонки та регресія дублів**:
+[контракт, 6 AC та 8 API/UI кейсів](docs/REQ-REL-COL.md).
+Dev: `powershell -File scripts/run_relocation_export_columns_dev.ps1`.
+Набір `relocation-export-columns`: порядок 20 колонок, три kind, матриця 4 групи × 3 kind,
+повна пагінація Видано/Отримано та фактичний UI download. Погоджені групи — ПМ без Цукрарня / СБС без ПМ / Цукрарня / Інші;
+JDBC лише читає конфігурацію. Класи додані також до `relocations`, `ui`, `regression`.
+TCM: [prod](http://tcm.lab/projects/1?feature=176), [stage](http://localhost:18100/projects/1?feature=171).
+22.10.2026 після погодження назв: [dev — 8 PASS / 0 FAIL / 0 SKIP; cleanup успішний](docs/audits/2026-10-22/relocation-export-columns-dev-report.md).
+
+**Інвентаризація → Закриті — фільтр по назві ресурсу**:
+[вимоги, 3 АС та 9 API/UI-кейсів](docs/REQ-INV-NAME.md), TCM `REQ-WMS-003` → `REQ-INV-NAME`.
+Запуск dev: `mvn test -Denv=dev -Dsuite=inventory-name-filter -Duse.database=false -Dssh.enabled=false`.
+Перевіряються точні ресурси всередині розбіжностей, пошук/скидання та актуальний Excel.
+
+Документообіг переміщень → **Новий комерційний документ — обов'язкові поля**:
+[вимоги, 6 АС і 8 API/UI кейсів](docs/REQ-CD-REQ.md), TCM `REQ-DOCFLOW` → `REQ-CD-REQ`.
+`mvn test -Denv=dev -Dsuite=commercial-document-required-fields -Duse.database=false -Dssh.enabled=false`.
+21 API-перевірка та 4 UI-сценарії: видимі `*`, номер/дата/надходження/файл,
+сума й назва кожного ресурсу, пробіли, нульова сума, необов'язкові поля,
+скасування та повторне відкриття збереженого документа. Ізольовані дані й cleanup;
+класи також включені до `relocations`, `ui` (UI-клас) та `regression`.
  
 Data-Driven фреймворк для автоматизації тестування REST API, з фокусом на перевірці безпеки (RBAC) та контрактному тестуванні (Contract Testing).
 
+Фільтр «Постачальник» на **Видати/Отримати**: [вимоги](docs/REQ-REL-SUPPLIER.md),
+[12 API/UI кейсів, 39 виконань](docs/RELOCATION_SUPPLIER_FILTERS_TEST_CASES.md).
+Запуск на dev: `mvn test -Denv=dev -Dsuite=relocation-supplier-filters`.
+
 Сортування ресурсів за «Змінено»: [вимоги, тест-кейси та запуск](docs/REQ-RES-SORT.md).
 Окремий набір API/UI — `-Dsuite=resource-modified-sort`.
+
+Фільтр техкарт «Категорія виробу»: [вимоги та 12 API/UI кейсів](docs/REQ-MFG-CATEGORY-FILTER.md).
+Запуск на dev: `mvn test -Denv=dev -Dsuite=tech-map-category-filter -Duse.database=false -Dframework.browser.channel=chrome`; для стейджу — `-Denv=staging`.
 
 Технологічний стек
 Java 21

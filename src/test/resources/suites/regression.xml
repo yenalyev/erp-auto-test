@@ -91,6 +91,7 @@
             <class name="com.erp.tests.functional.storage.RoleStorageSelectorApiTest"/>
             <class name="com.erp.tests.functional.storage.AccountantRelocationFilterTest"/>
             <class name="com.erp.tests.functional.storage.CrewWriteOffTest"/>
+            <class name="com.erp.tests.functional.storage.ManualBatchCrewReceiveApiTest"/>
             <class name="com.erp.tests.functional.storage.FaitaCrewSyncContractTest"/>
             <class name="com.erp.tests.functional.storage.FaitaCrewSyncE2eTest"/>
             <class name="com.erp.tests.functional.storage.FaitaInitiatorWriteOffTest"/>
@@ -130,6 +131,7 @@
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapAlternativeGroupsTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapHierarchyApiTest"/>
             <class name="com.erp.tests.functional.tech_map.TechnologicalMapResourceCalculatorApiTest"/>
+            <class name="com.erp.tests.functional.tech_map.TechMapCategoryFilterApiTest"/>
         </classes>
     </test>
 
@@ -206,10 +208,13 @@
             <class name="com.erp.tests.functional.relocation.RelocationInTransitEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationBatchTechMapExportTest"/>
+            <class name="com.erp.tests.functional.analytics.RelocationExportColumnsApiTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationBatchAccountingTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationUsedBatchEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest"/>
+            <class name="com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTotalsApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
@@ -219,6 +224,8 @@
             <class name="com.erp.tests.functional.equipment.EquipmentInventoryCreateTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentCategoryCrudApiTest"/>
             <class name="com.erp.tests.functional.equipment.EquipmentUnitHistoryApiTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentDictionaryApiTest"/>
+            <class name="com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertCrudApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertOwnerSaveApiTest"/>
             <class name="com.erp.tests.functional.alert.AlertStockHighlightApiTest"/>
@@ -229,6 +236,7 @@
 
     <test name="Inventory API">
         <classes>
+            <class name="com.erp.tests.functional.inventory.InventoryNameFilterApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventorySessionApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConductApiTest"/>
             <class name="com.erp.tests.functional.inventory.InventoryConcurrentIssueApiTest"/>
@@ -339,11 +347,14 @@
             <class name="com.erp.tests.ui.RelocationRegionAliasFeatureUiTest"/>
             <class name="com.erp.tests.ui.RelocationBatchAccountingUiTest"/>
             <class name="com.erp.tests.ui.RelocationBatchTechMapExportUiTest"/>
+            <class name="com.erp.tests.ui.RelocationExportColumnsUiTest"/>
             <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.RelocationSupplierDefectEditUiTest"/>
             <class name="com.erp.tests.ui.BattalionRelocationEditUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.RelocationSupplierFiltersUiTest"/>
+            <class name="com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest"/>
             <class name="com.erp.tests.ui.LogisticsJournalUiTest">
                 <methods>
                     <include name="logisticsTotalsFollowTabsAndFilters"/>
@@ -370,12 +381,18 @@
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
             <class name="com.erp.tests.ui.EquipmentKindHintUiTest"/>
             <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
+            <class name="com.erp.tests.ui.EquipmentDictionaryUiTest"/>
+            <class name="com.erp.tests.ui.EquipmentModelArchiveUiTest"/>
             <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest"/>
         </classes>
     </test>
 
     <test name="UI Inventory">
         <classes>
+            <class name="com.erp.tests.ui.InventoryNameFilterUiTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffExportUiTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffEditTest"/>
             <class name="com.erp.tests.ui.InventoryUiTest"/>
             <class name="com.erp.tests.ui.CrewInventoryAccessUiTest"/>
             <class name="com.erp.tests.ui.InventoryConcurrentIssueUiTest"/>
@@ -434,6 +451,7 @@
         <classes>
             <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
+            <class name="com.erp.tests.ui.TechMapCategoryFilterUiTest"/>
             <class name="com.erp.tests.ui.TechnologicalMapHashtagUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>

@@ -1,0 +1,173 @@
+{
+  "result": "SUCCESS",
+  "baseUrl": "http://localhost:18100",
+  "remoteRunId": "equipment-model-archive-dev-20261022-recovered",
+  "importResponse": {
+    "runId": 224,
+    "matched": 13,
+    "created": 0,
+    "updated": 13,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 224,
+    "name": "AUTO Архівація моделі обладнання — dev 22.10.2026",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 45,
+    "testPlanName": "AUTO TP REQ-EQU-ARCHIVE",
+    "startedAt": "2026-10-22T08:19:26.325622",
+    "completedAt": "2026-10-22T08:40:46.504146",
+    "createdAt": "2026-10-22T08:19:26.327741",
+    "items": [
+      {
+        "id": 20998,
+        "testId": "TC-EQA-API-001",
+        "title": "Архівація списаної моделі зі збереженням історії",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-API-001",
+        "executedAt": "2026-10-22T11:16:43"
+      },
+      {
+        "id": 20999,
+        "testId": "TC-EQA-API-002",
+        "title": "Залишки AVAILABLE та IN_REPAIR блокують архівацію",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-API-002",
+        "executedAt": "2026-10-22T11:16:57"
+      },
+      {
+        "id": 21000,
+        "testId": "TC-EQA-API-003",
+        "title": "Активне переміщення блокує архівацію",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-API-003",
+        "executedAt": "2026-10-22T11:16:36"
+      },
+      {
+        "id": 21001,
+        "testId": "TC-EQA-API-004",
+        "title": "Зняття останнього блокера та повторна архівація",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-API-004",
+        "executedAt": "2026-10-22T11:16:47"
+      },
+      {
+        "id": 21002,
+        "testId": "TC-EQA-API-005",
+        "title": "Статус із назвою категорією та пагінацією",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-API-005",
+        "executedAt": "2026-10-22T11:16:52"
+      },
+      {
+        "id": 21003,
+        "testId": "TC-EQA-API-006",
+        "title": "Suggestions виключає архів із результатів пошуку",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-API-006",
+        "executedAt": "2026-10-22T11:17:03"
+      },
+      {
+        "id": 21004,
+        "testId": "TC-EQA-UI-001",
+        "title": "Типовий фільтр показує активні моделі",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-UI-001",
+        "executedAt": "2026-10-22T11:18:02"
+      },
+      {
+        "id": 21005,
+        "testId": "TC-EQA-UI-002",
+        "title": "Перемикання статусу та перетин фільтрів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-UI-002",
+        "executedAt": "2026-10-22T11:18:22"
+      },
+      {
+        "id": 21006,
+        "testId": "TC-EQA-UI-003",
+        "title": "Скасування архівації не змінює модель",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-UI-003",
+        "executedAt": "2026-10-22T11:17:48"
+      },
+      {
+        "id": 21007,
+        "testId": "TC-EQA-UI-004",
+        "title": "Підтвердження архівації та збереження після reload",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-UI-004",
+        "executedAt": "2026-10-22T11:17:53"
+      },
+      {
+        "id": 21008,
+        "testId": "TC-EQA-UI-005",
+        "title": "Залишки та обладнання в дорозі блокують кнопку",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-UI-005",
+        "executedAt": "2026-10-22T11:18:15"
+      },
+      {
+        "id": 21009,
+        "testId": "TC-EQA-UI-006",
+        "title": "Автокомпліт форми показує лише активну модель",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-UI-006",
+        "executedAt": "2026-10-22T11:17:38"
+      },
+      {
+        "id": 21010,
+        "testId": "TC-EQA-UI-007",
+        "title": "Повторна валідація залишку під час підтвердження",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-EQA-UI-007",
+        "executedAt": "2026-10-22T11:18:08"
+      }
+    ]
+  }
+}

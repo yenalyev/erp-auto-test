@@ -1,0 +1,14 @@
+{
+  "destination": "production TCM",
+  "featureId": "REQ-MFG-001-03",
+  "featureDbId": 12,
+  "documentationReadbackVerified": true,
+  "managedCriteria": 2,
+  "managedCases": 12,
+  "executionStatusesChanged": false,
+  "documentedDevResult": {
+    "PASS": 13,
+    "FAIL": 1
+  },
+  "knownDefectTestId": "TC-TM-CAT-API-007"
+}

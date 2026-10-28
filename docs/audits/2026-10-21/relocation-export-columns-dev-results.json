@@ -1,0 +1,387 @@
+{
+  "environment": "dev",
+  "featureId": "REQ-REL-COL",
+  "buildDirectory": "target\\rel-columns-verified-20261021",
+  "testngTotals": {
+    "ignored": "0",
+    "total": "8",
+    "passed": "3",
+    "failed": "3",
+    "skipped": "2"
+  },
+  "configurationFailures": [
+    {
+      "className": "com.erp.tests.ui.RelocationExportColumnsUiTest",
+      "method": "baseTestClassSetup",
+      "message": "\n              Error {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-2784329746674901623\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-2784329746674901623\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\", waiting until \"domcontentloaded\"\n\n            ",
+      "build": "target\\rel-columns-verified-20261021"
+    },
+    {
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "method": "cleanup",
+      "message": "\n              Relocation columns cleanup failed\n            ",
+      "build": "target\\rel-columns-verified-20261021"
+    }
+  ],
+  "sourceBuilds": [
+    "target\\rel-columns-verified-20261021",
+    "target\\rel-columns-recovery-20261022"
+  ],
+  "supersededInvocations": [
+    {
+      "testCaseId": "TC-REL-COL-API-006",
+      "status": "FAIL",
+      "durationMs": 3107,
+      "executedAt": "2026-10-22T09:01:23",
+      "errorMessage": "Connection refused: getsockopt",
+      "attachments": [],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-verified-20261021"
+    },
+    {
+      "testCaseId": "TC-REL-COL-UI-001",
+      "status": "SKIPPED",
+      "durationMs": 117,
+      "executedAt": "2026-10-22T09:03:47",
+      "errorMessage": "Error {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-2784329746674901623\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-2784329746674901623\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\", waiting until \"domcontentloaded\"\n",
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-001-870847c6-856b-44c9-bf41-92c42982c896-attachment.png"
+      ],
+      "className": "com.erp.tests.ui.RelocationExportColumnsUiTest",
+      "sourceBuild": "target\\rel-columns-verified-20261021"
+    },
+    {
+      "testCaseId": "TC-REL-COL-UI-002",
+      "status": "SKIPPED",
+      "durationMs": 105,
+      "executedAt": "2026-10-22T09:03:48",
+      "errorMessage": "Error {\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\n  name='Error\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\n    at FrameSession._navigate (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-2784329746674901623\\package\\lib\\server\\chromium\\crPage.js:496:35)\n    at async Frame._gotoAction (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-2784329746674901623\\package\\lib\\server\\frames.js:539:28)\n}\nCall log:\n-   - navigating to \"https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\", waiting until \"domcontentloaded\"\n",
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-476ff58a-001a-4f6b-8b3a-a732b7c77f2a-attachment.png"
+      ],
+      "className": "com.erp.tests.ui.RelocationExportColumnsUiTest",
+      "sourceBuild": "target\\rel-columns-verified-20261021"
+    }
+  ],
+  "invocationCounts": {
+    "PASS": 6,
+    "FAIL": 2
+  },
+  "caseCounts": {
+    "PASS": 6,
+    "FAIL": 2
+  },
+  "invocations": [
+    {
+      "testCaseId": "TC-REL-COL-API-001",
+      "status": "PASS",
+      "durationMs": 11927,
+      "executedAt": "2026-10-21T18:12:35",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-API-001-ad806461-7795-49fc-8176-c9d961c1ebc6-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-verified-20261021"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-005",
+      "status": "PASS",
+      "durationMs": 53213160,
+      "executedAt": "2026-10-21T18:14:30",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-API-005-d6943043-0128-4a2a-beff-c80a5ee1cab4-attachment.xlsx",
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-API-005-d20fe5fa-cee2-4c79-8428-85aaddabb3cc-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-verified-20261021"
+    },
+    {
+      "testCaseId": "TC-REL-COL-UI-002",
+      "status": "PASS",
+      "durationMs": 16923,
+      "executedAt": "2026-10-22T09:10:53",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-820ceb6f-7473-4a7a-a389-e1712a50964a-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-89eeb441-0a94-4787-8c7f-81a72423a406-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-ba74d884-3c26-408d-97e3-9cbc25fe31cf-attachment.xlsx",
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-453e2f88-a83f-46db-9545-e45d824f58a6-attachment.png"
+      ],
+      "className": "com.erp.tests.ui.RelocationExportColumnsUiTest",
+      "sourceBuild": "target\\rel-columns-recovery-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-004",
+      "status": "FAIL",
+      "durationMs": 1173,
+      "executedAt": "2026-10-21T18:14:29",
+      "errorMessage": "\r\nMultiple Failures (12 failures)\r\n-- failure 1 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 2 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 3 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 4 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 5 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 6 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 7 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595650961_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 8 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595650961_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 9 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595655382_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 10 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595655382_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 11 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595659637_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 12 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595659637_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)",
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-API-004-94d03412-f901-4fd4-a392-15d476a44292-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-verified-20261021"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-003",
+      "status": "FAIL",
+      "durationMs": 66002,
+      "executedAt": "2026-10-21T18:13:23",
+      "errorMessage": "\r\nMultiple Failures (12 failures)\r\n-- failure 1 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 2 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 3 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 4 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 5 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 6 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 7 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595622312_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 8 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595622312_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 9 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595626698_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 10 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595626698_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 11 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595631379_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 12 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595631379_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)",
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-API-003-50b3febc-2cff-4b27-bc9f-105be7d9570c-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-verified-20261021"
+    },
+    {
+      "testCaseId": "TC-REL-COL-UI-001",
+      "status": "PASS",
+      "durationMs": 8307,
+      "executedAt": "2026-10-22T09:10:44",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-001-8b6f5fc5-46cd-48c2-a285-cf22e415e3d8-attachment.xlsx",
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-001-0354a7a5-1a5f-4a0f-b7d0-192ff175897f-attachment.png",
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-UI-001-8ac6368a-37bb-459c-adfd-ee70cc5ec2ec-attachment.png"
+      ],
+      "className": "com.erp.tests.ui.RelocationExportColumnsUiTest",
+      "sourceBuild": "target\\rel-columns-recovery-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-002",
+      "status": "PASS",
+      "durationMs": 35300,
+      "executedAt": "2026-10-21T18:12:47",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-API-002-8841a454-d772-4ba1-968f-d6c7821476de-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-verified-20261021"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-006",
+      "status": "PASS",
+      "durationMs": 41583,
+      "executedAt": "2026-10-22T09:09:25",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-API-006-6ea19dbe-50a3-4650-b495-5381863c9ce0-attachment.xlsx",
+        "docs\\audits\\2026-10-21\\relocation-export-columns-evidence\\TC-REL-COL-API-006-19d2d15d-ee75-4870-b5a1-b852de4d2fbc-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-recovery-20261022"
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "remoteRunId": "rel-columns-verified-20261021-recovery20261022",
+    "environment": "dev",
+    "runName": "Експорт даних — Переміщення: колонки — dev — 2026-10-21 — 2026-10-22",
+    "suite": "relocation-export-columns",
+    "buildName": "erp-auto-test Java 21 Chrome read-only JDBC",
+    "results": [
+      {
+        "testCaseId": "TC-REL-COL-API-001",
+        "status": "PASS",
+        "durationMs": 11927,
+        "executedAt": "2026-10-21T18:12:35",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-002",
+        "status": "PASS",
+        "durationMs": 35300,
+        "executedAt": "2026-10-21T18:12:47",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-003",
+        "status": "FAIL",
+        "durationMs": 66002,
+        "executedAt": "2026-10-21T18:13:23",
+        "errorMessage": "\r\nMultiple Failures (12 failures)\r\n-- failure 1 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 2 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 3 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 4 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 5 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 6 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 7 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595622312_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 8 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595622312_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 9 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595626698_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 10 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595626698_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 11 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595631379_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 12 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595631379_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)"
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-004",
+        "status": "FAIL",
+        "durationMs": 1173,
+        "executedAt": "2026-10-21T18:14:29",
+        "errorMessage": "\r\nMultiple Failures (12 failures)\r\n-- failure 1 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 2 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 3 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 4 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 5 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 6 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 7 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595650961_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 8 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595650961_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 9 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595655382_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 10 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595655382_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 11 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595659637_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 12 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595659637_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)"
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-005",
+        "status": "PASS",
+        "durationMs": 53213160,
+        "executedAt": "2026-10-21T18:14:30",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-006",
+        "status": "PASS",
+        "durationMs": 41583,
+        "executedAt": "2026-10-22T09:09:25",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-UI-001",
+        "status": "PASS",
+        "durationMs": 8307,
+        "executedAt": "2026-10-22T09:10:44",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-UI-002",
+        "status": "PASS",
+        "durationMs": 16923,
+        "executedAt": "2026-10-22T09:10:53",
+        "errorMessage": null
+      }
+    ]
+  },
+  "pendingCleanup": {
+    "status": "RECOVERED",
+    "manifest": "docs\\audits\\2026-10-21\\relocation-export-columns-pending-cleanup.json",
+    "sourceBuild": "target\\rel-columns-verified-20261021",
+    "storages": 20,
+    "resources": 4
+  },
+  "cleanupRecovery": {
+    "storages": [
+      {
+        "active": false,
+        "storageId": 4663,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4664,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4665,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4666,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4667,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4668,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4669,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4670,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4671,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4672,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4673,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4674,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4675,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4676,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4677,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4678,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4659,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4660,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4661,
+        "afterRows": 0,
+        "beforeRows": 2
+      },
+      {
+        "active": false,
+        "storageId": 4662,
+        "afterRows": 0,
+        "beforeRows": 2
+      }
+    ],
+    "history": "Completed history retained by API policy",
+    "archivedResourceIds": [
+      5384,
+      5385,
+      5382,
+      5383
+    ],
+    "environment": "dev",
+    "sourceManifest": "docs/audits/2026-10-21/relocation-export-columns-pending-cleanup.json",
+    "result": "SUCCESS"
+  },
+  "activeConfigurationFailures": []
+}

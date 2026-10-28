@@ -26,6 +26,49 @@ import java.util.Optional;
 @Getter
 public enum ApiEndpointDefinition {
 
+    LOW_VALUE_WRITE_OFF_CREATE("/api/v1/storages/inventory/low-value-resources/write-off", Method.POST,
+            null, "Write off low-value resources", new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_LIST("/api/v1/storages/inventory/low-value-resources", Method.GET,
+            null, "Low-value write-off history", null, new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_EXPORT("/api/v1/storages/inventory/low-value-resources/export", Method.GET,
+            null, "Export filtered low-value write-off history as XLSX", null, new TypeReference<byte[]>() {}, null),
+    LOW_VALUE_WRITE_OFF_GET("/api/v1/storages/inventory/low-value-resources/{id}?storageId={storageId}", Method.GET,
+            null, "Get low-value write-off", null, new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_UPDATE("/api/v1/storages/inventory/low-value-resources/{id}", Method.PUT,
+            null, "Update low-value write-off", new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_DELETE("/api/v1/storages/inventory/low-value-resources/{id}?storageId={storageId}", Method.DELETE,
+            null, "Cancel low-value write-off and restore stock", null, null, null),
+    LOW_VALUE_STORAGE_ITEMS("/api/v1/storages/{id}/storage-item", Method.GET,
+            null, "Available low-value resources", null, new TypeReference<List<Map<String, Object>>>() {}, null),
+    STORAGE_INVENTORY_ITEM_BY_RESOURCE("/api/v1/storages/{id}/inventory?resourceId={resourceId}", Method.GET,
+            null, "Exact inventory item including zero stock", null, new TypeReference<StorageItemResponse>() {}, null),
+
+    // Movement document flow: ledger entries, receipts and commercial documents.
+    VIRTUAL_STORAGE_LIST("/api/v1/virtual-storage/{storageId}", Method.GET, null,
+            "List ledger entries", null, new TypeReference<List<Map<String, Object>>>() {}, null),
+    VIRTUAL_STORAGE_CREATE("/api/v1/virtual-storage/{storageId}", Method.POST, null,
+            "Track ledger resource", new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Map<String, Object>>() {}, null),
+    VIRTUAL_STORAGE_ARCHIVE("/api/v1/virtual-storage/{storageId}/{id}/archive", Method.POST, null,
+            "Archive ledger entry", null, new TypeReference<Map<String, Object>>() {}, null),
+    VIRTUAL_RECEIPT_CREATE("/api/v1/virtual-storage/{storageId}/{id}/receipts", Method.POST, null,
+            "Add ledger receipt", new TypeReference<Map<String, Object>>() {},
+            new TypeReference<Map<String, Object>>() {}, null),
+    VIRTUAL_RECEIPT_DELETE("/api/v1/virtual-storage/{storageId}/{id}/receipts/{receiptId}", Method.DELETE,
+            null, "Delete ledger receipt", null, null, null),
+    COMMERCIAL_DOCUMENT_LIST("/api/v1/virtual-storage/{storageId}/commercial-documents", Method.GET,
+            null, "List commercial documents", null, new TypeReference<List<Map<String, Object>>>() {}, null),
+    COMMERCIAL_DOCUMENT_CREATE("/api/v1/virtual-storage/{storageId}/commercial-documents", Method.POST,
+            null, "Create commercial document (multipart request + files)",
+            new TypeReference<Map<String, Object>>() {}, new TypeReference<Map<String, Object>>() {}, null),
+    COMMERCIAL_DOCUMENT_DELETE("/api/v1/virtual-storage/{storageId}/commercial-documents/{id}", Method.DELETE,
+            null, "Delete commercial document", null, null, null),
+    COMMERCIAL_DOCUMENT_UNCOVERED_RECEIPTS(
+            "/api/v1/virtual-storage/{storageId}/commercial-documents/uncovered-receipts", Method.GET,
+            null, "List uncovered receipts", null, new TypeReference<List<Map<String, Object>>>() {}, null),
+
     // ========================================
     // ORDER ENDPOINTS
     // ========================================
@@ -2225,6 +2268,16 @@ public enum ApiEndpointDefinition {
             null
     ),
 
+    STORAGE_INVENTORY_PROCESSES_EXPORT_GET(
+            "/api/v1/storages/inventory/processes/export",
+            Method.GET,
+            null,
+            "Export filtered inventory process differences to XLSX",
+            null,
+            null,
+            null
+    ),
+
     STORAGE_EQUIPMENT_INVENTORY_STATUS_GET(
             "/api/v1/storages/{id}/equipment-inventory/status",
             Method.GET,
@@ -2272,6 +2325,16 @@ public enum ApiEndpointDefinition {
             "Get inventory resource tag statistics",
             null,
             new TypeReference<List<ProductionProcessTagStatisticResponse>>() {},
+            null
+    ),
+
+    EXPORT_RELOCATIONS_GET(
+            "/api/v1/export-analytics/export-relocation",
+            Method.GET,
+            null,
+            "Export data: global relocation journal XLSX (start/end)",
+            null,
+            null,
             null
     ),
 
@@ -2721,6 +2784,26 @@ public enum ApiEndpointDefinition {
             "Get equipment page",
             null,
             new TypeReference<PagedEquipmentResponse>() {},
+            null
+    ),
+
+    EQUIPMENT_MODEL_ARCHIVE(
+            "/api/v1/equipment/models/{id}/archive", Method.PUT, null,
+            "Archive equipment model", null, new TypeReference<Void>() {}, null
+    ),
+
+    EQUIPMENT_SUGGESTIONS(
+            "/api/v1/equipment/suggestions", Method.GET, null,
+            "Suggest active equipment models", null, new TypeReference<List<Map<String, Object>>>() {}, null
+    ),
+
+    EQUIPMENT_MODELS_GET_PAGE(
+            "/api/v1/equipment/models",
+            Method.GET,
+            "schemas/equipment/equipment-model-page-schema.json",
+            "Get equipment model dictionary",
+            null,
+            new TypeReference<EquipmentModelPageResponse>() {},
             null
     ),
 

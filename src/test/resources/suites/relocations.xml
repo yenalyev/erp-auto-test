@@ -18,9 +18,12 @@
             <class name="com.erp.tests.functional.relocation.RelocationOneDayLimitTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationExtendedTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationBatchTechMapExportTest"/>
+            <class name="com.erp.tests.functional.analytics.RelocationExportColumnsApiTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationBatchAccountingTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationUsedBatchEditTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationJournalSortApiTest"/>
+            <class name="com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest"/>
+            <class name="com.erp.tests.functional.relocation.CommercialDocumentRequiredFieldsApiTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationTotalsApiTest"/>
             <class name="com.erp.tests.functional.relocation.EquipmentRelocationTest"/>
             <class name="com.erp.tests.functional.relocation.RelocationIncidentTest"/>
@@ -38,6 +41,7 @@
         <classes>
             <class name="com.erp.tests.ui.RelocationUITest"/>
             <class name="com.erp.tests.ui.RelocationBatchTechMapExportUiTest"/>
+            <class name="com.erp.tests.ui.RelocationExportColumnsUiTest"/>
             <class name="com.erp.tests.ui.RelocationReceivedDateUiTest"/>
             <class name="com.erp.tests.ui.RelocationOperationHistoryCommentUiTest"/>
             <class name="com.erp.tests.ui.CrewReturnUITest"/>
@@ -50,6 +54,8 @@
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.BattalionRelocationEditUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.RelocationSupplierFiltersUiTest"/>
+            <class name="com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest"/>
             <class name="com.erp.tests.ui.LogisticsJournalUiTest">
                 <methods>
                     <include name="logisticsTotalsFollowTabsAndFilters"/>

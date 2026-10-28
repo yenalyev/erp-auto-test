@@ -1,0 +1,17 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "projectId": 1,
+  "featureId": "REQ-CD-REQ",
+  "featureDbId": 165,
+  "parentFeatureId": "REQ-DOCFLOW",
+  "criteriaVerified": 6,
+  "casesVerified": 8,
+  "apiCases": 4,
+  "uiCases": 4,
+  "automatedCases": 8,
+  "executionVariants": 25,
+  "documentationSha256": "f580305d7a2437267c38edc17d0fbe4a2d0429e7b91f60a0cfded8b3ed85c877",
+  "result": "SUCCESS",
+  "executionStatusesVerified": 8,
+  "runId": 207
+}

@@ -1,0 +1,837 @@
+{
+  "sources": [
+    "target\\relocation-supplier-verified\\allure-results",
+    "target\\supplier-search-retest\\allure-results"
+  ],
+  "testngSources": [
+    "docs\\audits\\2026-10-19\\relocation-supplier-full-testng.xml",
+    "docs\\audits\\2026-10-19\\relocation-supplier-search-retest-testng.xml"
+  ],
+  "attempts": [
+    {
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "counts": {
+        "passed": 37,
+        "broken": 2
+      }
+    },
+    {
+      "source": "target\\supplier-search-retest\\allure-results",
+      "counts": {
+        "passed": 4
+      }
+    }
+  ],
+  "selection": "Latest actual result for each testId and parameter set",
+  "timezone": "Europe/Kiev",
+  "counts": {
+    "PASS": 39
+  },
+  "configurationFailures": [],
+  "executions": [
+    {
+      "testId": "TC-REL-SUP-API-002",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.multipleSuppliersUseOrAndUnknownValueMatchesNothing",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "active"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2270,
+      "executedAt": "2026-10-19T17:42:09.694000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-UI-001",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.optionsSearchAndSingleSupplierFilter",
+      "parameters": [
+        {
+          "name": "arg0",
+          "value": "active"
+        }
+      ],
+      "source": "target\\supplier-search-retest\\allure-results",
+      "status": "PASS",
+      "durationMs": 7999,
+      "executedAt": "2026-10-19T17:48:27.424000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\1bc2daf3-8210-4040-b781-b03e23b0f5dd-attachment.png",
+        "relocation-supplier-evidence\\64e6a4cb-dffa-48eb-ba25-1e6cb93437ef-attachment.xlsx",
+        "relocation-supplier-evidence\\1cadba1f-05bf-4dc4-b6d1-48bbcc169208-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-003",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.supplierIntersectsTheSameItemAndOtherFilters",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "received"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2619,
+      "executedAt": "2026-10-19T17:42:29.117000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-UI-002",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.multipleSuppliersAndSameItemIntersection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 8051,
+      "executedAt": "2026-10-19T17:44:20.704000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\dba77c52-e154-42e4-9a5d-f6f7f5a10cee-attachment.xlsx",
+        "relocation-supplier-evidence\\11a05d0f-92b0-44c8-9af0-5f89c72f48a0-attachment.png",
+        "relocation-supplier-evidence\\d64bb003-bfa8-48f4-9e11-1ed7b4a6d504-attachment.xlsx",
+        "relocation-supplier-evidence\\f8751230-3c88-4d9c-9e51-613ca6f084f6-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-002",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.multipleSuppliersAndSameItemIntersection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "received"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 8334,
+      "executedAt": "2026-10-19T17:44:12.152000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\22310c03-c35f-4817-b222-148c1b688f8e-attachment.xlsx",
+        "relocation-supplier-evidence\\5fea6ef2-b66a-49bc-a65e-5cb490ab05b1-attachment.png",
+        "relocation-supplier-evidence\\b72bd417-acea-403e-87b8-38d7c0de8245-attachment.xlsx",
+        "relocation-supplier-evidence\\6e72ed28-a997-4a39-9fb8-8226903ff90c-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-005",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.excelAppliesSupplierAndIgnoresPageSize",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "active"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 4011,
+      "executedAt": "2026-10-19T17:41:33.790000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\1aa969a4-b3aa-4db4-a47f-d68cc728c55c-attachment.xlsx",
+        "relocation-supplier-evidence\\0819d1bf-0fcd-422c-98e7-e9af6d8865c6-attachment.xlsx",
+        "relocation-supplier-evidence\\edcad421-3366-4e2a-aa55-298cc3524729-attachment.xlsx"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-003",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.removingChipsRestoresAllCargoAndReopeningClearsSelection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 10604,
+      "executedAt": "2026-10-19T17:46:22.633000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\94fba4d3-fe0d-4cd8-9f7c-44b7760220ac-attachment.xlsx",
+        "relocation-supplier-evidence\\be325141-5b7f-498e-a4b3-bc81b5167f31-attachment.png",
+        "relocation-supplier-evidence\\8989fcf1-3b26-476e-9671-db488180e7fd-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-003",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.supplierIntersectsTheSameItemAndOtherFilters",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2529,
+      "executedAt": "2026-10-19T17:42:31.747000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-UI-003",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.removingChipsRestoresAllCargoAndReopeningClearsSelection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "active"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 10931,
+      "executedAt": "2026-10-19T17:45:50.201000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\a5b8bac4-242b-46bf-acfc-7f13cbb89331-attachment.xlsx",
+        "relocation-supplier-evidence\\f6c5314f-4b83-462a-8c02-db90032d9360-attachment.png",
+        "relocation-supplier-evidence\\78fea61a-12bb-4f3f-b609-e264b7c64d96-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-002",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.multipleSuppliersAndSameItemIntersection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "active"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 8509,
+      "executedAt": "2026-10-19T17:43:54.840000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\9ee30900-b224-45b1-9644-64ac50960cb9-attachment.xlsx",
+        "relocation-supplier-evidence\\79c7e615-c732-4cbe-99ef-a9a4dd54ca3d-attachment.png",
+        "relocation-supplier-evidence\\8386304d-d201-42f6-87e3-eca9150c0556-attachment.xlsx",
+        "relocation-supplier-evidence\\829817bd-4733-44eb-bbee-2ac448aaa8f3-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-001",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.singleSupplierTrimsCargoAndPreservesQuantities",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "received"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 1272,
+      "executedAt": "2026-10-19T17:42:21.368000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-005",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.excelAppliesSupplierAndIgnoresPageSize",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 1848,
+      "executedAt": "2026-10-19T17:41:41.842000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\7fe5ce21-d3fc-48f6-afa6-1e94142039d0-attachment.xlsx",
+        "relocation-supplier-evidence\\f410c115-eaa9-4983-8971-efc6dfdcd3c9-attachment.xlsx",
+        "relocation-supplier-evidence\\6e5b41d9-30fa-4dd6-92cd-d779e9213aee-attachment.xlsx"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-002",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.multipleSuppliersUseOrAndUnknownValueMatchesNothing",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2208,
+      "executedAt": "2026-10-19T17:42:16.314000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-004",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.filteredTotalsAndPaginationUseTheWholeSelection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "active"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2311,
+      "executedAt": "2026-10-19T17:42:00.941000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-004",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.filteredTotalsAndPaginationUseTheWholeSelection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "received"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2344,
+      "executedAt": "2026-10-19T17:42:05.516000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-003",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.supplierIntersectsTheSameItemAndOtherFilters",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "active"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2508,
+      "executedAt": "2026-10-19T17:42:24.034000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-001",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.singleSupplierTrimsCargoAndPreservesQuantities",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 1427,
+      "executedAt": "2026-10-19T17:42:19.932000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-UI-002",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.multipleSuppliersAndSameItemIntersection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 8481,
+      "executedAt": "2026-10-19T17:44:03.521000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\86a3e867-8cbc-46ea-a279-df995fe262f2-attachment.xlsx",
+        "relocation-supplier-evidence\\e75a1f51-8665-4f8d-96ae-2a8f473b967d-attachment.png",
+        "relocation-supplier-evidence\\ec8d0842-b54c-4115-b66f-d459968aeba4-attachment.xlsx",
+        "relocation-supplier-evidence\\9868b88f-947a-466f-b5b1-c6de019a9411-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-004",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.equipmentOmitsSupplierAndResourceModeRestoresIt",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "active"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 9519,
+      "executedAt": "2026-10-19T17:43:20.957000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\6187c456-0771-4eae-9213-3cc7d585d401-attachment.xlsx",
+        "relocation-supplier-evidence\\db3f892f-9bee-487a-9c49-e9ffff8d7173-attachment.png",
+        "relocation-supplier-evidence\\88dbafd0-fade-46b6-b75c-daeccedfcd74-attachment.xlsx",
+        "relocation-supplier-evidence\\97d62f59-294d-4fbc-85fd-73ef39df5282-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-005",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.excelAppliesSupplierAndIgnoresPageSize",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "received"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 1942,
+      "executedAt": "2026-10-19T17:41:39.889000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\826b08db-db1f-4ac6-a0d4-fd979e7562f3-attachment.xlsx",
+        "relocation-supplier-evidence\\010a6107-64b3-4172-9d0b-fb7c667e0dfe-attachment.xlsx",
+        "relocation-supplier-evidence\\40ab6ddf-d4f0-4ba2-bb93-e126b5791ef6-attachment.xlsx"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-001",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.singleSupplierTrimsCargoAndPreservesQuantities",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "active"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 1389,
+      "executedAt": "2026-10-19T17:42:18.534000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-UI-003",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.removingChipsRestoresAllCargoAndReopeningClearsSelection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "received"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 10292,
+      "executedAt": "2026-10-19T17:46:12.187000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\a144f7c2-cb95-4fc7-bf79-651ec9644609-attachment.xlsx",
+        "relocation-supplier-evidence\\ea3d0b5d-0ba8-4ce2-b383-17b7c92e8ee4-attachment.png",
+        "relocation-supplier-evidence\\29281f9b-1ece-433e-bc97-e297438425ab-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-002",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.multipleSuppliersUseOrAndUnknownValueMatchesNothing",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2129,
+      "executedAt": "2026-10-19T17:42:11.971000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-UI-001",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.optionsSearchAndSingleSupplierFilter",
+      "parameters": [
+        {
+          "name": "arg0",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\supplier-search-retest\\allure-results",
+      "status": "PASS",
+      "durationMs": 5391,
+      "executedAt": "2026-10-19T17:48:35.610000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\ea94f50f-6eb9-4f7b-8e00-c19c5c175313-attachment.png",
+        "relocation-supplier-evidence\\b53c1321-693a-4a0c-8c9f-cb65b650802e-attachment.xlsx",
+        "relocation-supplier-evidence\\a51e0ecd-e086-4aae-896f-477066843d39-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-004",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.filteredTotalsAndPaginationUseTheWholeSelection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 1824,
+      "executedAt": "2026-10-19T17:42:07.860000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-002",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.multipleSuppliersUseOrAndUnknownValueMatchesNothing",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "received"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2194,
+      "executedAt": "2026-10-19T17:42:14.111000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-004",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.filteredTotalsAndPaginationUseTheWholeSelection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2247,
+      "executedAt": "2026-10-19T17:42:03.260000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-003",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.supplierIntersectsTheSameItemAndOtherFilters",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2552,
+      "executedAt": "2026-10-19T17:42:26.557000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-UI-005",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.reopeningUsesUpdatedSupplierOfExistingHistory",
+      "parameters": [],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 12215,
+      "executedAt": "2026-10-19T17:46:33.432000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\6f54e34f-0ee6-4908-bec7-be4a3fb1af74-attachment.png",
+        "relocation-supplier-evidence\\b20fb4ca-0827-4b20-bc80-fa795a259da2-attachment.xlsx",
+        "relocation-supplier-evidence\\a5b6528a-8ec8-4195-b7a8-d00208bb9f12-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-007",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.externalReceiptFiltersByResourcePropertyRatherThanSenderLocation",
+      "parameters": [],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 1430,
+      "executedAt": "2026-10-19T17:41:59.500000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-UI-001",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.optionsSearchAndSingleSupplierFilter",
+      "parameters": [
+        {
+          "name": "arg0",
+          "value": "received"
+        }
+      ],
+      "source": "target\\supplier-search-retest\\allure-results",
+      "status": "PASS",
+      "durationMs": 5108,
+      "executedAt": "2026-10-19T17:48:41.137000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\fabce18e-3c5f-4ff4-a2da-d247773220c3-attachment.png",
+        "relocation-supplier-evidence\\9a74ee10-ce5c-4efb-b0fc-84ffad263d3a-attachment.xlsx",
+        "relocation-supplier-evidence\\640a8e45-5953-4cf0-9381-167d05670412-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-001",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.singleSupplierTrimsCargoAndPreservesQuantities",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 1379,
+      "executedAt": "2026-10-19T17:42:22.647000",
+      "message": "",
+      "evidence": []
+    },
+    {
+      "testId": "TC-REL-SUP-API-005",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.excelAppliesSupplierAndIgnoresPageSize",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 2045,
+      "executedAt": "2026-10-19T17:41:37.830000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\fc49cf6f-a86d-4a73-a4d1-4a3f219b673d-attachment.xlsx",
+        "relocation-supplier-evidence\\b328886a-8dd5-4096-8d26-f2f1c099ca1e-attachment.xlsx",
+        "relocation-supplier-evidence\\e4cd9f3b-684a-43f5-a647-8b220e62d15c-attachment.xlsx"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-004",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.equipmentOmitsSupplierAndResourceModeRestoresIt",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "received"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 7728,
+      "executedAt": "2026-10-19T17:43:39.448000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\85ad4309-9afb-49ae-aa13-d6e7cf136e8f-attachment.xlsx",
+        "relocation-supplier-evidence\\973ac5f3-ebbe-4284-bee9-5e4c0e7c9132-attachment.png",
+        "relocation-supplier-evidence\\80273003-86f3-4c72-a47e-111a3f26919e-attachment.xlsx",
+        "relocation-supplier-evidence\\3ae1ace9-7f18-4f90-a2de-4a73d1d46102-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-API-006",
+      "method": "com.erp.tests.functional.relocation.RelocationSupplierFiltersApiTest.existingHistoryUsesCurrentSupplierAfterUpdateAndRemoval",
+      "parameters": [],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 15782,
+      "executedAt": "2026-10-19T17:41:43.707000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\805b86c5-bf56-4c6e-890d-42b9b7433c6e-attachment.xlsx",
+        "relocation-supplier-evidence\\d885a702-7d2c-434b-827a-39fb63743141-attachment.xlsx",
+        "relocation-supplier-evidence\\85d3a802-f0be-4030-8a60-d0a0af67a922-attachment.xlsx",
+        "relocation-supplier-evidence\\0013f2c2-5546-4535-a7e1-250024ccda61-attachment.xlsx",
+        "relocation-supplier-evidence\\e5363dbc-d636-4b25-b042-0e0a9bec2ed3-attachment.xlsx",
+        "relocation-supplier-evidence\\dd2f327e-94f1-4c8b-8e5b-233ac4e48ca2-attachment.xlsx",
+        "relocation-supplier-evidence\\56524a16-ca9b-49ca-86ed-06e5e6a5091d-attachment.xlsx",
+        "relocation-supplier-evidence\\4300649c-68c1-441a-8c9b-61da1f48a0e5-attachment.xlsx"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-003",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.removingChipsRestoresAllCargoAndReopeningClearsSelection",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 10765,
+      "executedAt": "2026-10-19T17:46:01.283000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\ab075ba0-139a-4855-b7fc-7b542f17a53e-attachment.xlsx",
+        "relocation-supplier-evidence\\c1f0812c-4c9a-4ede-ad7e-0e6b94866287-attachment.png",
+        "relocation-supplier-evidence\\41fae142-009a-4361-a494-1097ea3f23d9-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-001",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.optionsSearchAndSingleSupplierFilter",
+      "parameters": [
+        {
+          "name": "arg0",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\supplier-search-retest\\allure-results",
+      "status": "PASS",
+      "durationMs": 5423,
+      "executedAt": "2026-10-19T17:48:46.395000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\bb4ead49-1560-42fa-a278-37a159a03edc-attachment.png",
+        "relocation-supplier-evidence\\5014ba85-4538-4034-b80a-34f345574245-attachment.xlsx",
+        "relocation-supplier-evidence\\fce834a3-88dc-4b7c-8623-15dc79df996f-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-004",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.equipmentOmitsSupplierAndResourceModeRestoresIt",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "sent"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 8597,
+      "executedAt": "2026-10-19T17:43:30.696000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\3a2bdea0-7044-4ed6-9d82-6c8b0a389048-attachment.xlsx",
+        "relocation-supplier-evidence\\dc40c21e-839e-4b18-b425-a338ede1d963-attachment.png",
+        "relocation-supplier-evidence\\241b15cd-3164-4380-bbfa-16e962b15fcb-attachment.xlsx",
+        "relocation-supplier-evidence\\6a77ac50-8571-45df-9077-2771e41ef45f-attachment.png"
+      ]
+    },
+    {
+      "testId": "TC-REL-SUP-UI-004",
+      "method": "com.erp.tests.ui.RelocationSupplierFiltersUiTest.equipmentOmitsSupplierAndResourceModeRestoresIt",
+      "parameters": [
+        {
+          "name": "tab",
+          "value": "lost"
+        }
+      ],
+      "source": "target\\relocation-supplier-verified\\allure-results",
+      "status": "PASS",
+      "durationMs": 7308,
+      "executedAt": "2026-10-19T17:43:47.371000",
+      "message": "",
+      "evidence": [
+        "relocation-supplier-evidence\\b7a910b5-658f-40e1-b66f-3ee16407b4de-attachment.xlsx",
+        "relocation-supplier-evidence\\7d891bdd-d761-4d47-ba8c-226eb61ddcbf-attachment.png",
+        "relocation-supplier-evidence\\9790dd81-efcd-47b4-a808-9c08c6bc845a-attachment.xlsx",
+        "relocation-supplier-evidence\\f071824b-c7a1-4652-ba42-ae0405f28efc-attachment.png"
+      ]
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "featureId": 166,
+    "environment": "dev",
+    "suite": "relocation-supplier-filters",
+    "remoteRunId": "relocation-supplier-dev-20261019-1740-verified",
+    "runName": "Supplier filter — ERP dev (full + search retest)",
+    "results": [
+      {
+        "testCaseId": "TC-REL-SUP-API-001",
+        "status": "PASS",
+        "durationMs": 5467,
+        "executedAt": "2026-10-19T17:42:18.534000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-API-002",
+        "status": "PASS",
+        "durationMs": 8801,
+        "executedAt": "2026-10-19T17:42:09.694000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-API-003",
+        "status": "PASS",
+        "durationMs": 10208,
+        "executedAt": "2026-10-19T17:42:24.034000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-API-004",
+        "status": "PASS",
+        "durationMs": 8726,
+        "executedAt": "2026-10-19T17:42:00.941000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-API-005",
+        "status": "PASS",
+        "durationMs": 9846,
+        "executedAt": "2026-10-19T17:41:33.790000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-API-006",
+        "status": "PASS",
+        "durationMs": 15782,
+        "executedAt": "2026-10-19T17:41:43.707000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-API-007",
+        "status": "PASS",
+        "durationMs": 1430,
+        "executedAt": "2026-10-19T17:41:59.500000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-UI-001",
+        "status": "PASS",
+        "durationMs": 23921,
+        "executedAt": "2026-10-19T17:48:27.424000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-UI-002",
+        "status": "PASS",
+        "durationMs": 33375,
+        "executedAt": "2026-10-19T17:43:54.840000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-UI-003",
+        "status": "PASS",
+        "durationMs": 42592,
+        "executedAt": "2026-10-19T17:45:50.201000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-UI-004",
+        "status": "PASS",
+        "durationMs": 33152,
+        "executedAt": "2026-10-19T17:43:20.957000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-SUP-UI-005",
+        "status": "PASS",
+        "durationMs": 12215,
+        "executedAt": "2026-10-19T17:46:33.432000",
+        "errorMessage": null
+      }
+    ]
+  }
+}

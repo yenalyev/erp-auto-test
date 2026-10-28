@@ -1,0 +1,48 @@
+{
+  "environment": "dev",
+  "reason": "HTTP 503 no available server interrupted UI fixture cleanup",
+  "marker": "eqarchive-59c7ee34",
+  "source": 4840,
+  "target": 4841,
+  "category": 39,
+  "activeSends": [],
+  "items": [
+    {
+      "equipment": 2286,
+      "model": 720,
+      "name": "eqarchive-59c7ee34 autocomplete-active"
+    },
+    {
+      "equipment": 2287,
+      "model": 721,
+      "name": "eqarchive-59c7ee34 autocomplete-archived"
+    },
+    {
+      "equipment": 2288,
+      "model": 722,
+      "name": "eqarchive-59c7ee34 cancel"
+    },
+    {
+      "equipment": 2289,
+      "model": 723,
+      "name": "eqarchive-59c7ee34 confirm"
+    },
+    {
+      "equipment": 2290,
+      "model": 724,
+      "name": "eqarchive-59c7ee34 default-active"
+    },
+    {
+      "equipment": 2291,
+      "model": 725,
+      "name": "eqarchive-59c7ee34 default-archived"
+    }
+  ],
+  "nextSteps": "None: cleanup completed and verified by API readback.",
+  "status": "COMPLETED",
+  "completedAt": "2026-10-22T11:16:32.041512100+03:00[Europe/Kyiv]",
+  "equipmentDeleted": 6,
+  "modelsArchived": 6,
+  "categoryDeleted": true,
+  "locationsDeactivated": true
+}

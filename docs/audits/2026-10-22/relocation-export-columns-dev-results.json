@@ -1,0 +1,195 @@
+{
+  "environment": "dev",
+  "featureId": "REQ-REL-COL",
+  "buildDirectory": "target\\rel-columns-approved-groups-20261022",
+  "testngTotals": {
+    "ignored": "0",
+    "total": "8",
+    "passed": "8",
+    "failed": "0",
+    "skipped": "0"
+  },
+  "configurationFailures": [],
+  "sourceBuilds": [
+    "target\\rel-columns-approved-groups-20261022"
+  ],
+  "supersededInvocations": [],
+  "invocationCounts": {
+    "PASS": 8
+  },
+  "caseCounts": {
+    "PASS": 8
+  },
+  "invocations": [
+    {
+      "testCaseId": "TC-REL-COL-UI-002",
+      "status": "PASS",
+      "durationMs": 15121,
+      "executedAt": "2026-10-22T09:35:41",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-940eaf94-5716-432c-b088-620efd5218ef-attachment.png",
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-8d503bd5-e38d-4975-9981-c6635241e060-attachment.png",
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-d0b6145f-eaf9-4be8-8747-74e79c0aa666-attachment.xlsx",
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-UI-002-e73c6116-38a9-4c25-9874-216b7ce54817-attachment.png"
+      ],
+      "className": "com.erp.tests.ui.RelocationExportColumnsUiTest",
+      "sourceBuild": "target\\rel-columns-approved-groups-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-004",
+      "status": "PASS",
+      "durationMs": 619,
+      "executedAt": "2026-10-22T09:33:17",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-API-004-b5119ce8-e57d-4d39-bd5d-d113b0a10a97-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-approved-groups-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-005",
+      "status": "PASS",
+      "durationMs": 3939,
+      "executedAt": "2026-10-22T09:33:17",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-API-005-9bc5dc94-27b1-4660-ba7d-c913a960b2f5-attachment.xlsx",
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-API-005-18ceb9b1-f343-4039-b03d-e4cdd3f71bbe-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-approved-groups-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-002",
+      "status": "PASS",
+      "durationMs": 19912,
+      "executedAt": "2026-10-22T09:32:13",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-API-002-b5e9ead5-3095-4621-ae06-7af4b9994855-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-approved-groups-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-006",
+      "status": "PASS",
+      "durationMs": 996,
+      "executedAt": "2026-10-22T09:33:21",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-API-006-f52bc496-39a5-4d59-9edf-dc83ffda0818-attachment.xlsx",
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-API-006-16b72620-b4d3-42f4-a2b1-4cbac6129034-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-approved-groups-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-001",
+      "status": "PASS",
+      "durationMs": 8418,
+      "executedAt": "2026-10-22T09:32:05",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-API-001-ab11691f-ad53-4204-8ee4-5f14951009cc-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-approved-groups-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-UI-001",
+      "status": "PASS",
+      "durationMs": 6690,
+      "executedAt": "2026-10-22T09:35:34",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-UI-001-3a722af4-6064-4f72-98f7-0aa2c8d6573b-attachment.xlsx",
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-UI-001-08dbcd2a-992e-46fb-ba61-ccd55c2db39d-attachment.png",
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-UI-001-94c719a7-cb95-47d4-93c7-9bff0d9892ff-attachment.png"
+      ],
+      "className": "com.erp.tests.ui.RelocationExportColumnsUiTest",
+      "sourceBuild": "target\\rel-columns-approved-groups-20261022"
+    },
+    {
+      "testCaseId": "TC-REL-COL-API-003",
+      "status": "PASS",
+      "durationMs": 43474,
+      "executedAt": "2026-10-22T09:32:33",
+      "errorMessage": null,
+      "attachments": [
+        "docs\\audits\\2026-10-22\\relocation-export-columns-evidence\\TC-REL-COL-API-003-1b581ccb-d4ff-4958-8b50-8f2cd3e6b0a8-attachment.xlsx"
+      ],
+      "className": "com.erp.tests.functional.analytics.RelocationExportColumnsApiTest",
+      "sourceBuild": "target\\rel-columns-approved-groups-20261022"
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "remoteRunId": "rel-columns-approved-groups-20261022",
+    "environment": "dev",
+    "runName": "Експорт даних — Переміщення: колонки — dev — 2026-10-22",
+    "suite": "relocation-export-columns",
+    "buildName": "erp-auto-test Java 21 Chrome read-only JDBC",
+    "results": [
+      {
+        "testCaseId": "TC-REL-COL-API-001",
+        "status": "PASS",
+        "durationMs": 8418,
+        "executedAt": "2026-10-22T09:32:05",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-002",
+        "status": "PASS",
+        "durationMs": 19912,
+        "executedAt": "2026-10-22T09:32:13",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-003",
+        "status": "PASS",
+        "durationMs": 43474,
+        "executedAt": "2026-10-22T09:32:33",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-004",
+        "status": "PASS",
+        "durationMs": 619,
+        "executedAt": "2026-10-22T09:33:17",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-005",
+        "status": "PASS",
+        "durationMs": 3939,
+        "executedAt": "2026-10-22T09:33:17",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-API-006",
+        "status": "PASS",
+        "durationMs": 996,
+        "executedAt": "2026-10-22T09:33:21",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-UI-001",
+        "status": "PASS",
+        "durationMs": 6690,
+        "executedAt": "2026-10-22T09:35:34",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-REL-COL-UI-002",
+        "status": "PASS",
+        "durationMs": 15121,
+        "executedAt": "2026-10-22T09:35:41",
+        "errorMessage": null
+      }
+    ]
+  },
+  "activeConfigurationFailures": []
+}

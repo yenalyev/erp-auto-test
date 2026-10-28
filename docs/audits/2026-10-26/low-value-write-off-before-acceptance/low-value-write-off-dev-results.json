@@ -1,0 +1,634 @@
+{
+  "environment": "dev",
+  "timezone": "Europe/Kyiv",
+  "utcOffset": "+02:00",
+  "runDirectory": "target\\low-value-write-off-dev-20261026-final",
+  "executionCounts": {
+    "PASS": 30,
+    "FAIL": 2
+  },
+  "caseCounts": {
+    "PASS": 17,
+    "FAIL": 2
+  },
+  "configurationFailures": [],
+  "executions": [
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3120,
+      "executedAt": "2026-10-26T12:07:46.841000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "tomorrow"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 2950,
+      "executedAt": "2026-10-26T12:07:20.856000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "missingAmount"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-009",
+      "status": "PASS",
+      "durationMs": 3335,
+      "executedAt": "2026-10-26T12:08:36.413000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3048,
+      "executedAt": "2026-10-26T12:07:11.008000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "empty"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-003",
+      "status": "PASS",
+      "durationMs": 4567,
+      "executedAt": "2026-10-26T12:06:51.868000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3045,
+      "executedAt": "2026-10-26T12:07:23.947000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "overStock"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3169,
+      "executedAt": "2026-10-26T12:07:36.903000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "unknownBatch"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-007",
+      "status": "PASS",
+      "durationMs": 6182,
+      "executedAt": "2026-10-26T12:06:45.521000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-001",
+      "status": "PASS",
+      "durationMs": 4079,
+      "executedAt": "2026-10-26T12:06:41.262000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-008",
+      "status": "PASS",
+      "durationMs": 3260,
+      "executedAt": "2026-10-26T12:08:16.038000",
+      "parameters": [
+        {
+          "name": "role",
+          "value": "accountant"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-007",
+      "status": "PASS",
+      "durationMs": 2849,
+      "executedAt": "2026-10-26T12:07:57.216000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-008",
+      "status": "PASS",
+      "durationMs": 3594,
+      "executedAt": "2026-10-26T12:08:12.281000",
+      "parameters": [
+        {
+          "name": "role",
+          "value": "admin"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3124,
+      "executedAt": "2026-10-26T12:07:43.522000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "yesterday"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-002",
+      "status": "PASS",
+      "durationMs": 1080,
+      "executedAt": "2026-10-26T12:06:40.002000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-003",
+      "status": "PASS",
+      "durationMs": 3353,
+      "executedAt": "2026-10-26T12:08:19.479000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-006",
+      "status": "PASS",
+      "durationMs": 2668,
+      "executedAt": "2026-10-26T12:07:08.140000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3113,
+      "executedAt": "2026-10-26T12:07:50.202000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "longComment"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-005",
+      "status": "PASS",
+      "durationMs": 3559,
+      "executedAt": "2026-10-26T12:07:53.470000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-005",
+      "status": "PASS",
+      "durationMs": 1868,
+      "executedAt": "2026-10-26T12:07:06.110000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3225,
+      "executedAt": "2026-10-26T12:07:27.149000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "regular"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3057,
+      "executedAt": "2026-10-26T12:07:33.704000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "duplicate"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3196,
+      "executedAt": "2026-10-26T12:07:14.198000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "zero"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-010",
+      "status": "PASS",
+      "durationMs": 4579,
+      "executedAt": "2026-10-26T12:08:00.206000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-008",
+      "status": "PASS",
+      "durationMs": 7145,
+      "executedAt": "2026-10-26T12:08:04.936000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3115,
+      "executedAt": "2026-10-26T12:07:17.538000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "negative"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3150,
+      "executedAt": "2026-10-26T12:07:40.239000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "external"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-001",
+      "status": "PASS",
+      "durationMs": 5912,
+      "executedAt": "2026-10-26T12:08:23.006000",
+      "parameters": [
+        {
+          "name": "URL",
+          "value": "https://dev.cukerochka.sbs/resources/update/5654"
+        },
+        {
+          "name": "URL",
+          "value": "https://dev.cukerochka.sbs/resources/update/5654"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-009",
+      "status": "PASS",
+      "durationMs": 1734,
+      "executedAt": "2026-10-26T12:08:39.899000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-004",
+      "status": "PASS",
+      "durationMs": 3026,
+      "executedAt": "2026-10-26T12:07:30.531000",
+      "parameters": [
+        {
+          "name": "variant",
+          "value": "absent"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-006",
+      "status": "PASS",
+      "durationMs": 1312,
+      "executedAt": "2026-10-26T12:08:41.783000",
+      "parameters": [],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-002",
+      "status": "FAIL",
+      "durationMs": 7185,
+      "executedAt": "2026-10-26T12:08:29.074000",
+      "parameters": [
+        {
+          "name": "URL",
+          "value": "https://dev.cukerochka.sbs/resources/update/5654"
+        }
+      ],
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByText(\"МШП (малоцінні та швидкозношувані предмети) - засоби, що використовують у процесі виробництва продукції і підпадають під списання\", new Page.GetByTextOptions().setExact(true))"
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-004",
+      "status": "FAIL",
+      "durationMs": 9373,
+      "executedAt": "2026-10-26T12:06:56.589000",
+      "parameters": [],
+      "errorMessage": "Locator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName(\"МШП\").setExact(true))"
+    }
+  ],
+  "screenshots": [
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-00d5298a-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-0411a172-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-009",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-009-0a951271-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-16274f2b-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-003",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-003-1bc4c52a-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-3f81c1d1-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-469fd9f6-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-007",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-007-4bc6237c-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-001",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-001-52651f16-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-008",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-008-5c57f163-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-007",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-007-5ce043b2-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-008",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-008-5fcb0f10-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-6eaf192d-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-002",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-002-71835037-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-003",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-003-8177834a-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-006",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-006-865de073-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-98830e6e-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-005",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-005-9ac762da-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-005",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-005-a1e99597-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-a35d2ee2-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-a89d36b9-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-c24a03d4-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-010",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-010-d055d6fd-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-008",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-008-d5308952-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-d6989621-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-e22fc039-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-001",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-001-e2c74eb6-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-009",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-009-e7f6955f-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-004-ed639cae-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-006",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-API-006-eda747ff-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-002",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-002-f449887e-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-004",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-evidence\\TC-MSHP-UI-004-f6d1c13a-0.png"
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "remoteRunId": "low-value-write-off-dev-20261026-final",
+    "environment": "dev",
+    "suite": "low-value-write-off",
+    "runName": "Списання ресурсів МШП / dev",
+    "results": [
+      {
+        "testCaseId": "TC-MSHP-API-001",
+        "status": "PASS",
+        "durationMs": 4079,
+        "executedAt": "2026-10-26T12:06:41.262000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-API-002",
+        "status": "PASS",
+        "durationMs": 1080,
+        "executedAt": "2026-10-26T12:06:40.002000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-API-003",
+        "status": "PASS",
+        "durationMs": 3353,
+        "executedAt": "2026-10-26T12:08:19.479000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-API-004",
+        "status": "PASS",
+        "durationMs": 40338,
+        "executedAt": "2026-10-26T12:07:11.008000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-API-005",
+        "status": "PASS",
+        "durationMs": 1868,
+        "executedAt": "2026-10-26T12:07:06.110000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-API-006",
+        "status": "PASS",
+        "durationMs": 1312,
+        "executedAt": "2026-10-26T12:08:41.783000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-API-007",
+        "status": "PASS",
+        "durationMs": 2849,
+        "executedAt": "2026-10-26T12:07:57.216000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-API-008",
+        "status": "PASS",
+        "durationMs": 7145,
+        "executedAt": "2026-10-26T12:08:04.936000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-API-009",
+        "status": "PASS",
+        "durationMs": 3335,
+        "executedAt": "2026-10-26T12:08:36.413000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-001",
+        "status": "PASS",
+        "durationMs": 5912,
+        "executedAt": "2026-10-26T12:08:23.006000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-002",
+        "status": "FAIL",
+        "durationMs": 7185,
+        "executedAt": "2026-10-26T12:08:29.074000",
+        "errorMessage": "parameters=[{\"name\": \"URL\", \"value\": \"https://dev.cukerochka.sbs/resources/update/5654\"}]\nLocator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByText(\"МШП (малоцінні та швидкозношувані предмети) - засоби, що використовують у процесі виробництва продукції і підпадають під списання\", new Page.GetByTextOptions().setExact(true))"
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-003",
+        "status": "PASS",
+        "durationMs": 4567,
+        "executedAt": "2026-10-26T12:06:51.868000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-004",
+        "status": "FAIL",
+        "durationMs": 9373,
+        "executedAt": "2026-10-26T12:06:56.589000",
+        "errorMessage": "parameters=[]\nLocator expected to be visible\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for getByRole(AriaRole.CHECKBOX, new Page.GetByRoleOptions().setName(\"МШП\").setExact(true))"
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-005",
+        "status": "PASS",
+        "durationMs": 3559,
+        "executedAt": "2026-10-26T12:07:53.470000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-006",
+        "status": "PASS",
+        "durationMs": 2668,
+        "executedAt": "2026-10-26T12:07:08.140000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-007",
+        "status": "PASS",
+        "durationMs": 6182,
+        "executedAt": "2026-10-26T12:06:45.521000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-008",
+        "status": "PASS",
+        "durationMs": 6854,
+        "executedAt": "2026-10-26T12:08:12.281000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-009",
+        "status": "PASS",
+        "durationMs": 1734,
+        "executedAt": "2026-10-26T12:08:39.899000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-010",
+        "status": "PASS",
+        "durationMs": 4579,
+        "executedAt": "2026-10-26T12:08:00.206000",
+        "errorMessage": null
+      }
+    ]
+  }
+}

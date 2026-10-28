@@ -1,0 +1,448 @@
+{
+  "featureId": "REQ-MFG-001-03",
+  "documentation": "## Список техкарт\n\nВибрана локація визначає, які активні техкарти бачить користувач. Архівні техкарти у звичайному списку не показуються. Власник локації переглядає доступний йому робочий простір; адміністратор може вибрати будь-яку локацію. Для перегляду режим редагування не потрібен.\n\nЯкщо вибрано склад або виробництво, що має дочірні локації, список охоплює техкарту самого вибраного місця та техкарти всіх його нащадків. Техкарта нащадка видима й тоді, коли власник не має окремого доступу до цієї дочірньої локації. Техкарти поза вибраною гілкою не додаються, навіть за наявності доступу до них.\n\nЯкщо вибрано локацію без дочірніх локацій, список містить лише її техкарти. Підрозділ не є місцем зберігання техкарт і не виступає батьківською локацією для такого списку.\n\n## Картка\n\nЗі списку користувач відкриває техкарту, щоб переглянути її ресурси, норми та взаємозамінні групи. Перегляд не змінює техкарту. Правила редагування й клонування карти, що належить дочірній локації, описано в REQ-MFG-001-05.\n\n## Примітка для перевірки\n\nСклад списку для складу й виробництва перевіряє TC-MFG-035. Правила перегляду відповідають AC-01–AC-04. Сценарії TC-UI-MFG-VIEW-001/002/003 підготовлено для перегляду списку власником і адміністратором та картки техкарти. 12.10.2026 вони скомпілювалися, але повторний запуск на dev зупинився під час авторизації тестового адміністратора; їхню поведінку цим запуском не підтверджено. Повторний запуск UI-частини TC-MFG-035 того ж дня зупинився на створенні ізольованого користувача (403).\n\n## Фільтр «Категорія виробу»\n\nДата: 21.10.2026. TCM: `REQ-MFG-001-03`, `AC-05`, `AC-06`.\n\n## Вимоги\n\nПоточний підпис елемента — «Категорії продукту». Фільтр використовує категорію вихідного виробу техкарти, а не категорію сировини. Без вибору категорій список не обмежується за категорією. Кілька категорій дають об’єднання результатів без повторення техкарти з кількома виходами; пошук за назвою карти, продуктом і сировиною додає умови AND. Категорія та пошук продукту повинні збігатися на одному вихідному ресурсі.\n\nВибір батьківської категорії позначає все піддерево. UI передає явний набір categoryIds; API не розгортає батька самостійно. Дочірню категорію можна зняти окремо. «Скинути вибір» очищує лише категорії та залишає текстові фільтри. За відсутності результатів показується «Немає даних».\n\nВибір зберігається у URL (category), переживає reload та повернення з історії версій. Зміна категорії скидає номер сторінки. Пагінація та статистика тегів враховують категорії; обмеження типу, архівності та доступного робочого простору продовжують діяти.\n\n## Тестові дані та ізоляція\n\n`TechMapCategoryFilterFixture` створює власні категорії parent → A, B та empty; чотири активні карти виготовлення (a, b, parent, multi), архівну карту та карту розбирання. Карта b має вхід категорії A і вихід B; multi має виходи A+B. Унікальний префікс обмежує список власними картами. Передумови не залежать від наповнення чужих техкарт.\n\nПісля класу власні карти й ресурси архівуються, ресурси переводяться до наявної категорії, створені категорії видаляються від дітей до батьків. Початковий режим редагування локації відновлюється; помилка cleanup робить прогін невдалим. БД не потрібна.\n\n## Автоматизовані кейси\n\n### TC-TM-CAT-API-001 — Одна категорія відбирає вихідні вироби для ADMIN та OWNER\n\n- Критерій: AC-05.\n- Дія: Вибрати A, потім B через categoryIds.\n- Очікування: Для A лише a та multi, для B лише b та multi; сировина категорії A не включає b.\n\n### TC-TM-CAT-API-002 — Кілька категорій дають об’єднання без дублів\n\n- Критерій: AC-05.\n- Дія: Передати categoryIds=A,B.\n- Очікування: Рівно a,b,multi; multi один раз.\n\n### TC-TM-CAT-API-003 — Явне піддерево категорій включає батька й нащадків\n\n- Критерій: AC-06.\n- Дія: Порівняти categoryIds=parent та categoryIds=parent,A.\n- Очікування: Лише parentMap у першому запиті; parentMap,a,multi у другому.\n\n### TC-TM-CAT-API-004 — Категорія та текстові фільтри перетинаються за тим самим виходом\n\n- Критерій: AC-05.\n- Дія: Поєднати A, назву продукту A та сировину; змінити продукт на B.\n- Очікування: a,multi; після зміни продукту порожньо, навіть для multi.\n\n### TC-TM-CAT-API-005 — Порожній результат, очищення та ізоляція типу й архіву\n\n- Критерій: AC-05.\n- Дія: Вибрати порожню категорію, очистити; окремо змінити isActive/type для A.\n- Очікування: Порожній список; після очищення чотири активні PRODUCTION; архівний та DISASSEMBLE запити повертають відповідні контрольні карти.\n\n### TC-TM-CAT-API-006 — Пагінація рахує лише відфільтровані техкарти\n\n- Критерій: AC-05.\n- Дія: Для категорії B запитати дві сторінки size=1.\n- Очікування: totalElements=2,totalPages=2; b та multi рівно по одному разу.\n\n### TC-TM-CAT-API-007 — Статистика тегів враховує категорію виробу\n\n- Критерій: AC-05.\n- Дія: Запитати tag-statistics з категорією A та спільним префіксом карт.\n- Очікування: Лише теги a,multi з count=1; тег b відсутній.\n\n### TC-TM-CAT-UI-001 — Фільтр категорії виробу доступний ADMIN та OWNER\n\n- Критерій: AC-05.\n- Дія: Відкрити список; перевірити початковий стан; вибрати A.\n- Очікування: Початково всі чотири активні PRODUCTION; після вибору лише a,multi; category=A у URL.\n\n### TC-TM-CAT-UI-002 — Мультивибір, зняття категорії та очищення\n\n- Критерій: AC-06.\n- Дія: Вибрати A+B; зняти A; натиснути Скинути вибір.\n- Очікування: a,b,multi; потім b,multi; після очищення всі чотири карти, category відсутня в URL.\n\n### TC-TM-CAT-UI-003 — Вибір батьківської категорії та зняття нащадка\n\n- Критерій: AC-06.\n- Дія: Вибрати parent; зняти дочірню A.\n- Очікування: parentMap,a,multi та URL з parent,A; після зняття A лише parentMap.\n\n### TC-TM-CAT-UI-004 — Поєднання пошуку з категорією та порожній стан\n\n- Критерій: AC-06.\n- Дія: Ввести продукт B і сировину; вибрати A; очистити категорії.\n- Очікування: Немає даних для несумісного виходу; після очищення b,multi, текстові фільтри збережено.\n\n### TC-TM-CAT-UI-005 — Вибір зберігається після reload і повернення, сторінка скидається\n\n- Критерій: AC-06.\n- Дія: Вибрати A; reload; відкрити історію версій і повернутися; перейти на page=1 та додати B.\n- Очікування: A та a,multi відновлюються; зміна вибору прибирає page з URL і показує a,b,multi.\n\n## Запуск\n\nJava 21, Maven, встановлений Chrome та мережевий доступ до dev.cukerochka.sbs / stage.cukerochka.sbs і сервера авторизації.\n\n```powershell\n$env:JAVA_HOME = 'C:\\Users\\gigam\\.jdks\\corretto-21.0.9'\n$env:PATH = \"$env:JAVA_HOME\\bin;$env:PATH\"\n$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = '1'\nmvn test '-Denv=staging' '-Dsuite=tech-map-category-filter' '-Duse.database=false' '-Dframework.browser.channel=chrome' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false' '-Dtest.output.directory=target/tm-category-staging'\nmvn test '-Denv=dev' '-Dsuite=tech-map-category-filter' '-Duse.database=false' '-Dframework.browser.channel=chrome' '-Dtcm.enabled=false' '-Dgoogle.sheets.enabled=false' '-Dtest.output.directory=target/tm-category-dev'\n```\n\n12 кейсів дають 14 виконань: API-001 та UI-001 параметризовані ADMIN/OWNER. Класи також включено до `technological-maps`, `ui` (UI-клас) та `regression`. Результати публікуються в production TCM після перевірки фактичного TestNG XML; початкова команда вимикає автоматичний імпорт, щоб не дублювати запуск.\n\nДжерела контракту (читання SUT): `tk-ui/src/pages/technological-maps/TechnologicalMapsListPage.tsx`, `useTechnologicalMapsList.ts`, `src/components/ui/hierarchical-category-multi-select.tsx`, `src/api/technologicalMaps.ts`; backend `tk/src/main/java/org/pm/tk/dao/TechnologicalMapSpecifications.java`. SUT не змінювався.\n\n## Перевірка 21.10.2026 та відомий дефект\n\nНа ERP dev: **13 PASS, 1 FAIL** із 14 виконань. Усі шість UI-виконань пройшли після уточнення локатора автотесту: назва шукається всередині конкретного рядка карти. Framework — **100 PASS**, помилок setup/cleanup немає. [Звіт і скріншоти](audits/2026-10-21/tech-map-category-dev-report.md).\n\nВідомий дефект — **статистика тегів у техкартах не враховує фільтр «Категорія виробу»**. Запит `GET /api/v1/technological-maps/tag-statistics` отримує `categoryIds`, але повертає також тег карти, вихід якої належить іншій категорії. Сам список техкарт на dev відфільтрований правильно. Регресійний тест `TC-TM-CAT-API-007` залишається FAIL до виправлення продукту; очікування не послаблено.\n\nВідтворення: на одній локації створити активні карти A (вихід категорії A, тег `#категоріяА`), B (вихід категорії B, тег `#категоріяБ`) і AB (виходи A+B, тег `#спільний`). У списку виробничих техкарт вибрати категорію A та перевірити статистику тегів.\n\nОчікування: лише `#категоріяА` й `#спільний`, кожен із кількістю 1; `#категоріяБ` відсутній. Фактично API повертає всі три теги. Список містить лише карти A та AB.\n\nНа ERP staging цього ж дня основний прогін мав **14 FAIL**: UI-фільтр відсутній, список API ігнорує `categoryIds`; тестовий OWNER додатково отримує 403. Окремий повтор статистики від ADMIN також відтворив зайвий тег. Це стан перевіреної версії стейджу, а не результат тестування ERP production. [Звіт стейджу](audits/2026-10-21/tech-map-category-staging-report.md).\n\nЗміни документації в dev і production TCM не є запуском тестів на ERP production. Результати прогонів зберігаються окремо від вимог.",
+  "criteria": [
+    {
+      "acKey": "AC-05",
+      "text": "Фільтр «Категорія виробу» (поточний UI: «Категорії продукту») відбирає техкарти за категорією вихідного ресурсу, а не сировини. Кілька категорій поєднуються через OR, інші фільтри — через AND; назва продукту та його категорія мають відповідати одному вихідному ресурсу. Порожній вибір не обмежує категорії. Архівність, тип і доступний робочий простір зберігають свої обмеження; пагінація й статистика тегів враховують категорії."
+    },
+    {
+      "acKey": "AC-06",
+      "text": "Вибір батьківської категорії у фільтрі позначає її та всіх нащадків і передає явні categoryIds. Дочірню категорію можна зняти окремо; повторний вибір категорії та «Скинути вибір» змінюють список. Вибір зберігається у URL category після перезавантаження й переходу в історію версій та назад. Зміна категорії скидає пагінацію на першу сторінку; очищення категорій зберігає інші пошукові поля. За відсутності збігів показано «Немає даних»."
+    }
+  ],
+  "cases": [
+    {
+      "testId": "TC-TM-CAT-API-001",
+      "title": "Одна категорія відбирає вихідні вироби для ADMIN та OWNER",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. Для A лише a та multi, для B лише b та multi; сировина категорії A не включає b.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "Для A лише a та multi, для B лише b та multi; сировина категорії A не включає b.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати A, потім B через categoryIds.",
+          "expectedText": "Для A лише a та multi, для B лише b та multi; сировина категорії A не включає b."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-001"
+      ],
+      "uiAutomationIds": [],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-05"
+    },
+    {
+      "testId": "TC-TM-CAT-API-002",
+      "title": "Кілька категорій дають об’єднання без дублів",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. Рівно a,b,multi; multi один раз.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "Рівно a,b,multi; multi один раз.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Передати categoryIds=A,B.",
+          "expectedText": "Рівно a,b,multi; multi один раз."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-002"
+      ],
+      "uiAutomationIds": [],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-05"
+    },
+    {
+      "testId": "TC-TM-CAT-API-003",
+      "title": "Явне піддерево категорій включає батька й нащадків",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. Лише parentMap у першому запиті; parentMap,a,multi у другому.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "Лише parentMap у першому запиті; parentMap,a,multi у другому.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Порівняти categoryIds=parent та categoryIds=parent,A.",
+          "expectedText": "Лише parentMap у першому запиті; parentMap,a,multi у другому."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-003"
+      ],
+      "uiAutomationIds": [],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-06"
+    },
+    {
+      "testId": "TC-TM-CAT-API-004",
+      "title": "Категорія та текстові фільтри перетинаються за тим самим виходом",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. a,multi; після зміни продукту порожньо, навіть для multi.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "a,multi; після зміни продукту порожньо, навіть для multi.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Поєднати A, назву продукту A та сировину; змінити продукт на B.",
+          "expectedText": "a,multi; після зміни продукту порожньо, навіть для multi."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-004"
+      ],
+      "uiAutomationIds": [],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-05"
+    },
+    {
+      "testId": "TC-TM-CAT-API-005",
+      "title": "Порожній результат, очищення та ізоляція типу й архіву",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. Порожній список; після очищення чотири активні PRODUCTION; архівний та DISASSEMBLE запити повертають відповідні контрольні карти.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "Порожній список; після очищення чотири активні PRODUCTION; архівний та DISASSEMBLE запити повертають відповідні контрольні карти.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати порожню категорію, очистити; окремо змінити isActive/type для A.",
+          "expectedText": "Порожній список; після очищення чотири активні PRODUCTION; архівний та DISASSEMBLE запити повертають відповідні контрольні карти."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-005"
+      ],
+      "uiAutomationIds": [],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-05"
+    },
+    {
+      "testId": "TC-TM-CAT-API-006",
+      "title": "Пагінація рахує лише відфільтровані техкарти",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. totalElements=2,totalPages=2; b та multi рівно по одному разу.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "totalElements=2,totalPages=2; b та multi рівно по одному разу.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Для категорії B запитати дві сторінки size=1.",
+          "expectedText": "totalElements=2,totalPages=2; b та multi рівно по одному разу."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-006"
+      ],
+      "uiAutomationIds": [],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-05"
+    },
+    {
+      "testId": "TC-TM-CAT-API-007",
+      "title": "Статистика тегів враховує категорію виробу",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. Лише теги a,multi з count=1; тег b відсутній.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "Лише теги a,multi з count=1; тег b відсутній.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "FUNCTIONAL",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Запитати tag-statistics з категорією A та спільним префіксом карт.",
+          "expectedText": "Лише теги a,multi з count=1; тег b відсутній."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [
+        "TC-TM-CAT-API-007"
+      ],
+      "uiAutomationIds": [],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-05"
+    },
+    {
+      "testId": "TC-TM-CAT-UI-001",
+      "title": "Фільтр категорії виробу доступний ADMIN та OWNER",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. Початково всі чотири активні PRODUCTION; після вибору лише a,multi; category=A у URL.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "Початково всі чотири активні PRODUCTION; після вибору лише a,multi; category=A у URL.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Відкрити список; перевірити початковий стан; вибрати A.",
+          "expectedText": "Початково всі чотири активні PRODUCTION; після вибору лише a,multi; category=A у URL."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-001"
+      ],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-05"
+    },
+    {
+      "testId": "TC-TM-CAT-UI-002",
+      "title": "Мультивибір, зняття категорії та очищення",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. a,b,multi; потім b,multi; після очищення всі чотири карти, category відсутня в URL.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "a,b,multi; потім b,multi; після очищення всі чотири карти, category відсутня в URL.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати A+B; зняти A; натиснути Скинути вибір.",
+          "expectedText": "a,b,multi; потім b,multi; після очищення всі чотири карти, category відсутня в URL."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-002"
+      ],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-06"
+    },
+    {
+      "testId": "TC-TM-CAT-UI-003",
+      "title": "Вибір батьківської категорії та зняття нащадка",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. parentMap,a,multi та URL з parent,A; після зняття A лише parentMap.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "parentMap,a,multi та URL з parent,A; після зняття A лише parentMap.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати parent; зняти дочірню A.",
+          "expectedText": "parentMap,a,multi та URL з parent,A; після зняття A лише parentMap."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-003"
+      ],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-06"
+    },
+    {
+      "testId": "TC-TM-CAT-UI-004",
+      "title": "Поєднання пошуку з категорією та порожній стан",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. Немає даних для несумісного виходу; після очищення b,multi, текстові фільтри збережено.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "Немає даних для несумісного виходу; після очищення b,multi, текстові фільтри збережено.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Ввести продукт B і сировину; вибрати A; очистити категорії.",
+          "expectedText": "Немає даних для несумісного виходу; після очищення b,multi, текстові фільтри збережено."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-004"
+      ],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-06"
+    },
+    {
+      "testId": "TC-TM-CAT-UI-005",
+      "title": "Вибір зберігається після reload і повернення, сторінка скидається",
+      "description": "Ізольований автоматизований сценарій фільтра категорії вихідного виробу. A та a,multi відновлюються; зміна вибору прибирає page з URL і показує a,b,multi.",
+      "preconditions": "Стейдж доступний; ADMIN/OWNER мають чинні сесії. Fixture створює власні категорії parent→A, B, empty; карти a,b,parent,multi,archived,disassemble на локації OWNER_1. Початковий режим локації відновлюється після класу.",
+      "testData": "Java fixture TechMapCategoryFilterFixture; унікальний marker; b має сировину A та вихід B, multi має виходи A+B.",
+      "expectedResult": "A та a,multi відновлюються; зміна вибору прибирає page з URL і показує a,b,multi.",
+      "tags": "tech-map,category-filter,automated,staging",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "status": "ACTIVE",
+      "testType": "UI",
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Підготувати власні категорії, ресурси та контрольні техкарти.",
+          "expectedText": "Дані створено без зміни сторонніх сутностей."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Вибрати A; reload; відкрити історію версій і повернутися; перейти на page=1 та додати B.",
+          "expectedText": "A та a,multi відновлюються; зміна вибору прибирає page з URL і показує a,b,multi."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Очистити власні дані й відновити режим редагування локації.",
+          "expectedText": "Власні карти/ресурси архівовано, категорії видалено, попередній режим відновлено."
+        }
+      ],
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-TM-CAT-UI-005"
+      ],
+      "featureId": "REQ-MFG-001-03",
+      "acKey": "AC-06"
+    }
+  ]
+}

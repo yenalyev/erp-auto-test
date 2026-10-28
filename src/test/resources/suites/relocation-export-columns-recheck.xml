@@ -1,0 +1,15 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Relocation export network recovery" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+        <listener class-name="com.erp.listeners.UiScreenshotListener"/>
+    </listeners>
+    <test name="Previously blocked period and UI checks">
+        <classes>
+            <class name="com.erp.tests.functional.analytics.RelocationExportColumnsApiTest">
+                <methods><include name="dateRangeIncludesTodayAndExcludesTomorrow"/></methods>
+            </class>
+            <class name="com.erp.tests.ui.RelocationExportColumnsUiTest"/>
+        </classes>
+    </test>
+</suite>

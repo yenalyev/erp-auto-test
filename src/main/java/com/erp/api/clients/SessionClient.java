@@ -115,6 +115,29 @@ public class SessionClient extends BaseClient {
                 .response();
     }
 
+    /** A null content omits the file part; an empty array sends an empty file. */
+    public Response executeMultipartJsonFilePost(String path, Map<String, String> cookies,
+                                                 Object request, String filePartName, byte[] content,
+                                                 String filename, String mimeType) {
+        String json;
+        try {
+            json = MULTIPART_MAPPER.writeValueAsString(request);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize attachment request", e);
+        }
+        var multipart = given().config(HttpClientSupport.config())
+                .baseUri(ConfigProvider.getBackendUrl())
+                .accept(io.restassured.http.ContentType.ANY)
+                .cookies(cookies != null ? cookies : Map.of())
+                .multiPart(new io.restassured.builder.MultiPartSpecBuilder(json)
+                        .controlName("request").mimeType("application/json").charset("UTF-8").build())
+                .filter(new SafeHttpDiagnosticsFilter());
+        if (content != null) {
+            multipart.multiPart(filePartName, filename, content, mimeType);
+        }
+        return multipart.when().post(path).then().spec(responseSpec).extract().response();
+    }
+
     private Response executeMultipart(
             io.restassured.http.Method method,
             String path,

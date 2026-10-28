@@ -1,0 +1,76 @@
+{
+  "destination": "dev/local TCM",
+  "baseUrl": "http://localhost:18100",
+  "featureId": "REQ-MFG-001-03",
+  "featureDbId": 12,
+  "documentationReadbackVerified": true,
+  "documentationSha256": "385a2358d0d2a1d5dd4a009e23bfbb79b5375b09cbaaa05b4b2f5fde2eec661e",
+  "managedCriteria": {
+    "AC-05": 788,
+    "AC-06": 789
+  },
+  "verifiedCases": [
+    {
+      "testId": "TC-TM-CAT-API-001",
+      "id": 1947,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-API-002",
+      "id": 1948,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-API-003",
+      "id": 1949,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-API-004",
+      "id": 1950,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-API-005",
+      "id": 1951,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-API-006",
+      "id": 1952,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-API-007",
+      "id": 1953,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-UI-001",
+      "id": 1954,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-UI-002",
+      "id": 1955,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-UI-003",
+      "id": 1956,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-UI-004",
+      "id": 1957,
+      "automation": true
+    },
+    {
+      "testId": "TC-TM-CAT-UI-005",
+      "id": 1958,
+      "automation": true
+    }
+  ],
+  "executionStatusesChanged": false,
+  "unrelatedMetadataPreserved": true
+}

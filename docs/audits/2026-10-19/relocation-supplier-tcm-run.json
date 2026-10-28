@@ -1,0 +1,159 @@
+{
+  "imported": {
+    "runId": 139,
+    "matched": 12,
+    "created": 12,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "readback": {
+    "id": 139,
+    "name": "AUTO Supplier filter — ERP dev (full + search retest)",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 35,
+    "testPlanName": "AUTO TP REQ-REL-SUPPLIER",
+    "startedAt": "2026-10-19T14:50:10.108694",
+    "completedAt": "2026-10-19T14:50:10.603185",
+    "createdAt": "2026-10-19T14:50:10.108823",
+    "items": [
+      {
+        "id": 18921,
+        "testId": "TC-REL-SUP-API-001",
+        "title": "один постачальник і точний вантаж",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-API-001",
+        "executedAt": "2026-10-19T17:42:18.534"
+      },
+      {
+        "id": 18922,
+        "testId": "TC-REL-SUP-API-002",
+        "title": "OR, відсутня властивість і невідоме значення",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-API-002",
+        "executedAt": "2026-10-19T17:42:09.694"
+      },
+      {
+        "id": 18923,
+        "testId": "TC-REL-SUP-API-003",
+        "title": "AND для тієї самої позиції та інших фільтрів",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-API-003",
+        "executedAt": "2026-10-19T17:42:24.034"
+      },
+      {
+        "id": 18924,
+        "testId": "TC-REL-SUP-API-004",
+        "title": "підсумки та пагінація",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-API-004",
+        "executedAt": "2026-10-19T17:42:00.941"
+      },
+      {
+        "id": 18925,
+        "testId": "TC-REL-SUP-API-005",
+        "title": "Excel повної вибірки та порожнього перетину",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-API-005",
+        "executedAt": "2026-10-19T17:41:33.79"
+      },
+      {
+        "id": 18926,
+        "testId": "TC-REL-SUP-API-006",
+        "title": "зміна й видалення властивості в наявній історії",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-API-006",
+        "executedAt": "2026-10-19T17:41:43.707"
+      },
+      {
+        "id": 18927,
+        "testId": "TC-REL-SUP-API-007",
+        "title": "постачальник ресурсу незалежний від зовнішнього відправника",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-API-007",
+        "executedAt": "2026-10-19T17:41:59.5"
+      },
+      {
+        "id": 18928,
+        "testId": "TC-REL-SUP-UI-001",
+        "title": "поле, опції, пошук і один вибір",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-UI-001",
+        "executedAt": "2026-10-19T17:48:27.424"
+      },
+      {
+        "id": 18929,
+        "testId": "TC-REL-SUP-UI-002",
+        "title": "кілька значень і порожній AND",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-UI-002",
+        "executedAt": "2026-10-19T17:43:54.84"
+      },
+      {
+        "id": 18930,
+        "testId": "TC-REL-SUP-UI-003",
+        "title": "видалення chips та перевідкриття",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-UI-003",
+        "executedAt": "2026-10-19T17:45:50.201"
+      },
+      {
+        "id": 18931,
+        "testId": "TC-REL-SUP-UI-004",
+        "title": "обладнання та відновлення ресурсного вибору",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-UI-004",
+        "executedAt": "2026-10-19T17:43:20.957"
+      },
+      {
+        "id": 18932,
+        "testId": "TC-REL-SUP-UI-005",
+        "title": "перевідкриття після зміни властивості",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-SUP-UI-005",
+        "executedAt": "2026-10-19T17:46:33.432"
+      }
+    ]
+  }
+}

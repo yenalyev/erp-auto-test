@@ -145,6 +145,34 @@ public class TechnologicalMapsListPage extends BasePage {
         return this;
     }
 
+    public Locator categoryFilter() {
+        return page.getByTestId("technological-maps-filter-categories");
+    }
+
+    public TechnologicalMapsListPage toggleProductCategory(long categoryId) {
+        categoryFilter().click();
+        waitForCategoryListChange(() -> page.getByTestId("category-multi-select-item-" + categoryId).click());
+        page.keyboard().press("Escape");
+        return this;
+    }
+
+    public TechnologicalMapsListPage clearProductCategories() {
+        categoryFilter().click();
+        waitForCategoryListChange(() -> page.getByTestId("category-multi-select-clear").click());
+        page.keyboard().press("Escape");
+        return this;
+    }
+
+    private void waitForCategoryListChange(Runnable action) {
+        var response = page.waitForResponse(r ->
+                java.net.URI.create(r.url()).getPath().endsWith("/api/v1/technological-maps")
+                        && "GET".equals(r.request().method()), action);
+        if (response.status() != 200) {
+            throw new AssertionError("Category list request returned " + response.status());
+        }
+        waitForTableSettled();
+    }
+
     public TechnologicalMapsListPage filterByIngredient(String ingredientTerm) {
         runSearchFilterAction(() -> ingredientSearchInput().fill(ingredientTerm));
         return this;

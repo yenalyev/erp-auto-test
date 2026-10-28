@@ -1,0 +1,320 @@
+{
+  "environment": "dev",
+  "suite": "tech-map-category-filter",
+  "runDirectory": "target/tm-category-dev-20261021-094650/initial",
+  "executions": 14,
+  "counts": {
+    "PASS": 13,
+    "FAIL": 1
+  },
+  "configurationFailures": [],
+  "cleanupSuccessful": true,
+  "results": [
+    {
+      "testCaseId": "TC-TM-CAT-API-004",
+      "method": "categoryIntersectsOtherSearchFields",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 3025,
+      "executedAt": "2026-10-21T09:48:28",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-005",
+      "method": "emptyResultClearAndStateTypeIsolation",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 2125,
+      "executedAt": "2026-10-21T09:48:30",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-003",
+      "method": "expandedParentIncludesChildren",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 1066,
+      "executedAt": "2026-10-21T09:48:31",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-002",
+      "method": "multipleCategoriesReturnDistinctUnion",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 622,
+      "executedAt": "2026-10-21T09:48:32",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-006",
+      "method": "paginationCountsFilteredMaps",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 1539,
+      "executedAt": "2026-10-21T09:48:33",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-001",
+      "method": "singleCategoryUsesOutputOnly",
+      "parameters": [
+        "ADMIN"
+      ],
+      "status": "PASS",
+      "durationMs": 1013,
+      "executedAt": "2026-10-21T09:48:34",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-001",
+      "method": "singleCategoryUsesOutputOnly",
+      "parameters": [
+        "OWNER_1"
+      ],
+      "status": "PASS",
+      "durationMs": 4793,
+      "executedAt": "2026-10-21T09:48:39",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-007",
+      "method": "tagStatisticsRespectCategory",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 453,
+      "executedAt": "2026-10-21T09:48:39",
+      "errorMessage": "Expecting actual:\n  [\"#tmcat-3f176d85-a\", \"#tmcat-3f176d85-b\", \"#tmcat-3f176d85-multi\"]\nto contain exactly in any order:\n  [\"#tmcat-3f176d85-a\", \"#tmcat-3f176d85-multi\"]\nbut the following elements were unexpected:\n  [\"#tmcat-3f176d85-b\"]",
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-002",
+      "method": "multipleSelectionToggleAndClear",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 7364,
+      "executedAt": "2026-10-21T09:51:36",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/ui-rerun/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-003",
+      "method": "parentSelectsSubtreeAndChildCanBeRemoved",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 5397,
+      "executedAt": "2026-10-21T09:51:42",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/ui-rerun/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-004",
+      "method": "searchIntersectionAndEmptyState",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 7093,
+      "executedAt": "2026-10-21T09:51:49",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/ui-rerun/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-005",
+      "method": "selectionSurvivesReloadNavigationAndResetsPage",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 8925,
+      "executedAt": "2026-10-21T09:51:59",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/ui-rerun/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-001",
+      "method": "singleCategoryFiltersOutput",
+      "parameters": [
+        "ADMIN"
+      ],
+      "status": "PASS",
+      "durationMs": 5674,
+      "executedAt": "2026-10-21T09:52:05",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/ui-rerun/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-001",
+      "method": "singleCategoryFiltersOutput",
+      "parameters": [
+        "OWNER_1"
+      ],
+      "status": "PASS",
+      "durationMs": 10952,
+      "executedAt": "2026-10-21T09:52:16",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/ui-rerun/surefire-reports/testng-results.xml"
+    }
+  ],
+  "tcmImported": false,
+  "initialResults": [
+    {
+      "testCaseId": "TC-TM-CAT-API-004",
+      "method": "categoryIntersectsOtherSearchFields",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 3025,
+      "executedAt": "2026-10-21T09:48:28",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-005",
+      "method": "emptyResultClearAndStateTypeIsolation",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 2125,
+      "executedAt": "2026-10-21T09:48:30",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-003",
+      "method": "expandedParentIncludesChildren",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 1066,
+      "executedAt": "2026-10-21T09:48:31",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-002",
+      "method": "multipleCategoriesReturnDistinctUnion",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 622,
+      "executedAt": "2026-10-21T09:48:32",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-006",
+      "method": "paginationCountsFilteredMaps",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 1539,
+      "executedAt": "2026-10-21T09:48:33",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-001",
+      "method": "singleCategoryUsesOutputOnly",
+      "parameters": [
+        "ADMIN"
+      ],
+      "status": "PASS",
+      "durationMs": 1013,
+      "executedAt": "2026-10-21T09:48:34",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-001",
+      "method": "singleCategoryUsesOutputOnly",
+      "parameters": [
+        "OWNER_1"
+      ],
+      "status": "PASS",
+      "durationMs": 4793,
+      "executedAt": "2026-10-21T09:48:39",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-API-007",
+      "method": "tagStatisticsRespectCategory",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 453,
+      "executedAt": "2026-10-21T09:48:39",
+      "errorMessage": "Expecting actual:\n  [\"#tmcat-3f176d85-a\", \"#tmcat-3f176d85-b\", \"#tmcat-3f176d85-multi\"]\nto contain exactly in any order:\n  [\"#tmcat-3f176d85-a\", \"#tmcat-3f176d85-multi\"]\nbut the following elements were unexpected:\n  [\"#tmcat-3f176d85-b\"]",
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-002",
+      "method": "multipleSelectionToggleAndClear",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 7680,
+      "executedAt": "2026-10-21T09:49:08",
+      "errorMessage": "Error {\n  message='Error: strict mode violation: getByText(\"tmcat-6db447be-parent\", new Page.GetByTextOptions().setExact(true)) resolved to 2 elements:\n    1) <div class=\"w-60 whitespace-normal\">tmcat-6db447be-parent</div> aka getByTestId(\"technological-map-row-2601\").getByText(\"tmcat-6db447be-parent\", new Locator.GetByTextOptions().setExact(true))\n    2) <button type=\"button\" data-testid=\"category-multi-select-item-78\" class=\"flex w-full items-center gap-1.5 rounded-sm py-1.5 pr-2 text-sm text-left hover:bg-accent hover:text-accent-foreground\">…</button> aka getByTestId(\"category-multi-select-item-78\")\n\n  name='Error\n  stack='Error: Error: strict mode violation: getByText(\"tmcat-6db447be-parent\", new Page.GetByTextOptions().setExact(true)) resolved to 2 elements:\n    1) <div class=\"w-60 whitespace-normal\">tmcat-6db447be-parent</div> aka getByTestId(\"technological-map-row-2601\").getByText(\"tmcat-6db447be-parent\", new Locator.GetByTextOptions().setExact(true))\n    2) <button type=\"button\" data-testid=\"category-multi-select-item-78\" class=\"flex w-full items-center gap-1.5 rounded-sm py-1.5 pr-2 text-sm text-left hover:bg-accent hover:text-accent-foreground\">…</button> aka getByTestId(\"category-multi-select-item-78\")\n\n    at CRExecutionContext.evaluateWithArguments (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\chromium\\crExecutionContext.js:79:33)\n    at async LongStandingScope._race (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\utils\\manualPromise.js:96:14)\n    at async evaluateExpression (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\javascript.js:229:12)\n    at async Frame._expectInternal (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\frames.js:1344:9)\n    at async C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\frames.js:1271:18\n    at async ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\progress.js:79:22)\n    at async Frame._expectImpl (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\frames.js:1270:31)\n    at async Frame.expect (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\frames.js:1241:20)\n    at async FrameDispatcher.expect (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\dispatchers\\frameDispatcher.js:281:20)\n    at async LongStandingScope._race (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\utils\\manualPromise.js:96:14)\n}\nCall log:\n-   - Locator.expect with timeout 5000ms\n-   - waiting for getByText(\"tmcat-6db447be-parent\", new Page.GetByTextOptions().setExact(true))",
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-003",
+      "method": "parentSelectsSubtreeAndChildCanBeRemoved",
+      "parameters": [],
+      "status": "FAIL",
+      "durationMs": 4760,
+      "executedAt": "2026-10-21T09:49:13",
+      "errorMessage": "Error {\n  message='Error: strict mode violation: getByText(\"tmcat-6db447be-parent\", new Page.GetByTextOptions().setExact(true)) resolved to 3 elements:\n    1) <span data-slot=\"badge\" data-variant=\"secondary\" class=\"h-5 gap-1 rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium transition-all has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&>svg]:size-3! inline-flex items-center justify-center w-fit whitespace-nowrap shrink-0 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:bord…>tmcat-6db447be-parent</span> aka getByTestId(\"technological-maps-filter-categories\")\n    2) <div class=\"w-60 whitespace-normal\">tmcat-6db447be-parent</div> aka getByTestId(\"technological-map-row-2601\").getByText(\"tmcat-6db447be-parent\", new Locator.GetByTextOptions().setExact(true))\n    3) <button type=\"button\" data-testid=\"category-multi-select-item-78\" class=\"flex w-full items-center gap-1.5 rounded-sm py-1.5 pr-2 text-sm text-left hover:bg-accent hover:text-accent-foreground bg-accent text-accent-foreground font-medium\">…</button> aka getByTestId(\"category-multi-select-item-78\")\n\n  name='Error\n  stack='Error: Error: strict mode violation: getByText(\"tmcat-6db447be-parent\", new Page.GetByTextOptions().setExact(true)) resolved to 3 elements:\n    1) <span data-slot=\"badge\" data-variant=\"secondary\" class=\"h-5 gap-1 rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium transition-all has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&>svg]:size-3! inline-flex items-center justify-center w-fit whitespace-nowrap shrink-0 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:bord…>tmcat-6db447be-parent</span> aka getByTestId(\"technological-maps-filter-categories\")\n    2) <div class=\"w-60 whitespace-normal\">tmcat-6db447be-parent</div> aka getByTestId(\"technological-map-row-2601\").getByText(\"tmcat-6db447be-parent\", new Locator.GetByTextOptions().setExact(true))\n    3) <button type=\"button\" data-testid=\"category-multi-select-item-78\" class=\"flex w-full items-center gap-1.5 rounded-sm py-1.5 pr-2 text-sm text-left hover:bg-accent hover:text-accent-foreground bg-accent text-accent-foreground font-medium\">…</button> aka getByTestId(\"category-multi-select-item-78\")\n\n    at CRExecutionContext.evaluateWithArguments (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\chromium\\crExecutionContext.js:79:33)\n    at async LongStandingScope._race (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\utils\\manualPromise.js:96:14)\n    at async evaluateExpression (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\javascript.js:229:12)\n    at async Frame._expectInternal (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\frames.js:1344:9)\n    at async C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\frames.js:1271:18\n    at async ProgressController.run (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\progress.js:79:22)\n    at async Frame._expectImpl (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\frames.js:1270:31)\n    at async Frame.expect (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\frames.js:1241:20)\n    at async FrameDispatcher.expect (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\server\\dispatchers\\frameDispatcher.js:281:20)\n    at async LongStandingScope._race (C:\\Users\\gigam\\AppData\\Local\\Temp\\playwright-java-4993718425003182524\\package\\lib\\utils\\manualPromise.js:96:14)\n}\nCall log:\n-   - Locator.expect with timeout 5000ms\n-   - waiting for getByText(\"tmcat-6db447be-parent\", new Page.GetByTextOptions().setExact(true))",
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-004",
+      "method": "searchIntersectionAndEmptyState",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 7349,
+      "executedAt": "2026-10-21T09:49:21",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-005",
+      "method": "selectionSurvivesReloadNavigationAndResetsPage",
+      "parameters": [],
+      "status": "PASS",
+      "durationMs": 9470,
+      "executedAt": "2026-10-21T09:49:31",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-001",
+      "method": "singleCategoryFiltersOutput",
+      "parameters": [
+        "ADMIN"
+      ],
+      "status": "PASS",
+      "durationMs": 5004,
+      "executedAt": "2026-10-21T09:49:36",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    },
+    {
+      "testCaseId": "TC-TM-CAT-UI-001",
+      "method": "singleCategoryFiltersOutput",
+      "parameters": [
+        "OWNER_1"
+      ],
+      "status": "PASS",
+      "durationMs": 4268,
+      "executedAt": "2026-10-21T09:49:40",
+      "errorMessage": null,
+      "source": "target/tm-category-dev-20261021-094650/initial/surefire-reports/testng-results.xml"
+    }
+  ],
+  "uiRerun": "target/tm-category-dev-20261021-094650/ui-rerun",
+  "framework": {
+    "total": 100,
+    "passed": 100,
+    "failed": 0,
+    "skipped": 0
+  }
+}

@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="14" passed="14" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-10-22T11:16:06 EEST" name="Equipment Model Archive" finished-at="2026-10-22T11:19:06 EEST" duration-ms="180457">
+    <groups>
+    </groups>
+    <test started-at="2026-10-22T11:16:06 EEST" name="Archive model API and UI" finished-at="2026-10-22T11:19:06 EEST" duration-ms="180457">
+      <class name="com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest">
+        <test-method is-config="true" signature="globalSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:15:59 EEST" name="globalSetup" finished-at="2026-10-22T11:16:06 EEST" duration-ms="6767" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalSetup -->
+        <test-method is-config="true" signature="baseTestClassSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:06 EEST" name="baseTestClassSetup" finished-at="2026-10-22T11:16:06 EEST" duration-ms="10" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- baseTestClassSetup -->
+        <test-method is-config="true" signature="setupFunctionalContext()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:06 EEST" name="setupFunctionalContext" finished-at="2026-10-22T11:16:06 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setupFunctionalContext -->
+        <test-method is-config="true" signature="prepareArchive()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:06 EEST" name="prepareArchive" finished-at="2026-10-22T11:16:36 EEST" depends-on-methods="com.erp.tests.BaseTest.baseTestClassSetup" duration-ms="29958" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- prepareArchive -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:36 EEST" name="testSetup" finished-at="2026-10-22T11:16:36 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="activeRelocationBlocksArchive()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:36 EEST" name="activeRelocationBlocksArchive" finished-at="2026-10-22T11:16:43 EEST" duration-ms="6560" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- activeRelocationBlocksArchive -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:43 EEST" name="testTeardown" finished-at="2026-10-22T11:16:43 EEST" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:43 EEST" name="testSetup" finished-at="2026-10-22T11:16:43 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="archivesRetiredModelAndPreservesHistory()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:43 EEST" name="archivesRetiredModelAndPreservesHistory" finished-at="2026-10-22T11:16:47 EEST" duration-ms="4142" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- archivesRetiredModelAndPreservesHistory -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:47 EEST" name="testTeardown" finished-at="2026-10-22T11:16:47 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:47 EEST" name="testSetup" finished-at="2026-10-22T11:16:47 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="clearingLastBlockerAllowsArchiveAndRepeatIsRejected()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:47 EEST" name="clearingLastBlockerAllowsArchiveAndRepeatIsRejected" finished-at="2026-10-22T11:16:52 EEST" duration-ms="4580" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- clearingLastBlockerAllowsArchiveAndRepeatIsRejected -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:52 EEST" name="testTeardown" finished-at="2026-10-22T11:16:52 EEST" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:52 EEST" name="testSetup" finished-at="2026-10-22T11:16:52 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="filtersStatusWithNameCategoryAndPagination()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:52 EEST" name="filtersStatusWithNameCategoryAndPagination" finished-at="2026-10-22T11:16:57 EEST" duration-ms="5259" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- filtersStatusWithNameCategoryAndPagination -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:57 EEST" name="testTeardown" finished-at="2026-10-22T11:16:57 EEST" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:57 EEST" name="testSetup" finished-at="2026-10-22T11:16:57 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="nonRetiredStockBlocksArchive(com.erp.enums.EquipmentStatus)[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:16:57 EEST" name="nonRetiredStockBlocksArchive" data-provider="stockStatuses" finished-at="2026-10-22T11:17:00 EEST" duration-ms="2657" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[AVAILABLE]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- nonRetiredStockBlocksArchive -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:00 EEST" name="testTeardown" finished-at="2026-10-22T11:17:00 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:00 EEST" name="testSetup" finished-at="2026-10-22T11:17:00 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="nonRetiredStockBlocksArchive(com.erp.enums.EquipmentStatus)[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:00 EEST" name="nonRetiredStockBlocksArchive" data-provider="stockStatuses" finished-at="2026-10-22T11:17:03 EEST" duration-ms="3417" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[IN_REPAIR]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- nonRetiredStockBlocksArchive -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:03 EEST" name="testTeardown" finished-at="2026-10-22T11:17:03 EEST" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:03 EEST" name="testSetup" finished-at="2026-10-22T11:17:03 EEST" duration-ms="5" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="suggestionsExcludeArchivedModels()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:03 EEST" name="suggestionsExcludeArchivedModels" finished-at="2026-10-22T11:17:08 EEST" duration-ms="4685" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- suggestionsExcludeArchivedModels -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:08 EEST" name="testTeardown" finished-at="2026-10-22T11:17:08 EEST" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="cleanupArchive()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:08 EEST" name="cleanupArchive" finished-at="2026-10-22T11:17:33 EEST" duration-ms="25233" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanupArchive -->
+        <test-method is-config="true" signature="classTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:17:33 EEST" name="classTeardown" finished-at="2026-10-22T11:17:33 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- classTeardown -->
+        <test-method is-config="true" signature="globalTeardown()[pri:0, instance:com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest@4e22368c]" started-at="2026-10-22T11:19:06 EEST" name="globalTeardown" finished-at="2026-10-22T11:19:07 EEST" duration-ms="392" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalTeardown -->
+      </class> <!-- com.erp.tests.functional.equipment.EquipmentModelArchiveApiTest -->
+      <class name="com.erp.tests.ui.EquipmentModelArchiveUiTest">
+        <test-method is-config="true" signature="baseTestClassSetup()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:33 EEST" name="baseTestClassSetup" finished-at="2026-10-22T11:17:33 EEST" duration-ms="12" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- baseTestClassSetup -->
+        <test-method is-config="true" signature="prepareArchive()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:33 EEST" name="prepareArchive" finished-at="2026-10-22T11:17:37 EEST" depends-on-methods="com.erp.tests.ui.BaseUITest.baseTestClassSetup" duration-ms="4327" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- prepareArchive -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:37 EEST" name="testSetup" finished-at="2026-10-22T11:17:38 EEST" duration-ms="216" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="autocompleteExcludesArchivedModels()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:38 EEST" name="autocompleteExcludesArchivedModels" finished-at="2026-10-22T11:17:47 EEST" duration-ms="9596" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- autocompleteExcludesArchivedModels -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:47 EEST" name="uiTestTeardown" finished-at="2026-10-22T11:17:47 EEST" duration-ms="17" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:47 EEST" name="testTeardown" finished-at="2026-10-22T11:17:47 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:47 EEST" name="testSetup" finished-at="2026-10-22T11:17:48 EEST" duration-ms="253" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="cancelsArchiveWithoutMutation()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:48 EEST" name="cancelsArchiveWithoutMutation" finished-at="2026-10-22T11:17:53 EEST" duration-ms="5373" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cancelsArchiveWithoutMutation -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:53 EEST" name="uiTestTeardown" finished-at="2026-10-22T11:17:53 EEST" duration-ms="13" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:53 EEST" name="testTeardown" finished-at="2026-10-22T11:17:53 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:53 EEST" name="testSetup" finished-at="2026-10-22T11:17:53 EEST" duration-ms="227" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="confirmsArchiveAndPersistsIt()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:17:53 EEST" name="confirmsArchiveAndPersistsIt" finished-at="2026-10-22T11:18:02 EEST" duration-ms="8018" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- confirmsArchiveAndPersistsIt -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:02 EEST" name="uiTestTeardown" finished-at="2026-10-22T11:18:02 EEST" duration-ms="8" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:02 EEST" name="testTeardown" finished-at="2026-10-22T11:18:02 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:02 EEST" name="testSetup" finished-at="2026-10-22T11:18:02 EEST" duration-ms="177" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="defaultsToActiveModels()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:02 EEST" name="defaultsToActiveModels" finished-at="2026-10-22T11:18:08 EEST" duration-ms="5902" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- defaultsToActiveModels -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:08 EEST" name="uiTestTeardown" finished-at="2026-10-22T11:18:08 EEST" duration-ms="7" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:08 EEST" name="testTeardown" finished-at="2026-10-22T11:18:08 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:08 EEST" name="testSetup" finished-at="2026-10-22T11:18:08 EEST" duration-ms="185" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="revalidatesStockAtConfirmation()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:08 EEST" name="revalidatesStockAtConfirmation" finished-at="2026-10-22T11:18:15 EEST" duration-ms="6950" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- revalidatesStockAtConfirmation -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:15 EEST" name="uiTestTeardown" finished-at="2026-10-22T11:18:15 EEST" duration-ms="7" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:15 EEST" name="testTeardown" finished-at="2026-10-22T11:18:15 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:15 EEST" name="testSetup" finished-at="2026-10-22T11:18:15 EEST" duration-ms="182" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="stockAndTransitDisableArchive()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:15 EEST" name="stockAndTransitDisableArchive" finished-at="2026-10-22T11:18:22 EEST" duration-ms="6675" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- stockAndTransitDisableArchive -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:22 EEST" name="uiTestTeardown" finished-at="2026-10-22T11:18:22 EEST" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:22 EEST" name="testTeardown" finished-at="2026-10-22T11:18:22 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:22 EEST" name="testSetup" finished-at="2026-10-22T11:18:22 EEST" duration-ms="184" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="switchesStatusAndCombinesFilters()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:22 EEST" name="switchesStatusAndCombinesFilters" finished-at="2026-10-22T11:18:32 EEST" duration-ms="9829" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- switchesStatusAndCombinesFilters -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:32 EEST" name="uiTestTeardown" finished-at="2026-10-22T11:18:32 EEST" duration-ms="7" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:32 EEST" name="testTeardown" finished-at="2026-10-22T11:18:32 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="cleanupArchive()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:18:32 EEST" name="cleanupArchive" finished-at="2026-10-22T11:19:06 EEST" duration-ms="34047" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanupArchive -->
+        <test-method is-config="true" signature="classTeardown()[pri:0, instance:com.erp.tests.ui.EquipmentModelArchiveUiTest@5382184b]" started-at="2026-10-22T11:19:06 EEST" name="classTeardown" finished-at="2026-10-22T11:19:06 EEST" duration-ms="12" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- classTeardown -->
+      </class> <!-- com.erp.tests.ui.EquipmentModelArchiveUiTest -->
+    </test> <!-- Archive model API and UI -->
+  </suite> <!-- Equipment Model Archive -->
+</testng-results>

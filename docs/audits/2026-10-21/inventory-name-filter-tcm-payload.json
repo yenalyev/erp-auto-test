@@ -1,0 +1,314 @@
+{
+  "feature": {
+    "projectId": 1,
+    "featureId": "REQ-INV-NAME",
+    "parentFeatureId": "REQ-WMS-003",
+    "module": "WMS",
+    "title": "Інвентаризація — фільтр по назві ресурсу",
+    "priority": "HIGH",
+    "description": "Інвентаризація → Закриті: пошук за назвою, тільки відповідні ресурси в розбіжностях, Excel за поточним фільтром.",
+    "documentation": "# Інвентаризація — фільтр по назві ресурсу\n\nВимоги та автоматизовані сценарії, 21.10.2026. TCM: `REQ-WMS-003` → `REQ-INV-NAME`.\n\n## Поведінка\n\nНа сторінці **Інвентаризація → Закриті** (`/inventory-processes`) є поле **Назва ресурсу**.\nПошук працює за повною назвою або її частиною без урахування регістру, зокрема для українських назв.\nUI обрізає пробіли на початку та в кінці й застосовує значення після debounce 500 мс.\nПорожній або пробільний UI-пошук прибирає фільтр.\n\nТаблиця показує лише інвентаризації з відповідними ресурсами. У колонці **Розбіжності**\nзалишаються тільки ресурси, назви яких відповідають пошуку: якщо одне проведення містить\n«Акумулятор А», «Акумулятор Б» і «Кабель», пошук «АКУМУЛЯТОР» показує лише перші два.\nПроцес із самим кабелем, відхилення й ручне закриття без розбіжностей у цьому результаті відсутні.\nПісля очищення відновлюються повні розбіжності та процеси без них. Пошук не змінює історію або залишки.\n\n**Експорт в Excel** використовує поточний фільтр: у книзі **Інвентаризації** є тільки відповідні\nпроцеси й ресурси. Зміна пошуку створює нову вибірку. Для відсутніх збігів завантажується\nвалідний XLSX лише із заголовками. Після очищення книга знову містить усі рядки вибраної локації.\nДробові додатні й від’ємні розбіжності зберігаються числами.\n\nAPI таблиці: `GET /api/v1/storages/inventory/processes`.\nAPI Excel: `GET /api/v1/storages/inventory/processes/export`.\nПараметр `resourceName`; також `parentStorageId`, `states`, `requestedBy`, `categoryIds`, `fromDate`, `toDate`.\nФільтри працюють як AND. `page.totalElements` рахує процеси, а не ресурси всередині `diff`.\nВкладка «Закриті» використовує `states=CLOSED,REJECTED`.\n\nЦе покриття історії інвентаризацій. Фільтр залишків `/inventory` та локальний пошук форми\n`/inventory/:id` мають окремі наявні регресії.\n\n## Критерії приймання\n\n- **AC-01:** На вкладці «Закриті» доступне поле «Назва ресурсу»; повна назва або підрядок, Unicode, різний регістр та пробіли навколо UI-запиту обробляються коректно.\n- **AC-02:** Таблиця та вкладені розбіжності містять тільки відповідні процеси й ресурси; без збігів результат порожній, очищення відновлює повні дані; інші фільтри перетинаються, пагінація рахує процеси, історія та залишки незмінні.\n- **AC-03:** Excel враховує поточний пошук, зміну й очищення фільтра; містить точні process/resource/delta без зайвих ресурсів, числові дробові розбіжності та валідну порожню книгу без збігів.\n\n## Передумови й дані\n\nADMIN на ERP dev. Кожен клас створює власну локацію та три унікальні ресурси:\nАкумулятор А, Акумулятор Б і Кабель, по 10 одиниць через справжні надходження.\nДалі реальний lifecycle request → approve → conduct створює:\n\n- mixed: А +2.25, Б −3.5, Кабель +4;\n- cableOnly: Кабель +1;\n- manual: ручне закриття без проведення;\n- rejected: відхилений запит без проведення.\n\nПісля кожного тесту звіряються всі незмінені записи історії та точні залишки 12.25/6.5/15.\nCleanup прибирає власні залишки, архівує три ресурси й локацію. Історичні процеси зберігаються\nяк аудит архівованої тестової локації. Наявні користувачі, їхні права та робочі залишки не редагуються.\n\n## Тест-кейси\n\n### TC-INV-NAME-API-001 — Повна й часткова назва, Unicode та регістр [AC-01]\nАвтотест: `InventoryNameFilterApiTest#fullPartialAndCaseInsensitiveNamesFilterNestedDifferences`.\n1. Передати повну назву А, потім її варіант у верхньому регістрі.\n2. Передати підрядок «АКУМУЛЯТОР».\nОчікування: перші запити повертають тільки mixed із diff А:+2.25; підрядок — тільки mixed із А:+2.25 і Б:-3.5. Кабелю й інших процесів немає, назви ресурсів точні.\n\n### TC-INV-NAME-API-002 — Немає збігів та очищення [AC-02]\nАвтотест: `InventoryNameFilterApiTest#noMatchAndResetRestoreAllClosedAndRejectedProcesses`.\n1. Задати унікальну назву без збігів.\n2. Повторити запит без resourceName.\nОчікування: content порожній, totalElements=0; після очищення повертаються чотири точні process ID, а mixed знову містить усі три ресурси.\n\n### TC-INV-NAME-API-003 — Пагінація й перетин фільтрів [AC-02]\nАвтотест: `InventoryNameFilterApiTest#paginationCountsProcessesAndFiltersIntersect`.\n1. Шукати спільний маркер трьох ресурсів зі size=1 на сторінках 0 і 1.\n2. Перетнути назву А з відсутнім автором або states=REJECTED.\n3. Перетнути назву А з фактичним автором та категорією.\nОчікування: totalElements=2 на обох сторінках, точні ID mixed і cableOnly; конфліктні фільтри дають порожній список, сумісні — тільки mixed із А:+2.25.\n\n### TC-INV-NAME-API-004 — Excel за поточною назвою [AC-03]\nАвтотест: `InventoryNameFilterApiTest#excelContainsOnlyCurrentMatchingResources`.\n1. Експортувати повну назву А, потім підрядок «АКУМУЛЯТОР».\n2. Змінити назву на Кабель та повторити експорт.\nОчікування: книги містять відповідно 1, 2 і 2 точні рядки process/resource/delta; +2.25/-3.5/+4/+1 є числовими, зайвих ресурсів та процесів немає.\n\n### TC-INV-NAME-API-005 — Порожня книга, очищення й AND [AC-03]\nАвтотест: `InventoryNameFilterApiTest#emptyExcelResetAndCombinedFiltersUseFreshSelection`.\n1. Експортувати назву без збігів, потім прибрати фільтр.\n2. Експортувати назву А з відсутнім автором.\nОчікування: порожня книга тільки з заголовками; після очищення рівно 6 рядків, включно з двома процесами без diff; AND з відсутнім автором знову дає порожню книгу.\n\n### TC-INV-NAME-UI-001 — Видиме поле та точні розбіжності [AC-01]\nАвтотест: `InventoryNameFilterUiTest#fullAndPartialUnicodeNameShowOnlyMatchingDifferences`.\n1. У браузері відкрити «Закриті» власної локації й задати повну назву А.\n2. Замінити значення на «  АКУМУЛЯТОР  ».\nОчікування: видиме поле працює; у таблиці тільки mixed, спочатку один ресурс А, потім рівно А й Б; запит містить обрізану назву, Кабелю немає.\n\n### TC-INV-NAME-UI-002 — Зміна, відсутність збігів та скидання [AC-02]\nАвтотест: `InventoryNameFilterUiTest#changedEmptyAndClearedNameRestoreTheCompleteTable`.\n1. Змінити пошук А на Кабель.\n2. Задати назву без збігів, потім лише пробіли.\nОчікування: Кабель видно тільки у mixed і cableOnly; без збігів жодного процесу; пробіли скидають фільтр і повертають усі чотири процеси та три ресурси mixed.\n\n### TC-INV-NAME-UI-003 — Кнопка Excel після зміни назви [AC-03]\nАвтотест: `InventoryNameFilterUiTest#excelButtonUsesTheCurrentNameAfterChangingTheFilter`.\n1. Задати назву А, перевірити таблицю та натиснути Excel.\n2. Змінити назву на Кабель, перевірити таблицю та натиснути Excel.\nОчікування: завантажено два реальні XLSX; resourceName у запиті актуальний; перша книга містить тільки mixed/А/+2.25, друга — mixed/Кабель/+4 і cableOnly/Кабель/+1.\n\n### TC-INV-NAME-UI-004 — Excel без збігів та після очищення [AC-03]\nАвтотест: `InventoryNameFilterUiTest#emptyExcelAndResetMatchTheVisibleSelection`.\n1. Задати назву без збігів і натиснути Excel.\n2. Очистити поле, перевірити всі чотири процеси й завантажити Excel.\nОчікування: перший XLSX має тільки заголовки; після очищення resourceName відсутній у запиті й книга містить рівно 6 очікуваних рядків, без попереднього фільтра.\n\n## Автоматизація й запуск\n\nОкремий suite `inventory-name-filter`: 5 API + 4 UI, послідовно, без JDBC/SSH.\nКласи також включені до `inventory`, `inventory-process`, `regression`; UI — до `ui`, API — до `functional`.\nUI очікує відповідь саме з актуальним resourceName після debounce та перевіряє точні ID процесів.\nXLSX звіряється через Apache POI за кожним process/resource/delta, включно з об’єднаними комірками ID.\nСкриншоти та отримані XLSX додаються до Allure.\n\n```powershell\nmvn test -Denv=dev -Dsuite=inventory-name-filter -Duse.database=false -Dssh.enabled=false -Dsuite.artifact.sweep=false -Dtcm.enabled=false -Dgoogle.sheets.enabled=false -Dframework.browser.channel=chrome\n```\n\nВимоги не є підтвердженням PASS. Фактичний результат зберігається окремо після запуску.\nДжерела контракту, лише читання: tk-ui `InventoryProcessesPage.tsx`, `DiffList.tsx`, `api/inventoryProcess.ts`;\ntk `InventoryRepository`, `InventoryProcessController`, `InventoryExportService`.\nНе перевіряються цим suite: межа експорту 500 процесів, фільтри дат, вибір категорій у UI та RBAC.\n"
+  },
+  "criteria": [
+    {
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-01",
+      "text": "На вкладці «Закриті» доступне поле «Назва ресурсу»; повна назва або підрядок, Unicode, різний регістр та пробіли навколо UI-запиту обробляються коректно."
+    },
+    {
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-02",
+      "text": "Таблиця та вкладені розбіжності містять тільки відповідні процеси й ресурси; без збігів результат порожній, очищення відновлює повні дані; інші фільтри перетинаються, пагінація рахує процеси, історія та залишки незмінні."
+    },
+    {
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-03",
+      "text": "Excel враховує поточний пошук, зміну й очищення фільтра; містить точні process/resource/delta без зайвих ресурсів, числові дробові розбіжності та валідну порожню книгу без збігів."
+    }
+  ],
+  "cases": [
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-01",
+      "testId": "TC-INV-NAME-API-001",
+      "title": "Повна й часткова назва, Unicode та регістр",
+      "description": "InventoryNameFilterApiTest#fullPartialAndCaseInsensitiveNamesFilterNestedDifferences. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterApiTest#fullPartialAndCaseInsensitiveNamesFilterNestedDifferences`.\n1. Передати повну назву А, потім її варіант у верхньому регістрі.\n2. Передати підрядок «АКУМУЛЯТОР».\nОчікування: перші запити повертають тільки mixed із diff А:+2.25; підрядок — тільки mixed із А:+2.25 і Б:-3.5. Кабелю й інших процесів немає, назви ресурсів точні.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "перші запити повертають тільки mixed із diff А:+2.25; підрядок — тільки mixed із А:+2.25 і Б:-3.5. Кабелю й інших процесів немає, назви ресурсів точні.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [
+        "TC-INV-NAME-API-001"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Передати повну назву А, потім її варіант у верхньому регістрі."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Передати підрядок «АКУМУЛЯТОР».",
+          "expectedText": "перші запити повертають тільки mixed із diff А:+2.25; підрядок — тільки mixed із А:+2.25 і Б:-3.5. Кабелю й інших процесів немає, назви ресурсів точні."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-02",
+      "testId": "TC-INV-NAME-API-002",
+      "title": "Немає збігів та очищення",
+      "description": "InventoryNameFilterApiTest#noMatchAndResetRestoreAllClosedAndRejectedProcesses. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterApiTest#noMatchAndResetRestoreAllClosedAndRejectedProcesses`.\n1. Задати унікальну назву без збігів.\n2. Повторити запит без resourceName.\nОчікування: content порожній, totalElements=0; після очищення повертаються чотири точні process ID, а mixed знову містить усі три ресурси.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "content порожній, totalElements=0; після очищення повертаються чотири точні process ID, а mixed знову містить усі три ресурси.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [
+        "TC-INV-NAME-API-002"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Задати унікальну назву без збігів."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Повторити запит без resourceName.",
+          "expectedText": "content порожній, totalElements=0; після очищення повертаються чотири точні process ID, а mixed знову містить усі три ресурси."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-02",
+      "testId": "TC-INV-NAME-API-003",
+      "title": "Пагінація й перетин фільтрів",
+      "description": "InventoryNameFilterApiTest#paginationCountsProcessesAndFiltersIntersect. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterApiTest#paginationCountsProcessesAndFiltersIntersect`.\n1. Шукати спільний маркер трьох ресурсів зі size=1 на сторінках 0 і 1.\n2. Перетнути назву А з відсутнім автором або states=REJECTED.\n3. Перетнути назву А з фактичним автором та категорією.\nОчікування: totalElements=2 на обох сторінках, точні ID mixed і cableOnly; конфліктні фільтри дають порожній список, сумісні — тільки mixed із А:+2.25.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "totalElements=2 на обох сторінках, точні ID mixed і cableOnly; конфліктні фільтри дають порожній список, сумісні — тільки mixed із А:+2.25.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [
+        "TC-INV-NAME-API-003"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Шукати спільний маркер трьох ресурсів зі size=1 на сторінках 0 і 1."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Перетнути назву А з відсутнім автором або states=REJECTED."
+        },
+        {
+          "stepOrder": 3,
+          "actionText": "Перетнути назву А з фактичним автором та категорією.",
+          "expectedText": "totalElements=2 на обох сторінках, точні ID mixed і cableOnly; конфліктні фільтри дають порожній список, сумісні — тільки mixed із А:+2.25."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-03",
+      "testId": "TC-INV-NAME-API-004",
+      "title": "Excel за поточною назвою",
+      "description": "InventoryNameFilterApiTest#excelContainsOnlyCurrentMatchingResources. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterApiTest#excelContainsOnlyCurrentMatchingResources`.\n1. Експортувати повну назву А, потім підрядок «АКУМУЛЯТОР».\n2. Змінити назву на Кабель та повторити експорт.\nОчікування: книги містять відповідно 1, 2 і 2 точні рядки process/resource/delta; +2.25/-3.5/+4/+1 є числовими, зайвих ресурсів та процесів немає.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "книги містять відповідно 1, 2 і 2 точні рядки process/resource/delta; +2.25/-3.5/+4/+1 є числовими, зайвих ресурсів та процесів немає.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [
+        "TC-INV-NAME-API-004"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Експортувати повну назву А, потім підрядок «АКУМУЛЯТОР»."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Змінити назву на Кабель та повторити експорт.",
+          "expectedText": "книги містять відповідно 1, 2 і 2 точні рядки process/resource/delta; +2.25/-3.5/+4/+1 є числовими, зайвих ресурсів та процесів немає."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-03",
+      "testId": "TC-INV-NAME-API-005",
+      "title": "Порожня книга, очищення й AND",
+      "description": "InventoryNameFilterApiTest#emptyExcelResetAndCombinedFiltersUseFreshSelection. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterApiTest#emptyExcelResetAndCombinedFiltersUseFreshSelection`.\n1. Експортувати назву без збігів, потім прибрати фільтр.\n2. Експортувати назву А з відсутнім автором.\nОчікування: порожня книга тільки з заголовками; після очищення рівно 6 рядків, включно з двома процесами без diff; AND з відсутнім автором знову дає порожню книгу.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "порожня книга тільки з заголовками; після очищення рівно 6 рядків, включно з двома процесами без diff; AND з відсутнім автором знову дає порожню книгу.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "FUNCTIONAL",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [
+        "TC-INV-NAME-API-005"
+      ],
+      "uiAutomationIds": [],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Експортувати назву без збігів, потім прибрати фільтр."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Експортувати назву А з відсутнім автором.",
+          "expectedText": "порожня книга тільки з заголовками; після очищення рівно 6 рядків, включно з двома процесами без diff; AND з відсутнім автором знову дає порожню книгу."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-01",
+      "testId": "TC-INV-NAME-UI-001",
+      "title": "Видиме поле та точні розбіжності",
+      "description": "InventoryNameFilterUiTest#fullAndPartialUnicodeNameShowOnlyMatchingDifferences. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterUiTest#fullAndPartialUnicodeNameShowOnlyMatchingDifferences`.\n1. У браузері відкрити «Закриті» власної локації й задати повну назву А.\n2. Замінити значення на «  АКУМУЛЯТОР  ».\nОчікування: видиме поле працює; у таблиці тільки mixed, спочатку один ресурс А, потім рівно А й Б; запит містить обрізану назву, Кабелю немає.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "видиме поле працює; у таблиці тільки mixed, спочатку один ресурс А, потім рівно А й Б; запит містить обрізану назву, Кабелю немає.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-INV-NAME-UI-001"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "У браузері відкрити «Закриті» власної локації й задати повну назву А."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Замінити значення на «  АКУМУЛЯТОР  ».",
+          "expectedText": "видиме поле працює; у таблиці тільки mixed, спочатку один ресурс А, потім рівно А й Б; запит містить обрізану назву, Кабелю немає."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-02",
+      "testId": "TC-INV-NAME-UI-002",
+      "title": "Зміна, відсутність збігів та скидання",
+      "description": "InventoryNameFilterUiTest#changedEmptyAndClearedNameRestoreTheCompleteTable. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterUiTest#changedEmptyAndClearedNameRestoreTheCompleteTable`.\n1. Змінити пошук А на Кабель.\n2. Задати назву без збігів, потім лише пробіли.\nОчікування: Кабель видно тільки у mixed і cableOnly; без збігів жодного процесу; пробіли скидають фільтр і повертають усі чотири процеси та три ресурси mixed.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "Кабель видно тільки у mixed і cableOnly; без збігів жодного процесу; пробіли скидають фільтр і повертають усі чотири процеси та три ресурси mixed.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-INV-NAME-UI-002"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Змінити пошук А на Кабель."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Задати назву без збігів, потім лише пробіли.",
+          "expectedText": "Кабель видно тільки у mixed і cableOnly; без збігів жодного процесу; пробіли скидають фільтр і повертають усі чотири процеси та три ресурси mixed."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-03",
+      "testId": "TC-INV-NAME-UI-003",
+      "title": "Кнопка Excel після зміни назви",
+      "description": "InventoryNameFilterUiTest#excelButtonUsesTheCurrentNameAfterChangingTheFilter. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterUiTest#excelButtonUsesTheCurrentNameAfterChangingTheFilter`.\n1. Задати назву А, перевірити таблицю та натиснути Excel.\n2. Змінити назву на Кабель, перевірити таблицю та натиснути Excel.\nОчікування: завантажено два реальні XLSX; resourceName у запиті актуальний; перша книга містить тільки mixed/А/+2.25, друга — mixed/Кабель/+4 і cableOnly/Кабель/+1.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "завантажено два реальні XLSX; resourceName у запиті актуальний; перша книга містить тільки mixed/А/+2.25, друга — mixed/Кабель/+4 і cableOnly/Кабель/+1.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-INV-NAME-UI-003"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Задати назву А, перевірити таблицю та натиснути Excel."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Змінити назву на Кабель, перевірити таблицю та натиснути Excel.",
+          "expectedText": "завантажено два реальні XLSX; resourceName у запиті актуальний; перша книга містить тільки mixed/А/+2.25, друга — mixed/Кабель/+4 і cableOnly/Кабель/+1."
+        }
+      ]
+    },
+    {
+      "projectId": 1,
+      "featureId": "REQ-INV-NAME",
+      "acKey": "AC-03",
+      "testId": "TC-INV-NAME-UI-004",
+      "title": "Excel без збігів та після очищення",
+      "description": "InventoryNameFilterUiTest#emptyExcelAndResetMatchTheVisibleSelection. Suite inventory-name-filter; docs/REQ-INV-NAME.md. Автотест: `InventoryNameFilterUiTest#emptyExcelAndResetMatchTheVisibleSelection`.\n1. Задати назву без збігів і натиснути Excel.\n2. Очистити поле, перевірити всі чотири процеси й завантажити Excel.\nОчікування: перший XLSX має тільки заголовки; після очищення resourceName відсутній у запиті й книга містить рівно 6 очікуваних рядків, без попереднього фільтра.",
+      "preconditions": "ERP dev; ADMIN; власна локація, три унікальні ресурси та 4 процеси. UI: Chrome, workspace власної локації. JDBC/SSH не потрібні.",
+      "testData": "InventoryNameFilterFixture: mixed А:+2.25/Б:-3.5/Кабель:+4; cableOnly Кабель:+1; manual і rejected без diff. Залишки 12.25/6.5/15. Cleanup власних ресурсів і локації.",
+      "expectedResult": "перший XLSX має тільки заголовки; після очищення resourceName відсутній у запиті й книга містить рівно 6 очікуваних рядків, без попереднього фільтра.",
+      "status": "ACTIVE",
+      "priority": "HIGH",
+      "severity": "MAJOR",
+      "testType": "UI",
+      "tags": "inventory,history,resource-name,filter,excel,automated,dev",
+      "apiAutomationIds": [],
+      "uiAutomationIds": [
+        "TC-INV-NAME-UI-004"
+      ],
+      "steps": [
+        {
+          "stepOrder": 1,
+          "actionText": "Задати назву без збігів і натиснути Excel."
+        },
+        {
+          "stepOrder": 2,
+          "actionText": "Очистити поле, перевірити всі чотири процеси й завантажити Excel.",
+          "expectedText": "перший XLSX має тільки заголовки; після очищення resourceName відсутній у запиті й книга містить рівно 6 очікуваних рядків, без попереднього фільтра."
+        }
+      ]
+    }
+  ]
+}

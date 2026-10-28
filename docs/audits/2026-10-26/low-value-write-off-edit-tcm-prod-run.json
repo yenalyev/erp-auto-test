@@ -1,0 +1,60 @@
+{
+  "importResponse": {
+    "runId": 170,
+    "matched": 3,
+    "created": 3,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 170,
+    "name": "AUTO Редагування списання МШП / dev",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 49,
+    "testPlanName": "AUTO TP REQ-MSHP",
+    "startedAt": "2026-10-26T12:03:24.126232",
+    "completedAt": "2026-10-26T12:03:24.309019",
+    "createdAt": "2026-10-26T12:03:24.126331",
+    "items": [
+      {
+        "id": 19221,
+        "testId": "TC-MSHP-API-010",
+        "title": "API-контроль редагування FIFO: 6 із 10",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-API-010",
+        "executedAt": "2026-10-26T14:00:10.866"
+      },
+      {
+        "id": 19222,
+        "testId": "TC-MSHP-UI-011",
+        "title": "Регресія: FIFO-редагування не блокує кількість у доступних межах",
+        "status": "FAIL",
+        "actualResult": "parameters=[{\"name\": \"amount\", \"value\": \"6\"}]\nLocator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\"\n\nparameters=[{\"name\": \"amount\", \"value\": \"4\"}]\nLocator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\"\n\nparameters=[{\"name\": \"amount\", \"value\": \"10\"}]\nLocator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\"",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-011",
+        "executedAt": "2026-10-26T14:00:21.837"
+      },
+      {
+        "id": 19223,
+        "testId": "TC-MSHP-UI-012",
+        "title": "UI-контроль редагування списання з явним вибором партії",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-MSHP-UI-012",
+        "executedAt": "2026-10-26T14:00:03.382"
+      }
+    ]
+  }
+}

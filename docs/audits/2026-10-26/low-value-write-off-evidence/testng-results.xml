@@ -1,0 +1,650 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="32" passed="32" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-10-26T12:22:06 EET" name="Low-value resource write-off" finished-at="2026-10-26T12:25:11 EET" duration-ms="184674">
+    <groups>
+    </groups>
+    <test started-at="2026-10-26T12:22:06 EET" name="Isolated МШП API and real UI" finished-at="2026-10-26T12:25:11 EET" duration-ms="184674">
+      <class name="com.erp.tests.ui.LowValueWriteOffTest">
+        <test-method is-config="true" signature="globalSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:00 EET" name="globalSetup" finished-at="2026-10-26T12:22:06 EET" duration-ms="6272" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalSetup -->
+        <test-method is-config="true" signature="baseTestClassSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:07 EET" name="baseTestClassSetup" finished-at="2026-10-26T12:22:48 EET" duration-ms="41984" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- baseTestClassSetup -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:49 EET" name="testSetup" finished-at="2026-10-26T12:22:49 EET" duration-ms="224" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="availableResourcesAreEligibleAndLocal()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:49 EET" name="availableResourcesAreEligibleAndLocal" finished-at="2026-10-26T12:22:50 EET" duration-ms="782" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- availableResourcesAreEligibleAndLocal -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:50 EET" name="uiTestTeardown" finished-at="2026-10-26T12:22:50 EET" duration-ms="16" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:50 EET" name="testTeardown" finished-at="2026-10-26T12:22:50 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:50 EET" name="testSetup" finished-at="2026-10-26T12:22:50 EET" duration-ms="195" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="categoryPersistsAndDictionaryFilters()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:50 EET" name="categoryPersistsAndDictionaryFilters" finished-at="2026-10-26T12:22:54 EET" duration-ms="3350" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- categoryPersistsAndDictionaryFilters -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:54 EET" name="uiTestTeardown" finished-at="2026-10-26T12:22:54 EET" duration-ms="11" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:54 EET" name="testTeardown" finished-at="2026-10-26T12:22:54 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:54 EET" name="testSetup" finished-at="2026-10-26T12:22:54 EET" duration-ms="145" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="createWriteOffThroughUi()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:22:54 EET" name="createWriteOffThroughUi" finished-at="2026-10-26T12:23:02 EET" duration-ms="8313" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- createWriteOffThroughUi -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:02 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:02 EET" duration-ms="6" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:02 EET" name="testTeardown" finished-at="2026-10-26T12:23:02 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:02 EET" name="testSetup" finished-at="2026-10-26T12:23:02 EET" duration-ms="170" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="dictionaryFilterWorksAndResets()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:02 EET" name="dictionaryFilterWorksAndResets" finished-at="2026-10-26T12:23:07 EET" duration-ms="4604" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- dictionaryFilterWorksAndResets -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:07 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:07 EET" duration-ms="7" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:07 EET" name="testTeardown" finished-at="2026-10-26T12:23:07 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:07 EET" name="testSetup" finished-at="2026-10-26T12:23:07 EET" duration-ms="146" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="dictionaryUsesAcceptedMshpSelect()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:07 EET" name="dictionaryUsesAcceptedMshpSelect" finished-at="2026-10-26T12:23:11 EET" duration-ms="3421" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- dictionaryUsesAcceptedMshpSelect -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:11 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:11 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:11 EET" name="testTeardown" finished-at="2026-10-26T12:23:11 EET" duration-ms="5" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:11 EET" name="testSetup" finished-at="2026-10-26T12:23:11 EET" duration-ms="188" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="explicitBatchWriteOffAndCancellation()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:11 EET" name="explicitBatchWriteOffAndCancellation" finished-at="2026-10-26T12:23:13 EET" duration-ms="1886" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- explicitBatchWriteOffAndCancellation -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:13 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:13 EET" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:13 EET" name="testTeardown" finished-at="2026-10-26T12:23:13 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:13 EET" name="testSetup" finished-at="2026-10-26T12:23:13 EET" duration-ms="143" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="formOffersOnlyEligibleResources()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:13 EET" name="formOffersOnlyEligibleResources" finished-at="2026-10-26T12:23:16 EET" duration-ms="2287" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- formOffersOnlyEligibleResources -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:16 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:16 EET" duration-ms="8" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:16 EET" name="testTeardown" finished-at="2026-10-26T12:23:16 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:16 EET" name="testSetup" finished-at="2026-10-26T12:23:16 EET" duration-ms="139" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:16 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:19 EET" duration-ms="3078" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[empty]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:19 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:19 EET" duration-ms="8" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:19 EET" name="testTeardown" finished-at="2026-10-26T12:23:19 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:19 EET" name="testSetup" finished-at="2026-10-26T12:23:19 EET" duration-ms="163" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:19 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:22 EET" duration-ms="3083" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[zero]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:23 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:23 EET" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:23 EET" name="testTeardown" finished-at="2026-10-26T12:23:23 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:23 EET" name="testSetup" finished-at="2026-10-26T12:23:23 EET" duration-ms="134" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:23 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:26 EET" duration-ms="2892" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[negative]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:26 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:26 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:26 EET" name="testTeardown" finished-at="2026-10-26T12:23:26 EET" duration-ms="8" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:26 EET" name="testSetup" finished-at="2026-10-26T12:23:26 EET" duration-ms="141" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:26 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:29 EET" duration-ms="2965" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[missingAmount]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:29 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:29 EET" duration-ms="10" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:29 EET" name="testTeardown" finished-at="2026-10-26T12:23:29 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:29 EET" name="testSetup" finished-at="2026-10-26T12:23:29 EET" duration-ms="234" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:29 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:32 EET" duration-ms="3098" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[overStock]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:32 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:32 EET" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:32 EET" name="testTeardown" finished-at="2026-10-26T12:23:32 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:32 EET" name="testSetup" finished-at="2026-10-26T12:23:33 EET" duration-ms="145" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:33 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:36 EET" duration-ms="3016" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[regular]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:36 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:36 EET" duration-ms="5" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:36 EET" name="testTeardown" finished-at="2026-10-26T12:23:36 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:36 EET" name="testSetup" finished-at="2026-10-26T12:23:36 EET" duration-ms="134" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:36 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:39 EET" duration-ms="3126" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[absent]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:39 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:39 EET" duration-ms="14" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:39 EET" name="testTeardown" finished-at="2026-10-26T12:23:39 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:39 EET" name="testSetup" finished-at="2026-10-26T12:23:39 EET" duration-ms="169" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:39 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:42 EET" duration-ms="3016" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[duplicate]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:42 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:42 EET" duration-ms="8" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:42 EET" name="testTeardown" finished-at="2026-10-26T12:23:42 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:42 EET" name="testSetup" finished-at="2026-10-26T12:23:43 EET" duration-ms="146" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:43 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:45 EET" duration-ms="2826" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[unknownBatch]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:45 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:45 EET" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:45 EET" name="testTeardown" finished-at="2026-10-26T12:23:45 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:45 EET" name="testSetup" finished-at="2026-10-26T12:23:46 EET" duration-ms="137" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:46 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:49 EET" duration-ms="3197" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[external]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:49 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:49 EET" duration-ms="14" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:49 EET" name="testTeardown" finished-at="2026-10-26T12:23:49 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:49 EET" name="testSetup" finished-at="2026-10-26T12:23:49 EET" duration-ms="232" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:49 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:52 EET" duration-ms="3048" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[yesterday]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:52 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:52 EET" duration-ms="12" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:52 EET" name="testTeardown" finished-at="2026-10-26T12:23:52 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:52 EET" name="testSetup" finished-at="2026-10-26T12:23:52 EET" duration-ms="137" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:52 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:55 EET" duration-ms="2892" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[tomorrow]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:55 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:55 EET" duration-ms="4" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:56 EET" name="testTeardown" finished-at="2026-10-26T12:23:56 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:56 EET" name="testSetup" finished-at="2026-10-26T12:23:56 EET" duration-ms="147" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="invalidWriteOffIsAtomic(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:56 EET" name="invalidWriteOffIsAtomic" data-provider="invalidRequests" finished-at="2026-10-26T12:23:59 EET" duration-ms="2916" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[longComment]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- invalidWriteOffIsAtomic -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:59 EET" name="uiTestTeardown" finished-at="2026-10-26T12:23:59 EET" duration-ms="10" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:59 EET" name="testTeardown" finished-at="2026-10-26T12:23:59 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:59 EET" name="testSetup" finished-at="2026-10-26T12:23:59 EET" duration-ms="189" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="inventoryButtonAndFormValidation()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:23:59 EET" name="inventoryButtonAndFormValidation" finished-at="2026-10-26T12:24:02 EET" duration-ms="3418" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- inventoryButtonAndFormValidation -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:02 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:02 EET" duration-ms="10" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:02 EET" name="testTeardown" finished-at="2026-10-26T12:24:02 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:02 EET" name="testSetup" finished-at="2026-10-26T12:24:03 EET" duration-ms="187" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="journalFiltersAndPagination()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:03 EET" name="journalFiltersAndPagination" finished-at="2026-10-26T12:24:05 EET" duration-ms="2592" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- journalFiltersAndPagination -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:05 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:05 EET" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:05 EET" name="testTeardown" finished-at="2026-10-26T12:24:05 EET" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:05 EET" name="testSetup" finished-at="2026-10-26T12:24:06 EET" duration-ms="149" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="journalLocationAndPeriodFilters()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:06 EET" name="journalLocationAndPeriodFilters" finished-at="2026-10-26T12:24:11 EET" duration-ms="4988" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- journalLocationAndPeriodFilters -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:11 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:11 EET" duration-ms="4" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:11 EET" name="testTeardown" finished-at="2026-10-26T12:24:11 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:11 EET" name="testSetup" finished-at="2026-10-26T12:24:11 EET" duration-ms="152" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="journalRbac()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:11 EET" name="journalRbac" finished-at="2026-10-26T12:24:20 EET" duration-ms="9174" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- journalRbac -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:20 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:20 EET" duration-ms="11" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:20 EET" name="testTeardown" finished-at="2026-10-26T12:24:20 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:20 EET" name="testSetup" finished-at="2026-10-26T12:24:20 EET" duration-ms="174" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="journalSidebarColumnsAndSearch(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:20 EET" name="journalSidebarColumnsAndSearch" data-provider="journalReaders" finished-at="2026-10-26T12:24:23 EET" duration-ms="2992" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[admin]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- journalSidebarColumnsAndSearch -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:23 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:23 EET" duration-ms="10" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:23 EET" name="testTeardown" finished-at="2026-10-26T12:24:23 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:23 EET" name="testSetup" finished-at="2026-10-26T12:24:24 EET" duration-ms="155" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="journalSidebarColumnsAndSearch(java.lang.String)[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:24 EET" name="journalSidebarColumnsAndSearch" data-provider="journalReaders" finished-at="2026-10-26T12:24:27 EET" duration-ms="3231" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[accountant]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- journalSidebarColumnsAndSearch -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:27 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:27 EET" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:27 EET" name="testTeardown" finished-at="2026-10-26T12:24:27 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:27 EET" name="testSetup" finished-at="2026-10-26T12:24:27 EET" duration-ms="155" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="multiResourceWriteOffDebitsExactAmounts()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:27 EET" name="multiResourceWriteOffDebitsExactAmounts" finished-at="2026-10-26T12:24:30 EET" duration-ms="3324" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- multiResourceWriteOffDebitsExactAmounts -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:30 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:30 EET" duration-ms="5" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:30 EET" name="testTeardown" finished-at="2026-10-26T12:24:30 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:30 EET" name="testSetup" finished-at="2026-10-26T12:24:31 EET" duration-ms="141" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="resourceCategoryCanBeEdited()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:31 EET" name="resourceCategoryCanBeEdited" finished-at="2026-10-26T12:24:36 EET" duration-ms="5215" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- resourceCategoryCanBeEdited -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:37 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:37 EET" duration-ms="5" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:37 EET" name="testTeardown" finished-at="2026-10-26T12:24:37 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:37 EET" name="testSetup" finished-at="2026-10-26T12:24:37 EET" duration-ms="153" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="sameDayEditAndLocationIsolation()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:37 EET" name="sameDayEditAndLocationIsolation" finished-at="2026-10-26T12:24:40 EET" duration-ms="3212" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- sameDayEditAndLocationIsolation -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:40 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:40 EET" duration-ms="10" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:40 EET" name="testTeardown" finished-at="2026-10-26T12:24:40 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:40 EET" name="testSetup" finished-at="2026-10-26T12:24:40 EET" duration-ms="137" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="unauthorizedUserCannotOpenWriteOffPages()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:40 EET" name="unauthorizedUserCannotOpenWriteOffPages" finished-at="2026-10-26T12:24:42 EET" duration-ms="1752" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- unauthorizedUserCannotOpenWriteOffPages -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:42 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:42 EET" duration-ms="6" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:42 EET" name="testTeardown" finished-at="2026-10-26T12:24:42 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:42 EET" name="testSetup" finished-at="2026-10-26T12:24:42 EET" duration-ms="146" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="writeOffAppearsInOperationHistory()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:42 EET" name="writeOffAppearsInOperationHistory" finished-at="2026-10-26T12:24:44 EET" duration-ms="1349" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- writeOffAppearsInOperationHistory -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:44 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:44 EET" duration-ms="0" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:44 EET" name="testTeardown" finished-at="2026-10-26T12:24:44 EET" duration-ms="2" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:44 EET" name="testSetup" finished-at="2026-10-26T12:24:44 EET" duration-ms="138" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="writeOffFormExplainsMshp()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:44 EET" name="writeOffFormExplainsMshp" finished-at="2026-10-26T12:24:47 EET" duration-ms="2666" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- writeOffFormExplainsMshp -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:47 EET" name="uiTestTeardown" finished-at="2026-10-26T12:24:47 EET" duration-ms="9" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:47 EET" name="testTeardown" finished-at="2026-10-26T12:24:47 EET" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="cleanup()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:24:47 EET" name="cleanup" finished-at="2026-10-26T12:25:11 EET" duration-ms="24317" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanup -->
+        <test-method is-config="true" signature="classTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:25:11 EET" name="classTeardown" finished-at="2026-10-26T12:25:11 EET" duration-ms="8" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- classTeardown -->
+        <test-method is-config="true" signature="globalTeardown()[pri:0, instance:com.erp.tests.ui.LowValueWriteOffTest@5e593b08]" started-at="2026-10-26T12:25:11 EET" name="globalTeardown" finished-at="2026-10-26T12:25:11 EET" duration-ms="277" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalTeardown -->
+      </class> <!-- com.erp.tests.ui.LowValueWriteOffTest -->
+    </test> <!-- Isolated МШП API and real UI -->
+  </suite> <!-- Low-value resource write-off -->
+</testng-results>

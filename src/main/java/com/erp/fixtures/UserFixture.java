@@ -361,6 +361,19 @@ public class UserFixture extends BaseFixture {
         }
     }
 
+    /** Fresh actor with exactly the requested grants; no default location-head role is added. */
+    @Step("Create isolated actor with explicit access grants")
+    public BusinessActor createPermissionActor(PlaywrightSessionProvider playwright,
+                                               List<String> roleNames, List<String> permissionKeys) {
+        String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String username = "autotest-pdf-" + suffix;
+        String password = "Autotest1!" + suffix;
+        UserModelResponse user = createUserProfile(username, "Autotest", "PDF", playwright, password);
+        trackForCleanup(user.getId());
+        accessFixture.ensureGrants(user.getId(), roleNames, permissionKeys, GrantScopeKind.ALL, null);
+        return new BusinessActor(user.getId(), username, password, null, List.of());
+    }
+
     public record BusinessActor(String userId, String username, String password,
                                 BusinessRole businessRole, List<Long> storageIds) { }
 

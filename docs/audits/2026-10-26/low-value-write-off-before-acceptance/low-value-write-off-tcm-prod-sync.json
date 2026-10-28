@@ -1,0 +1,28 @@
+{
+  "result": "SUCCESS",
+  "featureDbId": 180,
+  "criteriaVerified": 8,
+  "casesVerified": 19,
+  "automationLinksVerified": 19,
+  "verifiedIds": [
+    "TC-MSHP-API-001",
+    "TC-MSHP-API-002",
+    "TC-MSHP-API-003",
+    "TC-MSHP-API-004",
+    "TC-MSHP-API-005",
+    "TC-MSHP-API-006",
+    "TC-MSHP-API-007",
+    "TC-MSHP-API-008",
+    "TC-MSHP-API-009",
+    "TC-MSHP-UI-001",
+    "TC-MSHP-UI-002",
+    "TC-MSHP-UI-003",
+    "TC-MSHP-UI-004",
+    "TC-MSHP-UI-005",
+    "TC-MSHP-UI-006",
+    "TC-MSHP-UI-007",
+    "TC-MSHP-UI-008",
+    "TC-MSHP-UI-009",
+    "TC-MSHP-UI-010"
+  ]
+}

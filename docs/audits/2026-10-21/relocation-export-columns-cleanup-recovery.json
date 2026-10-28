@@ -1,0 +1,108 @@
+{
+  "storages" : [ {
+    "active" : false,
+    "storageId" : 4663,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4664,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4665,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4666,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4667,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4668,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4669,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4670,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4671,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4672,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4673,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4674,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4675,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4676,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4677,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4678,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4659,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4660,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4661,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  }, {
+    "active" : false,
+    "storageId" : 4662,
+    "afterRows" : 0,
+    "beforeRows" : 2
+  } ],
+  "history" : "Completed history retained by API policy",
+  "archivedResourceIds" : [ 5384, 5385, 5382, 5383 ],
+  "environment" : "dev",
+  "sourceManifest" : "docs/audits/2026-10-21/relocation-export-columns-pending-cleanup.json",
+  "result" : "SUCCESS"
+}

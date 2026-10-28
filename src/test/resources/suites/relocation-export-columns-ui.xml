@@ -1,0 +1,10 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Export data relocation columns UI" parallel="none" verbose="1">
+    <listeners>
+        <listener class-name="com.erp.listeners.TestCaseIdListener"/>
+        <listener class-name="com.erp.listeners.UiScreenshotListener"/>
+    </listeners>
+    <test name="Real export download and both journal screens">
+        <classes><class name="com.erp.tests.ui.RelocationExportColumnsUiTest"/></classes>
+    </test>
+</suite>

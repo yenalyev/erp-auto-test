@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="4" passed="4" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-10-19T17:47:47 EEST" name="Surefire suite" finished-at="2026-10-19T17:49:17 EEST" duration-ms="89631">
+    <groups>
+    </groups>
+    <test started-at="2026-10-19T17:47:47 EEST" name="Surefire test" finished-at="2026-10-19T17:49:17 EEST" duration-ms="89631">
+      <class name="com.erp.tests.ui.RelocationSupplierFiltersUiTest">
+        <test-method is-config="true" signature="globalSetup()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:47:40 EEST" name="globalSetup" finished-at="2026-10-19T17:47:47 EEST" duration-ms="7053" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalSetup -->
+        <test-method is-config="true" signature="baseTestClassSetup()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:47:48 EEST" name="baseTestClassSetup" finished-at="2026-10-19T17:48:27 EEST" duration-ms="39056" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- baseTestClassSetup -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:27 EEST" name="testSetup" finished-at="2026-10-19T17:48:27 EEST" duration-ms="132" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="optionsSearchAndSingleSupplierFilter(java.lang.String)[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:27 EEST" name="optionsSearchAndSingleSupplierFilter" data-provider="tabs" finished-at="2026-10-19T17:48:35 EEST" duration-ms="7942" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[active]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- optionsSearchAndSingleSupplierFilter -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:35 EEST" name="uiTestTeardown" finished-at="2026-10-19T17:48:35 EEST" duration-ms="11" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:35 EEST" name="testTeardown" finished-at="2026-10-19T17:48:35 EEST" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:35 EEST" name="testSetup" finished-at="2026-10-19T17:48:35 EEST" duration-ms="148" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="optionsSearchAndSingleSupplierFilter(java.lang.String)[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:35 EEST" name="optionsSearchAndSingleSupplierFilter" data-provider="tabs" finished-at="2026-10-19T17:48:40 EEST" duration-ms="5286" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[sent]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- optionsSearchAndSingleSupplierFilter -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:41 EEST" name="uiTestTeardown" finished-at="2026-10-19T17:48:41 EEST" duration-ms="5" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:41 EEST" name="testTeardown" finished-at="2026-10-19T17:48:41 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:41 EEST" name="testSetup" finished-at="2026-10-19T17:48:41 EEST" duration-ms="118" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="optionsSearchAndSingleSupplierFilter(java.lang.String)[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:41 EEST" name="optionsSearchAndSingleSupplierFilter" data-provider="tabs" finished-at="2026-10-19T17:48:46 EEST" duration-ms="5003" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[received]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- optionsSearchAndSingleSupplierFilter -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:46 EEST" name="uiTestTeardown" finished-at="2026-10-19T17:48:46 EEST" duration-ms="5" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:46 EEST" name="testTeardown" finished-at="2026-10-19T17:48:46 EEST" duration-ms="1" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="testSetup()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:46 EEST" name="testSetup" finished-at="2026-10-19T17:48:46 EEST" duration-ms="129" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSetup -->
+        <test-method signature="optionsSearchAndSingleSupplierFilter(java.lang.String)[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:46 EEST" name="optionsSearchAndSingleSupplierFilter" data-provider="tabs" finished-at="2026-10-19T17:48:51 EEST" duration-ms="5290" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[lost]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- optionsSearchAndSingleSupplierFilter -->
+        <test-method is-config="true" signature="uiTestTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:51 EEST" name="uiTestTeardown" finished-at="2026-10-19T17:48:51 EEST" duration-ms="7" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- uiTestTeardown -->
+        <test-method is-config="true" signature="testTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:51 EEST" name="testTeardown" finished-at="2026-10-19T17:48:51 EEST" duration-ms="3" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testTeardown -->
+        <test-method is-config="true" signature="cleanupSupplierData()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:48:51 EEST" name="cleanupSupplierData" finished-at="2026-10-19T17:49:17 EEST" duration-ms="25765" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanupSupplierData -->
+        <test-method is-config="true" signature="classTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:49:17 EEST" name="classTeardown" finished-at="2026-10-19T17:49:17 EEST" duration-ms="15" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- classTeardown -->
+        <test-method is-config="true" signature="globalTeardown()[pri:0, instance:com.erp.tests.ui.RelocationSupplierFiltersUiTest@235d29d6]" started-at="2026-10-19T17:49:17 EEST" name="globalTeardown" finished-at="2026-10-19T17:49:17 EEST" duration-ms="254" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- globalTeardown -->
+      </class> <!-- com.erp.tests.ui.RelocationSupplierFiltersUiTest -->
+    </test> <!-- Surefire test -->
+  </suite> <!-- Surefire suite -->
+</testng-results>

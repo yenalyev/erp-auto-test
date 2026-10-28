@@ -1,0 +1,49 @@
+{
+  "result": "SUCCESS",
+  "executionCounts": {
+    "PASS": 30,
+    "FAIL": 2
+  },
+  "caseCounts": {
+    "PASS": 17,
+    "FAIL": 2
+  },
+  "configurationFailures": 0,
+  "prodRun": 168,
+  "stageRun": 229,
+  "documentationSha256": "d830c4cfdf5319c654d413b0c127cd69bae4518c8a1e90b9dd7ac282b566e42e",
+  "prodDocumentationExactMatch": true,
+  "stageDocumentationExactMatch": true,
+  "all19CaseStatusesVerified": true,
+  "suitesVerified": [
+    "low-value-write-off",
+    "inventory",
+    "ui",
+    "regression"
+  ],
+  "ownLocationsArchived": [
+    5033,
+    5034,
+    5035
+  ],
+  "ownResourcesArchived": [
+    5651,
+    5652,
+    5653,
+    5654
+  ],
+  "previousRunRecovery": {
+    "resources": [
+      5647,
+      5648,
+      5649,
+      5650
+    ],
+    "result": "SUCCESS",
+    "locations": [
+      5030,
+      5031,
+      5032
+    ]
+  }
+}

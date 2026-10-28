@@ -1,0 +1,10 @@
+{
+  "destination": "production TCM",
+  "featureId": "REQ-MFG-001-03",
+  "remoteRunId": "tech-map-category-staging-20261021-093546",
+  "status": "REJECTED_BY_AUTOMATIC_APPROVAL_REVIEW",
+  "imported": false,
+  "reason": "The review rejected sending internal staging URLs, error details and test metadata to the production TCM destination and updating persistent test statuses without explicit authorization for this payload and destination.",
+  "approvalRequired": true,
+  "payload": "tech-map-category-tcm-payload.json"
+}

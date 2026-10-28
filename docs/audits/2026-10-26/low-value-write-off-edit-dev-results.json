@@ -1,0 +1,175 @@
+{
+  "environment": "dev",
+  "timezone": "Europe/Kyiv",
+  "utcOffset": "+02:00",
+  "runDirectory": "target\\low-value-write-off-edit-dev-20261026-recheck",
+  "executionCounts": {
+    "PASS": 4,
+    "FAIL": 3
+  },
+  "caseCounts": {
+    "PASS": 2,
+    "FAIL": 1
+  },
+  "configurationFailures": [],
+  "executions": [
+    {
+      "testCaseId": "TC-MSHP-API-010",
+      "status": "PASS",
+      "durationMs": 3315,
+      "executedAt": "2026-10-26T14:00:14.811000",
+      "parameters": [
+        {
+          "name": "amount",
+          "value": "6"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-011",
+      "status": "FAIL",
+      "durationMs": 9578,
+      "executedAt": "2026-10-26T14:00:31.692000",
+      "parameters": [
+        {
+          "name": "amount",
+          "value": "6"
+        }
+      ],
+      "errorMessage": "Locator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\""
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-011",
+      "status": "FAIL",
+      "durationMs": 9671,
+      "executedAt": "2026-10-26T14:00:21.837000",
+      "parameters": [
+        {
+          "name": "amount",
+          "value": "4"
+        }
+      ],
+      "errorMessage": "Locator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\""
+    },
+    {
+      "testCaseId": "TC-MSHP-API-010",
+      "status": "PASS",
+      "durationMs": 3408,
+      "executedAt": "2026-10-26T14:00:18.284000",
+      "parameters": [
+        {
+          "name": "amount",
+          "value": "10"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-API-010",
+      "status": "PASS",
+      "durationMs": 3797,
+      "executedAt": "2026-10-26T14:00:10.866000",
+      "parameters": [
+        {
+          "name": "amount",
+          "value": "4"
+        }
+      ],
+      "errorMessage": null
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-011",
+      "status": "FAIL",
+      "durationMs": 9901,
+      "executedAt": "2026-10-26T14:00:41.450000",
+      "parameters": [
+        {
+          "name": "amount",
+          "value": "10"
+        }
+      ],
+      "errorMessage": "Locator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\""
+    },
+    {
+      "testCaseId": "TC-MSHP-UI-012",
+      "status": "PASS",
+      "durationMs": 7299,
+      "executedAt": "2026-10-26T14:00:03.382000",
+      "parameters": [],
+      "errorMessage": null
+    }
+  ],
+  "screenshots": [
+    {
+      "testId": "TC-MSHP-API-010",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-API-010-0a043507-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-011",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-UI-011-1adad593-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-011",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-UI-011-1adad593-1.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-011",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-UI-011-28e2d9c5-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-011",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-UI-011-28e2d9c5-1.png"
+    },
+    {
+      "testId": "TC-MSHP-API-010",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-API-010-2b1d495c-0.png"
+    },
+    {
+      "testId": "TC-MSHP-API-010",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-API-010-3ca2c547-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-011",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-UI-011-59f74f00-0.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-011",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-UI-011-59f74f00-1.png"
+    },
+    {
+      "testId": "TC-MSHP-UI-012",
+      "path": "docs\\audits\\2026-10-26\\low-value-write-off-edit-evidence\\TC-MSHP-UI-012-e45c13b5-0.png"
+    }
+  ],
+  "tcmImport": {
+    "projectId": 1,
+    "remoteRunId": "low-value-write-off-edit-dev-20261026-recheck",
+    "environment": "dev",
+    "suite": "low-value-write-off-edit",
+    "runName": "Редагування списання МШП / dev",
+    "results": [
+      {
+        "testCaseId": "TC-MSHP-API-010",
+        "status": "PASS",
+        "durationMs": 10520,
+        "executedAt": "2026-10-26T14:00:10.866000",
+        "errorMessage": null
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-011",
+        "status": "FAIL",
+        "durationMs": 29150,
+        "executedAt": "2026-10-26T14:00:21.837000",
+        "errorMessage": "parameters=[{\"name\": \"amount\", \"value\": \"6\"}]\nLocator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\"\n\nparameters=[{\"name\": \"amount\", \"value\": \"4\"}]\nLocator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\"\n\nparameters=[{\"name\": \"amount\", \"value\": \"10\"}]\nLocator expected to be enabled\nCall log:\n  - Locator.expect with timeout 5000ms\n  - waiting for locator(\"internal:attr=[data-testid=\\\"low-value-write-off-submit\\\"]\")\n    9 × locator resolved to <button disabled type=\"submit\" data-slot=\"button\" data-size=\"default\" data-variant=\"default\" data-testid=\"low-value-write-off-submit\" class=\"cursor-pointer focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-[5px] border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]…>Підтвердити</button>\n      - unexpected value \"disabled\""
+      },
+      {
+        "testCaseId": "TC-MSHP-UI-012",
+        "status": "PASS",
+        "durationMs": 7299,
+        "executedAt": "2026-10-26T14:00:03.382000",
+        "errorMessage": null
+      }
+    ]
+  }
+}

@@ -21,6 +21,9 @@ public class TechnologicalMapListQuery {
     Long storageId;
     String name;
     String productTerm;
+    String ingredientTerm;
+    /** Exact output-resource categories; the UI expands a selected parent into its subtree. */
+    List<Long> categoryIds;
     Boolean isActive;
     /** PRODUCTION / DISASSEMBLE — required for tag-statistics (backend SpEL calls type.name()). */
     String type;
@@ -52,6 +55,12 @@ public class TechnologicalMapListQuery {
         }
         if (productTerm != null && !productTerm.isBlank()) {
             params.put("productTerm", productTerm);
+        }
+        if (ingredientTerm != null && !ingredientTerm.isBlank()) {
+            params.put("ingredientTerm", ingredientTerm);
+        }
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            params.put("categoryIds", new ArrayList<>(categoryIds));
         }
         if (isActive != null) {
             params.put("isActive", isActive);

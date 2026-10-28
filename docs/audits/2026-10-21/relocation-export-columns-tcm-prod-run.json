@@ -1,0 +1,116 @@
+{
+  "result": "SUCCESS",
+  "importResponse": {
+    "runId": 155,
+    "matched": 8,
+    "created": 8,
+    "updated": 0,
+    "skippedManual": 0,
+    "skippedOutOfScope": 0,
+    "unmatched": [],
+    "outOfScope": []
+  },
+  "run": {
+    "id": 155,
+    "name": "AUTO Експорт даних — Переміщення: колонки — dev — 2026-10-21 — 2026-10-22",
+    "status": "COMPLETED",
+    "environment": "dev",
+    "version": null,
+    "assignee": "autotest",
+    "testPlanId": 45,
+    "testPlanName": "AUTO TP REQ-REL-COL",
+    "startedAt": "2026-10-22T06:06:54.826259",
+    "completedAt": "2026-10-22T06:06:55.167093",
+    "createdAt": "2026-10-22T06:06:54.826365",
+    "items": [
+      {
+        "id": 19049,
+        "testId": "TC-REL-COL-API-001",
+        "title": "Назви та точний порядок колонок",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-001",
+        "executedAt": "2026-10-21T18:12:35"
+      },
+      {
+        "id": 19050,
+        "testId": "TC-REL-COL-API-002",
+        "title": "Kind отримувача в кожному рядку",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-002",
+        "executedAt": "2026-10-21T18:12:47"
+      },
+      {
+        "id": 19051,
+        "testId": "TC-REL-COL-API-003",
+        "title": "Групи отримувача для матриці 4 × 3",
+        "status": "FAIL",
+        "actualResult": "\r\nMultiple Failures (12 failures)\r\n-- failure 1 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 2 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 3 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 4 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 5 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 6 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 7 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595622312_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 8 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595622312_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 9 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595626698_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 10 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595626698_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 11 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595631379_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 12 --\r\n[rel-columns--loc_1792595621850_T1 → rel-columns--loc_1792595631379_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-003",
+        "executedAt": "2026-10-21T18:13:23"
+      },
+      {
+        "id": 19052,
+        "testId": "TC-REL-COL-API-004",
+        "title": "Група відправника незалежна від отримувача",
+        "status": "FAIL",
+        "actualResult": "\r\nMultiple Failures (12 failures)\r\n-- failure 1 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 2 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595607206_T1 (Локація)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 3 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 4 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595612919_T1 (Екіпаж)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 5 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 6 --\r\n[rel-columns--loc_1792595606655_T1 → rel-columns--loc_1792595617370_T1 (Точка вильоту)] \r\nexpected: \"СБС\"\r\n but was: \"СБС без ПМ\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 7 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595650961_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 8 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595650961_T1 (Локація)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 9 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595655382_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 10 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595655382_T1 (Екіпаж)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 11 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595659637_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)\r\n-- failure 12 --\r\n[rel-columns--loc_1792595650463_T1 → rel-columns--loc_1792595659637_T1 (Точка вильоту)] \r\nexpected: \"ПМ\"\r\n but was: \"ПМ без Цукрарня\"\r\nat RelocationExportColumnsAssertions.assertGroups(RelocationExportColumnsAssertions.java:64)",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-004",
+        "executedAt": "2026-10-21T18:14:29"
+      },
+      {
+        "id": 19053,
+        "testId": "TC-REL-COL-API-005",
+        "title": "Регресія дублів і звірка обох вкладок",
+        "status": "PASS",
+        "actualResult": null,
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-005",
+        "executedAt": "2026-10-21T18:14:30"
+      },
+      {
+        "id": 19054,
+        "testId": "TC-REL-COL-API-006",
+        "title": "Включний період та виключення сусіднього дня",
+        "status": "BLOCKED",
+        "actualResult": "Connection refused: getsockopt",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-API-006",
+        "executedAt": "2026-10-22T09:01:23"
+      },
+      {
+        "id": 19055,
+        "testId": "TC-REL-COL-UI-001",
+        "title": "Реальний download із Експорт даних",
+        "status": "BLOCKED",
+        "actualResult": "Setup/cleanup failure: [{\"className\": \"com.erp.tests.ui.RelocationExportColumnsUiTest\", \"method\": \"baseTestClassSetup\", \"message\": \"\\n              Error {\\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\n  name='Error\\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\n    at FrameSession._navigate (C:\\\\Users\\\\gigam\\\\AppData\\\\Local\\\\Temp\\\\playwright-java-2784329746674901623\\\\package\\\\lib\\\\server\\\\chromium\\\\crPage.js:496:35)\\n    at async Frame._gotoAction (C:\\\\Users\\\\gigam\\\\AppData\\\\Local\\\\Temp\\\\playwright-java-2784329746674901623\\\\package\\\\lib\\\\server\\\\frames.js:539:28)\\n}\\nCall log:\\n-   - navigating to \\\"https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\\", waiting until \\\"domcontentloaded\\\"\\n\\n            \", \"build\": \"target\\\\rel-columns-verified-20261021\"}, {\"className\": \"com.erp.tests.ui.RelocationExportColumnsUiTest\", \"method\": \"globalSetup\", \"message\": \"\\n              Configured database is unavailable. Hint: Check db.url, db.username and db.password in properties.\\n            \", \"build\": \"target\\\\rel-columns-ui-verified-20261021\"}, {\"className\": \"com.erp.tests.ui.RelocationExportColumnsUiTest\", \"method\": \"baseTestClassSetup\", \"message\": \"\\n              Error {\\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\n  name='Error\\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\n    at FrameSession._navigate (C:\\\\Users\\\\gigam\\\\AppData\\\\Local\\\\Temp\\\\playwright-java-1437771570022277593\\\\package\\\\lib\\\\server\\\\chromium\\\\crPage.js:496:35)\\n    at async Frame._gotoAction (C:\\\\Users\\\\gigam\\\\AppData\\\\Local\\\\Temp\\\\playwright-java-1437771570022277593\\\\package\\\\lib\\\\server\\\\frames.js:539:28)\\n}\\nCall log:\\n-   - navigating to \\\"https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\\", waiting until \\\"domcontentloaded\\\"\\n\\n            \", \"build\": \"target\\\\rel-columns-ui-verified-20261021\"}]",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-UI-001",
+        "executedAt": "2026-10-22T09:02:06"
+      },
+      {
+        "id": 19056,
+        "testId": "TC-REL-COL-UI-002",
+        "title": "Звірка видимих Видано й Отримано з Excel",
+        "status": "BLOCKED",
+        "actualResult": "Setup/cleanup failure: [{\"className\": \"com.erp.tests.ui.RelocationExportColumnsUiTest\", \"method\": \"baseTestClassSetup\", \"message\": \"\\n              Error {\\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\n  name='Error\\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\n    at FrameSession._navigate (C:\\\\Users\\\\gigam\\\\AppData\\\\Local\\\\Temp\\\\playwright-java-2784329746674901623\\\\package\\\\lib\\\\server\\\\chromium\\\\crPage.js:496:35)\\n    at async Frame._gotoAction (C:\\\\Users\\\\gigam\\\\AppData\\\\Local\\\\Temp\\\\playwright-java-2784329746674901623\\\\package\\\\lib\\\\server\\\\frames.js:539:28)\\n}\\nCall log:\\n-   - navigating to \\\"https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\\", waiting until \\\"domcontentloaded\\\"\\n\\n            \", \"build\": \"target\\\\rel-columns-verified-20261021\"}, {\"className\": \"com.erp.tests.ui.RelocationExportColumnsUiTest\", \"method\": \"globalSetup\", \"message\": \"\\n              Configured database is unavailable. Hint: Check db.url, db.username and db.password in properties.\\n            \", \"build\": \"target\\\\rel-columns-ui-verified-20261021\"}, {\"className\": \"com.erp.tests.ui.RelocationExportColumnsUiTest\", \"method\": \"baseTestClassSetup\", \"message\": \"\\n              Error {\\n  message='net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\n  name='Error\\n  stack='Error: net::ERR_CONNECTION_REFUSED at https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\n    at FrameSession._navigate (C:\\\\Users\\\\gigam\\\\AppData\\\\Local\\\\Temp\\\\playwright-java-1437771570022277593\\\\package\\\\lib\\\\server\\\\chromium\\\\crPage.js:496:35)\\n    at async Frame._gotoAction (C:\\\\Users\\\\gigam\\\\AppData\\\\Local\\\\Temp\\\\playwright-java-1437771570022277593\\\\package\\\\lib\\\\server\\\\frames.js:539:28)\\n}\\nCall log:\\n-   - navigating to \\\"https://dev.cukerochka.sbs/server/login?redirectUri=https%3A%2F%2Fdev.cukerochka.sbs\\\", waiting until \\\"domcontentloaded\\\"\\n\\n            \", \"build\": \"target\\\\rel-columns-ui-verified-20261021\"}]",
+        "comment": null,
+        "defectId": null,
+        "automationTestId": "TC-REL-COL-UI-002",
+        "executedAt": "2026-10-22T09:02:06"
+      }
+    ]
+  }
+}

@@ -9,6 +9,15 @@
         <listener class-name="com.erp.listeners.TestCaseIdListener"/>
     </listeners>
 
+    <test name="Inventory name filter UI">
+        <classes>
+            <class name="com.erp.tests.ui.InventoryNameFilterUiTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffExportUiTest"/>
+            <class name="com.erp.tests.ui.LowValueWriteOffEditTest"/>
+        </classes>
+    </test>
+
     <test name="Login UI">
         <classes>
             <class name="com.erp.tests.ui.LoginUITest"/>
@@ -49,12 +58,15 @@
             <class name="com.erp.tests.ui.RelocationRegionAliasFeatureUiTest"/>
             <class name="com.erp.tests.ui.RelocationBatchAccountingUiTest"/>
             <class name="com.erp.tests.ui.RelocationBatchTechMapExportUiTest"/>
+            <class name="com.erp.tests.ui.RelocationExportColumnsUiTest"/>
             <class name="com.erp.tests.ui.RelocationWmsJournalUiTest"/>
             <class name="com.erp.tests.ui.RelocationEditActionsUiTest"/>
             <class name="com.erp.tests.ui.RelocationSupplierDefectEditUiTest"/>
             <class name="com.erp.tests.ui.RelocationSendRecipientUiTest"/>
             <class name="com.erp.tests.ui.RelocationInvoiceVisibilityUiTest"/>
             <class name="com.erp.tests.ui.RelocationJournalFilterSortUITest"/>
+            <class name="com.erp.tests.ui.RelocationSupplierFiltersUiTest"/>
+            <class name="com.erp.tests.ui.CommercialDocumentRequiredFieldsUiTest"/>
             <class name="com.erp.tests.ui.LogisticsJournalUiTest">
                 <methods>
                     <include name="logisticsTotalsFollowTabsAndFilters"/>
@@ -74,6 +86,8 @@
             <class name="com.erp.tests.ui.EquipmentCreateUITest"/>
             <class name="com.erp.tests.ui.EquipmentKindHintUiTest"/>
             <class name="com.erp.tests.ui.EquipmentGroupSortUITest"/>
+            <class name="com.erp.tests.ui.EquipmentDictionaryUiTest"/>
+            <class name="com.erp.tests.ui.EquipmentModelArchiveUiTest"/>
             <class name="com.erp.tests.ui.EquipmentUnitHistoryUiTest"/>
         </classes>
     </test>
@@ -112,6 +126,7 @@
         <classes>
             <class name="com.erp.tests.ui.TechnologicalMapValidationUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapSearchUITest"/>
+            <class name="com.erp.tests.ui.TechMapCategoryFilterUiTest"/>
             <class name="com.erp.tests.ui.TechnologicalMapAlternativeGroupsUITest"/>
             <class name="com.erp.tests.ui.ProductionAlternativeInputsUITest"/>
             <class name="com.erp.tests.ui.TechnologicalMapHierarchyUITest"/>

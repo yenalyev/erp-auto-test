@@ -1,0 +1,17 @@
+{
+  "summary": {
+    "ignored": "0",
+    "total": "13",
+    "passed": "13",
+    "failed": "0",
+    "skipped": "0"
+  },
+  "suite": {
+    "started-at": "2026-10-22T10:24:19 EEST",
+    "name": "Equipment Dictionary",
+    "finished-at": "2026-10-22T10:25:47 EEST",
+    "duration-ms": "88135"
+  },
+  "configurationFailures": [],
+  "buildSuccess": true
+}

@@ -1,0 +1,132 @@
+{
+  "baseUrl": "http://localhost:18100",
+  "feature": {
+    "created": false,
+    "updated": true
+  },
+  "acceptanceCriteria": {
+    "created": [],
+    "updated": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06"
+    ]
+  },
+  "testCases": {
+    "created": [],
+    "updated": [
+      "TC-REL-COL-API-001",
+      "TC-REL-COL-API-002",
+      "TC-REL-COL-API-003",
+      "TC-REL-COL-API-004",
+      "TC-REL-COL-API-005",
+      "TC-REL-COL-API-006",
+      "TC-REL-COL-UI-001",
+      "TC-REL-COL-UI-002"
+    ]
+  },
+  "verification": {
+    "featureId": "REQ-REL-COL",
+    "parentFeatureId": "REQ-EDIT_REL",
+    "status": "ACTIVE",
+    "documentationLength": 7154,
+    "documentationSha256": "b26ae69a9640a5cec0cdd2e46cd37eb78f35b4ccc6c2649447bbe344b85e81d5",
+    "sourceDocumentationSha256": "b26ae69a9640a5cec0cdd2e46cd37eb78f35b4ccc6c2649447bbe344b85e81d5",
+    "requiredAcPresent": true,
+    "managedAcCount": 6,
+    "managedCaseCount": 8,
+    "automatedCaseCount": 8,
+    "manualCaseCount": 0,
+    "allCasesPresent": true,
+    "documentationMatchesSource": true,
+    "testCases": {
+      "TC-REL-COL-API-001": {
+        "featureId": "REQ-REL-COL",
+        "acId": "AC-01",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-COL-API-001"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-COL-API-002": {
+        "featureId": "REQ-REL-COL",
+        "acId": "AC-02",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-COL-API-002"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-COL-API-003": {
+        "featureId": "REQ-REL-COL",
+        "acId": "AC-03",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-COL-API-003"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-COL-API-004": {
+        "featureId": "REQ-REL-COL",
+        "acId": "AC-04",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-COL-API-004"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-COL-API-005": {
+        "featureId": "REQ-REL-COL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-COL-API-005"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 3
+      },
+      "TC-REL-COL-API-006": {
+        "featureId": "REQ-REL-COL",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [
+          "TC-REL-COL-API-006"
+        ],
+        "uiAutomationIds": [],
+        "stepCount": 2
+      },
+      "TC-REL-COL-UI-001": {
+        "featureId": "REQ-REL-COL",
+        "acId": "AC-06",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-COL-UI-001"
+        ],
+        "stepCount": 3
+      },
+      "TC-REL-COL-UI-002": {
+        "featureId": "REQ-REL-COL",
+        "acId": "AC-05",
+        "status": "ACTIVE",
+        "apiAutomationIds": [],
+        "uiAutomationIds": [
+          "TC-REL-COL-UI-002"
+        ],
+        "stepCount": 3
+      }
+    }
+  },
+  "result": "SUCCESS",
+  "featureDbId": 171,
+  "casesVerified": 8,
+  "criteriaVerified": 6
+}

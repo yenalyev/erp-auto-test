@@ -1,0 +1,8 @@
+{
+  "result": "SUCCESS",
+  "baseUrl": "http://localhost:18100",
+  "featureDbId": 175,
+  "criteriaVerified": 8,
+  "casesVerified": 19,
+  "documentationSha256": "08b35dde452c73ff67f71becf6c167697d23bc176443ea3f29297584fb742190"
+}
