@@ -1,5 +1,5 @@
 param([string]$RunId = ('low-value-write-off-' + (Get-Date -Format 'yyyyMMdd-HHmmss')), [string]$RecoveryManifest,
-      [ValidateSet('low-value-write-off','low-value-write-off-edit')][string]$Suite = 'low-value-write-off')
+      [ValidateSet('low-value-write-off','low-value-write-off-edit','low-value-write-off-export','framework')][string]$Suite = 'low-value-write-off')
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $buildDir = Join-Path $repoRoot "target/$RunId"

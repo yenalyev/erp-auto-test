@@ -31,6 +31,8 @@ public enum ApiEndpointDefinition {
             new TypeReference<Map<String, Object>>() {}, null),
     LOW_VALUE_WRITE_OFF_LIST("/api/v1/storages/inventory/low-value-resources", Method.GET,
             null, "Low-value write-off history", null, new TypeReference<Map<String, Object>>() {}, null),
+    LOW_VALUE_WRITE_OFF_EXPORT("/api/v1/storages/inventory/low-value-resources/export", Method.GET,
+            null, "Export filtered low-value write-off history as XLSX", null, new TypeReference<byte[]>() {}, null),
     LOW_VALUE_WRITE_OFF_GET("/api/v1/storages/inventory/low-value-resources/{id}?storageId={storageId}", Method.GET,
             null, "Get low-value write-off", null, new TypeReference<Map<String, Object>>() {}, null),
     LOW_VALUE_WRITE_OFF_UPDATE("/api/v1/storages/inventory/low-value-resources/{id}", Method.PUT,

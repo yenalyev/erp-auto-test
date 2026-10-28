@@ -61,8 +61,7 @@ public class LowValueWriteOffFixture {
         second = resource("cloth", "LOW_VALUE_ITEM");
         regular = resource("regular", "REGULAR");
         absent = resource("no-stock", "LOW_VALUE_ITEM");
-        context.set(ContextKey.RELOCATION_SUPPLIER_ID,
-                RelocationStockSeeder.resolveSupplierStorageId(api, UserRole.ADMIN));
+        context.set(ContextKey.RELOCATION_SUPPLIER_ID, external.getId());
         seed(a, low, 20, "A");
         seed(a, low, 10, "B");
         seed(a, second, secondStock, "C");
@@ -76,8 +75,12 @@ public class LowValueWriteOffFixture {
     }
 
     private StorageResponse location(String suffix, boolean isExternal) {
-        var request = StorageDataFactory.childStorage(1L, marker + "-" + suffix).build();
-        request.setParentId(null);
+        var request = com.erp.models.request.StorageRequest.builder()
+                .name(StorageDataFactory.uniqueName(marker + "-" + suffix))
+                .kind(com.erp.enums.StorageKind.LOCATION)
+                .features(Set.of(com.erp.enums.LocationFeature.RELOCATIONS, com.erp.enums.LocationFeature.EQUIPMENT))
+                .relation(com.erp.enums.StorageRelation.INTERNAL)
+                .accessMode(com.erp.enums.StorageAccessMode.FULL_ACCESS).build();
         if (isExternal) request.setRelation(com.erp.enums.StorageRelation.EXTERNAL);
         var result = storages.createStorage(request);
         locations.add(result);
